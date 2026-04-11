@@ -187,7 +187,6 @@ class GameState:
         self._draw_cards(winner_id)
         
         # Clear table
-        played_1 = card1.to_dict()
         played_2 = card2.to_dict()
         self.played_card_1 = None
         self.played_card_2 = None
@@ -569,7 +568,7 @@ async def _handle_rematch(
     await current_room.broadcast({"type": "rematchRequested", "playerId": player_id}, exclude=player_id)
 
     if len(current_room.rematch_requests) == 2:
-        print(f"[Briscola WS] Both players want rematch, starting new game")
+        print("[Briscola WS] Both players want rematch, starting new game")
         current_room.start_game()
         print(f"[Briscola WS] Rematch started - current_player: {current_room.game.current_player_id}")
 

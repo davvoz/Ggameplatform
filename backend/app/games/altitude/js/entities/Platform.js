@@ -11,7 +11,6 @@ export class Platform extends GameObject {
     #type;
     #broken = false;
     #breakTimer = 0;
-    #moveDirection = 1;
     #moveRange = 60;
     #startX;
     #opacity = 1;
@@ -26,7 +25,6 @@ export class Platform extends GameObject {
 
         // Set random initial values for moving platforms
         if (type === 'moving') {
-            this.#moveDirection = Math.random() > 0.5 ? 1 : -1;
             this.#moveRange = 40 + Math.random() * 40;
         }
 
@@ -45,9 +43,10 @@ export class Platform extends GameObject {
      * Get bounce multiplier for this platform type
      */
     getBounceMultiplier() {
-        switch (this.#type) {
-            case 'bouncy': return PHYSICS.BOUNCE_SUPER;
-            default: return PHYSICS.BOUNCE_NORMAL;
+        if (this.#type === 'bouncy') {
+            return PHYSICS.BOUNCE_SUPER;
+        } else {
+            return PHYSICS.BOUNCE_NORMAL;
         }
     }
 
@@ -150,7 +149,7 @@ export class Platform extends GameObject {
             if (typeIndex >= 0) {
                 const srcX = typeIndex * sprite.width;
                 const srcY = this.#broken ? sprite.height : 0;
-                
+
                 ctx.drawImage(
                     sprite.canvas,
                     srcX, srcY,
@@ -180,11 +179,11 @@ export class Platform extends GameObject {
 
     #drawDeadlySpikes(ctx, x, y) {
         const platformTop = y - this.height / 2;
-        const spikeH      = 18;
-        const spikeW      = 10;
-        const count       = 4;
-        const totalSpan   = count * spikeW + (count - 1) * 2;
-        const startX      = x - totalSpan / 2;
+        const spikeH = 18;
+        const spikeW = 10;
+        const count = 4;
+        const totalSpan = count * spikeW + (count - 1) * 2;
+        const startX = x - totalSpan / 2;
 
         ctx.save();
 
@@ -195,23 +194,23 @@ export class Platform extends GameObject {
             // White fill
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.moveTo(sx,          platformTop);
+            ctx.moveTo(sx, platformTop);
             ctx.lineTo(sx + spikeW, platformTop);
-            ctx.lineTo(tipX,        platformTop - spikeH);
+            ctx.lineTo(tipX, platformTop - spikeH);
             ctx.closePath();
             ctx.fill();
 
             // Red outline
             ctx.strokeStyle = COLORS.PLATFORM_DEADLY;
-            ctx.lineWidth   = 1;
+            ctx.lineWidth = 1;
             ctx.stroke();
 
             // Inner highlight — left face
             ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-            ctx.lineWidth   = 0.8;
+            ctx.lineWidth = 0.8;
             ctx.beginPath();
-            ctx.moveTo(sx + 2,  platformTop - 2);
-            ctx.lineTo(tipX,    platformTop - spikeH);
+            ctx.moveTo(sx + 2, platformTop - 2);
+            ctx.lineTo(tipX, platformTop - spikeH);
             ctx.stroke();
         }
 
@@ -253,10 +252,10 @@ export class Platform extends GameObject {
     #drawMoveIndicator(ctx, x, y) {
         // Small arrows showing movement direction
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        
+
         const arrowY = y + this.height / 2 + 5;
         const arrowSize = 4;
-        
+
         // Left arrow
         ctx.beginPath();
         ctx.moveTo(x - 20, arrowY);
@@ -307,7 +306,7 @@ export class PlatformFactory {
 
     static #getRandomType(altitude) {
         let weights;
-        
+
         if (altitude < 500) {
             weights = PLATFORM.SPAWN_WEIGHTS.LOW;
         } else if (altitude < 3000) {

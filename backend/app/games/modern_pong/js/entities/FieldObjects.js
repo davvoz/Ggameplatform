@@ -1,12 +1,44 @@
 import {
-    ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM, ARENA_MID_Y,
-    COLORS, POWERUP_SIZE,
+    ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM,
+    COLORS,
 } from '../config/Constants.js';
+
+//Abstract implements only checkBallCollision, the rest is up to subclasses
+class FieldObject {
+    get alive() { return true; }
+    get x() { return 0; }
+    get y() { return 0; }
+    get width() { return 0; }
+    get height() { return 0; }
+    update(dt) {
+        throw new Error('update() must be implemented by subclasses');
+    }
+    draw(ctx) {
+        throw new Error('draw() must be implemented by subclasses');
+    }
+    checkBallCollision(ball) {
+        const width = this.width;
+        const height = this.height;
+        const obj = { x: this.x, y: this.y, width: width, height: height };
+        return this.#checkCollision(ball, obj);
+    }
+    #checkCollision(ball, obj) {
+    const bx = ball.x;
+    const by = ball.y;
+    const br = ball.radius;
+    return (
+        bx + br >= obj.x - obj.width / 2 &&
+        bx - br <= obj.x + obj.width / 2 &&
+        by + br >= obj.y - obj.height / 2 &&
+        by - br <= obj.y + obj.height / 2
+    );
+}
+}
 
 /**
  * Shield entity — sits at the goal line and blocks one hit.
  */
-export class Shield {
+export class Shield extends FieldObject {
     #x;
     #goalY;
     #width = 60;
@@ -15,6 +47,7 @@ export class Shield {
     #flashTimer = 0;
 
     constructor(isTopPlayer) {
+        super();
         this.#x = (ARENA_LEFT + ARENA_RIGHT) / 2;
         this.#goalY = isTopPlayer ? ARENA_TOP + 3 : ARENA_BOTTOM - 3;
     }
@@ -49,27 +82,13 @@ export class Shield {
         ctx.restore();
     }
 
-    /**
-     * Check if the ball collides with this shield.
-     */
-    checkBallCollision(ball) {
-        if (!this.#alive) return false;
-        const bx = ball.x;
-        const by = ball.y;
-        const br = ball.radius;
-        return (
-            bx + br >= this.#x - this.#width / 2 &&
-            bx - br <= this.#x + this.#width / 2 &&
-            by + br >= this.#goalY - this.#height / 2 &&
-            by - br <= this.#goalY + this.#height / 2
-        );
-    }
+
 }
 
 /**
  * GravityWell entity — pulls the ball toward it.
  */
-export class GravityWell {
+export class GravityWell extends FieldObject {
     #x;
     #y;
     #strength;
@@ -79,6 +98,7 @@ export class GravityWell {
     #pulsePhase = 0;
 
     constructor(x, y, duration, strength = 100) {
+        super();
         this.#x = x;
         this.#y = y;
         this.#strength = strength;
@@ -141,7 +161,7 @@ export class GravityWell {
 /**
  * SuperShield — full-width goal barrier that blocks 3 hits (Tank super).
  */
-export class SuperShield {
+export class SuperShield extends FieldObject {
     #x;
     #goalY;
     #width;
@@ -152,6 +172,7 @@ export class SuperShield {
     #color;
 
     constructor(isTopPlayer, color = '#88ee88') {
+        super();
         this.#x = (ARENA_LEFT + ARENA_RIGHT) / 2;
         this.#goalY = isTopPlayer ? ARENA_TOP + 4 : ARENA_BOTTOM - 4;
         this.#width = ARENA_RIGHT - ARENA_LEFT - 20;
@@ -202,16 +223,6 @@ export class SuperShield {
         ctx.restore();
     }
 
-    checkBallCollision(ball) {
-        if (!this.#alive) return false;
-        const bx = ball.x;
-        const by = ball.y;
-        const br = ball.radius;
-        return (
-            bx + br >= this.#x - this.#width / 2 &&
-            bx - br <= this.#x + this.#width / 2 &&
-            by + br >= this.#goalY - this.#height / 2 &&
-            by - br <= this.#goalY + this.#height / 2
-        );
-    }
 }
+
+ 

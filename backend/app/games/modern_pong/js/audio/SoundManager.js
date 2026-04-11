@@ -17,7 +17,7 @@ export class SoundManager {
 
     async init() {
         try {
-            this.#ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.#ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
             this.#musicGain = this.#ctx.createGain();
             this.#musicGain.gain.value = this.#musicVolume;
             this.#musicGain.connect(this.#ctx.destination);
@@ -59,8 +59,8 @@ export class SoundManager {
             this.#musicTimer = null;
         }
         for (const n of this.#musicNodes) {
-            try { n.stop(); } catch (_) {}
-            try { n.disconnect(); } catch (_) {}
+            try { n.stop(); } catch (e) {console.error('Error' +e);}
+            try { n.disconnect(); } catch (e) {console.error('Error' +e);}
         }
         this.#musicNodes = [];
     }
@@ -251,7 +251,7 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t);
             osc.stop(t + dur);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     #noise(dur, vol = 0.1) {
@@ -272,7 +272,7 @@ export class SoundManager {
             src.connect(g);
             g.connect(this.#ctx.destination);
             src.start(t);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Button / menu click */
@@ -291,7 +291,7 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t);
             osc.stop(t + 0.07);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Ball hits paddle / character */
@@ -321,7 +321,7 @@ export class SoundManager {
             g2.connect(this.#ctx.destination);
             osc2.start(t);
             osc2.stop(t + 0.05);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Ball hits wall */
@@ -340,7 +340,7 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t);
             osc.stop(t + 0.09);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Goal scored! */
@@ -364,7 +364,7 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t + 0.1);
             osc.stop(t + 0.55);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Countdown tick (3, 2, 1) */
@@ -391,7 +391,7 @@ export class SoundManager {
                 osc.start(t + i * 0.06);
                 osc.stop(t + 0.5);
             });
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Power-up collected */
@@ -412,7 +412,7 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t);
             osc.stop(t + 0.3);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Shield hit / field object destroyed */
@@ -443,7 +443,7 @@ export class SoundManager {
             g2.connect(this.#ctx.destination);
             osc2.start(t);
             osc2.stop(t + 0.12);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Match end — winner fanfare */
@@ -465,7 +465,7 @@ export class SoundManager {
                 osc.start(t + i * 0.15);
                 osc.stop(t + i * 0.15 + 0.55);
             });
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Match end — loser sound */
@@ -487,7 +487,7 @@ export class SoundManager {
                 osc.start(st);
                 osc.stop(st + 0.35);
             });
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Character selected in character select */
@@ -512,7 +512,7 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t);
             osc.stop(t + 0.2);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Super shot activation — dramatic rising sweep */
@@ -547,7 +547,7 @@ export class SoundManager {
             g2.connect(this.#ctx.destination);
             osc2.start(t);
             osc2.stop(t + 0.55);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 
     /** Super bar fully charged — short chime */
@@ -569,6 +569,6 @@ export class SoundManager {
             g.connect(this.#ctx.destination);
             osc.start(t);
             osc.stop(t + 0.45);
-        } catch (_) {}
+        } catch (e) {console.error('Error' +e);}
     }
 }

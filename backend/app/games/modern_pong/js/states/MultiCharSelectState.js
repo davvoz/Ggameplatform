@@ -75,7 +75,7 @@ export class MultiCharSelectState extends State {
     #ready = false;              // local player locked in
     #opponentReady = false;      // opponent locked in
     #opponentCharId = null;      // opponent's character id (after both ready)
-    #roomData = null;            // { roundsToWin, betAmount, stage, opponentName }
+    #roomData = null;            // data about the multiplayer room, sent from server on enter
 
     enter(data) {
         this.#roomData = data ?? {};
@@ -373,13 +373,13 @@ export class MultiCharSelectState extends State {
     /* ======================= BUTTONS ======================= */
 
     #setupButtons() {
-        const buttons = [];
+        const characterButtons = [];
 
         // Character grid hitboxes
         for (let i = 0; i < CHARACTERS.length; i++) {
             const col = i % COLS;
             const row = Math.floor(i / COLS);
-            buttons.push({
+            characterButtons.push({
                 x: GRID_LEFT + col * (CELL + GAP),
                 y: GRID_TOP + row * (CELL + GAP),
                 w: CELL, h: CELL,
@@ -388,19 +388,21 @@ export class MultiCharSelectState extends State {
             });
         }
 
-        // READY button
-        buttons.push({
-            x: 40, y: READY_Y, w: DESIGN_WIDTH - 80, h: 46,
-            label: 'READY!', action: 'doReady',
-            color: CLR.GREEN, fontSize: 15,
-        });
-
-        // BACK button
-        buttons.push({
-            x: 60, y: BACK_Y, w: DESIGN_WIDTH - 120, h: 36,
-            label: 'BACK', action: 'goBack',
-            color: CLR.TEXT_MID, fontSize: 10,
-        });
+        const buttons = [
+            ...characterButtons,
+            // READY button
+            {
+                x: 40, y: READY_Y, w: DESIGN_WIDTH - 80, h: 46,
+                label: 'READY!', action: 'doReady',
+                color: CLR.GREEN, fontSize: 15,
+            },
+            // BACK button
+            {
+                x: 60, y: BACK_Y, w: DESIGN_WIDTH - 120, h: 36,
+                label: 'BACK', action: 'goBack',
+                color: CLR.TEXT_MID, fontSize: 10,
+            },
+        ];
 
         this._game.ui.setButtons(buttons);
 

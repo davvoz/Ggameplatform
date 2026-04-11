@@ -1,6 +1,6 @@
 import {
     ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM, ARENA_MID_Y,
-    POWERUP_SIZE, COLORS,
+    POWERUP_SIZE
 } from '../config/Constants.js';
 
 /**
@@ -11,14 +11,12 @@ export class PowerUp {
     #x;
     #y;
     #alive = true;
-    #spawnTime = 0;
     #pulsePhase = 0;
 
     constructor(type, x, y) {
         this.#type = type;
         this.#x = x;
         this.#y = y;
-        this.#spawnTime = 0;
     }
 
     get type() { return this.#type; }
@@ -30,7 +28,6 @@ export class PowerUp {
     collect() { this.#alive = false; }
 
     update(dt) {
-        this.#spawnTime += dt;
         this.#pulsePhase += dt / 500;
     }
 
@@ -92,10 +89,10 @@ export class PowerUp {
         const metrics = ctx.measureText(name);
         const tw = metrics.width;
         const padX = 5;
-        const padY = 3;
         const pillW = tw + padX * 2;
         const pillH = 12;
         const r = pillH / 2;
+        
 
         // Pill background
         const px = -pillW / 2;

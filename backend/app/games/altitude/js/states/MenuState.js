@@ -9,7 +9,6 @@ import { PrestigeBadgeRenderer } from '../graphics/PrestigeBadgeRenderer.js';
 
 export class MenuState extends State {
     #buttons = [];
-    #titlePhase = 0;
     #bgStars = [];
     #selectedIndex = 0;
     #inputCooldown = 0;
@@ -35,7 +34,6 @@ export class MenuState extends State {
     }
 
     enter() {
-        this.#titlePhase = 0;
         this.#selectedIndex = 0;
 
         const infiniteUnlocked = this._game.save.infiniteUnlocked;
@@ -74,7 +72,6 @@ export class MenuState extends State {
     }
 
     update(dt) {
-        this.#titlePhase += dt;
         this.#prestigeBadge.update(dt);
 
         // Update stars
@@ -129,9 +126,6 @@ export class MenuState extends State {
         }
     }
 
-    #handleTouch() {
-        // legacy stub — tap handling moved to update()
-    }
 
     draw(ctx) {
         // Background gradient

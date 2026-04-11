@@ -2,7 +2,7 @@
  * Particle system for visual effects — goals, power-ups, celebrations.
  */
 class Particle {
-    constructor(x, y, vx, vy, life, color, size, gravity = 60) {
+    constructor(x, y, { vx, vy, life, color, size, gravity = 60 } = {}) {
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -61,7 +61,7 @@ export class ParticleSystem {
             const life = lifeMin + Math.random() * (lifeMax - lifeMin);
             const color = colors[Math.floor(Math.random() * colors.length)];
             const size = sizeMin + Math.random() * (sizeMax - sizeMin);
-            this.#particles.push(new Particle(x, y, vx, vy, life, color, size, gravity));
+            this.#particles.push(new Particle(x, y, { vx, vy, life, color, size, gravity }));
         }
     }
 
@@ -72,12 +72,14 @@ export class ParticleSystem {
             this.#particles.push(new Particle(
                 x + (Math.random() - 0.5) * 30,
                 y + (Math.random() - 0.5) * 20,
-                Math.cos(angle) * speed,
-                -Math.abs(Math.sin(angle) * speed) - 10,
-                400 + Math.random() * 500,
-                color,
-                2 + Math.random() * 3,
-                0
+                {
+                    vx: Math.cos(angle) * speed,
+                    vy: -Math.abs(Math.sin(angle) * speed) - 10,
+                    life: 400 + Math.random() * 500,
+                    color,
+                    size: 2 + Math.random() * 3,
+                    gravity: 0
+                }
             ));
         }
     }
@@ -86,12 +88,14 @@ export class ParticleSystem {
         this.#particles.push(new Particle(
             x + (Math.random() - 0.5) * 4,
             y + (Math.random() - 0.5) * 4,
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 20,
-            200 + Math.random() * 200,
-            color,
-            2 + Math.random() * 3,
-            0
+            {
+                vx: (Math.random() - 0.5) * 20,
+                vy: (Math.random() - 0.5) * 20,
+                life: 200 + Math.random() * 200,
+                color,
+                size: 2 + Math.random() * 3,
+                gravity: 0
+            }
         ));
     }
 

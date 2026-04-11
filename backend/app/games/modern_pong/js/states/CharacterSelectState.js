@@ -461,62 +461,14 @@ export class CharacterSelectState extends State {
         }
     }
 
-    /** Draw a tiny arena preview for a stage button. */
-    #drawMiniArena(ctx, x, y, w, h, stage) {
-        const theme = stage.theme;
-
-        ctx.save();
-
-        // floor
-        ctx.fillStyle = theme ? theme.floor : '#0d0d22';
-        roundRect(ctx, x, y, w, h, 2);
-        ctx.fill();
-
-        // grid (2 vertical + 1 horizontal)
-        ctx.strokeStyle = theme ? theme.grid : '#1e1e4a';
-        ctx.lineWidth = 0.5;
-        const thirdW = w / 3;
-        for (let i = 1; i < 3; i++) {
-            ctx.beginPath();
-            ctx.moveTo(x + thirdW * i, y);
-            ctx.lineTo(x + thirdW * i, y + h);
-            ctx.stroke();
-        }
-        // center line
-        ctx.strokeStyle = theme ? theme.line : '#1a1a3a';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x, y + h / 2);
-        ctx.lineTo(x + w, y + h / 2);
-        ctx.stroke();
-
-        // border with accent
-        ctx.strokeStyle = theme ? theme.accent : CLR.ACCENT;
-        ctx.globalAlpha = 0.6;
-        ctx.lineWidth = 1;
-        roundRect(ctx, x, y, w, h, 2);
-        ctx.stroke();
-
-        // goal glows (top & bottom tiny bars)
-        const glowColor = theme ? theme.glow : 'rgba(0,240,255,0.3)';
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = glowColor;
-        ctx.fillRect(x, y, w, 2);
-        ctx.fillRect(x, y + h - 2, w, 2);
-
-        ctx.restore();
-    }
-
     /* ==================== BUTTON SETUP ==================== */
 
-    #setupButtons() {
-        const buttons = [];
-
-        // character grid hitboxes
+    #createCharacterButtons() {
+        const characterButtons = [];
         for (let i = 0; i < CHARACTERS.length; i++) {
             const col = i % COLS;
             const row = Math.floor(i / COLS);
-            buttons.push({
+            characterButtons.push({
                 x: GRID_LEFT + col * (CELL + GAP),
                 y: GRID_TOP + row * (CELL + GAP),
                 w: CELL, h: CELL,
@@ -524,86 +476,97 @@ export class CharacterSelectState extends State {
                 color: 'transparent',
             });
         }
+        return characterButtons;
+    }
 
-        // difficulty hitboxes
-        if (this.#mode === 'cpu') {
-            const diffs = ['EASY', 'MEDIUM', 'HARD'];
-            const btnW = 100;
-            const spacing = 10;
-            const totalW = diffs.length * btnW + (diffs.length - 1) * spacing;
-            const startX = (DESIGN_WIDTH - totalW) / 2;
-            const by = DIFF_Y + 18;
-            for (let i = 0; i < diffs.length; i++) {
-                buttons.push({
-                    x: startX + i * (btnW + spacing),
-                    y: by, w: btnW, h: 28,
-                    label: '', action: 'diff_' + diffs[i],
-                    color: 'transparent',
-                });
-            }
+    #createDifficultyButtons() {
+        const buttons = [];
+        if (this.#mode !== 'cpu') return buttons;
+
+        const diffs = ['EASY', 'MEDIUM', 'HARD'];
+        const btnW = 100;
+        const spacing = 10;
+        const totalW = diffs.length * btnW + (diffs.length - 1) * spacing;
+        const startX = (DESIGN_WIDTH - totalW) / 2;
+        const by = DIFF_Y + 18;
+        for (let i = 0; i < diffs.length; i++) {
+            buttons.push({
+                x: startX + i * (btnW + spacing),
+                y: by, w: btnW, h: 28,
+                label: '', action: 'diff_' + diffs[i],
+                color: 'transparent',
+            });
         }
+        return buttons;
+    }
 
-        // rounds preset buttons (hidden in story mode)
-        if (this.#mode !== 'story') {
-            const opts = ROUNDS_TO_WIN_OPTIONS;
-            const btnW = 40;
-            const spacing = 6;
-            const totalW = opts.length * btnW + (opts.length - 1) * spacing;
-            const startX = (DESIGN_WIDTH - totalW) / 2;
-            const ry = (this.#mode === 'cpu' ? ROUNDS_Y : DIFF_Y) + 18;
-            for (let i = 0; i < opts.length; i++) {
-                buttons.push({
-                    x: startX + i * (btnW + spacing),
-                    y: ry, w: btnW, h: 28,
-                    label: '', action: 'rounds_' + opts[i],
-                    color: 'transparent',
-                });
-            }
+    #createRoundsButtons() {
+        const buttons = [];
+        if (this.#mode === 'story') return buttons;
+
+        const opts = ROUNDS_TO_WIN_OPTIONS;
+        const btnW = 40;
+        const spacing = 6;
+        const totalW = opts.length * btnW + (opts.length - 1) * spacing;
+        const startX = (DESIGN_WIDTH - totalW) / 2;
+        const ry = (this.#mode === 'cpu' ? ROUNDS_Y : DIFF_Y) + 18;
+        for (let i = 0; i < opts.length; i++) {
+            buttons.push({
+                x: startX + i * (btnW + spacing),
+                y: ry, w: btnW, h: 28,
+                label: '', action: 'rounds_' + opts[i],
+                color: 'transparent',
+            });
         }
+        return buttons;
+    }
 
-        // stage selector hitboxes (hidden in story mode)
-        if (this.#mode !== 'story') {
-            const stages = VS_STAGES;
-            const cols = 4;
-            const btnW = 88;
-            const btnH = 30;
-            const spacingX = 6;
-            const spacingY = 6;
-            const shift = this.#mode === 'cpu' ? 0 : -(ROUNDS_Y - DIFF_Y);
-            const by = STAGE_Y + shift + 18;
-            for (let idx = 0; idx < stages.length; idx++) {
-                const col = idx % cols;
-                const row = Math.floor(idx / cols);
-                const itemsInRow = Math.min(cols, stages.length - row * cols);
-                const rowW = itemsInRow * btnW + (itemsInRow - 1) * spacingX;
-                const rowStartX = (DESIGN_WIDTH - rowW) / 2;
-                buttons.push({
-                    x: rowStartX + col * (btnW + spacingX),
-                    y: by + row * (btnH + spacingY),
-                    w: btnW, h: btnH,
-                    label: '', action: 'stage_' + idx,
-                    color: 'transparent',
-                });
-            }
+    #createStageButtons() {
+        const buttons = [];
+        if (this.#mode === 'story') return buttons;
+
+        const stages = VS_STAGES;
+        const cols = 4;
+        const btnW = 88;
+        const btnH = 30;
+        const spacingX = 6;
+        const spacingY = 6;
+        const shift = this.#mode === 'cpu' ? 0 : -(ROUNDS_Y - DIFF_Y);
+        const by = STAGE_Y + shift + 18;
+        for (let idx = 0; idx < stages.length; idx++) {
+            const col = idx % cols;
+            const row = Math.floor(idx / cols);
+            const itemsInRow = Math.min(cols, stages.length - row * cols);
+            const rowW = itemsInRow * btnW + (itemsInRow - 1) * spacingX;
+            const rowStartX = (DESIGN_WIDTH - rowW) / 2;
+            buttons.push({
+                x: rowStartX + col * (btnW + spacingX),
+                y: by + row * (btnH + spacingY),
+                w: btnW, h: btnH,
+                label: '', action: 'stage_' + idx,
+                color: 'transparent',
+            });
         }
+        return buttons;
+    }
 
-        // FIGHT / BEGIN STORY
+    #createActionButtons() {
         const fightLabel = this.#mode === 'story' ? 'BEGIN STORY' : 'FIGHT!';
-        buttons.push({
-            x: 40, y: FIGHT_Y, w: DESIGN_WIDTH - 80, h: 46,
-            label: fightLabel, action: 'confirmCharacter',
-            color: CLR.GREEN, fontSize: 15,
-        });
+        return [
+            {
+                x: 40, y: FIGHT_Y, w: DESIGN_WIDTH - 80, h: 46,
+                label: fightLabel, action: 'confirmCharacter',
+                color: CLR.GREEN, fontSize: 15,
+            },
+            {
+                x: 60, y: BACK_Y, w: DESIGN_WIDTH - 120, h: 36,
+                label: 'BACK', action: 'backToMenu',
+                color: CLR.TEXT_MID, fontSize: 10,
+            }
+        ];
+    }
 
-        // BACK
-        buttons.push({
-            x: 60, y: BACK_Y, w: DESIGN_WIDTH - 120, h: 36,
-            label: 'BACK', action: 'backToMenu',
-            color: CLR.TEXT_MID, fontSize: 10,
-        });
-
-        this._game.ui.setButtons(buttons);
-
+    #registerEventHandlers() {
         for (let i = 0; i < CHARACTERS.length; i++) {
             this._game.ui.on('selectChar_' + i, () => {
                 this.#selectedIndex = i;
@@ -627,35 +590,54 @@ export class CharacterSelectState extends State {
             });
         }
 
-        this._game.ui.on('confirmCharacter', () => {
-            this._game.sound.playConfirm();
-
-            if (this.#mode === 'story') {
-                // Story mode — store selected character and go to first level intro
-                this._game.storyPlayerCharId = CHARACTERS[this.#selectedIndex].id;
-                this._game.storyLevel = 1;
-                const firstLevel = getStoryLevel(1);
-                this._game.fsm.transition('storyIntro', { level: firstLevel });
-                return;
-            }
-
-            const transitionData = {
-                mode: this.#mode,
-                playerCharId: CHARACTERS[this.#selectedIndex].id,
-                aiDifficulty: this.#aiDifficulty,
-                roundsToWin: this.#roundsToWin,
-                betAmount: this.#betAmount,
-                theme: VS_STAGES[this.#selectedStage].theme,
-                obstacles: VS_STAGES[this.#selectedStage].obstacles,
-            };
-            if (this.#multiData) {
-                transitionData.opponentCharId = this.#multiData.opponentCharId;
-            }
-            this._game.fsm.transition('countdown', transitionData);
-        });
-
+        this._game.ui.on('confirmCharacter', () => this.#handleConfirmCharacter());
         this._game.ui.on('backToMenu', () => {
             this._game.fsm.transition('menu');
         });
+    }
+
+    #handleConfirmCharacter() {
+        this._game.sound.playConfirm();
+
+        if (this.#mode === 'story') {
+            this._game.storyPlayerCharId = CHARACTERS[this.#selectedIndex].id;
+            this._game.storyLevel = 1;
+            const firstLevel = getStoryLevel(1);
+            this._game.fsm.transition('storyIntro', { level: firstLevel });
+            return;
+        }
+
+        const transitionData = {
+            mode: this.#mode,
+            playerCharId: CHARACTERS[this.#selectedIndex].id,
+            aiDifficulty: this.#aiDifficulty,
+            roundsToWin: this.#roundsToWin,
+            betAmount: this.#betAmount,
+            theme: VS_STAGES[this.#selectedStage].theme,
+            obstacles: VS_STAGES[this.#selectedStage].obstacles,
+        };
+        if (this.#multiData) {
+            transitionData.opponentCharId = this.#multiData.opponentCharId;
+        }
+        this._game.fsm.transition('countdown', transitionData);
+    }
+
+    #setupButtons() {
+        const characterButtons = this.#createCharacterButtons();
+        const difficultyButtons = this.#createDifficultyButtons();
+        const roundsButtons = this.#createRoundsButtons();
+        const stageButtons = this.#createStageButtons();
+        const actionButtons = this.#createActionButtons();
+
+        const buttons = [
+            ...characterButtons,
+            ...difficultyButtons,
+            ...roundsButtons,
+            ...stageButtons,
+            ...actionButtons,
+        ];
+
+        this._game.ui.setButtons(buttons);
+        this.#registerEventHandlers();
     }
 }

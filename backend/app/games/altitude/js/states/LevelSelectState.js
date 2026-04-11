@@ -241,7 +241,7 @@ export class LevelSelectState extends State {
         const ld          = getLevelData(index);
         const levelName   = ld?.name ?? `Level ${index + 1}`;
         const shortName   = `${levelName.slice(0, 12)}`.toUpperCase(); // truncate and uppercase for display;
-        const cardAlpha   = unlocked ? 1.0 : 0.45;
+        const cardAlpha   = unlocked ? 1 : 0.45;
 
         ctx.save();
         ctx.globalAlpha = cardAlpha;

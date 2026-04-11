@@ -31,7 +31,7 @@ export class CameraController {
      * @param {number} designHeight  — viewport height in design pixels
      */
     update(dt, playerY, designHeight) {
-        const target = playerY - designHeight * 0.50;
+        const target = playerY - designHeight * 0.5;
         if (target < this.#targetY) {
             this.#targetY = target;
         }

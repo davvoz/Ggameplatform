@@ -36,7 +36,7 @@ import { StoryCompleteState } from '../states/StoryCompleteState.js';
 import { MultiCharSelectState } from '../states/MultiCharSelectState.js';
 
 /* Story imports */
-import { getStoryLevel, STORY_LEVELS } from '../story/StoryModeConfig.js';
+import { getStoryLevel } from '../story/StoryModeConfig.js';
 import { BackgroundRenderer } from '../rendering/BackgroundRenderer.js';
 import { Obstacle } from '../entities/Obstacle.js';
 
@@ -129,8 +129,8 @@ export class Game {
         const resumeAudio = () => {
             this.sound.resume();
         };
-        window.addEventListener('pointerdown', resumeAudio, { once: true });
-        window.addEventListener('keydown', resumeAudio, { once: true });
+        globalThis.addEventListener('pointerdown', resumeAudio, { once: true });
+        globalThis.addEventListener('keydown', resumeAudio, { once: true });
 
         this.fsm.transition('menu');
         this.loop.start();
@@ -200,9 +200,9 @@ export class Game {
             // On ball-affecting events, immediately snap ball to server state
             // so dead-reckoning continues with correct post-collision velocity.
             if (data.events?.length && s.ball && this.ball) {
-                const BALL_EVENTS = ['paddleHit', 'shieldHit', 'superShot',
-                    'fireballPassThrough', 'obstacleHit', 'wallHit'];
-                if (data.events.some(ev => BALL_EVENTS.includes(ev.t))) {
+                const BALL_EVENTS = new Set(['paddleHit', 'shieldHit', 'superShot',
+                    'fireballPassThrough', 'obstacleHit', 'wallHit']);
+                if (data.events.some(ev => BALL_EVENTS.has(ev.t))) {
                     this.ball.x = s.ball.x;
                     this.ball.y = s.ball.y;
                     this.ball.vx = s.ball.vx;
@@ -570,10 +570,10 @@ export class Game {
 
     startNextRound(lastScorerId, serverRound) {
         // Use server-provided round number if available, otherwise increment
-        if (serverRound !== undefined) {
-            this.currentRound = serverRound;
-        } else {
+        if (serverRound === undefined) {
             this.currentRound++;
+        } else {
+            this.currentRound = serverRound;
         }
         this.powerUps = [];
         this.fieldObjects = [];
@@ -598,7 +598,14 @@ export class Game {
         this.topPlayer.clearEffects();
 
         // Serve toward the player who lost the point
-        const serveDir = lastScorerId === 'bottom' ? -1 : lastScorerId === 'top' ? 1 : undefined;
+        let serveDir;
+        if (lastScorerId === 'bottom') {
+            serveDir = -1;
+        } else if (lastScorerId === 'top') {
+            serveDir = 1;
+        } else {
+            serveDir = undefined;
+        }
         this.#spawnBall(serveDir);
 
         // In multiplayer, keep ball frozen — server snapshots will position it.
@@ -678,7 +685,8 @@ export class Game {
         );
         const isPlayerBottom = this.isVsCPU || this.isHost;
         const bottomLabel = isPlayerBottom ? 'YOU' : (this.bottomPlayer?.data?.name ?? 'P2');
-        const topLabel = this.isVsCPU ? 'CPU' : (isPlayerBottom ? (this.topPlayer?.data?.name ?? 'P2') : 'YOU');
+        const topLabelIfNotCPU = isPlayerBottom ? (this.topPlayer?.data?.name ?? 'P2') : 'YOU';
+        const topLabel = this.isVsCPU ? 'CPU' : topLabelIfNotCPU;
         HUD.drawRoundInfo(ctx, this.currentRound, this.roundsToWin, this.isDeuce, this.advantage, bottomLabel, topLabel);
         HUD.drawScanlines(ctx);
     }
@@ -729,41 +737,53 @@ export class Game {
             const oppPlayer = this.playerIsBottom ? this.topPlayer : this.bottomPlayer;
 
             // 2.  Dead-reckon ball: advance by velocity, bounce off walls.
-            if (this.ball && !this.ball.frozen) {
-                this.ball.x += this.ball.vx * sec;
-                this.ball.y += this.ball.vy * sec;
-                // Simple wall bounce (keeps ball visually correct between snapshots)
-                const r = this.ball.radius;
-                if (this.ball.x - r <= ARENA_LEFT) {
-                    this.ball.x = ARENA_LEFT + r;
-                    this.ball.vx = Math.abs(this.ball.vx);
-                } else if (this.ball.x + r >= ARENA_RIGHT) {
-                    this.ball.x = ARENA_RIGHT - r;
-                    this.ball.vx = -Math.abs(this.ball.vx);
-                }
-            }
+            this.advanceBallPosition(sec);
 
             // 3.  Blend toward server truth (frame-rate independent).
             //     Formula: 1 - (1-base)^(dt*60) keeps convergence rate
             //     consistent regardless of actual frame rate.
-            if (this.#serverBallTarget && this.ball && !this.ball.frozen) {
-                const bc = 1 - Math.pow(0.7, sec * 60);   // ~0.3 @60fps
-                this.ball.x += (this.#serverBallTarget.x - this.ball.x) * bc;
-                this.ball.y += (this.#serverBallTarget.y - this.ball.y) * bc;
-                this.ball.vx += (this.#serverBallTarget.vx - this.ball.vx) * bc;
-                this.ball.vy += (this.#serverBallTarget.vy - this.ball.vy) * bc;
-            }
+            this.blendBallToServerTarget(sec);
 
-            if (this.#serverOppTarget && oppPlayer) {
-                const oc = 1 - Math.pow(0.65, sec * 60);  // ~0.35 @60fps
-                oppPlayer.x += (this.#serverOppTarget.x - oppPlayer.x) * oc;
-                oppPlayer.y += (this.#serverOppTarget.y - oppPlayer.y) * oc;
-            }
+            this.updateOpponentPosition(oppPlayer, sec);
 
             // 4.  Visual updates (trail, effects — no position changes).
             this.ball?.updateVisuals(dt);
             for (const eb of this.extraBalls) {
                 eb.updateVisuals(dt);
+            }
+        }
+    }
+
+    updateOpponentPosition(oppPlayer, sec) {
+        if (this.#serverOppTarget && oppPlayer) {
+            const oc = 1 - Math.pow(0.65, sec * 60); // ~0.35 @60fps
+            oppPlayer.x += (this.#serverOppTarget.x - oppPlayer.x) * oc;
+            oppPlayer.y += (this.#serverOppTarget.y - oppPlayer.y) * oc;
+        }
+    }
+
+    blendBallToServerTarget(sec) {
+        if (this.#serverBallTarget && this.ball && !this.ball.frozen) {
+            const bc = 1 - Math.pow(0.7, sec * 60); // ~0.3 @60fps
+            this.ball.x += (this.#serverBallTarget.x - this.ball.x) * bc;
+            this.ball.y += (this.#serverBallTarget.y - this.ball.y) * bc;
+            this.ball.vx += (this.#serverBallTarget.vx - this.ball.vx) * bc;
+            this.ball.vy += (this.#serverBallTarget.vy - this.ball.vy) * bc;
+        }
+    }
+
+    advanceBallPosition(sec) {
+        if (this.ball && !this.ball.frozen) {
+            this.ball.x += this.ball.vx * sec;
+            this.ball.y += this.ball.vy * sec;
+            // Simple wall bounce (keeps ball visually correct between snapshots)
+            const r = this.ball.radius;
+            if (this.ball.x - r <= ARENA_LEFT) {
+                this.ball.x = ARENA_LEFT + r;
+                this.ball.vx = Math.abs(this.ball.vx);
+            } else if (this.ball.x + r >= ARENA_RIGHT) {
+                this.ball.x = ARENA_RIGHT - r;
+                this.ball.vx = -Math.abs(this.ball.vx);
             }
         }
     }
@@ -785,18 +805,11 @@ export class Game {
         const renderTime = performance.now() - this.#interpDelay;
 
         // Find two snapshots bracketing renderTime
-        let before = null, after = null;
-        for (let i = this.#netBuffer.length - 1; i > 0; i--) {
-            if (this.#netBuffer[i - 1].time <= renderTime) {
-                before = this.#netBuffer[i - 1];
-                after = this.#netBuffer[i];
-                break;
-            }
-        }
+        let { before, after } = this.getNetBufferState(renderTime);
 
         if (!before) {
             // Use latest snapshot directly
-            const s = this.#netBuffer[this.#netBuffer.length - 1].state;
+            const s = this.#netBuffer.at(-1).state;
             this.#applySnapshotTargets(s);
             return;
         }
@@ -812,14 +825,20 @@ export class Game {
         const oppKey = this.playerIsBottom ? 'top' : 'bottom';
         const ownPlayer = this.playerIsBottom ? this.bottomPlayer : this.topPlayer;
 
-        // Ball target (interpolate or extrapolate)
+        this.#updateBallTarget(bs, as_, t, rawT, renderTime, after.time);
+        this.#updateOpponentTarget(bs, as_, oppKey, rawT);
+        this.#updateOwnCharacter(as_, ownKey, ownPlayer);
+        this.#updateExtraBalls(bs, as_, rawT, t);
+    }
+
+    #updateBallTarget(bs, as_, t, rawT, renderTime, afterTime) {
         if (bs.ball && as_.ball) {
             let bx, by;
             if (rawT <= 1) {
                 bx = this.#lerp(bs.ball.x, as_.ball.x, t);
                 by = this.#lerp(bs.ball.y, as_.ball.y, t);
             } else {
-                const overshoot = Math.min((renderTime - after.time) / 1000, 0.05);
+                const overshoot = Math.min((renderTime - afterTime) / 1000, 0.05);
                 bx = as_.ball.x + as_.ball.vx * overshoot;
                 by = as_.ball.y + as_.ball.vy * overshoot;
             }
@@ -828,36 +847,34 @@ export class Game {
                 vx: as_.ball.vx, vy: as_.ball.vy,
             };
         }
+    }
 
-        // Opponent target
+    #updateOpponentTarget(bs, as_, oppKey, rawT) {
         if (bs[oppKey] && as_[oppKey]) {
-            const ot = Math.min(rawT, 2);   // extrapolate linearly for opponent
+            const ot = Math.min(rawT, 2);
             this.#serverOppTarget = {
                 x: this.#lerp(bs[oppKey].x, as_[oppKey].x, ot),
                 y: this.#lerp(bs[oppKey].y, as_[oppKey].y, ot),
             };
         }
+    }
 
-        // Own character — trust client prediction fully.
-        // Only correct on large discrepancy (stun, teleport, power-up push).
-        // Uses LATEST snapshot (not interpolated) to avoid correcting toward stale data.
+    #updateOwnCharacter(as_, ownKey, ownPlayer) {
         if (as_[ownKey] && ownPlayer) {
             const dx = as_[ownKey].x - ownPlayer.x;
             const dy = as_[ownKey].y - ownPlayer.y;
             const dist = Math.hypot(dx, dy);
             if (dist > 40) {
-                // Teleport-level — hard snap
                 ownPlayer.x = as_[ownKey].x;
                 ownPlayer.y = as_[ownKey].y;
             } else if (dist > 15) {
-                // Moderate mismatch — gentle nudge
                 ownPlayer.x += dx * 0.1;
                 ownPlayer.y += dy * 0.1;
             }
-            // Below 15px: trust client prediction entirely
         }
+    }
 
-        // Extra balls — sync count and set positions
+    #updateExtraBalls(bs, as_, rawT, t) {
         const snapExtra = as_.extraBalls ?? [];
         while (this.extraBalls.length > snapExtra.length) this.extraBalls.pop();
         while (this.extraBalls.length < snapExtra.length) this.extraBalls.push(new Ball());
@@ -874,6 +891,18 @@ export class Game {
             this.extraBalls[i].vx = seb.vx;
             this.extraBalls[i].vy = seb.vy;
         }
+    }
+
+    getNetBufferState(renderTime) {
+        let before = null, after = null;
+        for (let i = this.#netBuffer.length - 1; i > 0; i--) {
+            if (this.#netBuffer[i - 1].time <= renderTime) {
+                before = this.#netBuffer[i - 1];
+                after = this.#netBuffer[i];
+                break;
+            }
+        }
+        return { before, after };
     }
 
     /**

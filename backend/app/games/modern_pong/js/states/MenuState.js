@@ -171,13 +171,22 @@ export class MenuState extends State {
 
     #generateStars() {
         for (let i = 0; i < 80; i++) {
+            const rand = Math.random();
+            let color;
+            if (rand > 0.7) {
+                color = '#bf5af2';
+            } else if (rand > 0.5) {
+                color = '#00e5ff';
+            } else {
+                color = '#ffffff';
+            }
             this.#bgStars.push({
                 x: Math.random() * DESIGN_WIDTH,
                 y: Math.random() * DESIGN_HEIGHT,
                 size: 0.5 + Math.random() * 2,
                 speed: 0.2 + Math.random() * 0.5,
                 phase: Math.random() * Math.PI * 2,
-                color: Math.random() > 0.7 ? '#bf5af2' : (Math.random() > 0.5 ? '#00e5ff' : '#ffffff'),
+                color: color,
             });
         }
     }

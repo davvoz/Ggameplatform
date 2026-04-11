@@ -12,7 +12,7 @@ export class ScreenShake {
     get offsetY() { return this.#offsetY; }
     get isActive() { return this.#elapsed < this.#duration; }
 
-    trigger(intensity = 5, duration = 200) {
+    trigger(intensity = 2, duration = 200) {
         this.#intensity = intensity;
         this.#duration = duration;
         this.#elapsed = 0;

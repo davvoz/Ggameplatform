@@ -5,10 +5,10 @@
  * - Uses ArrayUtils for zero-allocation update loop
  */
 
-import { Easing, TweenManager as BaseTweenManager } from '../../../shared/Tween.js';
+import { TweenManager as BaseTweenManager } from '../../../shared/Tween.js';
 import { updateAndCompact, compactInPlace } from '../core/ArrayUtils.js';
 
-export { Easing };
+export { Easing } from '../../../shared/Tween.js';
 
 class LazyTween {
     constructor(target, properties, duration, easing, onComplete, delay) {

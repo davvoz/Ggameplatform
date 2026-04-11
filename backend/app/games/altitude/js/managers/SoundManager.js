@@ -15,7 +15,7 @@ export class SoundManager {
         if (this.#initialized) return;
 
         try {
-            this.#ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.#ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
             this.#masterGain = this.#ctx.createGain();
             this.#sfxGain = this.#ctx.createGain();
             this.#musicGain = this.#ctx.createGain();

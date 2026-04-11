@@ -18,21 +18,18 @@ import { PlatformBridge } from './platform/PlatformBridge.js';
 import { SoundManager } from './audio/SoundManager.js';
 
 class BriscolaApp {
-    constructor() {
-        this.spriteSheet = null;
-        this.uiManager = null;
-        this.gameEngine = null;
-        this.menuController = null;
-        this.gameController = null;
-        this.multiplayerController = null;
-        this.platformBridge = null;
-        this.soundManager = null;
-        
-        this.currentMode = null; // 'ai', 'local', 'online'
-        this.difficulty = 'medium';
-        this.selectedDeck = ''; // '' = piacentino, 'br' = bresciano, 'bo' = bolognese
-    }
-    
+    spriteSheet = null;
+    uiManager = null;
+    gameEngine = null;
+    menuController = null;
+    gameController = null;
+    multiplayerController = null;
+    platformBridge = null;
+    soundManager = null;
+    currentMode = null; // 'ai', 'local', 'online'
+    difficulty = 'medium';
+    selectedDeck = ''; // '' = piacentino, 'br' = bresciano, 'bo' = bolognese
+
     async init() {
 
         
@@ -257,9 +254,10 @@ class BriscolaApp {
     
     getOpponentName() {
         switch (this.currentMode) {
-            case 'ai':
+            case 'ai': {
                 const names = ['CPU Easy', 'CPU Medium', 'CPU Hard'];
                 return names[['easy', 'medium', 'hard'].indexOf(this.difficulty)];
+            }
             case 'local':
                 return 'Player 2';
             case 'online':
@@ -348,12 +346,20 @@ class BriscolaApp {
         const opponentScore = state.player2Score;
         
         // Report to platform with extra data for quest tracking
+        let result;
+        if (isWin) {
+            result = 'win';
+        } else if (isDraw) {
+            result = 'draw';
+        } else {
+            result = 'loss';
+        }
         this.platformBridge.reportGameOver(playerScore, {
             opponent_score: opponentScore,
             player_score: playerScore,
             mode: this.currentMode,
             difficulty: this.difficulty,
-            result: isWin ? 'win' : (isDraw ? 'draw' : 'loss'),
+            result: result,
             hands_won: state.player1HandsWon,
             total_hands: state.totalHands,
             // Quest-specific data
@@ -474,10 +480,10 @@ class BriscolaApp {
 }
 
 // Initialize on load
-window.addEventListener('DOMContentLoaded', () => {
+globalThis.addEventListener('DOMContentLoaded', () => {
     const app = new BriscolaApp();
     app.init();
     
     // Expose for debugging
-    window.briscolaApp = app;
+    globalThis.briscolaApp = app;
 });

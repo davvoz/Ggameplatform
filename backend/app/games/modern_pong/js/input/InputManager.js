@@ -90,10 +90,10 @@ export class InputManager {
     }
 
     #setupKeyboard() {
-        window.addEventListener('keydown', (e) => {
+        globalThis.addEventListener('keydown', (e) => {
             this.#keys.add(e.code);
         });
-        window.addEventListener('keyup', (e) => {
+        globalThis.addEventListener('keyup', (e) => {
             this.#keys.delete(e.code);
         });
     }

@@ -18,13 +18,13 @@ export class PlatformBridge {
 
     /**
      * Initialize the platform bridge
+     * @param {Object} [callbacks] - Lifecycle callbacks
+     * @param {Function} [callbacks.onStart] - Called when SDK signals start
+     * @param {Function} [callbacks.onPause] - Called when SDK signals pause
+     * @param {Function} [callbacks.onResume] - Called when SDK signals resume
      * @returns {Promise<boolean>}
      */
-    async initialize() {
-        return this.init();
-    }
-
-    async init() {
+    async initialize(callbacks = {}) {
         if (this.#initialized) return true;
 
         if (!this.#sdk) {
@@ -34,11 +34,16 @@ export class PlatformBridge {
         }
 
         try {
-            // Wait for SDK ready
-            if (typeof this.#sdk.waitForReady === 'function') {
+            if (typeof this.#sdk.init === 'function') {
+                await this.#sdk.init({
+                    onStart:  callbacks.onStart  || (() => {}),
+                    onPause:  callbacks.onPause  || (() => {}),
+                    onResume: callbacks.onResume || (() => {}),
+                });
+            } else if (typeof this.#sdk.waitForReady === 'function') {
                 await this.#sdk.waitForReady();
             }
-            
+
             this.#initialized = true;
             console.log('[PlatformBridge] SDK initialized');
             return true;

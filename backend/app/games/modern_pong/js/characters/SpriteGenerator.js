@@ -78,6 +78,258 @@ export class SpriteGenerator {
         let legPhase = 0, armMode = 0; // 0=idle, 1=punch, 2=up
         const moving = anim.startsWith('move');
 
+        ({ offY, rotation, squash, stretch, legPhase, offX, armMode } = SpriteGenerator.calculateAnimationTransform({ anim, offY, t, sc, rotation, squash, stretch, legPhase, offX, frame, armMode }));
+
+        ctx.translate(half + offX, s * SpriteGenerator.ART_CENTER_Y + offY);
+        if (rotation !== 0) ctx.rotate(rotation);
+        ctx.scale(squash, stretch);
+
+        const wide = id === 'tank';
+        const bw = wide ? 7 : 5; // body half-width in sc
+        const PR = SpriteGenerator.#pixelRect;
+        const RR = SpriteGenerator.#roundedRect;
+
+        /* ==== 1. SHADOW ==== */
+        SpriteGenerator.drawCharacterShadow(ctx, sc, bw, legPhase, p, PR, RR);
+
+        /* ==== 3. BODY ==== */
+        // Outline
+        SpriteGenerator.drawBodyOutline(ctx, p, RR, bw, sc, PR);
+        // Belt / sash
+        ctx.fillStyle = p.secondary;
+        PR(ctx, -(bw - 1) * sc, 2 * sc, (bw - 1) * 2 * sc, 2 * sc);
+        // Belt buckle
+        ctx.fillStyle = p.accent;
+        PR(ctx, -sc, 2 * sc, 2 * sc, 2 * sc);
+
+        // Per-character body detail
+        SpriteGenerator.#drawBodyDetail(ctx, sc, p, id, bw);
+        // Body contour (pencil)
+        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.8 * sc;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        SpriteGenerator.#strokeRoundedRect(ctx, -(bw + 1) * sc, -2 * sc, (bw + 1) * 2 * sc, 8 * sc, 2 * sc);
+
+        /* ==== 4. ARMS + HANDS ==== */
+        SpriteGenerator.renderCharacterArms({ bw, ctx, p, sc, armMode, PR, frame, RR, moving, legPhase, t });
+
+        /* ==== 5. HEAD (big chibi) ==== */
+        // Head outline
+        SpriteGenerator.drawCharacterHead(ctx, p, RR, sc);
+        // Head contour (pencil)
+        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.8 * sc;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        SpriteGenerator.#strokeRoundedRect(ctx, -8 * sc, -14 * sc, 16 * sc, 13 * sc, 5 * sc);
+
+        /* ==== 6. HEADGEAR (per character) ==== */
+        SpriteGenerator.#drawHeadgear(ctx, sc, p, id, anim, frame);
+
+        /* ==== 7. EYES (per character) ==== */
+        SpriteGenerator.#drawEyes(ctx, sc, p, id, anim, frame);
+
+        /* ==== 8. MOUTH ==== */
+        SpriteGenerator.#drawMouth(ctx, sc, p, id, anim, frame);
+
+        /* ==== Stun sparkles ==== */
+        SpriteGenerator.renderStunEffects(anim, frame, sc, ctx, p, PR);
+
+        /* ==== Aura glow ==== */
+        SpriteGenerator.applyAuraEffect(anim, frame, ctx, sc, p);
+
+        /* ==== Per-character ambient particles ==== */
+        SpriteGenerator.#drawCharacterParticles(ctx, sc, p, id, anim, frame, totalFrames);
+
+        ctx.restore();
+    }
+
+    static applyAuraEffect(anim, frame, ctx, sc, p) {
+        if (anim === 'hit' || anim === 'celebrate') {
+            const glowIntensity = 0.15 + Math.sin(frame * Math.PI / 2) * 0.1;
+            ctx.globalAlpha = glowIntensity;
+            const grad = ctx.createRadialGradient(0, -2 * sc, 2 * sc, 0, -2 * sc, 15 * sc);
+            grad.addColorStop(0, p.accent);
+            grad.addColorStop(0.6, p.secondary);
+            grad.addColorStop(1, 'transparent');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.ellipse(0, -2 * sc, 15 * sc, 15 * sc, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    static renderStunEffects(anim, frame, sc, ctx, p, PR) {
+        if (anim === 'stun') {
+            const sOff = frame * 1.5;
+            // Orbiting stars
+            for (let i = 0; i < 4; i++) {
+                const a = sOff + i * Math.PI / 2;
+                const orbitR = (8 + Math.sin(frame * 0.8 + i) * 2) * sc;
+                const sx = Math.cos(a) * orbitR;
+                const sy = -15 * sc + Math.sin(a) * 3 * sc;
+                ctx.save();
+                ctx.translate(sx, sy);
+                ctx.rotate(a);
+                ctx.fillStyle = i % 2 === 0 ? p.accent : '#ffffff';
+                PR(ctx, -sc * 0.5, -sc * 0.3, sc, sc * 0.6);
+                PR(ctx, -sc * 0.3, -sc * 0.5, sc * 0.6, sc);
+                ctx.restore();
+            }
+            // Dizzy swirl
+            ctx.strokeStyle = p.accent;
+            ctx.lineWidth = 0.5 * sc;
+            ctx.globalAlpha = 0.45;
+            ctx.beginPath();
+            for (let a = 0; a < Math.PI * 3; a += 0.3) {
+                const sr = (2 + a * 1.2) * sc;
+                const sx = Math.cos(a + sOff) * sr;
+                const sy = -15 * sc + Math.sin(a + sOff) * sr * 0.3;
+                a === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    static drawCharacterHead(ctx, p, RR, sc) {
+        ctx.fillStyle = p.outline;
+        RR(ctx, -8 * sc, -14 * sc, 16 * sc, 13 * sc, 5 * sc);
+        // Skin fill
+        ctx.fillStyle = p.skin;
+        RR(ctx, -7 * sc, -13 * sc, 14 * sc, 11 * sc, 4 * sc);
+        // Forehead highlight
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.1;
+        RR(ctx, -5 * sc, -12 * sc, 10 * sc, 3 * sc, 2 * sc);
+        ctx.globalAlpha = 1;
+        // Cheek blush
+        ctx.globalAlpha = 0.12;
+        ctx.fillStyle = p.accent;
+        SpriteGenerator.#pixelEllipse(ctx, -5 * sc, -5 * sc, 2 * sc, 1.5 * sc);
+        SpriteGenerator.#pixelEllipse(ctx, 5 * sc, -5 * sc, 2 * sc, 1.5 * sc);
+        ctx.globalAlpha = 1;
+        // Head side hatching (pencil sketch)
+        ctx.save();
+        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.3 * sc;
+        ctx.globalAlpha = 0.14;
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+            const hy = (-8 + i * 2) * sc;
+            ctx.moveTo(5 * sc, hy);
+            ctx.lineTo(6.5 * sc, hy + 1.5 * sc);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    static renderCharacterArms(config) {
+        const { bw, ctx, p, sc, armMode, PR, frame, RR, moving, legPhase, t } = config;
+        const armX = bw + 1;
+        ctx.fillStyle = p.secondary;
+        const armStroke = () => {
+            ctx.strokeStyle = p.outline; ctx.lineWidth = 0.6 * sc;
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        };
+        if (armMode === 2) {
+            // Celebrate — arms raised
+            PR(ctx, -(armX + 2) * sc, (-9 - frame) * sc, 3 * sc, 7 * sc);
+            PR(ctx, (armX - 1) * sc, (-9 - frame) * sc, 3 * sc, 7 * sc);
+            // Gloves / hands
+            ctx.fillStyle = p.skin;
+            RR(ctx, -(armX + 2) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
+            RR(ctx, (armX - 1) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
+            // Arm + hand contours (pencil)
+            armStroke();
+            ctx.strokeRect(Math.round(-(armX + 2) * sc), Math.round((-9 - frame) * sc), Math.round(3 * sc), Math.round(7 * sc));
+            ctx.strokeRect(Math.round((armX - 1) * sc), Math.round((-9 - frame) * sc), Math.round(3 * sc), Math.round(7 * sc));
+            SpriteGenerator.#strokeRoundedRect(ctx, -(armX + 2) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
+            SpriteGenerator.#strokeRoundedRect(ctx, (armX - 1) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
+        } else if (armMode === 1) {
+            // Hit — arms forward
+            PR(ctx, -(armX + 3) * sc, -2 * sc, 4 * sc, 4 * sc);
+            PR(ctx, (armX - 1) * sc, -2 * sc, 4 * sc, 4 * sc);
+            ctx.fillStyle = p.skin;
+            RR(ctx, -(armX + 4) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
+            RR(ctx, (armX + 2) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
+            // Arm + hand contours (pencil)
+            armStroke();
+            ctx.strokeRect(Math.round(-(armX + 3) * sc), Math.round(-2 * sc), Math.round(4 * sc), Math.round(4 * sc));
+            ctx.strokeRect(Math.round((armX - 1) * sc), Math.round(-2 * sc), Math.round(4 * sc), Math.round(4 * sc));
+            SpriteGenerator.#strokeRoundedRect(ctx, -(armX + 4) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
+            SpriteGenerator.#strokeRoundedRect(ctx, (armX + 2) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
+        } else {
+            // Normal with swing
+            const aSwing = moving ? Math.sin(legPhase) * 2 * sc : Math.sin(t) * 0.5 * sc;
+            PR(ctx, -(armX + 2) * sc, -1 * sc + aSwing, 3 * sc, 6 * sc);
+            PR(ctx, (armX - 1) * sc, -1 * sc - aSwing, 3 * sc, 6 * sc);
+            // Hands
+            ctx.fillStyle = p.skin;
+            RR(ctx, -(armX + 2) * sc, 4 * sc + aSwing, 3 * sc, 2 * sc, sc);
+            RR(ctx, (armX - 1) * sc, 4 * sc - aSwing, 3 * sc, 2 * sc, sc);
+            // Arm + hand contours (pencil)
+            armStroke();
+            ctx.strokeRect(Math.round(-(armX + 2) * sc), Math.round(-1 * sc + aSwing), Math.round(3 * sc), Math.round(6 * sc));
+            ctx.strokeRect(Math.round((armX - 1) * sc), Math.round(-1 * sc - aSwing), Math.round(3 * sc), Math.round(6 * sc));
+            SpriteGenerator.#strokeRoundedRect(ctx, -(armX + 2) * sc, 4 * sc + aSwing, 3 * sc, 2 * sc, sc);
+            SpriteGenerator.#strokeRoundedRect(ctx, (armX - 1) * sc, 4 * sc - aSwing, 3 * sc, 2 * sc, sc);
+        }
+    }
+
+    static drawBodyOutline(ctx, p, RR, bw, sc, PR) {
+        ctx.fillStyle = p.outline;
+        RR(ctx, -(bw + 1) * sc, -2 * sc, (bw + 1) * 2 * sc, 8 * sc, 2 * sc);
+        // Fill
+        ctx.fillStyle = p.primary;
+        RR(ctx, -bw * sc, -1 * sc, bw * 2 * sc, 7 * sc, 2 * sc);
+        // Highlight strip (top)
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.15;
+        RR(ctx, -(bw - 1) * sc, -1 * sc, (bw - 1) * 2 * sc, 2 * sc, sc);
+        ctx.globalAlpha = 1;
+        // Shadow strip (bottom)
+        ctx.fillStyle = '#000000'; ctx.globalAlpha = 0.12;
+        PR(ctx, -(bw - 1) * sc, 4 * sc, (bw - 1) * 2 * sc, 2 * sc);
+        ctx.globalAlpha = 1;
+        // Cross-hatch shading (pencil sketch)
+        ctx.save();
+        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.35 * sc;
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const hx = (-(bw - 2) + i * (bw - 1) * 0.5) * sc;
+            ctx.moveTo(hx, 3 * sc);
+            ctx.lineTo(hx + 1.5 * sc, 6 * sc);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    static drawCharacterShadow(ctx, sc, bw, legPhase, p, PR, RR) {
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.beginPath();
+        ctx.ellipse(0, 12 * sc, (bw + 4) * sc, 2.5 * sc, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* ==== 2. LEGS ==== */
+        const lk = Math.sin(legPhase) * 2 * sc;
+        // Leg columns
+        ctx.fillStyle = p.outline;
+        PR(ctx, -3 * sc, 5 * sc - lk, 3 * sc, 6 * sc);
+        PR(ctx, 0 * sc, 5 * sc + lk, 3 * sc, 6 * sc);
+        // Shoes (rounded-ish)
+        ctx.fillStyle = p.secondary;
+        RR(ctx, -4 * sc, 10 * sc - lk, 5 * sc, 3 * sc, sc);
+        RR(ctx, -1 * sc, 10 * sc + lk, 5 * sc, 3 * sc, sc);
+        // Shoe highlight
+        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.2;
+        PR(ctx, -3 * sc, 10 * sc - lk, 3 * sc, sc);
+        PR(ctx, 0 * sc, 10 * sc + lk, 3 * sc, sc);
+        ctx.globalAlpha = 1;
+        // Shoe contours (pencil)
+        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.7 * sc;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        SpriteGenerator.#strokeRoundedRect(ctx, -4 * sc, 10 * sc - lk, 5 * sc, 3 * sc, sc);
+        SpriteGenerator.#strokeRoundedRect(ctx, -1 * sc, 10 * sc + lk, 5 * sc, 3 * sc, sc);
+    }
+
+    static calculateAnimationTransform({ anim, offY, t, sc, rotation, squash, stretch, legPhase, offX, frame, armMode }) {
         switch (anim) {
             case 'idle':
                 offY = Math.sin(t) * 2 * sc;
@@ -146,229 +398,7 @@ export class SpriteGenerator {
                 break;
             }
         }
-
-        ctx.translate(half + offX, s * SpriteGenerator.ART_CENTER_Y + offY);
-        if (rotation !== 0) ctx.rotate(rotation);
-        ctx.scale(squash, stretch);
-
-        const wide = id === 'tank';
-        const bw = wide ? 7 : 5; // body half-width in sc
-        const PR = SpriteGenerator.#pixelRect;
-        const RR = SpriteGenerator.#roundedRect;
-
-        /* ==== 1. SHADOW ==== */
-        ctx.fillStyle = 'rgba(0,0,0,0.22)';
-        ctx.beginPath();
-        ctx.ellipse(0, 12 * sc, (bw + 4) * sc, 2.5 * sc, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        /* ==== 2. LEGS ==== */
-        const lk = Math.sin(legPhase) * 2 * sc;
-        // Leg columns
-        ctx.fillStyle = p.outline;
-        PR(ctx, -3 * sc, 5 * sc - lk, 3 * sc, 6 * sc);
-        PR(ctx, 0 * sc, 5 * sc + lk, 3 * sc, 6 * sc);
-        // Shoes (rounded-ish)
-        ctx.fillStyle = p.secondary;
-        RR(ctx, -4 * sc, 10 * sc - lk, 5 * sc, 3 * sc, sc);
-        RR(ctx, -1 * sc, 10 * sc + lk, 5 * sc, 3 * sc, sc);
-        // Shoe highlight
-        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.2;
-        PR(ctx, -3 * sc, 10 * sc - lk, 3 * sc, sc);
-        PR(ctx, 0 * sc, 10 * sc + lk, 3 * sc, sc);
-        ctx.globalAlpha = 1;
-        // Shoe contours (pencil)
-        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.7 * sc;
-        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        SpriteGenerator.#strokeRoundedRect(ctx, -4 * sc, 10 * sc - lk, 5 * sc, 3 * sc, sc);
-        SpriteGenerator.#strokeRoundedRect(ctx, -1 * sc, 10 * sc + lk, 5 * sc, 3 * sc, sc);
-
-        /* ==== 3. BODY ==== */
-        // Outline
-        ctx.fillStyle = p.outline;
-        RR(ctx, -(bw + 1) * sc, -2 * sc, (bw + 1) * 2 * sc, 8 * sc, 2 * sc);
-        // Fill
-        ctx.fillStyle = p.primary;
-        RR(ctx, -bw * sc, -1 * sc, bw * 2 * sc, 7 * sc, 2 * sc);
-        // Highlight strip (top)
-        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.15;
-        RR(ctx, -(bw - 1) * sc, -1 * sc, (bw - 1) * 2 * sc, 2 * sc, sc);
-        ctx.globalAlpha = 1;
-        // Shadow strip (bottom)
-        ctx.fillStyle = '#000000'; ctx.globalAlpha = 0.12;
-        PR(ctx, -(bw - 1) * sc, 4 * sc, (bw - 1) * 2 * sc, 2 * sc);
-        ctx.globalAlpha = 1;
-        // Cross-hatch shading (pencil sketch)
-        ctx.save();
-        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.35 * sc;
-        ctx.globalAlpha = 0.18;
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            const hx = (-(bw - 2) + i * (bw - 1) * 0.5) * sc;
-            ctx.moveTo(hx, 3 * sc);
-            ctx.lineTo(hx + 1.5 * sc, 6 * sc);
-        }
-        ctx.stroke();
-        ctx.restore();
-        // Belt / sash
-        ctx.fillStyle = p.secondary;
-        PR(ctx, -(bw - 1) * sc, 2 * sc, (bw - 1) * 2 * sc, 2 * sc);
-        // Belt buckle
-        ctx.fillStyle = p.accent;
-        PR(ctx, -sc, 2 * sc, 2 * sc, 2 * sc);
-
-        // Per-character body detail
-        SpriteGenerator.#drawBodyDetail(ctx, sc, p, id, bw);
-        // Body contour (pencil)
-        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.8 * sc;
-        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        SpriteGenerator.#strokeRoundedRect(ctx, -(bw + 1) * sc, -2 * sc, (bw + 1) * 2 * sc, 8 * sc, 2 * sc);
-
-        /* ==== 4. ARMS + HANDS ==== */
-        const armX = bw + 1;
-        ctx.fillStyle = p.secondary;
-        const armStroke = () => {
-            ctx.strokeStyle = p.outline; ctx.lineWidth = 0.6 * sc;
-            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        };
-        if (armMode === 2) {
-            // Celebrate — arms raised
-            PR(ctx, -(armX + 2) * sc, (-9 - frame) * sc, 3 * sc, 7 * sc);
-            PR(ctx, (armX - 1) * sc, (-9 - frame) * sc, 3 * sc, 7 * sc);
-            // Gloves / hands
-            ctx.fillStyle = p.skin;
-            RR(ctx, -(armX + 2) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
-            RR(ctx, (armX - 1) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
-            // Arm + hand contours (pencil)
-            armStroke();
-            ctx.strokeRect(Math.round(-(armX + 2) * sc), Math.round((-9 - frame) * sc), Math.round(3 * sc), Math.round(7 * sc));
-            ctx.strokeRect(Math.round((armX - 1) * sc), Math.round((-9 - frame) * sc), Math.round(3 * sc), Math.round(7 * sc));
-            SpriteGenerator.#strokeRoundedRect(ctx, -(armX + 2) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
-            SpriteGenerator.#strokeRoundedRect(ctx, (armX - 1) * sc, (-10 - frame) * sc, 3 * sc, 2 * sc, sc);
-        } else if (armMode === 1) {
-            // Hit — arms forward
-            PR(ctx, -(armX + 3) * sc, -2 * sc, 4 * sc, 4 * sc);
-            PR(ctx, (armX - 1) * sc, -2 * sc, 4 * sc, 4 * sc);
-            ctx.fillStyle = p.skin;
-            RR(ctx, -(armX + 4) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
-            RR(ctx, (armX + 2) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
-            // Arm + hand contours (pencil)
-            armStroke();
-            ctx.strokeRect(Math.round(-(armX + 3) * sc), Math.round(-2 * sc), Math.round(4 * sc), Math.round(4 * sc));
-            ctx.strokeRect(Math.round((armX - 1) * sc), Math.round(-2 * sc), Math.round(4 * sc), Math.round(4 * sc));
-            SpriteGenerator.#strokeRoundedRect(ctx, -(armX + 4) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
-            SpriteGenerator.#strokeRoundedRect(ctx, (armX + 2) * sc, -1 * sc, 2 * sc, 2 * sc, sc);
-        } else {
-            // Normal with swing
-            const aSwing = moving ? Math.sin(legPhase) * 2 * sc : Math.sin(t) * 0.5 * sc;
-            PR(ctx, -(armX + 2) * sc, -1 * sc + aSwing, 3 * sc, 6 * sc);
-            PR(ctx, (armX - 1) * sc, -1 * sc - aSwing, 3 * sc, 6 * sc);
-            // Hands
-            ctx.fillStyle = p.skin;
-            RR(ctx, -(armX + 2) * sc, 4 * sc + aSwing, 3 * sc, 2 * sc, sc);
-            RR(ctx, (armX - 1) * sc, 4 * sc - aSwing, 3 * sc, 2 * sc, sc);
-            // Arm + hand contours (pencil)
-            armStroke();
-            ctx.strokeRect(Math.round(-(armX + 2) * sc), Math.round(-1 * sc + aSwing), Math.round(3 * sc), Math.round(6 * sc));
-            ctx.strokeRect(Math.round((armX - 1) * sc), Math.round(-1 * sc - aSwing), Math.round(3 * sc), Math.round(6 * sc));
-            SpriteGenerator.#strokeRoundedRect(ctx, -(armX + 2) * sc, 4 * sc + aSwing, 3 * sc, 2 * sc, sc);
-            SpriteGenerator.#strokeRoundedRect(ctx, (armX - 1) * sc, 4 * sc - aSwing, 3 * sc, 2 * sc, sc);
-        }
-
-        /* ==== 5. HEAD (big chibi) ==== */
-        // Head outline
-        ctx.fillStyle = p.outline;
-        RR(ctx, -8 * sc, -14 * sc, 16 * sc, 13 * sc, 5 * sc);
-        // Skin fill
-        ctx.fillStyle = p.skin;
-        RR(ctx, -7 * sc, -13 * sc, 14 * sc, 11 * sc, 4 * sc);
-        // Forehead highlight
-        ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.10;
-        RR(ctx, -5 * sc, -12 * sc, 10 * sc, 3 * sc, 2 * sc);
-        ctx.globalAlpha = 1;
-        // Cheek blush
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = p.accent;
-        SpriteGenerator.#pixelEllipse(ctx, -5 * sc, -5 * sc, 2 * sc, 1.5 * sc);
-        SpriteGenerator.#pixelEllipse(ctx, 5 * sc, -5 * sc, 2 * sc, 1.5 * sc);
-        ctx.globalAlpha = 1;
-        // Head side hatching (pencil sketch)
-        ctx.save();
-        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.3 * sc;
-        ctx.globalAlpha = 0.14;
-        ctx.beginPath();
-        for (let i = 0; i < 3; i++) {
-            const hy = (-8 + i * 2) * sc;
-            ctx.moveTo(5 * sc, hy);
-            ctx.lineTo(6.5 * sc, hy + 1.5 * sc);
-        }
-        ctx.stroke();
-        ctx.restore();
-        // Head contour (pencil)
-        ctx.strokeStyle = p.outline; ctx.lineWidth = 0.8 * sc;
-        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-        SpriteGenerator.#strokeRoundedRect(ctx, -8 * sc, -14 * sc, 16 * sc, 13 * sc, 5 * sc);
-
-        /* ==== 6. HEADGEAR (per character) ==== */
-        SpriteGenerator.#drawHeadgear(ctx, sc, p, id, anim, frame);
-
-        /* ==== 7. EYES (per character) ==== */
-        SpriteGenerator.#drawEyes(ctx, sc, p, id, anim, frame);
-
-        /* ==== 8. MOUTH ==== */
-        SpriteGenerator.#drawMouth(ctx, sc, p, id, anim, frame);
-
-        /* ==== Stun sparkles ==== */
-        if (anim === 'stun') {
-            const sOff = frame * 1.5;
-            // Orbiting stars
-            for (let i = 0; i < 4; i++) {
-                const a = sOff + i * Math.PI / 2;
-                const orbitR = (8 + Math.sin(frame * 0.8 + i) * 2) * sc;
-                const sx = Math.cos(a) * orbitR;
-                const sy = -15 * sc + Math.sin(a) * 3 * sc;
-                ctx.save();
-                ctx.translate(sx, sy);
-                ctx.rotate(a);
-                ctx.fillStyle = i % 2 === 0 ? p.accent : '#ffffff';
-                PR(ctx, -sc * 0.5, -sc * 0.3, sc, sc * 0.6);
-                PR(ctx, -sc * 0.3, -sc * 0.5, sc * 0.6, sc);
-                ctx.restore();
-            }
-            // Dizzy swirl
-            ctx.strokeStyle = p.accent;
-            ctx.lineWidth = 0.5 * sc;
-            ctx.globalAlpha = 0.45;
-            ctx.beginPath();
-            for (let a = 0; a < Math.PI * 3; a += 0.3) {
-                const sr = (2 + a * 1.2) * sc;
-                const sx = Math.cos(a + sOff) * sr;
-                const sy = -15 * sc + Math.sin(a + sOff) * sr * 0.3;
-                a === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
-            }
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-        }
-
-        /* ==== Aura glow ==== */
-        if (anim === 'hit' || anim === 'celebrate') {
-            const glowIntensity = 0.15 + Math.sin(frame * Math.PI / 2) * 0.1;
-            ctx.globalAlpha = glowIntensity;
-            const grad = ctx.createRadialGradient(0, -2 * sc, 2 * sc, 0, -2 * sc, 15 * sc);
-            grad.addColorStop(0, p.accent);
-            grad.addColorStop(0.6, p.secondary);
-            grad.addColorStop(1, 'transparent');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.ellipse(0, -2 * sc, 15 * sc, 15 * sc, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-
-        /* ==== Per-character ambient particles ==== */
-        SpriteGenerator.#drawCharacterParticles(ctx, sc, p, id, anim, frame, totalFrames);
-
-        ctx.restore();
+        return { offY, rotation, squash, stretch, legPhase, offX, armMode };
     }
 
     /* ---- Per-character headgear ---- */
@@ -850,125 +880,157 @@ export class SpriteGenerator {
         switch (id) {
             case 'blaze': {
                 // Rising flame particles
-                const numFlames = anim === 'hit' ? 5 : 3;
-                for (let i = 0; i < numFlames; i++) {
-                    const seed = i * 2.39996;
-                    const life = (frame * 0.3 + seed) % 1;
-                    const fx = (Math.sin(seed * 3) * 6 + Math.sin(t + seed) * 2) * sc;
-                    const fy = (-14 - life * 8) * sc;
-                    const fSize = (1 - life * 0.5) * sc;
-                    ctx.globalAlpha = 0.7 * (1 - life);
-                    ctx.fillStyle = life < 0.3 ? p.accent : (life < 0.6 ? p.secondary : p.primary);
-                    PR(ctx, fx - fSize / 2, fy - fSize / 2, fSize, fSize);
-                }
-                ctx.globalAlpha = 1;
+                SpriteGenerator.renderFlameParticles(anim, frame, t, sc, ctx, p, PR);
                 break;
             }
             case 'frost': {
                 // Floating ice sparkles
-                for (let i = 0; i < 4; i++) {
-                    const seed = i * 1.618;
-                    const angle = t + seed * Math.PI;
-                    const radius = (10 + Math.sin(angle * 0.7) * 3) * sc;
-                    const fx = Math.cos(angle) * radius;
-                    const fy = -8 * sc + Math.sin(angle * 1.3) * 5 * sc;
-                    const sparkleSize = (0.6 + Math.sin(t + i * 2) * 0.3) * sc;
-                    ctx.globalAlpha = 0.5 + Math.sin(t + i) * 0.3;
-                    ctx.fillStyle = i % 2 === 0 ? '#ffffff' : p.accent;
-                    ctx.save();
-                    ctx.translate(fx, fy);
-                    ctx.rotate(angle);
-                    PR(ctx, -sparkleSize / 2, 0, sparkleSize, sparkleSize * 0.5);
-                    PR(ctx, 0, -sparkleSize / 2, sparkleSize * 0.5, sparkleSize);
-                    ctx.restore();
-                }
-                ctx.globalAlpha = 1;
+                SpriteGenerator.renderIceSparkles(t, sc, ctx, p, PR);
                 break;
             }
             case 'shadow': {
                 // Dark mist wisps
-                ctx.globalAlpha = 0.2;
-                for (let i = 0; i < 3; i++) {
-                    const seed = i * 2.1;
-                    const wx = (Math.sin(t + seed) * 8) * sc;
-                    const wy = (5 + Math.cos(t * 0.5 + seed) * 3) * sc;
-                    const wLen = (4 + Math.sin(t + i) * 2) * sc;
-                    ctx.fillStyle = p.primary;
-                    ctx.beginPath();
-                    ctx.ellipse(wx, wy, wLen, sc * 0.8, t + seed, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.globalAlpha = 1;
+                SpriteGenerator.renderDarkMistWisps(ctx, t, sc, p);
                 break;
             }
             case 'tank': {
                 // Ground dust puffs when moving
-                if (anim.startsWith('move') || anim === 'celebrate') {
-                    ctx.globalAlpha = 0.25;
-                    ctx.fillStyle = '#ccbb99';
-                    for (let i = 0; i < 3; i++) {
-                        const dx = (Math.sin(t + i * 2) * 5) * sc;
-                        const dy = (11 + Math.sin(frame * 0.7 + i * 1.3) * 1.5) * sc;
-                        const dSize = (1 + Math.sin(t + i) * 0.5) * sc;
-                        ctx.beginPath();
-                        ctx.ellipse(dx, dy, dSize, dSize * 0.6, 0, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    ctx.globalAlpha = 1;
-                }
+                SpriteGenerator.renderMovementEffects(anim, ctx, t, sc, frame);
                 break;
             }
             case 'spark': {
                 // Electric arcs between hair spikes
-                ctx.strokeStyle = p.accent;
-                ctx.lineWidth = 0.5 * sc;
-                ctx.globalAlpha = 0.6 + Math.sin(t * 2) * 0.3;
-                for (let i = 0; i < 2; i++) {
-                    const startX = (i === 0 ? -3 : 1) * sc;
-                    const startY = -17 * sc;
-                    ctx.beginPath();
-                    ctx.moveTo(startX, startY);
-                    for (let j = 1; j <= 3; j++) {
-                        const bx = startX + (Math.sin(t + i + j) * 3) * sc;
-                        const by = startY + j * 2 * sc * (i === 0 ? -0.3 : 0.3);
-                        ctx.lineTo(bx, by);
-                    }
-                    ctx.stroke();
-                }
-                // Floating spark points
-                ctx.fillStyle = '#ffffff';
-                for (let i = 0; i < 3; i++) {
-                    const sa = t * 2 + i * Math.PI * 2 / 3;
-                    const sr = (11 + Math.sin(sa) * 2) * sc;
-                    const sx = Math.cos(sa) * sr;
-                    const sy = -8 * sc + Math.sin(sa * 1.5) * 4 * sc;
-                    PR(ctx, sx, sy, sc * 0.7, sc * 0.7);
-                }
-                ctx.globalAlpha = 1;
+                SpriteGenerator.renderElectricArcs(ctx, p, sc, t, PR);
                 break;
             }
             case 'venom': {
                 // Toxic rising bubbles
-                for (let i = 0; i < 4; i++) {
-                    const seed = i * 1.8;
-                    const life = (frame * 0.25 + seed * 0.3) % 1;
-                    const bx = (Math.sin(seed * 5) * 6 + Math.sin(t + seed) * 1.5) * sc;
-                    const by = (6 - life * 14) * sc;
-                    const bSize = (0.5 + (1 - life) * 0.8) * sc;
-                    ctx.globalAlpha = 0.5 * (1 - life * 0.8);
-                    ctx.fillStyle = i % 2 === 0 ? p.accent : p.secondary;
-                    ctx.beginPath();
-                    ctx.arc(bx, by, bSize, 0, Math.PI * 2);
-                    ctx.fill();
-                    // Bubble highlight
-                    ctx.fillStyle = '#ffffff';
-                    ctx.globalAlpha = 0.3 * (1 - life);
-                    PR(ctx, bx - bSize * 0.3, by - bSize * 0.3, bSize * 0.4, bSize * 0.4);
-                }
-                ctx.globalAlpha = 1;
+                SpriteGenerator.renderToxicBubbles(frame, t, sc, ctx, p, PR);
                 break;
             }
         }
+    }
+
+    static renderToxicBubbles(frame, t, sc, ctx, p, PR) {
+        for (let i = 0; i < 4; i++) {
+            const seed = i * 1.8;
+            const life = (frame * 0.25 + seed * 0.3) % 1;
+            const bx = (Math.sin(seed * 5) * 6 + Math.sin(t + seed) * 1.5) * sc;
+            const by = (6 - life * 14) * sc;
+            const bSize = (0.5 + (1 - life) * 0.8) * sc;
+            ctx.globalAlpha = 0.5 * (1 - life * 0.8);
+            ctx.fillStyle = i % 2 === 0 ? p.accent : p.secondary;
+            ctx.beginPath();
+            ctx.arc(bx, by, bSize, 0, Math.PI * 2);
+            ctx.fill();
+            // Bubble highlight
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.3 * (1 - life);
+            PR(ctx, bx - bSize * 0.3, by - bSize * 0.3, bSize * 0.4, bSize * 0.4);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    static renderElectricArcs(ctx, p, sc, t, PR) {
+        ctx.strokeStyle = p.accent;
+        ctx.lineWidth = 0.5 * sc;
+        ctx.globalAlpha = 0.6 + Math.sin(t * 2) * 0.3;
+        for (let i = 0; i < 2; i++) {
+            const startX = (i === 0 ? -3 : 1) * sc;
+            const startY = -17 * sc;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            for (let j = 1; j <= 3; j++) {
+                const bx = startX + (Math.sin(t + i + j) * 3) * sc;
+                const by = startY + j * 2 * sc * (i === 0 ? -0.3 : 0.3);
+                ctx.lineTo(bx, by);
+            }
+            ctx.stroke();
+        }
+        // Floating spark points
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 3; i++) {
+            const sa = t * 2 + i * Math.PI * 2 / 3;
+            const sr = (11 + Math.sin(sa) * 2) * sc;
+            const sx = Math.cos(sa) * sr;
+            const sy = -8 * sc + Math.sin(sa * 1.5) * 4 * sc;
+            PR(ctx, sx, sy, sc * 0.7, sc * 0.7);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    static renderMovementEffects(anim, ctx, t, sc, frame) {
+        if (anim.startsWith('move') || anim === 'celebrate') {
+            ctx.globalAlpha = 0.25;
+            ctx.fillStyle = '#ccbb99';
+            for (let i = 0; i < 3; i++) {
+                const dx = (Math.sin(t + i * 2) * 5) * sc;
+                const dy = (11 + Math.sin(frame * 0.7 + i * 1.3) * 1.5) * sc;
+                const dSize = (1 + Math.sin(t + i) * 0.5) * sc;
+                ctx.beginPath();
+                ctx.ellipse(dx, dy, dSize, dSize * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    static renderDarkMistWisps(ctx, t, sc, p) {
+        ctx.globalAlpha = 0.2;
+        for (let i = 0; i < 3; i++) {
+            const seed = i * 2.1;
+            const wx = (Math.sin(t + seed) * 8) * sc;
+            const wy = (5 + Math.cos(t * 0.5 + seed) * 3) * sc;
+            const wLen = (4 + Math.sin(t + i) * 2) * sc;
+            ctx.fillStyle = p.primary;
+            ctx.beginPath();
+            ctx.ellipse(wx, wy, wLen, sc * 0.8, t + seed, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    static renderIceSparkles(t, sc, ctx, p, PR) {
+        for (let i = 0; i < 4; i++) {
+            const seed = i * 1.618;
+            const angle = t + seed * Math.PI;
+            const radius = (10 + Math.sin(angle * 0.7) * 3) * sc;
+            const fx = Math.cos(angle) * radius;
+            const fy = -8 * sc + Math.sin(angle * 1.3) * 5 * sc;
+            const sparkleSize = (0.6 + Math.sin(t + i * 2) * 0.3) * sc;
+            ctx.globalAlpha = 0.5 + Math.sin(t + i) * 0.3;
+            ctx.fillStyle = i % 2 === 0 ? '#ffffff' : p.accent;
+            ctx.save();
+            ctx.translate(fx, fy);
+            ctx.rotate(angle);
+            PR(ctx, -sparkleSize / 2, 0, sparkleSize, sparkleSize * 0.5);
+            PR(ctx, 0, -sparkleSize / 2, sparkleSize * 0.5, sparkleSize);
+            ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    static renderFlameParticles(anim, frame, t, sc, ctx, p, PR) {
+        const numFlames = anim === 'hit' ? 5 : 3;
+        for (let i = 0; i < numFlames; i++) {
+            const seed = i * 2.39996;
+            const life = (frame * 0.3 + seed) % 1;
+            const fx = (Math.sin(seed * 3) * 6 + Math.sin(t + seed) * 2) * sc;
+            const fy = (-14 - life * 8) * sc;
+            const fSize = (1 - life * 0.5) * sc;
+            ctx.globalAlpha = 0.7 * (1 - life);
+            let flameColor;
+            if (life < 0.3) {
+                flameColor = p.accent;
+            } else if (life < 0.6) {
+                flameColor = p.secondary;
+            } else {
+                flameColor = p.primary;
+            }
+            ctx.fillStyle = flameColor;
+            PR(ctx, fx - fSize / 2, fy - fSize / 2, fSize, fSize);
+        }
+        ctx.globalAlpha = 1;
     }
 
     /* ---- Helpers ---- */

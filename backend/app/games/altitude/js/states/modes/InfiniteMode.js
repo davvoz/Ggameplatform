@@ -100,16 +100,16 @@ export class InfiniteMode extends GameMode {
         }, 22);
 
         // Floating medal popup
-        const popLines = bonus.medal !== 'none'
-            ? ['CHECKPOINT', `+${bonus.score} pts  +${bonus.coins} `]
-            : ['CHECKPOINT', `${TimeBonusCalculator.formatTime(screenTime)}`];
+        const popLines = bonus.medal === 'none'
+            ? ['CHECKPOINT', `${TimeBonusCalculator.formatTime(screenTime)}`]
+            : ['CHECKPOINT', `+${bonus.score} pts  +${bonus.coins} `];
 
         popLines.forEach((text, i) => {
             floatingTexts.add({
                 x: DESIGN_WIDTH / 2,
                 screenY: DESIGN_HEIGHT * 0.18 + i * 26,
                 text,
-                life: 2.0,
+                life: 2,
                 vy: -30,
                 color: bonus.color,
                 large: i === 0,

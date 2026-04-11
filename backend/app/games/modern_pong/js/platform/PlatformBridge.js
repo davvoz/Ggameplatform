@@ -8,18 +8,16 @@ export class PlatformBridge {
     #parentOrigin = null;
 
     constructor() {
-        this.#sdk = window.PlatformSDK;
+        this.#sdk = globalThis.PlatformSDK;
         this.#parentOrigin = this.#getParentOrigin();
     }
 
     #getParentOrigin() {
-        try {
+       
             if (document.referrer) {
                 return new URL(document.referrer).origin;
             }
-        } catch (e) {
-            // Referrer not available
-        }
+
         return null;
     }
 
@@ -38,7 +36,7 @@ export class PlatformBridge {
         // XP banner & level-up via raw postMessage only (not SDK events)
         // to avoid duplicate triggers from the SDK's generic triggerEvent.
         window.addEventListener('message', (event) => {
-            if (!event.data || !event.data.type) return;
+            if (!event.data?.data.type) return;
             if (event.data.protocolVersion !== '1.0.0') return;
             if (this.#parentOrigin && event.origin !== this.#parentOrigin) return;
             if (!this.#parentOrigin && event.origin) this.#parentOrigin = event.origin;
@@ -67,7 +65,7 @@ export class PlatformBridge {
                 protocolVersion: '1.0.0',
             }, this.#parentOrigin);
         } catch (e) {
-            // Non-blocking
+            console.warn('Failed to post gameStarted message:', e);
         }
     }
 
@@ -76,7 +74,7 @@ export class PlatformBridge {
         try {
             await this.#sdk.gameOver(score, { extra_data: extraData });
         } catch (e) {
-            // Non-blocking
+            console.warn('Failed to send gameOver message:', e);
         }
     }
 
@@ -85,7 +83,7 @@ export class PlatformBridge {
         try {
             await this.#sdk.resetSession();
         } catch (e) {
-            // Non-blocking
+            console.warn('Failed to reset session:', e);
         }
     }
 
@@ -100,6 +98,7 @@ export class PlatformBridge {
             const data = await res.json();
             return data.balance;
         } catch (e) {
+            console.warn('Failed to get user balance:', e);
             return null;
         }
     }
@@ -116,6 +115,8 @@ export class PlatformBridge {
             });
             return res.ok;
         } catch (e) {
+            console.warn('Failed to spend coins:', e);
+
             return false;
         }
     }
@@ -132,6 +133,7 @@ export class PlatformBridge {
             });
             return res.ok;
         } catch (e) {
+            console.warn('Failed to award coins:', e);
             return false;
         }
     }
@@ -144,7 +146,7 @@ export class PlatformBridge {
 
     #resolveUserId() {
         try {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(globalThis.location.search);
             const id = params.get('userId') ?? params.get('user_id');
             if (id) {
                 this.#userId = id;
@@ -155,7 +157,7 @@ export class PlatformBridge {
                 this.#userId = refParams.get('userId') ?? refParams.get('user_id') ?? null;
             }
         } catch (e) {
-            // Non-blocking
+            console.warn('Failed to resolve user ID from URL:', e);
         }
     }
 

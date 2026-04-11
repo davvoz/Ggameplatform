@@ -1,20 +1,18 @@
 import { State } from './State.js';
 import {
-     ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM, ARENA_MID_Y,
+    ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM,
     POWERUP_SPAWN_INTERVAL, MAX_ACTIVE_POWERUPS, COLORS,
-    BALL_MAX_SPEED, DESIGN_WIDTH, DESIGN_HEIGHT, UI_FONT,
+    DESIGN_WIDTH, DESIGN_HEIGHT, UI_FONT,
 } from '../config/Constants.js';
 import { HUD } from '../ui/UIManager.js';
 import { CollisionSystem } from '../physics/CollisionSystem.js';
 import { spawnRandomPowerUp } from '../entities/PowerUp.js';
 import { POWERUP_TYPES } from '../powerups/PowerUpTypes.js';
-import { SuperShield } from '../entities/FieldObjects.js';
 
 /**
  * Main gameplay state — handles game logic, collisions, power-ups, input.
  */
 export class PlayingState extends State {
-    #matchData = null;
     #powerUpTimer = 0;
     #lastHitter = null;
     /** Characters the fireball is currently passing through — skip collision */
@@ -24,10 +22,8 @@ export class PlayingState extends State {
     /** Track whether we've played the super-ready chime for each player */
     #superReadyPlayed = { top: false, bottom: false };
     /** Counter for unique power-up network IDs */
-    #puIdCounter = 0;
 
     enter(data) {
-        this.#matchData = data ?? this._game.matchData;
         this.#powerUpTimer = 0;
         this.#lastHitter = null;
         this.#noCollide.clear();
@@ -69,70 +65,9 @@ export class PlayingState extends State {
         game.input.update();
 
         if (game.isVsCPU) {
-            // CPU/Story mode — full local authority (unchanged)
-            game.bottomPlayer.move(game.input.dx, game.input.dy, dt);
-            const aiInput = game.ai.computeInput(
-                game.topPlayer, game.ball, game.powerUps, dt
-            );
-            game.topPlayer.move(aiInput.dx, aiInput.dy, dt);
-
-            for (const obs of game.obstacles) {
-                obs.pushCharacterOut(game.bottomPlayer);
-                obs.pushCharacterOut(game.topPlayer);
-            }
-
-            game.topPlayer.update(dt);
-            game.bottomPlayer.update(dt);
-            game.ball.update(dt);
-
-            if (game.ball.consumeWallHit()) {
-                game.sound.playWallHit();
-            }
-
-            // Decrement fireball no-collide timers
-            for (const [char, timer] of this.#noCollide) {
-                const t = timer - dt;
-                if (t <= 0) this.#noCollide.delete(char);
-                else this.#noCollide.set(char, t);
-            }
-            // Decrement hit cooldown timers
-            for (const [char, timer] of this.#hitCooldown) {
-                const t = timer - dt;
-                if (t <= 0) this.#hitCooldown.delete(char);
-                else this.#hitCooldown.set(char, t);
-            }
-            // Update extra balls
-            for (const eb of game.extraBalls) {
-                eb.update(dt);
-            }
-
-            // Power-up spawning
-            this.#powerUpTimer += dt;
-            if (this.#powerUpTimer >= POWERUP_SPAWN_INTERVAL &&
-                game.powerUps.filter(p => p.alive).length < MAX_ACTIVE_POWERUPS) {
-                this.#powerUpTimer = 0;
-                const pu = spawnRandomPowerUp(POWERUP_TYPES);
-                game.addPowerUp(pu);
-            }
-
-            // Collisions & goals
-            this.#handleCollisions();
-            this.#checkGoals();
+            this.#updateCPUMode(dt);
         } else {
-            // Multiplayer — server-authoritative
-            // Predict own character locally for responsive feel
-            const ownPlayer = game.playerIsBottom ? game.bottomPlayer : game.topPlayer;
-            ownPlayer.move(game.input.dx, game.input.dy, dt);
-
-            // Send input to server
-            game.network.sendInput({ dx: game.input.dx, dy: game.input.dy });
-
-            // Update character animations/effects (visual only)
-            game.topPlayer.update(dt);
-            game.bottomPlayer.update(dt);
-
-            // No physics, collisions, goals, or power-up spawning —
-            // the server handles all of that and sends events.
+            this.#updateMultiplayerMode(dt);
         }
 
         // Update power-ups (visual update — both modes)
@@ -152,6 +87,92 @@ export class PlayingState extends State {
         game.shake.update(dt);
         game.particles.update(dt);
         game.tweens.update(dt);
+    }
+
+    #updateCPUMode(dt) {
+        const game = this._game;
+
+        // CPU/Story mode — full local authority (unchanged)
+        game.bottomPlayer.move(game.input.dx, game.input.dy, dt);
+        const aiInput = game.ai.computeInput(
+            game.topPlayer, game.ball, game.powerUps, dt
+        );
+        game.topPlayer.move(aiInput.dx, aiInput.dy, dt);
+
+        for (const obs of game.obstacles) {
+            obs.pushCharacterOut(game.bottomPlayer);
+            obs.pushCharacterOut(game.topPlayer);
+        }
+
+        game.topPlayer.update(dt);
+        game.bottomPlayer.update(dt);
+        game.ball.update(dt);
+
+        if (game.ball.consumeWallHit()) {
+            game.sound.playWallHit();
+        }
+
+        this.#updateTimers(dt);
+        this.#updateExtraBalls(dt);
+        this.#spawnPowerUps(dt);
+
+        // Collisions & goals
+        this.#handleCollisions();
+        this.#checkGoals();
+    }
+
+    #updateMultiplayerMode(dt) {
+        const game = this._game;
+
+        // Multiplayer — server-authoritative
+        // Predict own character locally for responsive feel
+        const ownPlayer = game.playerIsBottom ? game.bottomPlayer : game.topPlayer;
+        ownPlayer.move(game.input.dx, game.input.dy, dt);
+
+        // Send input to server
+        game.network.sendInput({ dx: game.input.dx, dy: game.input.dy });
+
+        // Update character animations/effects (visual only)
+        game.topPlayer.update(dt);
+        game.bottomPlayer.update(dt);
+
+        // No physics, collisions, goals, or power-up spawning —
+        // the server handles all of that and sends events.
+    }
+
+    #updateTimers(dt) {
+        // Decrement fireball no-collide timers
+        for (const [char, timer] of this.#noCollide) {
+            const t = timer - dt;
+            if (t <= 0) this.#noCollide.delete(char);
+            else this.#noCollide.set(char, t);
+        }
+        // Decrement hit cooldown timers
+        for (const [char, timer] of this.#hitCooldown) {
+            const t = timer - dt;
+            if (t <= 0) this.#hitCooldown.delete(char);
+            else this.#hitCooldown.set(char, t);
+        }
+    }
+
+    #updateExtraBalls(dt) {
+        // Update extra balls
+        for (const eb of this._game.extraBalls) {
+            eb.update(dt);
+        }
+    }
+
+    #spawnPowerUps(dt) {
+        const game = this._game;
+
+        // Power-up spawning
+        this.#powerUpTimer += dt;
+        if (this.#powerUpTimer >= POWERUP_SPAWN_INTERVAL &&
+            game.powerUps.filter(p => p.alive).length < MAX_ACTIVE_POWERUPS) {
+            this.#powerUpTimer = 0;
+            const pu = spawnRandomPowerUp(POWERUP_TYPES);
+            game.addPowerUp(pu);
+        }
     }
 
     draw(ctx) {
@@ -197,9 +218,14 @@ export class PlayingState extends State {
         // Ping indicator (multiplayer only)
         if (!this._game.isVsCPU) {
             const rtt = Math.round(this._game.network.rtt);
-            const color = rtt < 80 ? COLORS.NEON_GREEN
-                        : rtt < 150 ? COLORS.NEON_YELLOW
-                        : COLORS.NEON_RED;
+            let color;
+            if (rtt < 80) {
+                color = COLORS.NEON_GREEN;
+            } else if (rtt < 150) {
+                color = COLORS.NEON_YELLOW;
+            } else {
+                color = COLORS.NEON_RED;
+            }
             ctx.save();
             ctx.font = `7px ${UI_FONT}`;
             ctx.textAlign = 'right';
@@ -220,6 +246,20 @@ export class PlayingState extends State {
         this.#checkBallVsCharacter(ball, game.topPlayer, game);
 
         // Ball vs power-ups
+        this.#handlePowerUpCollisions(game);
+
+        // Ball vs field objects (shields)
+        this.#handleFieldObjectCollisions(game);
+
+        // Ball vs obstacles (non-destructible)
+        this.#handleObstacleCollisions(game);
+
+        // Extra ball collisions & goals
+        this.#handleExtraBallCollisions(game);
+    }
+
+    #handlePowerUpCollisions(game) {
+        const ball = game.ball;
         const allPowerUps = [...game.powerUps];
         for (const pu of allPowerUps) {
             if (CollisionSystem.checkBallPowerUp(ball, pu)) {
@@ -239,10 +279,12 @@ export class PlayingState extends State {
                 this.#applyPowerUp(pu, game.topPlayer);
             }
         }
+    }
 
-        // Ball vs field objects (shields)
+    #handleFieldObjectCollisions(game) {
+        const ball = game.ball;
         for (const obj of game.fieldObjects) {
-            if (obj.checkBallCollision && obj.checkBallCollision(ball)) {
+            if (obj.checkBallCollision?.(ball)) {
                 ball.vy = -ball.vy;
                 ball.triggerImpact();
                 obj.destroy();
@@ -253,31 +295,24 @@ export class PlayingState extends State {
                 });
             }
         }
+    }
 
-        // Ball vs obstacles (non-destructible)
+    #handleObstacleCollisions(game) {
+        const ball = game.ball;
         for (const obs of game.obstacles) {
             if (obs.checkBallCollision(ball)) {
                 game.sound.playWallHit();
                 game.shake.trigger(2, 80);
             }
         }
+    }
 
-        // Extra ball collisions & goals
+    #handleExtraBallCollisions(game) {
         for (let i = game.extraBalls.length - 1; i >= 0; i--) {
             const eb = game.extraBalls[i];
             const goalResult = eb.checkGoal();
             if (goalResult !== 0) {
-                const scorerId = goalResult === 1 ? 'bottom' : 'top';
-                game.extraBalls.splice(i, 1);
-                game.shake.trigger(4, 150);
-                game.sound.playGoal();
-                const goalX = (ARENA_LEFT + ARENA_RIGHT) / 2;
-                const goalY = goalResult === 1 ? ARENA_TOP : ARENA_BOTTOM;
-                game.particles.emit(goalX, goalY, 20, {
-                    colors: [COLORS.NEON_YELLOW, '#ffffff'],
-                    speedMin: 30, speedMax: 120,
-                });
-                game.scoreGoal(scorerId);
+                this.#handleExtraBallGoal(eb, goalResult, i, game);
                 return; // Exit — scoreGoal transitions state
             }
             // Extra balls bounce off characters normally
@@ -285,7 +320,7 @@ export class PlayingState extends State {
             CollisionSystem.checkBallCharacter(eb, game.topPlayer);
             // Extra balls vs shields
             for (const obj of game.fieldObjects) {
-                if (obj.checkBallCollision && obj.checkBallCollision(eb)) {
+                if (obj.checkBallCollision?.(eb)) {
                     eb.vy = -eb.vy;
                     obj.destroy();
                     game.sound.playShieldHit();
@@ -296,6 +331,20 @@ export class PlayingState extends State {
                 obs.checkBallCollision(eb);
             }
         }
+    }
+
+    #handleExtraBallGoal(eb, goalResult, index, game) {
+        const scorerId = goalResult === 1 ? 'bottom' : 'top';
+        game.extraBalls.splice(index, 1);
+        game.shake.trigger(4, 150);
+        game.sound.playGoal();
+        const goalX = (ARENA_LEFT + ARENA_RIGHT) / 2;
+        const goalY = goalResult === 1 ? ARENA_TOP : ARENA_BOTTOM;
+        game.particles.emit(goalX, goalY, 20, {
+            colors: [COLORS.NEON_YELLOW, '#ffffff'],
+            speedMin: 30, speedMax: 120,
+        });
+        game.scoreGoal(scorerId);
     }
 
     /** Handle ball vs character collision with fireball pass-through logic. */
@@ -310,54 +359,62 @@ export class PlayingState extends State {
         const isOpponent = this.#lastHitter && this.#lastHitter !== character;
 
         if (isFireball && isOpponent) {
-            // Check overlap manually (don't bounce)
-            const dx = ball.x - character.x;
-            const dy = ball.y - character.y;
-            const dist = Math.hypot(dx, dy);
-            const minDist = ball.radius + character.hitboxRadius;
-            if (dist < minDist) {
-                // Fireball passes through! Consume and add cooldown
-                ball.consumeFireball();
-                this.#noCollide.set(character, 400);
-                game.shake.trigger(6, 200);
-                game.particles.emit(ball.x, ball.y, 25, {
-                    colors: [COLORS.NEON_ORANGE, COLORS.NEON_RED, '#ffff00'],
-                    speedMin: 40, speedMax: 120,
-                    sizeMin: 2, sizeMax: 5,
-                });
-            }
+            this.#handleFireballPassThrough(ball, character, game);
             return;
         }
 
         // Normal collision
         if (CollisionSystem.checkBallCharacter(ball, character)) {
-            this.#hitCooldown.set(character, 150); // 150ms cooldown
-            character.playHit();
-            game.shake.trigger(3, 100);
-            game.sound.playPaddleHit();
-            this.#lastHitter = character;
-            game.particles.emit(ball.x, ball.y, 8, {
-                colors: [character.data.palette.accent, '#ffffff'],
-                speedMin: 20, speedMax: 80,
+            this.#handleNormalCollision(character, ball, game);
+        }
+    }
+
+    #handleFireballPassThrough(ball, character, game) {
+        // Check overlap manually (don't bounce)
+        const dx = ball.x - character.x;
+        const dy = ball.y - character.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = ball.radius + character.hitboxRadius;
+        if (dist < minDist) {
+            // Fireball passes through! Consume and add cooldown
+            ball.consumeFireball();
+            this.#noCollide.set(character, 400);
+            game.shake.trigger(6, 200);
+            game.particles.emit(ball.x, ball.y, 25, {
+                colors: [COLORS.NEON_ORANGE, COLORS.NEON_RED, '#ffff00'],
+                speedMin: 40, speedMax: 120,
+                sizeMin: 2, sizeMax: 5,
             });
+        }
+    }
 
-            // Super shot — triggers automatically on hit when bar is full
-            if (character.superReady) {
-                character.consumeSuper();
-                this.#executeSuperShot(character, ball, game);
-                const key = character === game.topPlayer ? 'top' : 'bottom';
-                this.#superReadyPlayed[key] = false;
-            }
+    #handleNormalCollision(character, ball, game) {
+        this.#hitCooldown.set(character, 150); // 150ms cooldown
+        character.playHit();
+        game.shake.trigger(3, 100);
+        game.sound.playPaddleHit();
+        this.#lastHitter = character;
+        game.particles.emit(ball.x, ball.y, 8, {
+            colors: [character.data.palette.accent, '#ffffff'],
+            speedMin: 20, speedMax: 80,
+        });
 
-            // Charge super on every hit
-            const wasReady = character.superReady;
-            character.chargeSuper(20);
-            // Play chime when bar just filled
-            if (!wasReady && character.superReady) {
-                game.sound.playSuperReady();
-                const key = character === game.topPlayer ? 'top' : 'bottom';
-                this.#superReadyPlayed[key] = true;
-            }
+        // Super shot — triggers automatically on hit when bar is full
+        if (character.superReady) {
+            character.consumeSuper();
+            this.#executeSuperShot(character, ball, game);
+            const key = character === game.topPlayer ? 'top' : 'bottom';
+            this.#superReadyPlayed[key] = false;
+        }
+
+        // Charge super on every hit
+        const wasReady = character.superReady;
+        character.chargeSuper(20);
+        // Play chime when bar just filled
+        if (!wasReady && character.superReady) {
+            game.sound.playSuperReady();
+            const key = character === game.topPlayer ? 'top' : 'bottom';
+            this.#superReadyPlayed[key] = true;
         }
     }
 
@@ -404,85 +461,7 @@ export class PlayingState extends State {
         });
 
         const opponent = game.getOpponent(character);
-
-        switch (character.data.id) {
-            case 'blaze':
-                // INFERNO SMASH — super fireball + speed boost
-                ball.setFireball(4000);
-                ball.vx *= 1.5;
-                ball.vy *= 1.5;
-                game.particles.emit(ball.x, ball.y, 20, {
-                    colors: [COLORS.NEON_ORANGE, COLORS.NEON_RED, '#ffff00'],
-                    speedMin: 60, speedMax: 140,
-                });
-                break;
-
-            case 'frost':
-                // BLIZZARD SHOT — freeze opponent + massive curve
-                opponent.stun(2500);
-                ball.vx += (character.x > ball.x ? -150 : 150);
-                ball.setColor('#88ddff', '#00ccff');
-                game.particles.emit(opponent.x, opponent.y, 25, {
-                    colors: ['#88ddff', '#aaeeff', '#ffffff'],
-                    speedMin: 20, speedMax: 80,
-                });
-                break;
-
-            case 'shadow': {
-                // PHANTOM STRIKE — blazing purple disc launched at extreme speed
-                const sDir = character.isTopPlayer ? 1 : -1;
-                const mag = BALL_MAX_SPEED * 0.95;
-                ball.vy = mag * sDir;
-                ball.vx = (Math.random() - 0.5) * 80;
-                ball.setShadowBlaze(2500);
-                ball.setColor('#cc66ff', '#9933ff');
-                game.particles.emit(ball.x, ball.y, 30, {
-                    colors: ['#cc66ff', '#ff00ff', '#9933ff', '#ffffff'],
-                    speedMin: 60, speedMax: 160,
-                    sizeMin: 2, sizeMax: 5,
-                });
-                break;
-            }
-
-            case 'tank':
-                // IRON FORTRESS — full-width shield + power hit
-                game.addFieldObject(
-                    new SuperShield(character.isTopPlayer, character.data.palette.accent)
-                );
-                ball.vx *= 1.8;
-                ball.vy *= 1.8;
-                game.particles.emit(
-                    (ARENA_LEFT + ARENA_RIGHT) / 2,
-                    character.isTopPlayer ? ARENA_TOP + 4 : ARENA_BOTTOM - 4,
-                    30,
-                    { colors: ['#88ee88', '#44bb44', '#ffffff'], speedMin: 30, speedMax: 100 }
-                );
-                break;
-
-            case 'spark': {
-                // THUNDER BOLT — ball teleports into opponent's half at high speed
-                const dir = character.isTopPlayer ? 1 : -1;
-                ball.x = ARENA_LEFT + Math.random() * (ARENA_RIGHT - ARENA_LEFT - 40) + 20;
-                ball.y = ARENA_MID_Y + dir * 80;
-                ball.vy = BALL_MAX_SPEED * 0.85 * dir;
-                ball.vx = (Math.random() - 0.5) * 120;
-                ball.triggerImpact();
-                game.particles.emit(ball.x, ball.y, 25, {
-                    colors: ['#ffdd00', '#ffee44', '#ffffff'],
-                    speedMin: 60, speedMax: 150,
-                });
-                break;
-            }
-
-            case 'venom':
-                // TOXIC SHOT — reverse opponent controls + poison visual
-                opponent.applyEffect('mirror', 3000, { controlsReversed: true });
-                game.particles.emit(opponent.x, opponent.y, 25, {
-                    colors: ['#33cc33', '#66ff33', '#ccff66'],
-                    speedMin: 30, speedMax: 100,
-                });
-                break;
-        }
+        character.data.superShot.execute(character, ball, game, opponent);
     }
 
     #checkGoals() {

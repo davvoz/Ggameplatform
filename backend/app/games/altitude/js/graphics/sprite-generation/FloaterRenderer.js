@@ -3,11 +3,11 @@ import { COLORS } from '../../config/Constants.js';
 
 const TENTACLE_DEFS = [
     { baseLen: 16, curl: 0.35 },
-    { baseLen: 9, curl: 0.20 },
+    { baseLen: 9, curl: 0.2 },
     { baseLen: 13, curl: 0.45 },
     { baseLen: 7, curl: 0.15 },
-    { baseLen: 18, curl: 0.30 },
-    { baseLen: 11, curl: 0.40 },
+    { baseLen: 18, curl: 0.3 },
+    { baseLen: 11, curl: 0.4 },
 ];
 
 const BODY_RADIUS = 12;

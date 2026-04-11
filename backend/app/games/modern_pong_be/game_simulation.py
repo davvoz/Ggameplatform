@@ -273,7 +273,24 @@ class GameSimulation:
         self._check_ball_vs_character(ball, self.top_player)
 
         # Ball vs power-ups
-        for pu in list(self.powerups):
+        self._handle_powerup_collisions(ball)
+
+        # Ball vs shields
+        self._handle_shield_collisions(ball)
+
+        # Ball vs obstacles
+        self._handle_obstacle_collisions(ball)
+
+        # Extra balls
+        self._handle_extra_ball_collisions()
+
+        # Garbage-collect
+        self.field_objects = [o for o in self.field_objects if o.alive]
+        self.powerups = [p for p in self.powerups if p.alive]
+
+    def _handle_powerup_collisions(self, ball: ServerBall):
+        """Handle collisions between ball/characters and power-ups."""
+        for pu in self.powerups:
             if not pu.alive:
                 continue
             if CollisionSystem.check_ball_powerup(ball, pu):
@@ -286,8 +303,9 @@ class GameSimulation:
             if CollisionSystem.check_character_powerup(self.top_player, pu):
                 self._apply_powerup(pu, self.top_player)
 
-        # Ball vs shields
-        for obj in list(self.field_objects):
+    def _handle_shield_collisions(self, ball: ServerBall):
+        """Handle collisions between ball and shields."""
+        for obj in self.field_objects:
             if not obj.alive:
                 continue
             if CollisionSystem.check_ball_shield(ball, obj):
@@ -298,17 +316,11 @@ class GameSimulation:
                     obj.destroy()
                 self._queue("shieldHit", {})
 
-        # Ball vs obstacles
+    def _handle_obstacle_collisions(self, ball: ServerBall):
+        """Handle collisions between ball and obstacles."""
         for obs in self.obstacles:
             if CollisionSystem.check_ball_obstacle(ball, obs):
                 self._queue("obstacleHit", {})
-
-        # Extra balls
-        self._handle_extra_ball_collisions()
-
-        # Garbage-collect
-        self.field_objects = [o for o in self.field_objects if o.alive]
-        self.powerups = [p for p in self.powerups if p.alive]
 
     def _check_ball_vs_character(self, ball: ServerBall, player: ServerPlayer):
         """Handle ball-character collision including fireball pass-through."""
@@ -360,31 +372,49 @@ class GameSimulation:
     def _handle_extra_ball_collisions(self):
         for i in range(len(self.extra_balls) - 1, -1, -1):
             eb = self.extra_balls[i]
-            goal = eb.check_goal()
-            if goal != 0:
-                scorer_id = "bottom" if goal == 1 else "top"
-                goal_x = (ARENA_LEFT + ARENA_RIGHT) / 2
-                goal_y = ARENA_TOP if goal == 1 else ARENA_BOTTOM
-                self.extra_balls.pop(i)
-                self._queue("extraBallGoal", {
-                    "scorerId": scorer_id,
-                    "goalX": goal_x,
-                    "goalY": goal_y,
-                })
-                self._score_goal(scorer_id)
+            if self._check_extra_ball_goal(eb, i):
                 return  # One goal per tick
+            self._check_extra_ball_vs_characters(eb)
+            self._check_extra_ball_vs_shields(eb)
+            self._check_extra_ball_vs_obstacles(eb)
 
-            CollisionSystem.check_ball_character(eb, self.bottom_player)
-            CollisionSystem.check_ball_character(eb, self.top_player)
-            for obj in self.field_objects:
-                if obj.alive and CollisionSystem.check_ball_shield(eb, obj):
-                    eb.vy = -eb.vy
-                    if hasattr(obj, "hit"):
-                        obj.hit()
-                    else:
-                        obj.destroy()
-            for obs in self.obstacles:
-                CollisionSystem.check_ball_obstacle(eb, obs)
+    def _check_extra_ball_goal(self, eb: ServerBall, index: int) -> bool:
+        """Check if extra ball scored and handle it. Returns True if goal."""
+        goal = eb.check_goal()
+        if goal == 0:
+            return False
+
+        scorer_id = "bottom" if goal == 1 else "top"
+        goal_x = (ARENA_LEFT + ARENA_RIGHT) / 2
+        goal_y = ARENA_TOP if goal == 1 else ARENA_BOTTOM
+        self.extra_balls.pop(index)
+        self._queue("extraBallGoal", {
+            "scorerId": scorer_id,
+            "goalX": goal_x,
+            "goalY": goal_y,
+        })
+        self._score_goal(scorer_id)
+        return True
+
+    def _check_extra_ball_vs_characters(self, eb: ServerBall):
+        """Check extra ball collision with both players."""
+        CollisionSystem.check_ball_character(eb, self.bottom_player)
+        CollisionSystem.check_ball_character(eb, self.top_player)
+
+    def _check_extra_ball_vs_shields(self, eb: ServerBall):
+        """Check extra ball collision with shields."""
+        for obj in self.field_objects:
+            if obj.alive and CollisionSystem.check_ball_shield(eb, obj):
+                eb.vy = -eb.vy
+                if hasattr(obj, "hit"):
+                    obj.hit()
+                else:
+                    obj.destroy()
+
+    def _check_extra_ball_vs_obstacles(self, eb: ServerBall):
+        """Check extra ball collision with obstacles."""
+        for obs in self.obstacles:
+            CollisionSystem.check_ball_obstacle(eb, obs)
 
     # ── Power-up logic ───────────────────────────────────────────
 
@@ -591,12 +621,12 @@ class GameSimulation:
         self._powerup_timer = 0.0
 
     def _update_cooldowns(self, dt: float):
-        for key in list(self._no_collide):
+        for key in self._no_collide.keys():
             self._no_collide[key] -= dt
             if self._no_collide[key] <= 0:
                 del self._no_collide[key]
 
-        for key in list(self._hit_cooldown):
+        for key in self._hit_cooldown.keys():
             self._hit_cooldown[key] -= dt
             if self._hit_cooldown[key] <= 0:
                 del self._hit_cooldown[key]

@@ -50,14 +50,14 @@ export class InputManager {
 
     #bindEvents() {
         // Keyboard
-        window.addEventListener('keydown', (e) => {
+        globalThis.addEventListener('keydown', (e) => {
             this.#keys.add(e.code);
             if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
                 e.preventDefault();
             }
         });
 
-        window.addEventListener('keyup', (e) => {
+        globalThis.addEventListener('keyup', (e) => {
             this.#keys.delete(e.code);
         });
 

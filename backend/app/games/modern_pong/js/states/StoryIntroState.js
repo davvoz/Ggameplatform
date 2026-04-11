@@ -17,12 +17,10 @@ export class StoryIntroState extends State {
     #timer = 0;
     #level = null;     // StoryModeConfig level object
     #portrait = null;
-    #phase = 0;
 
     enter(data) {
         this.#level = data.level;
         this.#timer = 0;
-        this.#phase = 0;
 
         const charData = CHARACTERS.find(c => c.id === this.#level.opponentId);
         this.#portrait = charData
@@ -50,7 +48,6 @@ export class StoryIntroState extends State {
 
     update(dt) {
         this.#timer += dt;
-        this.#phase += dt / 1000;
     }
 
     draw(ctx) {

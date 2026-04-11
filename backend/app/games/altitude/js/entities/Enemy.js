@@ -249,7 +249,7 @@ export class Enemy extends GameObject {
         const sprite = SpriteGenerator.get('enemies');
         if (sprite) {
             const typeIndex = sprite.types.indexOf(this.#type.toUpperCase());
-            const rowIndex = typeIndex >= 0 ? typeIndex : 0;
+            const rowIndex = Math.max(typeIndex, 0);
             const frameX = this.#animFrame * sprite.frameSize;
             const frameY = rowIndex * sprite.frameSize;
 
@@ -338,7 +338,6 @@ export class EnemyFactory {
     }
 
     static #getRandomType(altitude) {
-        const types = Object.keys(ENEMY_TYPES);
         
         // Weight types based on altitude
         let weights;

@@ -179,31 +179,20 @@ export class Character {
 
     update(dt) {
         // Update stun
-        if (this.#stunTimer > 0) {
-            this.#stunTimer = Math.max(0, this.#stunTimer - dt);
-            if (this.#stunTimer <= 0) {
-                this.#currentAnim = 'idle';
-            }
-        }
+        this.updateStunTimer(dt);
 
         // Update active effects
-        for (const [name, effect] of this.#activeEffects) {
-            effect.remaining -= dt;
-            if (effect.remaining <= 0) {
-                this.#activeEffects.delete(name);
-                if (name === 'giant' || name === 'shrink') {
-                    this.#sizeMultiplier = 1;
-                }
-                if (name === 'speed') {
-                    this.#speedMultiplier = 1;
-                }
-                if (name === 'mirror') {
-                    this.#controlsReversed = false;
-                }
-            }
-        }
+        this.updateActiveEffects(dt);
 
         // Update frame
+        this.updateAnimationFrame(dt);
+
+        // Friction when no input
+        this.#velocityX *= 0.85;
+        this.#velocityY *= 0.85;
+    }
+
+    updateAnimationFrame(dt) {
         this.#frameTimer += dt;
         const animKey = this.#currentAnim;
         const animData = this.#spriteSheet.anims;
@@ -219,17 +208,40 @@ export class Character {
                 this.#currentAnim = 'idle';
             }
         }
+    }
 
-        // Friction when no input
-        this.#velocityX *= 0.85;
-        this.#velocityY *= 0.85;
+    updateActiveEffects(dt) {
+        for (const [name, effect] of this.#activeEffects) {
+            effect.remaining -= dt;
+            if (effect.remaining <= 0) {
+                this.#activeEffects.delete(name);
+                if (name === 'giant' || name === 'shrink') {
+                    this.#sizeMultiplier = 1;
+                }
+                if (name === 'speed') {
+                    this.#speedMultiplier = 1;
+                }
+                if (name === 'mirror') {
+                    this.#controlsReversed = false;
+                }
+            }
+        }
+    }
+
+    updateStunTimer(dt) {
+        if (this.#stunTimer > 0) {
+            this.#stunTimer = Math.max(0, this.#stunTimer - dt);
+            if (this.#stunTimer <= 0) {
+                this.#currentAnim = 'idle';
+            }
+        }
     }
 
     draw(ctx) {
         const fs = this.#spriteSheet.frameSize;
         const animKeys = Object.keys(this.#spriteSheet.anims);
         const rowIdx = animKeys.indexOf(this.#currentAnim);
-        const row = rowIdx >= 0 ? rowIdx : 0;
+        const row = Math.max(0, rowIdx);
         const col = this.#frameIndex;
 
         const sx = col * fs;
@@ -263,131 +275,144 @@ export class Character {
             );
         }
 
-        // Effect indicators
+        this.#drawEffects(ctx, drawSize);
+        ctx.restore();
+    }
+
+    #drawEffects(ctx, drawSize) {
         if (this.#stunTimer > 0) {
-            ctx.restore();
-            ctx.save();
-            // Frozen flash overlay
-            const flash = 0.25 + Math.sin(Date.now() / 100) * 0.15;
-            ctx.globalAlpha = flash;
-            ctx.fillStyle = '#88ddff';
-            const r = this.hitboxRadius + 4;
-            ctx.beginPath();
-            ctx.arc(this.#x, this.#y, r, 0, Math.PI * 2);
-            ctx.fill();
-            // Stun sparkles
-            ctx.globalAlpha = 0.8;
-            ctx.fillStyle = '#ffffff';
-            for (let i = 0; i < 4; i++) {
-                const a = Date.now() / 300 + i * Math.PI / 2;
-                const sx = this.#x + Math.cos(a) * (r + 2);
-                const sy = this.#y + Math.sin(a) * (r + 2);
-                ctx.fillRect(sx - 1, sy - 1, 2, 2);
-            }
+            this.#drawStunEffect(ctx);
         }
 
         if (this.#sizeMultiplier !== 1) {
-            ctx.restore();
-            ctx.save();
-            const isGrow = this.#sizeMultiplier > 1;
-            const ringColor = isGrow ? '#39ff14' : '#ff1744';
-            const pulse = 0.4 + Math.sin(Date.now() / 300) * 0.2;
-            ctx.globalAlpha = pulse;
-            ctx.strokeStyle = ringColor;
-            ctx.lineWidth = 2;
-            ctx.shadowColor = ringColor;
-            ctx.shadowBlur = 6;
-            ctx.beginPath();
-            ctx.arc(this.#x, this.#y, this.hitboxRadius + 4, 0, Math.PI * 2);
-            ctx.stroke();
+            this.#drawSizeEffect(ctx);
         }
 
         if (this.#speedMultiplier > 1) {
-            ctx.restore();
-            ctx.save();
-            // Speed lines trailing behind the character
-            const alpha = 0.3 + Math.sin(Date.now() / 200) * 0.15;
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = '#ffee44';
-            ctx.lineWidth = 1.5;
-            ctx.shadowColor = '#ffee44';
-            ctx.shadowBlur = 4;
-            for (let i = -1; i <= 1; i++) {
-                const ox = i * 8;
-                ctx.beginPath();
-                ctx.moveTo(this.#x + ox, this.#y + drawSize / 2 + 2);
-                ctx.lineTo(this.#x + ox, this.#y + drawSize / 2 + 10);
-                ctx.stroke();
-            }
+            this.#drawSpeedEffect(ctx, drawSize);
         }
 
-        // Poison aura (controls reversed by venom)
         if (this.#controlsReversed) {
-            ctx.restore();
-            ctx.save();
-            const t = Date.now();
-            const pulse = 0.25 + Math.sin(t / 200) * 0.15;
-            const r = this.hitboxRadius + 6;
-            // Pulsing green aura
-            ctx.globalAlpha = pulse;
-            ctx.fillStyle = '#33cc33';
-            ctx.shadowColor = '#33ff33';
-            ctx.shadowBlur = 14;
-            ctx.beginPath();
-            ctx.arc(this.#x, this.#y, r, 0, Math.PI * 2);
-            ctx.fill();
-            // Outer ring
-            ctx.globalAlpha = pulse * 0.6;
-            ctx.strokeStyle = '#66ff33';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(this.#x, this.#y, r + 3, 0, Math.PI * 2);
-            ctx.stroke();
-            // Floating toxic bubbles
-            ctx.globalAlpha = 0.7;
-            ctx.fillStyle = '#66ff33';
-            for (let i = 0; i < 5; i++) {
-                const a = t / 600 + i * Math.PI * 2 / 5;
-                const br = r + 2 + Math.sin(t / 400 + i) * 3;
-                const bx = this.#x + Math.cos(a) * br;
-                const by = this.#y + Math.sin(a) * br;
-                const bs = 1.5 + Math.sin(t / 300 + i * 2) * 0.5;
-                ctx.beginPath();
-                ctx.arc(bx, by, bs, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            this.#drawPoisonEffect(ctx);
         }
 
-        // Super-ready glow
         if (this.#superCharge >= 100) {
-            ctx.restore();
-            ctx.save();
-            const t = Date.now();
-            const pulse = 0.35 + Math.sin(t / 180) * 0.25;
-            const superColor = this.#data.superShot?.color ?? this.#data.palette.accent;
-            ctx.globalAlpha = pulse;
-            ctx.strokeStyle = superColor;
-            ctx.lineWidth = 2.5;
-            ctx.shadowColor = superColor;
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            ctx.arc(this.#x, this.#y, this.hitboxRadius + 8, 0, Math.PI * 2);
-            ctx.stroke();
-            // Rotating sparkles
-            ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = 0.8;
-            for (let i = 0; i < 4; i++) {
-                const a = t / 400 + i * Math.PI / 2;
-                const sr = this.hitboxRadius + 10;
-                const sx = this.#x + Math.cos(a) * sr;
-                const sy = this.#y + Math.sin(a) * sr;
-                ctx.beginPath();
-                ctx.arc(sx, sy, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            this.#drawSuperEffect(ctx);
         }
+    }
 
+    #drawStunEffect(ctx) {
         ctx.restore();
+        ctx.save();
+        const flash = 0.25 + Math.sin(Date.now() / 100) * 0.15;
+        ctx.globalAlpha = flash;
+        ctx.fillStyle = '#88ddff';
+        const r = this.hitboxRadius + 4;
+        ctx.beginPath();
+        ctx.arc(this.#x, this.#y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = '#ffffff';
+        for (let i = 0; i < 4; i++) {
+            const a = Date.now() / 300 + i * Math.PI / 2;
+            const sx = this.#x + Math.cos(a) * (r + 2);
+            const sy = this.#y + Math.sin(a) * (r + 2);
+            ctx.fillRect(sx - 1, sy - 1, 2, 2);
+        }
+    }
+
+    #drawSizeEffect(ctx) {
+        ctx.restore();
+        ctx.save();
+        const isGrow = this.#sizeMultiplier > 1;
+        const ringColor = isGrow ? '#39ff14' : '#ff1744';
+        const pulse = 0.4 + Math.sin(Date.now() / 300) * 0.2;
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = ringColor;
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(this.#x, this.#y, this.hitboxRadius + 4, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    #drawSpeedEffect(ctx, drawSize) {
+        ctx.restore();
+        ctx.save();
+        const alpha = 0.3 + Math.sin(Date.now() / 200) * 0.15;
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#ffee44';
+        ctx.lineWidth = 1.5;
+        ctx.shadowColor = '#ffee44';
+        ctx.shadowBlur = 4;
+        for (let i = -1; i <= 1; i++) {
+            const ox = i * 8;
+            ctx.beginPath();
+            ctx.moveTo(this.#x + ox, this.#y + drawSize / 2 + 2);
+            ctx.lineTo(this.#x + ox, this.#y + drawSize / 2 + 10);
+            ctx.stroke();
+        }
+    }
+
+    #drawPoisonEffect(ctx) {
+        ctx.restore();
+        ctx.save();
+        const t = Date.now();
+        const pulse = 0.25 + Math.sin(t / 200) * 0.15;
+        const r = this.hitboxRadius + 6;
+        ctx.globalAlpha = pulse;
+        ctx.fillStyle = '#33cc33';
+        ctx.shadowColor = '#33ff33';
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(this.#x, this.#y, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = pulse * 0.6;
+        ctx.strokeStyle = '#66ff33';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(this.#x, this.#y, r + 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = '#66ff33';
+        for (let i = 0; i < 5; i++) {
+            const a = t / 600 + i * Math.PI * 2 / 5;
+            const br = r + 2 + Math.sin(t / 400 + i) * 3;
+            const bx = this.#x + Math.cos(a) * br;
+            const by = this.#y + Math.sin(a) * br;
+            const bs = 1.5 + Math.sin(t / 300 + i * 2) * 0.5;
+            ctx.beginPath();
+            ctx.arc(bx, by, bs, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    #drawSuperEffect(ctx) {
+        ctx.restore();
+        ctx.save();
+        const t = Date.now();
+        const pulse = 0.35 + Math.sin(t / 180) * 0.25;
+        const superColor = this.#data.superShot?.color ?? this.#data.palette.accent;
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = superColor;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = superColor;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(this.#x, this.#y, this.hitboxRadius + 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 4; i++) {
+            const a = t / 400 + i * Math.PI / 2;
+            const sr = this.hitboxRadius + 10;
+            const sx = this.#x + Math.cos(a) * sr;
+            const sy = this.#y + Math.sin(a) * sr;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     /**

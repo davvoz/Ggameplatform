@@ -77,7 +77,7 @@ export class Collectible extends GameObject {
         const sprite = SpriteGenerator.get('collectibles');
         if (sprite) {
             const typeIndex = sprite.types.indexOf(this.#type);
-            const rowIndex = typeIndex >= 0 ? typeIndex : 0;
+            const rowIndex = Math.max(typeIndex, 0);
             const frameX = this.#animFrame * sprite.frameSize;
             const frameY = rowIndex * sprite.frameSize;
 

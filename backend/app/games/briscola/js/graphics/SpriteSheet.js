@@ -5,7 +5,6 @@
  * methods to render individual cards
  */
 
-import { SUIT_LIST, SPRITE_ORDER } from '../core/Cards.js';
 
 // Available deck types
 export const DECK_TYPES = {
@@ -15,19 +14,17 @@ export const DECK_TYPES = {
 };
 
 export class SpriteSheet {
-    constructor() {
-        this.image = null;
-        this.loaded = false;
-        this.currentDeck = DECK_TYPES.PIACENTINO;
-        
-        // Card dimensions in sprite sheet (will be calculated)
-        this.cardWidth = 0;
-        this.cardHeight = 0;
-        
-        // Number of cards per row and column
-        this.cols = 10; // 10 cards per suit
-        this.rows = 4;  // 4 suits
-    }
+    image = null;
+    loaded = false;
+    currentDeck = DECK_TYPES.PIACENTINO;
+    
+    // Card dimensions in sprite sheet (will be calculated)
+    cardWidth = 0;
+    cardHeight = 0;
+    
+    // Number of cards per row and column
+    cols = 10; // 10 cards per suit
+    rows = 4;  // 4 suits
     
     /**
      * Get file path for a deck type
@@ -48,7 +45,7 @@ export class SpriteSheet {
      */
     load(src, deckSuffix = null) {
         // If deckSuffix is provided, use it to determine the file
-        const finalSrc = deckSuffix !== null ? this.getDeckFilePath(deckSuffix) : src;
+        const finalSrc = deckSuffix === null ? src : this.getDeckFilePath(deckSuffix);
         
         return new Promise((resolve, reject) => {
             this.image = new Image();

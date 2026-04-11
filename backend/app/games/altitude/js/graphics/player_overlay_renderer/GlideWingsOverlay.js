@@ -11,9 +11,14 @@ export class GlideWingsOverlay extends PlayerOverlay {
         const t       = this._t;
         const anchorY = y - h * 0.18;
 
-        const spread = anim === 'fall' ? 1.0
-                     : anim === 'jump' ? 0.18
-                     : 0.40 + Math.sin(t * 2.0) * 0.07;
+        let spread;
+        if (anim === 'fall') {
+            spread = 1;
+        } else if (anim === 'jump') {
+            spread = 0.18;
+        } else {
+            spread = 0.4 + Math.sin(t * 2) * 0.07;
+        }
 
         ctx.save();
         ctx.shadowColor = '#22dd77';
@@ -26,7 +31,7 @@ export class GlideWingsOverlay extends PlayerOverlay {
             const tipY  = anchorY + spread * 20;
 
             // Wing membrane
-            ctx.globalAlpha = 0.50 + spread * 0.32;
+            ctx.globalAlpha = 0.5 + spread * 0.32;
             ctx.fillStyle   = '#18b95a';
             ctx.strokeStyle = '#44ffaa';
             ctx.lineWidth   = 1.2;

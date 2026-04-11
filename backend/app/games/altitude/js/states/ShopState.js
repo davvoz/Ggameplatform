@@ -62,7 +62,7 @@ export class ShopState extends State {
 
         if (this.#tapUpgradeItem(tx, ty, listStartY, listEndY, itemHeight)) return;
         if (ty < listStartY && ty >= listStartY - 30) { this.#changeUpgrade(-1); return; }
-        if (ty > listEndY && ty <= listEndY + 30) { this.#changeUpgrade(1); return; }
+        if (ty > listEndY && ty <= listEndY + 30) this.#changeUpgrade(1);
     }
 
     #tapBackButton(tx, ty) {
@@ -268,8 +268,6 @@ export class ShopState extends State {
         ctx.fillStyle = COLORS.COIN_GOLD;
         ctx.font = 'bold 18px monospace';
         ctx.textAlign = 'center';
-        //ctx.fillText(`💰 ${this._game.getCoins()}`, DESIGN_WIDTH / 2, 62);
-        //shadow
         bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2 + 2, 62 + 2, 28,
             { align: 'center', color: 'rgba(0, 0, 0, 1)' });
         bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2, 62, 28,
@@ -398,7 +396,9 @@ export class ShopState extends State {
             const price = this.#getUpgradePrice(upgrade, currentLevel);
             const canAfford = this._game.getCoins() >= price;
 
-            this.#drawUpgradeItem(ctx, upgrade, y, isSelected, currentLevel, isMaxed, price, canAfford);
+            this.#drawUpgradeItem(ctx, upgrade, y, {
+                isSelected, currentLevel, isMaxed, price, canAfford
+            });
         });
 
         ctx.restore();
@@ -418,7 +418,8 @@ export class ShopState extends State {
         }
     }
 
-    #drawUpgradeItem(ctx, upgrade, y, isSelected, currentLevel, isMaxed, price, canAfford) {
+    #drawUpgradeItem(ctx, upgrade, y, state) {
+        const { isSelected, currentLevel, isMaxed, price, canAfford } = state;
         const x = 20;
         const width = DESIGN_WIDTH - 40;
         const height = 80;

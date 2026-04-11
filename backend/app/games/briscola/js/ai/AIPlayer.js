@@ -89,8 +89,6 @@ export class AIPlayer {
      * Hard AI: Advanced strategy with card counting
      */
     playHard(hand, opponentCard, briscola, gameState) {
-        const briscolaCards = hand.filter(c => c.suit.id === briscola.id);
-        const nonBriscolaCards = hand.filter(c => c.suit.id !== briscola.id);
         
         // Late game adjustments
         const isLateGame = gameState.deckRemaining <= 6;
@@ -185,12 +183,7 @@ export class AIPlayer {
 
         // Opponent played briscola - don't waste our briscola
         if (opponentCard.suit.id === briscola.id) {
-            // Only beat with higher briscola if very valuable on table
-            if (pointsOnTable >= 10) {
-                const higherBriscola = briscolaCards.filter(c => c.strength > opponentCard.strength);
-                if (higherBriscola.length > 0) return this.selectLowestCard(higherBriscola);
-            }
-            return this.selectLowestCard(nonBriscolaCards.length > 0 ? nonBriscolaCards : hand);
+            return this.#handleOpponentBriscola(hand, briscolaCards, nonBriscolaCards, opponentCard, pointsOnTable);
         }
 
         // If we can win without briscola and there are points
@@ -207,6 +200,15 @@ export class AIPlayer {
         }
 
         // Nothing valuable - play lowest
+        return this.selectLowestCard(nonBriscolaCards.length > 0 ? nonBriscolaCards : hand);
+    }
+
+    #handleOpponentBriscola(hand, briscolaCards, nonBriscolaCards, opponentCard, pointsOnTable) {
+        // Only beat with higher briscola if very valuable on table
+        if (pointsOnTable >= 10) {
+            const higherBriscola = briscolaCards.filter(c => c.strength > opponentCard.strength);
+            if (higherBriscola.length > 0) return this.selectLowestCard(higherBriscola);
+        }
         return this.selectLowestCard(nonBriscolaCards.length > 0 ? nonBriscolaCards : hand);
     }
     

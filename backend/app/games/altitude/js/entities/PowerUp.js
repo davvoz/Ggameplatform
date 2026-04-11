@@ -4,7 +4,7 @@
  */
 
 import { GameObject } from './GameObject.js';
-import { POWERUP_TYPES, COLORS } from '../config/Constants.js';
+import { POWERUP_TYPES } from '../config/Constants.js';
 import { SpriteGenerator } from '../graphics/SpriteGenerator.js';
 
 export class PowerUp extends GameObject {
@@ -90,7 +90,7 @@ export class PowerUp extends GameObject {
         const sprite = SpriteGenerator.get('powerups');
         if (sprite) {
             const typeIndex = sprite.types.indexOf(this.#type.toUpperCase());
-            const rowIndex = typeIndex >= 0 ? typeIndex : 0;
+            const rowIndex = Math.max(typeIndex, 0);
             const frameX = this.#animFrame * sprite.frameSize;
             const frameY = rowIndex * sprite.frameSize;
 

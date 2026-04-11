@@ -9,7 +9,6 @@ export class ScreenShake {
     #elapsed = 0;
     #offsetX = 0;
     #offsetY = 0;
-    #decay = 0.9;
 
     /**
      * Trigger a screen shake

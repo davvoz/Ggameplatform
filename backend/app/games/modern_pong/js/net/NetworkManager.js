@@ -36,8 +36,8 @@ export class NetworkManager {
 
     connect() {
         return new Promise((resolve, reject) => {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host;
+            const protocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = globalThis.location.host;
             this.#ws = new WebSocket(`${protocol}//${host}/ws/modern-pong`);
 
             this.#ws.onopen = () => {
@@ -56,12 +56,10 @@ export class NetworkManager {
             };
 
             this.#ws.onmessage = (event) => {
-                try {
+                
                     const data = JSON.parse(event.data);
                     this.#handleMessage(data);
-                } catch (e) {
-                    // Ignore malformed messages
-                }
+               
             };
         });
     }

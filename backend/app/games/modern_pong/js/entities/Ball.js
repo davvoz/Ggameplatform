@@ -33,7 +33,6 @@ export class Ball {
     #speedGlow = 0;         // ramps up with speed
     #shadowBlazeTimer = 0;  // shadow super — purple fire disc
     #speedBurstFlash = 0;   // flash on accelerate
-    #prevSpeedTier = 0;     // track speed tier changes
 
     constructor() {
         this.reset(1);
@@ -88,7 +87,6 @@ export class Ball {
         this.#speedGlow = 0;
         this.#shadowBlazeTimer = 0;
         this.#speedBurstFlash = 0;
-        this.#prevSpeedTier = 0;
     }
 
     freeze() { this.#frozen = true; }
@@ -239,7 +237,7 @@ export class Ball {
     get speedTier() {
         const r = this.speedRatio;
         if (r < 0.25) return 0;
-        if (r < 0.50) return 1;
+        if (r < 0.5) return 1;
         if (r < 0.75) return 2;
         return 3;
     }
@@ -249,10 +247,10 @@ export class Ball {
      */
     get speedColor() {
         const r = this.speedRatio;
-        if (r < 0.20) return COLORS.NEON_CYAN;
-        if (r < 0.40) return COLORS.NEON_GREEN;
-        if (r < 0.60) return COLORS.NEON_YELLOW;
-        if (r < 0.80) return COLORS.NEON_ORANGE;
+        if (r < 0.2) return COLORS.NEON_CYAN;
+        if (r < 0.4) return COLORS.NEON_GREEN;
+        if (r < 0.6) return COLORS.NEON_YELLOW;
+        if (r < 0.8) return COLORS.NEON_ORANGE;
         return COLORS.NEON_RED;
     }
 
@@ -274,7 +272,6 @@ export class Ball {
         const newTier = this.speedTier;
         if (newTier > oldTier) {
             this.#speedBurstFlash = 250;
-            this.#prevSpeedTier = newTier;
         }
     }
 
@@ -286,36 +283,44 @@ export class Ball {
         this.#y += this.#vy * sec;
 
         // Wall bouncing (left/right)
-        if (this.#x - this.#radius <= ARENA_LEFT) {
-            this.#x = ARENA_LEFT + this.#radius;
-            this.#vx = Math.abs(this.#vx);
-            this.#wallHitFlag = true;
-            this.triggerImpact();
-        } else if (this.#x + this.#radius >= ARENA_RIGHT) {
-            this.#x = ARENA_RIGHT - this.#radius;
-            this.#vx = -Math.abs(this.#vx);
-            this.#wallHitFlag = true;
-            this.triggerImpact();
-        }
+        this.handleWallBounce();
 
-        // Trail — length scales with speed
-        const dynamicMaxTrail = this.#maxTrail + Math.round(this.speedRatio * 14);
-        this.#trail.push({ x: this.#x, y: this.#y });
-        while (this.#trail.length > dynamicMaxTrail) {
-            this.#trail.shift();
-        }
+        // Trail — length scales with speeds
+        this.updateTrail();
 
         // Fireball timer
-        if (this.#fireball) {
-            this.#fireballTimer -= dt;
-            if (this.#fireballTimer <= 0) {
-                this.#fireball = false;
+        this.handleFireballTimer(dt);
+
+        // Magnet pull — strong, curves ball noticeably toward target goal
+        this.updateMagnetBehavior(dt, sec);
+
+        // Visual timers
+        this.#rotation += (Math.abs(this.#vx) + Math.abs(this.#vy)) * sec * 0.04;
+        this.#pulsePhase += dt * 0.006;
+        this.#speedGlow = Math.min(1, this.#speed / BALL_MAX_SPEED);
+        if (this.#impactFlash > 0) this.#impactFlash -= dt;
+        if (this.#speedBurstFlash > 0) this.#speedBurstFlash -= dt;
+
+        // Keep glow synced with speed (when no special FX)
+        if (!this.#fireball && this.#shadowBlazeTimer <= 0) {
+            this.#glowColor = this.speedColor;
+        }
+
+        // Shadow blaze timer — reset color when it expires
+        this.updateShadowBlazeTimer(dt);
+    }
+
+    updateShadowBlazeTimer(dt) {
+        if (this.#shadowBlazeTimer > 0) {
+            this.#shadowBlazeTimer -= dt;
+            if (this.#shadowBlazeTimer <= 0) {
                 this.#color = COLORS.WHITE;
                 this.#glowColor = this.speedColor;
             }
         }
+    }
 
-        // Magnet pull — strong, curves ball noticeably toward target goal
+    updateMagnetBehavior(dt, sec) {
         if (this.#magnetTimer > 0) {
             this.#magnetTimer -= dt;
             if (this.#magnetTimer <= 0) {
@@ -331,26 +336,38 @@ export class Ball {
                 this.#vx += (cx - this.#x) * 0.3 * sec;
             }
         }
+    }
 
-        // Visual timers
-        this.#rotation += (Math.abs(this.#vx) + Math.abs(this.#vy)) * sec * 0.04;
-        this.#pulsePhase += dt * 0.006;
-        this.#speedGlow = Math.min(1, this.#speed / BALL_MAX_SPEED);
-        if (this.#impactFlash > 0) this.#impactFlash -= dt;
-        if (this.#speedBurstFlash > 0) this.#speedBurstFlash -= dt;
-
-        // Keep glow synced with speed (when no special FX)
-        if (!this.#fireball && this.#shadowBlazeTimer <= 0) {
-            this.#glowColor = this.speedColor;
-        }
-
-        // Shadow blaze timer — reset color when it expires
-        if (this.#shadowBlazeTimer > 0) {
-            this.#shadowBlazeTimer -= dt;
-            if (this.#shadowBlazeTimer <= 0) {
+    handleFireballTimer(dt) {
+        if (this.#fireball) {
+            this.#fireballTimer -= dt;
+            if (this.#fireballTimer <= 0) {
+                this.#fireball = false;
                 this.#color = COLORS.WHITE;
                 this.#glowColor = this.speedColor;
             }
+        }
+    }
+
+    updateTrail() {
+        const dynamicMaxTrail = this.#maxTrail + Math.round(this.speedRatio * 14);
+        this.#trail.push({ x: this.#x, y: this.#y });
+        while (this.#trail.length > dynamicMaxTrail) {
+            this.#trail.shift();
+        }
+    }
+
+    handleWallBounce() {
+        if (this.#x - this.#radius <= ARENA_LEFT) {
+            this.#x = ARENA_LEFT + this.#radius;
+            this.#vx = Math.abs(this.#vx);
+            this.#wallHitFlag = true;
+            this.triggerImpact();
+        } else if (this.#x + this.#radius >= ARENA_RIGHT) {
+            this.#x = ARENA_RIGHT - this.#radius;
+            this.#vx = -Math.abs(this.#vx);
+            this.#wallHitFlag = true;
+            this.triggerImpact();
         }
     }
 
@@ -369,9 +386,17 @@ export class Ball {
         const x = this.#x;
         const y = this.#y;
 
-        const isShadowBlaze = this.#shadowBlazeTimer > 0;
+        this.#drawTrail(ctx, x, y, r);
+        this.#drawImpactFlash(ctx, x, y, r);
+        this.#drawDiscBody(ctx, x, y, r);
+        this.#drawSpinDetails(ctx, x, y, r);
+        this.#drawSpeedMomentum(ctx, x, y, r);
+        this.#drawFireballParticles(ctx, x, y, r);
+        this.#drawShadowBlaze(ctx, x, y, r);
+        this.#drawMagnetIndicator(ctx, x, y, r);
+    }
 
-        /* ---- 1. TRAIL — graduated disc echoes ---- */
+    #drawTrail(ctx, x, y, r) {
         for (let i = 0; i < this.#trail.length; i++) {
             const t = i / this.#trail.length;
             const pos = this.#trail[i];
@@ -383,8 +408,9 @@ export class Ball {
             ctx.fill();
         }
         ctx.globalAlpha = 1;
+    }
 
-        /* ---- 2. IMPACT FLASH ring ---- */
+    #drawImpactFlash(ctx, x, y, r) {
         if (this.#impactFlash > 0) {
             const frac = this.#impactFlash / 180;
             const ringR = r + (1 - frac) * 18;
@@ -395,7 +421,6 @@ export class Ball {
             ctx.beginPath();
             ctx.arc(this.#impactX, this.#impactY, ringR, 0, Math.PI * 2);
             ctx.stroke();
-            // Inner flash
             ctx.fillStyle = this.#glowColor;
             ctx.globalAlpha = frac * 0.35;
             ctx.beginPath();
@@ -403,21 +428,29 @@ export class Ball {
             ctx.fill();
             ctx.restore();
         }
+    }
 
-        /* ---- 3. OUTER GLOW (speed-reactive) ---- */
+    #drawDiscBody(ctx, x, y, r) {
+        const isShadowBlaze = this.#shadowBlazeTimer > 0;
+
         ctx.save();
         const glowSize = 6 + this.#speedGlow * 10;
         ctx.shadowColor = isShadowBlaze ? '#cc66ff' : this.#glowColor;
-        ctx.shadowBlur = this.#fireball ? 18 : isShadowBlaze ? 22 : glowSize;
+        let shadowBlur;
+        if (this.#fireball) {
+            shadowBlur = 18;
+        } else if (isShadowBlaze) {
+            shadowBlur = 22;
+        } else {
+            shadowBlur = glowSize;
+        }
+        ctx.shadowBlur = shadowBlur;
 
-        /* ---- 4. DISC BODY ---- */
-        // Outer ring
         ctx.fillStyle = this.#glowColor;
         ctx.beginPath();
         ctx.arc(x, y, r + 1, 0, Math.PI * 2);
         ctx.fill();
 
-        // Main disc fill — gradient
         const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, 0, x, y, r);
         grad.addColorStop(0, '#ffffff');
         grad.addColorStop(0.35, this.#color);
@@ -427,7 +460,6 @@ export class Ball {
         ctx.arc(x, y, r, 0, Math.PI * 2);
         ctx.fill();
 
-        // Inner concentric grooves
         ctx.strokeStyle = 'rgba(0,0,0,0.2)';
         ctx.lineWidth = 0.7;
         ctx.beginPath();
@@ -437,10 +469,21 @@ export class Ball {
         ctx.arc(x, y, r * 0.78, 0, Math.PI * 2);
         ctx.stroke();
 
-        /* ---- 5. SPINNING DETAIL — visible rotation ---- */
+        const pulse = Math.sin(this.#pulsePhase) * 0.5 + 0.5;
+        ctx.globalAlpha = 0.15 + pulse * 0.12;
+        ctx.strokeStyle = this.#glowColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(x, y, r + 2 + pulse * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        ctx.restore();
+    }
+
+    #drawSpinDetails(ctx, x, y, r) {
         const rot = this.#rotation;
 
-        // 2 opposite dark arc wedges (clearly rotating sectors)
         ctx.globalAlpha = 0.13;
         ctx.fillStyle = '#000000';
         for (let i = 0; i < 2; i++) {
@@ -453,7 +496,6 @@ export class Ball {
         }
         ctx.globalAlpha = 1;
 
-        // 4 dark groove spokes
         ctx.strokeStyle = 'rgba(0,0,0,0.16)';
         ctx.lineWidth = 0.8;
         for (let i = 0; i < 4; i++) {
@@ -464,7 +506,6 @@ export class Ball {
             ctx.stroke();
         }
 
-        // Bright accent spoke (asymmetric — sells the spin)
         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -472,7 +513,6 @@ export class Ball {
         ctx.lineTo(x + Math.cos(rot) * r * 0.88, y + Math.sin(rot) * r * 0.88);
         ctx.stroke();
 
-        // 6 edge tick marks (rotate with disc)
         ctx.strokeStyle = 'rgba(255,255,255,0.3)';
         ctx.lineWidth = 1;
         for (let i = 0; i < 6; i++) {
@@ -483,35 +523,21 @@ export class Ball {
             ctx.stroke();
         }
 
-        // Center hub
         ctx.fillStyle = 'rgba(0,0,0,0.22)';
         ctx.beginPath();
         ctx.arc(x, y, r * 0.16, 0, Math.PI * 2);
         ctx.fill();
 
-        /* ---- 6. SPECULAR HIGHLIGHT ---- */
         ctx.fillStyle = 'rgba(255,255,255,0.55)';
         ctx.beginPath();
         ctx.ellipse(x - r * 0.25, y - r * 0.25, r * 0.35, r * 0.2, -0.6, 0, Math.PI * 2);
         ctx.fill();
+    }
 
-        /* ---- 7. PULSE RING (travel animation) ---- */
-        const pulse = Math.sin(this.#pulsePhase) * 0.5 + 0.5;
-        ctx.globalAlpha = 0.15 + pulse * 0.12;
-        ctx.strokeStyle = this.#glowColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(x, y, r + 2 + pulse * 3, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-
-        ctx.restore();
-
-        /* ---- 7b. SPEED MOMENTUM VISUALS ---- */
+    #drawSpeedMomentum(ctx, x, y, r) {
         const sRatio = this.speedRatio;
-        const sTier  = this.speedTier;
+        const sTier = this.speedTier;
 
-        // Heat rings — appear from tier 1+, extra ring each tier
         if (sTier >= 1) {
             const sColor = this.speedColor;
             const now7 = Date.now();
@@ -530,7 +556,6 @@ export class Ball {
             ctx.restore();
         }
 
-        // Motion streaks — at tier 2+ draw velocity lines behind the ball
         if (sTier >= 2) {
             const spd = Math.hypot(this.#vx, this.#vy);
             if (spd > 0) {
@@ -557,7 +582,6 @@ export class Ball {
             }
         }
 
-        // Speed burst flash — brief expanding ring when tier changes
         if (this.#speedBurstFlash > 0) {
             const burstFrac = this.#speedBurstFlash / 250;
             const burstR = r + (1 - burstFrac) * 28;
@@ -570,7 +594,6 @@ export class Ball {
             ctx.beginPath();
             ctx.arc(x, y, burstR, 0, Math.PI * 2);
             ctx.stroke();
-            // Inner bright disc
             ctx.globalAlpha = burstFrac * 0.25;
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
@@ -578,8 +601,9 @@ export class Ball {
             ctx.fill();
             ctx.restore();
         }
+    }
 
-        /* ---- 8. FIREBALL PARTICLES ---- */
+    #drawFireballParticles(ctx, x, y, r) {
         if (this.#fireball) {
             for (let i = 0; i < 4; i++) {
                 const a = Math.random() * Math.PI * 2;
@@ -595,86 +619,82 @@ export class Ball {
             }
             ctx.globalAlpha = 1;
         }
+    }
 
-        /* ---- 8b. SHADOW BLAZE — dramatic purple inferno ---- */
-        if (isShadowBlaze) {
-            const now = Date.now();
-            const speed = Math.hypot(this.#vx, this.#vy);
-            const dirX = speed > 0 ? -this.#vx / speed : 0;
-            const dirY = speed > 0 ? -this.#vy / speed : 0;
+    #drawShadowBlaze(ctx, x, y, r) {
+        if (this.#shadowBlazeTimer <= 0) return;
 
-            // 1) Long flame tail — 18 layered particles fanning out behind
-            const blazeColors = ['#ffffff', '#ff66ff', '#cc66ff', '#9933ff', '#ff00ff', '#6600cc'];
-            for (let i = 0; i < 18; i++) {
-                const t = (i + Math.random()) * 0.6;
-                const spreadAmt = (Math.random() - 0.5) * (4 + t * 6);
-                const px = x + dirX * (r + t * 10) + (-dirY) * spreadAmt;
-                const py = y + dirY * (r + t * 10) + dirX * spreadAmt;
-                const sz = (3.5 - t * 0.15) * (0.6 + Math.random() * 0.8);
-                ctx.globalAlpha = 0.7 - t * 0.035;
-                ctx.fillStyle = blazeColors[i % blazeColors.length];
-                ctx.beginPath();
-                ctx.arc(px, py, Math.max(0.5, sz), 0, Math.PI * 2);
-                ctx.fill();
-            }
+        const now = Date.now();
+        const speed = Math.hypot(this.#vx, this.#vy);
+        const dirX = speed > 0 ? -this.#vx / speed : 0;
+        const dirY = speed > 0 ? -this.#vy / speed : 0;
 
-            // 2) Outer pulsing aura — big soft glow
-            ctx.save();
-            const auraPulse = 0.3 + Math.sin(now / 60) * 0.15;
-            ctx.globalAlpha = auraPulse;
-            ctx.shadowColor = '#ff00ff';
-            ctx.shadowBlur = 35;
-            ctx.fillStyle = '#cc66ff';
+        const blazeColors = ['#ffffff', '#ff66ff', '#cc66ff', '#9933ff', '#ff00ff', '#6600cc'];
+        for (let i = 0; i < 18; i++) {
+            const t = (i + Math.random()) * 0.6;
+            const spreadAmt = (Math.random() - 0.5) * (4 + t * 6);
+            const px = x + dirX * (r + t * 10) + (-dirY) * spreadAmt;
+            const py = y + dirY * (r + t * 10) + dirX * spreadAmt;
+            const sz = (3.5 - t * 0.15) * (0.6 + Math.random() * 0.8);
+            ctx.globalAlpha = 0.7 - t * 0.035;
+            ctx.fillStyle = blazeColors[i % blazeColors.length];
             ctx.beginPath();
-            ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+            ctx.arc(px, py, Math.max(0.5, sz), 0, Math.PI * 2);
             ctx.fill();
-            ctx.restore();
-
-            // 3) Double spinning rings
-            ctx.save();
-            ctx.globalAlpha = 0.6;
-            ctx.strokeStyle = '#ff00ff';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#ff00ff';
-            ctx.shadowBlur = 14;
-            const a1 = now / 100;
-            ctx.beginPath();
-            ctx.arc(x, y, r + 4, a1, a1 + Math.PI * 1.2);
-            ctx.stroke();
-            ctx.strokeStyle = '#cc66ff';
-            ctx.beginPath();
-            ctx.arc(x, y, r + 6, a1 + Math.PI, a1 + Math.PI * 2.2);
-            ctx.stroke();
-            ctx.restore();
-
-            // 4) Bright core flash — pulsing white/pink center
-            const corePulse = 0.5 + Math.sin(now / 50) * 0.3;
-            ctx.globalAlpha = corePulse;
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(x, y, r * 0.55, 0, Math.PI * 2);
-            ctx.fill();
-
-            // 5) Side sparks flying off perpendicular
-            ctx.fillStyle = '#ff66ff';
-            for (let i = 0; i < 4; i++) {
-                const phase = now / 120 + i * Math.PI * 0.5;
-                const sparkR = r + 5 + Math.sin(phase) * 6;
-                const sa = phase * 1.5;
-                const sx = x + Math.cos(sa) * sparkR;
-                const sy = y + Math.sin(sa) * sparkR;
-                ctx.globalAlpha = 0.6 + Math.sin(phase * 2) * 0.3;
-                ctx.beginPath();
-                ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.globalAlpha = 1;
         }
 
-        /* ---- 9. MAGNET INDICATOR (clear visual) ---- */
+        ctx.save();
+        const auraPulse = 0.3 + Math.sin(now / 60) * 0.15;
+        ctx.globalAlpha = auraPulse;
+        ctx.shadowColor = '#ff00ff';
+        ctx.shadowBlur = 35;
+        ctx.fillStyle = '#cc66ff';
+        ctx.beginPath();
+        ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ff00ff';
+        ctx.shadowBlur = 14;
+        const a1 = now / 100;
+        ctx.beginPath();
+        ctx.arc(x, y, r + 4, a1, a1 + Math.PI * 1.2);
+        ctx.stroke();
+        ctx.strokeStyle = '#cc66ff';
+        ctx.beginPath();
+        ctx.arc(x, y, r + 6, a1 + Math.PI, a1 + Math.PI * 2.2);
+        ctx.stroke();
+        ctx.restore();
+
+        const corePulse = 0.5 + Math.sin(now / 50) * 0.3;
+        ctx.globalAlpha = corePulse;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ff66ff';
+        for (let i = 0; i < 4; i++) {
+            const phase = now / 120 + i * Math.PI * 0.5;
+            const sparkR = r + 5 + Math.sin(phase) * 6;
+            const sa = phase * 1.5;
+            const sx = x + Math.cos(sa) * sparkR;
+            const sy = y + Math.sin(sa) * sparkR;
+            ctx.globalAlpha = 0.6 + Math.sin(phase * 2) * 0.3;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    #drawMagnetIndicator(ctx, x, y, r) {
         if (this.#magnetTimer > 0) {
             const now = Date.now();
-            // Pulsing pink/magenta ring
             ctx.save();
             ctx.globalAlpha = 0.5 + Math.sin(now / 150) * 0.2;
             ctx.strokeStyle = COLORS.NEON_PINK;
@@ -683,7 +703,6 @@ export class Ball {
             ctx.arc(x, y, r + 6, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Direction arrow showing where magnet pulls
             const arrowDir = this.#magnetTargetY > this.#y ? 1 : -1;
             const arrowOff = 12 + Math.sin(now / 200) * 3;
             const ax = x;
@@ -696,7 +715,7 @@ export class Ball {
             ctx.lineTo(ax + 4, ay);
             ctx.closePath();
             ctx.fill();
-            // Second smaller arrow
+
             const ay2 = y + arrowDir * (arrowOff + 7);
             ctx.globalAlpha = 0.4;
             ctx.beginPath();

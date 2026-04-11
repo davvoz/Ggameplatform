@@ -1,6 +1,6 @@
 import {
     ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM, ARENA_MID_Y,
-    AI_DIFFICULTY, CHARACTER_HALF,
+    AI_DIFFICULTY, 
 } from '../config/Constants.js';
 
 /**
@@ -219,29 +219,13 @@ export class AIController {
 
         for (const pu of this.#powerUps) {
             if (!pu.alive) continue;
-
-            // Only consider power-ups in our half (+ small buffer past mid)
-            if (character.isTopPlayer && pu.y > ARENA_MID_Y + 30) continue;
-            if (!character.isTopPlayer && pu.y < ARENA_MID_Y - 30) continue;
-
-            // Must be a desirable type
-            const puId = pu.type?.id;
-            if (!puId || !AIController.#DESIRED_POWERUPS.has(puId)) continue;
+            if (!this.#isPowerUpEligible(pu, character, ballComing)) continue;
 
             const dx = pu.x - character.x;
             const dy = pu.y - character.y;
             const dist = Math.hypot(dx, dy);
 
-            // When ball is coming, only grab very nearby power-ups
-            if (ballComing && dist > 70) continue;
-            // When ball is away, reach further
-            if (!ballComing && dist > 160) continue;
-
-            // Priority scoring: defensive powerups rank higher
-            let priority = 1;
-            if (puId === 'shield' || puId === 'grow') priority = 1.5;
-            if (puId === 'freeze') priority = 1.3;
-            const score = priority * (200 - dist);
+            const score = this.#scorePowerUp(pu.type?.id, dist);
 
             if (score > bestScore) {
                 bestScore = score;
@@ -250,5 +234,39 @@ export class AIController {
         }
 
         return best;
+    }
+
+    /**
+     * Check if a power-up is eligible for targeting.
+     */
+    #isPowerUpEligible(pu, character, ballComing) {
+        // Only consider power-ups in our half (+ small buffer past mid)
+        if (character.isTopPlayer && pu.y > ARENA_MID_Y + 30) return false;
+        if (!character.isTopPlayer && pu.y < ARENA_MID_Y - 30) return false;
+
+        // Must be a desirable type
+        const puId = pu.type?.id;
+        if (!puId || !AIController.#DESIRED_POWERUPS.has(puId)) return false;
+
+        const dx = pu.x - character.x;
+        const dy = pu.y - character.y;
+        const dist = Math.hypot(dx, dy);
+
+        // When ball is coming, only grab very nearby power-ups
+        if (ballComing && dist > 70) return false;
+        // When ball is away, reach further
+        if (!ballComing && dist > 160) return false;
+
+        return true;
+    }
+
+    /**
+     * Score a power-up by type priority and distance.
+     */
+    #scorePowerUp(puId, dist) {
+        let priority = 1;
+        if (puId === 'shield' || puId === 'grow') priority = 1.5;
+        if (puId === 'freeze') priority = 1.3;
+        return priority * (200 - dist);
     }
 }

@@ -31,7 +31,7 @@ export class MagnetOverlay extends PlayerOverlay {
         ctx.fillStyle = '#ffd700';
         ctx.shadowBlur = 4;
         for (let i = 0; i < 3; i++) {
-            const a = (i / 3) * Math.PI * 2 + t * 2.0;
+            const a = (i / 3) * Math.PI * 2 + t * 2;
             const depth = 0.5 + Math.sin(a) * 0.35;
             const cr = R * (0.7 + i * 0.13);
             ctx.globalAlpha = 0.4 + depth * 0.5;

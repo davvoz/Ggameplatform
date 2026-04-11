@@ -11,7 +11,7 @@ import { State } from './State.js';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, TIME_BONUS } from '../config/Constants.js';
 import { getLevelData, TOTAL_LEVELS } from '../config/LevelData.js';
 import { bitmapFont } from '../graphics/BitmapFont.js';
-const PHASE_DURATIONS = [0.8, 2.0]; // cumulative: phase 0 ends at 0.8, phase 1 at 2.8
+const PHASE_DURATIONS = [0.8, 2]; // cumulative: phase 0 ends at 0.8, phase 1 at 2.8
 
 export class LevelCompleteState extends State {
     #timer = 0;
@@ -36,8 +36,6 @@ export class LevelCompleteState extends State {
     #bonusAnim = 0;   // 0→1 for rolling-counter animation
     #levelScreenCount = 1;
 
-    // Celebration rays
-    #rays = [];
 
     // Lightning
     #flashAlpha        = 0;
@@ -76,11 +74,6 @@ export class LevelCompleteState extends State {
         // Notify platform of level completion
         this._game.platform.levelCompleted(this.#levelId);
 
-        // Generate celebration rays
-        this.#rays = Array.from({ length: 24 }, (_, i) => ({
-            angle: (i / 24) * Math.PI * 2,
-            speed: 60 + Math.random() * 40,
-        }));
 
         // Lightning
         this.#flashAlpha        = 0.9;
@@ -121,7 +114,7 @@ export class LevelCompleteState extends State {
         }
 
         // Flash decay
-        if (this.#flashAlpha > 0) this.#flashAlpha = Math.max(0, this.#flashAlpha - dt * 3.0);
+        if (this.#flashAlpha > 0) this.#flashAlpha = Math.max(0, this.#flashAlpha - dt * 3);
 
         if (this.#phase < 2) this.#updateLightning(dt);
         if (this.#phase >= 2) this.#processTapInput();
@@ -139,7 +132,7 @@ export class LevelCompleteState extends State {
                         this.#spawnStrike(ch.angle, len,
                             DESIGN_WIDTH / 2, DESIGN_HEIGHT * 0.22)
                     );
-                    ch.timer = 0.10 + Math.random() * 0.42;
+                    ch.timer = 0.1 + Math.random() * 0.42;
                 }
             }
         }
@@ -245,7 +238,8 @@ export class LevelCompleteState extends State {
             ctx.lineCap  = 'round';
             ctx.lineJoin = 'round';
 
-            const drawBoltPath = (bpts, sx, sy, fwdX, fwdY, pX, pY, bLen, alpha, lw, glowW, glowCol) => {
+            const drawBoltPath = (config) => {
+                const { bpts, sx, sy, fwdX, fwdY, pX, pY, bLen, alpha, lw, glowW, glowCol } = config;
                 // Glow pass
                 ctx.strokeStyle = glowCol;
                 ctx.shadowColor = glowCol;
@@ -288,8 +282,10 @@ export class LevelCompleteState extends State {
                 const perpY =  Math.cos(angle);
 
                 // Main bolt
-                drawBoltPath(strike.pts, cx, cy, cosA, sinA, perpX, perpY,
-                    len, sAlpha, 1.2, 3.5, '#88ccff');
+                drawBoltPath({
+                    bpts: strike.pts, sx: cx, sy: cy, fwdX: cosA, fwdY: sinA, pX: perpX, pY: perpY,
+                    bLen: len, alpha: sAlpha, lw: 1.2, glowW: 3.5, glowCol: '#88ccff'
+                });
 
                 // Branches
                 for (const br of strike.branches) {
@@ -297,10 +293,12 @@ export class LevelCompleteState extends State {
                     const brStartY = cy + sinA * len * br.f0 + perpY * br.j0;
                     const brAngle  = angle + br.angle;
                     const brLen    = len * br.lenFrac;
-                    drawBoltPath(br.pts, brStartX, brStartY,
-                        Math.cos(brAngle), Math.sin(brAngle),
-                        -Math.sin(brAngle), Math.cos(brAngle),
-                        brLen, sAlpha * 0.75, 0.8, 2.2, '#aaddff');
+                    drawBoltPath({
+                        bpts: br.pts, sx: brStartX, sy: brStartY,
+                        fwdX: Math.cos(brAngle), fwdY: Math.sin(brAngle),
+                        pX: -Math.sin(brAngle), pY: Math.cos(brAngle),
+                        bLen: brLen, alpha: sAlpha * 0.75, lw: 0.8, glowW: 2.2, glowCol: '#aaddff'
+                    });
                 }
             }
         }
@@ -310,7 +308,6 @@ export class LevelCompleteState extends State {
 
     // ── Celebration helpers ──────────────────────────────────────────────────
 
-    static #CONFETTI_COLORS = ['#FFD700','#FF4466','#00FFAA','#AA88FF','#00CCFF','#FF8800','#FF66CC','#ffffff'];
 
     /**
      * Spawn a single lightning strike on the given channel angle.
@@ -325,7 +322,7 @@ export class LevelCompleteState extends State {
         for (let i = 3; i < pts.length - 2; i++) {
             if (Math.random() < 0.22 && branches.length < 3) {
                 const side    = Math.random() < 0.5 ? 1 : -1;
-                const spread  = 0.45 + Math.random() * 0.70;
+                const spread  = 0.45 + Math.random() * 0.7;
                 const lenFrac = 0.18 + Math.random() * 0.28;
                 branches.push({
                     f0: pts[i].f,
@@ -337,7 +334,7 @@ export class LevelCompleteState extends State {
             }
         }
 
-        const life = 0.04 + Math.random() * 0.10;
+        const life = 0.04 + Math.random() * 0.1;
         return { pts, branches, angle: channelAngle, life, maxLife: life };
     }
 
@@ -346,8 +343,7 @@ export class LevelCompleteState extends State {
         for (let lv = 0; lv < levels; lv++) {
             const next = [];
             for (let i = 0; i < pts.length - 1; i++) {
-                next.push(pts[i]);
-                next.push({
+                next.push(pts[i], {
                     f: (pts[i].f + pts[i + 1].f) / 2,
                     j: (pts[i].j + pts[i + 1].j) / 2 + (Math.random() - 0.5) * 2 * disp,
                 });
@@ -372,7 +368,7 @@ export class LevelCompleteState extends State {
         } else if (t < 0.6) {
             scale = 1.3 - ((t - 0.3) / 0.3) * 0.3;
         } else {
-            scale = 1.0;
+            scale = 1;
         }
 
         const cx = DESIGN_WIDTH / 2;
@@ -387,11 +383,7 @@ export class LevelCompleteState extends State {
         ctx.shadowBlur = 30;
 
         ctx.fillStyle = COLORS.NEON_YELLOW ?? '#f0e060';
-        // ctx.font = 'bold 36px monospace';
-        // ctx.textAlign = 'center';
-        // ctx.textBaseline = 'middle';
-        // ctx.fillText('LEVEL CLEAR!', 0, 0);
-        //shadow
+
         bitmapFont.drawText(ctx, 'LEVEL CLEAR!', 4, 4, 40, {
             align: 'center', color: 'rgba(0, 0, 0, 1)',
         });
@@ -626,7 +618,7 @@ export class LevelCompleteState extends State {
         ctx.fillText('Medal', lx, currentY);
         ctx.fillStyle   = medalColor;
         ctx.shadowColor = medalColor;
-        ctx.shadowBlur  = medal !== 'none' ? 9 : 0;
+        ctx.shadowBlur  = medal === 'none' ? 0 : 9;
         ctx.font        = 'bold 13px monospace';
         ctx.textAlign   = 'right';
         ctx.fillText(`${medalIcon}  ${medalLabel}`, rx, currentY);
@@ -667,7 +659,6 @@ export class LevelCompleteState extends State {
 
         btns.forEach((btn, i) => {
             const bx = startX + i * (bw + gap);
-            const selected = i === this.#selectedBtn;
 
             ctx.fillStyle = COLORS.UI_PANEL;
             ctx.strokeStyle =  COLORS.UI_BORDER;

@@ -37,7 +37,6 @@ export class LobbyState extends State {
     #betAmount = 0;
     #roundsToWin = DEFAULT_ROUNDS_TO_WIN;
     #selectedStage = 0;
-    #waitingText = '';
     #errorMessage = '';
     #errorTimer = 0;
     #phase = 0;
@@ -134,8 +133,12 @@ export class LobbyState extends State {
 
     #drawCreateRoom(ctx) {
         const w = DESIGN_WIDTH;
+        this.#drawBetSection(ctx, w);
+        this.#drawRoundsSection(ctx, w);
+        this.#drawStageSection(ctx, w);
+    }
 
-        // --- BET ---
+    #drawBetSection(ctx, w) {
         const betY = 80;
         ctx.fillStyle = CLR.TEXT_MID;
         ctx.font = `bold 10px ${FNT}`;
@@ -150,8 +153,9 @@ export class LobbyState extends State {
         ctx.fillStyle = CLR.TEXT_LO;
         ctx.font = `7px ${FNT}`;
         ctx.fillText('(0 = JUST FOR FUN)', w / 2, betY + 42);
+    }
 
-        // --- FIRST TO ---
+    #drawRoundsSection(ctx, w) {
         const roundsY = 150;
         ctx.fillStyle = CLR.TEXT_MID;
         ctx.font = `bold 10px ${FNT}`;
@@ -184,8 +188,9 @@ export class LobbyState extends State {
             ctx.textBaseline = 'middle';
             ctx.fillText(String(opts[i]), bx + rBtnW / 2, rBy + rBtnH / 2);
         }
+    }
 
-        // --- STAGE ---
+    #drawStageSection(ctx, w) {
         const stageY = 220;
         ctx.fillStyle = CLR.TEXT_MID;
         ctx.font = `bold 10px ${FNT}`;
@@ -294,11 +299,12 @@ export class LobbyState extends State {
 
     #setupCreateButtons() {
         const w = DESIGN_WIDTH;
-        const buttons = [];
 
         // --- BET -/+ ---
-        buttons.push({ x: 80,  y: 96, w: 50, h: 30, label: '-', action: 'betMinus', color: CLR.GOLD, fontSize: 14 });
-        buttons.push({ x: 270, y: 96, w: 50, h: 30, label: '+', action: 'betPlus',  color: CLR.GOLD, fontSize: 14 });
+        const betButtons = [
+            { x: 80,  y: 96, w: 50, h: 30, label: '-', action: 'betMinus', color: CLR.GOLD, fontSize: 14 },
+            { x: 270, y: 96, w: 50, h: 30, label: '+', action: 'betPlus',  color: CLR.GOLD, fontSize: 14 },
+        ];
 
         // --- ROUNDS preset hitboxes ---
         const opts = ROUNDS_TO_WIN_OPTIONS;
@@ -306,8 +312,9 @@ export class LobbyState extends State {
         const rTotalW = opts.length * rBtnW + (opts.length - 1) * rSpace;
         const rStartX = (w - rTotalW) / 2;
         const rBy = 150 + 18;
+        const roundsButtons = [];
         for (let i = 0; i < opts.length; i++) {
-            buttons.push({
+            roundsButtons.push({
                 x: rStartX + i * (rBtnW + rSpace),
                 y: rBy, w: rBtnW, h: 28,
                 label: '', action: 'rounds_' + opts[i],
@@ -320,13 +327,14 @@ export class LobbyState extends State {
         const cols = 4;
         const sBtnW = 88, sBtnH = 30, sSpX = 6, sSpY = 6;
         const sby = 220 + 18;
+        const stageButtons = [];
         for (let idx = 0; idx < stages.length; idx++) {
             const col = idx % cols;
             const row = Math.floor(idx / cols);
             const itemsInRow = Math.min(cols, stages.length - row * cols);
             const rowW = itemsInRow * sBtnW + (itemsInRow - 1) * sSpX;
             const rowStartX = (w - rowW) / 2;
-            buttons.push({
+            stageButtons.push({
                 x: rowStartX + col * (sBtnW + sSpX),
                 y: sby + row * (sBtnH + sSpY),
                 w: sBtnW, h: sBtnH,
@@ -335,21 +343,21 @@ export class LobbyState extends State {
             });
         }
 
-        // --- CREATE ---
-        buttons.push({
-            x: 40, y: 340, w: w - 80, h: 46,
-            label: 'CREATE ROOM', action: 'doCreate',
-            color: CLR.GREEN, fontSize: 15,
-        });
+        // --- CREATE and BACK ---
+        const actionButtons = [
+            {
+                x: 40, y: 340, w: w - 80, h: 46,
+                label: 'CREATE ROOM', action: 'doCreate',
+                color: CLR.GREEN, fontSize: 15,
+            },
+            {
+                x: 60, y: 394, w: w - 120, h: 36,
+                label: 'BACK', action: 'lobbyBack',
+                color: CLR.TEXT_MID, fontSize: 10,
+            },
+        ];
 
-        // --- BACK ---
-        buttons.push({
-            x: 60, y: 394, w: w - 120, h: 36,
-            label: 'BACK', action: 'lobbyBack',
-            color: CLR.TEXT_MID, fontSize: 10,
-        });
-
-        this._game.ui.setButtons(buttons);
+        this._game.ui.setButtons([...betButtons, ...roundsButtons, ...stageButtons, ...actionButtons]);
 
         this._game.ui.on('betMinus', () => { this.#betAmount = Math.max(0, this.#betAmount - 10); });
         this._game.ui.on('betPlus',  () => { this.#betAmount = Math.min(1000, this.#betAmount + 10); });
@@ -380,9 +388,11 @@ export class LobbyState extends State {
             buttons.push({ x: sx + col * sz, y: sy + row * (sz + 4), w: sz - 4, h: sz - 4, label: keys[i], action: `key_${keys[i]}`, color: CLR.ACCENT, fontSize: 14 });
         }
         const actionY = sy + Math.ceil(keys.length / cols) * (sz + 4) + 4;
-        buttons.push({ x: sx,       y: actionY, w: 130, h: 36, label: 'DEL',  action: 'keyDel', color: CLR.RED,   fontSize: 13 });
-        buttons.push({ x: sx + 140, y: actionY, w: cols * sz - 140, h: 36, label: 'JOIN',  action: 'doJoin', color: CLR.GREEN, fontSize: 13 });
-        buttons.push({ x: 60,  y: DESIGN_HEIGHT - 56, w: DESIGN_WIDTH - 120, h: 36, label: 'BACK', action: 'lobbyBack', color: CLR.TEXT_MID, fontSize: 10 });
+        buttons.push(
+            { x: sx,       y: actionY, w: 130, h: 36, label: 'DEL',  action: 'keyDel', color: CLR.RED,   fontSize: 13 },
+            { x: sx + 140, y: actionY, w: cols * sz - 140, h: 36, label: 'JOIN',  action: 'doJoin', color: CLR.GREEN, fontSize: 13 },
+            { x: 60,  y: DESIGN_HEIGHT - 56, w: DESIGN_WIDTH - 120, h: 36, label: 'BACK', action: 'lobbyBack', color: CLR.TEXT_MID, fontSize: 10 }
+        );
 
         this._game.ui.setButtons(buttons);
         for (const ch of keys) {
@@ -448,6 +458,7 @@ export class LobbyState extends State {
                 (stage.obstacles ?? []).map(o => ({ x: o.x, y: o.y, w: o.w, h: o.h })),
             );
         } catch (e) {
+            console.warn('Failed to create or connect to room:', e);
             this.showError('COULD NOT CONNECT TO SERVER');
         }
     }
@@ -498,6 +509,8 @@ export class LobbyState extends State {
                 username: 'Player',
             });
         } catch (e) {
+            console.warn('Failed to join room:', e);
+
             this.showError('COULD NOT CONNECT TO SERVER');
         }
     }

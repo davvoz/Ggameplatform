@@ -4,7 +4,7 @@
  */
 
 import { State } from './State.js';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, FONTS } from '../config/Constants.js';
+import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS } from '../config/Constants.js';
 
 export class PauseState extends State {
     #selectedOption = 0;

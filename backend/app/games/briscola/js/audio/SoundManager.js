@@ -6,24 +6,24 @@
  */
 
 export class SoundManager {
+    context = null;
+    isUnlocked = false;
+    isMuted = false;
+    volume = 0.5;
+    
+    sounds = {
+        cardPlay: null,
+        cardFlip: null,
+        cardShuffle: null,
+        pointsWin: null,
+        roundWin: null,
+        roundLose: null,
+        gameWin: null,
+        gameLose: null,
+        buttonClick: null
+    };
+
     constructor() {
-        this.context = null;
-        this.isUnlocked = false;
-        this.isMuted = false;
-        this.volume = 0.5;
-        
-        this.sounds = {
-            cardPlay: null,
-            cardFlip: null,
-            cardShuffle: null,
-            pointsWin: null,
-            roundWin: null,
-            roundLose: null,
-            gameWin: null,
-            gameLose: null,
-            buttonClick: null
-        };
-        
         // Unlock audio on first user interaction
         this.setupUnlock();
     }
@@ -36,7 +36,7 @@ export class SoundManager {
             if (this.isUnlocked) return;
             
             // Create audio context
-            this.context = new (window.AudioContext || window.webkitAudioContext)();
+            this.context = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
             
             // Create and play a silent buffer to unlock
             const buffer = this.context.createBuffer(1, 1, 22050);

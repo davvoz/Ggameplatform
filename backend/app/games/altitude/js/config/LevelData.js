@@ -531,8 +531,10 @@ export function generateInfiniteScreen(screenIndex) {
     const platforms = [];
 
     // Bottom landing row — always two safe normals
-    platforms.push({ x: 0.2 + rng(1) * 0.2, y: 0.9, type: 'normal' });
-    platforms.push({ x: 0.6 + rng(2) * 0.2, y: 0.9, type: 'normal' });
+    platforms.push(
+        { x: 0.2 + rng(1) * 0.2, y: 0.9, type: 'normal' },
+        { x: 0.6 + rng(2) * 0.2, y: 0.9, type: 'normal' }
+    );
 
     // Middle rows — two platforms each
     for (let i = 1; i < yRows.length - 1; i++) {

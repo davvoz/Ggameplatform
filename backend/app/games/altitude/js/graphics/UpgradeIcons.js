@@ -59,7 +59,7 @@ const _DRAW = {
     double_jump(ctx, cx, cy, S) {
         // Two stacked arrows
         ctx.fillStyle = '#aaffaa'; ctx.strokeStyle = '#008833'; ctx.lineWidth = 1.2;
-        for (const [oy, alpha] of [[S*0.1, 1.0], [S*0.32, 0.55]]) {
+        for (const [oy, alpha] of [[S*0.1, 1], [S*0.32, 0.55]]) {
             ctx.globalAlpha = alpha;
             ctx.beginPath();
             ctx.moveTo(cx,          cy - oy - S*0.18);
@@ -92,7 +92,7 @@ const _DRAW = {
     dash(ctx, cx, cy, S) {
         // Speed lines + arrow tip
         ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 1.5;
-        for (const [yOff, wScale] of [[-S*0.15, 0.7], [0, 1.0], [S*0.15, 0.7]]) {
+        for (const [yOff, wScale] of [[-S*0.15, 0.7], [0, 1], [S*0.15, 0.7]]) {
             ctx.globalAlpha = wScale;
             ctx.beginPath();
             ctx.moveTo(S*0.1,  cy + yOff);

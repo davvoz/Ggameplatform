@@ -184,7 +184,7 @@ export class HUDRenderer {
         if (elapsed > 0) {
             ctx.shadowColor = color;
             ctx.shadowBlur  = 10;
-            donutArc(0, currentAng, color, 0.90);
+            donutArc(0, currentAng, color, 0.9);
             ctx.shadowBlur = 0;
         }
 

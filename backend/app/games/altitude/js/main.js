@@ -6,7 +6,6 @@
 import { Game } from './core/Game.js';
 
 let game = null;
-let sessionStarted = false;
 let parentOrigin = null;
 
 // ═══════════════════════════════════════════════════════════════
@@ -16,7 +15,7 @@ let parentOrigin = null;
 window.addEventListener('message', (event) => {
     try {
         const msg = event.data;
-        if (!msg || !msg.type) return;
+        if (!msg?.type) return;
         if (msg.protocolVersion !== '1.0.0') return;
         if (parentOrigin && event.origin !== parentOrigin) {
             console.warn('[Altitude] Rejected message from untrusted origin:', event.origin);
@@ -33,75 +32,6 @@ window.addEventListener('message', (event) => {
         }
     } catch (e) { console.error('[Altitude] platform msg error', e); }
 });
-
-// ═══════════════════════════════════════════════════════════════
-// SDK INTEGRATION
-// ═══════════════════════════════════════════════════════════════
-
-async function initSDK() {
-    if (typeof PlatformSDK === 'undefined') {
-        console.warn('[Altitude] PlatformSDK not available');
-        return;
-    }
-    
-    try {
-        await PlatformSDK.init({
-            onStart: () => {},
-            onPause: () => {
-                if (game && game.isPlaying()) {
-                    game.pause();
-                }
-            },
-            onResume: () => {
-                if (game && game.isPaused()) {
-                    game.resume();
-                }
-            }
-        });
-    } catch (e) {
-        console.warn('[Altitude] SDK init error:', e);
-    }
-}
-
-function startGameSession() {
-    if (sessionStarted) return;
-    sessionStarted = true;
-    
-    if (typeof PlatformSDK !== 'undefined') {
-        try {
-            const targetOrigin = document.referrer 
-                ? new URL(document.referrer).origin 
-                : window.location.origin;
-            
-            window.parent.postMessage({
-                type: 'gameStarted',
-                payload: {},
-                timestamp: Date.now(),
-                protocolVersion: '1.0.0'
-            }, targetOrigin);
-        } catch (e) {
-            console.error('[Altitude] Failed to start session:', e);
-        }
-    }
-}
-
-function sendScoreToPlatform(finalScore, extraData = {}) {
-    if (typeof PlatformSDK !== 'undefined') {
-        try {
-            PlatformSDK.gameOver(finalScore, {
-                extra_data: {
-                    altitude: extraData.altitude || 0,
-                    coins: extraData.coins || 0,
-                    enemies_defeated: extraData.enemiesDefeated || 0,
-                    ...extraData
-                }
-            });
-        } catch (e) {
-            console.error('[Altitude] Failed to send score:', e);
-        }
-    }
-    sessionStarted = false;
-}
 
 function showXPBanner(xpAmount, payload) {
     if (!document.querySelector('#alt-xp-styles')) {
@@ -246,10 +176,8 @@ function showLevelUpNotification(data) {
 }
 
 // Global exports for platform
-window.startGameSession = startGameSession;
-window.sendScoreToPlatform = sendScoreToPlatform;
-window.showXPBanner = showXPBanner;
-window.showLevelUpNotification = showLevelUpNotification;
+globalThis.showXPBanner = showXPBanner;
+globalThis.showLevelUpNotification = showLevelUpNotification;
 
 // ═══════════════════════════════════════════════════════════════
 // INITIALIZATION
@@ -257,17 +185,15 @@ window.showLevelUpNotification = showLevelUpNotification;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const canvas = document.getElementById('game-canvas');
-    
+
     if (!canvas) {
         console.error('[Altitude] Canvas not found!');
         return;
     }
-    
-    await initSDK();
-    
+
     game = await Game.create(canvas);
-    window.game = game;
-    
+    globalThis.game = game;
+
     // Hide loading screen
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {

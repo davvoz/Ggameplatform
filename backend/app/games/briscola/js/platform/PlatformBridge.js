@@ -6,22 +6,20 @@
  */
 
 export class PlatformBridge {
-    constructor() {
-        this.sdk = null;
-        this.isAvailable = false;
-        this.config = null;
-        this.userId = null;
-        this.username = null;
-    }
+    sdk = null;
+    isAvailable = false;
+    config = null;
+    userId = null;
+    username = null;
     
     /**
      * Initialize platform SDK
      */
     async init() {
         // Check if PlatformSDK is available
-        if (typeof PlatformSDK !== 'undefined') {
+        if (globalThis.PlatformSDK) {
             try {
-                this.sdk = PlatformSDK;
+                this.sdk = globalThis.PlatformSDK;
                 
                 await this.sdk.init({
                     onPause: () => this.handlePause(),
@@ -37,7 +35,7 @@ export class PlatformBridge {
 
                 
             } catch (error) {
-
+                console.error('[PlatformBridge] SDK initialization failed:', error);
                 this.isAvailable = false;
             }
         } else {
@@ -53,12 +51,12 @@ export class PlatformBridge {
         const maxWait = 3000;
         const startTime = Date.now();
         
-        while (!window.platformConfig && (Date.now() - startTime < maxWait)) {
+        while (!globalThis.platformConfig && (Date.now() - startTime < maxWait)) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
         
-        if (window.platformConfig) {
-            this.config = window.platformConfig;
+        if (globalThis.platformConfig) {
+            this.config = globalThis.platformConfig;
             this.userId = this.config.userId;
             this.username = this.config.username;
 
@@ -137,21 +135,21 @@ export class PlatformBridge {
      */
     handlePause() {
         // Dispatch custom event for game to handle
-        window.dispatchEvent(new CustomEvent('platform:pause'));
+        globalThis.dispatchEvent(new CustomEvent('platform:pause'));
     }
     
     /**
      * Handle platform resume event
      */
     handleResume() {
-        window.dispatchEvent(new CustomEvent('platform:resume'));
+        globalThis.dispatchEvent(new CustomEvent('platform:resume'));
     }
     
     /**
      * Handle platform exit event
      */
     handleExit() {
-        window.dispatchEvent(new CustomEvent('platform:exit'));
+        globalThis.dispatchEvent(new CustomEvent('platform:exit'));
     }
     
     /**

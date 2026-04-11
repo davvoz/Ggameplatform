@@ -163,10 +163,10 @@ class BitmapFont {
         const prevA   = ctx.globalAlpha;
         ctx.globalAlpha = prevA * alpha;
 
-        if (color !== null) {
-            this.#tintedDraw(ctx, text, originX, originY, charHeight, cw, spaceW, letterSpacing, color, totalW);
+        if (color === null) {
+            this.#renderGlyphs(ctx, text, originX, originY, charHeight, { cw, spaceW, letterSpacing });
         } else {
-            this.#renderGlyphs(ctx, text, originX, originY, charHeight, cw, spaceW, letterSpacing);
+            this.#tintedDraw(ctx, text, originX, originY, charHeight, { cw, spaceW, letterSpacing, color, totalW });
         }
 
         ctx.globalAlpha = prevA;
@@ -178,7 +178,7 @@ class BitmapFont {
      * Render glyphs directly onto ctx.
      * originX/originY are the top-left of the text block (not centre).
      */
-    #renderGlyphs(ctx, text, originX, originY, charHeight, cw, spaceW, letterSpacing) {
+    #renderGlyphs(ctx, text, originX, originY, charHeight, { cw, spaceW, letterSpacing }) {
         let drawX = originX;
         for (const ch of text) {
             const isLower = ch >= 'a' && ch <= 'z';
@@ -234,7 +234,7 @@ class BitmapFont {
      *   4. destination-in-draw tmp1 onto tmp2 → trim away the color spill outside glyphs
      *   5. Composite tmp2 onto the main canvas
      */
-    #tintedDraw(ctx, text, originX, originY, charHeight, cw, spaceW, letterSpacing, color, totalW) {
+    #tintedDraw(ctx, text, originX, originY, charHeight, { cw, spaceW, letterSpacing, color, totalW }) {
         const tw = Math.ceil(totalW) + 2 || 2;
         const th = Math.ceil(charHeight) + 2;
 
@@ -278,7 +278,7 @@ class BitmapFont {
         tc2.globalCompositeOperation = 'source-over';
 
         // tmp1 — raw glyphs, transparent background
-        this.#renderGlyphs(tc1, text, 0, 0, charHeight, cw, spaceW, letterSpacing);
+        this.#renderGlyphs(tc1, text, 0, 0, charHeight, { cw, spaceW, letterSpacing: letterSpacing });
 
         // Step A: fill with target color
         tc2.fillStyle = color;

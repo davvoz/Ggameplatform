@@ -9,7 +9,7 @@ import { PlayerOverlay } from './PlayerOverlay.js';
 export class ShockwaveOverlay extends PlayerOverlay {
     draw(ctx, x, y, h) {
         const t  = this._t;
-        const cy = y + h * 0.10;
+        const cy = y + h * 0.1;
 
         ctx.save();
         ctx.shadowColor = '#ffdd00';

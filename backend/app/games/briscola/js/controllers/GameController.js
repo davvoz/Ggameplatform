@@ -48,7 +48,6 @@ export class GameController {
      */
     startGame() {
         const state = this.app.gameEngine.getState();
-        const ui = this.app.uiManager;
         
         // Set up engine callbacks
         this.app.gameEngine.onStateChange = (state) => this.onStateChange(state);
@@ -162,7 +161,7 @@ export class GameController {
         // Show card on table first (before calling playCard which triggers onRoundEnd)
         // Check if first slot already has a card (for online mode where engine state may not be updated)
         const firstSlot = document.getElementById('first-played');
-        const hasFirstCard = firstSlot && firstSlot.querySelector('.card');
+        const hasFirstCard = firstSlot?.querySelector('.card');
         const position = hasFirstCard ? 2 : 1;
         await this.app.uiManager.playCardToTable(card, position, false);
         
@@ -408,7 +407,7 @@ export class GameController {
         if (card) {
             // Determine position based on what's visually on the table
             const firstSlot = document.getElementById('first-played');
-            const hasFirstCard = firstSlot && firstSlot.querySelector('.card');
+            const hasFirstCard = firstSlot?.querySelector('.card');
             const position = hasFirstCard ? 2 : 1;
             await this.app.uiManager.playCardToTable(card, position, true);
             

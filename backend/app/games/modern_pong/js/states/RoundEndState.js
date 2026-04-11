@@ -58,17 +58,36 @@ export class RoundEndState extends State {
         this.#textScale = Math.min(1, this.#textScale + dt / 200);
 
         // Particles while celebrating
-        if (this.#timer < 1500 && Math.random() < 0.1) {
-            const scorer = this.#scorerId === 'bottom'
-                ? this._game.bottomPlayer
-                : this._game.topPlayer;
-            this._game.particles.sparkle(
-                scorer.x, scorer.y - 20, 3,
-                scorer.data.palette.accent
-            );
-        }
+        this.emitSparkleEffect();
 
         // Deuce sparkle burst (one-time at ~800 ms)
+        this.emitDeuceParticles();
+
+        this._game.topPlayer.update(dt);
+        this._game.bottomPlayer.update(dt);
+        this._game.particles.update(dt);
+        this._game.tweens.update(dt);
+
+        // In multiplayer, the server drives round transitions via 'roundStart'.
+        // In CPU/story mode, use the local timer.
+        this.handleRoundTransition();
+        // For multiplayer: Game.js handles the 'roundStart' network event,
+        // which calls startNextRound() when the server is ready.
+    }
+
+    handleRoundTransition() {
+        if (this._game.isVsCPU) {
+            const delay = (this._game.isDeuce || this._game.advantage)
+                ? ROUND_END_DELAY + 1000
+                : ROUND_END_DELAY;
+
+            if (this.#timer >= delay) {
+                this._game.startNextRound(this.#scorerId);
+            }
+        }
+    }
+
+    emitDeuceParticles() {
         if (!this.#deuceParticlesDone && this.#timer >= 800) {
             if (this._game.isDeuce || this._game.advantage) {
                 this.#deuceParticlesDone = true;
@@ -82,25 +101,18 @@ export class RoundEndState extends State {
                 this._game.shake.trigger(6, 200);
             }
         }
+    }
 
-        this._game.topPlayer.update(dt);
-        this._game.bottomPlayer.update(dt);
-        this._game.particles.update(dt);
-        this._game.tweens.update(dt);
-
-        // In multiplayer, the server drives round transitions via 'roundStart'.
-        // In CPU/story mode, use the local timer.
-        if (this._game.isVsCPU) {
-            const delay = (this._game.isDeuce || this._game.advantage)
-                ? ROUND_END_DELAY + 1000
-                : ROUND_END_DELAY;
-
-            if (this.#timer >= delay) {
-                this._game.startNextRound(this.#scorerId);
-            }
+    emitSparkleEffect() {
+        if (this.#timer < 1500 && Math.random() < 0.1) {
+            const scorer = this.#scorerId === 'bottom'
+                ? this._game.bottomPlayer
+                : this._game.topPlayer;
+            this._game.particles.sparkle(
+                scorer.x, scorer.y - 20, 3,
+                scorer.data.palette.accent
+            );
         }
-        // For multiplayer: Game.js handles the 'roundStart' network event,
-        // which calls startNextRound() when the server is ready.
     }
 
     draw(ctx) {
@@ -185,20 +197,7 @@ export class RoundEndState extends State {
         const fontSize = Math.round(22 * eased * pulse);
         const glowSize = 14 + 8 * Math.sin(t / 200);
 
-        let label, primary, secondary;
-        if (isDeuce) {
-            label = '\u26A1 DEUCE! \u26A1';
-            primary = '#ff5028';
-            secondary = '#ff3300';
-        } else {
-            const isPlayerBottom = game.isVsCPU || game.isHost;
-            const bottomAdvLabel = isPlayerBottom ? 'YOU' : (game.bottomPlayer?.data?.name ?? 'P2');
-            const topAdvLabel = game.isVsCPU ? 'CPU' : (isPlayerBottom ? (game.topPlayer?.data?.name ?? 'P2') : 'YOU');
-            const who = adv === 'bottom' ? bottomAdvLabel : topAdvLabel;
-            label = '\u25B6 ADVANTAGE ' + who + ' \u25C0';
-            primary = adv === 'bottom' ? '#00f0ff' : '#ff00aa';
-            secondary = primary;
-        }
+        let { primary, secondary, label } = this.getRoundEndDetails(isDeuce, game, adv);
 
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -214,5 +213,25 @@ export class RoundEndState extends State {
         ctx.fillText(label, cx, cy);
 
         ctx.restore();
+    }
+
+    getRoundEndDetails(isDeuce, game, adv) {
+        let label, primary, secondary;
+        if (isDeuce) {
+            label = '\u26A1 DEUCE! \u26A1';
+            primary = '#ff5028';
+            secondary = '#ff3300';
+        } else {
+            const isPlayerBottom = game.isVsCPU || game.isHost;
+            const bottomAdvLabel = isPlayerBottom ? 'YOU' : (game.bottomPlayer?.data?.name ?? 'P2');
+            const topPlayerName = game.topPlayer?.data?.name ?? 'P2';
+            const topAdvLabelIfNotCPU = isPlayerBottom ? topPlayerName : 'YOU';
+            const topAdvLabel = game.isVsCPU ? 'CPU' : topAdvLabelIfNotCPU;
+            const who = adv === 'bottom' ? bottomAdvLabel : topAdvLabel;
+            label = '\u25B6 ADVANTAGE ' + who + ' \u25C0';
+            primary = adv === 'bottom' ? '#00f0ff' : '#ff00aa';
+            secondary = primary;
+        }
+        return { primary, secondary, label };
     }
 }

@@ -24,8 +24,7 @@ export class JetpackOverlay extends PlayerOverlay {
         }
         // Compact in-place to avoid creating a new array each frame
         let write = 0;
-        for (let i = 0; i < this.#smoke.length; i++) {
-            const p = this.#smoke[i];
+        for (const p of this.#smoke) {
             p.ox += p.vx * dt;
             p.oy += p.vy * dt;
             p.age += dt;
@@ -44,7 +43,7 @@ export class JetpackOverlay extends PlayerOverlay {
 
         // Smoke trail
         this.#smoke.forEach(p => {
-            const alpha = ((1 - p.age / p.life) * 0.30).toFixed(3);
+            const alpha = ((1 - p.age / p.life) * 0.3).toFixed(3);
             ctx.fillStyle = `rgba(180,180,210,${alpha})`;
             ctx.beginPath();
             ctx.arc(x + p.ox, baseY + p.oy, p.r, 0, Math.PI * 2);
@@ -58,8 +57,8 @@ export class JetpackOverlay extends PlayerOverlay {
             const fh = 20 + Math.sin(t * 22 + ox) * 7;
             const grad = ctx.createLinearGradient(x + ox, baseY, x + ox, baseY + fh);
             grad.addColorStop(0,    '#ffff88');
-            grad.addColorStop(0.30, '#ff8800');
-            grad.addColorStop(0.80, '#ff3300');
+            grad.addColorStop(0.3, '#ff8800');
+            grad.addColorStop(0.8, '#ff3300');
             grad.addColorStop(1,    'rgba(255,50,0,0)');
             ctx.fillStyle = grad;
             ctx.beginPath();

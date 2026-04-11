@@ -108,7 +108,10 @@ export class Game {
 
         // Initialize subsystems
         await this.sound.init();
-        await this.platform.initialize();
+        await this.platform.initialize({
+            onPause:  () => { if (this.isPlaying()) this.pause(); },
+            onResume: () => { if (this.isPaused()) this.resume(); },
+        });
 
         // Load saved progress from DB
         await this.save.init();

@@ -443,12 +443,18 @@ export class HUD {
         if (!deuce && !advantage) return;
 
         const t = performance.now();
-        const alpha = 0.12 + 0.10 * Math.sin(t / 300);
+        const alpha = 0.12 + 0.1 * Math.sin(t / 300);
+        
+        let advantageColor;
+        if (advantage === 'bottom') {
+            advantageColor = `rgba(0,240,255,${alpha})`;
+        } else {
+            advantageColor = `rgba(255,0,170,${alpha})`;
+        }
+        
         const color = deuce
             ? `rgba(255,80,40,${alpha})`
-            : (advantage === 'bottom'
-                ? `rgba(0,240,255,${alpha})`
-                : `rgba(255,0,170,${alpha})`);
+            : advantageColor;
         const blur = deuce
             ? 12 + 8 * Math.sin(t / 250)
             : 10 + 6 * Math.sin(t / 200);
@@ -500,7 +506,6 @@ export class HUD {
      * Draw super-shot charge bars for both players in the HUD area.
      */
     static drawSuperBars(ctx, topPlayer, bottomPlayer) {
-        const fnt = HUD.#FNT;
         const barW = 90;
         const barH = 6;
         const barR = 3; // corner radius
@@ -508,21 +513,28 @@ export class HUD {
         // --- TOP PLAYER super bar (right side of top HUD, below score) ---
         const topX = DESIGN_WIDTH - 14 - barW;
         const topY = 46;
-        HUD.#drawSuperBar(ctx, topX, topY, barW, barH, barR,
-            topPlayer.superCharge, topPlayer.superReady,
-            topPlayer.data.superShot?.color ?? topPlayer.data.palette.accent,
-            topPlayer.data.superShot?.name ?? 'SUPER');
+        HUD.#drawSuperBar(ctx, {
+            x: topX, y: topY, w: barW, h: barH, r: barR,
+            charge: topPlayer.superCharge,
+            ready: topPlayer.superReady,
+            color: topPlayer.data.superShot?.color ?? topPlayer.data.palette.accent,
+            label: topPlayer.data.superShot?.name ?? 'SUPER'
+        });
 
         // --- BOTTOM PLAYER super bar (right side of bottom HUD) ---
         const botX = DESIGN_WIDTH - 14 - barW;
         const botY = ARENA_BOTTOM + 46;
-        HUD.#drawSuperBar(ctx, botX, botY, barW, barH, barR,
-            bottomPlayer.superCharge, bottomPlayer.superReady,
-            bottomPlayer.data.superShot?.color ?? bottomPlayer.data.palette.accent,
-            bottomPlayer.data.superShot?.name ?? 'SUPER');
+        HUD.#drawSuperBar(ctx, {
+            x: botX, y: botY, w: barW, h: barH, r: barR,
+            charge: bottomPlayer.superCharge,
+            ready: bottomPlayer.superReady,
+            color: bottomPlayer.data.superShot?.color ?? bottomPlayer.data.palette.accent,
+            label: bottomPlayer.data.superShot?.name ?? 'SUPER'
+        });
     }
 
-    static #drawSuperBar(ctx, x, y, w, h, r, charge, ready, color, label) {
+    static #drawSuperBar(ctx, options) {
+        const { x, y, w, h, r, charge, ready, color, label } = options;
         ctx.save();
 
         // Background track
@@ -596,7 +608,7 @@ export class HUD {
 
     static drawJoystickHint(ctx, input) {
         // If touch/joystick is active, draw floating joystick
-        if (input && input.joystickVisible) {
+        if (input?.joystickVisible) {
             const bx = input.joystickBaseX;
             const by = input.joystickBaseY;
             const tx = input.joystickThumbX;

@@ -56,7 +56,7 @@ export class Player extends GameObject {
     #landTimer = 0;
 
     // Spike-head perk
-    static #SPIKE_COOLDOWN = 3.0;  // seconds to regenerate one spike
+    static #SPIKE_COOLDOWN = 3;  // seconds to regenerate one spike
     #spikeTimers = [];              // per-spike cooldown remaining (0 = ready)
     #spikeHasteActive = false;
     #spikeHasteTimer = 0;
@@ -270,9 +270,7 @@ export class Player extends GameObject {
             anim = 'jetpack';
         } else if (!this.#grounded) {
             anim = this.vy < 0 ? 'jump' : 'fall';
-        } else if (Math.abs(this.vx) > 10) {
-            anim = 'idle'; // Could add run animation
-        }
+        } 
 
         if (this.#invincible) {
             anim = 'hurt';

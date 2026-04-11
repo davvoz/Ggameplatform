@@ -28,7 +28,17 @@ export class SpikeHeadOverlay extends PlayerOverlay {
         }
 
         for (let i = 0; i < activeSegments; i++) {
-            this.#drawSpikeSegment(ctx, x, headTopY, i, spikeCount, spikeTimers, spikeCooldown, halfW, chevH, rowGap);
+            this.#drawSpikeSegment(ctx, {
+                headTopY,
+                i,
+                spikeCount,
+                spikeTimers,
+                spikeCooldown,
+                halfW,
+                chevH,
+                rowGap,
+                x
+            });
         }
 
         if (spike_haste && activeSegments > 0) {
@@ -47,10 +57,10 @@ export class SpikeHeadOverlay extends PlayerOverlay {
         ctx.restore();
     }
 
-    #drawSpikeSegment(ctx, x, headTopY, i, spikeCount, spikeTimers, spikeCooldown, halfW, chevH, rowGap) {
+    #drawSpikeSegment(ctx, { headTopY, i, spikeCount, spikeTimers, spikeCooldown, halfW, chevH, rowGap, x }) {
         const logicalIndex = spikeCount - 1 - i;
         const timer = spikeTimers?.[logicalIndex] ?? 0;
-        const ready = Math.max(0, 1 - timer / spikeCooldown) >= 1.0;
+        const ready = Math.max(0, 1 - timer / spikeCooldown) >= 1;
 
         if (ready && this.#flashTimers[logicalIndex] <= 0 && timer === 0) {
             this.#flashTimers[logicalIndex] = 1;

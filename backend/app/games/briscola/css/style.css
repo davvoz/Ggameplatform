@@ -892,12 +892,6 @@ html, body {
     display: none;
 }
 
-.player-details {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
 /* ===========================================
    TURN SCREEN (Local 2P)
    =========================================== */

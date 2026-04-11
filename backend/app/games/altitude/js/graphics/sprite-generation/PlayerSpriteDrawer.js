@@ -4,7 +4,7 @@ const SIZE = 56;
 const HEAD_RADIUS = 15;
 const EYE_SPACING = 5.8;
 const EYE_RX = 4.2;
-const EYE_RY = 5.0;
+const EYE_RY = 5;
 
 const BODY_COLOR = '#00bb99';
 const BODY_SHADE = '#007766';
@@ -15,7 +15,7 @@ const IRIS_BLUE = '#2255ff';
 
 const FRAME_COUNTS = { idle: 4, jump: 4, fall: 2, hurt: 2, jetpack: 4, land: 3 };
 const ANIM_SPEEDS = { idle: 7, jump: 18, fall: 6, hurt: 15, jetpack: 12, land: 24 };
-const LAND_SQUASH = [0.38, 0.60, 0.82];
+const LAND_SQUASH = [0.38, 0.6, 0.82];
 
 export class PlayerSpriteDrawer extends BaseSpriteDrawer {
     generate() {
@@ -53,7 +53,7 @@ export class PlayerSpriteDrawer extends BaseSpriteDrawer {
 
     #generateJumpFrames(ctx, startFrame) {
         for (let i = 0; i < FRAME_COUNTS.jump; i++) {
-            const stretch = 1.42 - (i / (FRAME_COUNTS.jump - 1)) * 0.40;
+            const stretch = 1.42 - (i / (FRAME_COUNTS.jump - 1)) * 0.4;
             this.#drawFrame(ctx, (startFrame + i) * SIZE, 0, {
                 state: 'jump', bounce: 0, stretch, flash: false, frame: i,
             });
@@ -292,7 +292,7 @@ export class PlayerSpriteDrawer extends BaseSpriteDrawer {
             ctx.fillStyle = IRIS_BLUE;
             ctx.beginPath(); ctx.ellipse(ex, eyeY + 0.5, 2.1, 1.6, 0, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = PUPIL_DARK;
-            ctx.beginPath(); ctx.ellipse(ex, eyeY + 0.5, 1.0, 0.9, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(ex, eyeY + 0.5, 1, 0.9, 0, 0, Math.PI * 2); ctx.fill();
         });
 
         ctx.strokeStyle = palette.shade; ctx.lineWidth = 2.1; ctx.lineCap = 'round';

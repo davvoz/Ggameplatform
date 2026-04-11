@@ -1,8 +1,3 @@
-import {
-    ARENA_LEFT, ARENA_RIGHT, ARENA_TOP, ARENA_BOTTOM,
-    BALL_RADIUS, CHARACTER_HALF,
-} from '../config/Constants.js';
-
 /**
  * Obstacle entity — a non-traversable block placed on the arena.
  * Both the ball and characters bounce off obstacles.

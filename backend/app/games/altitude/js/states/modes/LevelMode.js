@@ -7,7 +7,7 @@
 import { GameMode } from './GameMode.js';
 import { TimeBonusCalculator } from '../../systems/TimeBonusCalculator.js';
 import { getLevelData } from '../../config/LevelData.js';
-import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS } from '../../config/Constants.js';
+import {  DESIGN_HEIGHT, COLORS } from '../../config/Constants.js';
 
 export class LevelMode extends GameMode {
     #levelData  = null;

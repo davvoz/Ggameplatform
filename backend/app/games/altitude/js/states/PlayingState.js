@@ -362,7 +362,7 @@ export class PlayingState extends State {
                 const x = col * SQ_W;
                 const top1dark = col % 2 === 0;
                 ctx.fillStyle = top1dark ? '#000000' : '#ffffff';
-                ctx.globalAlpha = 0.90;
+                ctx.globalAlpha = 0.9;
                 ctx.fillRect(x, sy, SQ_W, HALF);
                 ctx.fillStyle = top1dark ? '#ffffff' : '#000000';
                 ctx.fillRect(x, sy + HALF, SQ_W, HALF);

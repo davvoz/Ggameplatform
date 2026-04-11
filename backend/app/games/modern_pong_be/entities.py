@@ -99,6 +99,35 @@ class ServerBall:
             self.vx = (self.vx / mag) * self.speed
             self.vy = (self.vy / mag) * self.speed
 
+    def _update_fireball(self, dt: float):
+        """Update fireball timer."""
+        if self.fireball:
+            self.fireball_timer -= dt
+            if self.fireball_timer <= 0:
+                self.fireball = False
+                self.fireball_timer = 0.0
+
+    def _update_magnet(self, dt: float):
+        """Update magnet pull and timer."""
+        if self.magnet_timer > 0:
+            self.magnet_timer -= dt
+            if self.magnet_timer <= 0:
+                self.magnet_target_y = None
+            elif self.magnet_target_y is not None:
+                dy = self.magnet_target_y - self.y
+                sign = 1.0 if dy > 0 else -1.0
+                pull = 120 + min(abs(dy), 200) * 0.5
+                self.vy += sign * pull * dt
+                center_x = (ARENA_LEFT + ARENA_RIGHT) / 2
+                self.vx += (center_x - self.x) * 0.3 * dt
+
+    def _update_shadow_blaze(self, dt: float):
+        """Update shadow blaze timer."""
+        if self.shadow_blaze_timer > 0:
+            self.shadow_blaze_timer -= dt
+            if self.shadow_blaze_timer <= 0:
+                self.shadow_blaze_timer = 0.0
+
     def update(self, dt: float):
         """Advance ball physics by *dt* seconds."""
         if self.frozen:
@@ -118,31 +147,9 @@ class ServerBall:
             self.vx = -abs(self.vx)
             self.wall_hit = True
 
-        # Fireball timer
-        if self.fireball:
-            self.fireball_timer -= dt
-            if self.fireball_timer <= 0:
-                self.fireball = False
-                self.fireball_timer = 0.0
-
-        # Magnet pull
-        if self.magnet_timer > 0:
-            self.magnet_timer -= dt
-            if self.magnet_timer <= 0:
-                self.magnet_target_y = None
-            elif self.magnet_target_y is not None:
-                dy = self.magnet_target_y - self.y
-                sign = 1.0 if dy > 0 else -1.0
-                pull = 120 + min(abs(dy), 200) * 0.5
-                self.vy += sign * pull * dt
-                center_x = (ARENA_LEFT + ARENA_RIGHT) / 2
-                self.vx += (center_x - self.x) * 0.3 * dt
-
-        # Shadow blaze timer
-        if self.shadow_blaze_timer > 0:
-            self.shadow_blaze_timer -= dt
-            if self.shadow_blaze_timer <= 0:
-                self.shadow_blaze_timer = 0.0
+        self._update_fireball(dt)
+        self._update_magnet(dt)
+        self._update_shadow_blaze(dt)
 
     def check_goal(self) -> int:
         """Returns 1 (bottom scores), -1 (top scores), or 0 (in play)."""

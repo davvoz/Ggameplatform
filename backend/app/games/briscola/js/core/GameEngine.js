@@ -4,7 +4,7 @@
  * Core game logic and state management
  */
 
-import { Deck, Card, SUIT_LIST, calculatePoints } from './Cards.js';
+import { Deck, Card, SUIT_LIST } from './Cards.js';
 import { AIPlayer } from '../ai/AIPlayer.js';
 
 export class GameEngine {
@@ -174,9 +174,8 @@ export class GameEngine {
         
         // If comparison <= 0, first player (who played card1) wins
         // If comparison > 0, second player (who played card2) wins
-        const roundWinner = comparison > 0 ? 
-            (this.firstPlayerInRound === 1 ? 2 : 1) : 
-            this.firstPlayerInRound;
+        const secondPlayerWinner = this.firstPlayerInRound === 1 ? 2 : 1;
+        const roundWinner = comparison > 0 ? secondPlayerWinner : this.firstPlayerInRound;
         
         // Points in this round
         const pointsWon = card1.points + card2.points;
@@ -355,7 +354,7 @@ export class GameEngine {
             playedCard1: this.playedCard1,
             playedCard2: this.playedCard2,
             
-            deckRemaining: this._onlineDeckRemaining !== null ? this._onlineDeckRemaining : (this.deck.remaining + (this.briscolaCard ? 1 : 0)),
+            deckRemaining: this._onlineDeckRemaining ?? (this.deck.remaining + (this.briscolaCard ? 1 : 0)),
             
             isGameOver: this.isGameOver,
             isPaused: this.isPaused,

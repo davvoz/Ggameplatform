@@ -1,8 +1,17 @@
 {
-  "version": "5.0.7",
-  "timestamp": "2026-04-11T18:52:27.632Z",
-  "buildNumber": 520,
+  "version": "5.0.8",
+  "timestamp": "2026-04-11T21:02:09.202Z",
+  "buildNumber": 521,
   "changelog": [
+    {
+      "version": "5.0.8",
+      "date": "2026-04-11",
+      "type": "patch",
+      "changes": [
+        "fix:[FRONTEND] Sonar",
+        "🔖 Bump version to 5.0.7 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.7",
       "date": "2026-04-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[A] Enhance mobile performance and visuals with quality adjustments",
         "🔖 Bump version to 4.2.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.10",
-      "date": "2026-04-07",
-      "type": "patch",
-      "changes": [
-        "fix: [A] TRY Enhance performance optimizations for mobile devices",
-        "🔖 Bump version to 4.2.9 [skip-version]"
       ]
     }
   ]

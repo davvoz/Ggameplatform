@@ -4,11 +4,10 @@
 import eventEmitter from './utils/EventEmitter.js';
 
 class ImageUploadService {
-  constructor() {
-    this.MAX_FILE_SIZE_MB = 15;
-    this.UPLOAD_TIMEOUT_MS = 60000; // 60 secondi di timeout
-    this.API_ENDPOINT = 'https://develop-imridd.eu.pythonanywhere.com/api/steem/free_upload_image';
-  }
+  MAX_FILE_SIZE_MB = 15;
+  UPLOAD_TIMEOUT_MS = 60000; // 60 secondi di timeout
+  API_ENDPOINT = 'https://develop-imridd.eu.pythonanywhere.com/api/steem/free_upload_image';
+
 
   /**
    * Verifica se la dimensione del file è valida
@@ -52,7 +51,7 @@ class ImageUploadService {
         const mimeType = file.type || 'image/jpeg';
         
         // Usa la qualità massima per PNG, altrimenti qualità 90% per JPEG
-        const quality = mimeType === 'image/png' ? 1.0 : 0.9;
+        const quality = mimeType === 'image/png' ? 1 : 0.9;
         
         canvas.toBlob(
           blob => resolve(blob),
@@ -92,7 +91,7 @@ class ImageUploadService {
    */
   async uploadImage(file, username) {
     // Validazione input
-    if (!file || !file.type.startsWith('image/')) {
+    if (!file?.type?.startsWith('image/')) {
       throw new Error('Invalid file: only images are supported');
     }
 
@@ -194,7 +193,7 @@ class ImageUploadService {
       };
       
       reader.onerror = (error) => {
-        reject(new Error('Error reading file: ' + error));
+        reject(new Error('Error reading file: ' + (error?.message || 'Unknown error')));
       };
     });
   }

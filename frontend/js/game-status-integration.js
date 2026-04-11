@@ -207,7 +207,8 @@ function filterGamesByStatus(event) {
             return;
         }
         
-        const cardStatus = statusBadge.className.match(/status-(\w+)/)?.[1];
+        const match = /status-(\w+)/.exec(statusBadge.className);
+        const cardStatus = match?.[1];
         card.style.display = cardStatus === selectedStatus ? 'block' : 'none';
     });
 }
@@ -429,7 +430,7 @@ async function initGameStatusFeatures() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initGameStatusFeatures);
 } else {
-    initGameStatusFeatures();
+    await initGameStatusFeatures();
 }
 
 // Export for use in other modules

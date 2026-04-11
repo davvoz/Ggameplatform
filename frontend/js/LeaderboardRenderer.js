@@ -1,4 +1,4 @@
-import { fetchGames, getGameResourceUrl, getGamePreviewUrl } from './api.js';
+import { fetchGames,  getGamePreviewUrl } from './api.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import LeaderboardAPI from './LeaderboardAPI.js';
 
@@ -400,7 +400,14 @@ class LeaderboardRenderer {
         if (top3[2]) podiumOrder.push({ ...top3[2], podiumPos: 3 });
 
         const podiumHTML = podiumOrder.map(entry => {
-            const medal = entry.podiumPos === 1 ? '🥇' : entry.podiumPos === 2 ? '🥈' : '🥉';
+            let medal;
+            if (entry.podiumPos === 1) {
+                medal = '🥇';
+            } else if (entry.podiumPos === 2) {
+                medal = '🥈';
+            } else {
+                medal = '🥉';
+            }
             const username = entry.username || 'Anonymous';
             const steemUsername = entry.steem_username || null;
             const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
@@ -475,7 +482,7 @@ class LeaderboardRenderer {
         const isWinnersHistory = entries.length > 0 && entries[0].hasOwnProperty('steem_reward') && entries[0].hasOwnProperty('coin_reward');
         // Only show rewards column in winners history, not weekly tab
         const showRewards = isWinnersHistory;
-        const headerClass = `${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
+        const headerClass = `${hasGames ? 'has-games' : ''} ${showRewards ? '' : 'no-rewards'}`.trim();
         
         return `
             <div class="leaderboard-table">
@@ -519,7 +526,7 @@ class LeaderboardRenderer {
         if (!userId) {
             return;
         }
-        window.location.hash = `#/user/${userId}`;
+        globalThis.location.hash = `#/user/${userId}`;
     }
 
     /**
@@ -527,48 +534,62 @@ class LeaderboardRenderer {
      */
     renderLeaderboardRow(entry, hasGames = false, showRewards = true) {
         const rankClass = entry.rank <= 3 ? `top-${entry.rank}` : '';
-        const rowClass = `${rankClass} ${hasGames ? 'has-games' : ''} ${!showRewards ? 'no-rewards' : ''}`.trim();
+        const rowClass = `${rankClass} ${hasGames ? 'has-games' : ''} ${showRewards ? '' : 'no-rewards'}`.trim();
         const userId = entry.user_id || '';
         const playerCellHTML = this.buildPlayerCellHTML(entry);
 
         // If entry is from winners history, show actual sent rewards
         let rewardContent = '';
         if (showRewards && entry.hasOwnProperty('steem_reward') && entry.hasOwnProperty('coin_reward')) {
-            if (entry.coin_reward > 0) {
-                rewardContent += `<span class="reward-coins">🪙 ${entry.coin_reward}</span>`;
-            }
-            if (entry.steem_reward > 0) {
-                rewardContent += `<span class="reward-steem">💎 ${entry.steem_reward} STEEM</span>`;
-            }
-            if (entry.reward_sent && entry.steem_tx_id) {
-                rewardContent += `<span class="tx-id" style="font-size:0.82em; color:var(--text-muted);">TX:${entry.steem_tx_id.substring(0,8)}...</span>`;
-            }
-            if (entry.reward_sent) {
-                rewardContent += `<span style="font-size:0.95em;">✅</span>`;
-            }
+            rewardContent = this.generateRewardContent(entry, rewardContent);
         } else if (showRewards) {
             // Default: use config rewards for weekly tab
-            const reward = this.rewards.find(r => {
-                return entry.rank >= r.rank_start && entry.rank <= r.rank_end;
-            });
-            if (reward) {
-                const steemPart = reward.steem_reward > 0 ? `<span class="reward-steem">💎 ${reward.steem_reward} STEEM</span>` : '';
-                const coinPart = reward.coin_reward > 0 ? `<span class="reward-coins">🪙 ${reward.coin_reward}</span>` : '';
-                if (steemPart || coinPart) {
-                    rewardContent = `${coinPart} ${steemPart}`;
-                }
-            }
+            rewardContent = this.getRewardContent(entry, rewardContent);
         }
+
+        const gamesColumn = hasGames ? `<div class="col-games">${entry.games_played || 0}</div>` : '';
+        const rewardsBadge = rewardContent ? `<div class="inline-reward-badge">${rewardContent}</div>` : '';
+        const rewardsColumn = showRewards ? `<div class="col-rewards">${rewardsBadge}</div>` : '';
 
         return `
             <div class="table-row ${rowClass} clickable-row" data-user-id="${userId}" data-action="navigate-user" role="button" tabindex="0">
                 <div class="col-rank">#${entry.rank}</div>
                 <div class="col-player">${playerCellHTML}</div>
                 <div class="col-score">${(entry.score || entry.total_score || 0).toLocaleString()}</div>
-                ${hasGames ? `<div class="col-games">${entry.games_played || 0}</div>` : ''}
-                ${showRewards ? `<div class="col-rewards">${rewardContent ? `<div class="inline-reward-badge">${rewardContent}</div>` : ''}</div>` : ''}
+                ${gamesColumn}
+                ${rewardsColumn}
             </div>
         `;
+    }
+
+    getRewardContent(entry, rewardContent) {
+        const reward = this.rewards.find(r => {
+            return entry.rank >= r.rank_start && entry.rank <= r.rank_end;
+        });
+        if (reward) {
+            const steemPart = reward.steem_reward > 0 ? `<span class="reward-steem">💎 ${reward.steem_reward} STEEM</span>` : '';
+            const coinPart = reward.coin_reward > 0 ? `<span class="reward-coins">🪙 ${reward.coin_reward}</span>` : '';
+            if (steemPart || coinPart) {
+                rewardContent = `${coinPart} ${steemPart}`;
+            }
+        }
+        return rewardContent;
+    }
+
+    generateRewardContent(entry, rewardContent) {
+        if (entry.coin_reward > 0) {
+            rewardContent += `<span class="reward-coins">🪙 ${entry.coin_reward}</span>`;
+        }
+        if (entry.steem_reward > 0) {
+            rewardContent += `<span class="reward-steem">💎 ${entry.steem_reward} STEEM</span>`;
+        }
+        if (entry.reward_sent && entry.steem_tx_id) {
+            rewardContent += `<span class="tx-id" style="font-size:0.82em; color:var(--text-muted);">TX:${entry.steem_tx_id.substring(0, 8)}...</span>`;
+        }
+        if (entry.reward_sent) {
+            rewardContent += `<span style="font-size:0.95em;">✅</span>`;
+        }
+        return rewardContent;
     }
 
     /**

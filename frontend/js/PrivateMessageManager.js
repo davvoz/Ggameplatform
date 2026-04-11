@@ -46,14 +46,14 @@ class PrivateMessageAPI {
     // ─── WebSocket ───
 
     async connect() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws?.readyState === WebSocket.OPEN) {
             return;
         }
 
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.ENV?.API_URL
-            ? new URL(window.ENV.API_URL).host
-            : window.location.host;
+        const protocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = globalThis.ENV?.API_URL
+            ? new URL(globalThis.ENV.API_URL).host
+            : globalThis.location.host;
         const url = `${protocol}//${host}/ws/private-messages`;
 
         return new Promise((resolve, reject) => {
@@ -182,7 +182,7 @@ class PrivateMessageAPI {
     // ─── Private helpers ───
 
     _send(data) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws?.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(data));
         }
     }
@@ -1021,7 +1021,7 @@ class PrivateMessageManager {
             badge = document.createElement('span');
             badge.className = 'pm-unread-badge';
             const arrow = item.querySelector('.pm-connection-arrow');
-            item.insertBefore(badge, arrow);
+            arrow.before(badge);
         }
         badge.textContent = count > 9 ? '9+' : count;
     }
@@ -1033,7 +1033,7 @@ class PrivateMessageManager {
      * @private
      */
     _fireNotificationEvent(reason, peerId) {
-        window.dispatchEvent(new CustomEvent('pm:notification', {
+        globalThis.dispatchEvent(new CustomEvent('pm:notification', {
             detail: { reason, peerId, total: this.getTotalUnreadCount() },
         }));
     }
@@ -1069,7 +1069,7 @@ class PrivateMessageManager {
             avatar.title = `View profile of ${username || ''}`;
             avatar.addEventListener('click', (e) => {
                 e.stopPropagation();
-                window.location.hash = `#/user/${encodeURIComponent(profileId)}`;
+                globalThis.location.hash = `#/user/${encodeURIComponent(profileId)}`;
             });
         }
         return avatar;

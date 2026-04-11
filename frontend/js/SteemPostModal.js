@@ -21,7 +21,7 @@ class SteemPostModal {
      */
     async show() {
         const user = this.authManager.getUser();
-        if (!user || !user.user_id) {
+        if (!user?.user_id) {
             alert('Please log in to create a post');
             return;
         }
@@ -185,16 +185,16 @@ class SteemPostModal {
             const publishBtn = document.getElementById('publishPostBtn');
             const canAfford = balance >= 500;
 
-            if (!canAfford) {
+            if (canAfford) {
+                publishBtn.disabled = false;
+                publishBtn.classList.remove('disabled');
+            } else {
                 publishBtn.disabled = true;
                 publishBtn.innerHTML = `
                     <span class="btn-icon">⚠️</span>
                     <span class="btn-text">Insufficient Balance</span>
                 `;
                 publishBtn.classList.add('disabled');
-            } else {
-                publishBtn.disabled = false;
-                publishBtn.classList.remove('disabled');
             }
 
         } catch (error) {
@@ -239,7 +239,7 @@ class SteemPostModal {
             return;
         }
 
-        try {
+   
             this.setButtonLoading(publishBtn, 'Processing...');
 
             const postData = await this.generatePostContent(user.user_id, userMessage);
@@ -250,9 +250,7 @@ class SteemPostModal {
             // Pass the publish method to confirmAndFinalize
             await this.confirmAndFinalize(result, hasKeychain ? 'keychain' : 'posting_key');
 
-        } catch (error) {
-            this.resetPublishButton(publishBtn);
-        }
+      
     }
 
     /**
@@ -292,7 +290,7 @@ class SteemPostModal {
             postData.body = imageMarkdown + postData.body;
             
             // Also update operations if using Keychain
-            if (postData.keychain_operations && postData.keychain_operations[0]) {
+            if (postData.keychain_operations?.[0]) {
                 postData.keychain_operations[0][1].body = imageMarkdown + postData.keychain_operations[0][1].body;
             }
         }
@@ -344,13 +342,11 @@ class SteemPostModal {
         // Always confirm on backend to deduct coins and update cooldown
         // Pass publishMethod to avoid duplicate Telegram notifications
         if (result.success && result.post_url) {
-            try {
+           
                 const postTitle = result.post_title || 'Gaming milestone post';
                 await this.steemPostAPI.confirmPost(user.user_id, result.post_url, postTitle, publishMethod);
 
-            } catch (error) {
-                // Continue anyway - post was published successfully
-            }
+           
         }
 
         this.showSuccess(result.post_url);

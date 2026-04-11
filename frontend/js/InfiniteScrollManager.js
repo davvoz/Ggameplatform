@@ -86,7 +86,7 @@ class InfiniteScrollManager {
     _attachScrollListener() {
         // Use window or container based on setup
         const scrollTarget = this.container === document.documentElement 
-            ? window 
+            ? globalThis 
             : this.container;
         
         scrollTarget.addEventListener('scroll', this._boundScrollHandler, { passive: true });
@@ -249,7 +249,7 @@ class InfiniteScrollManager {
      */
     destroy() {
         const scrollTarget = this.container === document.documentElement 
-            ? window 
+            ? globalThis 
             : this.container;
         
         scrollTarget.removeEventListener('scroll', this._boundScrollHandler);

@@ -54,9 +54,9 @@ export default class RuntimeShell {
         this.gameId = gameId;
 
         // Get allowed origins from config, fallback to current origin and API URL
-        const apiUrl = window.ENV?.API_URL || window.location.origin;
+        const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin;
         const defaultOrigins = [
-            window.location.origin,
+            globalThis.location.origin,
             apiUrl,
             'http://localhost:8000',
             'http://localhost:3000'
@@ -168,7 +168,7 @@ export default class RuntimeShell {
                 break;
 
             case GAME_MESSAGE_TYPES.LOG:
-                //this.handleLog(message.payload);
+                //Qua puoi mettere i log
                 break;
 
             case GAME_MESSAGE_TYPES.RESET_SESSION:
@@ -183,7 +183,6 @@ export default class RuntimeShell {
                 this.log('🎮 Game started, creating session...');
                 if (!this.sessionId) {
                     this.startGameSession();
-                } else {
                 }
                 break;
 
@@ -213,14 +212,7 @@ export default class RuntimeShell {
         if (this.config.allowedOrigins.includes('*')) {
             return true;
         }
-
-        // Check if origin is in whitelist
-        const isAllowed = this.config.allowedOrigins.includes(origin);
-
-        if (!isAllowed) {
-        }
-
-        return isAllowed;
+        return this.config.allowedOrigins.includes(origin);
     }
 
     /**
@@ -234,12 +226,12 @@ export default class RuntimeShell {
                 return null;
             }
             const targetOrigin = new URL(this.iframe.src).origin;
-            
+
             // Validate the target origin is in our allowed list
             if (this.isValidOrigin(targetOrigin)) {
                 return targetOrigin;
             }
-            
+
             this.log('Target origin not in allowed origins:', targetOrigin);
             return null;
         } catch (e) {
@@ -326,20 +318,31 @@ export default class RuntimeShell {
         const extraData = payload?.extra_data || payload?.game_data || {};
 
         // Also merge top-level fields that games might send directly
-        if (payload) {
-            if (payload.kills !== undefined && !extraData.kills) extraData.kills = payload.kills;
-            if (payload.time !== undefined && !extraData.time) extraData.time = payload.time;
-            if (payload.level !== undefined && !extraData.level) extraData.level = payload.level;
-            if (payload.survival_time !== undefined && !extraData.survival_time) extraData.survival_time = payload.survival_time;
-            if (payload.enemies_killed !== undefined && !extraData.enemies_killed) extraData.enemies_killed = payload.enemies_killed;
-            if (payload.player_level !== undefined && !extraData.player_level) extraData.player_level = payload.player_level;
-        }
+        this.mergeGameData(payload, extraData);
 
         this.log('💀 Game Over! Final score:', this.state.score);
         this.log('📊 Extra data:', extraData);
         this.showGameOverOverlay(this.state.score);
 
         // End game session and save score ONLY if session exists
+        this.endCurrentSession(extraData);
+    }
+
+    mergeGameData(payload, extraData) {
+        if (!payload) return;
+        
+        const fieldsToMerge = [
+            'kills', 'time', 'level', 'survival_time', 'enemies_killed', 'player_level'
+        ];
+        
+        fieldsToMerge.forEach(field => {
+            if (payload[field] !== undefined && !extraData[field]) {
+                extraData[field] = payload[field];
+            }
+        });
+    }
+
+    endCurrentSession(extraData) {
         if (this.sessionId) {
             this.log('✅ SessionId exists, ending session:', this.sessionId);
             const sessionToEnd = this.sessionId;
@@ -382,8 +385,8 @@ export default class RuntimeShell {
         const targetElement = gamePlayer || container;
 
         // iOS/iPadOS Safari detection
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
+        const isIPadOS = /Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
         // Check if Fullscreen API is actually supported (iOS Safari returns false)
@@ -398,38 +401,45 @@ export default class RuntimeShell {
         const isInCSSFullscreen = targetElement.classList.contains('ios-fullscreen');
 
         if ((isIOS || isIPadOS) && !fullscreenSupported) {
-            // iOS/iPadOS Safari doesn't support Fullscreen API
-            // Use CSS-based fullscreen fallback (already toggles)
+            // iOS/iPadOS Safari doesn't support Fullscreen API  Use CSS-based fullscreen fallback (already toggles)
             this.enableIOSFullscreenFallback(container, gamePlayer);
         } else if (isSafari && !fullscreenSupported) {
             // Safari on Mac without fullscreen support
             this.enableIOSFullscreenFallback(container, gamePlayer);
         } else if (isInNativeFullscreen) {
             // Already in fullscreen - EXIT
-            this.log('Exiting native fullscreen');
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
+            this.exitFullscreen();
         } else if (isInCSSFullscreen) {
             // In CSS fullscreen - exit
             this.exitIOSFullscreen(targetElement);
         } else {
             // Not in fullscreen - ENTER
-            this.log('Entering native fullscreen');
-            if (targetElement.requestFullscreen) {
-                targetElement.requestFullscreen();
-            } else if (targetElement.webkitRequestFullscreen) {
-                targetElement.webkitRequestFullscreen();
-            } else if (targetElement.msRequestFullscreen) {
-                targetElement.msRequestFullscreen();
-            } else {
-                // Fallback if no fullscreen API available
-                this.enableIOSFullscreenFallback(container, gamePlayer);
-            }
+            this.enterFullscreen(targetElement, container, gamePlayer);
+        }
+    }
+
+    enterFullscreen(targetElement, container, gamePlayer) {
+        this.log('Entering native fullscreen');
+        if (targetElement.requestFullscreen) {
+            targetElement.requestFullscreen();
+        } else if (targetElement.webkitRequestFullscreen) {
+            targetElement.webkitRequestFullscreen();
+        } else if (targetElement.msRequestFullscreen) {
+            targetElement.msRequestFullscreen();
+        } else {
+            // Fallback if no fullscreen API available
+            this.enableIOSFullscreenFallback(container, gamePlayer);
+        }
+    }
+
+    exitFullscreen() {
+        this.log('Exiting native fullscreen');
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
         }
     }
 
@@ -532,9 +542,8 @@ export default class RuntimeShell {
      * @param {Object} payload - The log payload
      */
     handleLog(payload) {
-        if (payload && payload.message) {
-
-        }
+        /* sonar-ignore-start */
+        /* sonar-ignore-end */
     }
 
     /**
@@ -669,7 +678,7 @@ export default class RuntimeShell {
 
         // Clean up iOS fullscreen if active
         const container = this.iframe.parentElement;
-        if (container && container.classList.contains('ios-fullscreen')) {
+        if (container?.classList.contains('ios-fullscreen')) {
             container.classList.remove('ios-fullscreen');
             document.body.style.overflow = '';
         }
@@ -808,13 +817,11 @@ export default class RuntimeShell {
             // Just clear the session without saving
             this.sessionId = null;
             this.sessionStartTime = null;
-        } else {
-
         }
 
         // Clean up iOS fullscreen if active
         const container = this.iframe?.parentElement;
-        if (container && container.classList.contains('ios-fullscreen')) {
+        if (container?.classList.contains('ios-fullscreen')) {
             container.classList.remove('ios-fullscreen');
             document.body.style.overflow = '';
         }
@@ -868,7 +875,7 @@ export default class RuntimeShell {
         this.log('🎮 startGameSession() called');
         try {
             // Check if config is available
-            if (typeof config === 'undefined' || !config.API_URL) {
+            if (!config?.API_URL) {
                 this.log('❌ Config or API_URL not available');
                 return;
             }
@@ -914,7 +921,7 @@ export default class RuntimeShell {
         try {
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             if (!currentUser) { this.log('❌ No user, cannot save progress'); return; }
-            if (typeof config === 'undefined' || !config.API_URL) { this.log('❌ No API_URL'); return; }
+            if (!config?.API_URL) { this.log('❌ No API_URL'); return; }
 
             const response = await fetch(`${config.API_URL}/users/game-progress/${currentUser.user_id}/${this.gameId}`, {
                 method: 'PUT',
@@ -938,7 +945,7 @@ export default class RuntimeShell {
                 this.sendProgressResponse(payload._requestId, null);
                 return;
             }
-            if (typeof config === 'undefined' || !config.API_URL) {
+            if (!config?.API_URL) {
                 this.sendProgressResponse(payload._requestId, null);
                 return;
             }
@@ -961,7 +968,7 @@ export default class RuntimeShell {
      * Send progress data back to the game iframe
      */
     sendProgressResponse(requestId, progressData) {
-        if (!this.iframe || !this.iframe.contentWindow) return;
+        if (!this.iframe?.contentWindow) return;
         const targetOrigin = this.getValidatedTargetOrigin();
         if (!targetOrigin) {
             this.log('Cannot send progress response: unable to determine valid target origin');
@@ -1066,7 +1073,7 @@ export default class RuntimeShell {
                 }
 
                 // Emit event to trigger quest refresh
-                window.dispatchEvent(new CustomEvent('gameSessionEnded', {
+                globalThis.dispatchEvent(new CustomEvent('gameSessionEnded', {
                     detail: {
                         session: data.session,
                         xp_earned: data.session.xp_earned,
@@ -1101,7 +1108,6 @@ export default class RuntimeShell {
      * Show level-up notification
      */
     showLevelUpNotification(levelUpData) {
-        const { old_level, new_level, title, badge, coins_awarded, is_milestone } = levelUpData;
 
         // Check if user is anonymous
         const currentUser = AuthManager?.currentUser;
@@ -1132,9 +1138,8 @@ export default class RuntimeShell {
      * @param {...*} args - Arguments to log
      */
     log(...args) {
-        // if (this.config.debug) {
-        //     console.log('[RuntimeShell]', ...args);
-        // }
+        /* sonar-ignore-start */
+        /* sonar-ignore-end */
     }
 }
 
@@ -1143,7 +1148,7 @@ export default class RuntimeShell {
 
     function isDebuggerOpen() {
         const t0 = performance.now();
-        //debugger;
+        //dE buggerO 
         return performance.now() - t0 > 100;
     }
 

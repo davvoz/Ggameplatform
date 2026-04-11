@@ -3,8 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Cur8 Game Platform - Play amazing browser games and earn rewards">
 
     <!-- Performance Optimization -->
@@ -58,12 +57,12 @@
 <body>
     <!-- Daily Login Banner (will be shown after login) -->
     <div id="daily-login-overlay" class="daily-login-overlay"></div>
-    
+
     <!-- Floating button to open daily reward banner (shown only when can claim) -->
     <button id="daily-login-trigger" class="daily-login-trigger" title="Open Daily Rewards">
         🎁
     </button>
-    
+
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -81,34 +80,36 @@
                     <a href="#/" class="nav-link active" data-route="/">Games</a>
                     <a href="#/leaderboard" class="nav-link" data-route="/leaderboard">Leaderboard</a>
                     <a href="#/quests" class="nav-link auth-required" data-route="/quests" id="questsLink">Quests</a>
-                     <a href="#/community" class="nav-link auth-required" data-route="/community" id="communityLink">Community</a>
+                    <a href="#/community" class="nav-link auth-required" data-route="/community"
+                        id="communityLink">Community</a>
                     <a href="#/wallet" class="nav-link auth-required" data-route="#/wallet" id="walletLink">Wallet</a>
-                    <a href="#/profile" class="nav-link auth-required" data-route="/profile" id="profileLink">Profile</a>
+                    <a href="#/profile" class="nav-link auth-required" data-route="/profile"
+                        id="profileLink">Profile</a>
                 </div>
-            <!-- Multiplier card placed before level/profile for requested order -->
-            <div id="multiplierCard" class="nav-multiplier-card">
-                <div class="multiplier-title">
-                    <span>CUR8 XP</span>
-                    <span>MULTIPLIER</span>
+                <!-- Multiplier card placed before level/profile for requested order -->
+                <div id="multiplierCard" class="nav-multiplier-card">
+                    <div class="multiplier-title">
+                        <span>CUR8 XP</span>
+                        <span>MULTIPLIER</span>
+                    </div>
+                    <div class="multiplier-value" id="navMultiplier">1.00x</div>
                 </div>
-                <div class="multiplier-value" id="navMultiplier">1.00x</div>
-            </div>
-            <div id="levelCardContainer" class="nav-level-card">
-                <div id="levelBadgeContainer"></div>
-            </div>
-            <!-- Minimal `userInfo` placeholder (hidden via CSS) - required by JS to populate level badge and auth links -->
-            <div id="userInfo" class="user-info">
-                <div class="nav-user-card">
-                    <div class="nav-user-meta">
-                        <span id="userName" class="nav-username"></span>
+                <div id="levelCardContainer" class="nav-level-card">
+                    <div id="levelBadgeContainer"></div>
+                </div>
+                <!-- Minimal `userInfo` placeholder (hidden via CSS) - required by JS to populate level badge and auth links -->
+                <div id="userInfo" class="user-info">
+                    <div class="nav-user-card">
+                        <div class="nav-user-meta">
+                            <span id="userName" class="nav-username"></span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <!-- Logout moved out of the profile card to be the last visible control in the navbar -->
-            <div class="nav-logout">
-                <span id="navUserNameTop" class="nav-username-top"></span>
-                <button id="logoutBtn" class="btn-logout">Logout</button>
-            </div>
+                <!-- Logout moved out of the profile card to be the last visible control in the navbar -->
+                <div class="nav-logout">
+                    <span id="navUserNameTop" class="nav-username-top"></span>
+                    <button id="logoutBtn" class="btn-logout">Logout</button>
+                </div>
             </div>
             <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
                 <span></span>
@@ -217,8 +218,7 @@
         <div class="game-player">
 
             <div class="player-container">
-                <iframe id="game-iframe"
-                    title="Game Player"
+                <iframe id="game-iframe" title="Game Player"
                     sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups"
                     allow="gamepad; fullscreen; xr-spatial-tracking; autoplay" allowfullscreen
                     referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -231,15 +231,16 @@
         <div class="about">
             <div class="about-header">
                 <h2>🎮 Cur8 Game Platform</h2>
-                <p class="subtitle">A complete platform to play, compete, and earn real rewards while enjoying your favorite browser games.</p>
+                <p class="subtitle">A complete platform to play, compete, and earn real rewards while enjoying your
+                    favorite browser games.</p>
             </div>
-            
+
             <div class="version-box">
                 <div class="version-label">Current Version</div>
                 <div id="app-version" class="version-number">Loading...</div>
                 <div id="app-build-info" class="version-meta"></div>
             </div>
-            
+
             <div class="about-section">
                 <h3>Key Features</h3>
                 <div class="feature-grid">
@@ -375,11 +376,11 @@
             <div class="quests-list" id="questsList">
                 <div class="loading">Loading quests...</div>
             </div>
-            
+
             <!-- Scroll to top button -->
             <button class="scroll-to-top" id="scrollToTopQuests" aria-label="Scroll to top">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M18 15l-6-6-6 6"/>
+                    <path d="M18 15l-6-6-6 6" />
                 </svg>
             </button>
         </div>
@@ -398,7 +399,8 @@
                     <h2 class="profile-username">Username</h2>
                     <p class="profile-type"></p>
                     <!-- Cur8 Social Profile Link -->
-                    <a id="steemProfileLink" class="steem-profile-link" href="#" target="_blank" rel="noopener noreferrer">
+                    <a id="steemProfileLink" class="steem-profile-link" href="#" target="_blank"
+                        rel="noopener noreferrer">
                         <div class="steem-profile-link-logos">
                             <img src="./icons/icon-72x72.png" alt="Cur8" class="steem-profile-link-cur8">
                             <span class="steem-profile-link-x">×</span>
@@ -432,7 +434,8 @@
                         </div>
                         <div class="banner-text">
                             <h3>Share Your Gaming Journey on Steem!</h3>
-                            <p>Showcase your achievements, get upvoted by the Cur8 community, and turn your achievements into real rewards!</p>
+                            <p>Showcase your achievements, get upvoted by the Cur8 community, and turn your achievements
+                                into real rewards!</p>
                         </div>
                         <button id="shareOnSteemBtn" class="btn-share-steem">
                             <span class="btn-icon">🚀</span>
@@ -540,79 +543,77 @@
 
             <!-- Chat Section - Full Height Telegram/WhatsApp Style -->
             <div class="community-chat-section active">
-            <div class="chat-wrapper">
-                <!-- Chat Header -->
-                <div class="chat-header">
-                    <div class="chat-header-info">
-                        <div class="chat-header-avatar">💬</div>
-                        <div class="chat-header-details">
-                            <h2 class="chat-header-title">Community Chat</h2>
-                            <div class="chat-header-status">
-                                <span class="status-indicator" id="headerStatusIndicator"></span>
-                                <span class="status-text" id="headerStatusText">Connecting...</span>
-                                <span class="online-count" id="onlineCount">0 online</span>
+                <div class="chat-wrapper">
+                    <!-- Chat Header -->
+                    <div class="chat-header">
+                        <div class="chat-header-info">
+                            <div class="chat-header-avatar">💬</div>
+                            <div class="chat-header-details">
+                                <h2 class="chat-header-title">Community Chat</h2>
+                                <div class="chat-header-status">
+                                    <span class="status-indicator" id="headerStatusIndicator"></span>
+                                    <span class="status-text" id="headerStatusText">Connecting...</span>
+                                    <span class="online-count" id="onlineCount">0 online</span>
+                                </div>
                             </div>
                         </div>
+                        <div class="online-avatars" id="onlineAvatars"></div>
                     </div>
-                    <div class="online-avatars" id="onlineAvatars"></div>
-                </div>
 
-                <!-- Messages Area -->
-                <div class="chat-messages-area" id="chatMessagesArea">
-                    <div class="chat-messages" id="chatMessages">
-                        <!-- Messages will be rendered here -->
-                    </div>
-                    
-                    <!-- Scroll to bottom fab (shown when scrolled up) -->
-                    <button class="scroll-bottom-fab" id="scrollBottomFab">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                        </svg>
-                        <span class="new-messages-badge" id="newMessagesBadge">0</span>
-                    </button>
-                </div>
+                    <!-- Messages Area -->
+                    <div class="chat-messages-area" id="chatMessagesArea">
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will be rendered here -->
+                        </div>
 
-                <!-- Input Area -->
-                <div class="chat-input-area">
-                    <!-- Media Preview -->
-                    <div class="media-preview-bar" id="mediaPreviewBar">
-                        <div class="media-preview-content">
-                            <img id="mediaPreviewImg" src="" alt="Preview">
-                            <span class="media-preview-name" id="mediaPreviewName"></span>
-                        </div>
-                        <button class="media-preview-remove" id="mediaPreviewRemove">✕</button>
-                    </div>
-                    
-                    <!-- Input Row -->
-                    <div class="chat-input-row">
-                        <div class="chat-input-actions">
-                            <button class="chat-action-btn" id="emojiBtn" title="Emoji">
-                                <span>😊</span>
-                            </button>
-                            <button class="chat-action-btn" id="imageBtn" title="Send image">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                                </svg>
-                            </button>
-                            <button class="chat-action-btn" id="gifBtn" title="Send GIF">
-                                <span class="gif-label">GIF</span>
-                            </button>
-                        </div>
-                        <div class="chat-input-field">
-                            <input type="text" 
-                                   id="chatInput" 
-                                   placeholder="Message..." 
-                                   maxlength="500"
-                                   autocomplete="off">
-                        </div>
-                        <button class="chat-send-btn" id="sendBtn" title="Send">
+                        <!-- Scroll to bottom fab (shown when scrolled up) -->
+                        <button class="scroll-bottom-fab" id="scrollBottomFab">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
                             </svg>
+                            <span class="new-messages-badge" id="newMessagesBadge">0</span>
                         </button>
                     </div>
+
+                    <!-- Input Area -->
+                    <div class="chat-input-area">
+                        <!-- Media Preview -->
+                        <div class="media-preview-bar" id="mediaPreviewBar">
+                            <div class="media-preview-content">
+                                <img id="mediaPreviewImg" src="" alt="Preview">
+                                <span class="media-preview-name" id="mediaPreviewName"></span>
+                            </div>
+                            <button class="media-preview-remove" id="mediaPreviewRemove">✕</button>
+                        </div>
+
+                        <!-- Input Row -->
+                        <div class="chat-input-row">
+                            <div class="chat-input-actions">
+                                <button class="chat-action-btn" id="emojiBtn" title="Emoji">
+                                    <span>😊</span>
+                                </button>
+                                <button class="chat-action-btn" id="imageBtn" title="Send image">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path
+                                            d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                                    </svg>
+                                </button>
+                                <button class="chat-action-btn" id="gifBtn" title="Send GIF">
+                                    <span class="gif-label">GIF</span>
+                                </button>
+                            </div>
+                            <div class="chat-input-field">
+                                <input type="text" id="chatInput" placeholder="Message..." maxlength="500"
+                                    autocomplete="off">
+                            </div>
+                            <button class="chat-send-btn" id="sendBtn" title="Send">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
             </div> <!-- /community-chat-section -->
 
             <!-- Messages Section (Private Messages) -->
@@ -657,7 +658,8 @@
 
                 <div class="form-group">
                     <label for="steemMultiplier">CUR8 Multiplier (1.0 - 5.0)</label>
-                    <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1" title="CUR8 Multiplier value between 1.0 and 5.0">
+                    <input type="number" id="steemMultiplier" value="1.5" min="1.0" max="5.0" step="0.1"
+                        title="CUR8 Multiplier value between 1.0 and 5.0">
                     <small>Higher multipliers = more XP per game!</small>
                 </div>
 
@@ -693,23 +695,19 @@
     <!-- Load environment config first -->
     <script src="/env.js"></script>
     <script>
-        (function() {
-            try {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                const isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-                if (isIOS && isStandalone) {
-                    document.documentElement.classList.add('ios-standalone');
-                    document.body.classList.add('ios-pwa', 'display-standalone');
-                }
-            } catch (e) {
-
+        (function () {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
+            const isStandalone = globalThis.matchMedia && globalThis.matchMedia('(display-mode: standalone)').matches || globalThis.navigator.standalone === true;
+            if (isIOS && isStandalone) {
+                document.documentElement.classList.add('ios-standalone');
+                document.body.classList.add('ios-pwa', 'display-standalone');
             }
         })();
     </script>
-    
+
     <!-- ES6 Module Entry Point - All JS loaded here -->
     <script type="module" src="./js/main.js"></script>
-    
+
     <!-- Stylesheets -->
     <link rel="stylesheet" href="./css/community-stats.css">
     <link rel="stylesheet" href="./css/private-messages.css">
@@ -726,7 +724,7 @@
 
         // PWA Install Prompt
         let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
+        globalThis.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             showInstallButton();
@@ -740,7 +738,7 @@
             installBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
+                    await deferredPrompt.userChoice;
 
                     deferredPrompt = null;
                     installBtn.remove();
@@ -757,7 +755,7 @@
         }
 
         // Track install event
-        window.addEventListener('appinstalled', () => {
+        globalThis.addEventListener('appinstalled', () => {
 
             deferredPrompt = null;
         });

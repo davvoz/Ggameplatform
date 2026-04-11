@@ -176,11 +176,9 @@ export function showLevelUpModal(levelUpData) {
  */
 
 class LevelWidget {
-    constructor() {
-        this.container = null;
-        this.levelData = null;
-        this.userId = null;
-    }
+    container = null;
+    levelData = null;
+    userId = null;
 
     /**
      * Initialize widget for a user
@@ -198,7 +196,7 @@ class LevelWidget {
         if (!this.userId) return;
 
         try {
-            const API_URL = window.ENV?.API_URL || window.config?.API_URL || window.location.origin;
+            const API_URL = globalThis.ENV?.API_URL || globalThis.config?.API_URL || globalThis.location.origin;
             const response = await fetch(`${API_URL}/api/levels/${this.userId}`);
             if (response.ok) {
                 this.levelData = await response.json();

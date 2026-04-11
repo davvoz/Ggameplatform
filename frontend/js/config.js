@@ -4,14 +4,14 @@
  */
 
 // Fallback to window.ENV for runtime configuration (no bundler)
-const runtimeEnv = typeof window !== 'undefined' && window.ENV ? window.ENV : {};
+const runtimeEnv = globalThis.window?.ENV ?? {};
 
 export const config = {
     // API base URL - priority: window.ENV > same origin > default
-    API_URL: runtimeEnv.API_URL || window.location.origin || 'http://localhost:8000',
+    API_URL: runtimeEnv.API_URL || globalThis.window.location.origin || 'http://localhost:8000',
     
     // Frontend URL - priority: window.ENV > current origin > default
-    FRONTEND_URL: runtimeEnv.FRONTEND_URL || window.location.origin || 'http://localhost:3000',
+    FRONTEND_URL: runtimeEnv.FRONTEND_URL || globalThis.window.location.origin || 'http://localhost:3000',
     
     /**
      * Helper method to get full API endpoint
@@ -48,9 +48,6 @@ export const config = {
     }
 };
 
-// Log configuration in development
-if (config.isDevelopment()) {
-   
-}
+
 
 export default config;

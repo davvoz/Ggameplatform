@@ -22,7 +22,7 @@ async function checkUnclaimedQuests() {
 
 
     try {
-        const apiUrl = window.ENV?.API_URL || window.location.origin || 'http://localhost:8000';
+        const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin || 'http://localhost:8000';
         const timestamp = Date.now();
         const response = await fetch(`${apiUrl}/quests/user/${user.user_id}?_t=${timestamp}`, {
             headers: {
@@ -52,6 +52,7 @@ async function checkUnclaimedQuests() {
             removeQuestBadge();
         }
     } catch (error) {
+        console.error('Error checking unclaimed quests:', error);
         removeQuestBadge();
     }
 }
@@ -81,7 +82,11 @@ function updateQuestBadge(count) {
     if (navToggle) {
         let toggleBadge = navToggle.querySelector('.quest-notification-badge');
         const label = count > 9 ? '9+ unclaimed quests' : `${count} unclaimed quests`;
-        if (!toggleBadge) {
+        if (toggleBadge) {
+            toggleBadge.setAttribute('aria-label', label);
+            toggleBadge.title = label;
+            toggleBadge.textContent = '';
+        } else {
             // Create a small circular badge for the toggle without visible text
             toggleBadge = document.createElement('span');
             toggleBadge.className = 'quest-notification-badge';
@@ -90,10 +95,6 @@ function updateQuestBadge(count) {
             // no visible number inside the toggle badge
             toggleBadge.textContent = '';
             navToggle.appendChild(toggleBadge);
-        } else {
-            toggleBadge.setAttribute('aria-label', label);
-            toggleBadge.title = label;
-            toggleBadge.textContent = '';
         }
     }
 }
@@ -124,19 +125,19 @@ function removeQuestBadge() {
 function initQuestNotifications() {
 
     // Check when auth state changes (login/logout)
-    window.addEventListener('auth-state-changed', () => {
+    globalThis.addEventListener('auth-state-changed', () => {
         checkUnclaimedQuests();
     });
 
     // Check when navigating to quests page
-    window.addEventListener('hashchange', () => {
-        if (window.location.hash.includes('quest')) {
+    globalThis.addEventListener('hashchange', () => {
+        if (globalThis.location.hash.includes('quest')) {
             checkUnclaimedQuests();
         }
     });
 
     // Check when a game session ends (quests may have been completed)
-    window.addEventListener('gameSessionEnded', () => {
+    globalThis.addEventListener('gameSessionEnded', () => {
         // Small delay to allow backend to process quest updates
         setTimeout(() => {
             checkUnclaimedQuests();
@@ -285,7 +286,7 @@ function removeCommunityBadge() {
  */
 function markCommunityAsSeen() {
     const ws = getCommunityWS();
-    if (ws && ws._lastKnownMsgId) {
+    if (ws?._lastKnownMsgId) {
         localStorage.setItem('community_last_seen_msg', ws._lastKnownMsgId);
     }
     removeCommunityBadge();
@@ -295,14 +296,14 @@ function markCommunityAsSeen() {
 
 function _navOnMessage(message) {
     const ws = getCommunityWS();
-    if (message && message.id) {
+    if (message?.id) {
         ws._lastKnownMsgId = message.id;
     }
     // User is viewing the chat page → don't show badge
-    if (window.location.hash === '#/community') return;
+    if (globalThis.location.hash === '#/community') return;
     // Compare with last seen
     const seenId = localStorage.getItem('community_last_seen_msg');
-    if (!seenId || seenId !== (message && message.id)) {
+    if (!seenId || seenId !== (message?.id)) {
         updateCommunityBadge();
     }
 }
@@ -312,7 +313,7 @@ function _navOnHistoryLoad(messages) {
     // The backend sends newest-first; pick the newest
     const newest = messages[0];
     const ws = getCommunityWS();
-    if (newest && newest.id) {
+    if (newest?.id) {
         ws._lastKnownMsgId = newest.id;
     }
     // If user has never seen any message yet, seed localStorage
@@ -321,7 +322,7 @@ function _navOnHistoryLoad(messages) {
     }
     // Check if there's something unseen
     const seenId = localStorage.getItem('community_last_seen_msg');
-    if (seenId !== (newest && newest.id) && window.location.hash !== '#/community') {
+    if (seenId !== (newest?.id) && globalThis.location.hash !== '#/community') {
         updateCommunityBadge();
     }
 }
@@ -376,6 +377,7 @@ async function bootCommunityWS() {
         await api.connect();
     } catch (e) {
         // Connection failed (e.g. network error) - keep the global instance but it will be disconnected
+        console.error('Error connecting to community WS:', e);
     }
 
 }
@@ -388,7 +390,7 @@ function initCommunityNotifications() {
     _communityNotificationsInitialized = true;
 
     // Boot on auth changes (login / logout / user switch)
-    window.addEventListener('auth-state-changed', () => {
+    globalThis.addEventListener('auth-state-changed', () => {
         // If CommunityManager is active it owns the WS — skip
         if (getCurrentCommunityManager()) return;
         bootCommunityWS();
@@ -398,8 +400,8 @@ function initCommunityNotifications() {
     // When navigating TO community, mark as seen (CommunityManager will
     // take over the WS in its own init).  When navigating AWAY the
     // CommunityManager.destroy() hands control back.
-    window.addEventListener('hashchange', () => {
-        if (window.location.hash === '#/community') {
+    globalThis.addEventListener('hashchange', () => {
+        if (globalThis.location.hash === '#/community') {
             markCommunityAsSeen();
         }
     });
@@ -407,8 +409,8 @@ function initCommunityNotifications() {
     // Listen for PM notifications from PrivateMessageManager (fires when
     // a new message or connection request arrives in real-time).
     // If the user is NOT on the community page, show the community nav badge.
-    window.addEventListener('pm:notification', () => {
-        if (window.location.hash !== '#/community') {
+    globalThis.addEventListener('pm:notification', () => {
+        if (globalThis.location.hash !== '#/community') {
             updateCommunityBadge();
         }
     });
@@ -443,30 +445,30 @@ function initCommunityNotifications() {
 /* ── Lightweight PM WebSocket callbacks ── */
 
 function _navPMOnMessage(_msg) {
-    if (window.location.hash !== '#/community') {
+    if (globalThis.location.hash !== '#/community') {
         updateCommunityBadge();
     }
-    window.dispatchEvent(new CustomEvent('pm:notification', {
+    globalThis.dispatchEvent(new CustomEvent('pm:notification', {
         detail: { reason: 'message' },
     }));
 }
 
 function _navPMOnConnectionRequest(_conn) {
-    if (window.location.hash !== '#/community') {
+    if (globalThis.location.hash !== '#/community') {
         updateCommunityBadge();
     }
-    window.dispatchEvent(new CustomEvent('pm:notification', {
+    globalThis.dispatchEvent(new CustomEvent('pm:notification', {
         detail: { reason: 'connection_request' },
     }));
 }
 
 function _navPMOnUnreadSummary(data) {
     const total = (data.unread_messages || 0) + (data.pending_connections || 0);
-    if (total > 0 && window.location.hash !== '#/community') {
+    if (total > 0 && globalThis.location.hash !== '#/community') {
         updateCommunityBadge();
     }
     if (total > 0) {
-        window.dispatchEvent(new CustomEvent('pm:notification', {
+        globalThis.dispatchEvent(new CustomEvent('pm:notification', {
             detail: { reason: 'unread_summary', total },
         }));
     }
@@ -482,7 +484,7 @@ function installNavPMHandlers() {
     ws.onMessage = _navPMOnMessage;
     ws.onConnectionRequest = _navPMOnConnectionRequest;
     ws.onUnreadSummary = _navPMOnUnreadSummary;
-    ws.onError = () => {};
+    ws.onError = () => { };
 }
 
 /**
@@ -506,7 +508,8 @@ async function bootPMWS() {
 
     try {
         await api.connect();
-    } catch {
+    } catch (e) {
+        console.error('Error connecting to PM WS:', e);
         // Connection failed — keep the instance but it will be disconnected
     }
 }

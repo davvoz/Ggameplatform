@@ -5,18 +5,17 @@
  */
 
 class WalletStatsRenderer {
-    constructor() {
-        this.animationDuration = 1500;
-        this.chartColors = {
-            primary: '#667eea',
-            secondary: '#764ba2',
-            success: '#28a745',
-            warning: '#ffc107',
-            danger: '#dc3545',
-            info: '#17a2b8',
-            accent: '#00d9ff'
-        };
-    }
+    animationDuration = 1500;
+    chartColors = {
+        primary: '#667eea',
+        secondary: '#764ba2',
+        success: '#28a745',
+        warning: '#ffc107',
+        danger: '#dc3545',
+        info: '#17a2b8',
+        accent: '#00d9ff'
+    };
+
 
     /**
      * Render the complete stats dashboard
@@ -161,7 +160,19 @@ class WalletStatsRenderer {
             const dayOfWeek = date.getDay();
             const adjustedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Mon=0, Sun=6
             const hour = date.getHours();
-            const timeSlot = hour < 6 ? 3 : hour < 12 ? 0 : hour < 18 ? 1 : hour < 22 ? 2 : 3;
+            
+            let timeSlot;
+            if (hour < 6) {
+                timeSlot = 3;
+            } else if (hour < 12) {
+                timeSlot = 0;
+            } else if (hour < 18) {
+                timeSlot = 1;
+            } else if (hour < 22) {
+                timeSlot = 2;
+            } else {
+                timeSlot = 3;
+            }
             
             if (stats.activityMatrix[adjustedDay]) {
                 stats.activityMatrix[adjustedDay][timeSlot]++;

@@ -1,10 +1,10 @@
 /**
  * Production Environment Configuration
  * Domain: games.cur8.fun
- * Server: 95.216.27.123 (Hetzner)
+ * Server: 
  */
 
-window.ENV = {
+globalThis.ENV = {
     // Backend API URL
     API_URL: 'https://games.cur8.fun',
     

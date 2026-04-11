@@ -3,13 +3,13 @@ import { showCur8MultiplierModal } from './ProfileRenderer.js';
 
 // Attach click handler to nav multiplier card to open multiplier modal (replicates ProfileRenderer modal)
 
-function getApiUrl(){
-    return window.ENV?.API_URL || window.location.origin;
+function getApiUrl() {
+    return globalThis.ENV?.API_URL || globalThis.location.origin;
 }
 
-    function createModal(breakdown){
-        const modal = document.createElement('div');
-        modal.style.cssText = `
+function createModal(breakdown) {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
             position: fixed;
             top: 0;
             left: 0;
@@ -23,7 +23,7 @@ function getApiUrl(){
             animation: fadeIn 0.2s ease-out;
         `;
 
-        modal.innerHTML = `
+    modal.innerHTML = `
             <div style="background: var(--background-light); border-radius: 16px; max-width: 450px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid var(--border); animation: slideUp 0.3s ease-out;">
                 <div style="padding: 16px; border-bottom: 1px solid var(--border);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -74,80 +74,80 @@ function getApiUrl(){
             </div>
         `;
 
-        // close handlers
-        modal.querySelector('.nav-mult-close')?.addEventListener('click', () => modal.remove());
-        modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.remove(); });
+    // close handlers
+    modal.querySelector('.nav-mult-close')?.addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
-        // wire simple delegation preview update
-        const slider = modal.querySelector('#navDelegateAmountSlider');
-        const delegationValue = modal.querySelector('#navDelegationBonusValue');
-        if(slider && delegationValue){
-            slider.addEventListener('input', ()=>{
-                const val = Number(slider.value)||0;
-                    // compute per-delegation cap (backend override allowed). Default: 2.5 if voting witness, else 3.0
-                    const perDelegationCapNav = (breakdown.max_delegation_bonus !== undefined)
-                        ? Number(breakdown.max_delegation_bonus)
-                        : ((Number(breakdown.witness_bonus) && Number(breakdown.witness_bonus) > 0) ? 2.5 : 3.0);
+    // wire simple delegation preview update
+    const slider = modal.querySelector('#navDelegateAmountSlider');
+    const delegationValue = modal.querySelector('#navDelegationBonusValue');
+    if (slider && delegationValue) {
+        slider.addEventListener('input', () => {
+            const val = Number(slider.value) || 0;
+            // compute per-delegation cap (backend override allowed). Default: 2.5 if voting witness, else 3.0
+            const hasWitnessBonus = Number(breakdown.witness_bonus) && Number(breakdown.witness_bonus) > 0;
+            const defaultCap = hasWitnessBonus ? 2.5 : 3;
+            const perDelegationCapNav = (breakdown.max_delegation_bonus !== undefined && breakdown.max_delegation_bonus !== null)
+                ? Number(breakdown.max_delegation_bonus)
+                : defaultCap;
 
-                    // try to compute per-SP ratio from breakdown when available
-                    let perSpNav = 0.0001;
-                    if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
-                        perSpNav = Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
-                    }
+            // try to compute per-SP ratio from breakdown when available
+            let perSpNav = 0.0001;
+            if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
+                perSpNav = Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
+            }
 
-                    const rawPreview = val * perSpNav;
-                    const preview = Math.min(perDelegationCapNav, rawPreview);
-                    delegationValue.textContent = `+${preview.toFixed(2)}x`;
-                    const finalEl = modal.querySelector('#navFinalMultiplierValue');
-                    if (finalEl) {
-                        const base = breakdown.base || 1.0;
-                        const newFinal = base + (Number(breakdown.witness_bonus) || 0) + preview;
-                        finalEl.textContent = `${Math.min(4, newFinal).toFixed(2)}x`;
-                    }
-            });
-        }
-
-        document.body.appendChild(modal);
-
-        // Note: Vote/delegate buttons in this modal are display-only
-        // The actual voting/delegating happens through the ProfileRenderer modal
+            const rawPreview = val * perSpNav;
+            const preview = Math.min(perDelegationCapNav, rawPreview);
+            delegationValue.textContent = `+${preview.toFixed(2)}x`;
+            const finalEl = modal.querySelector('#navFinalMultiplierValue');
+            if (finalEl) {
+                const base = breakdown.base || 1;
+                const newFinal = base + (Number(breakdown.witness_bonus) || 0) + preview;
+                finalEl.textContent = `${Math.min(4, newFinal).toFixed(2)}x`;
+            }
+        });
     }
 
-    async function onClick(e){
-        try{
-            const user = AuthManager.isLoggedIn() ? AuthManager.getUser() : null;
-            if(!user || !user.user_id){
-                // show auth modal if not logged in
-                const authModal = document.getElementById('authModal');
-                if(authModal) authModal.style.display = 'block';
-                return;
-            }
-            const API_URL = getApiUrl();
-            const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
-            if(!resp.ok) throw new Error('Failed to load breakdown');
-            const json = await resp.json();
-            const breakdown = json.breakdown;
-            // Prefer canonical modal from ProfileRenderer when available
-            if (showCur8MultiplierModal) {
-                try {
-                    showCur8MultiplierModal(breakdown);
-                    return;
-                } catch (e) {
+    document.body.appendChild(modal);
 
-                }
-            }
-            createModal(breakdown);
-        }catch(err){
-            console.error('Failed opening multiplier modal from nav:', err);
+    // Note: Vote/delegate buttons in this modal are display-only
+    // The actual voting/delegating happens through the ProfileRenderer modal
+}
+
+async function onClick(e) {
+    try {
+        const user = AuthManager.isLoggedIn() ? AuthManager.getUser() : null;
+        if (!user?.user_id) {
+            // show auth modal if not logged in
+            const authModal = document.getElementById('authModal');
+            if (authModal) authModal.style.display = 'block';
+            return;
         }
+        const API_URL = getApiUrl();
+        const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
+        if (!resp.ok) throw new Error('Failed to load breakdown');
+        const json = await resp.json();
+        const breakdown = json.breakdown;
+        // Prefer canonical modal from ProfileRenderer when available
+        if (showCur8MultiplierModal) {
+
+            showCur8MultiplierModal(breakdown);
+            return;
+
+        }
+        createModal(breakdown);
+    } catch (err) {
+        console.error('Failed opening multiplier modal from nav:', err);
     }
+}
 
 /**
  * Initialize nav multiplier click handler
  */
 export function initNavMultiplier() {
     const card = document.getElementById('multiplierCard');
-    if(card) card.addEventListener('click', onClick);
+    if (card) card.addEventListener('click', onClick);
 }
 
 export default initNavMultiplier;

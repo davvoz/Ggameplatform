@@ -1,4 +1,4 @@
-import {InfiniteScrollManager} from './InfiniteScrollManager.js';
+import { InfiniteScrollManager } from './InfiniteScrollManager.js';
 import WalletStatsRenderer from './WalletStatsRenderer.js';
 /**
  * Wallet Renderer
@@ -126,12 +126,9 @@ class WalletRenderer {
      * @private
      */
     async _fetchDetailedStats() {
-        try {
-            return await this.coinAPI.getDetailedStats(this.userId, 30);
-        } catch (error) {
 
-            return null;
-        }
+        return await this.coinAPI.getDetailedStats(this.userId, 30);
+
     }
 
     /**
@@ -144,14 +141,14 @@ class WalletRenderer {
 
         // Initialize infinite scroll for transactions
         this._initInfiniteScroll();
-        
+
         // Initialize scroll-to-top button
         this._initScrollToTop();
-        
+
         // Initialize sticky hero navbar
         this._initStickyHero();
     }
-    
+
     /**
      * Initialize sticky hero behavior
      * The balance hero collapses into a compact navbar when scrolling
@@ -160,7 +157,7 @@ class WalletRenderer {
     _initStickyHero() {
         const balanceHero = document.querySelector('.balance-hero');
         if (!balanceHero) return;
-        
+
         // Create the compact sticky navbar clone
         const stickyNavbar = document.createElement('div');
         stickyNavbar.className = 'wallet-sticky-navbar';
@@ -176,33 +173,33 @@ class WalletRenderer {
                 </div>
             </div>
         `;
-        
+
         // Insert sticky navbar at the beginning of wallet container
         const walletContainer = document.querySelector('.wallet-container');
         if (walletContainer) {
             walletContainer.insertBefore(stickyNavbar, walletContainer.firstChild);
         }
-        
+
         // Get hero position for scroll calculations
         let heroRect = balanceHero.getBoundingClientRect();
         let heroTop = heroRect.top + window.scrollY;
         let heroHeight = heroRect.height;
-        
+
         // Recalculate on resize
         const recalculatePositions = () => {
             heroRect = balanceHero.getBoundingClientRect();
             heroTop = heroRect.top + window.scrollY;
             heroHeight = heroRect.height;
         };
-        
+
         window.addEventListener('resize', recalculatePositions, { passive: true });
-        
+
         // Handle scroll behavior
         const handleScroll = () => {
             const scrollY = window.scrollY;
             const triggerPoint = heroTop + heroHeight * 0.5; // Start compressing at 50% scroll
             const fullCompressPoint = heroTop + heroHeight; // Fully compressed when hero is out of view
-            
+
             if (scrollY < triggerPoint) {
                 // Normal state - hero fully visible
                 balanceHero.classList.remove('hero-compressing', 'hero-compressed');
@@ -221,13 +218,13 @@ class WalletRenderer {
                 stickyNavbar.classList.add('visible');
             }
         };
-        
+
         window.addEventListener('scroll', handleScroll, { passive: true });
-        
+
         // Initial check
         handleScroll();
     }
-    
+
     /**
      * Initialize scroll-to-top button
      * @private
@@ -235,9 +232,9 @@ class WalletRenderer {
     _initScrollToTop() {
         const scrollBtn = document.getElementById('scrollToTop');
         if (!scrollBtn) return;
-        
+
         const showThreshold = 300;
-        
+
         const toggleVisibility = () => {
             if (window.scrollY > showThreshold) {
                 scrollBtn.classList.add('visible');
@@ -245,16 +242,16 @@ class WalletRenderer {
                 scrollBtn.classList.remove('visible');
             }
         };
-        
+
         window.addEventListener('scroll', toggleVisibility, { passive: true });
-        
+
         scrollBtn.addEventListener('click', () => {
             window.scrollTo({
                 top: 0,
                 behavior: 'smooth'
             });
         });
-        
+
         // Initial check
         toggleVisibility();
     }

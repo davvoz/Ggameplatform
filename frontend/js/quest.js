@@ -19,9 +19,6 @@ function highlightReadyFilter(quests) {
         const progress = quest.progress || {};
         const isReady = progress.is_completed === true && 
                (progress.is_claimed === false || progress.is_claimed === 0);
-        if (isReady) {
-
-        }
         return isReady;
     }).length;
     
@@ -249,6 +246,21 @@ function setupQuestFilters(quests) {
 
 }
 
+function showCardWithAnimation(card) {
+    return new Promise(resolve => {
+        requestAnimationFrame(() => {
+            card.style.display = 'block';
+            requestAnimationFrame(() => {
+                card.classList.add('fade-in');
+                resolve();
+            });
+        });
+    });
+}
+
+const EMPTY_FILTER_ICONS = { games: '🎮', platform: '🏆', ready: '🎁', claimed: '✅' };
+const EMPTY_FILTER_TEXTS = { games: 'No game quests available', platform: 'No platform quests available', ready: 'No rewards to claim', claimed: 'No claimed quests yet' };
+
 async function applyFilter(filter, questsList) {
     const questCards = questsList.querySelectorAll('.quest-card');
 
@@ -282,35 +294,15 @@ async function applyFilter(filter, questsList) {
     });
 
     // Show cards with staggered animation
-    await Promise.all(
-        cardsToShow.map((card, index) => 
-            new Promise(resolve => {
-                requestAnimationFrame(() => {
-                    card.style.display = 'block';
-                    requestAnimationFrame(() => {
-                        card.classList.add('fade-in');
-                        resolve();
-                    });
-                });
-            })
-        )
-    );
+    await Promise.all(cardsToShow.map(card => showCardWithAnimation(card)));
 
     // Show empty message if no quests match filter
     if (cardsToShow.length === 0) {
         const emptyMsg = document.createElement('div');
         emptyMsg.className = 'quests-empty-message';
 
-        const emptyIcon = filter === 'games' ? '🎮' :
-            filter === 'platform' ? '🏆' :
-            filter === 'ready' ? '🎁' :
-            filter === 'claimed' ? '✅' : '🎯';
-
-        const emptyText = filter === 'games' ? 'No game quests available' :
-            filter === 'platform' ? 'No platform quests available' :
-            filter === 'ready' ? 'No rewards to claim' :
-            filter === 'claimed' ? 'No claimed quests yet' :
-            'No quests available';
+        const emptyIcon = EMPTY_FILTER_ICONS[filter] || '🎯';
+        const emptyText = EMPTY_FILTER_TEXTS[filter] || 'No quests available';
 
         emptyMsg.innerHTML = `
             <div class="empty-icon">${emptyIcon}</div>
@@ -474,6 +466,31 @@ export class QuestRenderer {
 /**
  * Quest Statistics - Calculates and displays quest statistics
  */
+
+function animateCount(el, target, duration = 600) {
+    if (!el) return null;
+    let value = 0;
+    el.textContent = String(0);
+    const steps = Math.max(6, Math.floor(duration / 30));
+    const increment = Math.max(1, Math.ceil(target / steps));
+    const iv = setInterval(() => {
+        value += increment;
+        if (value >= target) {
+            el.textContent = String(target);
+            clearInterval(iv);
+        } else {
+            el.textContent = String(value);
+        }
+    }, 30);
+    return iv;
+}
+
+function clearAnimations(...intervals) {
+    for (const iv of intervals) {
+        if (iv) clearInterval(iv);
+    }
+}
+
 class QuestStatistics {
     constructor(quests) {
         this.quests = quests;
@@ -501,97 +518,75 @@ class QuestStatistics {
     }
 
     render() {
-        // Only use hero stats now
-        const heroActiveEl = document.getElementById('heroActiveCount');
-        const heroReadyEl = document.getElementById('heroReadyCount');
-        const heroClaimedEl = document.getElementById('heroClaimedCount');
-        const heroTotalXPEl = document.getElementById('heroTotalXP');
-
-        // Animate the three hero counters (Active / Ready / Claimed)
-        const animateCount = (el, target, duration = 600) => {
-            if (!el) return null;
-            let value = 0;
-            el.textContent = String(0);
-            const steps = Math.max(6, Math.floor(duration / 30));
-            const increment = Math.max(1, Math.ceil(target / steps));
-            const iv = setInterval(() => {
-                value += increment;
-                if (value >= target) {
-                    el.textContent = String(target);
-                    clearInterval(iv);
-                } else {
-                    el.textContent = String(value);
-                }
-            }, 30);
-            return iv;
+        const elements = {
+            active: document.getElementById('heroActiveCount'),
+            ready: document.getElementById('heroReadyCount'),
+            claimed: document.getElementById('heroClaimedCount'),
+            totalXP: document.getElementById('heroTotalXP')
         };
 
-        const activeAnim = animateCount(heroActiveEl, this.activeCount);
-        const readyAnim = animateCount(heroReadyEl, this.readyToClaimCount);
-        const claimedAnim = animateCount(heroClaimedEl, this.claimedCount);
+        const anims = {
+            active: animateCount(elements.active, this.activeCount),
+            ready: animateCount(elements.ready, this.readyToClaimCount),
+            claimed: animateCount(elements.claimed, this.claimedCount)
+        };
 
-        // Compute Total XP coming from quests differently:
-        // Only this value is computed asynchronously so the rest of the page renders quickly.
-        (async () => {
-            // Start small animation while we compute the real value
-            let animInterval = null;
-            // Ensure we can clear the hero counters' animations if needed
-            const clearHeroAnims = () => {
-                try { if (activeAnim) clearInterval(activeAnim); } catch(e) {}
-                try { if (readyAnim) clearInterval(readyAnim); } catch(e) {}
-                try { if (claimedAnim) clearInterval(claimedAnim); } catch(e) {}
-            };
-            try {
-                if (heroTotalXPEl) {
-                    let display = 0;
-                    const placeholderTarget = Math.max(0, Math.floor(this.totalXP));
-                    heroTotalXPEl.textContent = String(display);
-                    animInterval = setInterval(() => {
-                        display += Math.max(1, Math.ceil(placeholderTarget / 20));
-                        if (display >= placeholderTarget) display = placeholderTarget;
-                        heroTotalXPEl.textContent = String(display);
-                    }, 30);
-                }
+        this._computeTotalXPAsync(elements, anims);
+    }
 
-                const user = AuthManager.getUser();
-                if (user && user.user_id && typeof user.total_xp_earned !== 'undefined') {
-                    const { getUserSessions } = await import('./api.js');
+    async _computeTotalXPAsync(elements, anims) {
+        let animInterval = null;
+        try {
+            animInterval = this._startXPPlaceholderAnim(elements.totalXP);
+            const questXP = await this._fetchQuestXP();
 
-                    // Request ALL sessions by omitting limit
-                    const all = await getUserSessions(user.user_id).catch(() => ({ sessions: [] }));
-                    const sessions = all && all.sessions ? all.sessions : [];
-                    const totalSessionXP = sessions.reduce((sum, s) => sum + (Number.parseFloat(s.xp_earned) || 0), 0);
-
-                    const questXP = Math.max(0, (Number.parseFloat(user.total_xp_earned) || 0) - totalSessionXP);
-
-                    if (animInterval) {
-                        clearInterval(animInterval);
-                        animInterval = null;
-                    }
-                    // Clear the hero counters' placeholder animations and set final values
-                    clearHeroAnims();
-                    if (heroActiveEl) heroActiveEl.textContent = String(this.activeCount);
-                    if (heroReadyEl) heroReadyEl.textContent = String(this.readyToClaimCount);
-                    if (heroClaimedEl) heroClaimedEl.textContent = String(this.claimedCount);
-
-                    if (heroTotalXPEl) heroTotalXPEl.textContent = String(Math.floor(questXP));
-                    return;
-                }
-            } catch (e) {
-                console.error('Error computing total quest XP from sessions:', e);
-            } finally {
-                if (animInterval) {
-                    clearInterval(animInterval);
-                    animInterval = null;
-                }
-                try { if (activeAnim) clearInterval(activeAnim); } catch(e) {}
-                try { if (readyAnim) clearInterval(readyAnim); } catch(e) {}
-                try { if (claimedAnim) clearInterval(claimedAnim); } catch(e) {}
+            if (questXP !== null) {
+                clearAnimations(animInterval, anims.active, anims.ready, anims.claimed);
+                animInterval = null;
+                this._setFinalValues(elements, questXP);
+                return;
             }
+        } catch (e) {
+            console.error('Error computing total quest XP from sessions:', e);
+        } finally {
+            clearAnimations(animInterval, anims.active, anims.ready, anims.claimed);
+        }
 
-            // Fallback: previous behaviour (sum of claimed quest xp)
-            if (heroTotalXPEl) heroTotalXPEl.textContent = Math.floor(this.totalXP.toFixed(2));
-        })();
+        // Fallback: previous behaviour (sum of claimed quest xp)
+        if (elements.totalXP) {
+            elements.totalXP.textContent = Math.floor(Number.parseFloat(this.totalXP.toFixed(2)));
+        }
+    }
+
+    _startXPPlaceholderAnim(heroTotalXPEl) {
+        if (!heroTotalXPEl) return null;
+        let display = 0;
+        const placeholderTarget = Math.max(0, Math.floor(this.totalXP));
+        heroTotalXPEl.textContent = String(display);
+        return setInterval(() => {
+            display += Math.max(1, Math.ceil(placeholderTarget / 20));
+            if (display >= placeholderTarget) display = placeholderTarget;
+            heroTotalXPEl.textContent = String(display);
+        }, 30);
+    }
+
+    async _fetchQuestXP() {
+        const user = AuthManager.getUser();
+        if (!user?.user_id || user.total_xp_earned === undefined) return null;
+
+        const { getUserSessions } = await import('./api.js');
+        const all = await getUserSessions(user.user_id).catch(() => ({ sessions: [] }));
+        const sessions = all?.sessions ?? [];
+        const totalSessionXP = sessions.reduce((sum, s) => sum + (Number.parseFloat(s.xp_earned) || 0), 0);
+
+        return Math.max(0, (Number.parseFloat(user.total_xp_earned) || 0) - totalSessionXP);
+    }
+
+    _setFinalValues(elements, questXP) {
+        if (elements.active) elements.active.textContent = String(this.activeCount);
+        if (elements.ready) elements.ready.textContent = String(this.readyToClaimCount);
+        if (elements.claimed) elements.claimed.textContent = String(this.claimedCount);
+        if (elements.totalXP) elements.totalXP.textContent = String(Math.floor(questXP));
     }
 }
 /**
@@ -708,7 +703,7 @@ class QuestCard {
         const questCard = document.createElement('div');
         questCard.className = 'quest-card';
         // Get game_id from config if it exists
-        const gameId = this.quest.config && this.quest.config.game_id ? this.quest.config.game_id : '';
+        const gameId = this.quest.config?.game_id ?? '';
         questCard.dataset.gameId = gameId;
         questCard.innerHTML = this.buildHTML();
 
@@ -829,7 +824,7 @@ class QuestCard {
 }
 
 // Listen for game session end events to refresh quest progress
-window.addEventListener('gameSessionEnded', async (event) => {
+globalThis.addEventListener('gameSessionEnded', async (event) => {
 
     
     // Only refresh if we're on the quests page
@@ -840,7 +835,7 @@ window.addEventListener('gameSessionEnded', async (event) => {
     
     // Get current user
     const user = AuthManager?.getUser();
-    if (!user || !user.user_id) {
+    if (!user?.user_id) {
         return;
     }
     

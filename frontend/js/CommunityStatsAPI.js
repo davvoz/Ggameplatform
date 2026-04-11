@@ -5,7 +5,7 @@
  * Follows LeaderboardAPI pattern (static methods, same base URL logic).
  */
 
-const STATS_API_URL = window.ENV?.API_URL || window.config?.API_URL || 'http://localhost:8000';
+const STATS_API_URL = globalThis.ENV?.API_URL || globalThis.config?.API_URL || 'http://localhost:8000';
 
 class CommunityStatsAPI {
 

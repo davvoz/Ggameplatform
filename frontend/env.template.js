@@ -11,7 +11,7 @@
  * <script type="module" src="/js/main.js"></script>
  */
 
-window.ENV = {
+globalThis.ENV = {
     // Backend API URL - update this for production
     API_URL: 'http://localhost:8000',
     
@@ -23,7 +23,7 @@ window.ENV = {
 };
 
 // Production example:
-// window.ENV = {
+// globalThis.ENV = {
 //     API_URL: 'https://api.yourdomain.com',
 //     FRONTEND_URL: 'https://yourdomain.com',
 //     MODE: 'production'

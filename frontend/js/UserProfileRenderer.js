@@ -1,4 +1,4 @@
-import { getGameResourceUrl, getGamePreviewUrl } from './api.js';
+import {  getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import { config } from './config.js';
@@ -235,7 +235,7 @@ class UserProfileRenderer {
             <div class="ws-container">
                 <div class="ws-header">
                     <span class="ws-subtitle">Current positions &amp; projected rewards</span>
-                    <span class="ws-days-left">⏳ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>
+                    <span class="ws-days-left">⏳ ${daysLeft} day${daysLeft === 1 ? '' : 's'} left</span>
                 </div>
                 <div class="ws-table">
                     <div class="ws-row ws-row-header">
@@ -332,7 +332,7 @@ class UserProfileRenderer {
         const steemUsername = this.extractSteemUsername(user);
         const avatarHTML = this.buildAvatarHTML(steemUsername);
         const totalXP = user.total_xp_earned || 0;
-        const multiplier = user.cur8_multiplier || 1.0;
+        const multiplier = user.cur8_multiplier || 1;
         const highScoresHTML = this.buildHighScoresHTML(user.game_scores_enriched);
         const recentActivityHTML = this.buildRecentActivityHTML(stats.recentActivity);
         const memberSince = user.created_at
@@ -597,7 +597,7 @@ class UserProfileRenderer {
         if (user.steemUsername || user.steem_username) {
             return user.steemUsername || user.steem_username;
         }
-        if (user.email && user.email.endsWith('@steem.local')) {
+        if (user.email?.endsWith('@steem.local')) {
             return user.email.replace('@steem.local', '');
         }
         if (user.username && !user.is_anonymous) {
@@ -765,7 +765,7 @@ class UserProfileRenderer {
     }
 
     getApiUrl() {
-        return window.ENV?.API_URL || config.API_URL || window.location.origin;
+        return globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
     }
 
     /**

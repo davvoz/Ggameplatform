@@ -30,7 +30,7 @@ const routes = {
  */
 export function initRouter() {
     // Listen for hash changes
-    window.addEventListener('hashchange', handleRoute);
+    globalThis.addEventListener('hashchange', handleRoute);
     
     // Handle initial load
     handleRoute();
@@ -40,7 +40,7 @@ export function initRouter() {
  * Handle route changes
  */
 function handleRoute() {
-    const hash = window.location.hash.slice(1) || '/';
+    const hash = globalThis.window.location.hash.slice(1) || '/';
     const route = matchRoute(hash);
     
     // Cleanup previous game runtime when navigating away from player
@@ -75,7 +75,7 @@ function matchRoute(path) {
     
     // Try pattern matching
     for (const [pattern, handler] of Object.entries(routes)) {
-        const regex = new RegExp('^' + pattern.replaceAll(/:[^\s/]+/g, '([\\w-]+)') + '$');
+        const regex = new RegExp('^' + pattern.replaceAll(/:[^\s/]+/g, String.raw`([\w-]+)`) + '$');
         const match = path.match(regex);
         
         if (match) {
@@ -97,7 +97,7 @@ function matchRoute(path) {
  * Navigate to a new route
  */
 export function navigateTo(path) {
-    window.location.hash = path;
+    globalThis.location.hash = path;
 }
 
 /**
@@ -107,7 +107,7 @@ function updateActiveNavLink(currentPath) {
     const navLinks = document.querySelectorAll('.nav-link');
     
     navLinks.forEach(link => {
-        const route = link.getAttribute('data-route');
+        const route = link.dataset.route;
         if (route === currentPath || (currentPath.startsWith('/game') && route === '/')) {
             link.classList.add('active');
         } else {
@@ -120,14 +120,14 @@ function updateActiveNavLink(currentPath) {
  * Get current route
  */
 export function getCurrentRoute() {
-    return window.location.hash.slice(1) || '/';
+    return globalThis.location.hash.slice(1) || '/';
 }
 
 /**
  * Get route parameters
  */
 export function getRouteParams() {
-    const hash = window.location.hash.slice(1) || '/';
+    const hash = globalThis.location.hash.slice(1) || '/';
     const route = matchRoute(hash);
     return route ? route.params : {};
 }

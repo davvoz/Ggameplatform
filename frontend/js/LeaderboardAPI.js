@@ -3,7 +3,7 @@
  * Handles API calls for weekly and all-time leaderboards
  */
 
-const API_URL = window.ENV?.API_URL || window.config?.API_URL || 'http://localhost:8000';
+const API_URL = globalThis.ENV?.API_URL || globalThis.config?.API_URL || 'http://localhost:8000';
 
 class LeaderboardAPI {
     /**

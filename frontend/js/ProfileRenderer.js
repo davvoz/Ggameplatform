@@ -1,4 +1,4 @@
-import { getUserSessions, getGameResourceUrl, getGamePreviewUrl } from './api.js';
+import { getUserSessions, getGamePreviewUrl } from './api.js';
 import { SteemProfileService } from './SteemProfileService.js';
 import { config } from './config.js';
 import AuthManager from './auth.js';
@@ -33,25 +33,25 @@ class ProfileRenderer {
         await this.renderProfilePageSkeleton(cachedUser);
 
         // Load multiplier breakdown in background (non-blocking)
-        const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
-        if (cachedUser && cachedUser.user_id) {
+        const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
+        if (cachedUser?.user_id) {
             fetch(`${API_URL}/users/multiplier-breakdown/${cachedUser.user_id}`)
                 .then(resp => resp.ok ? resp.json() : null)
                 .then(json => {
-                    if (json && json.breakdown && json.breakdown.final_multiplier !== undefined) {
+                    if (json?.breakdown?.final_multiplier !== undefined) {
                         const breakdown = json.breakdown;
-                        const updatedUser = Object.assign({}, cachedUser, {
+                        const updatedUser = {
+                            ...cachedUser,
                             cur8_multiplier: Number(breakdown.final_multiplier),
                             delegation_amount: Number(breakdown.delegation_amount || cachedUser.delegation_amount || 0)
-                        });
-                        try {
-                            if (this.authManager.setUser) this.authManager.setUser(updatedUser);
-                        } catch (e) {
+                        };
 
-                        }
-                        try {
-                            window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
-                        } catch (e) { }
+                        if (this.authManager.setUser)
+                            this.authManager.setUser(updatedUser);
+
+
+                        globalThis.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
+
                     }
                 })
                 .catch(e => { });
@@ -62,46 +62,43 @@ class ProfileRenderer {
     }
 
     async loadProfileDataAsync(cachedUser) {
-        try {
-            // Load user data from server (fresher data)
-            const userPromise = this.loadUserData();
-            const sessionsPromise = this.loadUserSessions(cachedUser.user_id);
 
-            // Wait for both user and sessions (sessionsPromise now returns an object {count, sessions})
-            const [user, sessionsData] = await Promise.all([userPromise, sessionsPromise]);
-            const sessions = (sessionsData && sessionsData.sessions) ? sessionsData.sessions : [];
+        // Load user data from server (fresher data)
+        const userPromise = this.loadUserData();
+        const sessionsPromise = this.loadUserSessions(cachedUser.user_id);
 
-            // Calculate stats immediately after sessions arrive
-            const stats = this.calculateStats(sessions);
+        // Wait for both user and sessions (sessionsPromise now returns an object {count, sessions})
+        const [user, sessionsData] = await Promise.all([userPromise, sessionsPromise]);
+        const sessions = sessionsData?.sessions ?? [];
 
-            // If API provided a total count, prefer that for gamesPlayed (avoids client-side limit effects)
-            if (sessionsData && typeof sessionsData.count === 'number') {
-                stats.gamesPlayed = sessionsData.count;
-            }
+        // Calculate stats immediately after sessions arrive
+        const stats = this.calculateStats(sessions);
 
-            // Update stats section
-            this.updateStatsSection(user, stats);
-            this.populateRecentActivity(stats.recentActivity);
-            this.populateHighScores(user.game_scores_enriched);
-
-            // Load weekly leaderboard standings in background
-            this.loadWeeklyStandingsAsync(user.user_id);
-
-            // Load Steem profile in background (slowest operation)
-            this.loadSteemProfile(user).then(steemProfile => {
-                if (steemProfile) {
-                    this.updateProfileWithSteemData(user, steemProfile);
-                }
-            }).catch(error => {
-
-            });
-
-        } catch (error) {
+        // If API provided a total count, prefer that for gamesPlayed (avoids client-side limit effects)
+        if (sessionsData && typeof sessionsData.count === 'number') {
+            stats.gamesPlayed = sessionsData.count;
         }
+
+        // Update stats section
+        this.updateStatsSection(user, stats);
+        this.populateRecentActivity(stats.recentActivity);
+        this.populateHighScores(user.game_scores_enriched);
+
+        // Load weekly leaderboard standings in background
+        this.loadWeeklyStandingsAsync(user.user_id);
+
+        // Load Steem profile in background (slowest operation)
+        this.loadSteemProfile(user).then(steemProfile => {
+            if (steemProfile) {
+                this.updateProfileWithSteemData(user, steemProfile);
+            }
+        }).catch(error => {
+
+        });
     }
 
     isUserAuthenticated() {
-        return this.authManager && this.authManager.isLoggedIn();
+        return this.authManager?.isLoggedIn();
     }
 
     renderLoginRequired() {
@@ -117,22 +114,15 @@ class ProfileRenderer {
 
     async loadUserData() {
         const cachedUser = this.authManager.getUser();
+        const API_URL = globalThis.ENV?.API_URL || config.API_URL;
+        const url = `${API_URL}/users/${cachedUser.user_id}`;
 
+        const response = await fetch(url);
+        if (response.ok) {
+            const userData = await response.json();
 
-        try {
-            const API_URL = window.ENV?.API_URL || config.API_URL;
-            const url = `${API_URL}/users/${cachedUser.user_id}`;
-
-            const response = await fetch(url);
-            if (response.ok) {
-                const userData = await response.json();
-
-                return userData.user;
-            }
-        } catch (error) {
+            return userData.user;
         }
-
-
         return cachedUser;
     }
 
@@ -140,10 +130,10 @@ class ProfileRenderer {
 
         try {
             const sessionsData = await getUserSessions(userId);
-
             // Return the full response so caller can access total count if API provides it
             return sessionsData || { count: 0, sessions: [] };
         } catch (error) {
+            console.error('Error loading user sessions:', error);
             return { count: 0, sessions: [] };
         }
     }
@@ -207,9 +197,9 @@ class ProfileRenderer {
         const steemProfile = await fetchSteemProfile(steemUsername);
 
         // Update multiplier from Steem data if available
-        if (steemProfile && steemProfile.votesCur8Witness !== undefined) {
+        if (steemProfile?.votesCur8Witness !== undefined) {
             try {
-                const API_URL = window.ENV?.API_URL || window.location.origin;
+                const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
 
                 // Send real Steem data to backend for multiplier update
                 const response = await fetch(`${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${steemProfile.votesCur8Witness}&delegation_amount=${steemProfile.delegationAmount || 0}`, {
@@ -218,17 +208,13 @@ class ProfileRenderer {
 
                 if (response.ok) {
                     const result = await response.json();
-
-
                     // Update user object with new multiplier
                     user.cur8_multiplier = result.cur8_multiplier;
                     user.votes_cur8_witness = result.votes_cur8_witness;
                     user.delegation_amount = result.delegation_amount;
-                } else {
-
                 }
             } catch (error) {
-
+                console.error('Error updating Steem data:', error);
             }
         }
 
@@ -242,7 +228,7 @@ class ProfileRenderer {
         }
 
         // Extract from email if ends with @steem.local
-        if (user.email && user.email.endsWith('@steem.local')) {
+        if (user.email?.endsWith('@steem.local')) {
             return user.email.replace('@steem.local', '');
         }
 
@@ -399,7 +385,7 @@ class ProfileRenderer {
 
     async _handleStickyMultiplierClick(user) {
         try {
-            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+            const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
             const response = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
 
             if (response.ok) {
@@ -407,7 +393,7 @@ class ProfileRenderer {
                 this.showMultiplierModal(data.breakdown);
             }
         } catch (error) {
-
+            console.error('Error fetching multiplier breakdown:', error);
         }
     }
 
@@ -415,7 +401,7 @@ class ProfileRenderer {
         element.style.cursor = 'pointer';
 
         element.addEventListener('click', () => {
-            window.location.hash = '#/wallet';
+            globalThis.location.hash = '#/wallet';
         });
 
         this._addHoverEffect(element, 'rgba(234, 179, 8, 0.25)');
@@ -609,7 +595,7 @@ class ProfileRenderer {
     }
 
     setAvatar(avatarCircle, avatarIcon, user, steemProfile) {
-        if (steemProfile && steemProfile.profileImage) {
+        if (steemProfile?.profileImage) {
             this.setSteemAvatar(avatarCircle, avatarIcon, steemProfile.profileImage);
         } else {
             this.setEmojiAvatar(avatarIcon, user);
@@ -641,7 +627,7 @@ class ProfileRenderer {
     }
 
     setHeaderBackground(profileHeader, steemProfile) {
-        if (steemProfile && steemProfile.coverImage) {
+        if (steemProfile?.coverImage) {
             profileHeader.style.backgroundImage = `url(${steemProfile.coverImage})`;
             profileHeader.style.backgroundSize = 'cover';
             profileHeader.style.backgroundPosition = 'center';
@@ -688,9 +674,9 @@ class ProfileRenderer {
     }
 
     async populateProfileStats(content, user, stats) {
-        const multiplier = user.cur8_multiplier || 1.0;
+        const multiplier = user.cur8_multiplier || 1;
         const totalXP = user.total_xp_earned || 0;
-        const API_URL = window.ENV?.API_URL || window.location.origin;
+        const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
 
         this._setupMultiplierBadge(content, user, multiplier, API_URL);
         this._populateBasicStats(content, stats);
@@ -777,9 +763,9 @@ class ProfileRenderer {
             };
 
             this.authManager.setUser?.(updatedUser);
-            window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
+            globalThis.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
         } catch (error) {
-
+            console.error('Error syncing multiplier to auth manager:', error);
         }
     }
 
@@ -851,6 +837,7 @@ class ProfileRenderer {
             const totalQuestClaims = await this._fetchAllQuestClaims(user.user_id, apiUrl);
             questsDoneEl.textContent = totalQuestClaims;
         } catch (error) {
+            console.error('Error loading quests count:', error);
             questsDoneEl.textContent = '0';
         }
     }
@@ -894,6 +881,7 @@ class ProfileRenderer {
                 gamesTriedEl.textContent = uniqueGames;
             }
         } catch (error) {
+            console.error('Error loading games tried:', error);
             gamesTriedEl.textContent = '0';
         }
     }
@@ -1015,7 +1003,7 @@ class ProfileRenderer {
         if (!coinBalanceEl) return;
 
         try {
-            const API_URL = window.ENV?.API_URL || config.API_URL;
+            const API_URL = globalThis.ENV?.API_URL || config.API_URL;
             const response = await fetch(`${API_URL}/api/coins/${userId}/balance`);
             if (response.ok) {
                 const data = await response.json();
@@ -1051,13 +1039,15 @@ class ProfileRenderer {
 
                     coinsBadge.addEventListener('click', () => {
                         // Navigate directly to wallet page
-                        window.location.hash = '#/wallet';
+                        globalThis.location.hash = '#/wallet';
                     });
                 }
             } else {
                 coinBalanceEl.textContent = '0';
             }
         } catch (error) {
+            console.error('Error loading coin balance:', error);
+
             coinBalanceEl.textContent = '--';
         }
     }
@@ -1067,7 +1057,7 @@ class ProfileRenderer {
      */
     async loadWeeklyStandingsAsync(userId) {
         try {
-            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+            const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
             const response = await fetch(`${API_URL}/api/leaderboard/user-weekly-standings/${userId}`);
             if (!response.ok) return;
             const data = await response.json();
@@ -1080,6 +1070,7 @@ class ProfileRenderer {
             section.style.display = 'block';
             section.innerHTML = this.buildWeeklyStandingsHTML(data);
         } catch (error) {
+            console.error('Error loading weekly standings:', error);
         }
     }
 
@@ -1093,7 +1084,7 @@ class ProfileRenderer {
 
         const standingsRows = data.standings.map(s => {
             const rankBadge = s.rank <= 3
-                ? `<span class="ws-rank ws-rank-${s.rank}">${['\ud83e\udd47','\ud83e\udd48','\ud83e\udd49'][s.rank - 1]}</span>`
+                ? `<span class="ws-rank ws-rank-${s.rank}">${['\ud83e\udd47', '\ud83e\udd48', '\ud83e\udd49'][s.rank - 1]}</span>`
                 : `<span class="ws-rank">#${s.rank}</span>`;
 
             const rewardBadges = [];
@@ -1133,7 +1124,7 @@ class ProfileRenderer {
             <div class="ws-container">
                 <div class="ws-header">
                     <span class="ws-subtitle">Current positions & projected rewards</span>
-                    <span class="ws-days-left">\u23f3 ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</span>
+                    <span class="ws-days-left">\u23f3 ${daysLeft} day${daysLeft === 1 ? '' : 's'} left</span>
                 </div>
                 <div class="ws-table">
                     <div class="ws-row ws-row-header">
@@ -1168,37 +1159,38 @@ class ProfileRenderer {
         const steemUsername = this.extractSteemUsername(user);
         if (!steemUsername) throw new Error('No Steem username available');
 
-        if (!window.steem_keychain) {
+        if (!globalThis.steem_keychain) {
             throw new Error('Steem Keychain not found');
         }
 
         return new Promise((resolve, reject) => {
             try {
                 // Preferred: requestWitnessVote (simpler witness API supported by Keychain)
-                if (typeof window.steem_keychain.requestWitnessVote === 'function') {
+                if (typeof globalThis.steem_keychain.requestWitnessVote === 'function') {
                     try {
-                        window.steem_keychain.requestWitnessVote(steemUsername, 'cur8.witness', true, (response) => {
+                        globalThis.steem_keychain.requestWitnessVote(steemUsername, 'cur8.witness', true, (response) => {
 
 
                             // Handle common response shapes
                             if (response && (response.success === true || response.success === 'true')) return resolve(response);
-                            if (response && response.result) return resolve(response);
+                            if (response?.result) return resolve(response);
                             if (typeof response === 'string' && response.length > 0) return resolve({ tx: response });
 
                             let errMsg = 'Keychain requestWitnessVote failed';
                             try {
-                                if (response && response.error) errMsg = response.error.message || JSON.stringify(response.error);
-                                else if (response && response.message) errMsg = response.message;
-                                else if (!response) errMsg = 'No response from Keychain requestWitnessVote';
-                                else errMsg = JSON.stringify(response);
+                                if (response?.error) errMsg = response.error.message || JSON.stringify(response.error);
+                                else if (response?.message) errMsg = response.message;
+                                else if (response) errMsg = JSON.stringify(response);
+                                else errMsg = 'No response from Keychain requestWitnessVote';
                             } catch (e) {
                                 errMsg = 'Unknown Keychain response format';
+                                console.error(errMsg, response, e);
                             }
                             return reject(new Error(errMsg));
                         });
                         return; // exit; callback will resolve/reject
                     } catch (e) {
-
+                        console.warn('requestWitnessVote failed, falling back to broadcast method', e);
                         // fall through to broadcast
                     }
                 }
@@ -1209,22 +1201,18 @@ class ProfileRenderer {
                     { voter: steemUsername, witness: 'cur8.witness', approve: true }
                 ]];
 
-                window.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
+                globalThis.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
 
 
                     if (result && (result.success === true || result.success === 'true')) return resolve(result);
-                    if (result && result.result) return resolve(result);
+                    if (result?.result) return resolve(result);
                     if (typeof result === 'string' && result.length > 0) return resolve({ tx: result });
 
-                    let errMsg = 'Keychain broadcast failed';
-                    try {
-                        if (result && result.error) errMsg = result.error.message || JSON.stringify(result.error);
-                        else if (result && result.message) errMsg = result.message;
-                        else if (!result) errMsg = 'No response from Keychain';
-                        else errMsg = JSON.stringify(result);
-                    } catch (e) {
-                        errMsg = 'Unknown Keychain response format';
-                    }
+                    let errMsg;
+                    if (result?.error) errMsg = result.error.message || JSON.stringify(result.error);
+                    else if (result?.message) errMsg = result.message;
+                    else if (result) errMsg = JSON.stringify(result);
+                    else errMsg = 'No response from Keychain';
                     return reject(new Error(errMsg));
                 });
             } catch (err) {
@@ -1235,106 +1223,95 @@ class ProfileRenderer {
 
     async refreshMultiplierForCurrentUser() {
         const user = this.authManager.getUser();
-        if (!user || !user.user_id) throw new Error('No user logged in');
+        if (!user?.user_id) throw new Error('No user logged in');
 
         const steemUsername = this.extractSteemUsername(user);
         if (!steemUsername) throw new Error('No Steem username available');
 
-        try {
-            const steemProfile = await steemProfileService.fetchProfile(steemUsername);
-            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
+        const steemProfile = await steemProfileService.fetchProfile(steemUsername);
+        const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
 
-            const response = await fetch(`${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${steemProfile.votesCur8Witness}&delegation_amount=${steemProfile.delegationAmount || 0}`, {
-                method: 'POST'
-            });
+        const response = await fetch(`${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${steemProfile.votesCur8Witness}&delegation_amount=${steemProfile.delegationAmount || 0}`, {
+            method: 'POST'
+        });
 
-            if (!response.ok) throw new Error('Failed to update user multiplier on backend');
+        if (!response.ok) throw new Error('Failed to update user multiplier on backend');
 
-            const result = await response.json();
+        const result = await response.json();
 
-            // Update local user object and UI
-            const updatedUser = Object.assign({}, user, {
-                cur8_multiplier: result.cur8_multiplier,
-                votes_cur8_witness: result.votes_cur8_witness,
-                delegation_amount: result.delegation_amount
-            });
+        // Update local user object and UI
+        const updatedUser = {
+            ...user,
+            cur8_multiplier: result.cur8_multiplier,
+            votes_cur8_witness: result.votes_cur8_witness,
+            delegation_amount: result.delegation_amount
+        };
 
-            this.authManager.setUser(updatedUser);
+        this.authManager.setUser(updatedUser);
 
-            // Immediately update visible multiplier badge on the profile page so user doesn't need extra refresh
-            try {
-                const newMult = Number(result.cur8_multiplier) || updatedUser.cur8_multiplier || 1.0;
-                const multEl = document.querySelector('.stat-value.multiplier');
-                if (multEl) {
-                    multEl.textContent = `${newMult.toFixed(2)}x`;
-                    multEl.style.color = '#818cf8';
-                    multEl.style.fontWeight = '700';
-                }
+        // Immediately update visible multiplier badge on the profile page so user doesn't need extra refresh
 
-                // Dispatch event in case other components listen for multiplier updates
-                window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
-            } catch (e) {
-
-            }
-
-            return result;
-        } catch (err) {
-            throw err;
+        const newMult = Number(result.cur8_multiplier) || updatedUser.cur8_multiplier || 1;
+        const multEl = document.querySelector('.stat-value.multiplier');
+        if (multEl) {
+            multEl.textContent = `${newMult.toFixed(2)}x`;
+            multEl.style.color = '#818cf8';
+            multEl.style.fontWeight = '700';
         }
+
+        // Dispatch event in case other components listen for multiplier updates
+        globalThis.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
+
+
+        return result;
+
     }
 
     async updateMultiplierBackend(votesWitness = false, delegationAmount = 0) {
         const user = this.authManager.getUser();
-        if (!user || !user.user_id) throw new Error('No user logged in');
-        try {
-            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
-            const url = `${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${votesWitness}&delegation_amount=${delegationAmount}`;
-            const response = await fetch(url, { method: 'POST' });
-            if (!response.ok) throw new Error('Backend update failed');
-            const result = await response.json();
+        if (!user?.user_id) throw new Error('No user logged in');
 
-            // Update local user object and UI immediately
-            const updatedUser = Object.assign({}, user, {
-                cur8_multiplier: result.cur8_multiplier,
-                votes_cur8_witness: result.votes_cur8_witness,
-                delegation_amount: result.delegation_amount
-            });
-            this.authManager.setUser(updatedUser);
+        const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
+        const url = `${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${votesWitness}&delegation_amount=${delegationAmount}`;
+        const response = await fetch(url, { method: 'POST' });
+        if (!response.ok) throw new Error('Backend update failed');
+        const result = await response.json();
 
-            // Also update multiplier badge
-            try {
-                const newMult = Number(result.cur8_multiplier) || updatedUser.cur8_multiplier || 1.0;
-                const multEl = document.querySelector('.stat-value.multiplier');
-                if (multEl) multEl.textContent = `${newMult.toFixed(2)}x`;
-            } catch (e) {
+        // Update local user object and UI immediately
+        const updatedUser = {
+            ...user,
+            cur8_multiplier: result.cur8_multiplier,
+            votes_cur8_witness: result.votes_cur8_witness,
+            delegation_amount: result.delegation_amount
+        };
+        this.authManager.setUser(updatedUser);
 
-            }
+        // Also update multiplier badge
 
-            return result;
-        } catch (err) {
-            throw err;
-        }
+        const newMult = Number(result.cur8_multiplier) || updatedUser.cur8_multiplier || 1;
+        const multEl = document.querySelector('.stat-value.multiplier');
+        if (multEl) multEl.textContent = `${newMult.toFixed(2)}x`;
+
+
+        return result;
+
     }
 
     async delegateToCur8(amountSp) {
         const user = this.authManager.getUser();
         const steemUsername = this.extractSteemUsername(user);
-        if (!user || !user.user_id) throw new Error('No user logged in');
+        if (!user?.user_id) throw new Error('No user logged in');
         if (!steemUsername) throw new Error('No Steem username available');
 
-        if (!window.steem_keychain) {
+        if (!globalThis.steem_keychain) {
             throw new Error('Steem Keychain not found');
         }
 
         if (!amountSp || Number(amountSp) <= 0) throw new Error('Invalid delegation amount');
 
         // Convert SP to VESTS using SteemProfileService helper
-        let vestsPerSteem = 2000.0;
-        try {
-            vestsPerSteem = await steemProfileService._getVestsToSpRatio();
-        } catch (e) {
+        let vestsPerSteem = await steemProfileService._getVestsToSpRatio();
 
-        }
 
         const vests = Number(amountSp) * Number(vestsPerSteem);
         const vesting_shares = `${vests.toFixed(6)} VESTS`;
@@ -1347,24 +1324,23 @@ class ProfileRenderer {
                 ]];
 
                 // Prefer a explicit Keychain delegation method if available
-                if (typeof window.steem_keychain.requestDelegateVestingShares === 'function') {
-                    try {
-                        window.steem_keychain.requestDelegateVestingShares(steemUsername, 'cur8', vesting_shares, (resp) => {
+                if (typeof globalThis.steem_keychain.requestDelegateVestingShares === 'function') {
 
-                            if (resp && (resp.success === true || resp.result)) return resolve(resp);
-                            return reject(new Error((resp && resp.error && resp.error.message) || 'Delegation failed'));
-                        });
-                        return;
-                    } catch (e) {
+                    globalThis.steem_keychain.requestDelegateVestingShares(steemUsername, 'cur8', vesting_shares, (resp) => {
 
-                    }
+                        if (resp && (resp.success === true || resp.result)) return resolve(resp);
+                        return reject(new Error(resp?.error?.message || 'Delegation failed'));
+                    });
+                    return;
+
                 }
 
-                window.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
+                globalThis.steem_keychain.requestBroadcast(steemUsername, ops, 'active', (result) => {
 
                     if (result && (result.success === true || result.result)) return resolve(result);
                     if (typeof result === 'string' && result.length > 0) return resolve({ tx: result });
-                    return reject(new Error((result && result.error && result.error.message) || 'Delegation broadcast failed'));
+                    if (result?.error?.message) return reject(new Error(result.error.message));
+                    return reject(new Error('Delegation broadcast failed'));
                 });
             } catch (err) {
                 reject(err);
@@ -1588,15 +1564,12 @@ class ProfileRenderer {
             await this._updateProfileVisualsAfterVote();
 
         } catch (err) {
+            console.error('Error voting for witness:', err);
             voteBtn.textContent = '❌ Failed';
         } finally {
             voteBtn.disabled = false;
             setTimeout(() => {
-                try {
-                    voteBtn.textContent = prevText;
-                } catch (e) {
-                    // Ignore if button no longer exists
-                }
+                voteBtn.textContent = prevText;
             }, 3000);
         }
     }
@@ -1607,7 +1580,7 @@ class ProfileRenderer {
         try {
             await this.updateMultiplierBackend(true, currentDelegation);
         } catch (e) {
-
+            console.error('Error updating multiplier after vote, falling back to refresh:', e);
             await this.refreshMultiplierForCurrentUser();
         }
     }
@@ -1622,37 +1595,33 @@ class ProfileRenderer {
     }
 
     async _refreshModalWithNewBreakdown(modal) {
-        try {
-            const API_URL = window.ENV?.API_URL || config.API_URL || window.location.origin;
-            const userId = this.authManager.getUser().user_id;
-            const response = await fetch(`${API_URL}/users/multiplier-breakdown/${userId}`);
 
-            if (response.ok) {
-                const json = await response.json();
-                modal.remove();
-                this.showMultiplierModal(json.breakdown);
-            }
-        } catch (e) {
+        const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
+        const userId = this.authManager.getUser().user_id;
+        const response = await fetch(`${API_URL}/users/multiplier-breakdown/${userId}`);
 
+        if (response.ok) {
+            const json = await response.json();
+            modal.remove();
+            this.showMultiplierModal(json.breakdown);
         }
+
     }
 
     async _updateProfileVisualsAfterVote() {
-        try {
-            const updatedUser = this.authManager.getUser();
-            const steemUsername = this.extractSteemUsername(updatedUser);
 
-            if (steemUsername) {
-                const steemProfile = await steemProfileService.fetchProfile(steemUsername);
-                if (steemProfile) {
-                    this.updateProfileWithSteemData(updatedUser, steemProfile);
-                }
+        const updatedUser = this.authManager.getUser();
+        const steemUsername = this.extractSteemUsername(updatedUser);
+
+        if (steemUsername) {
+            const steemProfile = await steemProfileService.fetchProfile(steemUsername);
+            if (steemProfile) {
+                this.updateProfileWithSteemData(updatedUser, steemProfile);
             }
-
-            window.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: this.authManager.getUser() }));
-        } catch (e) {
-
         }
+
+        globalThis.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: this.authManager.getUser() }));
+
     }
 
     _setupDelegationControls(modal, breakdown) {
@@ -1670,25 +1639,22 @@ class ProfileRenderer {
     }
 
     _initializeDelegationSlider(modal, slider, breakdown) {
-        try {
-            slider.value = Number(breakdown.delegation_amount || 0).toFixed(0);
+        slider.value = Number(breakdown.delegation_amount || 0).toFixed(0);
 
-            const availableSp = this._getAvailableSp(breakdown);
-            const delegatedAmount = Number(breakdown.delegation_amount || 0);
-            const inferredMax = Math.max(1, Math.floor(Math.max(availableSp, delegatedAmount)));
+        const availableSp = this._getAvailableSp(breakdown);
+        const delegatedAmount = Number(breakdown.delegation_amount || 0);
+        const inferredMax = Math.max(1, Math.floor(Math.max(availableSp, delegatedAmount)));
 
-            slider.max = inferredMax;
+        slider.max = inferredMax;
 
-            if (delegatedAmount > 0) {
-                slider.value = Math.min(delegatedAmount, slider.max);
-            }
-
-            this._populateSliderTicks(modal, inferredMax, delegatedAmount);
-
-            breakdown.available_sp = Math.max(availableSp, delegatedAmount);
-        } catch (e) {
-
+        if (delegatedAmount > 0) {
+            slider.value = Math.min(delegatedAmount, slider.max);
         }
+
+        this._populateSliderTicks(modal, inferredMax, delegatedAmount);
+
+        breakdown.available_sp = Math.max(availableSp, delegatedAmount);
+
     }
 
     _getAvailableSp(breakdown) {
@@ -1740,23 +1706,21 @@ class ProfileRenderer {
     }
 
     _computeDelegationPreview(modal, slider, breakdown) {
-        try {
-            const sliderValue = Math.max(0, Number(slider?.value || 0));
-            const perSpBonus = this._calculatePerSpBonus(breakdown);
-            const rawDelegationBonus = sliderValue * perSpBonus;
 
-            const perDelegationCap = this._getDelegationCap(breakdown);
-            const cappedBySingleDelegation = Math.min(rawDelegationBonus, perDelegationCap);
+        const sliderValue = Math.max(0, Number(slider?.value || 0));
+        const perSpBonus = this._calculatePerSpBonus(breakdown);
+        const rawDelegationBonus = sliderValue * perSpBonus;
 
-            const baseWithoutDelegation = this._calculateBaseWithoutDelegation(breakdown);
-            const newTotal = baseWithoutDelegation + cappedBySingleDelegation;
-            const cappedTotal = Math.min(newTotal, 4.0);
-            const effectiveDelegationBonus = Math.max(0, cappedTotal - baseWithoutDelegation);
+        const perDelegationCap = this._getDelegationCap(breakdown);
+        const cappedBySingleDelegation = Math.min(rawDelegationBonus, perDelegationCap);
 
-            this._updatePreviewDisplay(modal, effectiveDelegationBonus, cappedTotal, sliderValue, breakdown);
-        } catch (e) {
-            // Ignore preview calculation errors
-        }
+        const baseWithoutDelegation = this._calculateBaseWithoutDelegation(breakdown);
+        const newTotal = baseWithoutDelegation + cappedBySingleDelegation;
+        const cappedTotal = Math.min(newTotal, 4);
+        const effectiveDelegationBonus = Math.max(0, cappedTotal - baseWithoutDelegation);
+
+        this._updatePreviewDisplay(modal, effectiveDelegationBonus, cappedTotal, sliderValue, breakdown);
+
     }
 
     _calculatePerSpBonus(breakdown) {
@@ -1764,12 +1728,12 @@ class ProfileRenderer {
         if (breakdown.delegation_bonus_per_sp !== undefined) {
             return Number(breakdown.delegation_bonus_per_sp);
         }
-        
+
         // Calculate from existing delegation data if available
         if (breakdown.delegation_amount && breakdown.delegation_amount > 0 && breakdown.delegation_bonus !== undefined) {
             return Number(breakdown.delegation_bonus) / Number(breakdown.delegation_amount);
         }
-        
+
         // If no data available, return 0 - can't calculate without backend data
 
         return 0;
@@ -1781,13 +1745,13 @@ class ProfileRenderer {
         }
 
         const hasWitnessBonus = Number(breakdown.witness_bonus) > 0;
-        return hasWitnessBonus ? 2.5 : 3.0;
+        return hasWitnessBonus ? 2.5 : 3;
     }
 
     _calculateBaseWithoutDelegation(breakdown) {
-        let base = breakdown.base !== undefined
-            ? Number(breakdown.base)
-            : (Number(breakdown.final_multiplier) || 1) - (Number(breakdown.delegation_bonus) || 0);
+        let base = breakdown.base === undefined
+            ? (Number(breakdown.final_multiplier) || 1) - (Number(breakdown.delegation_bonus) || 0)
+            : Number(breakdown.base);
 
         return base + (Number(breakdown.witness_bonus) || 0);
     }
@@ -1817,33 +1781,31 @@ class ProfileRenderer {
     }
 
     async _loadSteemProfileForSlider(modal, slider, breakdown) {
-        try {
-            const user = this.authManager.getUser?.();
-            const steemUsername = this.extractSteemUsername(user);
 
-            if (!steemUsername) {
-                return;
-            }
+        const user = this.authManager.getUser?.();
+        const steemUsername = this.extractSteemUsername(user);
 
-            const spProfile = await steemProfileService.fetchProfile(steemUsername);
-            if (!spProfile?.account) {
-                return;
-            }
-
-            const availableSp = await this._calculateAvailableSp(spProfile);
-
-            slider.max = Math.max(1, availableSp);
-            if (Number(slider.value) > Number(slider.max)) {
-                slider.value = slider.max;
-            }
-
-            this._populateSliderTicks(modal, availableSp, Number(breakdown.delegation_amount || 0));
-
-            breakdown.available_sp = availableSp;
-            this._computeDelegationPreview(modal, slider, breakdown);
-        } catch (e) {
-
+        if (!steemUsername) {
+            return;
         }
+
+        const spProfile = await steemProfileService.fetchProfile(steemUsername);
+        if (!spProfile?.account) {
+            return;
+        }
+
+        const availableSp = await this._calculateAvailableSp(spProfile);
+
+        slider.max = Math.max(1, availableSp);
+        if (Number(slider.value) > Number(slider.max)) {
+            slider.value = slider.max;
+        }
+
+        this._populateSliderTicks(modal, availableSp, Number(breakdown.delegation_amount || 0));
+
+        breakdown.available_sp = availableSp;
+        this._computeDelegationPreview(modal, slider, breakdown);
+
     }
 
     async _calculateAvailableSp(spProfile) {
@@ -1873,7 +1835,7 @@ class ProfileRenderer {
                 return total;
             }, 0);
         } catch (e) {
-
+            console.error('Error fetching delegations to cur8:', e);
             return 0;
         }
     }
@@ -1910,15 +1872,12 @@ class ProfileRenderer {
             await this._refreshModalWithNewBreakdown(modal);
 
         } catch (err) {
+            console.error('Error delegating to cur8:', err);
             delegateBtn.textContent = '❌ Failed';
         } finally {
             delegateBtn.disabled = false;
             setTimeout(() => {
-                try {
-                    delegateBtn.textContent = prevText;
-                } catch (e) {
-                    // Ignore if button no longer exists
-                }
+                delegateBtn.textContent = prevText;
             }, 3000);
         }
     }
@@ -1945,13 +1904,17 @@ class ProfileRenderer {
         try {
             await this.updateMultiplierBackend(votesWitness, amount);
         } catch (e) {
-
-            await this.refreshMultiplierForCurrentUser();
+            console.error('Error updating multiplier after delegation, attempting refresh:', e);
+            try {
+                await this.refreshMultiplierForCurrentUser();
+            } catch (refreshError) {
+                console.error('Error refreshing multiplier:', refreshError);
+            }
         }
     }
 
     _hasWitnessVote(breakdown) {
-        if (breakdown && typeof breakdown.witness_bonus !== 'undefined') {
+        if (breakdown?.witness_bonus !== undefined) {
             return Number(breakdown.witness_bonus) > 0;
         }
 
@@ -1979,20 +1942,19 @@ class ProfileRenderer {
 
     _initializeSteemPostAPI() {
         if (!steemPostAPI) {
-            const API_URL = window.ENV?.API_URL || window.location.origin;
+            const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
             steemPostAPI = new SteemPostAPI(API_URL);
         }
     }
 
     async _setupShareButton(shareBtn, user) {
-        try {
-            const availability = await steemPostAPI.checkPostAvailability(user.user_id);
 
-            if (!availability.can_post) {
-                this._setupCooldownState(shareBtn, availability, user.user_id);
-            }
-        } catch (error) {
+        const availability = await steemPostAPI.checkPostAvailability(user.user_id);
+
+        if (!availability.can_post) {
+            this._setupCooldownState(shareBtn, availability, user.user_id);
         }
+
 
         this._attachShareButtonClickHandler(shareBtn);
     }
@@ -2046,21 +2008,20 @@ class ProfileRenderer {
         let updateInterval = null;
 
         const updateCooldown = async () => {
-            try {
-                const newAvailability = await steemPostAPI.checkPostAvailability(userId);
 
-                if (newAvailability.can_post) {
-                    this._enableShareButton(shareBtn);
-                    if (updateInterval) {
-                        clearInterval(updateInterval);
-                        updateInterval = null;
-                    }
-                } else {
-                    this._updateCooldownDisplay(shareBtn, newAvailability);
-                    this._adjustUpdateInterval(updateInterval, updateCooldown, newAvailability.hours_remaining);
+            const newAvailability = await steemPostAPI.checkPostAvailability(userId);
+
+            if (newAvailability.can_post) {
+                this._enableShareButton(shareBtn);
+                if (updateInterval) {
+                    clearInterval(updateInterval);
+                    updateInterval = null;
                 }
-            } catch (error) {
+            } else {
+                this._updateCooldownDisplay(shareBtn, newAvailability);
+                this._adjustUpdateInterval(updateInterval, updateCooldown, newAvailability.hours_remaining);
             }
+
         };
 
         const initialInterval = this._getUpdateInterval(initialHoursRemaining);
@@ -2097,17 +2058,16 @@ class ProfileRenderer {
                 return;
             }
 
-            try {
-                this._initializeCoinAPI();
-                await this._showSteemPostModal();
-            } catch (error) {
-            }
+
+            this._initializeCoinAPI();
+            await this._showSteemPostModal();
+
         });
     }
 
     _initializeCoinAPI() {
         if (!coinAPI) {
-            const API_URL = window.ENV?.API_URL || window.location.origin;
+            const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
             coinAPI = new CoinAPI(API_URL);
         }
     }
@@ -2142,10 +2102,8 @@ export async function renderProfile() {
  * @param {Object} breakdown - The multiplier breakdown data
  */
 export function showCur8MultiplierModal(breakdown) {
-    try {
-        const renderer = new ProfileRenderer();
-        renderer.showMultiplierModal(breakdown);
-    } catch (e) {
-        // Silently fail if modal cannot be shown
-    }
+
+    const renderer = new ProfileRenderer();
+    renderer.showMultiplierModal(breakdown);
+
 }

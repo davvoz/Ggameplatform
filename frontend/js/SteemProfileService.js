@@ -15,24 +15,22 @@ export class SteemProfileService {
      * @returns {Promise<Array>} array of delegation objects
      */
     async getOutgoingVestingDelegations(username) {
-        try {
-            const response = await fetch(this.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'condenser_api.get_vesting_delegations',
-                    params: [username, '', 100],
-                    id: 1
-                })
-            });
 
-            if (!response.ok) return [];
-            const data = await response.json();
-            return data.result || [];
-        } catch (error) {
-            return [];
-        }
+        const response = await fetch(this.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'condenser_api.get_vesting_delegations',
+                params: [username, '', 100],
+                id: 1
+            })
+        });
+
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.result || [];
+
     }
 
     /**
@@ -48,16 +46,13 @@ export class SteemProfileService {
 
 
 
-        try {
-            const accountData = await this._fetchAccountData(username);
-            if (!accountData) {
-                return null;
-            }
-
-            return await this._extractProfileData(accountData);
-        } catch (error) {
+        const accountData = await this._fetchAccountData(username);
+        if (!accountData) {
             return null;
         }
+
+        return await this._extractProfileData(accountData);
+
     }
 
     /**
@@ -99,7 +94,7 @@ export class SteemProfileService {
         // Extract witness votes
         const witnessVotes = account.witness_votes || [];
         let votesCur8Witness = witnessVotes.includes('cur8.witness');
-        
+
         // Check if user uses a proxy for witness voting
         const proxy = account.proxy || '';
         if (proxy && !votesCur8Witness) {
@@ -132,18 +127,16 @@ export class SteemProfileService {
      * @private
      */
     async _checkProxyVote(proxyUsername) {
-        try {
-            const proxyAccount = await this._fetchAccountData(proxyUsername);
-            if (proxyAccount) {
-                const proxyWitnessVotes = proxyAccount.witness_votes || [];
-                const votesForCur8 = proxyWitnessVotes.includes('cur8.witness');
 
-                return votesForCur8;
-            }
-            return false;
-        } catch (error) {
-            return false;
+        const proxyAccount = await this._fetchAccountData(proxyUsername);
+        if (proxyAccount) {
+            const proxyWitnessVotes = proxyAccount.witness_votes || [];
+            const votesForCur8 = proxyWitnessVotes.includes('cur8.witness');
+
+            return votesForCur8;
         }
+        return false;
+
     }
 
     /**
@@ -157,40 +150,38 @@ export class SteemProfileService {
             return this.vestsToSpCache;
         }
 
-        try {
-            const response = await fetch(this.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'condenser_api.get_dynamic_global_properties',
-                    params: [],
-                    id: 1
-                })
-            });
 
-            if (!response.ok) {
-                return this.vestsToSpCache; // Return cached value or null
-            }
+        const response = await fetch(this.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'condenser_api.get_dynamic_global_properties',
+                params: [],
+                id: 1
+            })
+        });
 
-            const data = await response.json();
-            const props = data.result;
-            
-            const totalVestingFundSteem = Number.parseFloat(props.total_vesting_fund_steem.split(' ')[0] || '0');
-            const totalVestingShares = Number.parseFloat(props.total_vesting_shares.split(' ')[0] || '0');
-            
-            if (totalVestingShares > 0 && totalVestingFundSteem > 0) {
-                const ratio = totalVestingShares / totalVestingFundSteem;
-                // Update cache
-                this.vestsToSpCache = ratio;
-                this.cacheTimestamp = now;
-                return ratio;
-            }
-            
-            return this.vestsToSpCache; // Return cached value or null
-        } catch (error) {
+        if (!response.ok) {
             return this.vestsToSpCache; // Return cached value or null
         }
+
+        const data = await response.json();
+        const props = data.result;
+
+        const totalVestingFundSteem = Number.parseFloat(props.total_vesting_fund_steem.split(' ')[0] || '0');
+        const totalVestingShares = Number.parseFloat(props.total_vesting_shares.split(' ')[0] || '0');
+
+        if (totalVestingShares > 0 && totalVestingFundSteem > 0) {
+            const ratio = totalVestingShares / totalVestingFundSteem;
+            // Update cache
+            this.vestsToSpCache = ratio;
+            this.cacheTimestamp = now;
+            return ratio;
+        }
+
+        return this.vestsToSpCache; // Return cached value or null
+
     }
 
     /**
@@ -198,47 +189,45 @@ export class SteemProfileService {
      * @private
      */
     async _getDelegationToCur8(username) {
-        try {
-            // Get conversion ratio
-            const vestsPerSteem = await this._getVestsToSpRatio();
-            
-            // If we can't get the ratio, we can't calculate delegation accurately
-            if (!vestsPerSteem) {
-                return 0;
-            }
-            
-            const response = await fetch(this.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    method: 'condenser_api.get_vesting_delegations',
-                    params: [username, 'cur8', 100],
-                    id: 1
-                })
-            });
 
-            if (!response.ok) {
-                return 0;
-            }
+        // Get conversion ratio
+        const vestsPerSteem = await this._getVestsToSpRatio();
 
-            const data = await response.json();
-            const delegations = data.result || [];
-
-            // Find delegation to @cur8
-            for (const delegation of delegations) {
-                if (delegation.delegatee === 'cur8') {
-                    const vests = Number.parseFloat(delegation.vesting_shares.split(' ')[0] || '0');
-                    // Convert VESTS to STEEM Power using dynamic ratio
-                    const steem = vests / vestsPerSteem;
-                    return Math.round(steem * 1000) / 1000; // Round to 3 decimals
-                }
-            }
-
-            return 0;
-        } catch (error) {
+        // If we can't get the ratio, we can't calculate delegation accurately
+        if (!vestsPerSteem) {
             return 0;
         }
+
+        const response = await fetch(this.apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'condenser_api.get_vesting_delegations',
+                params: [username, 'cur8', 100],
+                id: 1
+            })
+        });
+
+        if (!response.ok) {
+            return 0;
+        }
+
+        const data = await response.json();
+        const delegations = data.result || [];
+
+        // Find delegation to @cur8
+        for (const delegation of delegations) {
+            if (delegation.delegatee === 'cur8') {
+                const vests = Number.parseFloat(delegation.vesting_shares.split(' ')[0] || '0');
+                // Convert VESTS to STEEM Power using dynamic ratio
+                const steem = vests / vestsPerSteem;
+                return Math.round(steem * 1000) / 1000; // Round to 3 decimals
+            }
+        }
+
+        return 0;
+
     }
 
     /**
@@ -246,19 +235,16 @@ export class SteemProfileService {
      * @private
      */
     _parseMetadata(account) {
-        try {
-            // Try posting_json_metadata first (newer format)
-            const metadataString = account.posting_json_metadata || account.json_metadata;
-            if (!metadataString) {
-                return {};
-            }
 
-            const metadata = JSON.parse(metadataString);
-
-            return metadata;
-        } catch (error) {
-
+        // Try posting_json_metadata first (newer format)
+        const metadataString = account.posting_json_metadata || account.json_metadata;
+        if (!metadataString) {
             return {};
         }
+
+        const metadata = JSON.parse(metadataString);
+
+        return metadata;
+
     }
 }

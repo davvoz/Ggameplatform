@@ -11,7 +11,7 @@ import {
     getCurrentCommunityManager, setCurrentCommunityManager,
     getCoinAPI, setCoinAPI,
     getWalletRenderer, setWalletRenderer,
-     setDailyLoginBanner
+    setDailyLoginBanner
 } from './state.js';
 
 // Import all converted modules
@@ -34,177 +34,196 @@ setDailyLoginBanner(dailyLoginBannerInstance);
 AuthManager.init();
 
 // Listen for login event and update UI
-window.addEventListener('userLogin', () => {
+globalThis.addEventListener('userLogin', () => {
     AuthManager.updateUI();
 });
 
 
-// Initialize router when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize nav multiplier click handler
-    initNavMultiplier();
-    
-    // Check authentication
-    if (!AuthManager.isLoggedIn()) {
-        // Redirect to auth page if not on auth page
-        if (!window.location.pathname.includes('auth.html')) {
+/**
+ * Initialize UI and event listeners after authentication check
+ */
+function initializeAuthenticatedUI() {
+    const userInfoEl = document.getElementById('userInfo');
+    if (!AuthManager.currentUser || !userInfoEl) return;
 
-            window.location.href = '/auth.html';
-            return;
-        }
+    const user = AuthManager.currentUser;
+    populateUserInfo(user, userInfoEl);
+    setupLogoutButton();
+}
+
+/**
+ * Populate navbar user information
+ */
+function populateUserInfo(user, userInfoEl) {
+    const userNameEl = document.getElementById('userName');
+    const navAvatar = document.getElementById('navAvatar');
+    const navMultiplier = document.getElementById('navMultiplier');
+
+    if (userNameEl) userNameEl.textContent = user.username || user.steemUsername || 'Player';
+
+    if (navAvatar) {
+        navAvatar.src = './icons/icon-72x72.png';
+        fetchSteemAvatar(user, navAvatar);
     }
 
-    // Track daily access for login quests (only if authenticated)
-    if (AuthManager.isLoggedIn()) {
-        AuthManager.trackDailyAccess();
-        
-        // Initialize push notifications (non-blocking)
-        initPushNotifications();
+    if (navMultiplier) navMultiplier.textContent = `${(user.cur8_multiplier || 1).toFixed(2)}x`;
+    userInfoEl.style.display = 'flex';
+}
+
+/**
+ * Fetch and set Steem avatar if available
+ */
+function fetchSteemAvatar(user, navAvatar) {
+    const steemService = new SteemProfileService();
+    const steemUsername = user.steemUsername || user.steem_username || user.username;
+    if (steemUsername) {
+        steemService.fetchProfile(steemUsername)
+            .then(sp => {
+                if (sp?.profileImage) navAvatar.src = sp.profileImage;
+            })
+            .catch(() => { });
     }
+}
 
-    initRouter();
+/**
+ * Set up logout button handler
+ */
+function setupLogoutButton() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            AuthManager.logout();
+            globalThis.location.href = '/auth.html';
+        });
+    }
+}
 
-    // Wire daily login trigger button and overlay (ES6 — no globals needed)
+/**
+ * Set up daily login banner event listeners
+ */
+function setupDailyLoginBanner() {
     document.getElementById('daily-login-trigger')
         ?.addEventListener('click', () => dailyLoginBannerInstance.show());
     document.getElementById('daily-login-overlay')
         ?.addEventListener('click', () => dailyLoginBannerInstance.hide());
 
-    // Init daily login banner for users already authenticated on page load
     if (AuthManager.isLoggedIn()) {
         const _dlUser = AuthManager.getUser();
         if (_dlUser?.user_id && !_dlUser.is_anonymous) {
-            dailyLoginBannerInstance.init(_dlUser).catch(() => {});
+            dailyLoginBannerInstance.init(_dlUser).catch(() => { });
         }
     }
+}
 
-    // Populate navbar user info if authenticated
-    try {
-        const userInfoEl = document.getElementById('userInfo');
-        if (AuthManager.currentUser && userInfoEl) {
-            const user = AuthManager.currentUser;
-            const userNameEl = document.getElementById('userName');
-            const navAvatar = document.getElementById('navAvatar');
-            const navMultiplier = document.getElementById('navMultiplier');
-            const levelCardContainer = document.getElementById('levelCardContainer');
-            if (userNameEl) userNameEl.textContent = user.username || user.steemUsername || 'Player';
+/**
+ * Update navbar multiplier display
+ */
+function updateNavMultiplier(multiplier) {
+    const navMultiplierEl = document.getElementById('navMultiplier');
+    if (navMultiplierEl) {
+        navMultiplierEl.textContent = `${Number(multiplier).toFixed(2)}x`;
+    }
+}
 
-            if (navAvatar) {
-                navAvatar.src = './icons/icon-72x72.png';
-                // if user has a steem username, fetch the Steem profile for the avatar
-                try {
-                    const steemService = new SteemProfileService();
-                    const steemUsername = user.steemUsername || user.steem_username || user.username;
-                    if (steemUsername) {
-                        steemService.fetchProfile(steemUsername).then(sp => {
-                            if (sp && sp.profileImage) {
-                                navAvatar.src = sp.profileImage;
-                            }
-                        }).catch(e => {
+/**
+ * Handle multiplier update event
+ */
+function handleMultiplierUpdated(ev) {
+    const updated = ev?.detail || ev;
+    const navMultiplierEl = document.getElementById('navMultiplier');
 
-                        });
-                    }
-                } catch (e) {
+    if (updated?.cur8_multiplier != null) {
+        updateNavMultiplier(updated.cur8_multiplier);
+        return;
+    }
 
-                }
-            }
-            if (navMultiplier) navMultiplier.textContent = `${(user.cur8_multiplier || 1).toFixed(2)}x`;
+    if (updated?.breakdown?.final_multiplier !== undefined) {
+        updateNavMultiplier(updated.breakdown.final_multiplier);
+        return;
+    }
 
-            // show container
-            userInfoEl.style.display = 'flex';
+    fetchMultiplierBreakdown(navMultiplierEl);
+}
 
-            // Multiplier is rendered in its own navbar card (`#multiplierCard`).
+/**
+ * Fetch multiplier breakdown from API
+ */
+async function fetchMultiplierBreakdown(navMultiplierEl) {
+    const user = AuthManager.getUser();
+    if (!user?.user_id) return;
 
-            // Level card click-to-profile disabled per UI requirement
-
-            // Wire logout button if present
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) logoutBtn.addEventListener('click', () => {
-                try { AuthManager.logout(); } catch (e) { }
-                window.location.href = '/auth.html';
-            });
+    const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
+    
+        const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
+        if (!resp.ok) return;
+        const json = await resp.json();
+        const finalMult = json?.breakdown?.final_multiplier;
+        if (navMultiplierEl && finalMult !== undefined) {
+            updateNavMultiplier(finalMult);
         }
-    } catch (e) { }
-    // Listen for multiplier updates dispatched by ProfileRenderer and other components
-    window.addEventListener('multiplierUpdated', (ev) => {
-        try {
-            const updated = ev?.detail || ev;
-            const navMultiplierEl = document.getElementById('navMultiplier');
+    
+}
 
-            // Prefer explicit cur8_multiplier on user object
-            if (updated && (updated.cur8_multiplier !== undefined && updated.cur8_multiplier !== null)) {
-                if (navMultiplierEl) navMultiplierEl.textContent = `${Number(updated.cur8_multiplier).toFixed(2)}x`;
-                return;
-            }
+/**
+ * Handle user logout event
+ */
+function handleUserLogout() {
+    updateNavMultiplier(1);
+    const trigger = document.getElementById('daily-login-trigger');
+    if (trigger) trigger.style.display = 'none';
+    dailyLoginBannerInstance.currentUser = null;
+}
 
-            // If a breakdown payload was provided, prefer its final_multiplier
-            if (updated && updated.breakdown && updated.breakdown.final_multiplier !== undefined) {
-                if (navMultiplierEl) navMultiplierEl.textContent = `${Number(updated.breakdown.final_multiplier).toFixed(2)}x`;
-                return;
-            }
+/**
+ * Handle user login event
+ */
+function handleUserLogin() {
+    const user = AuthManager.getUser();
+    if (user) {
+        updateNavMultiplier(user.cur8_multiplier || 1);
+    }
 
-            // Fallback: try to fetch fresh breakdown for the currently logged user
-            (async () => {
-                try {
-                    const user = AuthManager.getUser();
-                    if (!user || !user.user_id) return;
-                    const API_URL = window.ENV?.API_URL || window.location.origin;
-                    const resp = await fetch(`${API_URL}/users/multiplier-breakdown/${user.user_id}`);
-                    if (!resp.ok) return;
-                    const json = await resp.json();
-                    const finalMult = json && json.breakdown && json.breakdown.final_multiplier;
-                    if (navMultiplierEl && finalMult !== undefined) navMultiplierEl.textContent = `${Number(finalMult).toFixed(2)}x`;
-                } catch (e) {
-
-                }
-            })();
-        } catch (err) {
-
-        }
-    });
-
-    // Keep navbar multiplier in sync on login/logout
-    window.addEventListener('userLogin', (e) => {
-        try {
-            const user = AuthManager.getUser();
-            const navMultiplierEl = document.getElementById('navMultiplier');
-            if (navMultiplierEl && user) {
-                const val = Number(user.cur8_multiplier || 1).toFixed(2);
-                navMultiplierEl.textContent = `${val}x`;
-            }
-        } catch (err) { }
-    });
-
-    // Re-init (or hide) daily login banner on every login/logout
-    window.addEventListener('userLogin', () => {
-        const _dlUser = AuthManager.getUser();
-        if (!_dlUser || _dlUser.is_anonymous) {
-            document.getElementById('daily-login-trigger')?.style && (document.getElementById('daily-login-trigger').style.display = 'none');
-            dailyLoginBannerInstance.currentUser = null;
-            return;
-        }
-        if (_dlUser.user_id) {
-            dailyLoginBannerInstance.init(_dlUser).catch(() => {});
-        }
-    });
-
-    window.addEventListener('userLogout', () => {
-        const navMultiplierEl = document.getElementById('navMultiplier');
-        if (navMultiplierEl) navMultiplierEl.textContent = `1.00x`;
-
-        // Hide daily login trigger button on logout
+    const _dlUser = AuthManager.getUser();
+    if (!_dlUser || _dlUser.is_anonymous) {
         const trigger = document.getElementById('daily-login-trigger');
         if (trigger) trigger.style.display = 'none';
         dailyLoginBannerInstance.currentUser = null;
-    });
+    } else if (_dlUser.user_id) {
+        dailyLoginBannerInstance.init(_dlUser).catch(() => { });
+    }
+}
 
-    // Cleanup game session on page unload (browser close/refresh)
+/**
+ * Initialize all event listeners for the application
+ */
+function setupEventListeners() {
+    globalThis.addEventListener('multiplierUpdated', handleMultiplierUpdated);
+    globalThis.addEventListener('userLogin', handleUserLogin);
+    globalThis.addEventListener('userLogout', handleUserLogout);
+
     window.addEventListener('beforeunload', () => {
         if (getCurrentGameRuntime()) {
-            // Use sendBeacon for reliable cleanup on page unload
             getCurrentGameRuntime().cleanup(true);
         }
     });
+}
+
+// Initialize router when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    initNavMultiplier();
+
+    if (AuthManager.isLoggedIn()) {
+        AuthManager.trackDailyAccess();
+        initPushNotifications();
+    } else if (!globalThis.location.pathname.includes('auth.html')) {
+        globalThis.location.href = '/auth.html';
+        return;
+    }
+
+    initRouter();
+    setupDailyLoginBanner();
+    initializeAuthenticatedUI();
+    setupEventListeners();
 });
 
 // Current game mode filter state
@@ -235,7 +254,7 @@ export async function renderCatalog(filters = {}) {
 
     // Set up filter event listeners
     setupFilters();
-    
+
     // Set up game mode tabs
     setupGameModeTabs();
 
@@ -255,11 +274,11 @@ function loadCatalogFooterVersion() {
     fetch('/version.json')
         .then(r => r.ok ? r.json() : null)
         .then(data => {
-            if (data && data.version) {
+            if (data?.version) {
                 el.textContent = `v${data.version}`;
             }
         })
-        .catch(() => {});
+        .catch(() => { });
 }
 
 /**
@@ -268,12 +287,12 @@ function loadCatalogFooterVersion() {
 function restoreTabState() {
     const tabsContainer = document.querySelector('.game-mode-tabs');
     const tabs = document.querySelectorAll('.game-mode-tab');
-    
+
     if (tabsContainer) {
         // Set the mode-fun class if Fun is selected
         tabsContainer.classList.toggle('mode-fun', currentGameMode === 'fun');
     }
-    
+
     // Update active state on tabs
     tabs.forEach(tab => {
         tab.classList.toggle('active', tab.dataset.mode === currentGameMode);
@@ -306,74 +325,85 @@ function setupFilters() {
 }
 
 /**
+ * Handle game mode tab animation
+ */
+function handleGameModeTabAnimation(newMode, swipeOutClass, swipeInClass, newContent, tabsContainer) {
+    const gameGrid = document.getElementById('game-grid');
+    
+    if (!gameGrid || !newContent) {
+        currentGameMode = newMode;
+        loadGames({ mode: currentGameMode });
+        return;
+    }
+
+    // Start exit animation
+    gameGrid.classList.add(swipeOutClass);
+
+    // Wait for exit, then swap and enter
+    setTimeout(() => {
+        completeGameModeTabSwitch(newMode, swipeOutClass, swipeInClass, gameGrid, newContent);
+    }, 200);
+}
+
+/**
+ * Complete the game mode tab switch animation
+ */
+function completeGameModeTabSwitch(newMode, swipeOutClass, swipeInClass, gameGrid, newContent) {
+    currentGameMode = newMode;
+    gameGrid.classList.remove(swipeOutClass);
+
+    // Instant content swap
+    gameGrid.innerHTML = '';
+    gameGrid.appendChild(newContent);
+
+    // Enter animation
+    gameGrid.classList.add(swipeInClass);
+    setTimeout(() => {
+        gameGrid.classList.remove(swipeInClass);
+    }, 300);
+}
+
+/**
  * Set up game mode tab event listeners
  */
 function setupGameModeTabs() {
     const tabs = document.querySelectorAll('.game-mode-tab');
     const tabsContainer = document.querySelector('.game-mode-tabs');
-    
+
     tabs.forEach(tab => {
         tab.addEventListener('click', async () => {
             const newMode = tab.dataset.mode;
             const oldMode = currentGameMode;
-            
+
             // Skip if same mode
             if (newMode === oldMode) return;
-            
+
             // Determine swipe direction
             const isSwipingLeft = newMode === 'fun';
             const swipeOutClass = isSwipingLeft ? 'swipe-left' : 'swipe-right';
             const swipeInClass = isSwipingLeft ? 'swipe-in-left' : 'swipe-in-right';
-            
+
             // PRE-FETCH: Load new games data BEFORE any animation
-            let newContent = null;
-            try {
-                newContent = await prepareGamesContent(newMode);
-            } catch (error) {
-                return;
-            }
-            
+            const newContent = await prepareGamesContent(newMode);
+
             // Update tabs container class for sliding indicator + shine animation
             if (tabsContainer) {
                 // Trigger shine animation
                 tabsContainer.classList.add('transitioning');
                 tabsContainer.classList.toggle('mode-fun', newMode === 'fun');
-                
+
                 // Remove transitioning class after animation
                 setTimeout(() => {
                     tabsContainer.classList.remove('transitioning');
                 }, 600);
             }
-            
+
             // Update active state on tabs
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            
-            // Now animate with pre-loaded content
-            const gameGrid = document.getElementById('game-grid');
-            if (gameGrid && newContent) {
-                // Start exit animation
-                gameGrid.classList.add(swipeOutClass);
-                
-                // Wait for exit, then swap and enter
-                setTimeout(() => {
-                    currentGameMode = newMode;
-                    gameGrid.classList.remove(swipeOutClass);
-                    
-                    // Instant content swap
-                    gameGrid.innerHTML = '';
-                    gameGrid.appendChild(newContent);
-                    
-                    // Enter animation
-                    gameGrid.classList.add(swipeInClass);
-                    setTimeout(() => {
-                        gameGrid.classList.remove(swipeInClass);
-                    }, 300);
-                }, 200);
-            } else {
-                currentGameMode = newMode;
-                loadGames({ mode: currentGameMode });
-            }
+
+            // Animate with pre-loaded content
+            handleGameModeTabAnimation(newMode, swipeOutClass, swipeInClass, newContent, tabsContainer);
         });
     });
 }
@@ -383,13 +413,13 @@ function setupGameModeTabs() {
  */
 async function prepareGamesContent(mode) {
     const games = await fetchGames({ mode });
-    
+
     // Filter games by mode
     const filteredGames = games.filter(game => {
         const statusCode = game.status?.status_code || '';
         return statusCode === mode;
     });
-    
+
     // Sort games: primary by play count (most played first), then STEEM, then display order
     filteredGames.sort((a, b) => {
         const aCount = getPlayCount(a);
@@ -404,10 +434,10 @@ async function prepareGamesContent(mode) {
         const bOrder = b.status?.display_order ?? Number.MAX_SAFE_INTEGER;
         return aOrder - bOrder;
     });
-    
+
     // Build content fragment
     const fragment = document.createDocumentFragment();
-    
+
     if (filteredGames.length === 0) {
         const modeLabel = mode === 'ranked' ? 'Ranked' : 'Fun';
         const noGamesMsg = document.createElement('p');
@@ -420,7 +450,7 @@ async function prepareGamesContent(mode) {
             fragment.appendChild(gameCard);
         });
     }
-    
+
     return fragment;
 }
 
@@ -479,8 +509,117 @@ async function loadGamesContent(filters = {}) {
             gameGrid.appendChild(gameCard);
         });
     } catch (error) {
+        console.error('Error loading games:', error);
         gameGrid.innerHTML = '<div class="error-message">Failed to load games. Please try again later.</div>';
     }
+}
+
+/**
+ * Add STEEM badge to badges container
+ */
+function addSteemBadge(badgesContainer) {
+    if (!badgesContainer) return;
+    const steemBadge = document.createElement('span');
+    steemBadge.className = 'steem-rewards-badge';
+    steemBadge.title = 'This game offers STEEM rewards';
+    const steemImg = document.createElement('img');
+    steemImg.src = './icons/steem.png';
+    steemImg.alt = 'STEEM';
+    steemImg.className = 'steem-rewards-icon';
+    steemBadge.appendChild(steemImg);
+    steemBadge.appendChild(document.createTextNode(' STEEM'));
+    badgesContainer.appendChild(steemBadge);
+}
+
+/**
+ * Add COIN badge for casino games to badges container
+ */
+function addCoinBadge(badgesContainer) {
+    if (!badgesContainer) return;
+    const coinBadge = document.createElement('span');
+    coinBadge.className = 'coin-rewards-badge';
+    coinBadge.title = 'This game offers COIN rewards';
+    const coinIcon = document.createElement('span');
+    coinIcon.className = 'coin-rewards-icon';
+    coinIcon.textContent = '🪙';
+    coinBadge.appendChild(coinIcon);
+    coinBadge.appendChild(document.createTextNode(' COIN'));
+    badgesContainer.appendChild(coinBadge);
+}
+
+/**
+ * Add campaign badge, ribbon, banner, and styling to card
+ */
+function addCampaignElements(card, cardElement, game) {
+    if (!game.active_campaign) return;
+    
+    const campaignColor = game.active_campaign.badge_color || '#ff6b00';
+    
+    // Badge in top-right corner
+    const badgesContainer = card.querySelector('.game-badges');
+    if (badgesContainer) {
+        const campaignBadge = document.createElement('span');
+        campaignBadge.className = 'campaign-badge';
+        campaignBadge.title = `${game.active_campaign.name} — ${game.active_campaign.xp_multiplier}x XP`;
+        campaignBadge.style.setProperty('--campaign-color', campaignColor);
+        campaignBadge.innerHTML = `🎯 ${game.active_campaign.badge_label || 'CAMPAIGN'}`;
+        badgesContainer.appendChild(campaignBadge);
+    }
+
+    // XP multiplier ribbon on thumbnail
+    const thumbnailContainer = card.querySelector('.game-thumbnail');
+    if (thumbnailContainer) {
+        const xpRibbon = document.createElement('div');
+        xpRibbon.className = 'campaign-xp-ribbon';
+        xpRibbon.style.setProperty('--campaign-color', campaignColor);
+        xpRibbon.innerHTML = `<span class="campaign-xp-value">×${game.active_campaign.xp_multiplier} XP</span>`;
+        thumbnailContainer.appendChild(xpRibbon);
+    }
+
+    // Campaign banner: description + countdown
+    const gameInfo = card.querySelector('.game-info');
+    if (gameInfo) {
+        const banner = document.createElement('div');
+        banner.className = 'campaign-banner';
+        banner.style.setProperty('--campaign-color', campaignColor);
+        const description = game.active_campaign.description;
+        banner.innerHTML = `<span class="campaign-banner-icon">🎯</span><span class="campaign-banner-desc">${description}</span><span class="campaign-banner-countdown" data-end="${game.active_campaign.end_date}">⏳</span>`;
+        gameInfo.appendChild(banner);
+        const countdownEl = banner.querySelector('.campaign-banner-countdown');
+        if (countdownEl && game.active_campaign.end_date) {
+            CampaignCountdown.register(countdownEl, game.active_campaign.end_date);
+        }
+    }
+
+    // Add glow effect to the card
+    cardElement.classList.add('campaign-active');
+    cardElement.style.setProperty('--campaign-color', campaignColor);
+}
+
+/**
+ * Add game tags to tags container
+ */
+function addGameTags(card, game) {
+    if (!game.tags || game.tags.length === 0) return;
+    const tagsContainer = card.querySelector('.game-tags');
+    game.tags.forEach(tag => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'tag';
+        tagElement.textContent = tag;
+        tagsContainer.appendChild(tagElement);
+    });
+}
+
+/**
+ * Set up game info text (title, description, author, category)
+ */
+function setGameInfo(card, game) {
+    const gameTitleEl = card.querySelector('.game-title');
+    gameTitleEl.textContent = game.title;
+    gameTitleEl.removeAttribute('aria-label');
+    card.querySelector('.game-description').textContent = game.description || 'No description available.';
+    card.querySelector('.game-author').textContent = `By ${game.author || 'Unknown'}`;
+    card.querySelector('.game-category').textContent = game.category || 'Uncategorized';
 }
 
 /**
@@ -493,110 +632,29 @@ function createGameCard(game) {
     const cardElement = card.querySelector('.game-card');
     cardElement.dataset.gameId = game.game_id;
 
-    // Set thumbnail (use lightweight preview for card grid)
+    // Set thumbnail
     const img = card.querySelector('.game-thumbnail img');
     const thumbnailUrl = getGamePreviewUrl(game.game_id, game.thumbnail);
     img.src = thumbnailUrl;
     img.alt = game.title;
 
-    // Add STEEM rewards badge if enabled
+    // Add badges
+    const badgesContainer = card.querySelector('.game-badges');
     if (game.steem_rewards_enabled) {
-        const badgesContainer = card.querySelector('.game-badges');
-        const steemBadge = document.createElement('span');
-        steemBadge.className = 'steem-rewards-badge';
-        steemBadge.title = 'This game offers STEEM rewards';
-        const steemImg = document.createElement('img');
-        steemImg.src = './icons/steem.png';
-        steemImg.alt = 'STEEM';
-        steemImg.className = 'steem-rewards-icon';
-        steemBadge.appendChild(steemImg);
-        steemBadge.appendChild(document.createTextNode(' STEEM'));
-        if (badgesContainer) badgesContainer.appendChild(steemBadge);
+        addSteemBadge(badgesContainer);
+    }
+    if (game.category && String(game.category).toLowerCase() === 'casino') {
+        addCoinBadge(badgesContainer);
     }
 
-    // Add COIN badge for casino-category games
-    try {
-        if (game.category && String(game.category).toLowerCase() === 'casino') {
-            const badgesContainer = card.querySelector('.game-badges');
-            const coinBadge = document.createElement('span');
-            coinBadge.className = 'coin-rewards-badge';
-            coinBadge.title = 'This game offers COIN rewards';
-
-            // Use emoji for coin icon (large) — simpler and consistent across platforms
-            const coinIcon = document.createElement('span');
-            coinIcon.className = 'coin-rewards-icon';
-            coinIcon.textContent = '🪙';
-            coinBadge.appendChild(coinIcon);
-            coinBadge.appendChild(document.createTextNode(' COIN'));
-            if (badgesContainer) badgesContainer.appendChild(coinBadge);
-        }
-    } catch (e) {
-    }
-
-    // Add Campaign badge if game has an active campaign
-    if (game.active_campaign) {
-        const campaignColor = game.active_campaign.badge_color || '#ff6b00';
-        
-        // Badge in top-right corner
-        const badgesContainer = card.querySelector('.game-badges');
-        if (badgesContainer) {
-            const campaignBadge = document.createElement('span');
-            campaignBadge.className = 'campaign-badge';
-            campaignBadge.title = `${game.active_campaign.name} — ${game.active_campaign.xp_multiplier}x XP`;
-            campaignBadge.style.setProperty('--campaign-color', campaignColor);
-            campaignBadge.innerHTML = `🎯 ${game.active_campaign.badge_label || 'CAMPAIGN'}`;
-            badgesContainer.appendChild(campaignBadge);
-        }
-
-        // XP multiplier ribbon on thumbnail
-        const thumbnailContainer = card.querySelector('.game-thumbnail');
-        if (thumbnailContainer) {
-            const xpRibbon = document.createElement('div');
-            xpRibbon.className = 'campaign-xp-ribbon';
-            xpRibbon.style.setProperty('--campaign-color', campaignColor);
-            xpRibbon.innerHTML = `<span class="campaign-xp-value">×${game.active_campaign.xp_multiplier} XP</span>`;
-            thumbnailContainer.appendChild(xpRibbon);
-        }
-
-        // Campaign banner: description + countdown
-        const gameInfo = card.querySelector('.game-info');
-        if (gameInfo) {
-            const banner = document.createElement('div');
-            banner.className = 'campaign-banner';
-            banner.style.setProperty('--campaign-color', campaignColor);
-            const description = game.active_campaign.description;
-            banner.innerHTML = `<span class="campaign-banner-icon">🎯</span><span class="campaign-banner-desc">${description}</span><span class="campaign-banner-countdown" data-end="${game.active_campaign.end_date}">⏳</span>`;
-            gameInfo.appendChild(banner);
-            // Register countdown (lightweight shared timer)
-            const countdownEl = banner.querySelector('.campaign-banner-countdown');
-            if (countdownEl && game.active_campaign.end_date) {
-                CampaignCountdown.register(countdownEl, game.active_campaign.end_date);
-            }
-        }
-
-        // Add glow effect to the card
-        cardElement.classList.add('campaign-active');
-        cardElement.style.setProperty('--campaign-color', campaignColor);
-    }
+    // Add campaign elements
+    addCampaignElements(card, cardElement, game);
 
     // Set game info
-    const gameTitleEl = card.querySelector('.game-title');
-    gameTitleEl.textContent = game.title;
-    gameTitleEl.removeAttribute('aria-label');
-    card.querySelector('.game-description').textContent = game.description || 'No description available.';
-    card.querySelector('.game-author').textContent = `By ${game.author || 'Unknown'}`;
-    card.querySelector('.game-category').textContent = game.category || 'Uncategorized';
+    setGameInfo(card, game);
 
-    // Set tags
-    const tagsContainer = card.querySelector('.game-tags');
-    if (game.tags && game.tags.length > 0) {
-        game.tags.forEach(tag => {
-            const tagElement = document.createElement('span');
-            tagElement.className = 'tag';
-            tagElement.textContent = tag;
-            tagsContainer.appendChild(tagElement);
-        });
-    }
+    // Add tags
+    addGameTags(card, game);
 
     // Add click event to navigate to game detail
     cardElement.addEventListener('click', () => {
@@ -637,9 +695,12 @@ export async function renderGameDetail(params) {
         const game = await fetchGameMetadata(gameId);
 
         // Populate detail page
-        const thumbnailUrl = game.thumbnail
-            ? (game.thumbnail.startsWith('http') ? game.thumbnail : getGameResourceUrl(gameId, game.thumbnail))
-            : 'https://via.placeholder.com/400x300?text=No+Image';
+        let thumbnailUrl = 'https://via.placeholder.com/400x300?text=No+Image';
+        if (game.thumbnail) {
+            thumbnailUrl = game.thumbnail.startsWith('http') 
+                ? game.thumbnail 
+                : getGameResourceUrl(gameId, game.thumbnail);
+        }
         document.querySelector('.detail-thumbnail').src = thumbnailUrl;
         const detailTitleEl = document.querySelector('.detail-title');
         detailTitleEl.textContent = game.title;
@@ -683,6 +744,7 @@ export async function renderGameDetail(params) {
         }
 
     } catch (error) {
+        console.error('Error loading game details:', error);
         appContainer.innerHTML = '<div class="error-message">Failed to load game details.</div>';
     }
 }
@@ -768,7 +830,14 @@ async function loadGameDetailLeaderboard(gameId) {
         if (top3[2]) podiumOrder.push({ ...top3[2], podiumPos: 3 });
 
         const podiumHTML = podiumOrder.map(entry => {
-            const medal = entry.podiumPos === 1 ? '🥇' : entry.podiumPos === 2 ? '🥈' : '🥉';
+            let medal;
+            if (entry.podiumPos === 1) {
+                medal = '🥇';
+            } else if (entry.podiumPos === 2) {
+                medal = '🥈';
+            } else {
+                medal = '🥉';
+            }
             const username = entry.username || 'Anonymous';
             const steemUsername = entry.steem_username || null;
             const avatarHTML = steemAvatarService.renderAvatarImg(steemUsername, {
@@ -838,12 +907,13 @@ async function loadGameDetailLeaderboard(gameId) {
             if (userId) {
                 el.style.cursor = 'pointer';
                 el.addEventListener('click', () => {
-                    window.location.hash = `#/user/${userId}`;
+                    globalThis.location.hash = `#/user/${userId}`;
                 });
             }
         });
 
     } catch (error) {
+        console.error('Error loading leaderboard:', error);
         container.innerHTML = `
             <div class="gdl-section">
                 <h3 class="gdl-title">🏆 Weekly Leaderboard</h3>
@@ -889,6 +959,7 @@ export async function renderGamePlayer(params) {
 
     } catch (error) {
         appContainer.innerHTML = '<div class="error-message">Failed to load game.</div>';
+        console.error('Error loading game:', error);
     }
 }
 
@@ -896,7 +967,7 @@ export async function renderGamePlayer(params) {
  * Set up player control buttons with RuntimeShell integration
  */
 function setupPlayerControls(gameId, iframe) {
-   
+
 
     // Initialize RuntimeShell
     const runtime = new RuntimeShell(iframe, gameId, { debug: true });
@@ -910,7 +981,7 @@ function setupPlayerControls(gameId, iframe) {
     runtime.on('gameOver', (data) => {
 
         // Optionally navigate back to game detail or show a summary
-        
+
     });
 
     runtime.on('levelCompleted', (data) => {
@@ -922,13 +993,13 @@ function setupPlayerControls(gameId, iframe) {
         const playerContainer = document.querySelector('.player-container');
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             // User exited fullscreen, ensure iOS class is removed
-            if (playerContainer && playerContainer.classList.contains('ios-fullscreen')) {
+            if (playerContainer?.classList.contains('ios-fullscreen')) {
                 playerContainer.classList.remove('ios-fullscreen');
                 document.body.style.overflow = '';
             }
         }
     };
-    
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
@@ -946,7 +1017,7 @@ export async function renderAbout() {
 
     appContainer.innerHTML = '';
     appContainer.appendChild(aboutContent);
-    
+
     // Load and display version information
     try {
         const response = await fetch('/version.json');
@@ -954,23 +1025,23 @@ export async function renderAbout() {
             const versionData = await response.json();
             const versionEl = document.getElementById('app-version');
             const buildInfoEl = document.getElementById('app-build-info');
-            
+
             if (versionEl) {
                 versionEl.textContent = `v${versionData.version}`;
             }
-            
+
             if (buildInfoEl && versionData.timestamp) {
                 const date = new Date(versionData.timestamp);
-                const formattedDate = date.toLocaleDateString('it-IT', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                const formattedDate = date.toLocaleDateString('it-IT', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                 });
                 buildInfoEl.textContent = `Build #${versionData.buildNumber || 'N/A'} • ${formattedDate}`;
             }
         }
     } catch (error) {
-
+        console.error('Error loading version information:', error);
         const versionEl = document.getElementById('app-version');
         if (versionEl) {
             versionEl.textContent = 'v1.0.0';
@@ -993,7 +1064,7 @@ export async function renderQuests() {
  */
 export async function renderWallet() {
     const appContainer = document.getElementById('app');
-    
+
     // Check if user is logged in
     if (!AuthManager.isLoggedIn()) {
         appContainer.innerHTML = `
@@ -1010,12 +1081,12 @@ export async function renderWallet() {
 
     try {
         const user = AuthManager.getUser();
-        if (!user || !user.user_id) {
+        if (!user?.user_id) {
             throw new Error('User not found');
         }
-        
+
         const userId = user.user_id;
-        
+
         // Initialize CoinAPI and WalletRenderer if not already done
         if (!getCoinAPI()) {
             setCoinAPI(new CoinAPI());
@@ -1026,7 +1097,7 @@ export async function renderWallet() {
 
         const walletHTML = await getWalletRenderer().render(userId);
         appContainer.innerHTML = walletHTML;
-        
+
         // Initialize animations and infinite scroll after DOM is ready
         requestAnimationFrame(() => {
             if (getWalletRenderer().initAfterRender) {
@@ -1062,7 +1133,7 @@ export function render404() {
  */
 export async function renderCommunity() {
     const appContainer = document.getElementById('app');
-    
+
     // Check if user is logged in
     if (!AuthManager.isLoggedIn()) {
         appContainer.innerHTML = `
@@ -1093,20 +1164,19 @@ export async function renderCommunity() {
     appContainer.appendChild(communityContent);
 
     // Initialize CommunityManager
-    try {
+  
         // Cleanup previous instance if exists
         if (getCurrentCommunityManager()) {
             getCurrentCommunityManager().destroy();
         }
-        
+
         setCurrentCommunityManager(new CommunityManager({
             container: appContainer.querySelector('.community'),
             authManager: AuthManager
         }));
-        
+
         await getCurrentCommunityManager().init();
-    } catch (error) {
-    }
+    
 }
 
 /**
@@ -1114,7 +1184,7 @@ export async function renderCommunity() {
  * Non-blocking - runs in background without affecting page load.
  */
 async function initPushNotifications() {
-    try {
+   
         // Inizializza push manager
         const initialized = await pushManager.init();
         if (!initialized) {
@@ -1135,8 +1205,7 @@ async function initPushNotifications() {
         }
 
         // Chiede SUBITO il permesso e registra
-         await pushManager.promptForSubscription(user.user_id);
+        await pushManager.promptForSubscription(user.user_id);
 
-    } catch (err) {
-    }
+
 }

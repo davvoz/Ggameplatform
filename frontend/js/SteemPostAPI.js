@@ -5,7 +5,7 @@
 
 class SteemPostAPI {
     constructor(baseUrl) {
-        this.baseUrl = baseUrl || window.ENV?.API_URL || 'http://localhost:8000';
+        this.baseUrl = baseUrl || globalThis.ENV?.API_URL || 'http://localhost:8000';
     }
 
     /**
@@ -175,7 +175,7 @@ class SteemPostAPI {
      */
     async publishViaKeychainOperations(steemUsername, operations, permlink, title) {
         return new Promise((resolve, reject) => {
-            if (!window.steem_keychain) {
+            if (!globalThis.steem_keychain) {
                 reject(new Error('Steem Keychain not found. Please install it first.'));
                 return;
             }
@@ -184,13 +184,13 @@ class SteemPostAPI {
 
 
             // Request Keychain to broadcast with backend-prepared operations
-            window.steem_keychain.requestBroadcast(
+            globalThis.steem_keychain.requestBroadcast(
                 steemUsername,
                 operations,
                 'Posting',
                 (response) => {
 
-                    
+
                     if (response.success) {
                         resolve({
                             success: true,
@@ -217,7 +217,7 @@ class SteemPostAPI {
      */
     async publishViaKeychain(steemUsername, title, body, tags, metadata = {}) {
         return new Promise((resolve, reject) => {
-            if (!window.steem_keychain) {
+            if (!globalThis.steem_keychain) {
                 reject(new Error('Steem Keychain not found. Please install it first.'));
                 return;
             }
@@ -242,13 +242,13 @@ class SteemPostAPI {
             ];
 
             // Request Keychain to broadcast
-            window.steem_keychain.requestBroadcast(
+            globalThis.steem_keychain.requestBroadcast(
                 steemUsername,
                 operations,
                 'Posting',
                 (response) => {
 
-                    
+
                     if (response.success) {
                         resolve({
                             success: true,
@@ -279,7 +279,7 @@ class SteemPostAPI {
 
 
 
-            
+
             const response = await fetch(`${this.baseUrl}/api/steem/publish-with-key`, {
                 method: 'POST',
                 headers: {
@@ -301,7 +301,7 @@ class SteemPostAPI {
             }
 
             const result = await response.json();
-            
+
             return {
                 success: true,
                 permlink: result.permlink,
@@ -320,19 +320,18 @@ class SteemPostAPI {
      * @private
      */
     _generatePermlink(title) {
-        const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(2, 8);
-        
+
         // Convert title to URL-safe format
         let permlink = title.toLowerCase()
             .replaceAll(/[^a-z0-9\s-]/g, '') // Remove special chars
             .replaceAll(/\s+/g, '-')          // Replace spaces with hyphens
             .replaceAll(/-+/g, '-')           // Replace multiple hyphens
             .substring(0, 100);            // Limit length
-        
+
         // Add timestamp to ensure uniqueness
         permlink = `${permlink}-${randomSuffix}`;
-        
+
         return permlink;
     }
 
@@ -340,7 +339,7 @@ class SteemPostAPI {
      * Check if Steem Keychain is available
      */
     isKeychainAvailable() {
-        return typeof window.steem_keychain !== 'undefined';
+        return globalThis.steem_keychain !== 'undefined';
     }
 }
 

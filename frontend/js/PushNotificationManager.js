@@ -8,9 +8,10 @@ import { config } from './config.js';
 const API_BASE_URL = config.API_URL;
 
 class PushNotificationManager {
+    swRegistration = null;
+    vapidPublicKey = null;
+
     constructor() {
-        this.swRegistration = null;
-        this.vapidPublicKey = null;
         this.isSupported = this._checkSupport();
     }
 
@@ -20,8 +21,8 @@ class PushNotificationManager {
     _checkSupport() {
         return (
             'serviceWorker' in navigator &&
-            'PushManager' in window &&
-            'Notification' in window
+            'PushManager' in globalThis &&
+            'Notification' in globalThis
         );
     }
 
@@ -53,6 +54,7 @@ class PushNotificationManager {
             return true;
 
         } catch (error) {
+            console.error('PushNotificationManager initialization failed:', error);
             return false;
         }
     }
@@ -95,7 +97,7 @@ class PushNotificationManager {
             const permission = await Notification.requestPermission();
             return permission;
         } catch (error) {
-
+            console.error('Error requesting notification permission:', error);
             return 'error';
         }
     }
@@ -153,14 +155,16 @@ class PushNotificationManager {
             }
 
             const result = await response.json();
-            
+
             // Store subscription status locally
             localStorage.setItem('pushSubscribed', 'true');
             localStorage.setItem('pushSubscriptionId', result.subscription_id);
-            
+
             return result;
 
         } catch (error) {
+            console.error('Error subscribing to push notifications:', error);
+
             return null;
         }
     }
@@ -197,6 +201,8 @@ class PushNotificationManager {
             return response.ok;
 
         } catch (error) {
+            console.error('Error unsubscribing from push notifications:', error);
+
             return false;
         }
     }
@@ -207,11 +213,12 @@ class PushNotificationManager {
      */
     async isSubscribed() {
         if (!this.swRegistration) return false;
-        
+
         try {
             const subscription = await this.swRegistration.pushManager.getSubscription();
             return subscription !== null;
         } catch (error) {
+            console.error('Error checking push subscription:', error);
             return false;
         }
     }
@@ -222,20 +229,18 @@ class PushNotificationManager {
      * @returns {Promise<Object>} Test result
      */
     async sendTestNotification(userId) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/push/test/${userId}`, {
-                method: 'POST'
-            });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Test notification failed');
-            }
+        const response = await fetch(`${API_BASE_URL}/push/test/${userId}`, {
+            method: 'POST'
+        });
 
-            return await response.json();
-        } catch (error) {
-            throw error;
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Test notification failed');
         }
+
+        return await response.json();
+
     }
 
     /**
@@ -248,7 +253,7 @@ class PushNotificationManager {
             .replaceAll('_', '+')
             .replaceAll('_', '/');
 
-        const rawData = window.atob(base64);
+        const rawData = globalThis.atob(base64);
         const outputArray = new Uint8Array(rawData.length);
 
         for (let i = 0; i < rawData.length; ++i) {

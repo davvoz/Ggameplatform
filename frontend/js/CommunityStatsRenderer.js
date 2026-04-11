@@ -11,47 +11,45 @@ import CommunityStatsAPI from './CommunityStatsAPI.js';
  */
 
 class CommunityStatsRenderer {
-    constructor() {
-        /** @type {HTMLElement|null} */
-        this.container = null;
+    /** @type {HTMLElement|null} */
+    container = null;
 
-        /** Chart color palette (reusable, extensible) */
-        this.palette = [
-            '#00d9ff', '#ff3d71', '#69f0ae', '#ffc107',
-            '#b388ff', '#ff6e40', '#18ffff', '#eeff41',
-            '#7c4dff', '#ff80ab', '#64ffda', '#ffab40'
-        ];
+    /** Chart color palette (reusable, extensible) */
+    palette = [
+        '#00d9ff', '#ff3d71', '#69f0ae', '#ffc107',
+        '#b388ff', '#ff6e40', '#18ffff', '#eeff41',
+        '#7c4dff', '#ff80ab', '#64ffda', '#ffab40'
+    ];
 
-        /** Cached data */
-        this._cache = {};
+    /** Cached data */
+    _cache = {};
 
-        /** Active game filter */
-        this.gameFilter = null;
+    /** Active game filter */
+    gameFilter = null;
 
-        /** Set of hidden game names (legend filter) */
-        this._hiddenGames = new Set();
+    /** Set of hidden game names (legend filter) */
+    _hiddenGames = new Set();
 
-        /** Stable game → color mapping (built once from full game list) */
-        this._gameColorMap = {};
+    /** Stable game → color mapping (built once from full game list) */
+    _gameColorMap = {};
 
-        /** Active economy period */
-        this.economyPeriod = 'daily'; // 'daily' | 'weekly' | 'historical'
+    /** Active economy period */
+    economyPeriod = 'daily'; // 'daily' | 'weekly' | 'historical'
 
-        /** Active achiever period */
-        this.achieverPeriod = 'daily'; // 'daily' | 'weekly' | 'alltime'
+    /** Active achiever period */
+    achieverPeriod = 'daily'; // 'daily' | 'weekly' | 'alltime'
 
-        /** Animation duration (ms) */
-        this.animDuration = 800;
+    /** Animation duration (ms) */
+    animDuration = 800;
 
-        /** @type {Function|null} Bound scroll handler for cleanup */
-        this._scrollHandler = null;
+    /** @type {Function|null} Bound scroll handler for cleanup */
+    _scrollHandler = null;
 
-        /** @type {boolean} Suppresses scroll spy briefly after a click */
-        this._scrollSpyLocked = false;
+    /** @type {boolean} Suppresses scroll spy briefly after a click */
+    _scrollSpyLocked = false;
 
-        /** @type {InfiniteScrollManager|null} Scroll manager for users ranked table */
-        this._usersScrollManager = null;
-    }
+    /** @type {InfiniteScrollManager|null} Scroll manager for users ranked table */
+    _usersScrollManager = null;
 
     // ========================================================================
     // Public API
@@ -376,8 +374,6 @@ class CommunityStatsRenderer {
 
         // Pie-chart data: XP per game
         const games = data.games || [];
-        const totalXP = games.reduce((s, g) => s + g.total_xp, 0) || 1;
-
         return `
         <div class="cs-historical cs-fade-in">
             <div class="cs-historical-totals">
@@ -856,7 +852,7 @@ class CommunityStatsRenderer {
             const row = e.target.closest('.cs-user-row');
             if (row) {
                 const userId = row.dataset.userId;
-                if (userId) window.location.hash = `/user/${userId}`;
+                if (userId) globalThis.location.hash = `/user/${userId}`;
             }
         });
 
@@ -957,6 +953,7 @@ class CommunityStatsRenderer {
             contentEl.innerHTML = html;
             this._initAnimations();
         } catch (err) {
+            console.error('Error loading economy data for period', period, err);
             contentEl.innerHTML = '<div class="cs-error"><p>Failed to load data.</p></div>';
         }
     }
@@ -1169,7 +1166,7 @@ class CommunityStatsRenderer {
             // Bottom detection: if user scrolled to the very bottom, activate last
             const atBottom = Math.abs(scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight) < 2;
             if (atBottom) {
-                const lastId = anchors[anchors.length - 1].id;
+                const lastId = anchors.at(-1).id;
                 if (lastId !== activeId) {
                     activeId = lastId;
                     nav.querySelectorAll('.cs-anchor-link').forEach(l =>

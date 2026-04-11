@@ -63,7 +63,7 @@ class GolemStompHandler extends AbilityHandler {
                     color: '#8B4513',
                     vy: -1,
                     life: 0.8,
-                    scale: 1.0
+                    scale: 1
                 });
             }
         });
@@ -72,7 +72,7 @@ class GolemStompHandler extends AbilityHandler {
             text: '🗿 STOMP!',
             color: '#8B4513',
             vy: -1.5,
-            life: 1.0,
+            life: 1,
             scale: 1.3,
             glow: true
         });
@@ -100,7 +100,7 @@ class SirenScreamHandler extends AbilityHandler {
                     color: '#E0B0FF',
                     vy: -1,
                     life: 1.2,
-                    scale: 1.0
+                    scale: 1
                 });
             }
         });
@@ -138,7 +138,7 @@ class VampireDrainHandler extends AbilityHandler {
             color: '#8B0000',
             vy: -1,
             life: 0.8,
-            scale: 1.0
+            scale: 1
         });
 
         this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS - CONFIG.DEFENSE_ZONE_ROWS, {

@@ -31,20 +31,20 @@ export class GameController {
         this.canvas = dependencies.canvas;
         this.engine = dependencies.engine;
         this.gameState = dependencies.gameState;
-        
+
         // Rainbow Rush SDK
         this.rainbowRushSDK = dependencies.rainbowRushSDK;
-        
+
         // Entities
         this.player = dependencies.player;
-        
+
         // New orchestrators (SOLID components)
         this.systemOrchestrator = dependencies.systemOrchestrator;
         this.stateMachine = dependencies.stateMachine;
         this.uiManager = dependencies.uiManager;
         this.inputCommandMapper = dependencies.inputCommandMapper;
         this.levelOrchestrator = dependencies.levelOrchestrator;
-        
+
         // Systems (injected, not instantiated)
         this.renderingSystem = dependencies.renderingSystem;
         this.scoreSystem = dependencies.scoreSystem;
@@ -61,13 +61,13 @@ export class GameController {
         this.particleSystem = dependencies.particleSystem;
         this.levelManager = dependencies.levelManager;
         this.enemySystem = dependencies.enemySystem; // NEW: Enemy system
-        
+
         // UI Components
         this.turboButtonUI = dependencies.turboButtonUI;
         this.flightButtonUI = dependencies.flightButtonUI;
         this.levelProgressBar = dependencies.levelProgressBar;
         this.abilityUnlockAnimation = dependencies.abilityUnlockAnimation;
-        
+
         // Minimal state (game-specific effects)
         this.screenFlash = { alpha: 0, color: [1, 1, 1] };
         this.coinRainActive = false;
@@ -78,12 +78,12 @@ export class GameController {
         this.timeScale = 1;
         this.cleanupTimer = 0;
         this.cleanupInterval = 1;
-        
+
         // Goal reached state
         this.goalReached = false;
         this.goalFadeProgress = 0;
         this.victoryZoom = null;
-        
+
         // Auto-pause state
         this.autoPaused = false;
     }
@@ -96,36 +96,29 @@ export class GameController {
         // Initialize AudioManager first
         await this.audioManager.initialize();
 
-        
+
         // Initialize Platform SDK BEFORE RainbowRushSDK to get userId
         await this.sdkManager.initialize();
 
-        
+
         // NOW wait for platform config with userId (max 3 seconds)
         const maxWait = 3000;
         const startWait = Date.now();
-        while (!window.platformConfig?.userId && (Date.now() - startWait < maxWait)) {
+        while (!globalThis.platformConfig?.userId && (Date.now() - startWait < maxWait)) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         // If we got userId from platform, update SDK
-        if (window.platformConfig?.userId && this.rainbowRushSDK) {
+        if (globalThis.platformConfig?.userId && this.rainbowRushSDK) {
 
-            this.rainbowRushSDK.userId = window.platformConfig.userId;
-        } else {
-
+            this.rainbowRushSDK.userId = globalThis.platformConfig.userId;
         }
-        
+
         // NOW initialize Rainbow Rush SDK with correct userId
         if (this.rainbowRushSDK) {
-            try {
-                await this.rainbowRushSDK.init();
-
-            } catch (error) {
-
-            }
+            await this.rainbowRushSDK.init();
         }
-        
+
         // Load progress asynchronously
         if (this.levelManager) {
             await this.levelManager.loadProgress();
@@ -135,8 +128,8 @@ export class GameController {
         if (this.backgroundSystem) {
             await this.backgroundSystem.initializeTheme();
         }
-        
-                // Setup rendering system update hook
+
+        // Setup rendering system update hook
         this.renderingSystem.update = (deltaTime, entities) => {
             this.updateGame(deltaTime);
             this.renderingSystem.setPowerupTimers(this.powerupSystem.getAllTimers());
@@ -220,17 +213,17 @@ export class GameController {
         // Update level manager with player velocity only (platforms/entities)
         const cameraSpeed = this.player.velocityX;
         this.levelManager.update(deltaTime, cameraSpeed);
-        
+
         // Check if goal should spawn
         const goalToSpawn = this.levelManager.shouldSpawnGoal();
         if (goalToSpawn) {
             this.entityManager.addEntity('goals', goalToSpawn);
 
         }
-        
+
         // Update level progress bar basata su DISTANZA
         if (this.levelProgressBar) {
-            const levelProgress = this.levelManager.getProgress(); // 0.0-1.0
+            const levelProgress = this.levelManager.getProgress(); // 0-1
             this.levelProgressBar.update(
                 deltaTime,
                 levelProgress * 100, // Converti a percentuale
@@ -241,7 +234,7 @@ export class GameController {
 
         // Update entities
         this.entityManager.updateAll(deltaTime, cameraSpeed, this.player);
-        
+
         // NEW: Update enemies (AI, movement, projectiles)
         // I nemici si muovono SOLO con la velocità base, NON con il turbo
         const enemyScrollSpeed = this.player.boostActive ? this.player.velocityX : 0;
@@ -343,7 +336,7 @@ export class GameController {
         this.renderingSystem.setScore(this.scoreSystem.getTotalScore());
         this.renderingSystem.setLevel(this.levelManager.currentLevelId || 1);
         this.renderingSystem.setLevelLength(this.levelManager.levelLength || 3000);
-        
+
         // Update background theme based on level
         this.backgroundSystem.setLevel(this.levelManager.currentLevelId || 1);
         this.renderingSystem.setDistanceTraveled(this.levelManager.distanceTraveled || 0);
@@ -352,7 +345,6 @@ export class GameController {
 
         // Collect all entities for rendering
         const entities = this._collectRenderEntities();
-        const obstacles = entities.filter(e => e.type === 'obstacle');
         this.engine.entities = entities;
     }
 
@@ -361,7 +353,7 @@ export class GameController {
      * @private
      */
     _collectRenderEntities() {
-        
+
         const entities = [
             ...this.entityManager.platforms,
             ...this.entityManager.obstacles,
@@ -383,7 +375,7 @@ export class GameController {
             ...this.entityManager.boostParticles
         ];
 
-  
+
         // Add safety platform
         const safetyPlatform = this.safetyPlatformSystem.getPlatform();
         if (safetyPlatform) {
@@ -436,7 +428,7 @@ export class GameController {
         if (goalEntities.length > 0 && !context.goalReached) {
             const goalEntity = goalEntities[0];
             const goalReached = this.collisionDetector.checkGoalCollision(goalEntity);
-            
+
             if (goalReached) {
                 // Transition to GOAL_REACHED state for animation
                 this.stateMachine.transitionTo(GameStates.GOAL_REACHED, context);
@@ -467,27 +459,27 @@ export class GameController {
         const context = () => this._getGameContext();
 
         // Keyboard inputs
-        this.inputManager.addEventListener('jump', () => 
+        this.inputManager.addEventListener('jump', () =>
             this.inputCommandMapper.executeCommand('jump', context())
         );
-        this.inputManager.addEventListener('jumpRelease', (duration) => 
+        this.inputManager.addEventListener('jumpRelease', (duration) =>
             this.inputCommandMapper.executeCommand('jumpRelease', context(), duration)
         );
-        this.inputManager.addEventListener('turbo', () => 
+        this.inputManager.addEventListener('turbo', () =>
             this.inputCommandMapper.executeCommand('turbo', context())
         );
-        this.inputManager.addEventListener('flight', () => 
+        this.inputManager.addEventListener('flight', () =>
             this.inputCommandMapper.executeCommand('flight', context())
         );
-        this.inputManager.addEventListener('flightUp', () => 
+        this.inputManager.addEventListener('flightUp', () =>
             this.inputCommandMapper.executeCommand('flightUp', context())
         );
-        this.inputManager.addEventListener('flightDown', () => 
+        this.inputManager.addEventListener('flightDown', () =>
             this.inputCommandMapper.executeCommand('flightDown', context())
         );
 
         // Click handler (delegates to UIManager)
-        this.inputManager.addEventListener('click', (data) => 
+        this.inputManager.addEventListener('click', (data) =>
             this.uiManager.handleClick(data.x, data.y, context())
         );
     }
@@ -513,7 +505,7 @@ export class GameController {
         // Score listeners
         this.scoreSystem.onScoreChange(() => {
             const stats = this.scoreSystem.getGameStats();
-            window.dispatchEvent(new CustomEvent('gameUpdate', { detail: stats }));
+            globalThis.dispatchEvent(new CustomEvent('gameUpdate', { detail: stats }));
         });
     }
 
@@ -578,7 +570,7 @@ export class GameController {
     }
 
     showMenu() {
-        window.dispatchEvent(new CustomEvent('showMenu', {
+        globalThis.dispatchEvent(new CustomEvent('showMenu', {
             detail: { highScore: this.scoreSystem.getHighScore() }
         }));
     }
@@ -611,7 +603,7 @@ export class GameController {
         this.animationController.createFloatingText(
             '💀 GAME OVER 💀', 400, 300,
             [1, 0.2, 0.2, 1],
-            this.entityManager, 3.0
+            this.entityManager, 3
         );
         this.audioManager.stopBackgroundMusic();
         this.audioManager.playSound('death');
@@ -644,9 +636,9 @@ export class GameController {
             'boosts', 'magnetBonuses', 'coinRainBonuses', 'shieldBonuses',
             'multiplierBonuses', 'rainbowBonuses', 'heartRechargeBonuses'
         ];
-        
+
         arrays.forEach(key => {
-            this.entityManager[key] = this.entityManager[key].filter(e => 
+            this.entityManager[key] = this.entityManager[key].filter(e =>
                 e.x + (e.radius || e.width || 0) > leftBound
             );
         });

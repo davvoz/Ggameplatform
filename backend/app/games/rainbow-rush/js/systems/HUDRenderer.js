@@ -97,7 +97,6 @@ export class HUDRenderer {
         const ctx = this.textCtx;
         ctx.save();
         
-        const pulse = Math.sin(this.pulseTime * 3) * 0.5 + 0.5;
         const displayRadius = this.pauseButtonRadius + (this.pausePressed ? -2 : 0);
         
         // Outer glow when hovered

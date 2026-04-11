@@ -8,7 +8,7 @@ export function vampire() {
     const legLeft = sprite.addPart('legLeft', {
         type: 'ellipse',
         x: 0, y: 0.16,
-        width: 0.10, height: 0.32,
+        width: 0.1, height: 0.32,
         color: '#9b7f02ff',
         fill: true
     }, 0.5, 0, -10);
@@ -18,7 +18,7 @@ export function vampire() {
     const legRight = sprite.addPart('legRight', {
         type: 'ellipse',
         x: 0, y: 0.16,
-        width: 0.10, height: 0.32,
+        width: 0.1, height: 0.32,
         color: '#9b7f02ff',
         fill: true
     }, 0.5, 0, -10);
@@ -28,7 +28,7 @@ export function vampire() {
     const capeBack = sprite.addPart('capeBack', {
         type: 'rect',
         x: 0, y: 0,
-        width: 0.30, height: 0.40,
+        width: 0.3, height: 0.4,
         color: '#db0872ff',
         fill: true
     }, 0.5, 0, -5);
@@ -48,9 +48,9 @@ export function vampire() {
             points: [
                 { x: 0, y: 0.05 },
                 { x: -0.12, y: 0.25 },
-                { x: -0.08, y: 0.30 },
+                { x: -0.08, y: 0.3 },
                 { x: 0, y: 0.15 },
-                { x: 0.08, y: 0.30 },
+                { x: 0.08, y: 0.3 },
                 { x: 0.12, y: 0.25 }
             ],
             color: '#ff2828ff',
@@ -71,7 +71,7 @@ export function vampire() {
             { x: 0, y: 0 },
             { x: -0.08, y: 0.02 },
             { x: -0.12, y: 0.35 },
-            { x: -0.02, y: 0.30 }
+            { x: -0.02, y: 0.3 }
         ],
         color:'#585300ff',
         fill: true
@@ -86,7 +86,7 @@ export function vampire() {
             { x: 0, y: 0 },
             { x: 0.08, y: 0.02 },
             { x: 0.12, y: 0.35 },
-            { x: 0.02, y: 0.30 }
+            { x: 0.02, y: 0.3 }
         ],
         color: '#585300ff',
         fill: true
@@ -105,7 +105,7 @@ export function vampire() {
         },
         {
             type: 'ellipse', // Hair
-            x: 0, y: -0.10,
+            x: 0, y: -0.1,
             width: 0.26, height: 0.14,
             color: '#1a0a1a',
             fill: true
@@ -147,71 +147,71 @@ export function vampire() {
             fill: true
         }
     ], 0.5, 0.5, 10);
-    head.setBaseTransform(0, -0.20);
+    head.setBaseTransform(0, -0.2);
     sprite.setParent('head', 'body');
 
     // Animations
     const allParts = ['body', 'head', 'capeLeft', 'capeRight', 'capeBack', 'legLeft', 'legRight'];
 
     // Custom IDLE animation with cape flutter - more dramatic
-    const idle = new AnimationClip('idle', 2.0, true);
+    const idle = new AnimationClip('idle', 2, true);
     idle.addTrack('body', [
-        { time: 0, transform: { y: 0, scaleY: 1.0, rotation: 0 } },
+        { time: 0, transform: { y: 0, scaleY: 1, rotation: 0 } },
         { time: 0.5, transform: { y: -0.03, scaleY: 1.02, rotation: 0.02 } },
-        { time: 1.0, transform: { y: -0.05, scaleY: 1.04, rotation: 0 } },
+        { time: 1, transform: { y: -0.05, scaleY: 1.04, rotation: 0 } },
         { time: 1.5, transform: { y: -0.03, scaleY: 1.02, rotation: -0.02 } },
-        { time: 2.0, transform: { y: 0, scaleY: 1.0, rotation: 0 } }
+        { time: 2, transform: { y: 0, scaleY: 1, rotation: 0 } }
     ]);
     idle.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0 } },
         { time: 0.5, transform: { y: -0.02, rotation: 0.08 } },
-        { time: 1.0, transform: { y: -0.04, rotation: 0 } },
+        { time: 1, transform: { y: -0.04, rotation: 0 } },
         { time: 1.5, transform: { y: -0.02, rotation: -0.08 } },
-        { time: 2.0, transform: { y: 0, rotation: 0 } }
+        { time: 2, transform: { y: 0, rotation: 0 } }
     ]);
     idle.addTrack('capeLeft', [
-        { time: 0, transform: { rotation: 0, x: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, x: 0, scaleY: 1 } },
         { time: 0.4, transform: { rotation: -0.15, x: -0.03, scaleY: 1.05 } },
         { time: 0.8, transform: { rotation: 0.1, x: 0.02, scaleY: 0.98 } },
         { time: 1.2, transform: { rotation: -0.2, x: -0.04, scaleY: 1.08 } },
-        { time: 1.6, transform: { rotation: 0.05, x: 0.01, scaleY: 1.0 } },
-        { time: 2.0, transform: { rotation: 0, x: 0, scaleY: 1.0 } }
+        { time: 1.6, transform: { rotation: 0.05, x: 0.01, scaleY: 1 } },
+        { time: 2, transform: { rotation: 0, x: 0, scaleY: 1 } }
     ]);
     idle.addTrack('capeRight', [
-        { time: 0, transform: { rotation: 0, x: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, x: 0, scaleY: 1 } },
         { time: 0.4, transform: { rotation: 0.15, x: 0.03, scaleY: 1.05 } },
         { time: 0.8, transform: { rotation: -0.1, x: -0.02, scaleY: 0.98 } },
         { time: 1.2, transform: { rotation: 0.2, x: 0.04, scaleY: 1.08 } },
-        { time: 1.6, transform: { rotation: -0.05, x: -0.01, scaleY: 1.0 } },
-        { time: 2.0, transform: { rotation: 0, x: 0, scaleY: 1.0 } }
+        { time: 1.6, transform: { rotation: -0.05, x: -0.01, scaleY: 1 } },
+        { time: 2, transform: { rotation: 0, x: 0, scaleY: 1 } }
     ]);
     idle.addTrack('capeBack', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { scaleX: 1, scaleY: 1 } },
         { time: 0.5, transform: { scaleX: 1.08, scaleY: 1.03 } },
-        { time: 1.0, transform: { scaleX: 1.12, scaleY: 1.06 } },
+        { time: 1, transform: { scaleX: 1.12, scaleY: 1.06 } },
         { time: 1.5, transform: { scaleX: 1.06, scaleY: 1.02 } },
-        { time: 2.0, transform: { scaleX: 1.0, scaleY: 1.0 } }
+        { time: 2, transform: { scaleX: 1, scaleY: 1 } }
     ]);
     idle.addTrack('legLeft', [
         { time: 0, transform: { rotation: 0 } },
-        { time: 1.0, transform: { rotation: 0.05 } },
-        { time: 2.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0.05 } },
+        { time: 2, transform: { rotation: 0 } }
     ]);
     idle.addTrack('legRight', [
         { time: 0, transform: { rotation: 0 } },
-        { time: 1.0, transform: { rotation: -0.05 } },
-        { time: 2.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: -0.05 } },
+        { time: 2, transform: { rotation: 0 } }
     ]);
     sprite.addAnimation(idle);
 
     // Custom WALK animation with cape billowing
     const walk = new AnimationClip('walk', 0.6, true);
     walk.addTrack('body', [
-        { time: 0, transform: { y: 0, rotation: 0.05, scaleY: 1.0 } },
+        { time: 0, transform: { y: 0, rotation: 0.05, scaleY: 1 } },
         { time: 0.15, transform: { y: -0.06, rotation: -0.06, scaleY: 0.96 } },
-        { time: 0.3, transform: { y: 0, rotation: -0.05, scaleY: 1.0 } },
+        { time: 0.3, transform: { y: 0, rotation: -0.05, scaleY: 1 } },
         { time: 0.45, transform: { y: -0.06, rotation: 0.06, scaleY: 0.96 } },
-        { time: 0.6, transform: { y: 0, rotation: 0.05, scaleY: 1.0 } }
+        { time: 0.6, transform: { y: 0, rotation: 0.05, scaleY: 1 } }
     ]);
     walk.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0.06 } },
@@ -249,19 +249,19 @@ export function vampire() {
         { time: 0.6, transform: { rotation: -0.15, x: -0.02 } }
     ]);
     walk.addTrack('capeBack', [
-        { time: 0, transform: { scaleX: 1.0, y: 0 } },
+        { time: 0, transform: { scaleX: 1, y: 0 } },
         { time: 0.3, transform: { scaleX: 1.1, y: -0.02 } },
-        { time: 0.6, transform: { scaleX: 1.0, y: 0 } }
+        { time: 0.6, transform: { scaleX: 1, y: 0 } }
     ]);
     sprite.addAnimation(walk);
 
     // Custom ATTACK animation with cape dramatic sweep
     const attack = new AnimationClip('attack', 0.5, false);
     attack.addTrack('body', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.15, transform: { rotation: -0.2, scaleX: 0.95 } },
         { time: 0.3, transform: { rotation: 0.25, scaleX: 1.1 } },
-        { time: 0.5, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 0.5, transform: { rotation: 0, scaleX: 1 } }
     ]);
     attack.addTrack('head', [
         { time: 0, transform: { rotation: 0, y: 0 } },
@@ -298,22 +298,22 @@ export function vampire() {
         { time: 0.8, transform: { rotation: 0, y: 0 } }
     ]);
     drain.addTrack('capeLeft', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.2, transform: { rotation: -0.4, scaleY: 1.1 } },
         { time: 0.5, transform: { rotation: -0.2, scaleY: 1.15 } },
-        { time: 0.8, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 0.8, transform: { rotation: 0, scaleY: 1 } }
     ]);
     drain.addTrack('capeRight', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.2, transform: { rotation: 0.4, scaleY: 1.1 } },
         { time: 0.5, transform: { rotation: 0.2, scaleY: 1.15 } },
-        { time: 0.8, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 0.8, transform: { rotation: 0, scaleY: 1 } }
     ]);
     drain.addTrack('capeBack', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { scaleX: 1, scaleY: 1 } },
         { time: 0.3, transform: { scaleX: 1.15, scaleY: 1.1 } },
         { time: 0.6, transform: { scaleX: 1.1, scaleY: 1.05 } },
-        { time: 0.8, transform: { scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.8, transform: { scaleX: 1, scaleY: 1 } }
     ]);
     sprite.addAnimation(drain);
 

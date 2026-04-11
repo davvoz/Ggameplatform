@@ -106,7 +106,7 @@ export function basic() {
         {
             type: 'rect',
             x: 0.1, y: -0.05,
-            width: 0.30, height: 0.10,
+            width: 0.3, height: 0.1,
             color: '#a0a0be',
             fill: true,
             stroke: true,

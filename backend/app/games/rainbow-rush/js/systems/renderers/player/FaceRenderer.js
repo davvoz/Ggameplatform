@@ -13,12 +13,12 @@ export class FaceRenderer {
         const winkProgress = player.winkProgress || 0;
 
         const expression = player.getExpression ? player.getExpression() : emotion;
-        const isBlinking = player.isEyeBlinking ? player.isEyeBlinking() : false;
+        const isNotBlinking = !(player.isEyeBlinking ? player.isEyeBlinking() : false);
 
         const eyeY = y - radiusY * 0.2;
         const eyeConfig = this.getEyeConfig(expression, emotionIntensity);
 
-        if (!isBlinking) {
+        if (isNotBlinking) {
             this.renderOpenEyes(x, eyeY, eyeConfig, emotionIntensity, winkProgress, scale);
         } else {
             this.renderClosedEyes(x, eyeY, scale);

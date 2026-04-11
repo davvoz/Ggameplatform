@@ -29,7 +29,7 @@ export function bomber() {
         {
             type: 'ellipse',
             x: 0, y: 0,
-            width: 0.50, height: 0.60,
+            width: 0.5, height: 0.6,
             color: '#4a3a2a',
             fill: true
         },
@@ -51,14 +51,14 @@ export function bomber() {
         // Bomb pockets
         {
             type: 'circle',
-            x: 0.12, y: 0.20,
+            x: 0.12, y: 0.2,
             radius: 0.05,
             color: '#aa4444',
             fill: true
         },
         {
             type: 'circle',
-            x: 0.38, y: 0.20,
+            x: 0.38, y: 0.2,
             radius: 0.05,
             color: '#aa4444',
             fill: true
@@ -81,14 +81,14 @@ export function bomber() {
         },
         {
             type: 'circle',
-            x: -0.10, y: 0.04,
+            x: -0.1, y: 0.04,
             radius: 0.04,
             color: '#dd5555',
             fill: true
         },
         {
             type: 'circle',
-            x: -0.10, y: 0.14,
+            x: -0.1, y: 0.14,
             radius: 0.04,
             color: '#dd5555',
             fill: true
@@ -105,22 +105,22 @@ export function bomber() {
         color: '#5a4a3a',
         fill: true
     }, 0.5, 0.5, 5);
-    shoulders.setBaseTransform(0, -0.10);
+    shoulders.setBaseTransform(0, -0.1);
     sprite.setParent('shoulders', 'body');
 
     // LEFT ARM (holding detonator, z-order 3)
     const armLeft = sprite.addPart('armLeft', [
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.10, height: 0.22,
+            x: 0, y: 0.1,
+            width: 0.1, height: 0.22,
             color: '#4a3a2a',
             fill: true
         },
         // Detonator
         {
             type: 'rect',
-            x: -0.02, y: 0.20,
+            x: -0.02, y: 0.2,
             width: 0.08, height: 0.06,
             color: '#cc3333',
             fill: true
@@ -134,18 +134,18 @@ export function bomber() {
             glow: { color: '#ffaa00', blur: 4 }
         }
     ], 0.5, 0, 3);
-    armLeft.setBaseTransform(-0.20, -0.02);
+    armLeft.setBaseTransform(-0.2, -0.02);
     sprite.setParent('armLeft', 'shoulders');
 
     // RIGHT ARM (z-order 3)
     const armRight = sprite.addPart('armRight', {
         type: 'ellipse',
-        x: 0, y: 0.10,
-        width: 0.10, height: 0.22,
+        x: 0, y: 0.1,
+        width: 0.1, height: 0.22,
         color: '#4a3a2a',
         fill: true
     }, 0.5, 0, 3);
-    armRight.setBaseTransform(0.20, -0.02);
+    armRight.setBaseTransform(0.2, -0.02);
     sprite.setParent('armRight', 'shoulders');
 
     // HEAD (with goggles, z-order 10)
@@ -190,7 +190,7 @@ export function bomber() {
         {
             type: 'path',
             points: [
-                { x: -0.10, y: 0 },
+                { x: -0.1, y: 0 },
                 { x: -0.14, y: 0.01 }
             ],
             color: '#2a2a2a',
@@ -200,7 +200,7 @@ export function bomber() {
         {
             type: 'path',
             points: [
-                { x: 0.10, y: 0 },
+                { x: 0.1, y: 0 },
                 { x: 0.14, y: 0.01 }
             ],
             color: '#2a2a2a',
@@ -237,7 +237,7 @@ export function bomber() {
         },
         {
             type: 'circle',
-            x: 0, y: -0.10,
+            x: 0, y: -0.1,
             radius: 0.03,
             color: '#ff6600',
             fill: true,
@@ -251,13 +251,13 @@ export function bomber() {
     const allParts = ['body', 'head', 'shoulders', 'legLeft', 'legRight', 'backpack', 'armLeft', 'armRight', 'fuse'];
     const bodyParts = ['body', 'head', 'shoulders', 'backpack', 'armLeft', 'armRight', 'fuse'];
     
-    sprite.addAnimation(AnimationBuilder.createIdleAnimation(bodyParts, 2.0));
+    sprite.addAnimation(AnimationBuilder.createIdleAnimation(bodyParts, 2));
     sprite.addAnimation(AnimationBuilder.createWalkAnimation(allParts, 0.6));
     // Bomber throws explosives - more dramatic wind-up
     sprite.addAnimation(AnimationBuilder.createAttackAnimation(['body', 'head', 'shoulders', 'armLeft', 'armRight', 'fuse'], 0.7));
     sprite.addAnimation(AnimationBuilder.createHitAnimation(allParts, 0.3));
     // Explosive death animation
-    sprite.addAnimation(AnimationBuilder.createDeathAnimation(allParts, 1.0));
+    sprite.addAnimation(AnimationBuilder.createDeathAnimation(allParts, 1));
 
     return sprite;
 }

@@ -67,7 +67,7 @@ export class Projectile {
         if (!this.active) return;
 
         // Se il target è morto, disattiva il projectile
-        if (this.target && this.target.isDead()) {
+        if (this.target?.isDead()) {
             this.active = false;
             return;
         }
@@ -106,7 +106,7 @@ export class Projectile {
     render(graphics) {
         if (!this.active) return;
 
-        graphics.drawProjectile(this.x, this.y, this.color, 1.0, {
+        graphics.drawProjectile(this.x, this.y, this.color, 1, {
             glow: true
         });
     }

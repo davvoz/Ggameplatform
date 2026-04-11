@@ -12,14 +12,14 @@ export class FullscreenManager {
 
     // ── public API ─────────────────────────────────────────────────────────
     toggleFullscreen() {
-        if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
+        if (globalThis.PlatformSDK && typeof globalThis.PlatformSDK.toggleFullscreen === 'function') {
             this._prepareForTransition();
-            window._gameFullscreenState = !window._gameFullscreenState;
-            window.PlatformSDK.toggleFullscreen();
+            globalThis._gameFullscreenState = !globalThis._gameFullscreenState;
+            globalThis.PlatformSDK.toggleFullscreen();
             return;
         }
 
-        const isIOS    = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIOS    = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
         const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
         const fsSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
 
@@ -59,9 +59,9 @@ export class FullscreenManager {
     }
 
     exitFullscreen() {
-        if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function' && window._gameFullscreenState) {
-            window._gameFullscreenState = false;
-            window.PlatformSDK.toggleFullscreen();
+        if (globalThis.PlatformSDK && typeof globalThis.PlatformSDK.toggleFullscreen === 'function' && globalThis._gameFullscreenState) {
+            globalThis._gameFullscreenState = false;
+            globalThis.PlatformSDK.toggleFullscreen();
             return;
         }
         if (document.body.classList.contains('ios-game-fullscreen')) {

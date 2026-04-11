@@ -36,11 +36,11 @@ export class LevelProgressBar {
             this.targetProgress = 0;
         }
         
-        // Calcola progresso target (0.0 a 1)
+        // Calcola progresso target (0 a 1)
         this.targetProgress = Math.min(platformCounter / platformsPerLevel, 1);
         
         // Smooth animation verso il target
-        const speed = 3.0;
+        const speed = 3;
         if (this.animProgress < this.targetProgress) {
             this.animProgress += deltaTime * speed;
             if (this.animProgress > this.targetProgress) {

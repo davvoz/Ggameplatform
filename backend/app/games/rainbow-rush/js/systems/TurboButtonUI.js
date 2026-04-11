@@ -85,175 +85,90 @@ export class TurboButtonUI {
         ctx.translate(-this.buttonX, -displayY);
         
         // Main button circle - colori vivaci cartoon (SENZA bordo nero)
-        ctx.beginPath();
-        ctx.arc(this.buttonX, displayY, this.buttonRadius, 0, Math.PI * 2);
-        
-        if (isActive) {
-            // Active - arcobaleno pulsante
-            const activePulse = Math.sin(this.pulseTime * 12) * 0.3 + 0.7;
-            const activeGradient = ctx.createRadialGradient(
-                this.buttonX - 15, displayY - 15, 0,
-                this.buttonX, displayY, this.buttonRadius
-            );
-            activeGradient.addColorStop(0, '#FFF59D'); // Yellow super light
-            activeGradient.addColorStop(0.3, '#FFD54F'); // Yellow light
-            activeGradient.addColorStop(0.6, '#FF9800'); // Orange
-            activeGradient.addColorStop(1, '#FF5722'); // Deep orange
-            ctx.fillStyle = activeGradient;
-        } else if (isReady) {
-            // Ready - giallo brillante allegro
-            const readyGradient = ctx.createRadialGradient(
-                this.buttonX - 15, displayY - 15, 0,
-                this.buttonX, displayY, this.buttonRadius
-            );
-            readyGradient.addColorStop(0, '#FFEB3B'); // Bright yellow
-            readyGradient.addColorStop(0.5, '#FFC107'); // Amber
-            readyGradient.addColorStop(1, '#FF9800'); // Orange
-            ctx.fillStyle = readyGradient;
-        } else {
-            // Cooldown - grigio con un tocco di colore
-            const cooldownGradient = ctx.createRadialGradient(
-                this.buttonX - 12, displayY - 12, 0,
-                this.buttonX, displayY, this.buttonRadius
-            );
-            cooldownGradient.addColorStop(0, '#90A4AE'); // Blue grey
-            cooldownGradient.addColorStop(1, '#546E7A'); // Blue grey dark
-            ctx.fillStyle = cooldownGradient;
-        }
-        
-        ctx.fill();
+        this.renderButtonBackground(ctx, displayY, isActive, isReady);
         
         // Highlight cartoon - grande e visibile
-        const highlightGradient = ctx.createRadialGradient(
-            this.buttonX - 12, displayY - 12, 0,
-            this.buttonX - 5, displayY - 5, this.buttonRadius * 0.6
-        );
-        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-        highlightGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.3)');
-        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        ctx.fillStyle = highlightGradient;
-        ctx.beginPath();
-        ctx.arc(this.buttonX - 5, displayY - 8, this.buttonRadius * 0.5, 0, Math.PI * 2);
-        ctx.fill();
+        this.renderHighlight(ctx, displayY);
         
         // Progress bar circolare quando TURBO ATTIVO - si consuma
-        if (isActive) {
-            // Usa la durata iniziale salvata invece di calcolarla dinamicamente
-            const totalDuration = player.turboInitialDuration || (player.turboBaseDuration + 1);
-            const remainingProgress = player.turboTimeRemaining / totalDuration;
-            
-            // Background ring semi-trasparente
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 6;
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, this.buttonRadius + 6, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Progress ring che si consuma - gradiente arancione->rosso
-            const progressGradient = ctx.createLinearGradient(
-                this.buttonX, displayY - this.buttonRadius,
-                this.buttonX, displayY + this.buttonRadius
-            );
-            progressGradient.addColorStop(0, '#FFD54F'); // Yellow
-            progressGradient.addColorStop(0.5, '#FF9800'); // Orange
-            progressGradient.addColorStop(1, '#FF5722'); // Red
-            
-            ctx.strokeStyle = progressGradient;
-            ctx.lineWidth = 7;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.arc(
-                this.buttonX, displayY,
-                this.buttonRadius + 6,
-                -Math.PI / 2,
-                -Math.PI / 2 + (Math.PI * 2 * remainingProgress),
-                false
-            );
-            ctx.stroke();
-        }
+        this.renderProgressRing(isActive, player, ctx, displayY);
         
         // Barra cooldown circolare ESTERNA - animata e brillante
-        if (!isReady && !isActive) {
-            const progress = player.getTurboCooldownProgress();
-            
-            // Anello esterno - background grigio scuro
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, this.buttonRadius + 8, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Progress ring ESTERNO - gradiente arcobaleno animato
-            const pulseWidth = 9 + Math.sin(this.pulseTime * 8) * 2; // Pulsazione
-            
-            // Gradiente rotante nel tempo
-            const gradientAngle = this.pulseTime * 0.5;
-            const gx1 = this.buttonX + Math.cos(gradientAngle) * this.buttonRadius;
-            const gy1 = displayY + Math.sin(gradientAngle) * this.buttonRadius;
-            const gx2 = this.buttonX - Math.cos(gradientAngle) * this.buttonRadius;
-            const gy2 = displayY - Math.sin(gradientAngle) * this.buttonRadius;
-            
-            const progressGradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-            progressGradient.addColorStop(0, '#FF6B35'); // Orange vivace
-            progressGradient.addColorStop(0.3, '#F7B731'); // Giallo
-            progressGradient.addColorStop(0.6, '#5F27CD'); // Viola
-            progressGradient.addColorStop(1, '#00D2FF'); // Ciano
-            
-            ctx.strokeStyle = progressGradient;
-            ctx.lineWidth = pulseWidth;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.arc(
-                this.buttonX, displayY,
-                this.buttonRadius + 8,
-                -Math.PI / 2,
-                -Math.PI / 2 + (Math.PI * 2 * progress),
-                false
-            );
-            ctx.stroke();
-            
-            // Pallino luminoso alla fine della progress bar (segnaposto)
-            const endAngle = -Math.PI / 2 + (Math.PI * 2 * progress);
-            const dotX = this.buttonX + Math.cos(endAngle) * (this.buttonRadius + 8);
-            const dotY = displayY + Math.sin(endAngle) * (this.buttonRadius + 8);
-            
-            // Pallino solido senza glow
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Bordo pallino
-            ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        }
+        this.renderCooldownProgress(isReady, isActive, player, ctx, displayY);
         
         // Icon - Fulmine grande e simpatico
+        this.renderIconWithEffects(isReady, isActive, ctx, displayY);
+        
+        // Timer display - stile cartoon divertente
+        this.renderTurboTimer(isActive, displayY, ctx, player);
+        
+        // NESSUN timer countdown per cooldown - solo progress bar visuale
+        
+        ctx.restore();
+    }
+    
+    renderTurboTimer(isActive, displayY, ctx, player) {
+        if (isActive) {
+            // Timer attivo - grande e colorato a destra
+            const timerX = this.buttonX + this.buttonRadius + 10;
+
+            // Background bubble (usando archi per compatibilità)
+            const bubbleX = timerX;
+            const bubbleY = displayY - 12;
+            const bubbleW = 35;
+            const bubbleH = 24;
+            const bubbleR = 12;
+
+            ctx.fillStyle = '#FFD54F';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(bubbleX + bubbleR, bubbleY);
+            ctx.lineTo(bubbleX + bubbleW - bubbleR, bubbleY);
+            ctx.arc(bubbleX + bubbleW - bubbleR, bubbleY + bubbleR, bubbleR, -Math.PI / 2, 0);
+            ctx.lineTo(bubbleX + bubbleW, bubbleY + bubbleH - bubbleR);
+            ctx.arc(bubbleX + bubbleW - bubbleR, bubbleY + bubbleH - bubbleR, bubbleR, 0, Math.PI / 2);
+            ctx.lineTo(bubbleX + bubbleR, bubbleY + bubbleH);
+            ctx.arc(bubbleX + bubbleR, bubbleY + bubbleH - bubbleR, bubbleR, Math.PI / 2, Math.PI);
+            ctx.lineTo(bubbleX, bubbleY + bubbleR);
+            ctx.arc(bubbleX + bubbleR, bubbleY + bubbleR, bubbleR, Math.PI, 3 * Math.PI / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Testo timer
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(Math.ceil(player.turboTimeRemaining), timerX + 17, displayY);
+        }
+    }
+
+    renderIconWithEffects(isReady, isActive, ctx, displayY) {
         if (isReady || isActive) {
             // Scala pulsante quando ready
             const iconScale = isReady ? 1 + Math.sin(this.pulseTime * 6) * 0.15 : 1;
-            
+
             ctx.save();
             ctx.translate(this.buttonX, displayY);
             ctx.scale(iconScale, iconScale);
             ctx.translate(-this.buttonX, -displayY);
-            
+
             // Ombra nera spessa (cartoon)
             ctx.fillStyle = '#000000';
             ctx.font = 'bold 34px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('⚡', this.buttonX + 2, displayY + 2);
-            
+
             // Fulmine principale bianco brillante
             ctx.fillStyle = '#FFFFFF';
             ctx.font = 'bold 34px Arial';
             ctx.fillText('⚡', this.buttonX, displayY);
-            
+
             ctx.restore();
-            
+
             // Scintille saltellanti quando ready
             if (isReady) {
                 for (let i = 0; i < 6; i++) {
@@ -262,13 +177,13 @@ export class TurboButtonUI {
                     const sx = this.buttonX + Math.cos(angle) * dist;
                     const sy = displayY + Math.sin(angle) * dist;
                     const size = 12 + Math.sin(this.pulseTime * 8 + i) * 4;
-                    
+
                     // Ombra stella
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                     ctx.font = `${size}px Arial`;
                     ctx.textAlign = 'center';
                     ctx.fillText('✨', sx + 1, sy + 1);
-                    
+
                     // Stella colorata
                     const colors = ['#FFD700', '#FF6B35', '#4ECDC4', '#FF1744', '#76FF03'];
                     ctx.fillStyle = colors[i % colors.length];
@@ -283,54 +198,175 @@ export class TurboButtonUI {
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('⚡', this.buttonX + 1, displayY + 1);
-            
+
             ctx.fillStyle = '#B0BEC5';
             ctx.font = 'bold 28px Arial';
             ctx.fillText('⚡', this.buttonX, displayY);
         }
-        
-        // Timer display - stile cartoon divertente
-        if (isActive) {
-            // Timer attivo - grande e colorato a destra
-            const timerX = this.buttonX + this.buttonRadius + 10;
-            
-            // Background bubble (usando archi per compatibilità)
-            const bubbleX = timerX;
-            const bubbleY = displayY - 12;
-            const bubbleW = 35;
-            const bubbleH = 24;
-            const bubbleR = 12;
-            
-            ctx.fillStyle = '#FFD54F';
-            ctx.strokeStyle = '#000000';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(bubbleX + bubbleR, bubbleY);
-            ctx.lineTo(bubbleX + bubbleW - bubbleR, bubbleY);
-            ctx.arc(bubbleX + bubbleW - bubbleR, bubbleY + bubbleR, bubbleR, -Math.PI/2, 0);
-            ctx.lineTo(bubbleX + bubbleW, bubbleY + bubbleH - bubbleR);
-            ctx.arc(bubbleX + bubbleW - bubbleR, bubbleY + bubbleH - bubbleR, bubbleR, 0, Math.PI/2);
-            ctx.lineTo(bubbleX + bubbleR, bubbleY + bubbleH);
-            ctx.arc(bubbleX + bubbleR, bubbleY + bubbleH - bubbleR, bubbleR, Math.PI/2, Math.PI);
-            ctx.lineTo(bubbleX, bubbleY + bubbleR);
-            ctx.arc(bubbleX + bubbleR, bubbleY + bubbleR, bubbleR, Math.PI, 3*Math.PI/2);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            // Testo timer
-            ctx.fillStyle = '#000000';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(Math.ceil(player.turboTimeRemaining), timerX + 17, displayY);
-        }
-        
-        // NESSUN timer countdown per cooldown - solo progress bar visuale
-        
-        ctx.restore();
     }
-    
+
+    renderCooldownProgress(isReady, isActive, player, ctx, displayY) {
+        if (!isReady && !isActive) {
+            const progress = player.getTurboCooldownProgress();
+
+            // Anello esterno - background grigio scuro
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, this.buttonRadius + 8, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Progress ring ESTERNO - gradiente arcobaleno animato
+            const pulseWidth = 9 + Math.sin(this.pulseTime * 8) * 2; // Pulsazione
+
+
+            // Gradiente rotante nel tempo
+            const gradientAngle = this.pulseTime * 0.5;
+            const gx1 = this.buttonX + Math.cos(gradientAngle) * this.buttonRadius;
+            const gy1 = displayY + Math.sin(gradientAngle) * this.buttonRadius;
+            const gx2 = this.buttonX - Math.cos(gradientAngle) * this.buttonRadius;
+            const gy2 = displayY - Math.sin(gradientAngle) * this.buttonRadius;
+
+            const progressGradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+            progressGradient.addColorStop(0, '#FF6B35'); // Orange vivace
+            progressGradient.addColorStop(0.3, '#F7B731'); // Giallo
+            progressGradient.addColorStop(0.6, '#5F27CD'); // Viola
+            progressGradient.addColorStop(1, '#00D2FF'); // Ciano
+
+            ctx.strokeStyle = progressGradient;
+            ctx.lineWidth = pulseWidth;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(
+                this.buttonX, displayY,
+                this.buttonRadius + 8,
+                -Math.PI / 2,
+                -Math.PI / 2 + (Math.PI * 2 * progress),
+                false
+            );
+            ctx.stroke();
+
+            // Pallino luminoso alla fine della progress bar (segnaposto)
+            const endAngle = -Math.PI / 2 + (Math.PI * 2 * progress);
+            const dotX = this.buttonX + Math.cos(endAngle) * (this.buttonRadius + 8);
+            const dotY = displayY + Math.sin(endAngle) * (this.buttonRadius + 8);
+
+            // Pallino solido senza glow
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bordo pallino
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    renderProgressRing(isActive, player, ctx, displayY) {
+        if (isActive) {
+            // Usa la durata iniziale salvata invece di calcolarla dinamicamente
+            const totalDuration = player.turboInitialDuration || (player.turboBaseDuration + 1);
+            const remainingProgress = player.turboTimeRemaining / totalDuration;
+
+            // Background ring semi-trasparente
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, this.buttonRadius + 6, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Progress ring che si consuma - gradiente arancione->rosso
+            const progressGradient = ctx.createLinearGradient(
+                this.buttonX, displayY - this.buttonRadius,
+                this.buttonX, displayY + this.buttonRadius
+            );
+            progressGradient.addColorStop(0, '#FFD54F'); // Yellow
+            progressGradient.addColorStop(0.5, '#FF9800'); // Orange
+            progressGradient.addColorStop(1, '#FF5722'); // Red
+
+            ctx.strokeStyle = progressGradient;
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(
+                this.buttonX, displayY,
+                this.buttonRadius + 6,
+                -Math.PI / 2,
+                -Math.PI / 2 + (Math.PI * 2 * remainingProgress),
+                false
+            );
+            ctx.stroke();
+        }
+    }
+
+    renderHighlight(ctx, displayY) {
+        const highlightGradient = ctx.createRadialGradient(
+            this.buttonX - 12, displayY - 12, 0,
+            this.buttonX - 5, displayY - 5, this.buttonRadius * 0.6
+        );
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        highlightGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.3)');
+        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = highlightGradient;
+        ctx.beginPath();
+        ctx.arc(this.buttonX - 5, displayY - 8, this.buttonRadius * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    renderButtonBackground(ctx, displayY, isActive, isReady) {
+        ctx.beginPath();
+        ctx.arc(this.buttonX, displayY, this.buttonRadius, 0, Math.PI * 2);
+
+        if (isActive) {
+            // Active - arcobaleno pulsante
+            this.renderActiveGradient(ctx, displayY);
+        } else if (isReady) {
+            // Ready - giallo brillante allegro
+            this.renderReadyGradient(ctx, displayY);
+        } else {
+            // Cooldown - grigio con un tocco di colore
+            this.renderCooldownGradient(ctx, displayY);
+        }
+
+        ctx.fill();
+    }
+
+    renderCooldownGradient(ctx, displayY) {
+        const cooldownGradient = ctx.createRadialGradient(
+            this.buttonX - 12, displayY - 12, 0,
+            this.buttonX, displayY, this.buttonRadius
+        );
+        cooldownGradient.addColorStop(0, '#90A4AE'); // Blue grey
+        cooldownGradient.addColorStop(1, '#546E7A'); // Blue grey dark
+        ctx.fillStyle = cooldownGradient;
+    }
+
+    renderReadyGradient(ctx, displayY) {
+        const readyGradient = ctx.createRadialGradient(
+            this.buttonX - 15, displayY - 15, 0,
+            this.buttonX, displayY, this.buttonRadius
+        );
+        readyGradient.addColorStop(0, '#FFEB3B'); // Bright yellow
+        readyGradient.addColorStop(0.5, '#FFC107'); // Amber
+        readyGradient.addColorStop(1, '#FF9800'); // Orange
+        ctx.fillStyle = readyGradient;
+    }
+
+    renderActiveGradient(ctx, displayY) {
+        const activeGradient = ctx.createRadialGradient(
+            this.buttonX - 15, displayY - 15, 0,
+            this.buttonX, displayY, this.buttonRadius
+        );
+        activeGradient.addColorStop(0, '#FFF59D'); // Yellow super light
+        activeGradient.addColorStop(0.3, '#FFD54F'); // Yellow light
+        activeGradient.addColorStop(0.6, '#FF9800'); // Orange
+        activeGradient.addColorStop(1, '#FF5722'); // Deep orange
+        ctx.fillStyle = activeGradient;
+    }
+
     renderLocked(ctx) {
         ctx.save();
         

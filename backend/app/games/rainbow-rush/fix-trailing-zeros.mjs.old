@@ -1,0 +1,116 @@
+/**
+ * Fix S7748: Remove unnecessary trailing zeros and decimal points from number literals.
+ * Usage: node fix-trailing-zeros.mjs [--dry-run]
+ */
+import { readdir, readFile, writeFile } from 'fs/promises';
+import { join, relative } from 'path';
+
+const ROOT = new URL('.', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
+const DRY_RUN = process.argv.includes('--dry-run');
+
+// Recursively collect all .js files
+async function collectFiles(dir) {
+    const entries = await readdir(dir, { withFileTypes: true });
+    const files = [];
+    for (const e of entries) {
+        const full = join(dir, e.name);
+        if (e.isDirectory() && e.name !== 'node_modules') {
+            files.push(...await collectFiles(full));
+        } else if (e.isFile() && e.name.endsWith('.js') && e.name !== 'fix-trailing-zeros.mjs') {
+            files.push(full);
+        }
+    }
+    return files;
+}
+
+/**
+ * Process a single line: replace number literals with trailing zeros
+ * while leaving string contents untouched.
+ *
+ * Strategy: split the line into "code" and "string" segments,
+ * only apply fixes to code segments.
+ */
+function fixLine(line) {
+    // Split into code vs string tokens
+    // Matches single-quoted, double-quoted, and template literal strings
+    const parts = [];
+    let remaining = line;
+    // Regex to find the next string literal (handles escaped quotes)
+    const strRegex = /('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`)/;
+
+    while (remaining.length > 0) {
+        const m = remaining.match(strRegex);
+        if (!m) {
+            parts.push({ code: true, text: remaining });
+            break;
+        }
+        const idx = m.index;
+        if (idx > 0) {
+            parts.push({ code: true, text: remaining.slice(0, idx) });
+        }
+        parts.push({ code: false, text: m[0] });
+        remaining = remaining.slice(idx + m[0].length);
+    }
+
+    // Fix trailing zeros only in code segments
+    // Pattern: a decimal number like 0.50, 1.0, 2.00, 0.10
+    // (?<!\w) ensures we don't match inside an identifier
+    const numRegex = /(?<![.\w])(\d+)\.(\d*?)0+(?!\d)/g;
+
+    let changed = false;
+    const fixed = parts.map(p => {
+        if (!p.code) return p.text;
+        const result = p.text.replaceAll(numRegex, (match, intPart, decPart) => {
+            // decPart is the decimal digits minus trailing zeros
+            if (decPart === '') {
+                // e.g. 1.0 -> 1, 2.0 -> 2
+                changed = true;
+                return intPart;
+            }
+            // e.g. 0.50 -> 0.5, 0.10 -> 0.1
+            changed = true;
+            return `${intPart}.${decPart}`;
+        });
+        return result;
+    }).join('');
+
+    return { text: fixed, changed };
+}
+
+// Main
+const files = await collectFiles(ROOT);
+let totalFiles = 0;
+let totalFixes = 0;
+
+for (const file of files) {
+    const content = await readFile(file, 'utf-8');
+    const lines = content.split('\n');
+    let fileChanged = false;
+    let fileFixes = 0;
+
+    const fixedLines = lines.map((line, i) => {
+        const { text, changed } = fixLine(line);
+        if (changed) {
+            fileChanged = true;
+            fileFixes++;
+            const rel = relative(ROOT, file);
+            if (DRY_RUN) {
+                console.log(`  ${rel}:${i + 1}`);
+                console.log(`    - ${line.trim()}`);
+                console.log(`    + ${text.trim()}`);
+            }
+        }
+        return text;
+    });
+
+    if (fileChanged) {
+        totalFiles++;
+        totalFixes += fileFixes;
+        if (!DRY_RUN) {
+            await writeFile(file, fixedLines.join('\n'), 'utf-8');
+            console.log(`  Fixed ${fileFixes} line(s) in ${relative(ROOT, file)}`);
+        }
+    }
+}
+
+console.log(`\n${DRY_RUN ? '[DRY RUN] ' : ''}Done: ${totalFixes} line(s) in ${totalFiles} file(s).`);

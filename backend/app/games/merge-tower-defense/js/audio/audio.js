@@ -6,15 +6,16 @@
 import { AudioSynthesizer, SoundLibrary } from './synth.js';
 
 export class AudioEngine {
+    backgroundMusic = null;
+    volume = 0.3;
+    enabled = false;
+    isPlaying = false;
+    soundEnabled = true;
+    soundVolume = 0.5;
+    synth;
+    soundLib;
+
     constructor() {
-        this.backgroundMusic = null;
-        this.volume = 0.3;
-        this.enabled = false;
-        this.isPlaying = false;
-        
-        this.soundEnabled = true;
-        this.soundVolume = 0.5;
-        
         // Initialize synth and sound library
         this.synth = new AudioSynthesizer();
         this.soundLib = new SoundLibrary(this.synth);
@@ -66,10 +67,10 @@ export class AudioEngine {
     toggle() {
         this.enabled = !this.enabled;
         
-        if (!this.enabled) {
-            this.stop();
-        } else {
+        if (this.enabled) {
             this.play();
+        } else {
+            this.stop();
         }
         
         return this.enabled;

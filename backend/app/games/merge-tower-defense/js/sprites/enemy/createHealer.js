@@ -13,7 +13,7 @@ export function healer() {
         color: '#6a4a8a',
         fill: true
     }, 0.5, 0, -10);
-    legLeft.setBaseTransform(-0.07, 0.30);
+    legLeft.setBaseTransform(-0.07, 0.3);
 
     // RIGHT LEG (behind body, z-order -10)
     const legRight = sprite.addPart('legRight', {
@@ -23,22 +23,22 @@ export function healer() {
         color: '#6a4a8a',
         fill: true
     }, 0.5, 0, -10);
-    legRight.setBaseTransform(0.07, 0.30);
+    legRight.setBaseTransform(0.07, 0.3);
 
     // BODY with ornate robe (main part, z-order 0)
     const body = sprite.addPart('body', [
         {
             type: 'ellipse',
             x: 0, y: 0.05,
-            width: 0.48, height: 0.50,
+            width: 0.48, height: 0.5,
             color: '#aa7acc',
             fill: true
         },
         {
             type: 'polygon', // Vertical stripe decoration
             points: [
-                { x: 0.46, y: 0.10 },
-                { x: 0.54, y: 0.10 },
+                { x: 0.46, y: 0.1 },
+                { x: 0.54, y: 0.1 },
                 { x: 0.52, y: 0.48 },
                 { x: 0.48, y: 0.48 }
             ],
@@ -63,7 +63,7 @@ export function healer() {
     const shoulders = sprite.addPart('shoulders', {
         type: 'ellipse',
         x: 0, y: 0,
-        width: 0.50, height: 0.14,
+        width: 0.5, height: 0.14,
         color: '#8a5aaa',
         fill: true
     }, 0.5, 0.5, 5);
@@ -147,7 +147,7 @@ export function healer() {
         fill: true,
         glow: { color: '#00ff88', blur: 5 }
     }, 0.5, 0.5, 20);
-    aura1.setBaseTransform(-0.18, 0.0);
+    aura1.setBaseTransform(-0.18, 0);
 
     const aura2 = sprite.addPart('aura2', {
         type: 'circle',
@@ -174,17 +174,17 @@ export function healer() {
     const allParts = ['body', 'head', 'shoulders', 'legLeft', 'legRight', 'staff', 'aura1', 'aura2', 'aura3'];
 
     // Use standard walk animation with legs
-    sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body', 'shoulders', 'staff'], 2.0));
+    sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body', 'shoulders', 'staff'], 2));
     sprite.addAnimation(AnimationBuilder.createWalkAnimation(walkParts, 0.6));
 
     // Aura orbit animation (runs alongside walk)
     const auraOrbit = new AnimationClip('auraOrbit', 2.5, true);
     auraOrbit.addTrack('aura1', [
-        { time: 0, transform: { x: -0.18, y: 0.0 } },
+        { time: 0, transform: { x: -0.18, y: 0 } },
         { time: 0.625, transform: { x: 0, y: -0.18 } },
-        { time: 1.25, transform: { x: 0.18, y: 0.0 } },
+        { time: 1.25, transform: { x: 0.18, y: 0 } },
         { time: 1.875, transform: { x: 0, y: 0.18 } },
-        { time: 2.5, transform: { x: -0.18, y: 0.0 } }
+        { time: 2.5, transform: { x: -0.18, y: 0 } }
     ]);
     auraOrbit.addTrack('aura2', [
         { time: 0, transform: { x: 0.18, y: 0.05 } },

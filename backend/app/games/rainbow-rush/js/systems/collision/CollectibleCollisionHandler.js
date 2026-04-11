@@ -64,9 +64,6 @@ export class CollectibleCollisionHandler extends CollisionHandler {
         // Track coin collection for level manager
         if (this.context.levelManager) {
             this.context.levelManager.recordCoinCollected();
-            if (collectible.fromCoinRain) {
-
-            }
         }
 
         this.context.achievementSystem.recordCollectible();
@@ -106,7 +103,7 @@ export class CollectibleCollisionHandler extends CollisionHandler {
 
         if (speedMult >= 1.5) {
             text = `+${points} ×${speedMult.toFixed(1)}`;
-            if (speedMult >= 3.0) {
+            if (speedMult >= 3) {
                 color = [1, 0, 0.4, 1]; // Rosa intenso
             } else if (speedMult >= 2) {
                 color = [1, 0.4, 0, 1]; // Arancione

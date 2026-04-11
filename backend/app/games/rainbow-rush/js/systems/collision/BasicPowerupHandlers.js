@@ -146,41 +146,45 @@ export class BoostCollisionHandler extends PowerupCollisionHandler {
         const speedMult = this.context.scoreSystem.getSpeedMultiplier();
 
         if (boostCombo >= 2) {
-            const speedBonus = Math.floor(this.context.player.boostComboSpeedBonus * 100);
-            let text = `+${points} BOOST x${boostCombo}! 🚀`;
-            let color = [0, 1, 0.9, 1];
-
-            if (speedMult >= 1.5) {
-                text = `+${points} ×${speedMult.toFixed(1)} BOOST x${boostCombo}! 🚀`;
-                if (speedMult >= 3.0) {
-                    color = [1, 0, 0.4, 1];
-                } else if (speedMult >= 2) {
-                    color = [1, 0.4, 0, 1];
-                }
-            }
-
-            this.createFloatingText(text, boost.x, boost.y, color, entityManager);
-
-            if (boostCombo >= 5) {
-                this.addNotification(
-                    `🚀 BOOST COMBO x${boostCombo}!`,
-                    `+${speedBonus}% velocità!`,
-                    'achievement'
-                );
-            }
+            this.displayBoostComboText(points, boostCombo, speedMult, boost, entityManager);
         } else {
             let text = `+${points} BOOST!`;
             let color = [0, 1, 0.9, 1];
 
             if (speedMult >= 1.5) {
                 text = `+${points} BOOST! ×${speedMult.toFixed(1)}`;
-                if (speedMult >= 3.0) {
+                if (speedMult >= 3) {
                     color = [1, 0, 0.4, 1];
                 } else if (speedMult >= 2) {
                     color = [1, 0.4, 0, 1];
                 }
             }
             this.createFloatingText(text, boost.x, boost.y, color, entityManager);
+        }
+    }
+
+    displayBoostComboText(points, boostCombo, speedMult, boost, entityManager) {
+        const speedBonus = Math.floor(this.context.player.boostComboSpeedBonus * 100);
+        let text = `+${points} BOOST x${boostCombo}! 🚀`;
+        let color = [0, 1, 0.9, 1];
+
+        if (speedMult >= 1.5) {
+            text = `+${points} ×${speedMult.toFixed(1)} BOOST x${boostCombo}! 🚀`;
+            if (speedMult >= 3) {
+                color = [1, 0, 0.4, 1];
+            } else if (speedMult >= 2) {
+                color = [1, 0.4, 0, 1];
+            }
+        }
+
+        this.createFloatingText(text, boost.x, boost.y, color, entityManager);
+
+        if (boostCombo >= 5) {
+            this.addNotification(
+                `🚀 BOOST COMBO x${boostCombo}!`,
+                `+${speedBonus}% velocità!`,
+                'achievement'
+            );
         }
     }
 }

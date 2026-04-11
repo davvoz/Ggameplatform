@@ -99,14 +99,7 @@ export class LevelOrchestrator {
                         await this.gameController.sdkManager.gameStarted();
 
                     }
-                } else {
-                    // CONTINUING - Keep session open, player is progressing through levels
-
-                    // Optionally update session with new level info (without closing it)
-                    if (this.gameController.rainbowRushSDK.sessionId) {
-                        // You could add an updateSession call here if backend supports it
-                    }
-                }
+                } 
             } catch (error) {
                 console.error('❌ Failed to manage game session:', error);
             }
@@ -390,7 +383,7 @@ export class LevelOrchestrator {
     findLastUnlockedLevel(progress) {
         let lastUnlocked = 1;
         for (let i = 1; i <= 200; i++) {
-            if (progress[i] && progress[i].completed) {
+            if (progress[i]?.completed) {
                 lastUnlocked = i + 1;
             } else {
                 break;

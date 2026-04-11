@@ -196,7 +196,7 @@ export class BaseThemeGenerator {
                 if (layer.speed !== undefined && layer.speed > 0) {
                     // Convert old speed to parallaxSpeed (normalize between 0-1)
                     // Higher speed = closer layer = higher parallaxSpeed
-                    layer.parallaxSpeed = Math.min(1, layer.speed / 10.0);
+                    layer.parallaxSpeed = Math.min(1, layer.speed / 10);
                 } else if (parallaxConfig.hasOwnProperty(layer.type)) {
                     layer.parallaxSpeed = parallaxConfig[layer.type];
                 } else {

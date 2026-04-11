@@ -55,14 +55,14 @@ export class Zombie {
         // VAMPIRE - Lifesteal on attack
         this.isVampire = baseStats.isVampire || false;
         this.lifesteal = baseStats.lifesteal || 0;
-        this.lifestealRange = baseStats.lifestealRange || 2.0;
+        this.lifestealRange = baseStats.lifestealRange || 2;
         this.lastDrainTime = 0;
         this.drainInterval = 1500; // Drain every 1.5 sec
 
 
         // BOMBER - Explodes on death
         this.isBomber = baseStats.isBomber || false;
-        this.explosionRadius = baseStats.explosionRadius || 2.0;
+        this.explosionRadius = baseStats.explosionRadius || 2;
         this.explosionDamage = baseStats.explosionDamage || 15;
 
         // SHADOW - Invisibility
@@ -90,7 +90,7 @@ export class Zombie {
 
         // Status effects
         this.slowUntil = 0;
-        this.slowFactor = 1.0;
+        this.slowFactor = 1;
         this.stunnedUntil = 0; // Stun effect timestamp
 
 
@@ -125,6 +125,7 @@ export class Zombie {
             }
 
         } catch (e) {
+            console.warn(`[ZOMBIE] Failed to initialize multi-part sprite for type ${this.type}:`, e);
             this.multiSprite = null;
         }
     }
@@ -168,7 +169,7 @@ export class Zombie {
 
         if (!this.isVampire && this.multiSprite.animations?.has('attack')) {
             this._attackAccumulator = (this._attackAccumulator || 0) + dt;
-            const attackInterval = this.isHealer ? 10.0 : 1.1;
+            const attackInterval = this.isHealer ? 10 : 1.1;
             if (this._attackAccumulator >= attackInterval) {
                 this._attackAccumulator = 0;
                 this.multiSprite.play('attack', true);
@@ -274,7 +275,7 @@ export class Zombie {
         // Apply armor reduction
         const actualDamage = Math.max(1, amount - this.armor);
         this.hp -= actualDamage;
-        this.hitFlash = 1.0;
+        this.hitFlash = 1;
 
         // Trigger hit animation
         if (this.multiSprite && this.multiSprite.currentAnimation !== 'death') {
@@ -361,7 +362,7 @@ export class Zombie {
 
         // Draw health bar
         const hpPercent = this.hp / this.maxHp;
-        if (hpPercent < 1.0) {
+        if (hpPercent < 1) {
             graphics.drawHealthBar(this.col, this.row, hpPercent, {
                 offsetY: -0.5 * this.scale,
                 width: 0.8 * this.scale

@@ -3,7 +3,7 @@
  * Secure client-side SDK for Rainbow Rush game
  * Handles all backend communication with anti-cheat measures
  * 
- * @version 1.0.0
+ * @version 1.0
  * @author Rainbow Rush Team
  */
 
@@ -15,7 +15,7 @@ export class RainbowRushSDK {
      * @param {string} config.userId - User ID
      */
     constructor(config = {}) {
-        this.apiBaseUrl = config.apiBaseUrl || window.location.origin;
+        this.apiBaseUrl = config.apiBaseUrl || globalThis.location.origin;
         this.userId = config.userId || null;
         this.username = config.username || null;
         this.platformUserId = null; // For comparison with game userId
@@ -187,16 +187,6 @@ export class RainbowRushSDK {
             
             const response = await this.apiRequest('POST', `/api/rainbow-rush/completion/${this.userId}`, submission);
             
-
-            
-            // Check validation result
-            if (response.completion?.validation) {
-                const validation = response.completion.validation;
-                if (!validation.is_valid) {
-
-                }
-
-            }
             
             this.emit('levelCompleted', response);
             return response;
@@ -213,7 +203,8 @@ export class RainbowRushSDK {
      */
     async getCompletionHistory(levelId = null) {
         try {
-            const url = `/api/rainbow-rush/completion/${this.userId}/history${levelId ? `?level_id=${levelId}` : ''}`;
+            const queryString = levelId ? '?level_id=' + levelId : '';
+            const url = `/api/rainbow-rush/completion/${this.userId}/history${queryString}`;
             return await this.apiRequest('GET', url);
         } catch (error) {
             console.error('[RainbowRushSDK] Error fetching history:', error);

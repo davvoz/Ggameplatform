@@ -26,29 +26,35 @@ export class SettingsRenderer {
     handleClick(screenX, screenY) {
         if (!this.showSettingsPopup) return null;
 
-        for (const checkbox of this.settingsCheckboxes) {
-            if (screenX >= checkbox.x && screenX <= checkbox.x + checkbox.width &&
-                screenY >= checkbox.y && screenY <= checkbox.y + checkbox.height) {
-                if (this.audio) {
-                    if (checkbox.action === 'music') {
-                        this.audio.toggle();
-                    } else if (checkbox.action === 'sound') {
-                        this.audio.toggleSounds();
-                    }
-                }
-                return 'checkbox';
-            }
+        const clickedCheckbox = this.settingsCheckboxes.find(checkbox =>
+            this._isPointInRect(screenX, screenY, checkbox)
+        );
+
+        if (clickedCheckbox) {
+            this.manageCheckboxAudio(clickedCheckbox);
+            return 'checkbox';
         }
 
-        for (const button of this.settingsPopupButtons) {
-            if (button.disabled) continue;
-            if (screenX >= button.x && screenX <= button.x + button.width &&
-                screenY >= button.y && screenY <= button.y + button.height) {
-                return button.action;
+        const clickedButton = this.settingsPopupButtons.find(button =>
+            !button.disabled && this._isPointInRect(screenX, screenY, button)
+        );
+
+        return clickedButton?.action ?? null;
+    }
+
+    _isPointInRect(x, y, rect) {
+        return x >= rect.x && x <= rect.x + rect.width &&
+               y >= rect.y && y <= rect.y + rect.height;
+    }
+
+    manageCheckboxAudio(checkbox) {
+        if (this.audio) {
+            if (checkbox.action === 'music') {
+                this.audio.toggle();
+            } else if (checkbox.action === 'sound') {
+                this.audio.toggleSounds();
             }
         }
-
-        return null;
     }
 
     render() {
@@ -164,9 +170,9 @@ export class SettingsRenderer {
         Utils.drawRoundRect(ctx, contentX, contentY, contentWidth, displayCardHeight, 12);
         ctx.stroke();
 
-        const isFullscreen = window._gameFullscreenState === true ||
-            ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function')
-                ? window.PlatformSDK.isFullscreen()
+        const isFullscreen = globalThis._gameFullscreenState === true ||
+            ((globalThis.PlatformSDK && typeof globalThis.PlatformSDK.isFullscreen === 'function')
+                ? globalThis.PlatformSDK.isFullscreen()
                 : (document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
         const fullscreenText = isFullscreen ? '🔲 Exit Fullscreen' : '⛶ Enter Fullscreen';
         this._renderButton(contentX + 15, contentY + 10, contentWidth - 30, 40, fullscreenText, 'fullscreen');

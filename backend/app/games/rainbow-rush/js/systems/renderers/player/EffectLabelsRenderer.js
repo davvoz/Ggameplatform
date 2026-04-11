@@ -36,7 +36,7 @@ export class EffectLabelsRenderer {
         this.shimmerTime += deltaTime * 2;
         
         // Update animation states
-        for (const [key, state] of this.activeEffectsState.entries()) {
+        for (const [ state] of this.activeEffectsState.entries()) {
             if (state.scale < 1) {
                 state.scale = Math.min(1, state.scale + deltaTime * 4);
             }
@@ -71,7 +71,7 @@ export class EffectLabelsRenderer {
                 this.activeEffectsState.set(effect.key, {
                     scale: 0.3,
                     alpha: 0,
-                    wobble: 1.0
+                    wobble: 1
                 });
             }
             
@@ -187,6 +187,8 @@ export class EffectLabelsRenderer {
         let rotation = 0, offsetX = 0, offsetY = 0;
         let scale = 0.9 + Math.sin(this.pulseTime * 4) * 0.1;
         let color = '#FFFFFF';
+        let brightness;
+        let hue;
         
         switch (animType) {
             case 'rotate':
@@ -210,13 +212,13 @@ export class EffectLabelsRenderer {
             case 'sparkle':
                 scale = 0.9 + Math.sin(this.shimmerTime * 8) * 0.2;
                 rotation = Math.sin(this.shimmerTime * 4) * 0.4;
-                const brightness = 60 + Math.sin(this.shimmerTime * 10) * 20;
+                brightness = 60 + Math.sin(this.shimmerTime * 10) * 20;
                 color = `hsl(280, 70%, ${brightness}%)`;
                 break;
             case 'rainbow':
                 rotation = this.shimmerTime;
-                scale = 1.0 + Math.sin(this.pulseTime * 4) * 0.15;
-                const hue = (this.shimmerTime * 100) % 360;
+                scale = 1 + Math.sin(this.pulseTime * 4) * 0.15;
+                hue = (this.shimmerTime * 100) % 360;
                 color = `hsl(${hue}, 80%, 70%)`;
                 break;
             case 'float':

@@ -144,12 +144,9 @@ export class ScreenManager {
         
         // Se viene passato il ScoreSystem, carica l'high score dal backend
         if (scoreSystem) {
-            try {
                 const highScore = await scoreSystem.loadHighScore();
                 this.updateHighScore(highScore);
-            } catch (error) {
-
-            }
+           
         }
         
         this._dispatchEvent('showMenu');
@@ -455,13 +452,13 @@ export class ScreenManager {
      * Dispatch custom event
      */
     _dispatchEvent(eventName, detail = {}) {
-        window.dispatchEvent(new CustomEvent(`screen:${eventName}`, { detail }));
+        globalThis.dispatchEvent(new CustomEvent(`screen:${eventName}`, { detail }));
     }
     
     /**
      * Aggiungi event listener
      */
     on(eventName, callback) {
-        window.addEventListener(`screen:${eventName}`, (e) => callback(e.detail));
+        globalThis.addEventListener(`screen:${eventName}`, (e) => callback(e.detail));
     }
 }

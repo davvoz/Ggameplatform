@@ -87,7 +87,7 @@ export function rapid() {
     sprite.setParent('barrelRight', 'turret');
 
     // Setup animations
-    sprite.addAnimation(AnimationBuilder.createTowerIdleAnimation(['turret'], 2.0));
+    sprite.addAnimation(AnimationBuilder.createTowerIdleAnimation(['turret'], 2));
     sprite.addAnimation(AnimationBuilder.createTowerFireAnimation(['barrelLeft', 'barrelRight', 'turret'], 0.15));
 
     return sprite;

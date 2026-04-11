@@ -116,9 +116,9 @@ export class EndgameRenderer {
 
         const buttonWidth = 200;
         const buttonHeight = 55;
-        const isFullscreen = window._gameFullscreenState === true ||
-            ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function')
-                ? window.PlatformSDK.isFullscreen()
+        const isFullscreen = globalThis._gameFullscreenState === true ||
+            ((globalThis.PlatformSDK && typeof globalThis.PlatformSDK.isFullscreen === 'function')
+                ? globalThis.PlatformSDK.isFullscreen()
                 : (document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
         const spacing = 12;
         const canAffordContinue = platformBalance >= continueCost;

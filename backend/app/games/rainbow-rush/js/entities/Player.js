@@ -47,7 +47,7 @@ export class Player {
         // Boost system
         this.boostActive = false;
         this.boostTimer = 0;
-        this.boostDuration = 3.0; // 3 secondi di boost
+        this.boostDuration = 3; // 3 secondi di boost
         this.boostSpeedMultiplier = 1.8; // 80% più veloce
         this.boostParticles = [];
         this.boostDecelerating = false;
@@ -58,7 +58,7 @@ export class Player {
         // Boost combo system
         this.boostCombo = 0;
         this.boostComboTimer = 0;
-        this.boostComboTimeout = 4.0; // 4 secondi per mantenere la combo
+        this.boostComboTimeout = 4; // 4 secondi per mantenere la combo
         this.boostComboSpeedBonus = 0; // Bonus velocità dalla combo
         
         // Powerup states
@@ -121,7 +121,7 @@ export class Player {
         this.turboCooldownRemaining = 0;
         this.turboCooldownDuration = 12; // 12 secondi cooldown (ridotto da 20)
         this.turboBaseDuration = 3; // 3 secondi base (ridotto da 5) + level bonus
-        this.turboSpeedMultiplier = 2.0; // 2x speed (ridotto da 2.5x) - più controllabile
+        this.turboSpeedMultiplier = 2; // 2x speed (ridotto da 2.5x) - più controllabile
         this.turboTrailParticles = [];
         
         // Safety platform state
@@ -143,7 +143,7 @@ export class Player {
         // Instant flight bonus (separate from button flight)
         this.instantFlightActive = false;
         this.instantFlightDuration = 0;
-        this.instantFlightMaxDuration = 5.0; // 5 secondi
+        this.instantFlightMaxDuration = 5; // 5 secondi
         
         // Animazione volo fluttuante
         this.flightFloatPhase = 0;
@@ -207,22 +207,15 @@ export class Player {
             const longTapThreshold = 600; // 600ms per tap medi
             
             let modifier = 1;
-            let jumpType = "FULL";
-            let emoji = "🚀";
             
             if (pressDuration < shortTapThreshold) {
                 // Very short tap: minimal jump (35% power)
                 modifier = 0.35;
-                jumpType = "SHORT";
-                emoji = "🐰";
             } else if (pressDuration < longTapThreshold) {
                 // Medium tap: partial jump (65% power)
                 modifier = 0.65;
-                jumpType = "MEDIUM";
-                emoji = "🦘";
             }
             
-            const oldVelocity = this.velocityY;
             this.velocityY *= modifier;
             
         } 
@@ -235,34 +228,38 @@ export class Player {
 
         this.animationTime += deltaTime;
         
-        // Rilevamento atterraggio per suono e animazione
+        this._updateLandingDetection(deltaTime);
+        this._updateAnimations(deltaTime);
+        this._updateInvulnerability(deltaTime);
+        this._updateShield(deltaTime);
+        this._updateTurbo(deltaTime);
+        this._updateFlight(deltaTime);
+        this._updateBoost(deltaTime);
+        this._updatePowerups(deltaTime);
+        this._updateInstantFlight(deltaTime);
+        this._updatePhysics(deltaTime);
+        this._updateFalloff();
+        this.updateTrailParticles(deltaTime);
+    }
+
+    _updateLandingDetection(deltaTime) {
         this.justLanded = false;
         if (this.isGrounded && !this.wasGrounded) {
             this.justLanded = true;
-            // Animazione squash su atterraggio
             this.squashAmount = 0.4;
             this.expression = 'surprised';
-            // Camera shake su atterraggio
             this.addCameraShake(3, 0.15);
         }
         this.wasGrounded = this.isGrounded;
-        
-        // Update espressioni basate sul contesto
+    }
+
+    _updateAnimations(deltaTime) {
         this.updateExpression(deltaTime);
-        
-        // Update blink (battito ciglia)
         this.updateBlink(deltaTime);
-        
-        // Update squash & stretch
         this.updateSquashStretch(deltaTime);
-        
-        // Update rotazione
         this.updateRotation(deltaTime);
-        
-        // Update camera shake
         this.updateCameraShake(deltaTime);
         
-        // Idle animation quando fermo a terra
         if (this.isGrounded && Math.abs(this.velocityX) < 50 && Math.abs(this.velocityY) < 10) {
             this.isIdle = true;
             this.idleAnimationTime += deltaTime;
@@ -270,8 +267,9 @@ export class Player {
             this.isIdle = false;
             this.idleAnimationTime = 0;
         }
-        
-        // Update invulnerabilità
+    }
+
+    _updateInvulnerability(deltaTime) {
         if (this.invulnerable) {
             this.invulnerabilityTimer -= deltaTime;
             if (this.invulnerabilityTimer <= 0) {
@@ -279,157 +277,158 @@ export class Player {
             }
         }
         
-        // Update shield
+        if (this.damageFlash > 0) {
+            this.damageFlash -= deltaTime;
+        }
+    }
+
+    _updateShield(deltaTime) {
         if (this.shieldActive) {
             this.shieldDuration -= deltaTime;
-            this.shieldRotation += deltaTime * 3; // Rotazione scudo
+            this.shieldRotation += deltaTime * 3;
             if (this.shieldDuration <= 0) {
                 this.shieldActive = false;
                 this.shieldDuration = 0;
             }
         }
-        
-        // Update damage flash
-        if (this.damageFlash > 0) {
-            this.damageFlash -= deltaTime;
-        }
-        
-        // Update turbo boost
+    }
+
+    _updateTurbo(deltaTime) {
         if (this.isTurboActive) {
             this.turboTimeRemaining -= deltaTime;
             if (this.turboTimeRemaining <= 0) {
                 this.isTurboActive = false;
                 this.turboTimeRemaining = 0;
-                // Inizia il cooldown SOLO quando il turbo finisce
                 this.turboCooldownRemaining = this.turboCooldownDuration;
             }
-            
-            // Genera particelle turbo trail
-            this.turboTrailParticles.push({
-                x: this.x + this.width / 2,
-                y: this.y + this.height / 2,
-                vx: (Math.random() - 0.5) * 200,
-                vy: Math.random() * 100,
-                life: 1,
-                maxLife: 0.6,
-                color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1]
-            });
-        }
-        // Update turbo cooldown SOLO quando il turbo NON è attivo
-        else if (this.turboCooldownRemaining > 0) {
+            this._generateTurboParticles();
+        } else if (this.turboCooldownRemaining > 0) {
             this.turboCooldownRemaining -= deltaTime;
             if (this.turboCooldownRemaining < 0) {
                 this.turboCooldownRemaining = 0;
             }
         }
         
-        // Update turbo trail particles
         this.turboTrailParticles = this.turboTrailParticles.filter(p => {
             p.life -= deltaTime / p.maxLife;
             p.x += p.vx * deltaTime;
             p.y += p.vy * deltaTime;
-            p.vy -= 200 * deltaTime; // Gravity
+            p.vy -= 200 * deltaTime;
             return p.life > 0;
         });
-        
-        // Update flight mode
+    }
+
+    _generateTurboParticles() {
+        this.turboTrailParticles.push({
+            x: this.x + this.width / 2,
+            y: this.y + this.height / 2,
+            vx: (Math.random() - 0.5) * 200,
+            vy: Math.random() * 100,
+            life: 1,
+            maxLife: 0.6,
+            color: [0.2 + Math.random() * 0.3, 0.8 + Math.random() * 0.2, 1, 1]
+        });
+    }
+
+    _updateFlight(deltaTime) {
         if (this.isFlightActive) {
             this.flightTimeRemaining -= deltaTime;
             if (this.flightTimeRemaining <= 0) {
                 this.isFlightActive = false;
                 this.flightTimeRemaining = 0;
-                // Inizia il cooldown SOLO quando il volo finisce
                 this.flightCooldownRemaining = this.flightCooldownDuration;
-                this.flightTargetY = this.y; // Reset target
+                this.flightTargetY = this.y;
             }
             this._updateActiveFlightPhysics(deltaTime);
-        }
-        // Update flight cooldown SOLO quando il volo NON è attivo
-        else if (this.flightCooldownRemaining > 0) {
+        } else if (this.flightCooldownRemaining > 0) {
             this.flightCooldownRemaining -= deltaTime;
             if (this.flightCooldownRemaining < 0) {
                 this.flightCooldownRemaining = 0;
             }
         }
         
-        // Update flight trail particles
         this.flightTrailParticles = this.flightTrailParticles.filter(p => {
             p.life -= deltaTime * 2;
             p.x += p.vx * deltaTime;
             p.y += p.vy * deltaTime;
             return p.life > 0;
         });
-        
-        // Update boost
+    }
+
+    _updateBoost(deltaTime) {
         if (this.boostActive) {
             this.boostTimer -= deltaTime;
             if (this.boostTimer <= 0) {
-                // Inizia decelerazione invece di fermarsi bruscamente
                 this.boostActive = false;
                 this.boostDecelerating = true;
                 this.boostDecelerationTime = 0;
                 this.boostPeakVelocity = this.velocityX;
             }
-            
-            // Genera particelle boost
-            this.boostParticles.push({
-                x: this.x + this.width / 2,
-                y: this.y + this.height / 2,
-                vx: -150 - Math.random() * 50,
-                vy: (Math.random() - 0.5) * 100,
-                life: 0.4,
-                maxLife: 0.4,
-                size: 5 + Math.random() * 3,
-                color: [0, 1, 0.9, 1]
-            });
+            this._generateBoostParticles();
         }
         
-        // Gestione decelerazione fluida del boost
         if (this.boostDecelerating) {
-            this.boostDecelerationTime += deltaTime;
-            const progress = Math.min(1, this.boostDecelerationTime / this.boostDecelerationDuration);
-            
-            // Easing esponenziale in uscita - decelerazione molto dolce e naturale
-            const smoothEase = (t) => {
-                return 1 - Math.pow(2, -10 * t);
-            };
-            
-            const easedProgress = smoothEase(progress);
-            
-            // Interpola da velocità di picco a 0 con easing molto dolce
-            this.velocityX = this.boostPeakVelocity * (1 - easedProgress);
-            
-            // Particelle decelerazione (meno intense)
-            if (Math.random() < 0.3) {
-                this.boostParticles.push({
-                    x: this.x + this.width / 2,
-                    y: this.y + this.height / 2,
-                    vx: -100 - Math.random() * 30,
-                    vy: (Math.random() - 0.5) * 60,
-                    life: 0.3,
-                    maxLife: 0.3,
-                    size: 3 + Math.random() * 2,
-                    color: [0, 0.8, 0.7, 0.7]
-                });
-            }
-            
-            if (progress >= 1) {
-                this.boostDecelerating = false;
-                this.velocityX = 0;
-            }
+            this._updateBoostDeceleration(deltaTime);
         }
         
-        // Gestione timer combo boost
         if (this.boostCombo > 0) {
             this.boostComboTimer -= deltaTime;
             if (this.boostComboTimer <= 0) {
-                // Combo scaduta
                 this.boostCombo = 0;
                 this.boostComboSpeedBonus = 0;
             }
         }
         
-        // Update shield powerup
+        this.boostParticles = this.boostParticles.filter(p => {
+            p.x += p.vx * deltaTime;
+            p.y += p.vy * deltaTime;
+            p.life -= deltaTime;
+            return p.life > 0;
+        });
+    }
+
+    _generateBoostParticles() {
+        this.boostParticles.push({
+            x: this.x + this.width / 2,
+            y: this.y + this.height / 2,
+            vx: -150 - Math.random() * 50,
+            vy: (Math.random() - 0.5) * 100,
+            life: 0.4,
+            maxLife: 0.4,
+            size: 5 + Math.random() * 3,
+            color: [0, 1, 0.9, 1]
+        });
+    }
+
+    _updateBoostDeceleration(deltaTime) {
+        this.boostDecelerationTime += deltaTime;
+        const progress = Math.min(1, this.boostDecelerationTime / this.boostDecelerationDuration);
+        
+        const smoothEase = (t) => 1 - Math.pow(2, -10 * t);
+        const easedProgress = smoothEase(progress);
+        
+        this.velocityX = this.boostPeakVelocity * (1 - easedProgress);
+        
+        if (Math.random() < 0.3) {
+            this.boostParticles.push({
+                x: this.x + this.width / 2,
+                y: this.y + this.height / 2,
+                vx: -100 - Math.random() * 30,
+                vy: (Math.random() - 0.5) * 60,
+                life: 0.3,
+                maxLife: 0.3,
+                size: 3 + Math.random() * 2,
+                color: [0, 0.8, 0.7, 0.7]
+            });
+        }
+        
+        if (progress >= 1) {
+            this.boostDecelerating = false;
+            this.velocityX = 0;
+        }
+    }
+
+    _updatePowerups(deltaTime) {
         if (this.hasShield) {
             const elapsed = Date.now() - this.shieldStartTime;
             if (elapsed >= this.shieldDuration) {
@@ -437,15 +436,15 @@ export class Player {
             }
         }
         
-        // Update magnet powerup
         if (this.hasMagnet) {
             const elapsed = Date.now() - this.magnetStartTime;
             if (elapsed >= this.magnetDuration) {
                 this.hasMagnet = false;
             }
         }
-        
-        // Gestione instant flight bonus
+    }
+
+    _updateInstantFlight(deltaTime) {
         if (this.instantFlightActive) {
             this.instantFlightDuration -= deltaTime;
             if (this.instantFlightDuration <= 0) {
@@ -455,70 +454,56 @@ export class Player {
                 this._updateActiveFlightPhysics(deltaTime);
             }
         }
-        
-        // Update boost particles
-        this.boostParticles = this.boostParticles.filter(p => {
-            p.x += p.vx * deltaTime;
-            p.y += p.vy * deltaTime;
-            p.life -= deltaTime;
-            return p.life > 0;
-        });
-        
-        // Apply gravity (reduced if flight is active or instant flight is active)
+    }
+
+    _updatePhysics(deltaTime) {
         let currentGravity = this.gravity;
         if (this.powerups.flight || this.instantFlightActive) {
             currentGravity = this.gravity * 0.3;
         }
         this.velocityY += currentGravity * deltaTime;
         
-        // Cap fall speed
         if (this.velocityY > this.maxFallSpeed) {
             this.velocityY = this.maxFallSpeed;
         }
 
-        // Update position
         this.y += this.velocityY * deltaTime;
         
-        // Il player NON si muove mai in X - rimane sempre a 100px
-        // Solo l'ambiente si muove attorno a lui
-        // VelocityX viene usata solo come riferimento per la velocità della camera
-        
-        // Handle icy platform sliding
+        this._updateIcyPlatformSlide(deltaTime);
+        this._updateVelocityX();
+    }
+
+    _updateIcyPlatformSlide(deltaTime) {
         if (this.isOnIcyPlatform && this.isGrounded) {
-            // Continua a scivolare
             this.isSliding = true;
-            this.slideVelocityX *= this.slideFriction; // Very slow decay
+            this.slideVelocityX *= this.slideFriction;
             this.slideDecelerationTime += deltaTime;
             
-            // Se la velocità di slide è quasi zero, ferma lo slide
             if (Math.abs(this.slideVelocityX) < 5) {
                 this.slideVelocityX = 0;
                 this.isSliding = false;
             }
         } else if (this.isSliding && !this.isGrounded) {
-            // Se lascia la piattaforma ghiacciata mentre scivola
             this.slideVelocityX = 0;
             this.isSliding = false;
             this.slideDecelerationTime = 0;
         }
-        
-        // Apply turbo speed boost to camera velocity
+    }
+
+    _updateVelocityX() {
         if (this.isTurboActive) {
-            this.velocityX = 500 * this.turboSpeedMultiplier; // Super fast forward speed!
+            this.velocityX = 500 * this.turboSpeedMultiplier;
         }
         
-        // Decay velocityX (friction) - solo se non in boost, turbo o decelerazione
         if (!this.boostActive && !this.boostDecelerating && !this.isTurboActive) {
             this.velocityX *= 0.92;
         }
+    }
 
-        // Check if fell off screen (game over quando cade troppo basso, a meno che immortale)
+    _updateFalloff() {
         if (this.y > this.canvasHeight && !this.powerups.immortality) {
             this._die();
         }
-        
-        // Update trail particles for powerups
-        this.updateTrailParticles(deltaTime);
     }
     
     _updateActiveFlightPhysics(deltaTime) {
@@ -673,106 +658,108 @@ export class Player {
         if (!horizontalOverlap) return false;
         
         // CONTINUOUS COLLISION DETECTION
-        // Store previous Y position to check if player crossed platform during this frame
-        const prevBottom = playerBottom - this.velocityY * (1/60); // Approximate previous position
-        
-        // Check if player was above platform and is now at or below it (falling through)
+        const onPlatform = this._checkVerticalCollision(playerBottom, platformTop, toleranceOverride);
+
+        if (onPlatform) {
+            this._handlePlatformCollisionEntry(platform, playerBottom, platformTop);
+            return true;
+        } else {
+            this._handlePlatformCollisionExit(platform);
+        }
+
+        return false;
+    }
+
+    _checkVerticalCollision(playerBottom, platformTop, toleranceOverride) {
+        const prevBottom = playerBottom - this.velocityY * (1/60);
         const wasAbove = prevBottom <= platformTop;
         const isNowAtOrBelow = playerBottom >= platformTop;
         const isFalling = this.velocityY > 0;
         
-        // Tolerance for landing (smaller than before for better precision)
-        const tolerance = toleranceOverride !== null ? toleranceOverride : 25;
+        const tolerance = toleranceOverride === null ? 25 : toleranceOverride;
         const verticalDistance = Math.abs(playerBottom - platformTop);
         
-        // Collision occurs if:
-        // 1. Player is falling AND crossed the platform top this frame
-        // 2. OR player is very close to platform top
         const crossedPlatform = isFalling && wasAbove && isNowAtOrBelow;
         const nearPlatform = verticalDistance < tolerance && isFalling;
         
-        const onPlatform = (crossedPlatform || nearPlatform) && horizontalOverlap;
+        return crossedPlatform || nearPlatform;
+    }
 
-        if (onPlatform) {
-            // Snap precisely to platform top (con offset se bouncing)
-            const yOffset = (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') 
-                ? (platform.bounceOffset || 0) : 0;
-            this.y = platformTop - this.height + yOffset;
-            
-            // Apply bounce multiplier for bouncy platforms
-            if (platform.bounceMultiplier && platform.bounceMultiplier > 1) {
-                // SPRING platforms = CATAPULTA ORIZZONTALE! 🚀
-                if (platform.platformType === 'spring') {
-                    platform.springCompression = 1; // Compressione massima
-                    this.velocityX = 1200; // BOOST ORIZZONTALE MEGA!
-                    this.velocityY = -200; // Piccolo sollevamento
-                } else {
-                    // Bouncy normal = bounce verticale
-                    this.velocityY = -Math.abs(this.velocityY) * platform.bounceMultiplier;
-                }
+    _handlePlatformCollisionEntry(platform, playerBottom, platformTop) {
+        const yOffset = (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') 
+            ? (platform.bounceOffset || 0) : 0;
+        this.y = platformTop - this.height + yOffset;
+        
+        this._applyBouncePhysics(platform);
+        this.isGrounded = true;
+        this.currentPlatform = platform;
+        
+        this._activatePlatformType(platform);
+    }
+
+    _applyBouncePhysics(platform) {
+        if (platform.bounceMultiplier && platform.bounceMultiplier > 1) {
+            if (platform.platformType === 'spring') {
+                platform.springCompression = 1;
+                this.velocityX = 1200;
+                this.velocityY = -200;
             } else {
-                this.velocityY = 0;
+                this.velocityY = -Math.abs(this.velocityY) * platform.bounceMultiplier;
             }
-            
-            this.isGrounded = true;
-            this.currentPlatform = platform;
-            
-            // Handle BOUNCING platform - inizia a oscillare quando il player ci sale
-            if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
-                platform.isBouncing = true;
-            }
-            
-            // Handle DISSOLVING platform - inizia a dissolversi quando il player ci sale
-            if (platform.platformType === 'DISSOLVING' || platform.platformType === 'dissolving') {
-                if (!platform.isDissolving) {
-                    platform.isDissolving = true;
-                    platform.dissolveTimer = 0;
-                    platform.dissolveDuration = 0.8; // Tempo di dissoluzione (secondi)
-                    platform.dissolveAlpha = 1;
-                }
-            }
-            
-            // Handle ROTATING platform - inizia a ruotare quando il player ci atterra
-            if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
-                platform.isRotating = true;
-            }
-            
-            // Handle icy platform
-            if (platform.platformType === 'icy') {
-                this.isOnIcyPlatform = true;
-                // Start sliding with momentum when landing on ice
-                if (!this.isSliding) {
-                    this.slideVelocityX = platform.velocity * 0.5; // Inherit some platform velocity
-                    this.slideDecelerationTime = 0;
-                }
-            } else {
-                this.isOnIcyPlatform = false;
-            }
-            
-            // Trigger crumbling for crumbling platforms
-            if (platform.platformType === 'crumbling' && !platform.isCrumbling) {
-                platform.isCrumbling = true;
-            }
-            
-            return true;
         } else {
-            if (this.currentPlatform === platform) {
-                this.currentPlatform = null;
-                this.isOnIcyPlatform = false;
-                
-                // Stop bouncing when player leaves
-                if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
-                    platform.isBouncing = false;
-                }
-                
-                // Stop rotating when player leaves
-                if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
-                    platform.isRotating = false;
-                }
+            this.velocityY = 0;
+        }
+    }
+
+    _activatePlatformType(platform) {
+        const type = platform.platformType;
+        
+        if (type === 'BOUNCING' || type === 'bouncing') {
+            platform.isBouncing = true;
+        }
+        
+        if (type === 'DISSOLVING' || type === 'dissolving') {
+            if (!platform.isDissolving) {
+                platform.isDissolving = true;
+                platform.dissolveTimer = 0;
+                platform.dissolveDuration = 0.8;
+                platform.dissolveAlpha = 1;
             }
         }
+        
+        if (type === 'ROTATING' || type === 'rotating') {
+            platform.isRotating = true;
+        }
+        
+        if (type === 'icy') {
+            this.isOnIcyPlatform = true;
+            if (!this.isSliding) {
+                this.slideVelocityX = platform.velocity * 0.5;
+                this.slideDecelerationTime = 0;
+            }
+        } else {
+            this.isOnIcyPlatform = false;
+        }
+        
+        if (type === 'crumbling' && !platform.isCrumbling) {
+            platform.isCrumbling = true;
+        }
+    }
 
-        return false;
+    _handlePlatformCollisionExit(platform) {
+        if (this.currentPlatform === platform) {
+            this.currentPlatform = null;
+            this.isOnIcyPlatform = false;
+            
+            const type = platform.platformType;
+            if (type === 'BOUNCING' || type === 'bouncing') {
+                platform.isBouncing = false;
+            }
+            
+            if (type === 'ROTATING' || type === 'rotating') {
+                platform.isRotating = false;
+            }
+        }
     }
 
     checkObstacleCollision(obstacle) {
@@ -954,7 +941,7 @@ export class Player {
     
     getTurboCooldownProgress() {
         if (this.turboCooldownRemaining === 0) return 1;
-        return 1.0 - (this.turboCooldownRemaining / this.turboCooldownDuration);
+        return 1 - (this.turboCooldownRemaining / this.turboCooldownDuration);
     }
     
     getTrailParticles() {
@@ -1046,7 +1033,8 @@ export class Player {
         this.rotation += rotationDiff * this.rotationSpeed * deltaTime;
         
         // Rotazione basata su velocità
-        if (!this.isGrounded) {
+        const notGrounded = !this.isGrounded;
+        if (notGrounded) {
             if (this.velocityY < -200) {
                 this.targetRotation = -0.15; // Ruota indietro quando sale
             } else if (this.velocityY > 200) {
@@ -1160,7 +1148,7 @@ export class Player {
     }
     
     getFlightCooldownProgress() {
-        return 1.0 - (this.flightCooldownRemaining / this.flightCooldownDuration);
+        return 1 - (this.flightCooldownRemaining / this.flightCooldownDuration);
     }
     
     getFlightTrailParticles() {

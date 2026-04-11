@@ -85,7 +85,7 @@ export class AbilityManager {
             const bonus = killCount * 25 * level;
             this.state.score += bonus;
             this.particles.emit(gridPos.col, gridPos.row - 1.2, {
-                text: `+${bonus}`, color: '#ffaa00', vy: -1.5, life: 1.0, scale: 1.2, glow: true,
+                text: `+${bonus}`, color: '#ffaa00', vy: -1.5, life: 1, scale: 1.2, glow: true,
             });
         }
     }
@@ -121,7 +121,7 @@ export class AbilityManager {
             const bonus = pushedCount * 10 * level;
             this.state.score += bonus;
             this.particles.emit(CONFIG.COLS / 2, defenseLineY - 0.5, {
-                text: `+${bonus}`, color: '#00ccff', vy: -1.5, life: 1.0, scale: 1.2, glow: true,
+                text: `+${bonus}`, color: '#00ccff', vy: -1.5, life: 1, scale: 1.2, glow: true,
             });
         }
     }
@@ -159,7 +159,7 @@ export class AbilityManager {
             zombie.stunnedUntil = gameTime + effectiveDuration;
             stunnedCount++;
             this.particles.emit(zombie.col, zombie.row, {
-                text: '💫', color: '#ffee00', vy: -1, life: 0.8, scale: 1.0, glow: true,
+                text: '💫', color: '#ffee00', vy: -1, life: 0.8, scale: 1, glow: true,
             });
         }
 
@@ -170,7 +170,7 @@ export class AbilityManager {
             const bonus = stunnedCount * 15 * level;
             this.state.score += bonus;
             this.particles.emit(gridPos.col, gridPos.row - 1, {
-                text: `+${bonus}`, color: '#ffee00', vy: -1.5, life: 1.0, scale: 1.2, glow: true,
+                text: `+${bonus}`, color: '#ffee00', vy: -1.5, life: 1, scale: 1.2, glow: true,
             });
             this.particles.emit(gridPos.col, gridPos.row + 0.5, {
                 text: `⚡${stunnedCount} STUNNED!`, color: '#ffffff',

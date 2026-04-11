@@ -11,7 +11,7 @@ const SAFETY_CONFIG = {
     RECHARGE_WINDOW: 5, // seconds - window for charge tracking
     
     // Timing
-    TIME_BEFORE_DISSOLVE: 3.0, // seconds on platform before dissolve starts
+    TIME_BEFORE_DISSOLVE: 3, // seconds on platform before dissolve starts
     DISSOLVE_DURATION: 1.5, // seconds to complete dissolve animation
     DISSOLVE_SPEED_AUTO: 0.02, // slow dissolve when player leaves
     

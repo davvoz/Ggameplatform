@@ -87,7 +87,6 @@ export class ShopRenderer {
     }
 
     _renderButton(button, gameState) {
-        const ctx = this.graphics.ctx;
         const cannon = button.cannon;
         const isSelected = button.id === this.selectedCannonType;
 
@@ -99,16 +98,23 @@ export class ShopRenderer {
         let baseCost = typeof calculateTowerCost === 'function'
             ? calculateTowerCost(cannon.id, 1)
             : cannon.cost;
-        let multiplier = 1;
-        if (gameState.cannonPriceMultiplier && gameState.cannonPriceMultiplier[cannon.id]) {
-            multiplier = gameState.cannonPriceMultiplier[cannon.id];
-        }
+        let multiplier = gameState.cannonPriceMultiplier?.[cannon.id] ?? 1;
         const actualCost = Math.floor(baseCost * multiplier);
         const canAfford = gameState.coins >= actualCost && !isBlockedByTutorial;
 
         const cornerRadius = Math.min(8, Math.floor(button.width * 0.12));
 
-        // ── Background ──
+        this._renderButtonBackground(button, cannon, isSelected, isBlockedByTutorial, canAfford, cornerRadius);
+        this._renderButtonHighlight(button, isBlockedByTutorial, canAfford, cornerRadius);
+        this._renderButtonBorder(button, cannon, isSelected, isBlockedByTutorial, canAfford, cornerRadius);
+        this._renderButtonSprite(button, cannon, isSelected, isBlockedByTutorial, canAfford);
+        this._renderButtonLabels(button, cannon, actualCost, canAfford, isBlockedByTutorial);
+        this._renderLockIcon(button, isBlockedByTutorial);
+        this._renderSelectionAccents(button, cannon, isSelected, isBlockedByTutorial, cornerRadius);
+    }
+
+    _renderButtonBackground(button, cannon, isSelected, isBlockedByTutorial, canAfford, cornerRadius) {
+        const ctx = this.graphics.ctx;
         ctx.save();
         const bgGradient = ctx.createLinearGradient(button.x, button.y, button.x, button.y + button.height);
         if (isBlockedByTutorial) {
@@ -123,15 +129,17 @@ export class ShopRenderer {
         } else {
             bgGradient.addColorStop(0, canAfford ? '#1e2832' : '#181818');
             bgGradient.addColorStop(1, canAfford ? '#0f1418' : '#0d0d0d');
-            ctx.globalAlpha = canAfford ? 1.0 : 0.5;
+            ctx.globalAlpha = canAfford ? 1 : 0.5;
         }
         ctx.fillStyle = bgGradient;
         Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
         ctx.fill();
         ctx.restore();
+    }
 
-        // ── Inner highlight (3D effect) ──
+    _renderButtonHighlight(button, isBlockedByTutorial, canAfford, cornerRadius) {
         if (!isBlockedByTutorial && canAfford) {
+            const ctx = this.graphics.ctx;
             ctx.save();
             ctx.globalAlpha = 0.15;
             ctx.fillStyle = '#ffffff';
@@ -139,22 +147,27 @@ export class ShopRenderer {
             ctx.fill();
             ctx.restore();
         }
+    }
 
-        // ── Border ──
+    _renderButtonBorder(button, cannon, isSelected, isBlockedByTutorial, canAfford, cornerRadius) {
+        const ctx = this.graphics.ctx;
         ctx.save();
         if (isSelected && !isBlockedByTutorial) {
             ctx.shadowColor = cannon.color || CONFIG.COLORS.BUTTON_ACTIVE;
             ctx.shadowBlur = 12;
         }
+        const borderColor = canAfford ? CONFIG.COLORS.BUTTON_BORDER : '#444444';
         ctx.strokeStyle = isSelected
             ? (cannon.color || CONFIG.COLORS.BUTTON_ACTIVE)
-            : canAfford ? CONFIG.COLORS.BUTTON_BORDER : '#444444';
+            : borderColor;
         ctx.lineWidth = isSelected ? 3 : 2;
         Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
         ctx.stroke();
         ctx.restore();
+    }
 
-        // ── Tower sprite ──
+    _renderButtonSprite(button, cannon, isSelected, isBlockedByTutorial, canAfford) {
+        const ctx = this.graphics.ctx;
         ctx.save();
         const spriteSize = Math.floor(button.width * 0.65);
         const spriteX = button.x + button.width / 2;
@@ -166,23 +179,23 @@ export class ShopRenderer {
             ctx.globalAlpha = 0.5;
         }
 
-
         if (cannon.sprite && typeof cannon.sprite === 'function') {
             const towerSprite = cannon.sprite();
             if (towerSprite && typeof towerSprite.render === 'function') {
                 if (isSelected && !isBlockedByTutorial) {
                     const time = Date.now() * 0.003;
-                    const pulse = 1.0 + Math.sin(time) * 0.05;
+                    const pulse = 1 + Math.sin(time) * 0.05;
                     ctx.translate(spriteX, spriteY);
                     ctx.scale(pulse, pulse);
                     ctx.translate(-spriteX, -spriteY);
                 }
-                towerSprite.render(ctx, spriteX, spriteY, spriteSize, { opacity: 1.0 });
+                towerSprite.render(ctx, spriteX, spriteY, spriteSize, { opacity: 1 });
             }
         }
         ctx.restore();
+    }
 
-        // ── Tower name ──
+    _renderButtonLabels(button, cannon, actualCost, canAfford, isBlockedByTutorial) {
         const labelSize = Math.max(8, Math.min(11, Math.floor(button.height * 0.15)));
         this.graphics.drawText(cannon.name.toUpperCase(), button.x + button.width / 2, button.y + button.height * 0.72, {
             size: labelSize,
@@ -193,7 +206,6 @@ export class ShopRenderer {
             shadow: true
         });
 
-        // ── Cost ──
         const costSize = Math.max(9, Math.min(11, Math.floor(button.height * 0.15)));
         const costColor = canAfford ? '#ffcc00' : '#993333';
         this.graphics.drawText(`💰 ${actualCost}`, button.x + button.width / 2, button.y + button.height * 0.88, {
@@ -204,9 +216,11 @@ export class ShopRenderer {
             bold: true,
             shadow: true
         });
+    }
 
-        // ── Lock icon (tutorial) ──
+    _renderLockIcon(button, isBlockedByTutorial) {
         if (isBlockedByTutorial) {
+            const ctx = this.graphics.ctx;
             ctx.save();
             ctx.font = `${Math.floor(button.width * 0.4)}px Arial`;
             ctx.textAlign = 'center';
@@ -217,9 +231,11 @@ export class ShopRenderer {
             ctx.fillText('🔒', button.x + button.width / 2, button.y + button.height * 0.4);
             ctx.restore();
         }
+    }
 
-        // ── Selection corner accents ──
+    _renderSelectionAccents(button, cannon, isSelected, isBlockedByTutorial, cornerRadius) {
         if (isSelected && !isBlockedByTutorial) {
+            const ctx = this.graphics.ctx;
             ctx.save();
             const time = Date.now() * 0.004;
             ctx.globalAlpha = 0.7 + Math.sin(time) * 0.3;

@@ -89,9 +89,7 @@ export class RenderingSystem {
         
         // Pass to player renderer for effect labels
         const playerRenderer = this.factory.getRenderer('player');
-        if (playerRenderer && playerRenderer.setPowerupTimers) {
-            playerRenderer.setPowerupTimers(timers);
-        }
+        playerRenderer?.setPowerupTimers?.(timers);
     }
 
     setPlayer(player) {
@@ -277,7 +275,7 @@ export class RenderingSystem {
         const bottomBound = this.canvasHeight + 50;
         
         entities.forEach(entity => {
-            if (!entity || !entity.type) return;
+            if (!entity?.type) return;
             
             // Skip offscreen entities for performance (except player)
             const x = entity.x || 0;
@@ -417,7 +415,7 @@ export class RenderingSystem {
         // Powerup UI
         if (this.powerupTimers && this.powerupUIRenderer) {
             // Update player health for hearts display
-            if (this.player && this.player.health !== undefined) {
+            if (this.player?.health !== undefined) {
                 this.powerupUIRenderer.setPlayerHealth(this.player.health, this.player.maxHealth || 3);
             }
             this.powerupUIRenderer.render(this.powerupTimers, Date.now());
@@ -467,7 +465,7 @@ export class RenderingSystem {
         const entities = gameState.entities || [];
         
         // Find the goal flag entity
-        const goalFlag = entities.find(e => e && e.type === 'goalFlag');
+        const goalFlag = entities.find(e => e?.type === 'goalFlag');
         
         if (goalFlag) {
             // Render using the goal flag renderer
@@ -490,9 +488,7 @@ export class RenderingSystem {
         
         // Update player renderer (for effect labels)
         const playerRenderer = this.factory.getRenderer('player');
-        if (playerRenderer && playerRenderer.update) {
-            playerRenderer.update(deltaTime);
-        }
+        playerRenderer?.update?.(deltaTime);
     }
 
     /**

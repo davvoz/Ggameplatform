@@ -114,11 +114,14 @@ export const Utils = {
             if (t < 1 / 2.75) {
                 return 7.5625 * t * t;
             } else if (t < 2 / 2.75) {
-                return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+                t -= 1.5 / 2.75;
+                return 7.5625 * t * t + 0.75;
             } else if (t < 2.5 / 2.75) {
-                return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+                t -= 2.25 / 2.75;
+                return 7.5625 * t * t + 0.9375;
             } else {
-                return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+                t -= 2.625 / 2.75;
+                return 7.5625 * t * t + 0.984375;
             }
         }
     },
@@ -181,6 +184,16 @@ export const Utils = {
             return `rgba(${r}, ${g}, ${b}, ${alpha})`;
         }
         return color;
+    },
+
+    /**
+     * Check if a point is inside a rectangle
+     */
+    isPointInRect(point, rect) {
+        return point.x >= rect.x &&
+               point.x <= rect.x + rect.width &&
+               point.y >= rect.y &&
+               point.y <= rect.y + rect.height;
     },
 
     /**
@@ -285,7 +298,7 @@ export const Utils = {
      * Deep clone object
      */
     deepClone(obj) {
-        return JSON.parse(JSON.stringify(obj));
+        return structuredClone(obj);
     },
     
     /**

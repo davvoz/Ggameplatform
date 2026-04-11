@@ -35,9 +35,9 @@ export class Graphics {
             const TARGET_ASPECT_RATIO = 9 / 16;
             const isDesktop = window.innerWidth >= 769;
             // Check fullscreen state: prefer local tracking, then PlatformSDK, fallback to native/CSS
-            const isFullscreen = window._gameFullscreenState === true ||
-                ((window.PlatformSDK && typeof window.PlatformSDK.isFullscreen === 'function') 
-                    ? window.PlatformSDK.isFullscreen() 
+            const isFullscreen = globalThis._gameFullscreenState === true ||
+                ((globalThis.PlatformSDK && typeof globalThis.PlatformSDK.isFullscreen === 'function') 
+                    ? globalThis.PlatformSDK.isFullscreen() 
                     : (document.fullscreenElement || document.body.classList.contains('game-fullscreen') || document.body.classList.contains('ios-game-fullscreen')));
             
             let width, height;
@@ -185,7 +185,7 @@ export class Graphics {
         ctx.textBaseline = 'middle';
         ctx.globalAlpha = 0.3;
         ctx.fillText('⚔️ DEFENSE ZONE ⚔️', width / 2, defenseY + this.cellSize * 2);
-        ctx.globalAlpha = 1.0;
+        ctx.globalAlpha = 1;
         
         this.gridCacheDirty = false;
     }
@@ -235,8 +235,8 @@ export class Graphics {
         if (!sprite) return; // Skip if no sprite available
         
         const {
-            scale = 1.0,
-            opacity = 1.0,
+            scale = 1,
+            opacity = 1,
             rotation = 0,
             color = null,
             glow = false,
@@ -327,8 +327,14 @@ export class Graphics {
         this.ctx.fillRect(x, y, barWidth, barHeight);
         
         // Foreground
-        const fillColor = hpPercent > 0.5 ? foregroundColor : 
-                         hpPercent > 0.25 ? '#ffaa00' : '#ff3333';
+        let fillColor;
+        if (hpPercent > 0.5) {
+            fillColor = foregroundColor;
+        } else if (hpPercent > 0.25) {
+            fillColor = '#ffaa00';
+        } else {
+            fillColor = '#ff3333';
+        }
         this.ctx.fillStyle = fillColor;
         this.ctx.fillRect(x, y, barWidth * hpPercent, barHeight);
         
@@ -364,9 +370,8 @@ export class Graphics {
     /**
      * Draw projectile
      */
-    drawProjectile(x, y, color, size = 1.0, options = {}) {
+    drawProjectile(x, y, color, size = 1, options = {}) {
         const {
-            trail = false,
             glow = true
         } = options;
         
@@ -402,8 +407,8 @@ export class Graphics {
         const {
             text = '',
             color = '#ffffff',
-            size = 1.0,
-            opacity = 1.0,
+            size = 1,
+            opacity = 1,
             glow = false
         } = options;
         
@@ -566,7 +571,6 @@ export class Graphics {
                 // Determina lo stato del mattoncino
                 const isNewBrick = isGaining && bricksDrawn >= displayBricks && bricksDrawn < targetBricks;
                 const isDyingBrick = isLosing && bricksDrawn >= targetBricks && bricksDrawn < displayBricks;
-                const isNormalBrick = bricksDrawn < displayBricks && bricksDrawn < targetBricks;
                 const isDisplayedBrick = bricksDrawn < displayBricks;
                 
                 if (isNewBrick) {

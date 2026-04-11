@@ -26,8 +26,8 @@ export function splitter() {
     const legLeft2 = sprite.addPart('legLeft2', [
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.07, height: 0.20,
+            x: 0, y: 0.1,
+            width: 0.07, height: 0.2,
             color: '#2d8066',
             fill: true
         }
@@ -55,8 +55,8 @@ export function splitter() {
     const legRight2 = sprite.addPart('legRight2', [
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.07, height: 0.20,
+            x: 0, y: 0.1,
+            width: 0.07, height: 0.2,
             color: '#2d8066',
             fill: true
         }
@@ -156,7 +156,7 @@ export function splitter() {
         {
             type: 'ellipse',
             x: 0, y: 0,
-            width: 0.30, height: 0.10,
+            width: 0.3, height: 0.1,
             color: '#4db888',
             fill: true
         }
@@ -203,98 +203,98 @@ export function splitter() {
     const allParts = ['body', 'headLeft', 'headRight', 'connection', 'legLeft1', 'legLeft2', 'legRight1', 'legRight2', 'tendrilLeft', 'tendrilRight'];
 
     // IDLE - Pulsating blob with heads swaying
-    const idle = new AnimationClip('idle', 2.0, true);
+    const idle = new AnimationClip('idle', 2, true);
     idle.addTrack('body', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { scaleX: 1, scaleY: 1 } },
         { time: 0.5, transform: { scaleX: 1.04, scaleY: 0.97 } },
-        { time: 1.0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+        { time: 1, transform: { scaleX: 1, scaleY: 1 } },
         { time: 1.5, transform: { scaleX: 0.97, scaleY: 1.03 } },
-        { time: 2.0, transform: { scaleX: 1.0, scaleY: 1.0 } }
+        { time: 2, transform: { scaleX: 1, scaleY: 1 } }
     ]);
     idle.addTrack('headLeft', [
         { time: 0, transform: { x: 0, y: 0, rotation: 0 } },
         { time: 0.6, transform: { x: -0.02, y: -0.01, rotation: -0.1 } },
         { time: 1.2, transform: { x: 0.01, y: 0.01, rotation: 0.05 } },
-        { time: 2.0, transform: { x: 0, y: 0, rotation: 0 } }
+        { time: 2, transform: { x: 0, y: 0, rotation: 0 } }
     ]);
     idle.addTrack('headRight', [
         { time: 0, transform: { x: 0, y: 0, rotation: 0 } },
         { time: 0.6, transform: { x: 0.02, y: -0.01, rotation: 0.1 } },
         { time: 1.2, transform: { x: -0.01, y: 0.01, rotation: -0.05 } },
-        { time: 2.0, transform: { x: 0, y: 0, rotation: 0 } }
+        { time: 2, transform: { x: 0, y: 0, rotation: 0 } }
     ]);
     idle.addTrack('connection', [
-        { time: 0, transform: { scaleX: 1.0 } },
-        { time: 1.0, transform: { scaleX: 1.1 } },
-        { time: 2.0, transform: { scaleX: 1.0 } }
+        { time: 0, transform: { scaleX: 1 } },
+        { time: 1, transform: { scaleX: 1.1 } },
+        { time: 2, transform: { scaleX: 1 } }
     ]);
     idle.addTrack('tendrilLeft', [
         { time: 0, transform: { rotation: 0 } },
-        { time: 1.0, transform: { rotation: -0.2 } },
-        { time: 2.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: -0.2 } },
+        { time: 2, transform: { rotation: 0 } }
     ]);
     idle.addTrack('tendrilRight', [
         { time: 0, transform: { rotation: 0 } },
-        { time: 1.0, transform: { rotation: 0.2 } },
-        { time: 2.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0.2 } },
+        { time: 2, transform: { rotation: 0 } }
     ]);
     sprite.addAnimation(idle);
 
     // WALK - Crawling motion with blob deformation
     const walk = new AnimationClip('walk', 0.6, true);
     walk.addTrack('body', [
-        { time: 0, transform: { y: 0, scaleX: 1.0, scaleY: 1.0, rotation: 0.02 } },
+        { time: 0, transform: { y: 0, scaleX: 1, scaleY: 1, rotation: 0.02 } },
         { time: 0.15, transform: { y: -0.02, scaleX: 1.06, scaleY: 0.95, rotation: -0.02 } },
-        { time: 0.30, transform: { y: 0, scaleX: 1.0, scaleY: 1.0, rotation: 0.02 } },
+        { time: 0.3, transform: { y: 0, scaleX: 1, scaleY: 1, rotation: 0.02 } },
         { time: 0.45, transform: { y: -0.02, scaleX: 0.95, scaleY: 1.05, rotation: -0.02 } },
-        { time: 0.6, transform: { y: 0, scaleX: 1.0, scaleY: 1.0, rotation: 0.02 } }
+        { time: 0.6, transform: { y: 0, scaleX: 1, scaleY: 1, rotation: 0.02 } }
     ]);
     walk.addTrack('headLeft', [
         { time: 0, transform: { y: 0, rotation: 0.1 } },
         { time: 0.15, transform: { y: -0.02, rotation: -0.1 } },
-        { time: 0.30, transform: { y: 0, rotation: 0.1 } },
+        { time: 0.3, transform: { y: 0, rotation: 0.1 } },
         { time: 0.45, transform: { y: -0.02, rotation: -0.1 } },
         { time: 0.6, transform: { y: 0, rotation: 0.1 } }
     ]);
     walk.addTrack('headRight', [
         { time: 0, transform: { y: 0, rotation: -0.1 } },
         { time: 0.15, transform: { y: -0.02, rotation: 0.1 } },
-        { time: 0.30, transform: { y: 0, rotation: -0.1 } },
+        { time: 0.3, transform: { y: 0, rotation: -0.1 } },
         { time: 0.45, transform: { y: -0.02, rotation: 0.1 } },
         { time: 0.6, transform: { y: 0, rotation: -0.1 } }
     ]);
     walk.addTrack('legLeft1', [
         { time: 0, transform: { rotation: 0.3, y: 0 } },
         { time: 0.15, transform: { rotation: 0, y: -0.03 } },
-        { time: 0.30, transform: { rotation: -0.3, y: 0 } },
+        { time: 0.3, transform: { rotation: -0.3, y: 0 } },
         { time: 0.45, transform: { rotation: 0, y: 0 } },
         { time: 0.6, transform: { rotation: 0.3, y: 0 } }
     ]);
     walk.addTrack('legRight1', [
         { time: 0, transform: { rotation: -0.3, y: 0 } },
         { time: 0.15, transform: { rotation: 0, y: 0 } },
-        { time: 0.30, transform: { rotation: 0.3, y: 0 } },
+        { time: 0.3, transform: { rotation: 0.3, y: 0 } },
         { time: 0.45, transform: { rotation: 0, y: -0.03 } },
         { time: 0.6, transform: { rotation: -0.3, y: 0 } }
     ]);
     walk.addTrack('legLeft2', [
         { time: 0, transform: { rotation: 0.2 } },
-        { time: 0.30, transform: { rotation: -0.2 } },
+        { time: 0.3, transform: { rotation: -0.2 } },
         { time: 0.6, transform: { rotation: 0.2 } }
     ]);
     walk.addTrack('legRight2', [
         { time: 0, transform: { rotation: -0.2 } },
-        { time: 0.30, transform: { rotation: 0.2 } },
+        { time: 0.3, transform: { rotation: 0.2 } },
         { time: 0.6, transform: { rotation: -0.2 } }
     ]);
     walk.addTrack('tendrilLeft', [
         { time: 0, transform: { rotation: 0.15 } },
-        { time: 0.30, transform: { rotation: -0.25 } },
+        { time: 0.3, transform: { rotation: -0.25 } },
         { time: 0.6, transform: { rotation: 0.15 } }
     ]);
     walk.addTrack('tendrilRight', [
         { time: 0, transform: { rotation: -0.15 } },
-        { time: 0.30, transform: { rotation: 0.25 } },
+        { time: 0.3, transform: { rotation: 0.25 } },
         { time: 0.6, transform: { rotation: -0.15 } }
     ]);
     sprite.addAnimation(walk);
@@ -302,58 +302,58 @@ export function splitter() {
     // ATTACK - Heads lunge forward
     const attack = new AnimationClip('attack', 0.5, false);
     attack.addTrack('body', [
-        { time: 0, transform: { scaleY: 1.0, rotation: 0 } },
+        { time: 0, transform: { scaleY: 1, rotation: 0 } },
         { time: 0.15, transform: { scaleY: 0.9, rotation: -0.05 } },
-        { time: 0.30, transform: { scaleY: 1.15, rotation: 0.1 } },
-        { time: 0.5, transform: { scaleY: 1.0, rotation: 0 } }
+        { time: 0.3, transform: { scaleY: 1.15, rotation: 0.1 } },
+        { time: 0.5, transform: { scaleY: 1, rotation: 0 } }
     ]);
     attack.addTrack('headLeft', [
-        { time: 0, transform: { x: 0, y: 0, scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } },
         { time: 0.15, transform: { x: 0.02, y: 0.02, scaleX: 0.9, scaleY: 0.9 } },
-        { time: 0.30, transform: { x: -0.06, y: -0.08, scaleX: 1.2, scaleY: 1.2 } },
-        { time: 0.5, transform: { x: 0, y: 0, scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.3, transform: { x: -0.06, y: -0.08, scaleX: 1.2, scaleY: 1.2 } },
+        { time: 0.5, transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } }
     ]);
     attack.addTrack('headRight', [
-        { time: 0, transform: { x: 0, y: 0, scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } },
         { time: 0.15, transform: { x: -0.02, y: 0.02, scaleX: 0.9, scaleY: 0.9 } },
-        { time: 0.30, transform: { x: 0.06, y: -0.08, scaleX: 1.2, scaleY: 1.2 } },
-        { time: 0.5, transform: { x: 0, y: 0, scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.3, transform: { x: 0.06, y: -0.08, scaleX: 1.2, scaleY: 1.2 } },
+        { time: 0.5, transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } }
     ]);
     attack.addTrack('connection', [
-        { time: 0, transform: { scaleX: 1.0 } },
-        { time: 0.30, transform: { scaleX: 1.5 } },
-        { time: 0.5, transform: { scaleX: 1.0 } }
+        { time: 0, transform: { scaleX: 1 } },
+        { time: 0.3, transform: { scaleX: 1.5 } },
+        { time: 0.5, transform: { scaleX: 1 } }
     ]);
     sprite.addAnimation(attack);
 
     // SPLIT animation - Heads separate dramatically
     const split = new AnimationClip('split', 0.8, false);
     split.addTrack('body', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0, alpha: 1.0 } },
+        { time: 0, transform: { scaleX: 1, scaleY: 1, alpha: 1 } },
         { time: 0.3, transform: { scaleX: 1.3, scaleY: 0.8, alpha: 0.9 } },
         { time: 0.6, transform: { scaleX: 0.6, scaleY: 1.2, alpha: 0.5 } },
         { time: 0.8, transform: { scaleX: 0.3, scaleY: 0.3, alpha: 0 } }
     ]);
     split.addTrack('headLeft', [
-        { time: 0, transform: { x: 0, y: 0, scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } },
         { time: 0.4, transform: { x: -0.15, y: -0.1, scaleX: 1.3, scaleY: 1.3 } },
-        { time: 0.8, transform: { x: -0.3, y: 0, scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.8, transform: { x: -0.3, y: 0, scaleX: 1, scaleY: 1 } }
     ]);
     split.addTrack('headRight', [
-        { time: 0, transform: { x: 0, y: 0, scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } },
         { time: 0.4, transform: { x: 0.15, y: -0.1, scaleX: 1.3, scaleY: 1.3 } },
-        { time: 0.8, transform: { x: 0.3, y: 0, scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.8, transform: { x: 0.3, y: 0, scaleX: 1, scaleY: 1 } }
     ]);
     split.addTrack('connection', [
-        { time: 0, transform: { scaleX: 1.0, alpha: 1.0 } },
-        { time: 0.4, transform: { scaleX: 2.0, alpha: 0.6 } },
+        { time: 0, transform: { scaleX: 1, alpha: 1 } },
+        { time: 0.4, transform: { scaleX: 2, alpha: 0.6 } },
         { time: 0.8, transform: { scaleX: 0.1, alpha: 0 } }
     ]);
     sprite.addAnimation(split);
 
     // Standard animations
     sprite.addAnimation(AnimationBuilder.createHitAnimation(allParts, 0.25));
-    sprite.addAnimation(AnimationBuilder.createDeathAnimation(allParts, 1.0));
+    sprite.addAnimation(AnimationBuilder.createDeathAnimation(allParts, 1));
 
     return sprite;
 }

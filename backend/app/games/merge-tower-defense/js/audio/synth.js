@@ -4,24 +4,19 @@
  */
 
 export class AudioSynthesizer {
-    constructor() {
-        this.ctx = null;
-        this.masterGain = null;
-        this.initialized = false;
-    }
+    ctx = null;
+    masterGain = null;
+    initialized = false;
+
 
     init() {
         if (this.initialized) return;
-        
-        try {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            this.masterGain = this.ctx.createGain();
-            this.masterGain.connect(this.ctx.destination);
-            this.masterGain.gain.value = 0.3;
-            this.initialized = true;
-        } catch (e) {
 
-        }
+        this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.connect(this.ctx.destination);
+        this.masterGain.gain.value = 0.3;
+        this.initialized = true;
     }
 
     createEnvelope(param, attack, decay, sustain, release, peakValue = 1, startTime = 0) {
@@ -33,22 +28,22 @@ export class AudioSynthesizer {
         param.linearRampToValueAtTime(0, now + attack + decay + release);
     }
 
-    playNote(frequency, type,  envelope, options = {}) {
+    playNote(frequency, type, envelope, options = {}) {
         if (!this.initialized) this.init();
         if (!this.ctx) return;
 
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
-        
+
         osc.type = type;
         osc.frequency.value = frequency;
-        
+
         if (options.detune) {
             osc.detune.value = options.detune;
         }
-        
+
         osc.connect(gainNode);
-        
+
         if (options.filter) {
             const filter = this.ctx.createBiquadFilter();
             filter.type = options.filter.type || 'lowpass';
@@ -59,7 +54,7 @@ export class AudioSynthesizer {
         } else {
             gainNode.connect(this.masterGain);
         }
-        
+
         const volume = (options.volume || 1) * 0.3;
         this.createEnvelope(
             gainNode.gain,
@@ -69,7 +64,7 @@ export class AudioSynthesizer {
             envelope.release,
             volume
         );
-        
+
         osc.start(this.ctx.currentTime);
         osc.stop(this.ctx.currentTime + envelope.attack + envelope.decay + envelope.release);
     }
@@ -87,24 +82,24 @@ export class AudioSynthesizer {
         const bufferSize = this.ctx.sampleRate * duration;
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
-        
+
         for (let i = 0; i < bufferSize; i++) {
             data[i] = Math.random() * 2 - 1;
         }
-        
+
         const noise = this.ctx.createBufferSource();
         noise.buffer = buffer;
-        
+
         const gainNode = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
-        
+
         filter.type = options.filterType || 'highpass';
         filter.frequency.value = options.filterFreq || 1000;
-        
+
         noise.connect(filter);
         filter.connect(gainNode);
         gainNode.connect(this.masterGain);
-        
+
         const volume = (options.volume || 1) * 0.3;
         this.createEnvelope(
             gainNode.gain,
@@ -114,7 +109,7 @@ export class AudioSynthesizer {
             envelope.release,
             volume
         );
-        
+
         noise.start(this.ctx.currentTime);
         noise.stop(this.ctx.currentTime + duration);
     }
@@ -127,16 +122,16 @@ export class AudioSynthesizer {
         const modulator = this.ctx.createOscillator();
         const modGain = this.ctx.createGain();
         const gainNode = this.ctx.createGain();
-        
+
         carrier.frequency.value = carrierFreq;
         modulator.frequency.value = modFreq;
         modGain.gain.value = modDepth;
-        
+
         modulator.connect(modGain);
         modGain.connect(carrier.frequency);
         carrier.connect(gainNode);
         gainNode.connect(this.masterGain);
-        
+
         const volume = (options.volume || 1) * 0.2;
         this.createEnvelope(
             gainNode.gain,
@@ -146,7 +141,7 @@ export class AudioSynthesizer {
             envelope.release,
             volume
         );
-        
+
         carrier.start(this.ctx.currentTime);
         modulator.start(this.ctx.currentTime);
         carrier.stop(this.ctx.currentTime + duration);
@@ -159,13 +154,13 @@ export class AudioSynthesizer {
 
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
-        
+
         osc.type = options.type || 'sine';
         osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + duration);
-        
+
         osc.connect(gainNode);
-        
+
         if (options.filter) {
             const filter = this.ctx.createBiquadFilter();
             filter.type = options.filter.type || 'lowpass';
@@ -176,7 +171,7 @@ export class AudioSynthesizer {
         } else {
             gainNode.connect(this.masterGain);
         }
-        
+
         const volume = (options.volume || 1) * 0.3;
         this.createEnvelope(
             gainNode.gain,
@@ -186,7 +181,7 @@ export class AudioSynthesizer {
             envelope.release,
             volume
         );
-        
+
         osc.start(this.ctx.currentTime);
         osc.stop(this.ctx.currentTime + duration);
     }
@@ -389,7 +384,7 @@ export class SoundLibrary {
             { attack: 0.02, decay: 0.15, sustain: 0.3, release: 0.3 },
             { volume: 0.5 }
         );
-        
+
         setTimeout(() => {
             this.synth.playChord(
                 [523, 659, 784],
@@ -453,7 +448,7 @@ export class SoundLibrary {
             { attack: 0.001, decay: 0.15, sustain: 0, release: 0.25 },
             { volume: 0.3, filter: { type: 'lowpass', freq: 800 } }
         );
-        
+
         setTimeout(() => {
             this.synth.createNoise(
                 0.2,
@@ -496,11 +491,11 @@ export class SoundLibrary {
             80,
             40,
             500,
-            1.0,
+            1,
             { attack: 0.1, decay: 0.3, sustain: 0.5, release: 0.5 },
             { volume: 0.6 }
         );
-        
+
         setTimeout(() => {
             this.synth.createNoise(
                 0.5,
@@ -566,7 +561,7 @@ export class SoundLibrary {
                 );
             }, i * 100);
         });
-        
+
         setTimeout(() => {
             this.synth.playChord(
                 [523, 659, 784, 1047],
@@ -584,7 +579,7 @@ export class SoundLibrary {
             { attack: 0.001, decay: 0.05, sustain: 0.3, release: 0.1 },
             { volume: 0.35 }
         );
-        
+
         setTimeout(() => {
             this.synth.playNote(
                 1318,
@@ -632,7 +627,7 @@ export class SoundLibrary {
             { attack: 0.001, decay: 0.05, sustain: 0.5, release: 0.15 },
             { volume: 0.4 + (level * 0.05) }
         );
-        
+
         setTimeout(() => {
             this.synth.playNote(
                 baseFreq * 1.5,

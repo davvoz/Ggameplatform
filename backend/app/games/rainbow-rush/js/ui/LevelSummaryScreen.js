@@ -61,9 +61,6 @@ export class LevelSummaryScreen {
         }
         
 
-        if (this.isGameComplete) {
-
-        }
     }
     
     /**
@@ -258,7 +255,7 @@ export class LevelSummaryScreen {
                 vy: Math.sin(angle) * 150,
                 color: [1, 0.9, 0.2, 1],
                 life: 1,
-                scale: 1.0
+                scale: 1
             });
         }
     }
@@ -310,57 +307,400 @@ export class LevelSummaryScreen {
         if (!this.visible || !this.summary) return;
         
         // Dark overlay with gradient
-        const gradient = ctx.createRadialGradient(canvasWidth / 2, canvasHeight / 2, 0, canvasWidth / 2, canvasHeight / 2, canvasWidth);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.85)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        this.applyDarkOverlay(ctx, canvasWidth, canvasHeight);
         
         // Panel with shadow and gradient
-        const panelWidth = Math.min(420, canvasWidth * 0.85);
-        const panelHeight = canvasHeight * 0.85;
-        const panelX = (canvasWidth - panelWidth) / 2;
-        const panelY = (canvasHeight - panelHeight) / 2;
-        
-        // Outer glow
-        ctx.shadowColor = 'rgba(102, 126, 234, 0.6)';
-        ctx.shadowBlur = 40;
-        ctx.fillStyle = 'rgba(102, 126, 234, 0.2)';
-        ctx.beginPath();
-        ctx.roundRect(panelX - 5, panelY - 5, panelWidth + 10, panelHeight + 10, 30);
-        ctx.fill();
-        
-        // Panel gradient background
-        const panelGradient = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelHeight);
-        panelGradient.addColorStop(0, '#ffffff');
-        panelGradient.addColorStop(1, '#f0f8ff');
-        ctx.fillStyle = panelGradient;
-        ctx.shadowBlur = 0;
-        ctx.beginPath();
-        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 30);
-        ctx.fill();
+        const { panelX, panelY, panelWidth, panelHeight } = this.calculatePanelDimensions(canvasWidth, canvasHeight, ctx);
         
         // Border accent with gradient
-        const borderGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + panelHeight);
-        borderGradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
-        borderGradient.addColorStop(0.5, 'rgba(118, 75, 162, 0.4)');
-        borderGradient.addColorStop(1, 'rgba(102, 126, 234, 0.4)');
-        ctx.strokeStyle = borderGradient;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 30);
-        ctx.stroke();
-        
-        // Decorative top bar
-        const topBarGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + 80);
-        topBarGradient.addColorStop(0, 'rgba(102, 126, 234, 0.25)');
-        topBarGradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
-        ctx.fillStyle = topBarGradient;
-        ctx.beginPath();
-        ctx.roundRect(panelX, panelY, panelWidth, 80, [30, 30, 0, 0]);
-        ctx.fill();
+        this.drawPanelBorder(ctx, panelX, panelY, panelWidth, panelHeight);
         
         // Title with rainbow gradient
+        this.renderTitleWithGradient(ctx, panelX, panelY, panelWidth, canvasWidth);
+        
+        // Subtitle with emoji
+        const { startX, starSpacing, starsY } = this.drawLevelSummary(ctx, canvasWidth, panelY);
+        
+        // Stars background glow with pulsing effect
+        this.renderStarGlow(startX, starSpacing, ctx, starsY);
+        
+        // Stars with enhanced scale animation and rotation
+        this.renderAnimatedStars(ctx, startX, starSpacing, starsY);
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Performance rank with animated badge
+        const rankInfo = this.getRankInfo();
+        
+        // Rank badge background
+        this.renderRankBadge(starsY, canvasWidth, ctx, rankInfo);
+        
+        this.renderStarRequirements(starsY, panelWidth, ctx);
+        this.renderStatisticsPanel(panelY, panelX, panelWidth, ctx);
+        this.updateButtonPositions(canvasWidth, canvasHeight);
+        this.renderButtonUI(ctx);      
+        this.renderConfettiParticles(ctx);
+        this.renderSparkleParticles(ctx);
+    }
+    
+    getRankInfo() {
+        const rankConfig = {
+            'perfect': { color: '#FFD700', emoji: '🏆', text: 'PERFECT!', bgColor: 'rgba(255, 215, 0, 0.15)' },
+            'gold': { color: '#FFA500', emoji: '🥇', text: 'EXCELLENT!', bgColor: 'rgba(255, 165, 0, 0.15)' },
+            'silver': { color: '#C0C0C0', emoji: '🥈', text: 'GREAT!', bgColor: 'rgba(192, 192, 192, 0.15)' },
+            'bronze': { color: '#CD7F32', emoji: '🥉', text: 'GOOD!', bgColor: 'rgba(205, 127, 50, 0.15)' }
+        };
+
+        let rank;
+        if (this.summary.stars === 3) {
+            rank = 'perfect';
+        } else if (this.summary.stars === 2) {
+            rank = 'gold';
+        } else if (this.summary.stars === 1) {
+            rank = 'silver';
+        } else {
+            rank = 'bronze';
+        }
+        const rankInfo = rankConfig[rank];
+        return rankInfo;
+    }
+
+    renderRankBadge(starsY, canvasWidth, ctx, rankInfo) {
+        const badgeY = starsY + 65;
+        const badgeWidth = 200;
+        const badgeHeight = 40;
+        const badgeX = canvasWidth / 2 - badgeWidth / 2;
+
+        ctx.fillStyle = rankInfo.bgColor;
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY - 15, badgeWidth, badgeHeight, 20);
+        ctx.fill();
+
+        ctx.strokeStyle = rankInfo.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Rank text
+        ctx.fillStyle = rankInfo.color;
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = `${rankInfo.color}44`;
+        ctx.shadowBlur = 8;
+        ctx.fillText(`${rankInfo.emoji} ${rankInfo.text}`, canvasWidth / 2, badgeY + 10);
+        ctx.shadowBlur = 0;
+    }
+
+    renderSparkleParticles(ctx) {
+        this.sparkleParticles.forEach(particle => {
+            ctx.save();
+            ctx.translate(particle.x, particle.y);
+            ctx.globalAlpha = particle.life;
+            ctx.scale(particle.scale, particle.scale);
+
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+            ctx.shadowBlur = 8;
+
+            ctx.fillStyle = `rgba(${particle.color[0] * 255}, ${particle.color[1] * 255}, ${particle.color[2] * 255}, ${particle.color[3]})`;
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+
+    renderConfettiParticles(ctx) {
+        this.confettiParticles.forEach(particle => {
+            ctx.save();
+            ctx.translate(particle.x, particle.y);
+            ctx.rotate(particle.rotation || 0);
+            ctx.globalAlpha = particle.life;
+
+            // Glow effect
+            ctx.shadowColor = `rgba(${particle.color[0] * 255}, ${particle.color[1] * 255}, ${particle.color[2] * 255}, 0.6)`;
+            ctx.shadowBlur = 10;
+
+            ctx.fillStyle = `rgba(${particle.color[0] * 255}, ${particle.color[1] * 255}, ${particle.color[2] * 255}, ${particle.color[3]})`;
+            ctx.fillRect(-5, -5, 10, 10);
+            ctx.restore();
+        });
+    }
+
+    renderButtonUI(ctx) {
+        for (const key in this.buttons) {
+            const btn = this.buttons[key];
+            if (!btn) continue;
+
+            const isHovered = this.selectedButton === key;
+            const color = isHovered ? btn.hoverColor : btn.color;
+
+            // Button outer glow on hover
+            if (isHovered) {
+                ctx.shadowColor = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 0.5)`;
+                ctx.shadowBlur = 25;
+                ctx.shadowOffsetY = 0;
+            }
+
+            // Button gradient with depth
+            const btnGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height);
+            const lightColor = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, ${color[3]})`;
+            const darkColor = `rgba(${color[0] * 220}, ${color[1] * 220}, ${color[2] * 220}, ${color[3]})`;
+            btnGradient.addColorStop(0, lightColor);
+            btnGradient.addColorStop(1, darkColor);
+
+            ctx.fillStyle = btnGradient;
+            ctx.beginPath();
+            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 25);
+            ctx.fill();
+
+            // Inner highlight
+            const highlightGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height / 3);
+            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = highlightGradient;
+            ctx.beginPath();
+            ctx.roundRect(btn.x, btn.y, btn.width, btn.height / 3, [25, 25, 0, 0]);
+            ctx.fill();
+
+            // Button border
+            ctx.strokeStyle = `rgba(${color[0] * 200}, ${color[1] * 200}, ${color[2] * 200}, 0.5)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 25);
+            ctx.stroke();
+
+            // Button text with enhanced shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetY = 2;
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 6);
+
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetY = 0;
+        }
+    }
+
+    renderStatisticsPanel(panelY, panelX, panelWidth, ctx) {
+        const statsStartY = panelY + 300;
+        const statsX = panelX + 30;
+        const statCardWidth = (panelWidth - 80) / 2;
+        const statCardHeight = 85;
+        const statSpacing = 20;
+
+        const stats = [
+            { icon: '⭐', label: 'Stars', value: `${this.summary.stars}/3`, color: '#FFD700', bgColor: 'rgba(255, 215, 0, 0.15)' },
+            { icon: '⏱️', label: 'Time', value: `${this.summary.time.toFixed(1)}s`, color: '#667eea', bgColor: 'rgba(102, 126, 234, 0.1)' },
+            { icon: '🪙', label: 'Coins', value: `${this.summary.coinsCollected}/${this.summary.totalCoins}`, color: '#FFA500', bgColor: 'rgba(255, 165, 0, 0.1)' },
+            { icon: '👾', label: 'Enemies', value: `${this.summary.enemiesKilled}/${this.summary.totalEnemies}`, color: '#dc2626', bgColor: 'rgba(220, 38, 38, 0.1)' }
+        ];
+
+        stats.forEach((stat, index) => {
+            const row = Math.floor(index / 2);
+            const col = index % 2;
+            const cardX = statsX + col * (statCardWidth + statSpacing);
+            const cardY = statsStartY + row * (statCardHeight + statSpacing);
+
+            // Card background with gradient
+            const cardGradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + statCardHeight);
+            cardGradient.addColorStop(0, '#ffffff');
+            cardGradient.addColorStop(1, '#fafafa');
+            ctx.fillStyle = cardGradient;
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, statCardWidth, statCardHeight, 16);
+            ctx.fill();
+
+            // Card colored accent bar at top
+            ctx.fillStyle = stat.color;
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, statCardWidth, 4, [16, 16, 0, 0]);
+            ctx.fill();
+
+            // Card border with subtle shadow
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, statCardWidth, statCardHeight, 16);
+            ctx.stroke();
+
+            // Icon circle with colored background
+            const iconSize = 36;
+            const iconX = cardX + 18;
+            const iconY = cardY + statCardHeight / 2;
+
+            ctx.fillStyle = stat.bgColor;
+            ctx.beginPath();
+            ctx.arc(iconX + iconSize / 2, iconY, iconSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Icon
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(stat.icon, iconX + iconSize / 2, iconY + 8);
+
+            // Label and value
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#888';
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText(stat.label.toUpperCase(), cardX + iconSize + 28, cardY + 30);
+
+            ctx.fillStyle = stat.color;
+            ctx.font = 'bold 22px Arial';
+            ctx.fillText(stat.value, cardX + iconSize + 28, cardY + 58);
+        });
+    }
+
+    renderStarRequirements(starsY, panelWidth, ctx) {
+        if (this.summary.starRequirements) {
+            const reqY = starsY + 100; // Moved up from statsStartY
+            const reqWidth = Math.min(panelWidth - 60, 380);
+            const reqX = centerX - reqWidth / 2;
+
+            // Title
+            ctx.fillStyle = '#666';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎯 STAR REQUIREMENTS', centerX, reqY);
+
+            // Requirements boxes - MORE COMPACT
+            const req = this.summary.starRequirements;
+            const coinsFor3 = Math.ceil(this.summary.totalCoins * req.threeStars.coins);
+            const coinsFor2 = Math.ceil(this.summary.totalCoins * req.twoStars.coins);
+            const coinsFor1 = Math.ceil(this.summary.totalCoins * req.oneStar.coins);
+
+            const requirements = [
+                { stars: 3, time: req.threeStars.time, coins: coinsFor3, color: '#FFD700' },
+                { stars: 2, time: req.twoStars.time, coins: coinsFor2, color: '#C0C0C0' },
+                { stars: 1, time: req.oneStar.time, coins: coinsFor1, color: '#CD7F32' }
+            ];
+
+            const reqBoxHeight = 28; // Reduced from 35
+            const reqBoxSpacing = 5; // Reduced from 8
+
+            requirements.forEach((r, index) => {
+                const boxY = reqY + 12 + (reqBoxHeight + reqBoxSpacing) * index;
+
+                // Box background
+                ctx.fillStyle = this.summary.stars >= r.stars ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.5)';
+                ctx.beginPath();
+                ctx.roundRect(reqX, boxY, reqWidth, reqBoxHeight, 6);
+                ctx.fill();
+
+                // Border
+                ctx.strokeStyle = this.summary.stars >= r.stars ? '#22c55e' : 'rgba(0, 0, 0, 0.1)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Stars icon
+                ctx.fillStyle = r.color;
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('⭐'.repeat(r.stars), reqX + 8, boxY + 19);
+
+                // Requirements text - MORE COMPACT
+                ctx.fillStyle = '#555';
+                ctx.font = '11px Arial';
+                let starKey;
+                if (r.stars === 3) {
+                    starKey = 'threeStars';
+                } else if (r.stars === 2) {
+                    starKey = 'twoStars';
+                } else {
+                    starKey = 'oneStar';
+                }
+                const coinsPercent = (req[starKey].coins * 100).toFixed(0);
+                ctx.fillText(`Time ≤${r.time}s  |  Coins ≥${r.coins} (${coinsPercent}%)`, reqX + 70, boxY + 19);
+
+                // Checkmark if achieved
+                if (this.summary.stars >= r.stars) {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('✓', reqX + reqWidth - 10, boxY + 20);
+                }
+            });
+        }
+    }
+
+    renderAnimatedStars(ctx, startX, starSpacing, starsY) {
+        ctx.font = '60px Arial';
+        for (let i = 0; i < 3; i++) {
+            const starX = startX + i * starSpacing;
+            const animProgress = this.starAnimations[i] || 0;
+
+            // Elastic easing for bounce effect
+            const elasticOut = (t) => {
+                if (t === 0 || t === 1) return t;
+                return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
+            };
+            const scale = elasticOut(animProgress);
+            const rotation = (1 - animProgress) * Math.PI * 2;
+
+            ctx.save();
+            ctx.translate(starX, starsY);
+            ctx.rotate(rotation);
+            ctx.scale(scale, scale);
+
+            if (i < this.summary.stars) {
+                // Filled star with enhanced shadow
+                ctx.shadowColor = 'rgba(255, 165, 0, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetY = 4;
+
+                // Create gradient for star
+                const starGradient = ctx.createLinearGradient(-30, -30, 30, 30);
+                starGradient.addColorStop(0, '#FFD700');
+                starGradient.addColorStop(0.5, '#FFA500');
+                starGradient.addColorStop(1, '#FF8C00');
+                ctx.fillStyle = starGradient;
+                ctx.fillText('⭐', 0, 0);
+            } else {
+                // Empty star
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#ddd';
+                ctx.fillText('☆', 0, 0);
+            }
+
+            ctx.restore();
+        }
+    }
+
+    renderStarGlow(startX, starSpacing, ctx, starsY) {
+        if (this.summary.stars > 0) {
+            for (let i = 0; i < this.summary.stars; i++) {
+                const starX = startX + i * starSpacing;
+                const pulseScale = 1 + Math.sin(Date.now() / 300 + i) * 0.1;
+                const starGlow = ctx.createRadialGradient(starX, starsY, 0, starX, starsY, 50 * pulseScale);
+                starGlow.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
+                starGlow.addColorStop(0.5, 'rgba(255, 215, 0, 0.2)');
+                starGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+                ctx.fillStyle = starGlow;
+                ctx.fillRect(starX - 50, starsY - 50, 100, 100);
+            }
+        }
+    }
+
+    drawLevelSummary(ctx, canvasWidth, panelY) {
+        ctx.fillStyle = '#666';
+        ctx.font = 'bold 16px Arial';
+        ctx.shadowColor = 'transparent';
+        const subtitleText = this.isGameComplete ? '🎉 All 200 Levels Completed! 🎉' : '✨ Level Complete! ✨';
+        ctx.fillText(subtitleText, canvasWidth / 2, panelY + 72);
+
+        // Stars section with enhanced animation
+        const starsY = panelY + 150;
+        const starSpacing = 80;
+        const startX = canvasWidth / 2 - starSpacing;
+        return { startX, starSpacing, starsY };
+    }
+
+    renderTitleWithGradient(ctx, panelX, panelY, panelWidth, canvasWidth) {
         ctx.save();
         const titleGradient = ctx.createLinearGradient(panelX, panelY + 40, panelX + panelWidth, panelY + 40);
         titleGradient.addColorStop(0, '#ff0080');
@@ -379,345 +719,63 @@ export class LevelSummaryScreen {
         const titleText = this.isGameComplete ? '🏆 GAME COMPLETE! 🏆' : (this.summary.levelName || `Level ${this.summary.levelId}`);
         ctx.fillText(titleText, canvasWidth / 2, panelY + 45);
         ctx.restore();
-        
-        // Subtitle with emoji
-        ctx.fillStyle = '#666';
-        ctx.font = 'bold 16px Arial';
-        ctx.shadowColor = 'transparent';
-        const subtitleText = this.isGameComplete ? '🎉 All 200 Levels Completed! 🎉' : '✨ Level Complete! ✨';
-        ctx.fillText(subtitleText, canvasWidth / 2, panelY + 72);
-        
-        // Stars section with enhanced animation
-        const starsY = panelY + 150;
-        const starSpacing = 80;
-        const startX = canvasWidth / 2 - starSpacing;
-        
-        // Stars background glow with pulsing effect
-        if (this.summary.stars > 0) {
-            for (let i = 0; i < this.summary.stars; i++) {
-                const starX = startX + i * starSpacing;
-                const pulseScale = 1 + Math.sin(Date.now() / 300 + i) * 0.1;
-                const starGlow = ctx.createRadialGradient(starX, starsY, 0, starX, starsY, 50 * pulseScale);
-                starGlow.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
-                starGlow.addColorStop(0.5, 'rgba(255, 215, 0, 0.2)');
-                starGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
-                ctx.fillStyle = starGlow;
-                ctx.fillRect(starX - 50, starsY - 50, 100, 100);
-            }
-        }
-        
-        // Stars with enhanced scale animation and rotation
-        ctx.font = '60px Arial';
-        for (let i = 0; i < 3; i++) {
-            const starX = startX + i * starSpacing;
-            const animProgress = this.starAnimations[i] || 0;
-            
-            // Elastic easing for bounce effect
-            const elasticOut = (t) => {
-                if (t === 0 || t === 1) return t;
-                return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
-            };
-            const scale = elasticOut(animProgress);
-            const rotation = (1 - animProgress) * Math.PI * 2;
-            
-            ctx.save();
-            ctx.translate(starX, starsY);
-            ctx.rotate(rotation);
-            ctx.scale(scale, scale);
-            
-            if (i < this.summary.stars) {
-                // Filled star with enhanced shadow
-                ctx.shadowColor = 'rgba(255, 165, 0, 0.8)';
-                ctx.shadowBlur = 20;
-                ctx.shadowOffsetY = 4;
-                
-                // Create gradient for star
-                const starGradient = ctx.createLinearGradient(-30, -30, 30, 30);
-                starGradient.addColorStop(0, '#FFD700');
-                starGradient.addColorStop(0.5, '#FFA500');
-                starGradient.addColorStop(1, '#FF8C00');
-                ctx.fillStyle = starGradient;
-                ctx.fillText('⭐', 0, 0);
-            } else {
-                // Empty star
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = '#ddd';
-                ctx.fillText('☆', 0, 0);
-            }
-            
-            ctx.restore();
-        }
-        
-        // Reset shadow
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
-        
-        // Performance rank with animated badge
-        const rankConfig = {
-            'perfect': { color: '#FFD700', emoji: '🏆', text: 'PERFECT!', bgColor: 'rgba(255, 215, 0, 0.15)' },
-            'gold': { color: '#FFA500', emoji: '🥇', text: 'EXCELLENT!', bgColor: 'rgba(255, 165, 0, 0.15)' },
-            'silver': { color: '#C0C0C0', emoji: '🥈', text: 'GREAT!', bgColor: 'rgba(192, 192, 192, 0.15)' },
-            'bronze': { color: '#CD7F32', emoji: '🥉', text: 'GOOD!', bgColor: 'rgba(205, 127, 50, 0.15)' }
-        };
-        
-        const rank = this.summary.stars === 3 ? 'perfect' : 
-                     this.summary.stars === 2 ? 'gold' : 
-                     this.summary.stars === 1 ? 'silver' : 'bronze';
-        const rankInfo = rankConfig[rank];
-        
-        // Rank badge background
-        const badgeY = starsY + 65;
-        const badgeWidth = 200;
-        const badgeHeight = 40;
-        const badgeX = canvasWidth / 2 - badgeWidth / 2;
-        
-        ctx.fillStyle = rankInfo.bgColor;
-        ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY - 15, badgeWidth, badgeHeight, 20);
-        ctx.fill();
-        
-        ctx.strokeStyle = rankInfo.color;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // Rank text
-        ctx.fillStyle = rankInfo.color;
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = `${rankInfo.color}44`;
-        ctx.shadowBlur = 8;
-        ctx.fillText(`${rankInfo.emoji} ${rankInfo.text}`, canvasWidth / 2, badgeY + 10);
-        ctx.shadowBlur = 0;
-        
-        // Star Requirements Section - MOVED HIGHER AND MORE COMPACT
-        if (this.summary.starRequirements) {
-            const reqY = starsY + 100; // Moved up from statsStartY
-            const reqWidth = Math.min(panelWidth - 60, 380);
-            const reqX = centerX - reqWidth / 2;
-            
-            // Title
-            ctx.fillStyle = '#666';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('🎯 STAR REQUIREMENTS', centerX, reqY);
-            
-            // Requirements boxes - MORE COMPACT
-            const req = this.summary.starRequirements;
-            const coinsFor3 = Math.ceil(this.summary.totalCoins * req.threeStars.coins);
-            const coinsFor2 = Math.ceil(this.summary.totalCoins * req.twoStars.coins);
-            const coinsFor1 = Math.ceil(this.summary.totalCoins * req.oneStar.coins);
-            
-            const requirements = [
-                { stars: 3, time: req.threeStars.time, coins: coinsFor3, color: '#FFD700' },
-                { stars: 2, time: req.twoStars.time, coins: coinsFor2, color: '#C0C0C0' },
-                { stars: 1, time: req.oneStar.time, coins: coinsFor1, color: '#CD7F32' }
-            ];
-            
-            const reqBoxHeight = 28; // Reduced from 35
-            const reqBoxSpacing = 5; // Reduced from 8
-            
-            requirements.forEach((r, index) => {
-                const boxY = reqY + 12 + (reqBoxHeight + reqBoxSpacing) * index;
-                
-                // Box background
-                ctx.fillStyle = this.summary.stars >= r.stars ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.5)';
-                ctx.beginPath();
-                ctx.roundRect(reqX, boxY, reqWidth, reqBoxHeight, 6);
-                ctx.fill();
-                
-                // Border
-                ctx.strokeStyle = this.summary.stars >= r.stars ? '#22c55e' : 'rgba(0, 0, 0, 0.1)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Stars icon
-                ctx.fillStyle = r.color;
-                ctx.font = 'bold 14px Arial';
-                ctx.textAlign = 'left';
-                ctx.fillText('⭐'.repeat(r.stars), reqX + 8, boxY + 19);
-                
-                // Requirements text - MORE COMPACT
-                ctx.fillStyle = '#555';
-                ctx.font = '11px Arial';
-                const coinsPercent = (req[r.stars === 3 ? 'threeStars' : r.stars === 2 ? 'twoStars' : 'oneStar'].coins * 100).toFixed(0);
-                ctx.fillText(`Time ≤${r.time}s  |  Coins ≥${r.coins} (${coinsPercent}%)`, reqX + 70, boxY + 19);
-                
-                // Checkmark if achieved
-                if (this.summary.stars >= r.stars) {
-                    ctx.fillStyle = '#22c55e';
-                    ctx.font = 'bold 16px Arial';
-                    ctx.textAlign = 'right';
-                    ctx.fillText('✓', reqX + reqWidth - 10, boxY + 20);
-                }
-            });
-        }
-        
-        // Stats section with modern card design
-        const statsStartY = panelY + 300;
-        const statsX = panelX + 30;
-        const statCardWidth = (panelWidth - 80) / 2;
-        const statCardHeight = 85;
-        const statSpacing = 20;
-        
-        const stats = [
-            { icon: '⭐', label: 'Stars', value: `${this.summary.stars}/3`, color: '#FFD700', bgColor: 'rgba(255, 215, 0, 0.15)' },
-            { icon: '⏱️', label: 'Time', value: `${this.summary.time.toFixed(1)}s`, color: '#667eea', bgColor: 'rgba(102, 126, 234, 0.1)' },
-            { icon: '🪙', label: 'Coins', value: `${this.summary.coinsCollected}/${this.summary.totalCoins}`, color: '#FFA500', bgColor: 'rgba(255, 165, 0, 0.1)' },
-            { icon: '👾', label: 'Enemies', value: `${this.summary.enemiesKilled}/${this.summary.totalEnemies}`, color: '#dc2626', bgColor: 'rgba(220, 38, 38, 0.1)' }
-        ];
-        
-        stats.forEach((stat, index) => {
-            const row = Math.floor(index / 2);
-            const col = index % 2;
-            const cardX = statsX + col * (statCardWidth + statSpacing);
-            const cardY = statsStartY + row * (statCardHeight + statSpacing);
-            
-            // Card background with gradient
-            const cardGradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + statCardHeight);
-            cardGradient.addColorStop(0, '#ffffff');
-            cardGradient.addColorStop(1, '#fafafa');
-            ctx.fillStyle = cardGradient;
-            ctx.beginPath();
-            ctx.roundRect(cardX, cardY, statCardWidth, statCardHeight, 16);
-            ctx.fill();
-            
-            // Card colored accent bar at top
-            ctx.fillStyle = stat.color;
-            ctx.beginPath();
-            ctx.roundRect(cardX, cardY, statCardWidth, 4, [16, 16, 0, 0]);
-            ctx.fill();
-            
-            // Card border with subtle shadow
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.08)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.roundRect(cardX, cardY, statCardWidth, statCardHeight, 16);
-            ctx.stroke();
-            
-            // Icon circle with colored background
-            const iconSize = 36;
-            const iconX = cardX + 18;
-            const iconY = cardY + statCardHeight / 2;
-            
-            ctx.fillStyle = stat.bgColor;
-            ctx.beginPath();
-            ctx.arc(iconX + iconSize/2, iconY, iconSize/2, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Icon
-            ctx.font = '24px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(stat.icon, iconX + iconSize/2, iconY + 8);
-            
-            // Label and value
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#888';
-            ctx.font = 'bold 11px Arial';
-            ctx.fillText(stat.label.toUpperCase(), cardX + iconSize + 28, cardY + 30);
-            
-            ctx.fillStyle = stat.color;
-            ctx.font = 'bold 22px Arial';
-            ctx.fillText(stat.value, cardX + iconSize + 28, cardY + 58);
-        });
-        
-        // Update button positions with current canvas dimensions
-        this.updateButtonPositions(canvasWidth, canvasHeight);
-
-        // Buttons with enhanced design
-        const buttonsStartY = panelY + panelHeight - 150;
-        
-        for (const key in this.buttons) {
-            const btn = this.buttons[key];
-            if (!btn) continue;
-            
-            const isHovered = this.selectedButton === key;
-            const color = isHovered ? btn.hoverColor : btn.color;
-            
-            // Button outer glow on hover
-            if (isHovered) {
-                ctx.shadowColor = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, 0.5)`;
-                ctx.shadowBlur = 25;
-                ctx.shadowOffsetY = 0;
-            }
-            
-            // Button gradient with depth
-            const btnGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height);
-            const lightColor = `rgba(${color[0] * 255}, ${color[1] * 255}, ${color[2] * 255}, ${color[3]})`;
-            const darkColor = `rgba(${color[0] * 220}, ${color[1] * 220}, ${color[2] * 220}, ${color[3]})`;
-            btnGradient.addColorStop(0, lightColor);
-            btnGradient.addColorStop(1, darkColor);
-            
-            ctx.fillStyle = btnGradient;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 25);
-            ctx.fill();
-            
-            // Inner highlight
-            const highlightGradient = ctx.createLinearGradient(btn.x, btn.y, btn.x, btn.y + btn.height / 3);
-            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = highlightGradient;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height / 3, [25, 25, 0, 0]);
-            ctx.fill();
-            
-            // Button border
-            ctx.strokeStyle = `rgba(${color[0] * 200}, ${color[1] * 200}, ${color[2] * 200}, 0.5)`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(btn.x, btn.y, btn.width, btn.height, 25);
-            ctx.stroke();
-            
-            // Button text with enhanced shadow
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetY = 2;
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 18px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(btn.label, btn.x + btn.width / 2, btn.y + btn.height / 2 + 6);
-            
-            // Reset shadow
-            ctx.shadowColor = 'transparent';
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetY = 0;
-        }
-        
-        // Confetti particles with glow
-        this.confettiParticles.forEach(particle => {
-            ctx.save();
-            ctx.translate(particle.x, particle.y);
-            ctx.rotate(particle.rotation || 0);
-            ctx.globalAlpha = particle.life;
-            
-            // Glow effect
-            ctx.shadowColor = `rgba(${particle.color[0] * 255}, ${particle.color[1] * 255}, ${particle.color[2] * 255}, 0.6)`;
-            ctx.shadowBlur = 10;
-            
-            ctx.fillStyle = `rgba(${particle.color[0] * 255}, ${particle.color[1] * 255}, ${particle.color[2] * 255}, ${particle.color[3]})`;
-            ctx.fillRect(-5, -5, 10, 10);
-            ctx.restore();
-        });
-        
-        // Sparkle particles
-        this.sparkleParticles.forEach(particle => {
-            ctx.save();
-            ctx.translate(particle.x, particle.y);
-            ctx.globalAlpha = particle.life;
-            ctx.scale(particle.scale, particle.scale);
-            
-            ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
-            ctx.shadowBlur = 8;
-            
-            ctx.fillStyle = `rgba(${particle.color[0] * 255}, ${particle.color[1] * 255}, ${particle.color[2] * 255}, ${particle.color[3]})`;
-            ctx.beginPath();
-            ctx.arc(0, 0, 3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        });
     }
-    
+
+    drawPanelBorder(ctx, panelX, panelY, panelWidth, panelHeight) {
+        const borderGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + panelHeight);
+        borderGradient.addColorStop(0, 'rgba(102, 126, 234, 0.4)');
+        borderGradient.addColorStop(0.5, 'rgba(118, 75, 162, 0.4)');
+        borderGradient.addColorStop(1, 'rgba(102, 126, 234, 0.4)');
+        ctx.strokeStyle = borderGradient;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 30);
+        ctx.stroke();
+
+        // Decorative top bar
+        const topBarGradient = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY + 80);
+        topBarGradient.addColorStop(0, 'rgba(102, 126, 234, 0.25)');
+        topBarGradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
+        ctx.fillStyle = topBarGradient;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, 80, [30, 30, 0, 0]);
+        ctx.fill();
+    }
+
+    calculatePanelDimensions(canvasWidth, canvasHeight, ctx) {
+        const panelWidth = Math.min(420, canvasWidth * 0.85);
+        const panelHeight = canvasHeight * 0.85;
+        const panelX = (canvasWidth - panelWidth) / 2;
+        const panelY = (canvasHeight - panelHeight) / 2;
+
+        // Outer glow
+        ctx.shadowColor = 'rgba(102, 126, 234, 0.6)';
+        ctx.shadowBlur = 40;
+        ctx.fillStyle = 'rgba(102, 126, 234, 0.2)';
+        ctx.beginPath();
+        ctx.roundRect(panelX - 5, panelY - 5, panelWidth + 10, panelHeight + 10, 30);
+        ctx.fill();
+
+        // Panel gradient background
+        const panelGradient = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelHeight);
+        panelGradient.addColorStop(0, '#ffffff');
+        panelGradient.addColorStop(1, '#f0f8ff');
+        ctx.fillStyle = panelGradient;
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 30);
+        ctx.fill();
+        return { panelX, panelY, panelWidth, panelHeight };
+    }
+
+    applyDarkOverlay(ctx, canvasWidth, canvasHeight) {
+        const gradient = ctx.createRadialGradient(canvasWidth / 2, canvasHeight / 2, 0, canvasWidth / 2, canvasHeight / 2, canvasWidth);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.75)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.85)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    }
+
     /**
      * Render con WebGL (sarà chiamato dal rendering system)
      */

@@ -5,7 +5,6 @@ import { BaseCollectible } from './BaseCollectible.js';
 
 export class PowerupCollectible extends BaseCollectible {
     renderVisual(entity, context) {
-        const { time } = context;
         const radius = entity.radius || 20;
         const rotationPulse = Math.sin((entity.rotationAngle || 0) * 2) * 0.3 + 1;
         const bigPulse = Math.abs(Math.sin((entity.rotationAngle || 0) * 3)) * 0.5 + 0.5;

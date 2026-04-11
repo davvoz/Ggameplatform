@@ -48,12 +48,10 @@ export class EntityManager {
         }
         
         // Limit particle count for performance
-        if (type === 'powerupParticles' && collection.length >= this.MAX_POWERUP_PARTICLES) {
-            collection.shift(); // Remove oldest particle
-        } else if (type === 'boostParticles' && collection.length >= this.MAX_BOOST_PARTICLES) {
-            collection.shift(); // Remove oldest particle
-        } else if (type === 'floatingTexts' && collection.length >= this.MAX_FLOATING_TEXTS) {
-            collection.shift(); // Remove oldest text
+        if ((type === 'powerupParticles' && collection.length >= this.MAX_POWERUP_PARTICLES) ||
+            (type === 'boostParticles' && collection.length >= this.MAX_BOOST_PARTICLES) ||
+            (type === 'floatingTexts' && collection.length >= this.MAX_FLOATING_TEXTS)) {
+            collection.shift(); // Remove oldest particle or text
         }
         
         collection.push(entity);
@@ -213,36 +211,7 @@ export class EntityManager {
      */
     updatePlatform(platform, deltaTime, cameraSpeed) {
         // Handle rotating platforms PRIMA - hanno il loro movimento speciale
-        if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
-            // Inizializza centro di rotazione al primo frame DI ROTAZIONE
-            if (platform.isRotating && !platform.rotationCenterX) {
-                platform.rotationCenterX = platform.x + platform.width / 2;
-                platform.rotationCenterY = platform.y;
-                platform.rotationRadius = 30; // Raggio ridotto per orbita più piccola
-            }
-            
-            if (platform.isRotating) {
-                // Ruota l'angolo continuamente
-                const rotSpeed = platform.rotationSpeed || 1;
-                platform.rotationAngle = (platform.rotationAngle || 0) + rotSpeed * deltaTime;
-                
-                // Muovi il centro con la velocity della piattaforma MENO la camera
-                const totalVelocity = platform.velocity - cameraSpeed;
-                platform.rotationCenterX += totalVelocity * deltaTime;
-                
-                // Calcola nuova posizione orbitale attorno al centro
-                platform.x = platform.rotationCenterX + Math.cos(platform.rotationAngle) * platform.rotationRadius - platform.width / 2;
-                platform.y = platform.rotationCenterY + Math.sin(platform.rotationAngle) * platform.rotationRadius;
-            } else {
-                // Movimento normale quando non sta ruotando
-                const totalVelocity = platform.velocity - cameraSpeed;
-                platform.x += totalVelocity * deltaTime;
-            }
-        } else {
-            // Movimento normale per tutte le altre piattaforme
-            const totalVelocity = platform.velocity - cameraSpeed;
-            platform.x += totalVelocity * deltaTime;
-        }
+        this.updateRotatingPlatform(platform, deltaTime, cameraSpeed);
 
         // Handle crumbling platforms
         if (platform.isCrumbling) {
@@ -256,7 +225,7 @@ export class EntityManager {
         if (platform.platformType === 'DISSOLVING' || platform.platformType === 'dissolving') {
             if (platform.isDissolving) {
                 platform.dissolveTimer = (platform.dissolveTimer || 0) + deltaTime;
-                platform.dissolveAlpha = Math.max(0, 1.0 - (platform.dissolveTimer / platform.dissolveDuration));
+                platform.dissolveAlpha = Math.max(0, 1 - (platform.dissolveTimer / platform.dissolveDuration));
                 
                 if (platform.dissolveTimer >= platform.dissolveDuration) {
                     return false; // Remove dissolved platform
@@ -265,27 +234,10 @@ export class EntityManager {
         }
 
         // Handle bouncing platforms
-        if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
-            if (platform.isBouncing) {
-                platform.bounceSpeed = (platform.bounceSpeed || 0) + deltaTime * 8;
-                platform.bounceOffset = Math.sin(platform.bounceSpeed) * platform.bounceAmplitude;
-            } else {
-                // Decelera quando il player non è sopra
-                if (platform.bounceOffset && Math.abs(platform.bounceOffset) > 0.5) {
-                    platform.bounceOffset *= 0.95;
-                }
-            }
-        }
+        this.updateBouncingPlatform(platform, deltaTime);
 
         // Handle spring animation
-        if (platform.platformType === 'SPRING') {
-            platform.springAnimationTime += deltaTime;
-            
-            // Decay compression over time
-            if (platform.springCompression > 0) {
-                platform.springCompression = Math.max(0, platform.springCompression - deltaTime * 3);
-            }
-        }
+        this.updateSpringAnimation(platform, deltaTime);
 
         // Handle icy platform shimmer effect
         if (platform.platformType === 'ICY') {
@@ -294,6 +246,62 @@ export class EntityManager {
 
         // Check if platform exited screen
         return platform.x + platform.width > -100;
+    }
+
+    updateSpringAnimation(platform, deltaTime) {
+        if (platform.platformType === 'SPRING') {
+            platform.springAnimationTime += deltaTime;
+
+            // Decay compression over time
+            if (platform.springCompression > 0) {
+                platform.springCompression = Math.max(0, platform.springCompression - deltaTime * 3);
+            }
+        }
+    }
+
+    updateBouncingPlatform(platform, deltaTime) {
+        if (platform.platformType === 'BOUNCING' || platform.platformType === 'bouncing') {
+            if (platform.isBouncing) {
+                platform.bounceSpeed = (platform.bounceSpeed || 0) + deltaTime * 8;
+                platform.bounceOffset = Math.sin(platform.bounceSpeed) * platform.bounceAmplitude;
+            } else if (platform.bounceOffset && Math.abs(platform.bounceOffset) > 0.5) {
+                // Decelera quando il player non è sopra
+                platform.bounceOffset *= 0.95;
+            }
+        }
+    }
+
+    updateRotatingPlatform(platform, deltaTime, cameraSpeed) {
+        if (platform.platformType === 'ROTATING' || platform.platformType === 'rotating') {
+            // Inizializza centro di rotazione al primo frame DI ROTAZIONE
+            if (platform.isRotating && !platform.rotationCenterX) {
+                platform.rotationCenterX = platform.x + platform.width / 2;
+                platform.rotationCenterY = platform.y;
+                platform.rotationRadius = 30; // Raggio ridotto per orbita più piccola
+            }
+
+            if (platform.isRotating) {
+                // Ruota l'angolo continuamente
+                const rotSpeed = platform.rotationSpeed || 1;
+                platform.rotationAngle = (platform.rotationAngle || 0) + rotSpeed * deltaTime;
+
+                // Muovi il centro con la velocity della piattaforma MENO la camera
+                const totalVelocity = platform.velocity - cameraSpeed;
+                platform.rotationCenterX += totalVelocity * deltaTime;
+
+                // Calcola nuova posizione orbitale attorno al centro
+                platform.x = platform.rotationCenterX + Math.cos(platform.rotationAngle) * platform.rotationRadius - platform.width / 2;
+                platform.y = platform.rotationCenterY + Math.sin(platform.rotationAngle) * platform.rotationRadius;
+            } else {
+                // Movimento normale quando non sta ruotando
+                const totalVelocity = platform.velocity - cameraSpeed;
+                platform.x += totalVelocity * deltaTime;
+            }
+        } else {
+            // Movimento normale per tutte le altre piattaforme
+            const totalVelocity = platform.velocity - cameraSpeed;
+            platform.x += totalVelocity * deltaTime;
+        }
     }
 
     /**
@@ -309,51 +317,73 @@ export class EntityManager {
      * Update collectible with magnet effect
      */
     updateCollectible(collectible, deltaTime, cameraSpeed, player) {
-        // Coin rain collectibles fall down with gravity
         if (collectible.fromCoinRain) {
-            // Initialize velocityY if not present
-            if (collectible.velocityY === undefined) {
-                collectible.velocityY = 200;
-            }
-            
-            // Apply gravity
-            collectible.velocityY += 400 * deltaTime; // Gravity acceleration
-            collectible.y += collectible.velocityY * deltaTime;
-            
-            // Slight horizontal drift
-            if (collectible.drift === undefined) {
-                collectible.drift = (Math.random() - 0.5) * 30;
-            }
-            collectible.x += collectible.drift * deltaTime;
-            collectible.pulsePhase += deltaTime * 2;
+            this.updateCoinRainCollectible(collectible, deltaTime);
         } else {
-            // Normal collectibles move with camera
-            const totalVelocity = collectible.velocity - cameraSpeed;
-            collectible.x += totalVelocity * deltaTime;
+            this.updateNormalCollectible(collectible, deltaTime, cameraSpeed);
         }
 
-        // Magnet effect - attracts toward player (works for both types)
-        if (collectible.magnetized) {
-            collectible.magnetDuration -= deltaTime;
-            if (collectible.magnetDuration <= 0) {
-                collectible.magnetized = false;
-            } else {
-                const dx = player.x - collectible.x;
-                const dy = (player.y + player.height / 2) - collectible.y;
-                const dist = Math.hypot(dx, dy);
-                if (dist > 5) {
-                    // Faster magnet during turbo to compensate for increased speed
-                    const magnetSpeed = player.isTurboActive ? 1200 : 400;
-                    collectible.x += (dx / dist) * magnetSpeed * deltaTime;
-                    collectible.y += (dy / dist) * magnetSpeed * deltaTime;
-                }
-            }
-        }
+        this.applyMagnetEffect(collectible, deltaTime, player);
 
         // Remove if off screen (left side or too far down)
         const offScreenLeft = collectible.x + collectible.radius < -50;
         const offScreenBottom = collectible.y > 1200;
         return !offScreenLeft && !offScreenBottom;
+    }
+
+    /**
+     * Update coin rain collectible with gravity
+     */
+    updateCoinRainCollectible(collectible, deltaTime) {
+        // Initialize velocityY if not present
+        if (collectible.velocityY === undefined) {
+            collectible.velocityY = 200;
+        }
+        
+        // Apply gravity
+        collectible.velocityY += 400 * deltaTime; // Gravity acceleration
+        collectible.y += collectible.velocityY * deltaTime;
+        
+        // Slight horizontal drift
+        if (collectible.drift === undefined) {
+            collectible.drift = (Math.random() - 0.5) * 30;
+        }
+        collectible.x += collectible.drift * deltaTime;
+        collectible.pulsePhase += deltaTime * 2;
+    }
+
+    /**
+     * Update normal collectible movement
+     */
+    updateNormalCollectible(collectible, deltaTime, cameraSpeed) {
+        const totalVelocity = collectible.velocity - cameraSpeed;
+        collectible.x += totalVelocity * deltaTime;
+    }
+
+    /**
+     * Apply magnet effect to collectible
+     */
+    applyMagnetEffect(collectible, deltaTime, player) {
+        if (!collectible.magnetized) {
+            return;
+        }
+
+        collectible.magnetDuration -= deltaTime;
+        if (collectible.magnetDuration <= 0) {
+            collectible.magnetized = false;
+            return;
+        }
+
+        const dx = player.x - collectible.x;
+        const dy = (player.y + player.height / 2) - collectible.y;
+        const dist = Math.hypot(dx, dy);
+        
+        if (dist > 5) {
+            // Faster magnet during turbo to compensate for increased speed
+            const magnetSpeed = player.isTurboActive ? 1200 : 400;
+            collectible.x += (dx / dist) * magnetSpeed * deltaTime;
+            collectible.y += (dy / dist) * magnetSpeed * deltaTime;
+        }
     }
 
     /**

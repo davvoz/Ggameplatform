@@ -48,7 +48,6 @@ export const UI_LAYOUT = {
  * Usa valori proporzionali per garantire uniformità tra mobile e desktop
  */
 export function calculateUIPositions(canvasWidth, canvasHeight) {
-    const isMobile = canvasWidth < 600;
     
     // Calcola dimensioni proporzionali basate sulla larghezza del canvas
     const buttonRadius = Math.round(canvasWidth * UI_LAYOUT.BUTTONS.RADIUS_RATIO);

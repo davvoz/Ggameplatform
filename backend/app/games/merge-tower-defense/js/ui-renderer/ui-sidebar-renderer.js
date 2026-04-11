@@ -138,7 +138,7 @@ export class SidebarRenderer {
             const centerY = button.y + button.height / 2;
 
             if (button.type === 'ability') {
-                this.renderAbilityButtonStyled(ctx, button, abilities, now, time, cornerRadius, centerX, centerY);
+                this.renderAbilityButtonStyled(ctx, button, { abilities, now, time, cornerRadius, centerX, centerY });
             } else if (button.type === 'shop') {
                 this.renderShopItemButtonStyled(ctx, button, gameState, time, cornerRadius, centerX, centerY);
             }
@@ -177,12 +177,12 @@ export class SidebarRenderer {
 
             // Container background with glow
             ctx.save();
-            if (!isLowTime) {
-                ctx.shadowColor = boostColor;
-                ctx.shadowBlur = 8 + Math.sin(time * 3) * 3;
-            } else {
+            if (isLowTime) {
                 ctx.shadowColor = '#ff0000';
                 ctx.shadowBlur = 10 + Math.sin(time * 10) * 5;
+            } else {
+                ctx.shadowColor = boostColor;
+                ctx.shadowBlur = 8 + Math.sin(time * 3) * 3;
             }
             ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
             Utils.drawRoundRect(ctx, barX, barY, barWidth, barHeight, 8);
@@ -260,7 +260,8 @@ export class SidebarRenderer {
     // Ability button rendering
     // -------------------------------------------------------------------------
 
-    renderAbilityButtonStyled(ctx, button, abilities, now, time, cornerRadius, centerX, centerY) {
+    renderAbilityButtonStyled(ctx, button, options) {
+        const { abilities, now, time, cornerRadius, centerX, centerY } = options;
         const ability = button.data;
         const abilityState = abilities[button.id] || { level: 1, lastUsed: 0, uses: 0 };
         const level = abilityState.level;
@@ -350,9 +351,9 @@ export class SidebarRenderer {
 
         // Draw custom ability icon sprite
         ctx.save();
-        ctx.globalAlpha = isReady ? 1.0 : 0.4;
+        ctx.globalAlpha = isReady ? 1 : 0.4;
         const iconSize = button.width * 0.55;
-        this.drawAbilitySprite(ctx, button.id, centerX, centerY - 3, iconSize, ability.color, isReady, time);
+        this.drawAbilitySprite(ctx, button.id, centerX, centerY - 3, iconSize, { color: ability.color, isReady, time });
         ctx.restore();
 
         // Level badge with glow
@@ -380,11 +381,12 @@ export class SidebarRenderer {
         ctx.restore();
     }
 
-    drawAbilitySprite(ctx, abilityId, x, y, size, color, isReady, time) {
+    drawAbilitySprite(ctx, abilityId, x, y, size, options) {
         ctx.save();
         ctx.translate(x, y);
 
         const s = size / 2;
+        const { color, isReady, time } = options;
 
         switch (abilityId) {
             case 'BOMB':
@@ -524,9 +526,9 @@ export class SidebarRenderer {
         this.renderButtonBorderWithGlow(ctx, isActive, canAfford, item, button, cornerRadius);
 
         ctx.save();
-        ctx.globalAlpha = isDisabled && !isActive ? 0.35 : 1.0;
+        ctx.globalAlpha = isDisabled && !isActive ? 0.35 : 1;
         const iconSize = button.width * 0.5;
-        this.drawShopItemSprite(ctx, button.id, centerX, centerY - 4, iconSize, item.color, canAfford, isActive, time);
+        this.drawShopItemSprite(ctx, button.id, centerX, centerY - 4, iconSize, { color: item.color, canAfford, isActive, time });
         ctx.restore();
 
         this.renderShopItemCostOrLabel(ctx, button, isActive, centerX, canAfford, item);
@@ -538,7 +540,8 @@ export class SidebarRenderer {
             ctx.shadowColor = item.color;
             ctx.shadowBlur = isActive ? 8 : 3;
         }
-        ctx.strokeStyle = isActive ? item.color : (canAfford ? Utils.colorWithAlpha(item.color, 0.7) : 'rgba(60, 60, 80, 0.5)');
+        const borderColor = canAfford ? Utils.colorWithAlpha(item.color, 0.7) : 'rgba(60, 60, 80, 0.5)';
+        ctx.strokeStyle = isActive ? item.color : borderColor;
         ctx.lineWidth = isActive ? 2.5 : 1.5;
         Utils.drawRoundRect(ctx, button.x, button.y, button.width, button.height, cornerRadius);
         ctx.stroke();
@@ -597,11 +600,12 @@ export class SidebarRenderer {
         return bgGradient;
     }
 
-    drawShopItemSprite(ctx, itemId, x, y, size, color, canAfford, isActive, time) {
+    drawShopItemSprite(ctx, itemId, x, y, size, options) {
         ctx.save();
         ctx.translate(x, y);
 
         const s = size / 2;
+        const { color, canAfford, isActive, time } = options;
 
         switch (itemId) {
             case 'ENERGY_SMALL':
@@ -661,7 +665,7 @@ export class SidebarRenderer {
         ctx.lineTo(-s * 0.15, s * 0.05);
         ctx.closePath();
         ctx.fill();
-        ctx.fillRect(-s * 0.06, s * 0.0, s * 0.12, s * 0.15);
+        ctx.fillRect(-s * 0.06, s * 0, s * 0.12, s * 0.15);
 
         if (canAfford) {
             ctx.fillStyle = '#ffffff';
@@ -738,7 +742,15 @@ export class SidebarRenderer {
 
         for (let i = 0; i < 3; i++) {
             const waveOffset = isActive ? Math.sin(time * 4 + i) * 2 : 0;
-            ctx.globalAlpha = isActive ? 0.4 + i * 0.2 : (canAfford ? 0.5 + i * 0.15 : 0.3);
+            let alpha;
+            if (isActive) {
+                alpha = 0.4 + i * 0.2;
+            } else if (canAfford) {
+                alpha = 0.5 + i * 0.15;
+            } else {
+                alpha = 0.3;
+            }
+            ctx.globalAlpha = alpha;
             ctx.beginPath();
             ctx.arc(-s * 0.2 + waveOffset, 0, s * 0.3 + i * s * 0.25, -Math.PI * 0.4, Math.PI * 0.4);
             ctx.stroke();
@@ -763,7 +775,7 @@ export class SidebarRenderer {
     drawEnergyLarge(ctx, canAfford, s) {
         ctx.fillStyle = canAfford ? '#00ff88' : '#446655';
 
-        ctx.fillRect(-s * 0.4, -s * 0.5, s * 0.8, s * 1.0);
+        ctx.fillRect(-s * 0.4, -s * 0.5, s * 0.8, s * 1);
         ctx.fillRect(-s * 0.15, -s * 0.7, s * 0.3, s * 0.2);
 
         ctx.fillStyle = canAfford ? '#88ffaa' : '#557766';
@@ -880,7 +892,7 @@ export class SidebarRenderer {
             ctx.font = `${button.width * 0.5}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.globalAlpha = isReady ? 1.0 : 0.5;
+            ctx.globalAlpha = isReady ? 1 : 0.5;
             ctx.fillText(ability.icon, centerX, centerY - 5);
             ctx.restore();
 
@@ -935,7 +947,7 @@ export class SidebarRenderer {
     /** Check if an ability button was clicked (legacy — uses sidebar) */
     getClickedAbilityButton(screenPos) {
         const clicked = this.getClickedSidebarButton(screenPos);
-        if (clicked && clicked.type === 'ability') {
+        if (clicked?.type === 'ability') {
             return { id: clicked.id, ability: clicked.data };
         }
         return null;

@@ -28,7 +28,7 @@ export class RendererFactory {
         this.labelRenderer = labelRenderer;
         
         // Inject into all existing renderers that support it
-        for (const [key, renderer] of this.renderers.entries()) {
+        for (const [ renderer] of this.renderers.entries()) {
             if (renderer && typeof renderer.setLabelRenderer === 'function') {
                 renderer.setLabelRenderer(labelRenderer);
             }
@@ -113,7 +113,7 @@ export class RendererFactory {
             return this.renderers.get(entity);
         }
         
-        if (!entity || !entity.type) {
+        if (!entity?.type) {
 
             return null;
         }

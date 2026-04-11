@@ -19,7 +19,7 @@ export class GameCommand extends ICommand {
     }
 
     canExecute(context) {
-        return context.stateMachine && context.stateMachine.isPlaying();
+        return context.stateMachine?.isPlaying() ?? false;
     }
 }
 
@@ -87,7 +87,7 @@ export class ActivateTurboCommand extends GameCommand {
     }
     
     canExecute(context) {
-        return context.player && context.stateMachine && context.stateMachine.isPlaying();
+        return context.player && context.stateMachine?.isPlaying();
     }
 }
 
@@ -116,7 +116,7 @@ export class ActivateFlightCommand extends GameCommand {
     }
     
     canExecute(context) {
-        return context.player && context.stateMachine && context.stateMachine.isPlaying();
+        return context.player && context.stateMachine?.isPlaying();
     }
 }
 
@@ -167,7 +167,7 @@ export class PauseGameCommand extends ICommand {
     }
 
     canExecute(context) {
-        return context.stateMachine && context.stateMachine.isPlaying();
+        return context.stateMachine?.isPlaying() ?? false;
     }
 }
 
@@ -180,7 +180,7 @@ export class ResumeGameCommand extends ICommand {
     }
 
     canExecute(context) {
-        return context.stateMachine && context.stateMachine.isPaused();
+        return context.stateMachine?.isPaused() ?? false;
     }
 }
 

@@ -103,7 +103,7 @@ export class Enemy {
         if (this.pattern === 'charge') {
             this.chargeSpeed = config.chargeSpeed || 300;
             this.chargeDetectRange = config.chargeDetectRange || 200;
-            this.chargeCooldown = config.chargeCooldown || 2.0;
+            this.chargeCooldown = config.chargeCooldown || 2;
             this.chargeTimer = 0;
             this.isCharging = false;
         }
@@ -140,20 +140,20 @@ export class Enemy {
 
         if (this.pattern === 'dive_bomb') {
             this.diveSpeed = config.diveSpeed || 400;
-            this.diveCooldown = config.diveCooldown || 4.0;
+            this.diveCooldown = config.diveCooldown || 4;
             this.diveTimer = 0;
             this.isDiving = false;
         }
 
         // Pattern speciali
         if (this.pattern === 'teleport') {
-            this.teleportInterval = config.teleportInterval || 3.0;
+            this.teleportInterval = config.teleportInterval || 3;
             this.teleportRange = config.teleportRange || 150;
             this.teleportTimer = 0;
         }
 
         if (this.pattern === 'spawn') {
-            this.spawnInterval = config.spawnInterval || 5.0;
+            this.spawnInterval = config.spawnInterval || 5;
             this.maxSpawns = config.maxSpawns || 3;
             this.spawnType = config.spawnType || 'slug';
             this.spawnTimer = 0;
@@ -517,7 +517,7 @@ export class Enemy {
                 radius: 8,
                 damage: this.damage,
                 color: this.color,
-                lifetime: 3.0,
+                lifetime: 3,
                 age: 0
             });
         }

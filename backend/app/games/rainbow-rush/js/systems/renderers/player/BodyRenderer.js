@@ -66,6 +66,18 @@ export class BodyRenderer {
         this.renderer.drawRect(rectX - 2 * finalScaleX, rectY - 2 * finalScaleY, sizeX + 4 * finalScaleX, sizeY + 4 * finalScaleY, borderColor);
 
         // Corpo - con gradiente dissoluzione se turbo
+        this.renderBodyGradient(squashStretch, sizeX, rectX, bodyColor, rectY, sizeY);
+
+        // Highlight (adattato)
+        const highlightColor = [1, 1, 1, 0.7];
+        this.renderer.drawCircle(x - sizeX * 0.2, finalY - sizeY * 0.2, Math.min(sizeX, sizeY) * 0.25, highlightColor);
+
+        if (rotation !== 0 && this.textCtx) {
+            this.textCtx.restore();
+        }
+    }
+
+    renderBodyGradient(squashStretch, sizeX, rectX, bodyColor, rectY, sizeY) {
         if (squashStretch.bodyGradient && this.textCtx) {
             // Effetto bolide: NON usare canvas 2D, usa WebGL con multiple draw per simulare gradiente
             // Dividi il corpo in segmenti che vanno da trasparente (dietro) a solido (davanti)
@@ -73,10 +85,10 @@ export class BodyRenderer {
             for (let i = 0; i < segments; i++) {
                 const segmentWidth = sizeX / segments;
                 const segmentX = rectX + (i * segmentWidth);
-                
-                // Alpha da 0.3 (dietro) a 1.0 (davanti)
+
+                // Alpha da 0.3 (dietro) a 1 (davanti)
                 const alpha = 0.3 + (i / segments) * 0.7;
-                
+
                 // Colore che sfuma da arancione/rosso (dietro) a colore player (davanti)
                 let segmentColor;
                 if (i < segments * 0.3) {
@@ -93,25 +105,16 @@ export class BodyRenderer {
                     segmentColor = [...bodyColor];
                     segmentColor[3] = alpha;
                 }
-                
+
                 this.renderer.drawRect(segmentX, rectY, segmentWidth, sizeY, segmentColor);
             }
         } else {
             // Rendering normale
             this.renderer.drawRect(rectX, rectY, sizeX, sizeY, bodyColor);
         }
-
-        // Highlight (adattato)
-        const highlightColor = [1, 1, 1, 0.7];
-        this.renderer.drawCircle(x - sizeX * 0.2, finalY - sizeY * 0.2, Math.min(sizeX, sizeY) * 0.25, highlightColor);
-
-        if (rotation !== 0 && this.textCtx) {
-            this.textCtx.restore();
-        }
     }
 
     drawMotionBlur(player, x, y, radius, squashStretch, motionBlur) {
-        const ctx = this.textCtx;
         const trailCount = 3;
         const direction = motionBlur.direction;
         const strength = motionBlur.strength;

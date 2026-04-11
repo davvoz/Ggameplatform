@@ -3,32 +3,31 @@
  * Follows Single Responsibility and Interface Segregation
  */
 export class AudioManager {
-    constructor() {
-        this.audioContext = null;
-        this.sounds = new Map();
-        this.masterVolume = 0.5;
-        this.initialized = false;
-        this.enabled = true;
-        this.backgroundMusic = null;
-        this.backgroundMusicGain = null;
-        this.musicVolume = 0.3;
-        this.musicPlaying = false;
-    }
+    audioContext = null;
+    sounds = new Map();
+    masterVolume = 0.5;
+    initialized = false;
+    enabled = true;
+    backgroundMusic = null;
+    backgroundMusicGain = null;
+    musicVolume = 0.3;
+    musicPlaying = false;
+
 
     async initialize() {
         if (this.initialized) return;
-        
+
         try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.audioContext = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
             this.generateSounds();
             await this.loadBackgroundMusic();
             this.initialized = true;
         } catch (error) {
-
+            console.warn('AudioManager initialization failed:', error);
             this.enabled = false;
         }
     }
-    
+
     async loadBackgroundMusic() {
         try {
             const response = await fetch('./assets/background_music.mp3');
@@ -36,36 +35,36 @@ export class AudioManager {
             this.backgroundMusic = await this.audioContext.decodeAudioData(arrayBuffer);
 
         } catch (error) {
-
+            console.warn('Failed to load background music:', error);
         }
     }
-    
+
     playBackgroundMusic() {
         if (!this.enabled || !this.audioContext || !this.backgroundMusic || this.musicPlaying) return;
-        
+
         try {
             // Create gain node for volume control
             this.backgroundMusicGain = this.audioContext.createGain();
             this.backgroundMusicGain.gain.value = this.musicVolume;
             this.backgroundMusicGain.connect(this.audioContext.destination);
-            
+
             // Create and configure source
             const source = this.audioContext.createBufferSource();
             source.buffer = this.backgroundMusic;
             source.loop = true;
             source.connect(this.backgroundMusicGain);
-            
+
             // Store reference for stopping
             this.musicSource = source;
-            
+
             source.start(0);
             this.musicPlaying = true;
 
         } catch (error) {
-
+            console.warn('Failed to play background music:', error);
         }
     }
-    
+
     stopBackgroundMusic() {
         if (this.musicSource && this.musicPlaying) {
             try {
@@ -73,11 +72,11 @@ export class AudioManager {
                 this.musicPlaying = false;
 
             } catch (error) {
-
+                console.warn('Failed to stop background music:', error);
             }
         }
     }
-    
+
     setMusicVolume(volume) {
         this.musicVolume = Math.max(0, Math.min(1, volume));
         if (this.backgroundMusicGain) {
@@ -100,7 +99,7 @@ export class AudioManager {
         this.sounds.set('brake', this.createBrakeSound.bind(this));
         this.sounds.set('turbo', this.createTurboSound.bind(this));
         this.sounds.set('flight', this.createFlightActivateSound.bind(this));
-        
+
         // Gamification sounds
         this.sounds.set('perfect_land', this.createPerfectLandSound.bind(this));
         this.sounds.set('streak', this.createStreakSound.bind(this));
@@ -111,7 +110,7 @@ export class AudioManager {
         this.sounds.set('safety_land', this.createSafetyLandSound.bind(this));
         this.sounds.set('tick', this.createTickSound.bind(this));
         this.sounds.set('teleport', this.createTeleportSound.bind(this));
-        
+
         // Power-up specific sounds
         this.sounds.set('powerup_immortality', this.createImmortalitySound.bind(this));
         this.sounds.set('powerup_flight', this.createFlightSound.bind(this));
@@ -137,7 +136,7 @@ export class AudioManager {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.1);
     }
-    
+
     createLandSound() {
         if (!this.enabled || !this.audioContext) return;
 
@@ -159,12 +158,12 @@ export class AudioManager {
         oscillator.start(ctx.currentTime);
         oscillator.stop(ctx.currentTime + 0.08);
     }
-    
+
     createBoostSound() {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Suono di accelerazione "whoosh" con sweep di frequenza
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -175,12 +174,12 @@ export class AudioManager {
         gainNode.connect(ctx.destination);
 
         oscillator.type = 'sawtooth';
-        
+
         // Sweep di frequenza crescente per effetto accelerazione
         oscillator.frequency.setValueAtTime(200, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
         oscillator.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
-        
+
         // Filtro passa-basso che si apre
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(500, ctx.currentTime);
@@ -243,7 +242,7 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Suono impattante con due oscillatori per più corpo
         const osc1 = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
@@ -261,7 +260,7 @@ export class AudioManager {
         osc1.type = 'square';
         osc1.frequency.setValueAtTime(150, ctx.currentTime);
         osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.25);
-        
+
         // Secondo oscillatore - rumore metallico
         osc2.type = 'sawtooth';
         osc2.frequency.setValueAtTime(280, ctx.currentTime);
@@ -269,10 +268,10 @@ export class AudioManager {
 
         gainNode1.gain.setValueAtTime(this.masterVolume * 0.6, ctx.currentTime);
         gainNode1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        
+
         gainNode2.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime);
         gainNode2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        
+
         masterGain.gain.setValueAtTime(1, ctx.currentTime);
         masterGain.gain.setValueAtTime(0.7, ctx.currentTime + 0.05);
         masterGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
@@ -287,10 +286,10 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Create a nice arpeggio
         const frequencies = [523.25, 659.25, 783.99]; // C, E, G
-        
+
         frequencies.forEach((freq, index) => {
             const oscillator = ctx.createOscillator();
             const gainNode = ctx.createGain();
@@ -299,7 +298,7 @@ export class AudioManager {
             gainNode.connect(ctx.destination);
 
             oscillator.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.08);
-            
+
             gainNode.gain.setValueAtTime(0, ctx.currentTime + index * 0.08);
             gainNode.gain.linearRampToValueAtTime(this.masterVolume * 0.2, ctx.currentTime + index * 0.08 + 0.01);
             gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.08 + 0.15);
@@ -313,10 +312,10 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Magical ascending arpeggio
         const frequencies = [440, 554.37, 659.25, 880]; // A, C#, E, A
-        
+
         frequencies.forEach((freq, index) => {
             const oscillator = ctx.createOscillator();
             const gainNode = ctx.createGain();
@@ -326,7 +325,7 @@ export class AudioManager {
 
             oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.06);
-            
+
             gainNode.gain.setValueAtTime(0, ctx.currentTime + index * 0.06);
             gainNode.gain.linearRampToValueAtTime(this.masterVolume * 0.3, ctx.currentTime + index * 0.06 + 0.01);
             gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.06 + 0.2);
@@ -340,7 +339,7 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Descending sound
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -351,7 +350,7 @@ export class AudioManager {
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(600, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.3);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.2, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
 
@@ -363,7 +362,7 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Short ding
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -373,7 +372,7 @@ export class AudioManager {
 
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(880, ctx.currentTime);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.25, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
 
@@ -385,10 +384,10 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Epic shield activation - bright ascending power sound
-        const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 - major chord
-        
+        const frequencies = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6 - major chord
+
         frequencies.forEach((freq, index) => {
             const oscillator = ctx.createOscillator();
             const gainNode = ctx.createGain();
@@ -398,7 +397,7 @@ export class AudioManager {
 
             oscillator.type = 'triangle';
             oscillator.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.05);
-            
+
             gainNode.gain.setValueAtTime(0, ctx.currentTime + index * 0.05);
             gainNode.gain.linearRampToValueAtTime(this.masterVolume * 0.25, ctx.currentTime + index * 0.05 + 0.01);
             gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.05 + 0.3);
@@ -406,21 +405,21 @@ export class AudioManager {
             oscillator.start(ctx.currentTime + index * 0.05);
             oscillator.stop(ctx.currentTime + index * 0.05 + 0.3);
         });
-        
+
         // Add a shimmering high note at the end
         const shimmer = ctx.createOscillator();
         const shimmerGain = ctx.createGain();
-        
+
         shimmer.connect(shimmerGain);
         shimmerGain.connect(ctx.destination);
-        
+
         shimmer.type = 'sine';
         shimmer.frequency.setValueAtTime(1568, ctx.currentTime + 0.2); // High G
-        
+
         shimmerGain.gain.setValueAtTime(0, ctx.currentTime + 0.2);
         shimmerGain.gain.linearRampToValueAtTime(this.masterVolume * 0.2, ctx.currentTime + 0.21);
         shimmerGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        
+
         shimmer.start(ctx.currentTime + 0.2);
         shimmer.stop(ctx.currentTime + 0.5);
     }
@@ -429,7 +428,7 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Rising whoosh sound - frequency increases to simulate flight
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
@@ -444,13 +443,13 @@ export class AudioManager {
         oscillator.frequency.setValueAtTime(200, ctx.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
         oscillator.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.5);
-        
+
         // Low-pass filter for smoother sound
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(400, ctx.currentTime);
         filter.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.5);
         filter.Q.value = 1.5;
-        
+
         // Volume envelope
         gainNode.gain.setValueAtTime(0, ctx.currentTime);
         gainNode.gain.linearRampToValueAtTime(this.masterVolume * 0.35, ctx.currentTime + 0.1);
@@ -465,7 +464,7 @@ export class AudioManager {
         if (!this.enabled || !this.audioContext) return;
 
         const ctx = this.audioContext;
-        
+
         // Energetic charging sound with sparkle
         const charge = ctx.createOscillator();
         const sparkle = ctx.createOscillator();
@@ -482,16 +481,16 @@ export class AudioManager {
         charge.frequency.setValueAtTime(300, ctx.currentTime);
         charge.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
         charge.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.3);
-        
+
         // High sparkle overlay
         sparkle.type = 'sine';
         sparkle.frequency.setValueAtTime(1200, ctx.currentTime);
         sparkle.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.2);
         sparkle.frequency.exponentialRampToValueAtTime(2400, ctx.currentTime + 0.35);
-        
+
         chargeGain.gain.setValueAtTime(this.masterVolume * 0.3, ctx.currentTime);
         chargeGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        
+
         sparkleGain.gain.setValueAtTime(this.masterVolume * 0.15, ctx.currentTime);
         sparkleGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
 
@@ -500,422 +499,422 @@ export class AudioManager {
         sparkle.start(ctx.currentTime);
         sparkle.stop(ctx.currentTime + 0.4);
     }
-    
+
     createPerfectLandSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const osc = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         osc.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         osc.type = 'sine';
         osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
         osc.frequency.exponentialRampToValueAtTime(1200, this.audioContext.currentTime + 0.1);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.4, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.15);
-        
+
         osc.start(this.audioContext.currentTime);
         osc.stop(this.audioContext.currentTime + 0.15);
     }
-    
+
     createStreakSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const osc1 = this.audioContext.createOscillator();
         const osc2 = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         osc1.connect(gainNode);
         osc2.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         osc1.type = 'sine';
         osc2.type = 'sine';
         osc1.frequency.setValueAtTime(523, this.audioContext.currentTime);
         osc2.frequency.setValueAtTime(659, this.audioContext.currentTime);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.3, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
-        
+
         osc1.start(this.audioContext.currentTime);
         osc2.start(this.audioContext.currentTime);
         osc1.stop(this.audioContext.currentTime + 0.2);
         osc2.stop(this.audioContext.currentTime + 0.2);
     }
-    
+
     createAchievementSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const notes = [523, 659, 784, 1047];
         const duration = 0.15;
-        
+
         notes.forEach((freq, i) => {
             const osc = this.audioContext.createOscillator();
             const gainNode = this.audioContext.createGain();
-            
+
             osc.connect(gainNode);
             gainNode.connect(this.audioContext.destination);
-            
+
             osc.type = 'sine';
             osc.frequency.value = freq;
-            
+
             const startTime = this.audioContext.currentTime + i * 0.08;
             gainNode.gain.setValueAtTime(this.masterVolume * 0.35, startTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-            
+
             osc.start(startTime);
             osc.stop(startTime + duration);
         });
     }
-    
+
     createNearMissSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const osc = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         osc.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(100, this.audioContext.currentTime);
         osc.frequency.exponentialRampToValueAtTime(80, this.audioContext.currentTime + 0.1);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.2, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
-        
+
         osc.start(this.audioContext.currentTime);
         osc.stop(this.audioContext.currentTime + 0.1);
     }
-    
+
     createComboBreakSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const osc = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         osc.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(300, this.audioContext.currentTime);
         osc.frequency.exponentialRampToValueAtTime(150, this.audioContext.currentTime + 0.2);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.25, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
-        
+
         osc.start(this.audioContext.currentTime);
         osc.stop(this.audioContext.currentTime + 0.2);
     }
-    
+
     createSafetyLandSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
         const osc = ctx.createOscillator();
         const gainNode = ctx.createGain();
-        
+
         osc.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
+
         // Suono negativo più forte e udibile - discesa triste
         osc.type = 'square';
         osc.frequency.setValueAtTime(400, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        
+
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.3);
     }
-    
+
     createTickSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
         const osc = ctx.createOscillator();
         const gainNode = ctx.createGain();
-        
+
         osc.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
+
         // Ticchettio breve e secco tipo orologio meccanico
         osc.type = 'square'; // Più meccanico
         osc.frequency.setValueAtTime(1200, ctx.currentTime); // Più acuto
-        
+
         gainNode.gain.setValueAtTime(this.masterVolume * 0.25, ctx.currentTime); // Più forte
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.03); // Più corto
-        
+
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.03);
     }
-    
+
     createTeleportSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
-        
+
         // Suono sci-fi di teletrasporto: sweep discendente + ascendente rapido
         // Prima parte: "scomparsa" - frequenza che scende
         const osc1 = ctx.createOscillator();
         const gain1 = ctx.createGain();
         const filter1 = ctx.createBiquadFilter();
-        
+
         osc1.connect(filter1);
         filter1.connect(gain1);
         gain1.connect(ctx.destination);
-        
+
         osc1.type = 'sawtooth';
         osc1.frequency.setValueAtTime(800, ctx.currentTime);
         osc1.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.15);
-        
+
         filter1.type = 'lowpass';
         filter1.frequency.setValueAtTime(2000, ctx.currentTime);
         filter1.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
-        
+
         gain1.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime);
         gain1.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-        
+
         osc1.start(ctx.currentTime);
         osc1.stop(ctx.currentTime + 0.15);
-        
+
         // Seconda parte: "ricomparsa" - frequenza che sale
         const osc2 = ctx.createOscillator();
         const gain2 = ctx.createGain();
         const filter2 = ctx.createBiquadFilter();
-        
+
         osc2.connect(filter2);
         filter2.connect(gain2);
         gain2.connect(ctx.destination);
-        
+
         osc2.type = 'sine';
         osc2.frequency.setValueAtTime(100, ctx.currentTime + 0.1);
         osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.25);
-        
+
         filter2.type = 'highpass';
         filter2.frequency.setValueAtTime(200, ctx.currentTime + 0.1);
         filter2.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.25);
-        
+
         gain2.gain.setValueAtTime(0.01, ctx.currentTime + 0.1);
         gain2.gain.linearRampToValueAtTime(this.masterVolume * 0.35, ctx.currentTime + 0.15);
         gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        
+
         osc2.start(ctx.currentTime + 0.1);
         osc2.stop(ctx.currentTime + 0.25);
-        
+
         // Effetto "energia": noise burst breve
         const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
         const noiseData = noiseBuffer.getChannelData(0);
         for (let i = 0; i < noiseData.length; i++) {
             noiseData[i] = Math.random() * 2 - 1;
         }
-        
+
         const noiseSource = ctx.createBufferSource();
         const noiseGain = ctx.createGain();
         const noiseFilter = ctx.createBiquadFilter();
-        
+
         noiseSource.buffer = noiseBuffer;
         noiseSource.connect(noiseFilter);
         noiseFilter.connect(noiseGain);
         noiseGain.connect(ctx.destination);
-        
+
         noiseFilter.type = 'bandpass';
         noiseFilter.frequency.value = 1000;
         noiseFilter.Q.value = 3;
-        
+
         noiseGain.gain.setValueAtTime(this.masterVolume * 0.15, ctx.currentTime + 0.12);
         noiseGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
-        
+
         noiseSource.start(ctx.currentTime + 0.12);
         noiseSource.stop(ctx.currentTime + 0.18);
     }
-    
+
     createDeathSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
-        
+
         // Suono triste e lungo - discesa drammatica con riverbero
         // Nota principale - discesa lenta e triste
         const mainOsc = ctx.createOscillator();
         const mainGain = ctx.createGain();
         const filter = ctx.createBiquadFilter();
-        
+
         mainOsc.connect(filter);
         filter.connect(mainGain);
         mainGain.connect(ctx.destination);
-        
+
         // Suono orchestrale triste (tipo violino triste)
         mainOsc.type = 'triangle';
-        
+
         // Discesa drammatica da nota alta a bassa (2.5 secondi)
         mainOsc.frequency.setValueAtTime(440, ctx.currentTime); // A4
         mainOsc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 1); // A3
         mainOsc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 2.5); // A2
-        
+
         // Filtro passa-basso che si chiude per dare effetto "morte"
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(2000, ctx.currentTime);
         filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 2.5);
         filter.Q.value = 1;
-        
+
         // Volume che sale e scende dolcemente
         mainGain.gain.setValueAtTime(0.01, ctx.currentTime);
         mainGain.gain.exponentialRampToValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.3);
         mainGain.gain.setValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 1.8);
         mainGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
-        
+
         mainOsc.start(ctx.currentTime);
         mainOsc.stop(ctx.currentTime + 2.5);
-        
+
         // Accordo triste di accompagnamento (minore settima)
         const chord = [330, 392, 494]; // E4, G4, B4 (Em7 parziale)
-        
+
         chord.forEach((freq, index) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
-            
+
             osc.connect(gain);
             gain.connect(ctx.destination);
-            
+
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, ctx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + 2.5);
-            
+
             const startDelay = index * 0.1;
             gain.gain.setValueAtTime(0.01, ctx.currentTime + startDelay);
             gain.gain.exponentialRampToValueAtTime(this.masterVolume * 0.15, ctx.currentTime + startDelay + 0.2);
             gain.gain.setValueAtTime(this.masterVolume * 0.15, ctx.currentTime + 1.8);
             gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 2.5);
-            
+
             osc.start(ctx.currentTime + startDelay);
             osc.stop(ctx.currentTime + 2.5);
         });
     }
-    
+
     createBrakeSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
-        
+
         // Skid/brake sound - harsh friction noise
         const noise = ctx.createOscillator();
         const filter = ctx.createBiquadFilter();
         const gainNode = ctx.createGain();
-        
+
         noise.connect(filter);
         filter.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
+
         // Use sawtooth for harsh sound
         noise.type = 'sawtooth';
-        
+
         // Descending frequency for skid effect
         noise.frequency.setValueAtTime(180, ctx.currentTime);
         noise.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.25);
-        
+
         // Band-pass filter for realistic friction
         filter.type = 'bandpass';
         filter.frequency.setValueAtTime(400, ctx.currentTime);
         filter.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.25);
         filter.Q.value = 3;
-        
+
         // Sharp attack, quick decay
         gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.02);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-        
+
         noise.start(ctx.currentTime);
         noise.stop(ctx.currentTime + 0.25);
     }
-    
+
     createTurboSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
-        
+
         // Power-up turbo sound - energetic ascending sweep
         const osc1 = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
         const filter = ctx.createBiquadFilter();
         const gainNode = ctx.createGain();
-        
+
         osc1.connect(filter);
         osc2.connect(filter);
         filter.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
+
         // Two oscillators for rich sound
         osc1.type = 'sawtooth';
         osc2.type = 'square';
-        
+
         // Fast ascending sweep for energy boost feel
         osc1.frequency.setValueAtTime(100, ctx.currentTime);
         osc1.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.3);
         osc1.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.5);
-        
+
         osc2.frequency.setValueAtTime(150, ctx.currentTime);
         osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.3);
         osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.5);
-        
+
         // Bright filter opening
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(200, ctx.currentTime);
         filter.frequency.exponentialRampToValueAtTime(4000, ctx.currentTime + 0.4);
         filter.Q.value = 5;
-        
+
         // Punchy envelope
         gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.6, ctx.currentTime + 0.05);
         gainNode.gain.setValueAtTime(this.masterVolume * 0.5, ctx.currentTime + 0.3);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-        
+
         osc1.start(ctx.currentTime);
         osc1.stop(ctx.currentTime + 0.5);
         osc2.start(ctx.currentTime);
         osc2.stop(ctx.currentTime + 0.5);
     }
-    
+
     createFlightActivateSound() {
         if (!this.enabled || !this.audioContext) return;
-        
+
         const ctx = this.audioContext;
         const osc1 = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
         const filter = ctx.createBiquadFilter();
         const gainNode = ctx.createGain();
-        
+
         osc1.connect(filter);
         osc2.connect(filter);
         filter.connect(gainNode);
         gainNode.connect(ctx.destination);
-        
+
         // Suono aereo e leggero - come ali che si aprono
         osc1.type = 'sine';
         osc2.type = 'triangle';
-        
+
         // Sweep ascendente delicato
         osc1.frequency.setValueAtTime(200, ctx.currentTime);
         osc1.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.4);
-        
+
         osc2.frequency.setValueAtTime(400, ctx.currentTime);
         osc2.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.4);
-        
+
         // High-pass filter per suono aereo
         filter.type = 'highpass';
         filter.frequency.setValueAtTime(300, ctx.currentTime);
         filter.Q.value = 2;
-        
+
         // Envelope morbida
         gainNode.gain.setValueAtTime(0.01, ctx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(this.masterVolume * 0.4, ctx.currentTime + 0.1);
         gainNode.gain.setValueAtTime(this.masterVolume * 0.3, ctx.currentTime + 0.25);
         gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        
+
         osc1.start(ctx.currentTime);
         osc1.stop(ctx.currentTime + 0.4);
         osc2.start(ctx.currentTime);
@@ -941,16 +940,16 @@ export class AudioManager {
     }
 
     pause() {
-        if (this.audioContext && this.audioContext.state === 'running') {
+        if (this.audioContext?.state === 'running') {
             this.audioContext.suspend();
         }
     }
 
     resume() {
-        if (this.audioContext && this.audioContext.state === 'suspended') {
+        if (this.audioContext?.state === 'suspended') {
             this.audioContext.resume();
         }
-        
+
         // Start background music if not already playing
         if (!this.musicPlaying) {
             this.playBackgroundMusic();

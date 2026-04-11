@@ -58,13 +58,7 @@ export class RenderingUtils {
         renderer.drawRect(x - 1, y - size * 1.5, 2, size * 3, color);
     }
 
-    /**
-     * Draw multi-layer glow effect - DISABLED for performance
-     */
-    static drawGlow(renderer, x, y, baseRadius, color, layers = 2, alphaBase = 0.2, alphaStep = 0.1) {
-        // Glow disabled for better performance
-        // No-op function
-    }
+  
 
     /**
      * Draw single-layer shadow - OPTIMIZED for performance

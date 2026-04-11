@@ -118,7 +118,7 @@ export function sniper() {
     sprite.setParent('scope', 'turret');
 
     // Setup animations
-    sprite.addAnimation(AnimationBuilder.createTowerIdleAnimation(['turret', 'scope'], 3.0));
+    sprite.addAnimation(AnimationBuilder.createTowerIdleAnimation(['turret', 'scope'], 3));
     sprite.addAnimation(AnimationBuilder.createTowerChargingAnimation(['scope', 'barrel'], 0.5));
     sprite.addAnimation(AnimationBuilder.createTowerFireAnimation(['barrel', 'turret'], 0.3));
 

@@ -111,8 +111,8 @@ export function tank() {
 
     // Slow heavy animations with legs and shoulder movement
     const allParts = ['body', 'head', 'shoulderLeft', 'shoulderRight', 'legLeft', 'legRight'];
-    sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body', 'shoulderLeft', 'shoulderRight'], 3.0));
-    const slowWalk = AnimationBuilder.createWalkAnimation(allParts, 1.0);
+    sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body', 'shoulderLeft', 'shoulderRight'], 3));
+    const slowWalk = AnimationBuilder.createWalkAnimation(allParts, 1);
     sprite.addAnimation(slowWalk);
     // Heavy attack animation (slower, weighty)
     sprite.addAnimation(AnimationBuilder.createAttackAnimation(['body', 'head', 'shoulderLeft', 'shoulderRight'], 0.7));

@@ -8,22 +8,22 @@ export function boss() {
     const aura = sprite.addPart('aura', [
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.50, height: 0.57,
+            x: 0, y: 0.1,
+            width: 0.5, height: 0.57,
             color: 'rgba(80, 0, 40, 0.25)',
             fill: true
         },
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.44, height: 0.50,
+            x: 0, y: 0.1,
+            width: 0.44, height: 0.5,
             color: 'rgba(120, 10, 60, 0.35)',
             fill: true,
             glow: { color: '#8a0a4a', blur: 8 }
         },
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
+            x: 0, y: 0.1,
             width: 0.37, height: 0.44,
             color: 'rgba(150, 20, 80, 0.2)',
             fill: true
@@ -36,10 +36,10 @@ export function boss() {
         type: 'polygon',
         points: [
             { x: 0.17, y: 0 },
-            { x: 0.50, y: 0 },
+            { x: 0.5, y: 0 },
             { x: 0.57, y: 0.44 },
             { x: 0.34, y: 0.48 },
-            { x: 0.10, y: 0.44 }
+            { x: 0.1, y: 0.44 }
         ],
         color: '#1a0a1a',
         fill: true
@@ -126,7 +126,7 @@ export function boss() {
             type: 'polygon', // Chest plate
             points: [
                 { x: 0.27, y: 0.05 },
-                { x: 0.40, y: 0.05 },
+                { x: 0.4, y: 0.05 },
                 { x: 0.39, y: 0.23 },
                 { x: 0.34, y: 0.25 },
                 { x: 0.28, y: 0.23 }
@@ -149,7 +149,7 @@ export function boss() {
             points: [
                 { x: 0.52, y: 0.01 },
                 { x: 0.55, y: -0.03 },
-                { x: 0.50, y: 0.04 }
+                { x: 0.5, y: 0.04 }
             ],
             color: '#6a2a4a',
             fill: true
@@ -171,7 +171,7 @@ export function boss() {
             glow: { color: '#ff2a5a', blur: 4 }
         }
     ], 0.5, 0.5, 0);
-    body.setBaseTransform(0, 0.10);
+    body.setBaseTransform(0, 0.1);
 
     // Parent legs, cape, and aura to body
     sprite.setParent('legLeft', 'body');
@@ -297,7 +297,7 @@ export function boss() {
         points: [
             { x: 0, y: 0 },
             { x: -0.07, y: 0.01 },
-            { x: -0.11, y: 0.30 },
+            { x: -0.11, y: 0.3 },
             { x: -0.05, y: 0.27 },
             { x: -0.01, y: 0.08 }
         ],
@@ -313,7 +313,7 @@ export function boss() {
         points: [
             { x: 0, y: 0 },
             { x: 0.07, y: 0.01 },
-            { x: 0.11, y: 0.30 },
+            { x: 0.11, y: 0.3 },
             { x: 0.05, y: 0.27 },
             { x: 0.01, y: 0.08 }
         ],
@@ -534,95 +534,95 @@ export function boss() {
         { time: 1.8, transform: { rotation: 0 } }
     ]);
     walk.addTrack('aura', [
-        { time: 0, transform: { scale: 1.0, rotation: 0 } },
+        { time: 0, transform: { scale: 1, rotation: 0 } },
         { time: 0.6, transform: { scale: 1.05, rotation: 0.02 } },
-        { time: 1.2, transform: { scale: 1.0, rotation: 0 } },
-        { time: 1.8, transform: { scale: 1.0, rotation: 0 } }
+        { time: 1.2, transform: { scale: 1, rotation: 0 } },
+        { time: 1.8, transform: { scale: 1, rotation: 0 } }
     ]);
 
     sprite.addAnimation(walk);
 
     // Menacing idle animation
-    const idle = new AnimationClip('idle', 3.0, true);
+    const idle = new AnimationClip('idle', 3, true);
     idle.addTrack('body', [
         { time: 0, transform: { y: 0 } },
         { time: 1.5, transform: { y: -0.04 } },
-        { time: 3.0, transform: { y: 0 } }
+        { time: 3, transform: { y: 0 } }
     ]);
     idle.addTrack('head', [
         { time: 0, transform: { rotation: 0 } },
-        { time: 1.0, transform: { rotation: 0.04 } },
-        { time: 2.0, transform: { rotation: -0.04 } },
-        { time: 3.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0.04 } },
+        { time: 2, transform: { rotation: -0.04 } },
+        { time: 3, transform: { rotation: 0 } }
     ]);
     idle.addTrack('capeLeft', [
         { time: 0, transform: { rotation: 0 } },
         { time: 1.5, transform: { rotation: 0.06 } },
-        { time: 3.0, transform: { rotation: 0 } }
+        { time: 3, transform: { rotation: 0 } }
     ]);
     idle.addTrack('capeRight', [
         { time: 0, transform: { rotation: 0 } },
         { time: 1.5, transform: { rotation: -0.06 } },
-        { time: 3.0, transform: { rotation: 0 } }
+        { time: 3, transform: { rotation: 0 } }
     ]);
     idle.addTrack('aura', [
-        { time: 0, transform: { scale: 1.0, rotation: 0 } },
+        { time: 0, transform: { scale: 1, rotation: 0 } },
         { time: 0.75, transform: { scale: 1.08, rotation: 0.03 } },
-        { time: 1.5, transform: { scale: 1.0, rotation: 0 } },
+        { time: 1.5, transform: { scale: 1, rotation: 0 } },
         { time: 2.25, transform: { scale: 1.08, rotation: -0.03 } },
-        { time: 3.0, transform: { scale: 1.0, rotation: 0 } }
+        { time: 3, transform: { scale: 1, rotation: 0 } }
     ]);
     idle.addTrack('crown', [
         { time: 0, transform: { y: 0 } },
         { time: 1.5, transform: { y: -0.01 } },
-        { time: 3.0, transform: { y: 0 } }
+        { time: 3, transform: { y: 0 } }
     ]);
     sprite.addAnimation(idle);
 
     // Devastating attack animation - dramatic and powerful
-    const attack = new AnimationClip('attack', 1.0, false);
+    const attack = new AnimationClip('attack', 1, false);
     attack.addTrack('body', [
         { time: 0, transform: { rotation: 0 } },
         { time: 0.25, transform: { rotation: 0.18, y: -0.05 } },
         { time: 0.5, transform: { rotation: -0.15, y: 0.02 } },
         { time: 0.75, transform: { rotation: 0.05 } },
-        { time: 1.0, transform: { rotation: 0, y: 0 } }
+        { time: 1, transform: { rotation: 0, y: 0 } }
     ]);
     attack.addTrack('armRight', [
         { time: 0, transform: { rotation: 0 } },
         { time: 0.25, transform: { rotation: -0.7 } },
         { time: 0.5, transform: { rotation: 0.5 } },
         { time: 0.75, transform: { rotation: -0.1 } },
-        { time: 1.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0 } }
     ]);
     attack.addTrack('armLeft', [
         { time: 0, transform: { rotation: 0 } },
         { time: 0.25, transform: { rotation: 0.6 } },
         { time: 0.5, transform: { rotation: -0.5 } },
         { time: 0.75, transform: { rotation: 0.1 } },
-        { time: 1.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0 } }
     ]);
     attack.addTrack('head', [
         { time: 0, transform: { rotation: 0 } },
-        { time: 0.25, transform: { rotation: 0.10 } },
+        { time: 0.25, transform: { rotation: 0.1 } },
         { time: 0.5, transform: { rotation: -0.08 } },
-        { time: 1.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0 } }
     ]);
     attack.addTrack('capeBack', [
         { time: 0, transform: { rotation: 0 } },
         { time: 0.3, transform: { rotation: -0.12 } },
         { time: 0.6, transform: { rotation: 0.08 } },
-        { time: 1.0, transform: { rotation: 0 } }
+        { time: 1, transform: { rotation: 0 } }
     ]);
     attack.addTrack('aura', [
-        { time: 0, transform: { scale: 1.0 } },
+        { time: 0, transform: { scale: 1 } },
         { time: 0.5, transform: { scale: 1.15 } },
-        { time: 1.0, transform: { scale: 1.0 } }
+        { time: 1, transform: { scale: 1 } }
     ]);
     sprite.addAnimation(attack);
 
     sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'legLeft', 'legRight', 'aura'], 0.3));
-    sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'armLeft', 'armRight', 'legLeft', 'legRight', 'capeLeft', 'capeRight', 'capeBack', 'crown', 'aura'], 2.0));
+    sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'armLeft', 'armRight', 'legLeft', 'legRight', 'capeLeft', 'capeRight', 'capeBack', 'crown', 'aura'], 2));
 
     return sprite;
 }

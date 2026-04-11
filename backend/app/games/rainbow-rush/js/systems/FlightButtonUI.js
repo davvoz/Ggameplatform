@@ -35,7 +35,6 @@ export class FlightButtonUI {
         this.rotationAngle += deltaTime * 2;
         
         const isReady = player.isFlightCooldownReady() && !player.isFlightActive;
-        const isActive = player.isFlightActive;
         
         // Glow pulsante quando ready
         if (isReady) {
@@ -98,39 +97,232 @@ export class FlightButtonUI {
         const displayY = this.buttonY - this.bounceOffset;
         
         // Render ripples (onde d'urto quando attivato)
-        for (const ripple of this.ripples) {
-            const alpha = ripple.life * 0.6;
-            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha})`;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, ripple.radius, 0, Math.PI * 2);
-            ctx.stroke();
-        }
+        this.renderRipples(ctx, displayY);
         
         // Outer glow disabled for performance
         
         // Render sparkles
-        for (const sparkle of this.sparkles) {
-            const alpha = sparkle.life;
-            ctx.fillStyle = `rgba(150, 230, 255, ${alpha})`;
-            ctx.beginPath();
-            ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Stella sparkle
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
-            ctx.font = `${sparkle.size * 3}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('✨', sparkle.x, sparkle.y);
-        }
+        this.renderSparkles(ctx);
         
         // Cerchio esterno con gradiente migliorato
+        this.renderButtonGradient(ctx, displayY, isActive, isReady);
+        
+        // Bordo con glow
+        this.renderButtonOutline(isActive, isReady, ctx, displayY);
+        
+        // Icona ali/volo con ombra
+        this.renderFlightIcon(isActive, isReady, ctx, displayY);
+        
+        // Progress ring del tempo attivo (quando volo è attivo) - ATTORNO AL BOTTONE
+        this.renderFlightProgressRing(isActive, player, ctx, displayY);
+        
+        // Progress ring del cooldown ELABORATO
+        this.renderCooldownProgress(isActive, player, ctx, displayY);
+        
+        // === INDICATORI ZONE DI VOLO - VERSIONE RIDOTTA E PROFESSIONALE ===
+        // Quando il volo è attivo, mostra indicatori discreti ai lati
+        this.renderFlightIndicators(isActive, ctx);
+        
+        ctx.restore();
+    }
+    
+    renderFlightIndicators(isActive, ctx) {
+        if (isActive) {
+            const pulse = Math.sin(this.pulseTime * 4) * 0.15 + 0.85;
+            const arrowBounce = Math.sin(this.pulseTime * 5) * 3;
+
+            // === INDICATORE SUPERIORE (LATO DESTRO) ===
+            const arrowUpX = this.canvasWidth - 45;
+            const arrowUpY = 100 - arrowBounce;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+
+            // Sfondo freccia compatto
+            ctx.fillStyle = `rgba(100, 255, 150, ${0.2 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(arrowUpX, arrowUpY, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bordo freccia
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(arrowUpX, arrowUpY, 22, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            // Icona freccia SU
+            ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⬆️', arrowUpX, arrowUpY);
+
+            ctx.restore();
+
+            // === INDICATORE INFERIORE (LATO DESTRO) ===
+            const arrowDownX = this.canvasWidth - 45;
+            const arrowDownY = this.canvasHeight - 180 + arrowBounce;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            ctx.shadowBlur = 6;
+
+            // Sfondo freccia compatto
+            ctx.fillStyle = `rgba(255, 150, 100, ${0.2 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(arrowDownX, arrowDownY, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bordo freccia
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(arrowDownX, arrowDownY, 22, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+
+            // Icona freccia GIÙ
+            ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+            ctx.font = 'bold 28px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('⬇️', arrowDownX, arrowDownY);
+
+            ctx.restore();
+        }
+    }
+
+    renderCooldownProgress(isActive, player, ctx, displayY) {
+        if (!isActive && player.flightCooldownRemaining > 0) {
+            const cooldownProgress = player.getFlightCooldownProgress();
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + (Math.PI * 2 * cooldownProgress);
+
+            // Ring esterno (ombra)
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, this.buttonRadius + 7, startAngle, endAngle);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Ring principale con gradiente rotante
+            const ringGradient = ctx.createLinearGradient(
+                this.buttonX - this.buttonRadius, displayY,
+                this.buttonX + this.buttonRadius, displayY
+            );
+            ringGradient.addColorStop(0, `rgba(80, 180, 255, ${0.6 + Math.sin(this.pulseTime * 3) * 0.2})`);
+            ringGradient.addColorStop(0.5, `rgba(120, 210, 255, ${0.8 + Math.sin(this.pulseTime * 3) * 0.2})`);
+            ringGradient.addColorStop(1, `rgba(100, 200, 255, ${0.6 + Math.sin(this.pulseTime * 3) * 0.2})`);
+
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, this.buttonRadius + 6, startAngle, endAngle);
+            ctx.strokeStyle = ringGradient;
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Punto luminoso alla fine del ring
+            const dotAngle = endAngle;
+            const dotRadius = this.buttonRadius + 6;
+            const dotX = this.buttonX + Math.cos(dotAngle) * dotRadius;
+            const dotY = displayY + Math.sin(dotAngle) * dotRadius;
+
+            const dotGradient = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8);
+            dotGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            dotGradient.addColorStop(0.5, 'rgba(150, 230, 255, 0.8)');
+            dotGradient.addColorStop(1, 'rgba(100, 200, 255, 0)');
+            ctx.fillStyle = dotGradient;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderFlightProgressRing(isActive, player, ctx, displayY) {
+        if (isActive && player.flightTimeRemaining > 0) {
+            const totalDuration = player.flightInitialDuration || player.flightBaseDuration;
+            const progress = player.flightTimeRemaining / totalDuration;
+            const startAngle = -Math.PI / 2;
+            const endAngle = startAngle + (Math.PI * 2 * progress);
+            const pulse = Math.sin(this.pulseTime * 6) * 0.15 + 0.85;
+
+            // Ring esterno (ombra)
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, this.buttonRadius + 7, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Ring progresso con gradiente animato
+            const ringGradient = ctx.createLinearGradient(
+                this.buttonX - this.buttonRadius, displayY,
+                this.buttonX + this.buttonRadius, displayY
+            );
+            ringGradient.addColorStop(0, `rgba(80, 220, 255, ${pulse})`);
+            ringGradient.addColorStop(0.5, `rgba(120, 240, 255, ${pulse})`);
+            ringGradient.addColorStop(1, `rgba(100, 230, 255, ${pulse})`);
+
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, this.buttonRadius + 6, startAngle, endAngle);
+            ctx.strokeStyle = ringGradient;
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Punto luminoso alla fine del ring
+            const dotAngle = endAngle;
+            const dotRadius = this.buttonRadius + 6;
+            const dotX = this.buttonX + Math.cos(dotAngle) * dotRadius;
+            const dotY = displayY + Math.sin(dotAngle) * dotRadius;
+
+            const dotGradient = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8);
+            dotGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            dotGradient.addColorStop(0.5, 'rgba(150, 240, 255, 0.8)');
+            dotGradient.addColorStop(1, 'rgba(100, 220, 255, 0)');
+            ctx.fillStyle = dotGradient;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderFlightIcon(isActive, isReady, ctx, displayY) {
+        if (isActive || isReady) {
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
+            ctx.shadowBlur = 8;
+        }
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 34px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🦅', this.buttonX, displayY);
+        ctx.shadowBlur = 0;
+    }
+
+    renderButtonOutline(isActive, isReady, ctx, displayY) {
+        if (isActive || isReady) {
+            ctx.shadowColor = 'rgba(100, 200, 255, 0.8)';
+            ctx.shadowBlur = isActive ? 15 : 10;
+        }
+        ctx.strokeStyle = isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(200, 230, 255, 0.8)';
+        ctx.lineWidth = isActive ? 4 : 3;
+        ctx.beginPath();
+        ctx.arc(this.buttonX, displayY, this.buttonRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    renderButtonGradient(ctx, displayY, isActive, isReady) {
         const gradient = ctx.createRadialGradient(
             this.buttonX, displayY, this.buttonRadius * 0.2,
             this.buttonX, displayY, this.buttonRadius
         );
-        
+
         if (isActive) {
             // Azzurro brillante quando attivo con animazione
             const activePulse = Math.sin(this.pulseTime * 8) * 0.1 + 0.9;
@@ -149,203 +341,41 @@ export class FlightButtonUI {
             gradient.addColorStop(0.6, 'rgba(80, 80, 80, 0.6)');
             gradient.addColorStop(1, 'rgba(60, 60, 60, 0.5)');
         }
-        
+
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(this.buttonX, displayY, this.buttonRadius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Bordo con glow
-        if (isActive || isReady) {
-            ctx.shadowColor = 'rgba(100, 200, 255, 0.8)';
-            ctx.shadowBlur = isActive ? 15 : 10;
-        }
-        ctx.strokeStyle = isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(200, 230, 255, 0.8)';
-        ctx.lineWidth = isActive ? 4 : 3;
-        ctx.beginPath();
-        ctx.arc(this.buttonX, displayY, this.buttonRadius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        
-        // Icona ali/volo con ombra
-        if (isActive || isReady) {
-            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)';
-            ctx.shadowBlur = 8;
-        }
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 34px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🦅', this.buttonX, displayY);
-        ctx.shadowBlur = 0;
-        
-        // Progress ring del tempo attivo (quando volo è attivo) - ATTORNO AL BOTTONE
-        if (isActive && player.flightTimeRemaining > 0) {
-            const totalDuration = player.flightInitialDuration || player.flightBaseDuration;
-            const progress = player.flightTimeRemaining / totalDuration;
-            const startAngle = -Math.PI / 2;
-            const endAngle = startAngle + (Math.PI * 2 * progress);
-            const pulse = Math.sin(this.pulseTime * 6) * 0.15 + 0.85;
-            
-            // Ring esterno (ombra)
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, this.buttonRadius + 7, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 6;
-            ctx.stroke();
-            
-            // Ring progresso con gradiente animato
-            const ringGradient = ctx.createLinearGradient(
-                this.buttonX - this.buttonRadius, displayY,
-                this.buttonX + this.buttonRadius, displayY
-            );
-            ringGradient.addColorStop(0, `rgba(80, 220, 255, ${pulse})`);
-            ringGradient.addColorStop(0.5, `rgba(120, 240, 255, ${pulse})`);
-            ringGradient.addColorStop(1, `rgba(100, 230, 255, ${pulse})`);
-            
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, this.buttonRadius + 6, startAngle, endAngle);
-            ctx.strokeStyle = ringGradient;
-            ctx.lineWidth = 5;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-            
-            // Punto luminoso alla fine del ring
-            const dotAngle = endAngle;
-            const dotRadius = this.buttonRadius + 6;
-            const dotX = this.buttonX + Math.cos(dotAngle) * dotRadius;
-            const dotY = displayY + Math.sin(dotAngle) * dotRadius;
-            
-            const dotGradient = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8);
-            dotGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            dotGradient.addColorStop(0.5, 'rgba(150, 240, 255, 0.8)');
-            dotGradient.addColorStop(1, 'rgba(100, 220, 255, 0)');
-            ctx.fillStyle = dotGradient;
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Progress ring del cooldown ELABORATO
-        if (!isActive && player.flightCooldownRemaining > 0) {
-            const cooldownProgress = player.getFlightCooldownProgress();
-            const startAngle = -Math.PI / 2;
-            const endAngle = startAngle + (Math.PI * 2 * cooldownProgress);
-            
-            // Ring esterno (ombra)
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, this.buttonRadius + 7, startAngle, endAngle);
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 6;
-            ctx.stroke();
-            
-            // Ring principale con gradiente rotante
-            const ringGradient = ctx.createLinearGradient(
-                this.buttonX - this.buttonRadius, displayY,
-                this.buttonX + this.buttonRadius, displayY
-            );
-            const gradientOffset = (this.pulseTime * 0.5) % 1;
-            ringGradient.addColorStop(0, `rgba(80, 180, 255, ${0.6 + Math.sin(this.pulseTime * 3) * 0.2})`);
-            ringGradient.addColorStop(0.5, `rgba(120, 210, 255, ${0.8 + Math.sin(this.pulseTime * 3) * 0.2})`);
-            ringGradient.addColorStop(1, `rgba(100, 200, 255, ${0.6 + Math.sin(this.pulseTime * 3) * 0.2})`);
-            
-            ctx.beginPath();
-            ctx.arc(this.buttonX, displayY, this.buttonRadius + 6, startAngle, endAngle);
-            ctx.strokeStyle = ringGradient;
-            ctx.lineWidth = 5;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-            
-            // Punto luminoso alla fine del ring
-            const dotAngle = endAngle;
-            const dotRadius = this.buttonRadius + 6;
-            const dotX = this.buttonX + Math.cos(dotAngle) * dotRadius;
-            const dotY = displayY + Math.sin(dotAngle) * dotRadius;
-            
-            const dotGradient = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, 8);
-            dotGradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            dotGradient.addColorStop(0.5, 'rgba(150, 230, 255, 0.8)');
-            dotGradient.addColorStop(1, 'rgba(100, 200, 255, 0)');
-            ctx.fillStyle = dotGradient;
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, 8, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // === INDICATORI ZONE DI VOLO - VERSIONE RIDOTTA E PROFESSIONALE ===
-        // Quando il volo è attivo, mostra indicatori discreti ai lati
-        if (isActive) {
-            const pulse = Math.sin(this.pulseTime * 4) * 0.15 + 0.85;
-            const arrowBounce = Math.sin(this.pulseTime * 5) * 3;
-            
-            // === INDICATORE SUPERIORE (LATO DESTRO) ===
-            const arrowUpX = this.canvasWidth - 45;
-            const arrowUpY = 100 - arrowBounce;
-            
-            ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 6;
-            
-            // Sfondo freccia compatto
-            ctx.fillStyle = `rgba(100, 255, 150, ${0.20 * pulse})`;
-            ctx.beginPath();
-            ctx.arc(arrowUpX, arrowUpY, 22, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Bordo freccia
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(arrowUpX, arrowUpY, 22, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            ctx.shadowBlur = 0;
-            
-            // Icona freccia SU
-            ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
-            ctx.font = 'bold 28px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⬆️', arrowUpX, arrowUpY);
-            
-            ctx.restore();
-            
-            // === INDICATORE INFERIORE (LATO DESTRO) ===
-            const arrowDownX = this.canvasWidth - 45;
-            const arrowDownY = this.canvasHeight - 180 + arrowBounce;
-            
-            ctx.save();
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-            ctx.shadowBlur = 6;
-            
-            // Sfondo freccia compatto
-            ctx.fillStyle = `rgba(255, 150, 100, ${0.20 * pulse})`;
-            ctx.beginPath();
-            ctx.arc(arrowDownX, arrowDownY, 22, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Bordo freccia
-            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(arrowDownX, arrowDownY, 22, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            ctx.shadowBlur = 0;
-            
-            // Icona freccia GIÙ
-            ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
-            ctx.font = 'bold 28px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('⬇️', arrowDownX, arrowDownY);
-            
-            ctx.restore();
-        }
-        
-        ctx.restore();
     }
-    
+
+    renderSparkles(ctx) {
+        for (const sparkle of this.sparkles) {
+            const alpha = sparkle.life;
+            ctx.fillStyle = `rgba(150, 230, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Stella sparkle
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            ctx.font = `${sparkle.size * 3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('✨', sparkle.x, sparkle.y);
+        }
+    }
+
+    renderRipples(ctx, displayY) {
+        for (const ripple of this.ripples) {
+            const alpha = ripple.life * 0.6;
+            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(this.buttonX, displayY, ripple.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+
     renderLocked(ctx) {
         ctx.save();
         

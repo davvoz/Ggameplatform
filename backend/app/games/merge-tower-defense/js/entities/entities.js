@@ -22,12 +22,12 @@ function applyWaveScaling(baseConfig, waveNumber) {
     // Wave 1-3: quasi invariato, poi accelera
     // Wave 1: x1.0, Wave 5: x1.25, Wave 10: x1.85, Wave 20: x5.0, Wave 30: x13.5
     const effectiveWave = Math.max(0, waveNumber - 3); // Scaling parte dalla wave 4
-    const hpMultiplier = 1 + effectiveWave * 0.08 + Math.pow(1.10, effectiveWave) - 1;
+    const hpMultiplier = 1 + effectiveWave * 0.08 + Math.pow(1.1, effectiveWave) - 1;
 
     // Speed scaling: molto leggero, solo nelle wave avanzate
     // Wave 1-5: x1.0, Wave 10: x1.05, Wave 20: x1.15
     const speedEffectiveWave = Math.max(0, waveNumber - 5);
-    const speedMultiplier = Math.min(1.30, 1 + speedEffectiveWave * 0.01);
+    const speedMultiplier = Math.min(1.3, 1 + speedEffectiveWave * 0.01);
 
     // Reward scaling: cresce significativamente per compensare la difficoltà
     // Wave 1: x1.0, Wave 5: x1.48, Wave 10: x2.08, Wave 20: x3.28, Wave 30: x4.48

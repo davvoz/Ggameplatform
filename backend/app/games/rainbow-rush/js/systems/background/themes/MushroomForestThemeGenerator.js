@@ -51,14 +51,15 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
         const config = MUSHROOM_FOREST_CONFIG;
         const groundY = this.getGroundY(0.85);
 
+        const giantMushroomLayers = [];
+
         for (let i = 0; i < config.GIANT_MUSHROOM_COUNT; i++) {
             const height = 120 + Math.random() * 80;
             const capWidth = 80 + Math.random() * 60;
             const x = (i + 0.5) * this.canvasWidth / config.GIANT_MUSHROOM_COUNT;
             const hue = Math.random();
 
-            // Stem
-            layers.push({
+            const stem = {
                 x: x - 10,
                 y: groundY - height,
                 width: 20 + Math.random() * 10,
@@ -68,10 +69,9 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
                 shape: 'rectangle',
                 speed: 5 + i * 2,
                 offset: 0
-            });
+            };
 
-            // Cap
-            layers.push({
+            const cap = {
                 x,
                 y: groundY - height,
                 width: capWidth,
@@ -87,8 +87,12 @@ export class MushroomForestThemeGenerator extends BaseThemeGenerator {
                 speed: 5 + i * 2,
                 offset: 0,
                 spots: Math.floor(3 + Math.random() * 5)
-            });
+            };
+
+            giantMushroomLayers.push(stem, cap);
         }
+
+        layers.push(...giantMushroomLayers);
     }
 
     generateRegularMushrooms(layers) {

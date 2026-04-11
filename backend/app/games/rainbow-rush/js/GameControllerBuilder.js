@@ -83,15 +83,11 @@ export class GameControllerBuilder {
      */
     withDefaults() {
         // Get userId from platform config if available
-        let userId = null;
-        if (window.platformConfig && window.platformConfig.userId) {
-            userId = window.platformConfig.userId;
-
-        }
+        let userId = globalThis.platformConfig?.userId ?? null;
         
         // Initialize Rainbow Rush SDK with userId from platform
         this.rainbowRushSDK = new RainbowRushSDK({
-            apiBaseUrl: window.location.origin,
+            apiBaseUrl: globalThis.location.origin,
             userId: userId
         });
         

@@ -8,21 +8,21 @@ export function rusher() {
     const legLeft = sprite.addPart('legLeft', {
         type: 'ellipse',
         x: 0, y: 0.15,
-        width: 0.10, height: 0.30,
+        width: 0.1, height: 0.3,
         color: '#6a2a2a',
         fill: true
     }, 0.5, 0, -10);
-    legLeft.setBaseTransform(-0.06, 0.20);
+    legLeft.setBaseTransform(-0.06, 0.2);
 
     // RIGHT LEG (behind body z-order -10)
     const legRight = sprite.addPart('legRight', {
         type: 'ellipse',
         x: 0, y: 0.15,
-        width: 0.10, height: 0.30,
+        width: 0.1, height: 0.3,
         color: '#6a2a2a',
         fill: true
     }, 0.5, 0, -10);
-    legRight.setBaseTransform(0.06, 0.20);
+    legRight.setBaseTransform(0.06, 0.2);
 
     // BODY (lean forward, z-order 0) - PIÙ PICCOLO CON MACCHIE GIALLE
     const body = sprite.addPart('body', [
@@ -115,9 +115,9 @@ export function rusher() {
             type: 'polygon',
             points: [
                 { x: -0.02, y: -0.02 },
-                { x: -0.04, y: -0.10 },
+                { x: -0.04, y: -0.1 },
                 { x: 0, y: -0.14 },
-                { x: 0.04, y: -0.10 },
+                { x: 0.04, y: -0.1 },
                 { x: 0.02, y: -0.02 }
             ],
             color: 'rgba(200, 100, 100, 0.65)',
@@ -194,7 +194,7 @@ export function rusher() {
     const walkParts = ['body', 'head', 'hornLeft', 'hornRight', 'legLeft', 'legRight'];
     const fastWalk = AnimationBuilder.createWalkAnimation(walkParts, 0.3);
     sprite.addAnimation(fastWalk);
-    sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body'], 1.0));
+    sprite.addAnimation(AnimationBuilder.createIdleAnimation(['head', 'body'], 1));
     // Add attack animation for rusher (fast jab)
     sprite.addAnimation(AnimationBuilder.createAttackAnimation(['body', 'head'], 0.45));
     sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'legLeft', 'legRight'], 0.2));

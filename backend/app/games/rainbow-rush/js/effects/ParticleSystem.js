@@ -3,10 +3,6 @@
  * Handles boost/powerup/death particles, explosions, sparkles, trails
  */
 export class ParticleSystem {
-    constructor() {
-        // Particle collections managed by EntityManager
-        // This class provides creation methods
-    }
 
     /**
      * Create projectile hit explosion - ULTRA MINIMAL
@@ -49,10 +45,16 @@ export class ParticleSystem {
         const particleCount = 3;
 
         // Colore semplificato
-        const particleColor = powerupType === 'immortality' ? [1, 0.84, 0, 1] :
-                             powerupType === 'flight' ? [0.4, 0.7, 1, 1] :
-                             powerupType === 'superJump' ? [1, 0.3, 0.5, 1] :
-                             [1, 1, 1, 1];
+        let particleColor;
+        if (powerupType === 'immortality') {
+            particleColor = [1, 0.84, 0, 1];
+        } else if (powerupType === 'flight') {
+            particleColor = [0.4, 0.7, 1, 1];
+        } else if (powerupType === 'superJump') {
+            particleColor = [1, 0.3, 0.5, 1];
+        } else {
+            particleColor = [1, 1, 1, 1];
+        }
 
         // Esplosione minima
         for (let i = 0; i < particleCount; i++) {

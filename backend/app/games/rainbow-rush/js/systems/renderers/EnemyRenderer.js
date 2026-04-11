@@ -89,17 +89,17 @@ export class EnemyRenderer extends IEntityRenderer {
         const animations = {
             flying: () => ({
             yOffset: Math.sin(time * 3) * 8,
-            scale: 1.0 + Math.sin(time * 4) * 0.08
+            scale: 1 + Math.sin(time * 4) * 0.08
             }),
             roll: () => ({
             yOffset: Math.sin(time * 1.5) * 2,
-            scale: 1.0 + Math.sin(time * 2) * 0.03
+            scale: 1 + Math.sin(time * 2) * 0.03
             }),
             bounce: () => {
             const bouncePhase = Math.sin(time * 6);
             return {
                 yOffset: Math.abs(bouncePhase) * 5,
-                scale: 1.0 + bouncePhase * 0.15
+                scale: 1 + bouncePhase * 0.15
             };
             },
             ground: () => ({
@@ -108,20 +108,28 @@ export class EnemyRenderer extends IEntityRenderer {
             }),
             chaser: () => ({
             yOffset: Math.sin(time * 5) * 4,
-            scale: 1.0 + Math.sin(time * 6) * 0.1
+            scale: 1 + Math.sin(time * 6) * 0.1
             }),
             default: () => ({
-            scale: 1.0 + Math.sin(time * 3) * 0.05
+            scale: 1 + Math.sin(time * 3) * 0.05
             })
         };
 
         // Determine animation type
-        const animType = 
-            enemy.category === 'flying' ? 'flying' :
-            enemy.pattern === 'roll' || enemy.id === 'spikeball' ? 'roll' :
-            enemy.pattern === 'bounce' || enemy.pattern === 'jump' ? 'bounce' :
-            enemy.id === 'slug' || enemy.category === 'ground' ? 'ground' :
-            enemy.category === 'chaser' ? 'chaser' : 'default';
+        let animType;
+        if (enemy.category === 'flying') {
+            animType = 'flying';
+        } else if (enemy.pattern === 'roll' || enemy.id === 'spikeball') {
+            animType = 'roll';
+        } else if (enemy.pattern === 'bounce' || enemy.pattern === 'jump') {
+            animType = 'bounce';
+        } else if (enemy.id === 'slug' || enemy.category === 'ground') {
+            animType = 'ground';
+        } else if (enemy.category === 'chaser') {
+            animType = 'chaser';
+        } else {
+            animType = 'default';
+        }
 
         // Apply animation
         const anim = animations[animType]();
@@ -270,10 +278,10 @@ export class EnemyRenderer extends IEntityRenderer {
         const progress = enemy.deathTimer / enemy.deathDuration;
         
         ctx.save();
-        ctx.globalAlpha = 1.0 - progress;
+        ctx.globalAlpha = 1 - progress;
         
         // Fade out and scale up
-        const scale = 1.0 + progress * 0.5;
+        const scale = 1 + progress * 0.5;
         ctx.translate(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2);
         ctx.scale(scale, scale);
         ctx.rotate(progress * Math.PI * 2);
@@ -334,8 +342,8 @@ export class EnemyRenderer extends IEntityRenderer {
         const progress = enemy.teleportTimer / 0.3;
         
         // Expanding circle
-        const radius = enemy.width * (1.0 + progress * 2);
-        const alpha = 1.0 - progress;
+        const radius = enemy.width * (1 + progress * 2);
+        const alpha = 1 - progress;
         
         ctx.strokeStyle = `rgba(200, 100, 255, ${alpha})`;
         ctx.lineWidth = 3;
@@ -482,7 +490,7 @@ export class EnemyRenderer extends IEntityRenderer {
             // Different seed for front spikes
             const seedA = Math.sin(i * 23.456 + 100) * 0.5 + 0.5;
             const seedB = Math.sin(i * 91.234 + 100) * 0.5 + 0.5;
-            const seedC = Math.sin(i * 67.890 + 100) * 0.5 + 0.5;
+            const seedC = Math.sin(i * 67.89 + 100) * 0.5 + 0.5;
             
             const lengthVariation = 0.8 + seedA * 0.4;
             const widthVariation = 0.75 + seedB * 0.5;
@@ -490,7 +498,7 @@ export class EnemyRenderer extends IEntityRenderer {
             
             // Individual spike animation - slight independent pulsing
             const spikePhase = Math.sin(time * 4.5 + i * 1.2) * 0.02;
-            const spikeLength = radius * (1.0 + breatheEffect + spikePhase + quiverEffect) * lengthVariation;
+            const spikeLength = radius * (1 + breatheEffect + spikePhase + quiverEffect) * lengthVariation;
             const baseWidth = radius * 0.2 * widthVariation;
             
             const baseX = x;

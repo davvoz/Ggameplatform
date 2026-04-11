@@ -10,38 +10,38 @@ export function grunt() {
         {
             type: 'ellipse',
             x: 0, y: 0.12,
-            width: 0.12, height: 0.30,
+            width: 0.12, height: 0.3,
             color: '#2d5a45',
             fill: true
         },
         {
             type: 'ellipse',  // Foot
             x: 0, y: 0.28,
-            width: 0.10, height: 0.08,
+            width: 0.1, height: 0.08,
             color: '#1a3d2e',
             fill: true
         }
     ], 0.5, 0, -10);
-    legLeft.setBaseTransform(-0.10, 0.30);
+    legLeft.setBaseTransform(-0.1, 0.3);
 
     // RIGHT LEG (behind body, z-order -10)
     const legRight = sprite.addPart('legRight', [
         {
             type: 'ellipse',
             x: 0, y: 0.12,
-            width: 0.12, height: 0.30,
+            width: 0.12, height: 0.3,
             color: '#2d5a45',
             fill: true
         },
         {
             type: 'ellipse',  // Foot
             x: 0, y: 0.28,
-            width: 0.10, height: 0.08,
+            width: 0.1, height: 0.08,
             color: '#1a3d2e',
             fill: true
         }
     ], 0.5, 0, -10);
-    legRight.setBaseTransform(0.10, 0.30);
+    legRight.setBaseTransform(0.1, 0.3);
 
     // BODY (main part, z-order 0)
     const body = sprite.addPart('body', [
@@ -55,7 +55,7 @@ export function grunt() {
         {
             type: 'ellipse',  // Chest highlight
             x: 0, y: -0.05,
-            width: 0.28, height: 0.30,
+            width: 0.28, height: 0.3,
             color: '#4a7a65',
             fill: true
         },
@@ -67,7 +67,7 @@ export function grunt() {
             fill: true
         }
     ], 0.5, 0.5, 0);
-    body.setBaseTransform(0, 0.10);
+    body.setBaseTransform(0, 0.1);
 
     // Parent legs to body
     sprite.setParent('legLeft', 'body');
@@ -77,8 +77,8 @@ export function grunt() {
     const armLeft = sprite.addPart('armLeft', [
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.10, height: 0.26,
+            x: 0, y: 0.1,
+            width: 0.1, height: 0.26,
             color: '#3d6b55',
             fill: true
         },
@@ -97,8 +97,8 @@ export function grunt() {
     const armRight = sprite.addPart('armRight', [
         {
             type: 'ellipse',
-            x: 0, y: 0.10,
-            width: 0.10, height: 0.26,
+            x: 0, y: 0.1,
+            width: 0.1, height: 0.26,
             color: '#3d6b55',
             fill: true
         },
@@ -175,8 +175,8 @@ export function grunt() {
         {
             type: 'polygon',  // Mouth/jaw
             points: [
-                { x: -0.08, y: 0.10 },
-                { x: 0.08, y: 0.10 },
+                { x: -0.08, y: 0.1 },
+                { x: 0.08, y: 0.1 },
                 { x: 0.05, y: 0.16 },
                 { x: -0.05, y: 0.16 }
             ],
@@ -184,7 +184,7 @@ export function grunt() {
             fill: true
         }
     ], 0.5, 0.5, 10);
-    head.setBaseTransform(0, -0.30);
+    head.setBaseTransform(0, -0.3);
     sprite.setParent('head', 'body');
 
     // Setup animations with arms and legs for more fluid walk cycle
@@ -193,11 +193,11 @@ export function grunt() {
     // IDLE animation - gentle breathing with arm sway
     const idle = new AnimationClip('idle', 2.5, true);
     idle.addTrack('body', [
-        { time: 0, transform: { y: 0, scaleY: 1.0 } },
+        { time: 0, transform: { y: 0, scaleY: 1 } },
         { time: 0.625, transform: { y: -0.01, scaleY: 1.02 } },
-        { time: 1.25, transform: { y: 0, scaleY: 1.0 } },
+        { time: 1.25, transform: { y: 0, scaleY: 1 } },
         { time: 1.875, transform: { y: 0.01, scaleY: 0.98 } },
-        { time: 2.5, transform: { y: 0, scaleY: 1.0 } }
+        { time: 2.5, transform: { y: 0, scaleY: 1 } }
     ]);
     idle.addTrack('head', [
         { time: 0, transform: { rotation: 0 } },
@@ -222,44 +222,44 @@ export function grunt() {
     walk.addTrack('body', [
         { time: 0, transform: { y: 0, rotation: 0.02 } },
         { time: 0.15, transform: { y: -0.03, rotation: -0.02 } },
-        { time: 0.30, transform: { y: 0, rotation: 0.02 } },
+        { time: 0.3, transform: { y: 0, rotation: 0.02 } },
         { time: 0.45, transform: { y: -0.03, rotation: -0.02 } },
         { time: 0.6, transform: { y: 0, rotation: 0.02 } }
     ]);
     walk.addTrack('head', [
         { time: 0, transform: { rotation: 0.04, y: 0 } },
         { time: 0.15, transform: { rotation: -0.06, y: -0.01 } },
-        { time: 0.30, transform: { rotation: 0.04, y: 0 } },
+        { time: 0.3, transform: { rotation: 0.04, y: 0 } },
         { time: 0.45, transform: { rotation: -0.06, y: -0.01 } },
         { time: 0.6, transform: { rotation: 0.04, y: 0 } }
     ]);
     walk.addTrack('legLeft', [
         { time: 0, transform: { rotation: 0.25, y: 0 } },
         { time: 0.15, transform: { rotation: 0, y: -0.04 } },
-        { time: 0.30, transform: { rotation: -0.25, y: 0 } },
+        { time: 0.3, transform: { rotation: -0.25, y: 0 } },
         { time: 0.45, transform: { rotation: 0, y: 0 } },
         { time: 0.6, transform: { rotation: 0.25, y: 0 } }
     ]);
     walk.addTrack('legRight', [
         { time: 0, transform: { rotation: -0.25, y: 0 } },
         { time: 0.15, transform: { rotation: 0, y: 0 } },
-        { time: 0.30, transform: { rotation: 0.25, y: 0 } },
+        { time: 0.3, transform: { rotation: 0.25, y: 0 } },
         { time: 0.45, transform: { rotation: 0, y: -0.04 } },
         { time: 0.6, transform: { rotation: -0.25, y: 0 } }
     ]);
     walk.addTrack('armLeft', [
         { time: 0, transform: { rotation: -0.35 } },
-        { time: 0.30, transform: { rotation: 0.35 } },
+        { time: 0.3, transform: { rotation: 0.35 } },
         { time: 0.6, transform: { rotation: -0.35 } }
     ]);
     walk.addTrack('armRight', [
         { time: 0, transform: { rotation: 0.35 } },
-        { time: 0.30, transform: { rotation: -0.35 } },
+        { time: 0.3, transform: { rotation: -0.35 } },
         { time: 0.6, transform: { rotation: 0.35 } }
     ]);
     walk.addTrack('shoulders', [
         { time: 0, transform: { rotation: 0.03 } },
-        { time: 0.30, transform: { rotation: -0.03 } },
+        { time: 0.3, transform: { rotation: -0.03 } },
         { time: 0.6, transform: { rotation: 0.03 } }
     ]);
     sprite.addAnimation(walk);
@@ -267,29 +267,29 @@ export function grunt() {
     // ATTACK animation - lunge forward with arms
     const attack = new AnimationClip('attack', 0.6, false);
     attack.addTrack('body', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.15, transform: { rotation: -0.15, scaleX: 0.95 } },
-        { time: 0.35, transform: { rotation: 0.20, scaleX: 1.10 } },
+        { time: 0.35, transform: { rotation: 0.2, scaleX: 1.1 } },
         { time: 0.5, transform: { rotation: 0.08, scaleX: 1.02 } },
-        { time: 0.6, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 0.6, transform: { rotation: 0, scaleX: 1 } }
     ]);
     attack.addTrack('head', [
         { time: 0, transform: { rotation: 0, y: 0 } },
-        { time: 0.15, transform: { rotation: -0.20, y: 0.02 } },
+        { time: 0.15, transform: { rotation: -0.2, y: 0.02 } },
         { time: 0.35, transform: { rotation: 0.25, y: -0.03 } },
         { time: 0.6, transform: { rotation: 0, y: 0 } }
     ]);
     attack.addTrack('armLeft', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.15, transform: { rotation: 0.5, scaleY: 0.9 } },
         { time: 0.35, transform: { rotation: -0.8, scaleY: 1.15 } },
-        { time: 0.6, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 0.6, transform: { rotation: 0, scaleY: 1 } }
     ]);
     attack.addTrack('armRight', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.15, transform: { rotation: -0.5, scaleY: 0.9 } },
         { time: 0.35, transform: { rotation: 0.8, scaleY: 1.15 } },
-        { time: 0.6, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 0.6, transform: { rotation: 0, scaleY: 1 } }
     ]);
     sprite.addAnimation(attack);
 

@@ -4,10 +4,8 @@
  */
 
 export class FastInitializer {
-    constructor() {
-        this.criticalModulesLoaded = false;
-        this.deferredModules = [];
-    }
+    criticalModulesLoaded = false;
+    deferredModules = [];
 
     /**
      * Load only critical modules for fast startup

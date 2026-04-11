@@ -19,7 +19,7 @@ export const DifficultyConfig = {
         powerupFrequency: 0.05,
         shieldFrequency: 0.03,
         magnetFrequency: 0.03,
-        healthFrequency: 0.10,
+        healthFrequency: 0.1,
         coinRainFrequency: 0.02,
         multiplierFrequency: 0.01,
         rainbowFrequency: 0.01,
@@ -80,7 +80,7 @@ export const DifficultyConfig = {
         heartRechargeBonusFrequency: 0.035,
 
         healthPerLevel: { min: 4, max: 6 },
-        coinFrequency: 0.30,
+        coinFrequency: 0.3,
 
         parTime: { threeStars: 60, twoStars: 90, oneStar: 130 }
     },
@@ -158,7 +158,7 @@ export const DifficultyConfig = {
         heartRechargeBonusFrequency: 0.05,
 
         healthPerLevel: { min: 8, max: 12 },
-        coinFrequency: 0.20,
+        coinFrequency: 0.2,
         
         parTime: { threeStars: 100, twoStars: 150, oneStar: 220 }
     }
@@ -182,7 +182,7 @@ export const PowerupTypes = {
  * Tipi di bonus disponibili con durate configurabili
  */
 export const BonusTypes = {
-    HEALTH: { id: 'health', weight: 1.0 },
+    HEALTH: { id: 'health', weight: 1 },
     SHIELD: { id: 'shield', weight: 0.8, duration: 15000 },  // 15 secondi
     MAGNET: { id: 'magnet', weight: 0.7, duration: 10000 }   // 10 secondi
 };

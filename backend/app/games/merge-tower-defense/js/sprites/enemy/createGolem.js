@@ -8,7 +8,7 @@ export function golem() {
     const legLeft = sprite.addPart('legLeft', {
         type: 'ellipse',
         x: 0, y: 0.12,
-        width: 0.10, height: 0.24,
+        width: 0.1, height: 0.24,
         color: '#8b6914',
         fill: true
     }, 0.5, 0, -10);
@@ -18,7 +18,7 @@ export function golem() {
     const legRight = sprite.addPart('legRight', {
         type: 'ellipse',
         x: 0, y: 0.12,
-        width: 0.10, height: 0.24,
+        width: 0.1, height: 0.24,
         color: '#8b6914',
         fill: true
     }, 0.5, 0, -10);
@@ -45,7 +45,7 @@ export function golem() {
         {
             type: 'ellipse',
             x: 0, y: 0.12,
-            width: 0.10, height: 0.22,
+            width: 0.1, height: 0.22,
             color: '#9a7018',
             fill: true
         },
@@ -65,7 +65,7 @@ export function golem() {
         {
             type: 'ellipse',
             x: 0, y: 0.12,
-            width: 0.10, height: 0.22,
+            width: 0.1, height: 0.22,
             color: '#9a7018',
             fill: true
         },
@@ -122,11 +122,11 @@ export function golem() {
     // Custom IDLE animation - slow, heavy breathing
     const idle = new AnimationClip('idle', 2.5, true);
     idle.addTrack('body', [
-        { time: 0, transform: { y: 0, scaleY: 1.0 } },
+        { time: 0, transform: { y: 0, scaleY: 1 } },
         { time: 0.625, transform: { y: -0.01, scaleY: 1.02 } },
         { time: 1.25, transform: { y: -0.015, scaleY: 1.03 } },
         { time: 1.875, transform: { y: -0.01, scaleY: 1.02 } },
-        { time: 2.5, transform: { y: 0, scaleY: 1.0 } }
+        { time: 2.5, transform: { y: 0, scaleY: 1 } }
     ]);
     idle.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0 } },
@@ -233,10 +233,10 @@ export function golem() {
     // SMASH animation - slow ground pound special (like healer)
     const smash = new AnimationClip('smash', 1.5, false);
     smash.addTrack('body', [
-        { time: 0, transform: { rotation: 0, y: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, y: 0, scaleY: 1 } },
         { time: 0.5, transform: { rotation: 0, y: -0.08, scaleY: 1.1 } },
         { time: 0.9, transform: { rotation: 0, y: 0.04, scaleY: 0.88 } },
-        { time: 1.5, transform: { rotation: 0, y: 0, scaleY: 1.0 } }
+        { time: 1.5, transform: { rotation: 0, y: 0, scaleY: 1 } }
     ]);
     smash.addTrack('head', [
         { time: 0, transform: { rotation: 0, y: 0 } },
@@ -246,25 +246,25 @@ export function golem() {
     ]);
     smash.addTrack('armLeft', [
         { time: 0, transform: { rotation: 0, y: 0 } },
-        { time: 0.5, transform: { rotation: -1.0, y: -0.10 } },
+        { time: 0.5, transform: { rotation: -1, y: -0.1 } },
         { time: 0.9, transform: { rotation: 0.35, y: 0.08 } },
         { time: 1.5, transform: { rotation: 0, y: 0 } }
     ]);
     smash.addTrack('armRight', [
         { time: 0, transform: { rotation: 0, y: 0 } },
-        { time: 0.5, transform: { rotation: 1.0, y: -0.10 } },
+        { time: 0.5, transform: { rotation: 1, y: -0.1 } },
         { time: 0.9, transform: { rotation: -0.35, y: 0.08 } },
         { time: 1.5, transform: { rotation: 0, y: 0 } }
     ]);
     smash.addTrack('legLeft', [
-        { time: 0, transform: { scaleX: 1.0 } },
+        { time: 0, transform: { scaleX: 1 } },
         { time: 0.9, transform: { scaleX: 1.12 } },
-        { time: 1.5, transform: { scaleX: 1.0 } }
+        { time: 1.5, transform: { scaleX: 1 } }
     ]);
     smash.addTrack('legRight', [
-        { time: 0, transform: { scaleX: 1.0 } },
+        { time: 0, transform: { scaleX: 1 } },
         { time: 0.9, transform: { scaleX: 1.12 } },
-        { time: 1.5, transform: { scaleX: 1.0 } }
+        { time: 1.5, transform: { scaleX: 1 } }
     ]);
     sprite.addAnimation(smash);
 

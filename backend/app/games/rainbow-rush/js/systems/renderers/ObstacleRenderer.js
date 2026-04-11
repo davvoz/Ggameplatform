@@ -134,10 +134,6 @@ export class ObstacleRenderer extends IEntityRenderer {
             [0, 0, 0, 0.35]
         );
 
-        // Glow disabled for performance
-        // const glowPulse = Math.sin(time * 5 + offset) * 0.3 + 0.5;
-        // RenderingUtils.drawGlow(this.renderer, enemy.x + enemy.width / 2, enemy.y + bounce + enemy.height * squish / 2,
-        //     enemy.width / 2, [0.6, 0.3, 1, 1], 3, glowPulse * 0.2, 0.07);
 
         // Body
         const bodyTopColor = [0.5, 0.2, 0.8, 1];
@@ -166,7 +162,7 @@ export class ObstacleRenderer extends IEntityRenderer {
     }
 
     renderEnemyEyes(enemy, time, offset, bounce, squish) {
-        const eyeScale = 1.0 + Math.sin(time * 10 + offset) * 0.2;
+        const eyeScale = 1 + Math.sin(time * 10 + offset) * 0.2;
         const eyeY = enemy.y + bounce + enemy.height * squish * 0.35;
 
         // Eyes

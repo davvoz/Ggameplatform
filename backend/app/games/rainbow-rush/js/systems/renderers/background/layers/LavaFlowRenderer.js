@@ -81,7 +81,7 @@ export class LavaFlowRenderer extends BaseLayerRenderer {
                           Math.sin(time * 6 + index * 0.4) * LAVA_FLOW_CONFIG.BRIGHTNESS_VARIANCE);
         
         const edgeColor = [
-            1.0 * brightness,
+            1 * brightness,
             0.35 * brightness,
             0,
             layer.color[3]

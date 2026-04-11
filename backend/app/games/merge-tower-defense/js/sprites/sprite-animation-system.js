@@ -75,7 +75,7 @@ export class SpritePart {
         this.pivotX = pivotX; // Rotation pivot point (0-1)
         this.pivotY = pivotY;
         this.visible = true;
-        this.opacity = 1.0;
+        this.opacity = 1;
         this.tint = null;
         this.zOrder = zOrder; // Lower = rendered first (behind)
 
@@ -225,7 +225,7 @@ export class MultiPartSprite {
         this.animations = new Map(); // animName -> AnimationClip
         this.currentAnimation = null;
         this.animationTime = 0;
-        this.playbackSpeed = 1.0;
+        this.playbackSpeed = 1;
         this.playing = false;
 
         // Root transform
@@ -374,7 +374,7 @@ export class MultiPartSprite {
         ctx.scale(world.scaleX, world.scaleY);
 
         // Apply effects
-        ctx.globalAlpha = part.opacity * (options.opacity || 1.0);
+        ctx.globalAlpha = part.opacity * (options.opacity || 1);
 
         // Render geometry - handle array or single geometry
         const geometries = Array.isArray(part.geometry) ? part.geometry : [part.geometry];
@@ -541,7 +541,7 @@ export class AnimationBuilder {
     /**
      * Create idle animation - subtle breathing/bobbing
      */
-    static createIdleAnimation(parts, duration = 2.0) {
+    static createIdleAnimation(parts, duration = 2) {
         const clip = new AnimationClip('idle', duration, true);
 
         // Head bobbing
@@ -556,9 +556,9 @@ export class AnimationBuilder {
         // Body breathing
         if (parts.includes('body')) {
             clip.addTrack('body', [
-                { time: 0, transform: { scaleY: 1.0 } },
+                { time: 0, transform: { scaleY: 1 } },
                 { time: duration * 0.5, transform: { scaleY: 1.03 } },
-                { time: duration, transform: { scaleY: 1.0 } }
+                { time: duration, transform: { scaleY: 1 } }
             ]);
         }
 
@@ -575,11 +575,11 @@ export class AnimationBuilder {
         // Body bounce and sway - VERY pronounced
         if (parts.includes('body')) {
             clip.addTrack('body', [
-                { time: 0, transform: { y: 0, rotation: 0.05, scaleY: 1.0 } },
+                { time: 0, transform: { y: 0, rotation: 0.05, scaleY: 1 } },
                 { time: duration * 0.25, transform: { y: -0.08, rotation: -0.08, scaleY: 0.95 } },
-                { time: duration * 0.5, transform: { y: 0, rotation: -0.05, scaleY: 1.0 } },
+                { time: duration * 0.5, transform: { y: 0, rotation: -0.05, scaleY: 1 } },
                 { time: duration * 0.75, transform: { y: -0.08, rotation: 0.08, scaleY: 0.95 } },
-                { time: duration, transform: { y: 0, rotation: 0.05, scaleY: 1.0 } }
+                { time: duration, transform: { y: 0, rotation: 0.05, scaleY: 1 } }
             ]);
         }
 
@@ -698,10 +698,10 @@ export class AnimationBuilder {
         // Body wind-up and strike
         if (parts.includes('body')) {
             clip.addTrack('body', [
-                { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+                { time: 0, transform: { rotation: 0, scaleX: 1 } },
                 { time: duration * 0.3, transform: { rotation: -0.15, scaleX: 0.95 } },
                 { time: duration * 0.5, transform: { rotation: 0.2, scaleX: 1.1 } },
-                { time: duration, transform: { rotation: 0, scaleX: 1.0 } }
+                { time: duration, transform: { rotation: 0, scaleX: 1 } }
             ]);
         }
 
@@ -737,9 +737,9 @@ export class AnimationBuilder {
         // Full body recoil
         for (const partName of parts) {
             clip.addTrack(partName, [
-                { time: 0, transform: { x: 0, scaleX: 1.0 } },
+                { time: 0, transform: { x: 0, scaleX: 1 } },
                 { time: duration * 0.3, transform: { x: -0.05, scaleX: 0.9 } },
-                { time: duration, transform: { x: 0, scaleX: 1.0 } }
+                { time: duration, transform: { x: 0, scaleX: 1 } }
             ]);
         }
 
@@ -749,13 +749,13 @@ export class AnimationBuilder {
     /**
      * Create death animation - collapse
      */
-    static createDeathAnimation(parts, duration = 1.0) {
+    static createDeathAnimation(parts, duration = 1) {
         const clip = new AnimationClip('death', duration, false);
 
         // Body collapse
         if (parts.includes('body')) {
             clip.addTrack('body', [
-                { time: 0, transform: { y: 0, rotation: 0, scaleY: 1.0 } },
+                { time: 0, transform: { y: 0, rotation: 0, scaleY: 1 } },
                 { time: duration * 0.3, transform: { y: -0.02, rotation: 0, scaleY: 1.1 } },
                 { time: duration * 0.6, transform: { y: 0.1, rotation: -0.3, scaleY: 0.8 } },
                 { time: duration, transform: { y: 0.2, rotation: -1.57, scaleY: 0.6 } }
@@ -778,7 +778,7 @@ export class AnimationBuilder {
                 clip.addTrack(limb, [
                     { time: 0, transform: { rotation: 0 } },
                     { time: duration * 0.5, transform: { rotation: Math.random() * 0.5 - 0.25 } },
-                    { time: duration, transform: { rotation: Math.random() * 1.0 - 0.5 } }
+                    { time: duration, transform: { rotation: Math.random() * 1 - 0.5 } }
                 ]);
             }
         }
@@ -799,37 +799,37 @@ export class AnimationBuilder {
         // Turret subtle scanning motion
         if (parts.includes('turret')) {
             clip.addTrack('turret', [
-                { time: 0, transform: { rotation: 0, scaleX: 1.0, scaleY: 1.0 } },
+                { time: 0, transform: { rotation: 0, scaleX: 1, scaleY: 1 } },
                 { time: duration * 0.25, transform: { rotation: 0.03, scaleX: 1.01, scaleY: 0.99 } },
-                { time: duration * 0.5, transform: { rotation: 0, scaleX: 1.0, scaleY: 1.0 } },
+                { time: duration * 0.5, transform: { rotation: 0, scaleX: 1, scaleY: 1 } },
                 { time: duration * 0.75, transform: { rotation: -0.03, scaleX: 0.99, scaleY: 1.01 } },
-                { time: duration, transform: { rotation: 0, scaleX: 1.0, scaleY: 1.0 } }
+                { time: duration, transform: { rotation: 0, scaleX: 1, scaleY: 1 } }
             ]);
         }
 
         // Barrel very subtle breathing
         if (parts.includes('barrel')) {
             clip.addTrack('barrel', [
-                { time: 0, transform: { scaleX: 1.0, x: 0 } },
+                { time: 0, transform: { scaleX: 1, x: 0 } },
                 { time: duration * 0.5, transform: { scaleX: 1.02, x: 0.005 } },
-                { time: duration, transform: { scaleX: 1.0, x: 0 } }
+                { time: duration, transform: { scaleX: 1, x: 0 } }
             ]);
         }
 
         // Barrel1 and Barrel2 for twin-barrel towers
         if (parts.includes('barrel1')) {
             clip.addTrack('barrel1', [
-                { time: 0, transform: { scaleX: 1.0 } },
+                { time: 0, transform: { scaleX: 1 } },
                 { time: duration * 0.5, transform: { scaleX: 1.02 } },
-                { time: duration, transform: { scaleX: 1.0 } }
+                { time: duration, transform: { scaleX: 1 } }
             ]);
         }
         if (parts.includes('barrel2')) {
             clip.addTrack('barrel2', [
-                { time: 0, transform: { scaleX: 1.0 } },
+                { time: 0, transform: { scaleX: 1 } },
                 { time: duration * 0.33, transform: { scaleX: 1.02 } },
-                { time: duration * 0.66, transform: { scaleX: 1.0 } },
-                { time: duration, transform: { scaleX: 1.0 } }
+                { time: duration * 0.66, transform: { scaleX: 1 } },
+                { time: duration, transform: { scaleX: 1 } }
             ]);
         }
 
@@ -844,20 +844,20 @@ export class AnimationBuilder {
         // Lens glow effect
         if (parts.includes('lens')) {
             clip.addTrack('lens', [
-                { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+                { time: 0, transform: { scaleX: 1, scaleY: 1 } },
                 { time: duration * 0.5, transform: { scaleX: 1.15, scaleY: 1.15 } },
-                { time: duration, transform: { scaleX: 1.0, scaleY: 1.0 } }
+                { time: duration, transform: { scaleX: 1, scaleY: 1 } }
             ]);
         }
 
         // Coil subtle pulse for electric
         if (parts.includes('coil')) {
             clip.addTrack('coil', [
-                { time: 0, transform: { scaleY: 1.0 } },
+                { time: 0, transform: { scaleY: 1 } },
                 { time: duration * 0.25, transform: { scaleY: 1.05 } },
-                { time: duration * 0.5, transform: { scaleY: 1.0 } },
+                { time: duration * 0.5, transform: { scaleY: 1 } },
                 { time: duration * 0.75, transform: { scaleY: 1.05 } },
-                { time: duration, transform: { scaleY: 1.0 } }
+                { time: duration, transform: { scaleY: 1 } }
             ]);
         }
 
@@ -873,10 +873,10 @@ export class AnimationBuilder {
         // Barrel recoil
         if (parts.includes('barrel')) {
             clip.addTrack('barrel', [
-                { time: 0, transform: { x: 0, scaleX: 1.0 } },
+                { time: 0, transform: { x: 0, scaleX: 1 } },
                 { time: duration * 0.15, transform: { x: -0.06, scaleX: 0.92 } },
                 { time: duration * 0.4, transform: { x: -0.03, scaleX: 0.96 } },
-                { time: duration, transform: { x: 0, scaleX: 1.0 } }
+                { time: duration, transform: { x: 0, scaleX: 1 } }
             ]);
         }
 
@@ -899,9 +899,9 @@ export class AnimationBuilder {
         // Turret slight kickback
         if (parts.includes('turret')) {
             clip.addTrack('turret', [
-                { time: 0, transform: { x: 0, scaleX: 1.0 } },
+                { time: 0, transform: { x: 0, scaleX: 1 } },
                 { time: duration * 0.15, transform: { x: -0.02, scaleX: 0.97 } },
-                { time: duration, transform: { x: 0, scaleX: 1.0 } }
+                { time: duration, transform: { x: 0, scaleX: 1 } }
             ]);
         }
 
@@ -925,29 +925,29 @@ export class AnimationBuilder {
         // Lens intensifies
         if (parts.includes('lens')) {
             clip.addTrack('lens', [
-                { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+                { time: 0, transform: { scaleX: 1, scaleY: 1 } },
                 { time: duration * 0.5, transform: { scaleX: 1.3, scaleY: 1.3 } },
                 { time: duration * 0.8, transform: { scaleX: 1.5, scaleY: 1.5 } },
-                { time: duration, transform: { scaleX: 1.0, scaleY: 1.0 } }
+                { time: duration, transform: { scaleX: 1, scaleY: 1 } }
             ]);
         }
 
         // Barrel extends slightly
         if (parts.includes('barrel')) {
             clip.addTrack('barrel', [
-                { time: 0, transform: { scaleX: 1.0, x: 0 } },
+                { time: 0, transform: { scaleX: 1, x: 0 } },
                 { time: duration * 0.7, transform: { scaleX: 1.05, x: 0.02 } },
                 { time: duration * 0.85, transform: { scaleX: 0.95, x: -0.04 } },
-                { time: duration, transform: { scaleX: 1.0, x: 0 } }
+                { time: duration, transform: { scaleX: 1, x: 0 } }
             ]);
         }
 
         // Turret braces
         if (parts.includes('turret')) {
             clip.addTrack('turret', [
-                { time: 0, transform: { scaleY: 1.0 } },
+                { time: 0, transform: { scaleY: 1 } },
                 { time: duration * 0.7, transform: { scaleY: 0.97 } },
-                { time: duration, transform: { scaleY: 1.0 } }
+                { time: duration, transform: { scaleY: 1 } }
             ]);
         }
 

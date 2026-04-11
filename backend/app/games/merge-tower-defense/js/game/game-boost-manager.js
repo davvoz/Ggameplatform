@@ -84,7 +84,7 @@ export class BoostManager {
             this.state.pendingUpgradeItem       = item;
             this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 1, {
                 text: '⭐ CLICK A TOWER TO UPGRADE ⭐',
-                color: '#ffdd00', vy: -1, life: 3.0, scale: 1.5, glow: true,
+                color: '#ffdd00', vy: -1, life: 3, scale: 1.5, glow: true,
             });
         }
     }

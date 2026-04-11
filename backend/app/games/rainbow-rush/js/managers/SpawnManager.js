@@ -79,16 +79,15 @@ export class SpawnManager {
         if (this.platformTimer >= this.platformInterval) {
             this.spawnPlatform(scoreSystem);
             this.platformTimer = 0;
-        } else {
-            // OPTIMIZED: Emergency check less frequently (only every 1s instead of 0.5s)
-            if (this.platformTimer % 1.0 < deltaTime) {
-                const visibleCount = this.entityManager.getVisiblePlatformCount(this.dims.width);
+        }
+        // OPTIMIZED: Emergency check less frequently (only every 1s instead of 0.5s)
+        if (this.platformTimer < this.platformInterval && this.platformTimer % 1 < deltaTime) {
+            const visibleCount = this.entityManager.getVisiblePlatformCount(this.dims.width);
 
-                // Emergency spawn if less than 3 visible platforms
-                if (visibleCount < 3) {
-                    this.spawnPlatform(scoreSystem);
-                    this.platformTimer = 0;
-                }
+            // Emergency spawn if less than 3 visible platforms
+            if (visibleCount < 3) {
+                this.spawnPlatform(scoreSystem);
+                this.platformTimer = 0;
             }
         }
     }
@@ -97,7 +96,7 @@ export class SpawnManager {
      * Controlla se abbiamo raggiunto la fine del livello
      */
     hasReachedLevelEnd() {
-        if (!this.levelManager || !this.levelManager.levelLength) return false;
+        if (!this.levelManager?.levelLength) return false;
         
         // Trova la piattaforma più a destra
         const platforms = this.entityManager.getEntities('platforms');
@@ -128,32 +127,10 @@ export class SpawnManager {
      */
     updateBonusSpawning(deltaTime) {
         this.magnetTimer += deltaTime;
-        if (this.magnetTimer >= this.magnetInterval) {
-            // 70% chance to spawn magnet + coin rain combo
-            if (Math.random() < 0.7) {
-                this.spawnBonusCombo();
-                // Reset both timers to avoid double spawning
-                this.magnetTimer = 0;
-                this.coinRainTimer = 0;
-            } else {
-                this.spawnMagnetBonus();
-                this.magnetTimer = 0;
-            }
-        }
+        this.updateMagnetSpawn();
 
         this.coinRainTimer += deltaTime;
-        if (this.coinRainTimer >= this.coinRainInterval) {
-            // 70% chance to spawn magnet + coin rain combo
-            if (Math.random() < 0.7) {
-                this.spawnBonusCombo();
-                // Reset both timers to avoid double spawning
-                this.magnetTimer = 0;
-                this.coinRainTimer = 0;
-            } else {
-                this.spawnCoinRainBonus();
-                this.coinRainTimer = 0;
-            }
-        }
+        this.updateCoinRainBonus();
 
         this.shieldTimer += deltaTime;
         if (this.shieldTimer >= this.shieldInterval) {
@@ -201,6 +178,36 @@ export class SpawnManager {
         if (this.rechargeBonusTimer >= this.rechargeBonusInterval) {
             this.spawnRechargeBonus();
             this.rechargeBonusTimer = 0;
+        }
+    }
+
+    updateCoinRainBonus() {
+        if (this.coinRainTimer >= this.coinRainInterval) {
+            // 70% chance to spawn magnet + coin rain combo
+            if (Math.random() < 0.7) {
+                this.spawnBonusCombo();
+                // Reset both timers to avoid double spawning
+                this.magnetTimer = 0;
+                this.coinRainTimer = 0;
+            } else {
+                this.spawnCoinRainBonus();
+                this.coinRainTimer = 0;
+            }
+        }
+    }
+
+    updateMagnetSpawn() {
+        if (this.magnetTimer >= this.magnetInterval) {
+            // 70% chance to spawn magnet + coin rain combo
+            if (Math.random() < 0.7) {
+                this.spawnBonusCombo();
+                // Reset both timers to avoid double spawning
+                this.magnetTimer = 0;
+                this.coinRainTimer = 0;
+            } else {
+                this.spawnMagnetBonus();
+                this.magnetTimer = 0;
+            }
         }
     }
 
@@ -296,7 +303,7 @@ export class SpawnManager {
             }
 
             // Use config values or fallback
-            if (powerupEntry && powerupEntry.duration && powerupEntry.cooldown) {
+            if (powerupEntry?.duration && powerupEntry?.cooldown) {
                 duration = powerupEntry.duration;
                 cooldown = powerupEntry.cooldown;
             } else {

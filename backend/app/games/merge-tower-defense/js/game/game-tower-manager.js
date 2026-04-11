@@ -63,7 +63,7 @@ export class TowerManager {
             const speed = 3 + Math.random() * 2;
             this.particles.emit(col, row, {
                 text: '💰', vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 3,
-                gravity: 0.15, life: 1.0, scale: 0.6 + Math.random() * 0.4,
+                gravity: 0.15, life: 1, scale: 0.6 + Math.random() * 0.4,
             });
         }
         // Sparkle burst
@@ -78,7 +78,7 @@ export class TowerManager {
         }
         this.particles.emit(col, row, {
             text: `+${sellValue}`, color: '#ffdd00', fontSize: 24,
-            vx: 0, vy: -2, gravity: 0, life: 1.2, scale: 1.0,
+            vx: 0, vy: -2, gravity: 0, life: 1.2, scale: 1,
         });
 
         this.audio.towerSell();
@@ -248,7 +248,7 @@ export class TowerManager {
         this.state.score  += upgradeBonus;
         this.particles.emit(cannon.col, cannon.row, {
             text: `⭐ LEVEL ${cannon.level} ⭐`, color: '#ffdd00',
-            vy: -2, life: 2.0, scale: 1.8, glow: true,
+            vy: -2, life: 2, scale: 1.8, glow: true,
         });
 
         this.state.selectingTowerForUpgrade = false;

@@ -37,7 +37,7 @@ export class EnemySystem {
      * Load enemies from level configuration
      */
     loadEnemiesFromLevel(levelData) {
-        if (!levelData || !levelData.enemies) return;
+        if (!levelData?.enemies) return;
 
         // Clear existing enemies
         this.entityManager.clearEntities('enemies');
@@ -78,13 +78,7 @@ export class EnemySystem {
     spawnFromSpawner(spawnerEnemy) {
         const spawnX = spawnerEnemy.x + (Math.random() - 0.5) * 50;
         const spawnY = spawnerEnemy.y;
-        
-        const newEnemy = this.spawnEnemy(
-            spawnerEnemy.spawnType,
-            spawnX,
-            spawnY,
-            spawnerEnemy.platformIndex
-        );
+
 
         // Create spawn particles
         this.createSpawnParticles(spawnX, spawnY);
@@ -119,53 +113,58 @@ export class EnemySystem {
      * Main update - chiamato ogni frame
      */
     update(deltaTime, scrollSpeed = 0) {
-        if (!this.player) return;
+        if (!this.player) 
+            return;
 
         const enemies = this.entityManager.getEntities('enemies');
         
         // Update each enemy
         for (let i = enemies.length - 1; i >= 0; i--) {
-            const enemy = enemies[i];
-            
-            // Check for teleport sound BEFORE update
-            if (enemy.justTeleported && this.audioManager) {
-                this.audioManager.playSound('teleport');
-                enemy.justTeleported = false;
-            }
-            
-            // Update enemy logic
-            enemy.update(deltaTime, this.player, this.dims);
-            
-            // Apply scrolling (piattaforme che si muovono) - ma SOLO baseSpeed, non turbo
-            const totalVelocity = enemy.velocity - scrollSpeed;
-            enemy.x += totalVelocity * deltaTime;
-            
-            // Handle platform collisions for grounded enemies
-            if (enemy.category === 'ground' || enemy.category === 'jumper') {
-                this.checkEnemyPlatformCollisions(enemy);
-            }
-
-            // Handle spawner enemies
-            if (enemy.pattern === 'spawn' && enemy.alive) {
-                // Check if spawn timer triggered
-                if (enemy.spawnTimer >= enemy.spawnInterval && enemy.currentSpawns < enemy.maxSpawns) {
-                    this.spawnFromSpawner(enemy);
-                }
-            }
-
-            // Remove if off-screen or dead
-            if (enemy.shouldRemove(this.dims.width)) {
-                enemies.splice(i, 1);
-                
-                // Track enemy defeated for level manager
-                if (!enemy.alive && this.levelManager) {
-                    this.levelManager.recordEnemyKilled();
-                }
-            }
+            this.updateEnemy(enemies, i, deltaTime, scrollSpeed);
         }
 
         // Optional: Dynamic spawning (can be disabled if only using predefined enemies)
         // this.updateDynamicSpawning(deltaTime);
+    }
+
+    updateEnemy(enemies, i, deltaTime, scrollSpeed) {
+        const enemy = enemies[i];
+
+        // Check for teleport sound BEFORE update
+        if (enemy.justTeleported && this.audioManager) {
+            this.audioManager.playSound('teleport');
+            enemy.justTeleported = false;
+        }
+
+        // Update enemy logic
+        enemy.update(deltaTime, this.player, this.dims);
+
+        // Apply scrolling (piattaforme che si muovono) - ma SOLO baseSpeed, non turbo
+        const totalVelocity = enemy.velocity - scrollSpeed;
+        enemy.x += totalVelocity * deltaTime;
+
+        // Handle platform collisions for grounded enemies
+        if (enemy.category === 'ground' || enemy.category === 'jumper') {
+            this.checkEnemyPlatformCollisions(enemy);
+        }
+
+        // Handle spawner enemies
+        if (enemy.pattern === 'spawn' && enemy.alive) {
+            // Check if spawn timer triggered
+            if (enemy.spawnTimer >= enemy.spawnInterval && enemy.currentSpawns < enemy.maxSpawns) {
+                this.spawnFromSpawner(enemy);
+            }
+        }
+
+        // Remove if off-screen or dead
+        if (enemy.shouldRemove(this.dims.width)) {
+            enemies.splice(i, 1);
+
+            // Track enemy defeated for level manager
+            if (!enemy.alive && this.levelManager) {
+                this.levelManager.recordEnemyKilled();
+            }
+        }
     }
 
     /**

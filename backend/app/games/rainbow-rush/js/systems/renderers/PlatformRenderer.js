@@ -98,7 +98,7 @@ export class PlatformRenderer extends IEntityRenderer {
         }
         
         const boostedColor = [...platform.color];
-        const multiplier = 1.0 + comboBoost * 0.5;
+        const multiplier = 1 + comboBoost * 0.5;
         boostedColor[0] = Math.min(boostedColor[0] * multiplier, 1);
         boostedColor[1] = Math.min(boostedColor[1] * multiplier, 1);
         boostedColor[2] = Math.min(boostedColor[2] * multiplier, 1);
@@ -108,7 +108,7 @@ export class PlatformRenderer extends IEntityRenderer {
     applyCrumblingTransform(platform, renderColor, baseX, baseY) {
         const crumbleProgress = platform.crumbleTimer / platform.crumbleDuration;
         const color = [...renderColor];
-        color[3] = 1.0 - crumbleProgress * 0.7;
+        color[3] = 1 - crumbleProgress * 0.7;
         
         const shake = crumbleProgress * 8;
         return {
@@ -170,7 +170,7 @@ export class PlatformRenderer extends IEntityRenderer {
     }
 
     renderHighlights(x, y, width, height, color, time) {
-        const comboBoost = color[0] > 1.0 ? 0.3 : 0;
+        const comboBoost = color[0] > 1 ? 0.3 : 0;
         const highlightPulse = Math.sin(time * 3) * 0.1 + 0.5 + comboBoost;
         this.renderer.drawRect(x + 3, y + 1, width - 6, 2, [1, 1, 1, highlightPulse]);
         

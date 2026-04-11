@@ -57,22 +57,22 @@ export function armored() {
         {
             type: 'rect', // Chest plate
             x: 0.06, y: 0.05,
-            width: 0.36, height: 0.20,
+            width: 0.36, height: 0.2,
             color: '#7a7a7a',
             fill: true
         },
         {
             type: 'rect', // Belt armor
             x: 0.04, y: 0.32,
-            width: 0.40, height: 0.10,
+            width: 0.4, height: 0.1,
             color: '#6a6a6a',
             fill: true
         },
         {
             type: 'polygon', // Center emblem
             points: [
-                { x: 0.24, y: 0.10 },
-                { x: 0.20, y: 0.18 },
+                { x: 0.24, y: 0.1 },
+                { x: 0.2, y: 0.18 },
                 { x: 0.24, y: 0.22 },
                 { x: 0.28, y: 0.18 }
             ],
@@ -93,8 +93,8 @@ export function armored() {
             points: [
                 { x: 0, y: 0 },
                 { x: -0.12, y: 0 },
-                { x: -0.14, y: 0.10 },
-                { x: -0.10, y: 0.16 },
+                { x: -0.14, y: 0.1 },
+                { x: -0.1, y: 0.16 },
                 { x: 0, y: 0.14 }
             ],
             color: '#6a6a6a',
@@ -102,13 +102,13 @@ export function armored() {
         },
         {
             type: 'rect', // Shoulder rivet
-            x: -0.10, y: 0.04,
+            x: -0.1, y: 0.04,
             width: 0.04, height: 0.04,
             color: '#8a8a8a',
             fill: true
         }
     ], 1, 0.5, 5);
-    shoulderLeft.setBaseTransform(-0.20, -0.02);
+    shoulderLeft.setBaseTransform(-0.2, -0.02);
     sprite.setParent('shoulderLeft', 'body');
 
     const shoulderRight = sprite.addPart('shoulderRight', [
@@ -117,8 +117,8 @@ export function armored() {
             points: [
                 { x: 0, y: 0 },
                 { x: 0.12, y: 0 },
-                { x: 0.14, y: 0.10 },
-                { x: 0.10, y: 0.16 },
+                { x: 0.14, y: 0.1 },
+                { x: 0.1, y: 0.16 },
                 { x: 0, y: 0.14 }
             ],
             color: '#6a6a6a',
@@ -132,7 +132,7 @@ export function armored() {
             fill: true
         }
     ], 0, 0.5, 5);
-    shoulderRight.setBaseTransform(0.20, -0.02);
+    shoulderRight.setBaseTransform(0.2, -0.02);
     sprite.setParent('shoulderRight', 'body');
 
     // HEAD (helmet with visor, z-order 10)
@@ -146,7 +146,7 @@ export function armored() {
         },
         {
             type: 'rect', // Visor slit
-            x: 0.04, y: 0.10,
+            x: 0.04, y: 0.1,
             width: 0.24, height: 0.05,
             color: '#3a7a9a',
             fill: true
@@ -170,14 +170,14 @@ export function armored() {
         {
             type: 'rect',
             x: 0, y: 0,
-            width: 0.14, height: 0.30,
+            width: 0.14, height: 0.3,
             color: '#6a6a6a',
             fill: true
         },
         {
             type: 'rect', // Shield boss
-            x: 0.04, y: 0.10,
-            width: 0.06, height: 0.10,
+            x: 0.04, y: 0.1,
+            width: 0.06, height: 0.1,
             color: '#8a8a8a',
             fill: true
         }
@@ -187,16 +187,15 @@ export function armored() {
 
     // Slow heavy animations (armored units move slower)
     const allParts = ['body', 'head', 'shoulderLeft', 'shoulderRight', 'legLeft', 'legRight', 'shield'];
-    const coreParts = ['body', 'head', 'shoulderLeft', 'shoulderRight', 'shield'];
     
     // Custom IDLE animation - heavy breathing, shield ready stance
     const idle = new AnimationClip('idle', 2.5, true);
     idle.addTrack('body', [
-        { time: 0, transform: { y: 0, scaleY: 1.0, rotation: 0 } },
+        { time: 0, transform: { y: 0, scaleY: 1, rotation: 0 } },
         { time: 0.6, transform: { y: -0.02, scaleY: 1.02, rotation: 0.02 } },
         { time: 1.25, transform: { y: -0.03, scaleY: 1.03, rotation: 0 } },
         { time: 1.9, transform: { y: -0.02, scaleY: 1.02, rotation: -0.02 } },
-        { time: 2.5, transform: { y: 0, scaleY: 1.0, rotation: 0 } }
+        { time: 2.5, transform: { y: 0, scaleY: 1, rotation: 0 } }
     ]);
     idle.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0 } },
@@ -218,7 +217,7 @@ export function armored() {
         { time: 0, transform: { x: 0, y: 0, rotation: 0 } },
         { time: 0.5, transform: { x: 0.02, y: -0.01, rotation: 0.08 } },
         { time: 1.25, transform: { x: 0.03, y: 0.02, rotation: 0.1 } },
-        { time: 2.0, transform: { x: 0.01, y: -0.01, rotation: 0.05 } },
+        { time: 2, transform: { x: 0.01, y: -0.01, rotation: 0.05 } },
         { time: 2.5, transform: { x: 0, y: 0, rotation: 0 } }
     ]);
     idle.addTrack('legLeft', [
@@ -236,11 +235,11 @@ export function armored() {
     // Custom WALK animation - heavy stomping
     const walk = new AnimationClip('walk', 0.9, true);
     walk.addTrack('body', [
-        { time: 0, transform: { y: 0, rotation: 0.04, scaleY: 1.0 } },
+        { time: 0, transform: { y: 0, rotation: 0.04, scaleY: 1 } },
         { time: 0.225, transform: { y: -0.06, rotation: -0.05, scaleY: 0.96 } },
-        { time: 0.45, transform: { y: 0, rotation: -0.04, scaleY: 1.0 } },
+        { time: 0.45, transform: { y: 0, rotation: -0.04, scaleY: 1 } },
         { time: 0.675, transform: { y: -0.06, rotation: 0.05, scaleY: 0.96 } },
-        { time: 0.9, transform: { y: 0, rotation: 0.04, scaleY: 1.0 } }
+        { time: 0.9, transform: { y: 0, rotation: 0.04, scaleY: 1 } }
     ]);
     walk.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0.05 } },
@@ -298,11 +297,11 @@ export function armored() {
         { time: 0.8, transform: { rotation: 0 } }
     ]);
     attack.addTrack('shield', [
-        { time: 0, transform: { rotation: 0, x: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, x: 0, scaleX: 1 } },
         { time: 0.2, transform: { rotation: 0.3, x: 0.05, scaleX: 0.95 } },
         { time: 0.4, transform: { rotation: -0.4, x: -0.12, scaleX: 1.1 } },
         { time: 0.6, transform: { rotation: -0.2, x: -0.06, scaleX: 1.05 } },
-        { time: 0.8, transform: { rotation: 0, x: 0, scaleX: 1.0 } }
+        { time: 0.8, transform: { rotation: 0, x: 0, scaleX: 1 } }
     ]);
     attack.addTrack('shoulderLeft', [
         { time: 0, transform: { rotation: 0 } },

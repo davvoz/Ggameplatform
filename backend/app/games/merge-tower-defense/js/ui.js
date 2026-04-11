@@ -90,7 +90,7 @@ export class UIManager {
         }
 
         // Info pages (Encyclopedia) - render on top of everything
-        if (this.infoPages && this.infoPages.isOpen) {
+        if (this.infoPages?.isOpen) {
             this.infoPages.render();
         }
     }
@@ -100,9 +100,7 @@ export class UIManager {
      */
     update(dt) {
         // Update info pages animations
-        if (this.infoPages) {
-            this.infoPages.update(dt);
-        }
+        this.infoPages?.update(dt);
     }
 
     renderTopBar(gameState) {
@@ -118,11 +116,11 @@ export class UIManager {
     renderSidebar(gameState) {
         this.sidebar.renderSidebar(gameState);
     }
-    renderAbilityButtonStyled(ctx, button, abilities, now, time, cornerRadius, centerX, centerY) {
-        this.sidebar.renderAbilityButtonStyled(ctx, button, abilities, now, time, cornerRadius, centerX, centerY);
+    renderAbilityButtonStyled(ctx, button, options) {
+        this.sidebar.renderAbilityButtonStyled(ctx, button, options);
     }
-    drawAbilitySprite(ctx, abilityId, x, y, size, color, isReady, time) {
-        this.sidebar.drawAbilitySprite(ctx, abilityId, x, y, size, color, isReady, time);
+    drawAbilitySprite(ctx, abilityId, x, y, size, options) {
+        this.sidebar.drawAbilitySprite(ctx, abilityId, x, y, size, options);
     }
     drawLightningBolt(ctx, color, s, isReady, time) {
         this.sidebar.drawLightningBolt(ctx, color, s, isReady, time);
@@ -148,8 +146,8 @@ export class UIManager {
     setBgGradient(ctx, button, isActive, time, item, canAfford) {
         return this.sidebar.setBgGradient(ctx, button, isActive, time, item, canAfford);
     }
-    drawShopItemSprite(ctx, itemId, x, y, size, color, canAfford, isActive, time) {
-        this.sidebar.drawShopItemSprite(ctx, itemId, x, y, size, color, canAfford, isActive, time);
+    drawShopItemSprite(ctx, itemId, x, y, size, options) {
+        this.sidebar.drawShopItemSprite(ctx, itemId, x, y, size, options);
     }
     drawTowerUpgradeStar(ctx, canAfford, s, time) {
         this.sidebar.drawTowerUpgradeStar(ctx, canAfford, s, time);
@@ -203,8 +201,8 @@ export class UIManager {
     renderStatRow(ctx, lx, rx, y, label, value, color) {
         this.towerPanel._renderStatRow(ctx, lx, rx, y, label, value, color);
     }
-    renderTowerInfoButton(ctx, x, y, w, h, text, bg, border, time, animated, textColor) {
-        this.towerPanel._renderButton(ctx, x, y, w, h, text, bg, border, time, animated, textColor);
+    renderTowerInfoButton(ctx, options) {
+        this.towerPanel._renderButton(ctx, options);
     }
     calculateSellValue(tower) {
         return this.towerPanel.calculateSellValue(tower);
@@ -243,39 +241,27 @@ export class UIManager {
         return this.sidebar.getClickedAbilityButton(screenPos);
     }
 
-    /**
-     * Check if bomb cancel button was clicked
-     */
     isBombCancelButtonClicked(screenX, screenY) {
         return this.targeting.isCancelButtonClicked(screenX, screenY);
     }
 
-    /** Proxy so callers can read this.ui.bombTargetingMode directly */
-    get bombTargetingMode() { return this.targeting.bombTargetingMode; }
+    get bombTargetingMode() {
+        return this.targeting.bombTargetingMode;
+    }
 
-    /**
-     * Enter bomb targeting mode
-     */
     enterBombTargetingMode(callback, abilityType = 'BOMB') {
         this.targeting.enter(callback, abilityType);
     }
 
-    /**
-     * Update targeting cursor position (called from input handler)
-     */
     updateTargetingCursor(x, y, isTouch = false, touchEnded = false) {
         this.targeting.updateCursor(x, y, isTouch, touchEnded);
     }
 
-    /**
-     * Exit bomb targeting mode
-     */
     exitBombTargetingMode() {
         this.targeting.exit();
     }
 
     renderShopButton(button, gameState) {
-        // Delegated to ShopRenderer — kept as thin proxy for any legacy callers
         this.shop._renderButton(button, gameState);
     }
 
@@ -328,7 +314,7 @@ export class UIManager {
     }
 
     _handleInfoPagesTap(screenPos) {
-        if (!this.infoPages || !this.infoPages.isOpen)
+        if (!this.infoPages?.isOpen)
             return undefined;
         const result = this.infoPages.handleTap(screenPos);
         return result ? { type: 'info', action: result } : null;
@@ -416,9 +402,6 @@ export class UIManager {
         this.previewRow = row;
     }
 
-    /**
-     * Set allowed tower types for tutorial (null = all allowed)
-     */
     setTutorialAllowedTowers(allowedTypes) {
         this.tutorialAllowedTowers = allowedTypes;
         this.shop.setTutorialAllowedTowers(allowedTypes);
@@ -437,10 +420,15 @@ export class UIManager {
         return this.shop.selectedCannonType;
     }
 
-    /** Proxy getters/setters used by TutorialManager */
-    get shopButtons() { return this.shop.shopButtons; }
-    get infoButton() { return this.topBar.infoButton; }
-    set selectedCannonType(type) { this.shop.setSelectedCannonType(type); }
+    get shopButtons() {
+        return this.shop.shopButtons;
+    }
+    get infoButton() {
+        return this.topBar.infoButton;
+    }
+    set selectedCannonType(type) {
+        this.shop.setSelectedCannonType(type);
+    }
 
     // Game over / Victory
     showGameOver(gameState, platformBalance = 0, continueCost = 100) {
@@ -494,31 +482,21 @@ export class UIManager {
         return this.tutorial.isTutorialSkipButtonClicked(x, y);
     }
 
-
-    /**
-     * Handle drag move for info pages scrolling
-     */
     handleDragMove(screenPos) {
-        if (this.infoPages && this.infoPages.isOpen) {
+        if (this.infoPages?.isOpen) {
             return this.infoPages.handleDragMove(screenPos);
         }
         return false;
     }
 
-    /**
-     * Handle drag end for info pages scrolling
-     */
     handleDragEnd() {
-        if (this.infoPages && this.infoPages.isOpen) {
+        if (this.infoPages?.isOpen) {
             this.infoPages.handleDragEnd();
         }
     }
 
-    /**
-     * Check if info pages are currently open
-     */
     isInfoPagesOpen() {
-        return this.infoPages && this.infoPages.isOpen;
+        return this.infoPages?.isOpen;
     }
 }
 

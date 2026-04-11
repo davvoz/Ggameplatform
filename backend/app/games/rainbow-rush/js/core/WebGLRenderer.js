@@ -117,9 +117,11 @@ export class WebGLRenderer {
             const angle1 = (i / actualSegments) * Math.PI * 2;
             const angle2 = ((i + 1) / actualSegments) * Math.PI * 2;
             
-            positions.push(x, y);
-            positions.push(x + Math.cos(angle1) * radius, y + Math.sin(angle1) * radius);
-            positions.push(x + Math.cos(angle2) * radius, y + Math.sin(angle2) * radius);
+            positions.push(
+                x, y,
+                x + Math.cos(angle1) * radius, y + Math.sin(angle1) * radius,
+                x + Math.cos(angle2) * radius, y + Math.sin(angle2) * radius
+            );
             
             colors.push(...color, ...color, ...color);
         }

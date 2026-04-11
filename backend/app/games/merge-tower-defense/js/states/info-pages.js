@@ -59,24 +59,20 @@ export class InfoPagesManager {
     cacheSprites() {
         // Cache enemy sprites
         for (const [key, enemy] of Object.entries(ZOMBIE_TYPES)) {
-            try {
+           
                 if (enemy.sprite) {
                     this.cachedSprites.enemies[key] = enemy.sprite();
                 }
-            } catch (e) {
-
-            }
+            
         }
 
         // Cache tower sprites
         for (const [key, tower] of Object.entries(CANNON_TYPES)) {
-            try {
+           
                 if (tower.sprite) {
                     this.cachedSprites.towers[key] = tower.sprite();
                 }
-            } catch (e) {
-
-            }
+           
         }
     }
 
@@ -153,10 +149,10 @@ export class InfoPagesManager {
 
         // Update cached sprites animation
         for (const sprite of Object.values(this.cachedSprites.enemies)) {
-            if (sprite && sprite.update) sprite.update(dt);
+            sprite?.update(dt);
         }
         for (const sprite of Object.values(this.cachedSprites.towers)) {
-            if (sprite && sprite.update) sprite.update(dt);
+            sprite?.update(dt);
         }
     }
 
@@ -535,23 +531,7 @@ export class InfoPagesManager {
 
         // Render sprite
         const sprite = this.cachedSprites.enemies[key];
-        if (sprite && sprite.render) {
-            try {
-                sprite.render(ctx, spriteX + spriteSize / 2, spriteY + spriteSize / 2, spriteSize);
-            } catch (e) {
-                // Fallback to icon
-                ctx.font = `${spriteSize * 0.6}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(enemy.icon || '👹', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
-            }
-        } else {
-            // Fallback to icon
-            ctx.font = `${spriteSize * 0.6}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(enemy.icon || '👹', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
-        }
+        sprite?.render(ctx, spriteX + spriteSize / 2, spriteY + spriteSize / 2, spriteSize);
 
         // Enemy name
         const textX = x + spriteSize + 30;
@@ -569,7 +549,7 @@ export class InfoPagesManager {
         ctx.fillText(`❤️ HP: ${enemy.hp}`, textX, statsY);
 
         // Speed
-        const speedDesc = enemy.speed >= 1.0 ? 'Fast' : enemy.speed >= 0.6 ? 'Medium' : 'Slow';
+        const speedDesc = this.getEnemySpeedDescription(enemy.speed);
         ctx.fillText(`⚡ Speed: ${speedDesc}`, textX, statsY + 16);
 
         // Reward
@@ -580,7 +560,17 @@ export class InfoPagesManager {
         ctx.font = 'italic 11px Arial';
         ctx.fillStyle = '#ffcc00';
 
-        let specialText = this.getEnemySpecialDescription(key, enemy);
+        const specialText = this.getEnemySpecialDescription(key, enemy);
+        this.drawSpecialText(specialText, width, spriteSize, specialY, ctx, textX);
+
+        // Scale indicator
+        ctx.font = '10px Arial';
+        ctx.fillStyle = '#888888';
+        ctx.textAlign = 'right';
+        ctx.fillText(`Scale: ${enemy.scale || 1}x`, x + width - 10, y + height - 8);
+    }
+
+    drawSpecialText(specialText, width, spriteSize, specialY, ctx, textX) {
         if (specialText) {
             // Word wrap
             const maxWidth = width - spriteSize - 50;
@@ -600,12 +590,19 @@ export class InfoPagesManager {
             }
             ctx.fillText(line, textX, lineY);
         }
+    }
 
-        // Scale indicator
-        ctx.font = '10px Arial';
-        ctx.fillStyle = '#888888';
-        ctx.textAlign = 'right';
-        ctx.fillText(`Scale: ${enemy.scale || 1.0}x`, x + width - 10, y + height - 8);
+    /**
+     * Get speed description for enemy
+     */
+    getEnemySpeedDescription(speed) {
+        if (speed >= 1) {
+            return 'Fast';
+        }
+        if (speed >= 0.6) {
+            return 'Medium';
+        }
+        return 'Slow';
     }
 
     /**
@@ -715,9 +712,16 @@ export class InfoPagesManager {
         ctx.fillText(`⚔️ Damage: ${tower.damage}`, textX, statsY);
 
         // Fire rate
-        const fireRateDesc = tower.fireRate <= 500 ? 'Very Fast' :
-            tower.fireRate <= 1000 ? 'Fast' :
-                tower.fireRate <= 1500 ? 'Medium' : 'Slow';
+        let fireRateDesc;
+        if (tower.fireRate <= 500) {
+            fireRateDesc = 'Very Fast';
+        } else if (tower.fireRate <= 1000) {
+            fireRateDesc = 'Fast';
+        } else if (tower.fireRate <= 1500) {
+            fireRateDesc = 'Medium';
+        } else {
+            fireRateDesc = 'Slow';
+        }
         ctx.fillText(`🔥 Fire Rate: ${fireRateDesc}`, textX, statsY + 14);
 
         // Range
@@ -741,15 +745,8 @@ export class InfoPagesManager {
     }
 
     drawSprite(sprite, ctx, spriteX, spriteSize, spriteY, tower) {
-        if (sprite && sprite.render) {
-            try {
-                sprite.render(ctx, spriteX + spriteSize / 2, spriteY + spriteSize / 2, spriteSize);
-            } catch (e) {
-                ctx.font = `${spriteSize * 0.6}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(tower.icon || '🗼', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
-            }
+        if (sprite?.render) {
+            sprite.render(ctx, spriteX + spriteSize / 2, spriteY + spriteSize / 2, spriteSize);
         } else {
             ctx.font = `${spriteSize * 0.6}px Arial`;
             ctx.textAlign = 'center';
@@ -977,11 +974,11 @@ export class InfoPagesManager {
 
         // Type badge
         ctx.font = 'bold 10px Arial';
-        const typeBadge = item.type === 'instant' ? '⚡ Instant' :
-            item.type === 'temporary' ? `⏱️ Duration: ${item.duration / 1000}s` :
-                '✨ Special';
-        ctx.fillStyle = item.type === 'instant' ? '#88ff88' :
-            item.type === 'temporary' ? '#88ccff' : '#ffcc88';
+        
+        const typeBadge = this.getItemTypeBadge(item);
+        const badgeColor = this.getItemBadgeColor(item);
+        
+        ctx.fillStyle = badgeColor;
         ctx.fillText(typeBadge, textX, y + 60);
 
         // Effect details
@@ -1006,6 +1003,32 @@ export class InfoPagesManager {
                 break;
         }
         ctx.fillText(effectText, textX, y + 76);
+    }
+
+    /**
+     * Get item type badge text
+     */
+    getItemTypeBadge(item) {
+        if (item.type === 'instant') {
+            return '⚡ Instant';
+        }
+        if (item.type === 'temporary') {
+            return `⏱️ Duration: ${item.duration / 1000}s`;
+        }
+        return '✨ Special';
+    }
+
+    /**
+     * Get item badge color
+     */
+    getItemBadgeColor(item) {
+        if (item.type === 'instant') {
+            return '#88ff88';
+        }
+        if (item.type === 'temporary') {
+            return '#88ccff';
+        }
+        return '#ffcc88';
     }
 
     /**

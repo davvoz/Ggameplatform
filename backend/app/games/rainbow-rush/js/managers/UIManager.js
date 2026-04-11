@@ -91,12 +91,12 @@ class PauseButtonClickHandler extends UIClickHandler {
  * UIManager - Main class
  */
 export class UIManager {
-    constructor() {
-        this.turboButtonUI = null;
-        this.flightButtonUI = null;
-        this.levelProgressBar = null;
-        this.hudRenderer = null;
+    turboButtonUI = null;
+    flightButtonUI = null;
+    levelProgressBar = null;
+    hudRenderer = null;
 
+    constructor() {
         // Chain of Responsibility for click handling
         this.clickHandlerChain = this._buildClickHandlerChain();
     }

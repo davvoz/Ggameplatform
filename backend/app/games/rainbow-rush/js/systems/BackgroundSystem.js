@@ -11,8 +11,7 @@
 
 import { ThemeGeneratorFactory } from './background/ThemeGeneratorFactory.js';
 import { THEME_NAMES, DEFAULT_THEME_SEQUENCE, TRANSITION_CONFIG } from './background/ThemeConfigurations.js';
-
-export { THEME_NAMES as BackgroundThemes };
+export { THEME_NAMES as BackgroundThemes } from './background/ThemeConfigurations.js';
 
 export class BackgroundSystem {
     constructor(canvasWidth, canvasHeight) {
@@ -160,8 +159,8 @@ export class BackgroundSystem {
             }
             
             // Apply parallax effect - each layer scrolls at different speed
-            // parallaxSpeed: 0.0 = stationary (far background), 1.0 = full speed (foreground)
-            const parallaxSpeed = layer.parallaxSpeed !== undefined ? layer.parallaxSpeed : 0.5;
+            // parallaxSpeed: 0 = stationary (far background), 1 = full speed (foreground)
+            const parallaxSpeed = ( layer.parallaxSpeed === 'undefined') ? 0.5 : layer.parallaxSpeed;
             
             // Decrease offset as camera moves right (offset becomes negative)
             layer.offset -= (cameraSpeed * parallaxSpeed) * deltaTime;
@@ -199,94 +198,123 @@ export class BackgroundSystem {
             case 'bird':
             case 'fish':
                 // Move left with speed + parallax camera effect
-                particle.x -= (particle.speed + cameraSpeed) * deltaTime;
-                if (particle.x < -100) {
-                    particle.x = this.canvasWidth + 100;
-                    particle.y = Math.random() * this.canvasHeight * (particle.type === 'fish' ? 0.8 : 0.6);
-                }
-                // Update animation phases
-                if (particle.type === 'bird') {
-                    particle.wingPhase = (particle.wingPhase || 0) + deltaTime * 5;
-                } else if (particle.type === 'fish') {
-                    particle.swimPhase = (particle.swimPhase || 0) + deltaTime * 4;
-                }
+                this.caseFish(particle, cameraSpeed, deltaTime);
                 break;
                 
             case 'bubble':
                 // Rise up with wobble
-                particle.y -= particle.speed * deltaTime;
-                particle.wobble = (particle.wobble || 0) + deltaTime * 2;
-                particle.x += Math.sin(particle.wobble) * 15 * deltaTime;
-                particle.x -= cameraSpeed * deltaTime; // Camera parallax
-                if (particle.y < this.canvasHeight * 0.3) {
-                    particle.y = this.canvasHeight;
-                    particle.x = Math.random() * this.canvasWidth;
-                }
+                this.caseBubble(particle, deltaTime, cameraSpeed);
                 break;
                 
             case 'snowflake':
                 // Fall down with drift
-                particle.y += particle.speed * deltaTime;
-                particle.drift = particle.drift || (Math.random() - 0.5) * 20;
-                particle.x += particle.drift * deltaTime;
-                particle.x -= cameraSpeed * deltaTime; // Camera parallax
-                if (particle.y > this.canvasHeight + 20) {
-                    particle.y = -20;
-                    particle.x = Math.random() * this.canvasWidth;
-                }
+                this.caseSnowflake(particle, deltaTime, cameraSpeed);
                 break;
                 
             case 'sand':
             case 'ember':
-                particle.x -= (particle.speed + cameraSpeed) * deltaTime;
-                if (particle.type === 'ember') {
-                    particle.y -= particle.speed * deltaTime * 0.5; // Rise up
-                    // Horizontal drift for embers
-                    if (particle.horizontalDrift) {
-                        particle.x += particle.horizontalDrift * deltaTime * 0.3;
-                    }
-                }
-                if (particle.x < 0 || (particle.type === 'ember' && particle.y < 0)) {
-                    particle.x = this.canvasWidth;
-                    particle.y = this.canvasHeight * (0.5 + Math.random() * 0.5);
-                }
+                this.caseAmber(particle, cameraSpeed, deltaTime);
                 break;
                 
             case 'smoke':
-                particle.y -= particle.speed * deltaTime; // Rise up
-                particle.x += (particle.drift || 0) * deltaTime;
-                particle.x -= cameraSpeed * deltaTime; // Camera parallax
-                particle.expansion = (particle.expansion || 1) + deltaTime * 0.5;
-                particle.color[3] = Math.max(0, particle.color[3] - deltaTime * 0.3);
-                
-                if (particle.color[3] <= 0 || particle.y < 0) {
-                    // Respawn
-                    particle.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60;
-                    particle.y = this.canvasHeight * 0.35 - 20;
-                    particle.expansion = 1;
-                    particle.color[3] = 0.4;
-                }
+                this.caseSmoke(particle, deltaTime, cameraSpeed);
                 break;
                 
             case 'star':
-                particle.x -= (particle.speed || 10 + cameraSpeed) * deltaTime;
-                particle.twinkle = (particle.twinkle || 0) + deltaTime * 2;
-                if (particle.x < 0) {
-                    particle.x = this.canvasWidth;
-                    particle.y = Math.random() * this.canvasHeight;
-                }
+                this.caseStar(particle, cameraSpeed, deltaTime);
                 break;
                 
             case 'leaf':
-                particle.y += particle.speed * deltaTime;
-                particle.x += particle.drift * deltaTime;
-                particle.x -= cameraSpeed * deltaTime; // Camera parallax
-                particle.rotation = (particle.rotation || 0) + (particle.rotationSpeed || 1) * deltaTime;
-                if (particle.y > this.canvasHeight) {
-                    particle.y = -10;
-                    particle.x = Math.random() * this.canvasWidth;
-                }
+                this.caseLeaf(particle, deltaTime, cameraSpeed);
                 break;
+        }
+    }
+
+    caseLeaf(particle, deltaTime, cameraSpeed) {
+        particle.y += particle.speed * deltaTime;
+        particle.x += particle.drift * deltaTime;
+        particle.x -= cameraSpeed * deltaTime; // Camera parallax
+        particle.rotation = (particle.rotation || 0) + (particle.rotationSpeed || 1) * deltaTime;
+        if (particle.y > this.canvasHeight) {
+            particle.y = -10;
+            particle.x = Math.random() * this.canvasWidth;
+        }
+    }
+
+    caseStar(particle, cameraSpeed, deltaTime) {
+        particle.x -= (particle.speed || 10 + cameraSpeed) * deltaTime;
+        particle.twinkle = (particle.twinkle || 0) + deltaTime * 2;
+        if (particle.x < 0) {
+            particle.x = this.canvasWidth;
+            particle.y = Math.random() * this.canvasHeight;
+        }
+    }
+
+    caseSmoke(particle, deltaTime, cameraSpeed) {
+        particle.y -= particle.speed * deltaTime; // Rise up
+        particle.x += (particle.drift || 0) * deltaTime;
+        particle.x -= cameraSpeed * deltaTime; // Camera parallax
+        particle.expansion = (particle.expansion || 1) + deltaTime * 0.5;
+        particle.color[3] = Math.max(0, particle.color[3] - deltaTime * 0.3);
+
+        if (particle.color[3] <= 0 || particle.y < 0) {
+            // Respawn
+            particle.x = this.canvasWidth * 0.65 + (Math.random() - 0.5) * 60;
+            particle.y = this.canvasHeight * 0.35 - 20;
+            particle.expansion = 1;
+            particle.color[3] = 0.4;
+        }
+    }
+
+    caseAmber(particle, cameraSpeed, deltaTime) {
+        particle.x -= (particle.speed + cameraSpeed) * deltaTime;
+        if (particle.type === 'ember') {
+            particle.y -= particle.speed * deltaTime * 0.5; // Rise up
+
+            // Horizontal drift for embers
+            if (particle.horizontalDrift) {
+                particle.x += particle.horizontalDrift * deltaTime * 0.3;
+            }
+        }
+        if (particle.x < 0 || (particle.type === 'ember' && particle.y < 0)) {
+            particle.x = this.canvasWidth;
+            particle.y = this.canvasHeight * (0.5 + Math.random() * 0.5);
+        }
+    }
+
+    caseSnowflake(particle, deltaTime, cameraSpeed) {
+        particle.y += particle.speed * deltaTime;
+        particle.drift = particle.drift || (Math.random() - 0.5) * 20;
+        particle.x += particle.drift * deltaTime;
+        particle.x -= cameraSpeed * deltaTime; // Camera parallax
+        if (particle.y > this.canvasHeight + 20) {
+            particle.y = -20;
+            particle.x = Math.random() * this.canvasWidth;
+        }
+    }
+
+    caseBubble(particle, deltaTime, cameraSpeed) {
+        particle.y -= particle.speed * deltaTime;
+        particle.wobble = (particle.wobble || 0) + deltaTime * 2;
+        particle.x += Math.sin(particle.wobble) * 15 * deltaTime;
+        particle.x -= cameraSpeed * deltaTime; // Camera parallax
+        if (particle.y < this.canvasHeight * 0.3) {
+            particle.y = this.canvasHeight;
+            particle.x = Math.random() * this.canvasWidth;
+        }
+    }
+
+    caseFish(particle, cameraSpeed, deltaTime) {
+        particle.x -= (particle.speed + cameraSpeed) * deltaTime;
+        if (particle.x < -100) {
+            particle.x = this.canvasWidth + 100;
+            particle.y = Math.random() * this.canvasHeight * (particle.type === 'fish' ? 0.8 : 0.6);
+        }
+        // Update animation phases
+        if (particle.type === 'bird') {
+            particle.wingPhase = (particle.wingPhase || 0) + deltaTime * 5;
+        } else if (particle.type === 'fish') {
+            particle.swimPhase = (particle.swimPhase || 0) + deltaTime * 4;
         }
     }
 

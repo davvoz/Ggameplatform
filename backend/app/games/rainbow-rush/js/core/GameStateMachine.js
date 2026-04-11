@@ -21,11 +21,11 @@ class BaseGameState extends IGameState {
     }
 
     async enter(context) {
-
+        //Extend in subclasses if needed
     }
 
     exit(context) {
-
+        //Extend in subclasses if needed
     }
 
     update(deltaTime, context) {
@@ -81,7 +81,7 @@ class LevelSelectState extends BaseGameState {
 
         // Show HTML level select screen
         const event = new CustomEvent('showLevelSelect');
-        window.dispatchEvent(event);
+        globalThis.dispatchEvent(event);
     }
 
     handleInput(action, data, context) {
@@ -115,7 +115,7 @@ class PlayingState extends BaseGameState {
 
         // Emit game start event
         const event = new CustomEvent('gameStart');
-        window.dispatchEvent(event);
+        globalThis.dispatchEvent(event);
     }
 
     update(deltaTime, context) {
@@ -205,7 +205,7 @@ class GoalReachedState extends BaseGameState {
         super.enter(context);
         this.elapsed = 0;
         this.lastTime = performance.now();
-        
+
         // Freeze player position for animation
         const player = context.player;
         if (player) {
@@ -214,41 +214,41 @@ class GoalReachedState extends BaseGameState {
             // Keep player's current expression from gameplay
 
         }
-        
+
         // Stop game physics
         context.engine.stop();
-        
+
         // Start animation loop
         this.animationFrameId = null;
         this.startAnimationLoop(context);
-        
+
         // Play victory sound
         context.audioManager?.playSound('victory');
-        
+
         // Set flag to disable damage/bonus/death processing in GameController
         if (context.gameController) {
             context.gameController.goalReached = true;
         }
-        
+
         // Create celebration particles explosion at player position
         const entityManager = context.entityManager;
-        
+
         // Store victory text that will be rendered following player during zoom
         this.victoryText = {
             text: '🏁 LEVEL COMPLETE! 🏁',
             alpha: 1,
             scale: 0.5
         };
-        
+
         if (player && entityManager) {
             // Create clean particle explosion
             for (let i = 0; i < 50; i++) {
                 const angle = (Math.PI * 2 * i) / 50;
                 const speed = 150 + Math.random() * 80;
-                
+
                 // Simple gold particles
                 const color = [1, 0.9, 0.2, 1];
-                
+
                 entityManager.addEntity('powerupParticles', {
                     x: player.x + player.width / 2,
                     y: player.y + player.height / 2,
@@ -263,7 +263,7 @@ class GoalReachedState extends BaseGameState {
                 });
             }
         }
-        
+
 
     }
 
@@ -271,91 +271,47 @@ class GoalReachedState extends BaseGameState {
         const animate = (currentTime) => {
             const deltaTime = (currentTime - this.lastTime) / 1000;
             this.lastTime = currentTime;
-            
+
             // Update animation state
             this.update(deltaTime, context);
-            
+
             // Update particles
             if (context.entityManager) {
                 context.entityManager.updateAll(deltaTime, 0, context.player);
             }
-            
+
             // Render frame
             if (context.renderingSystem && context.engine) {
                 context.renderingSystem.render(context.engine.gl, context.engine.entities);
-                
+
                 // Render victory text centered below player
                 this.renderVictoryText(context);
             }
-            
+
             // Continue loop if animation not complete
             if (this.elapsed < this.animationDuration) {
                 this.animationFrameId = requestAnimationFrame(animate);
             }
         };
-        
+
         this.animationFrameId = requestAnimationFrame(animate);
     }
 
     update(deltaTime, context) {
         this.elapsed += deltaTime;
-        
+
         // Calculate fade progress (0 to 1)
         const fadeProgress = Math.min(1, this.elapsed / this.animationDuration);
-        
+
         // Calculate zoom scale - simple and clean
-        let zoomScale = 1;
-        if (this.elapsed < 0.6) {
-            // Zoom in from 1.0 to 2.0x over 0.6s
-            const t = this.elapsed / 0.6;
-            const ease = t * t * (3 - 2 * t);
-            zoomScale = 1.0 + ease * 1;
-        } else if (this.elapsed < 2) {
-            // Hold at 2.0x
-            zoomScale = 2.0;
-        } else {
-            // Zoom out from 2.0x to 1.0 in last 0.5s
-            const t = (this.elapsed - 2) / 0.5;
-            const ease = 1 - (1 - t) * (1 - t);
-            zoomScale = 2.0 - ease * 1;
-        }
-        
-        const rotation = 0;
-        
+        let zoomScale = this.calculateZoomScale();
+
         // Wink animation: quick wink at peak zoom
-        let winkProgress = 0;
-        if (this.elapsed > 1.2 && this.elapsed < 1.4) {
-            winkProgress = Math.sin(((this.elapsed - 1.2) / 0.2) * Math.PI);
-        } else if (this.elapsed > 1.7 && this.elapsed < 1.9) {
-            winkProgress = Math.sin(((this.elapsed - 1.7) / 0.2) * Math.PI);
-        }
-        
+        let winkProgress = this.calculateWinkProgress();
+
         // Apply zoom directly to player
-        const player = context.player;
-        if (player && this.frozenPlayerX !== undefined) {
-            const canvasCenterX = context.renderingSystem?.canvasWidth / 2 || 400;
-            const canvasCenterY = context.renderingSystem?.canvasHeight / 2 || 300;
-            
-            // Freeze player at original position
-            player.x = this.frozenPlayerX;
-            player.y = this.frozenPlayerY;
-            
-            // Don't force expression - let player use its normal game expression
-            // player keeps whatever expression it had during gameplay
-            
-            // Calculate target position (center of canvas)
-            const targetX = canvasCenterX - player.width / 2;
-            const targetY = canvasCenterY - player.height / 2;
-            
-            // Interpolate position based on zoom with smooth easing
-            const lerpFactor = Math.min(1, (zoomScale - 1) / 1);
-            const smoothLerp = lerpFactor * lerpFactor * (3 - 2 * lerpFactor);
-            player.animatedX = this.frozenPlayerX + (targetX - this.frozenPlayerX) * smoothLerp;
-            player.animatedY = this.frozenPlayerY + (targetY - this.frozenPlayerY) * smoothLerp;
-            player.animatedScale = zoomScale;
-            player.winkProgress = winkProgress;
-        }
-        
+        const player = this.freezePlayerAnimation(context, zoomScale, winkProgress);
+
         // Store animation data for rendering in GameController
         if (context.gameController) {
             context.gameController.goalFadeProgress = fadeProgress;
@@ -364,15 +320,15 @@ class GoalReachedState extends BaseGameState {
                 winkProgress: winkProgress
             };
         }
-        
+
         // Continue spawning particles - simple and clean
         if (fadeProgress < 0.85 && Math.random() < 0.2) {
             const entityManager = context.entityManager;
-            
+
             if (player && entityManager) {
                 const angle = Math.random() * Math.PI * 2;
                 const speed = 120;
-                
+
                 entityManager.addEntity('powerupParticles', {
                     x: player.x + player.width / 2,
                     y: player.y + player.height / 2,
@@ -387,37 +343,93 @@ class GoalReachedState extends BaseGameState {
                 });
             }
         }
-        
+
         // After animation completes, transition to level summary
         if (this.elapsed >= this.animationDuration) {
             context.stateMachine.transitionTo(GameStates.LEVEL_SUMMARY, context);
         }
     }
 
+    freezePlayerAnimation(context, zoomScale, winkProgress) {
+        const player = context.player;
+        if (player && this.frozenPlayerX !== undefined) {
+            const canvasCenterX = context.renderingSystem?.canvasWidth / 2 || 400;
+            const canvasCenterY = context.renderingSystem?.canvasHeight / 2 || 300;
+
+            // Freeze player at original position
+            player.x = this.frozenPlayerX;
+            player.y = this.frozenPlayerY;
+
+            // Don't force expression - let player use its normal game expression
+            // player keeps whatever expression it had during gameplay
+            // Calculate target position (center of canvas)
+            const targetX = canvasCenterX - player.width / 2;
+            const targetY = canvasCenterY - player.height / 2;
+
+            // Interpolate position based on zoom with smooth easing
+            const lerpFactor = Math.min(1, (zoomScale - 1) / 1);
+            const smoothLerp = lerpFactor * lerpFactor * (3 - 2 * lerpFactor);
+            player.animatedX = this.frozenPlayerX + (targetX - this.frozenPlayerX) * smoothLerp;
+            player.animatedY = this.frozenPlayerY + (targetY - this.frozenPlayerY) * smoothLerp;
+            player.animatedScale = zoomScale;
+            player.winkProgress = winkProgress;
+        }
+        return player;
+    }
+
+    calculateWinkProgress() {
+        let winkProgress = 0;
+        if (this.elapsed > 1.2 && this.elapsed < 1.4) {
+            winkProgress = Math.sin(((this.elapsed - 1.2) / 0.2) * Math.PI);
+        } else if (this.elapsed > 1.7 && this.elapsed < 1.9) {
+            winkProgress = Math.sin(((this.elapsed - 1.7) / 0.2) * Math.PI);
+        }
+        return winkProgress;
+    }
+
+    calculateZoomScale() {
+        let zoomScale = 1;
+        if (this.elapsed < 0.6) {
+            // Zoom in from 1 to 2x over 0.6s
+            const t = this.elapsed / 0.6;
+            const ease = t * t * (3 - 2 * t);
+            zoomScale = 1 + ease * 1;
+        } else if (this.elapsed < 2) {
+            // Hold at 2x
+            zoomScale = 2;
+        } else {
+            // Zoom out from 2x to 1 in last 0.5s
+            const t = (this.elapsed - 2) / 0.5;
+            const ease = 1 - (1 - t) * (1 - t);
+            zoomScale = 2 - ease * 1;
+        }
+        return zoomScale;
+    }
+
     renderVictoryText(context) {
         if (!this.victoryText || !context.renderingSystem?.textCtx) return;
-        
+
         const ctx = context.renderingSystem.textCtx;
         const player = context.player;
-        
+
         if (!player) return;
-        
+
         // Use animated position (follows zoom and centering)
         const playerCenterX = (player.animatedX || player.x) + player.width / 2;
         const playerBottomY = (player.animatedY || player.y) + player.height;
-        
+
         // Calculate text position - centered below player
         // Offset scales with zoom to maintain relative position
         const zoomScale = player.animatedScale || 1;
         const offsetY = 80 * zoomScale; // Distance below player scales with zoom
-        
+
         const textX = playerCenterX;
         const textY = playerBottomY + offsetY;
-        
+
         // Calculate text scale and alpha based on animation progress
         let textScale = 0.5;
         let alpha = 1;
-        
+
         if (this.elapsed < 0.3) {
             // Pop in animation
             const t = this.elapsed / 0.3;
@@ -429,29 +441,29 @@ class GoalReachedState extends BaseGameState {
             const t = (this.animationDuration - this.elapsed) / 0.5;
             alpha = t;
         }
-        
+
         // Apply zoom to text size
         const baseSize = 48;
         const fontSize = baseSize * textScale * Math.min(1.5, zoomScale * 0.7);
-        
+
         // Render with glow effect
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.font = `bold ${fontSize}px Arial, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        
+
         // Glow effect disabled for performance
-        
+
         // Stroke (outline)
         ctx.strokeStyle = 'rgba(139, 69, 19, 0.8)';
         ctx.lineWidth = 4;
         ctx.strokeText(this.victoryText.text, textX, textY);
-        
+
         // Fill (main color)
         ctx.fillStyle = 'rgba(255, 215, 0, 1)';
         ctx.fillText(this.victoryText.text, textX, textY);
-        
+
         ctx.restore();
     }
 
@@ -459,35 +471,35 @@ class GoalReachedState extends BaseGameState {
         h = h / 360;
         const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
         const p = 2 * l - q;
-        const r = this.hueToRgb(p, q, h + 1/3);
+        const r = this.hueToRgb(p, q, h + 1 / 3);
         const g = this.hueToRgb(p, q, h);
-        const b = this.hueToRgb(p, q, h - 1/3);
+        const b = this.hueToRgb(p, q, h - 1 / 3);
         return [r, g, b];
     }
-    
+
     hueToRgb(p, q, t) {
         if (t < 0) t += 1;
         if (t > 1) t -= 1;
-        if (t < 1/6) return p + (q - p) * 6 * t;
-        if (t < 1/2) return q;
-        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
         return p;
     }
 
     exit(context) {
         super.exit(context);
-        
+
         // Stop animation loop
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
-        
+
         // Reset player victory state
         if (context.player) {
             // No need to reset expression - player manages its own
         }
-        
+
         if (context.gameController) {
             context.gameController.goalFadeProgress = 0;
             context.gameController.victoryZoom = null;
@@ -520,75 +532,73 @@ class LevelSummaryState extends BaseGameState {
 
         // Check if this is the final level (game complete)
         const isGameComplete = !summary.nextLevelId;
-        
-        if (isGameComplete) {
 
-            
-            // Build comprehensive final stats
-            const finalStats = {
-                level: context.levelManager.currentLevelId,
-                coins: context.scoreSystem.coins || 0,
-                score: summary.score,
-                time: Date.now(),
-                extra_data: {
-                    levels_completed: context.levelManager.currentLevelId,
-                    total_levels: 200,
-                    game_complete: true,
-                    coins_collected: context.scoreSystem.collectibles || 0,
-                    enemies_defeated: context.scoreSystem?.enemiesDefeated || 0,
-                    powerups_collected: context.scoreSystem?.powerupsCollected || 0,
-                    highest_combo: context.scoreSystem?.maxCombo || 0
-                }
-            };
-            
-            // Show stats banner in game
-            if (context.gameController?.showStatsBanner) {
-                context.gameController.showStatsBanner({
-                    score: summary.score,
-                    ...finalStats.extra_data
-                });
-            }
-            
-            // Show stats banner with game details (alternative method)
-            if (window.rainbowRushApp && typeof window.rainbowRushApp.showStatsBanner === 'function') {
-                window.rainbowRushApp.showStatsBanner({
-                    score: summary.score,
-                    ...finalStats.extra_data
-                });
-            }
-            
-            // End game session with final score
-            if (context.gameController?.rainbowRushSDK?.sessionId) {
-                try {
-
-                    await context.gameController.rainbowRushSDK.endSession(summary.score, finalStats);
-
-                } catch (error) {
-                    console.error('❌ Failed to end game session:', error);
-                }
-            }
-            
-            // Notify platform of game completion
-            try {
-                if (typeof PlatformSDK !== 'undefined') {
-
-                    await context.sdkManager.gameOver(summary.score, finalStats);
-                }
-            } catch (e) {
-                console.error('⚠️ Failed to notify platform of game completion:', e);
-            }
-        } else {
-            // Session continues for next level
-
+        if (isGameComplete) { // Build comprehensive final stats
+            await this.recordFinalStats(context, summary);
         }
 
         // Show HTML level summary screen
         const event = new CustomEvent('showLevelSummary', { detail: summary });
-        window.dispatchEvent(event);
+        globalThis.dispatchEvent(event);
 
         // Play sound based on stars
         context.audioManager?.playSound('score');
 
+    }
+
+    async recordFinalStats(context, summary) {
+        const finalStats = {
+            level: context.levelManager.currentLevelId,
+            coins: context.scoreSystem.coins || 0,
+            score: summary.score,
+            time: Date.now(),
+            extra_data: {
+                levels_completed: context.levelManager.currentLevelId,
+                total_levels: 200,
+                game_complete: true,
+                coins_collected: context.scoreSystem.collectibles || 0,
+                enemies_defeated: context.scoreSystem?.enemiesDefeated || 0,
+                powerups_collected: context.scoreSystem?.powerupsCollected || 0,
+                highest_combo: context.scoreSystem?.maxCombo || 0
+            }
+        };
+
+        // Show stats banner in game
+        if (context.gameController?.showStatsBanner) {
+            context.gameController.showStatsBanner({
+                score: summary.score,
+                ...finalStats.extra_data
+            });
+        }
+
+        // Show stats banner with game details (alternative method)
+        if (globalThis.rainbowRushApp && typeof globalThis.rainbowRushApp.showStatsBanner === 'function') {
+            globalThis.rainbowRushApp.showStatsBanner({
+                score: summary.score,
+                ...finalStats.extra_data
+            });
+        }
+
+        // End game session with final score
+        if (context.gameController?.rainbowRushSDK?.sessionId) {
+            try {
+
+                await context.gameController.rainbowRushSDK.endSession(summary.score, finalStats);
+
+            } catch (error) {
+                console.error('❌ Failed to end game session:', error);
+            }
+        }
+
+        // Notify platform of game completion
+        try {
+            if (typeof PlatformSDK !== 'undefined') {
+
+                await context.sdkManager.gameOver(summary.score, finalStats);
+            }
+        } catch (e) {
+            console.error('⚠️ Failed to notify platform of game completion:', e);
+        }
     }
 
     handleInput(action, data, context) {
@@ -627,17 +637,17 @@ class GameOverState extends BaseGameState {
         // Submit score
         const stats = context.scoreSystem.getGameStats();
         stats.level = context.levelManager.currentLevelId || 1;
-        
 
 
-        
+
+
         // IMPORTANT: Send all score data BEFORE resetting anything
         // Store score before any async operations
         const finalScore = stats.score;
-        
+
         // Calculate session duration in seconds
         const durationSeconds = context.gameController?.rainbowRushSDK?.getSessionDuration() || 0;
-        
+
         // Build comprehensive stats for cumulative XP system
         const finalStats = {
             level: stats.level,
@@ -656,9 +666,9 @@ class GameOverState extends BaseGameState {
                 duration_seconds: Math.floor(durationSeconds)  // Include playtime in extra_data too
             }
         };
-        
 
-        
+
+
         // Show stats banner in game
         if (context.gameController?.showStatsBanner) {
             context.gameController.showStatsBanner({
@@ -666,7 +676,7 @@ class GameOverState extends BaseGameState {
                 ...finalStats.extra_data
             });
         }
-        
+
         // End game session WITH SCORE
         if (context.gameController?.rainbowRushSDK?.sessionId) {
             try {
@@ -678,7 +688,7 @@ class GameOverState extends BaseGameState {
                 console.error('❌ Failed to end game session:', error);
             }
         }
-        
+
         // Submit score to Platform SDK
         try {
 
@@ -687,7 +697,7 @@ class GameOverState extends BaseGameState {
         } catch (error) {
             console.error('❌ [GameOverState] Error submitting score:', error);
         }
-        
+
         // Send gameOver to Platform SDK  
         try {
             if (typeof PlatformSDK !== 'undefined') {
@@ -700,8 +710,8 @@ class GameOverState extends BaseGameState {
         }
 
         // Show stats banner with game details
-        if (window.rainbowRushApp && typeof window.rainbowRushApp.showStatsBanner === 'function') {
-            window.rainbowRushApp.showStatsBanner({
+        if (globalThis.rainbowRushApp && typeof globalThis.rainbowRushApp.showStatsBanner === 'function') {
+            globalThis.rainbowRushApp.showStatsBanner({
                 score: finalScore,
                 ...finalStats.extra_data
             });
@@ -712,7 +722,7 @@ class GameOverState extends BaseGameState {
 
         // Emit game over event with the ORIGINAL stats (before reset)
         const event = new CustomEvent('gameOver', { detail: stats });
-        window.dispatchEvent(event);
+        globalThis.dispatchEvent(event);
     }
 
     handleInput(action, data, context) {

@@ -135,10 +135,7 @@ export class Cannon {
             this.multiSprite.update(dt);
 
             // Ensure idle animation keeps playing
-            if (!this.multiSprite.playing && this.multiSprite.currentAnimation !== 'idle') {
-                this.multiSprite.play('idle');
-            } else if (!this.multiSprite.playing) {
-                // Restart idle if it somehow stopped
+            if (!this.multiSprite.playing) {
                 this.multiSprite.play('idle');
             }
 
@@ -178,8 +175,8 @@ export class Cannon {
             this.#renderMultiSprite(graphics, currentTime, isBeingDragged, isStunned, isDisabled);
         } else if (this.sprite) {
             graphics.drawSprite(this.sprite, this.col, this.row, {
-                scale: 1.0, color: this.color, glow: this.selected, glowColor: this.color,
-                bounce, shake, opacity: isBeingDragged ? 0.3 : 1.0
+                scale: 1, color: this.color, glow: this.selected, glowColor: this.color,
+                bounce, shake, opacity: isBeingDragged ? 0.3 : 1
             });
         }
 
@@ -210,7 +207,7 @@ export class Cannon {
             console.error('[CANNON] Render error for', this.type, ':', e);
             if (this.sprite) {
                 graphics.drawSprite(this.sprite, this.col, this.row, {
-                    scale: 1.0, color: this.color, glow: this.selected, glowColor: this.color
+                    scale: 1, color: this.color, glow: this.selected, glowColor: this.color
                 });
             }
         }

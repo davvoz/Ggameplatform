@@ -49,38 +49,38 @@ export class FrozenVolcanoThemeGenerator extends BaseThemeGenerator {
     }
 
     generateVolcanoes(layers) {
-        const config = FROZEN_VOLCANO_CONFIG;
         const groundY = this.getGroundY(0.85);
 
-        // Main frozen volcano
-        layers.push({
-            x: this.canvasWidth * 0.6,
-            y: groundY - 300,
-            width: 300,
-            height: 300,
-            color: [0.5, 0.6, 0.75, 0.9],
-            type: 'volcano',
-            speed: 10,
-            craterWidth: 70,
-            craterDepth: 50,
-            offset: 0,
-            frozen: true
-        });
+        const volcanoes = [
+            {
+                x: this.canvasWidth * 0.6,
+                y: groundY - 300,
+                width: 300,
+                height: 300,
+                color: [0.5, 0.6, 0.75, 0.9],
+                type: 'volcano',
+                speed: 10,
+                craterWidth: 70,
+                craterDepth: 50,
+                offset: 0,
+                frozen: true
+            },
+            {
+                x: this.canvasWidth * 0.3,
+                y: groundY - 180,
+                width: 180,
+                height: 180,
+                color: [0.45, 0.55, 0.7, 0.85],
+                type: 'volcano',
+                speed: 7,
+                craterWidth: 45,
+                craterDepth: 35,
+                offset: 0,
+                frozen: true
+            }
+        ];
 
-        // Secondary volcano
-        layers.push({
-            x: this.canvasWidth * 0.3,
-            y: groundY - 180,
-            width: 180,
-            height: 180,
-            color: [0.45, 0.55, 0.7, 0.85],
-            type: 'volcano',
-            speed: 7,
-            craterWidth: 45,
-            craterDepth: 35,
-            offset: 0,
-            frozen: true
-        });
+        layers.push(...volcanoes);
     }
 
     generateIceCrystals(layers) {

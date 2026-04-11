@@ -145,8 +145,8 @@ export class Game {
     }
 
     _onTap(gridPos, screenPos) {
-        if (window.handleWaveModeSelectorTap?.(screenPos)) return;
-        if (window.handleTutorialPromptTap?.(screenPos))   return;
+        if (globalThis.handleWaveModeSelectorTap?.(screenPos)) return;
+        if (globalThis.handleTutorialPromptTap?.(screenPos))   return;
 
         if (this.tutorial?.isActive && this.tutorial.handleTap(screenPos)) return;
 
@@ -281,9 +281,9 @@ export class Game {
         this.ui.render(this.state);
 
         if (this.state.isGameOver) {
-            this.ui.showGameOver(this.state, window.platformBalance || 0, CONFIG.CONTINUE_COST || 100);
+            this.ui.showGameOver(this.state, globalThis.platformBalance || 0, CONFIG.CONTINUE_COST || 100);
         }
-        if (window.location.search.includes('debug')) this._renderDebugInfo();
+        if (globalThis.location.search.includes('debug')) this._renderDebugInfo();
     }
 
     // =========================================================================
@@ -316,7 +316,7 @@ export class Game {
             try { draggingTower.multiSprite.render(ctx, dragCurrentPos.x, dragCurrentPos.y, cellSize); }
             catch { this._drawSimpleTowerGhost(ctx, dragCurrentPos.x, dragCurrentPos.y, cellSize, draggingTower.color); }
         } else if (draggingTower.sprite) {
-            this.graphics.drawSpriteAt(draggingTower.sprite, dragCurrentPos.x, dragCurrentPos.y, { scale: 1.0, color: draggingTower.color });
+            this.graphics.drawSpriteAt(draggingTower.sprite, dragCurrentPos.x, dragCurrentPos.y, { scale: 1, color: draggingTower.color });
         } else {
             this._drawSimpleTowerGhost(ctx, dragCurrentPos.x, dragCurrentPos.y, cellSize, draggingTower.color);
         }
@@ -406,7 +406,7 @@ export class Game {
     }
 
     continueGame() {
-        if (window.handleContinueGame) window.handleContinueGame();
+        if (globalThis.handleContinueGame) globalThis.handleContinueGame();
     }
 
     resumeAfterContinue() {
@@ -428,9 +428,9 @@ export class Game {
         this.audio.waveComplete();
         this.particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 2, {
             text: '🏆 VICTORY! 🏆', color: '#ffdd00',
-            vy: -0.3, life: 4.0, scale: 2.5, glow: true,
+            vy: -0.3, life: 4, scale: 2.5, glow: true,
         });
-        if (window.handleVictory) window.handleVictory(this.state.coinReward);
+        if (globalThis.handleVictory) globalThis.handleVictory(this.state.coinReward);
     }
 
     restart() {
@@ -440,7 +440,7 @@ export class Game {
 
     restartWithModeSelection() {
         this._resetGameState();
-        if (window.showWaveModeSelection) window.showWaveModeSelection();
+        if (globalThis.showWaveModeSelection) globalThis.showWaveModeSelection();
     }
 
     /**
@@ -452,7 +452,7 @@ export class Game {
         this.particles.clear();
         this.towerManager.deselectAll();
         this.ui.clearRetryButton();
-        if (window.resetGameSession) window.resetGameSession();
+        if (globalThis.resetGameSession) globalThis.resetGameSession();
     }
 
     /**

@@ -69,7 +69,7 @@ export const MultiPartTowerSprites = {
 // ============================================================================
 
 // Extend AnimationBuilder with tower-specific animations
-if (typeof AnimationBuilder !== 'undefined') {
+if (AnimationBuilder !== undefined) {
 
     /**
      * Create idle/scanning animation for towers
@@ -139,9 +139,9 @@ if (typeof AnimationBuilder !== 'undefined') {
         partNames.forEach((name, i) => {
             // Pulse effect
             anim.addTrack(name, [
-                { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+                { time: 0, transform: { scaleX: 1, scaleY: 1 } },
                 { time: duration * 0.5, transform: { scaleX: 1.15, scaleY: 1.15 } },
-                { time: duration, transform: { scaleX: 1.0, scaleY: 1.0 } }
+                { time: duration, transform: { scaleX: 1, scaleY: 1 } }
             ]);
         });
         return anim;
@@ -149,6 +149,6 @@ if (typeof AnimationBuilder !== 'undefined') {
 }
 
 // Export to global scope for browser
-if (typeof window !== 'undefined') {
-    window.MultiPartTowerSprites = MultiPartTowerSprites;
+if (globalThis !== undefined) {
+    globalThis.MultiPartTowerSprites = MultiPartTowerSprites;
 }

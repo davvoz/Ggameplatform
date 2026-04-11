@@ -13,7 +13,8 @@ import { CONFIG } from '../config.js';
  * Follows Strategy Pattern for clean AI behavior separation
  */
 export class MovementStrategy {
-    constructor(config = {}) {
+    constructor(controller, config = {}) {
+        this.controller = controller;
         this.config = config;
     }
 
@@ -24,7 +25,16 @@ export class MovementStrategy {
      * @returns {Object} - { col, row } delta movement
      */
     calculateMovement(enemy, context) {
-        throw new Error('calculateMovement() must be implemented by subclass');
+        if (!this.controller) {
+            throw new Error('MovementStrategy requires a controller');
+        }
+        this.controller.updateMovement(
+            enemy,
+            context.dt,
+            context.currentTime,
+            context.allEnemies,
+            context.cannons
+        );
     }
 }
 
@@ -111,8 +121,8 @@ export class AvoidanceBehavior {
 export class LaneSystem {
     constructor(config = {}) {
         this.laneCount = config.laneCount || CONFIG.COLS;
-        this.laneSwitchCooldown = config.laneSwitchCooldown || 1.0;
-        this.laneSwitchSpeed = config.laneSwitchSpeed || 2.0;
+        this.laneSwitchCooldown = config.laneSwitchCooldown || 1;
+        this.laneSwitchSpeed = config.laneSwitchSpeed || 2;
         this.lookAheadRows = config.lookAheadRows || 3;
     }
 
@@ -198,7 +208,7 @@ export class LaneSystem {
             }
         }
 
-        return bestLane !== currentLane ? bestLane : null;
+        return bestLane === currentLane ? null : bestLane;
     }
 }
 
@@ -255,7 +265,7 @@ export class RetreatBehavior {
     constructor(config = {}) {
         this.retreatDistance = config.retreatDistance || 0.5;
         this.retreatDuration = config.retreatDuration || 0.5;
-        this.retreatCooldown = config.retreatCooldown || 2.0;
+        this.retreatCooldown = config.retreatCooldown || 2;
     }
 
     /**
@@ -332,7 +342,7 @@ export class EnemyMovementController {
         this.retreat = new RetreatBehavior(config.retreat || {});
 
         // Movement parameters
-        this.baseSpeed = config.baseSpeed || 1.0;
+        this.baseSpeed = config.baseSpeed || 1;
         this.lateralSpeedFactor = config.lateralSpeedFactor || 0.5;
         this.smoothingFactor = config.smoothingFactor || 0.15;
     }
@@ -453,21 +463,10 @@ export class EnemyMovementController {
  */
 export class RusherMovementStrategy extends MovementStrategy {
     constructor(controller) {
-        super();
-        this.controller = controller;
+        super(controller);
         // Rushers switch lanes more aggressively
         this.controller.laneSystem.laneSwitchCooldown = 0.5;
-        this.controller.laneSystem.laneSwitchSpeed = 3.0;
-    }
-
-    calculateMovement(enemy, context) {
-        this.controller.updateMovement(
-            enemy, 
-            context.dt, 
-            context.currentTime, 
-            context.allEnemies,
-            context.cannons
-        );
+        this.controller.laneSystem.laneSwitchSpeed = 3;
     }
 }
 
@@ -476,22 +475,11 @@ export class RusherMovementStrategy extends MovementStrategy {
  */
 export class TankMovementStrategy extends MovementStrategy {
     constructor(controller) {
-        super();
-        this.controller = controller;
+        super(controller);
         // Tanks don't switch lanes much
-        this.controller.laneSystem.laneSwitchCooldown = 3.0;
+        this.controller.laneSystem.laneSwitchCooldown = 3;
         this.controller.laneSystem.laneSwitchSpeed = 0.5;
         this.controller.avoidance.avoidanceStrength = 0.3;
-    }
-
-    calculateMovement(enemy, context) {
-        this.controller.updateMovement(
-            enemy, 
-            context.dt, 
-            context.currentTime, 
-            context.allEnemies,
-            context.cannons
-        );
     }
 }
 
@@ -500,21 +488,10 @@ export class TankMovementStrategy extends MovementStrategy {
  */
 export class FlyerMovementStrategy extends MovementStrategy {
     constructor(controller) {
-        super();
-        this.controller = controller;
+        super(controller);
         // Flyers have reduced avoidance (they fly over)
         this.controller.avoidance.detectionRadius = 0.6;
         this.controller.avoidance.personalSpace = 0.3;
-    }
-
-    calculateMovement(enemy, context) {
-        this.controller.updateMovement(
-            enemy, 
-            context.dt, 
-            context.currentTime, 
-            context.allEnemies,
-            context.cannons
-        );
     }
 }
 
@@ -523,22 +500,11 @@ export class FlyerMovementStrategy extends MovementStrategy {
  */
 export class BossMovementStrategy extends MovementStrategy {
     constructor(controller) {
-        super();
-        this.controller = controller;
+        super(controller);
         // Bosses don't change lanes, they push through
-        this.controller.laneSystem.laneSwitchCooldown = 10.0;
+        this.controller.laneSystem.laneSwitchCooldown = 10;
         this.controller.avoidance.avoidanceStrength = 0.1;
         this.controller.retreat.retreatCooldown = 999; // Never retreat
-    }
-
-    calculateMovement(enemy, context) {
-        this.controller.updateMovement(
-            enemy, 
-            context.dt, 
-            context.currentTime, 
-            context.allEnemies,
-            context.cannons
-        );
     }
 }
 
@@ -553,27 +519,27 @@ export class EnemyAISystem {
         this.controllers = {
             default: new EnemyMovementController(),
             rusher: new EnemyMovementController({
-                lanes: { laneSwitchCooldown: 0.5, laneSwitchSpeed: 3.0 },
-                avoidance: { detectionRadius: 1.0, avoidanceStrength: 1.0 }
+                lanes: { laneSwitchCooldown: 0.5, laneSwitchSpeed: 3 },
+                avoidance: { detectionRadius: 1, avoidanceStrength: 1 }
             }),
             tank: new EnemyMovementController({
-                lanes: { laneSwitchCooldown: 3.0, laneSwitchSpeed: 0.5 },
+                lanes: { laneSwitchCooldown: 3, laneSwitchSpeed: 0.5 },
                 avoidance: { avoidanceStrength: 0.3 }
             }),
             flyer: new EnemyMovementController({
                 avoidance: { detectionRadius: 0.6, personalSpace: 0.3 }
             }),
             boss: new EnemyMovementController({
-                lanes: { laneSwitchCooldown: 10.0 },
+                lanes: { laneSwitchCooldown: 10 },
                 avoidance: { avoidanceStrength: 0.1 },
                 retreat: { retreatCooldown: 999 }
             }),
             healer: new EnemyMovementController({
-                lanes: { laneSwitchCooldown: 2.0 },
+                lanes: { laneSwitchCooldown: 2 },
                 // Healers try to stay behind
             }),
             shadow: new EnemyMovementController({
-                lanes: { laneSwitchCooldown: 0.3, laneSwitchSpeed: 4.0 },
+                lanes: { laneSwitchCooldown: 0.3, laneSwitchSpeed: 4 },
                 avoidance: { detectionRadius: 0.5 }
             })
         };

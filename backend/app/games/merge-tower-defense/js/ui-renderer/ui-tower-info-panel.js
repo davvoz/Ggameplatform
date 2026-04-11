@@ -244,18 +244,42 @@ export class TowerInfoPanel {
         const actionButtonWidth = remainingWidth / 2;
 
         const closeX = panelX + sideMargin;
-        this._renderButton(ctx, closeX, buttonY, closeButtonWidth, buttonHeight,
-            '✕', '#3a3a3a', '#555555', time, false, '#999999');
+        this._renderButton(ctx, closeX, buttonY, {
+            width: closeButtonWidth,
+            height: buttonHeight,
+            text: '✕',
+            bgColor: '#3a3a3a',
+            borderColor: '#555555',
+            time: time,
+            animated: false,
+            textColor: '#999999'
+        });
         this.towerInfoCloseButton = { x: closeX, y: buttonY, width: closeButtonWidth, height: buttonHeight };
 
         const selectX = closeX + closeButtonWidth + buttonSpacing;
-        this._renderButton(ctx, selectX, buttonY, actionButtonWidth, buttonHeight,
-            '🔗 SELECT', '#1a3a5c', '#2d5a8a', time, false, '#7ec8e3');
+        this._renderButton(ctx, selectX, buttonY, {
+            width: actionButtonWidth,
+            height: buttonHeight,
+            text: '🔗 SELECT',
+            bgColor: '#1a3a5c',
+            borderColor: '#2d5a8a',
+            time: time,
+            animated: false,
+            textColor: '#7ec8e3'
+        });
         this.towerInfoSelectButton = { x: selectX, y: buttonY, width: actionButtonWidth, height: buttonHeight };
 
         const sellBtnX = selectX + actionButtonWidth + buttonSpacing;
-        this._renderButton(ctx, sellBtnX, buttonY, actionButtonWidth, buttonHeight,
-            `💰 SELL`, '#1a4a2a', '#2d6b3d', time, true, '#6ee7a0');
+        this._renderButton(ctx, sellBtnX, buttonY, {
+            width: actionButtonWidth,
+            height: buttonHeight,
+            text: '💰 SELL',
+            bgColor: '#1a4a2a',
+            borderColor: '#2d6b3d',
+            time: time,
+            animated: true,
+            textColor: '#6ee7a0'
+        });
         this.towerInfoSellButton = { x: sellBtnX, y: buttonY, width: actionButtonWidth, height: buttonHeight };
     }
 
@@ -288,7 +312,18 @@ export class TowerInfoPanel {
         }
     }
 
-    _renderButton(ctx, x, y, width, height, text, bgColor, borderColor, time, animated = false, textColor = '#ffffff') {
+    _renderButton(ctx, x, y, options = {}) {
+        const {
+            width,
+            height,
+            text,
+            bgColor,
+            borderColor,
+            time,
+            animated = false,
+            textColor = '#ffffff'
+        } = options;
+
         ctx.save();
 
         const gradient = ctx.createLinearGradient(x, y, x, y + height);

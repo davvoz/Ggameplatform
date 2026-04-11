@@ -34,7 +34,7 @@ export class EnergyManager {
             state._wallEnergyTimer = 0;
         }
 
-        if (state._healerWallTimer >= 5.0 && healers.length > 0) {
+        if (state._healerWallTimer >= 5 && healers.length > 0) {
             const n = Math.min(healers.length, state.energy - bricksToRemove);
             if (n > 0) {
                 bricksToRemove   += n;

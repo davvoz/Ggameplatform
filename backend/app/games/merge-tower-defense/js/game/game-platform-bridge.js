@@ -31,15 +31,15 @@ export class PlatformBridge {
     }
 
     showLevelUpNotification(levelUpData) {
-        if (typeof window.showLevelUpNotification === 'function') {
-            window.showLevelUpNotification(levelUpData);
+        if (typeof globalThis.showLevelUpNotification === 'function') {
+            globalThis.showLevelUpNotification(levelUpData);
         }
     }
 
     // ── private helpers ────────────────────────────────────────────────────
     _setup() {
-        if (window.PlatformSDK) {
-            window.PlatformSDK.on('showXPBanner', payload => {
+        if (globalThis.PlatformSDK) {
+            globalThis.PlatformSDK.on('showXPBanner', payload => {
                 if (payload?.xp_earned !== undefined) {
                     this.showXPBanner(payload.xp_earned, payload);
                 }

@@ -8,27 +8,29 @@ import { CONFIG,  UI_CONFIG } from '../config.js';
 import { Utils } from '../utils.js';
 
 /**
- * Represents a single tutorial step
+ * Creates a single tutorial step
+ * @param {Object} config - Step configuration
+ * @returns {Object} Tutorial step object
  */
-class TutorialStep {
-    constructor(config) {
-        this.id = config.id;
-        this.title = config.title;
-        this.description = config.description;
-        this.highlightArea = config.highlightArea || null; // {x, y, width, height} or 'grid' | 'shop' | 'sidebar' | 'topbar'
-        this.highlightAreas = config.highlightAreas || null; // Array of areas to highlight simultaneously
-        this.arrowDirection = config.arrowDirection || null; // 'up' | 'down' | 'left' | 'right'
-        this.arrowTarget = config.arrowTarget || null; // {x, y}
-        this.waitForAction = config.waitForAction || null; // 'tap' | 'place_tower' | 'merge' | 'start_wave' | null
-        this.autoAdvanceDelay = config.autoAdvanceDelay || null; // ms to auto-advance, null = wait for action/tap
-        this.condition = config.condition || null; // Function to check if step is complete
-        this.onEnter = config.onEnter || null; // Callback when step starts
-        this.onExit = config.onExit || null; // Callback when step ends
-        this.position = config.position || 'center'; // 'top' | 'center' | 'bottom'
-        this.icon = config.icon || '💡';
-        this.allowedTowerTypes = config.allowedTowerTypes || null; // Array of allowed tower type IDs during this step
-        this.showFirstTowerArrow = config.showFirstTowerArrow || false; // Show exaggerated arrow pointing to first tower
-    }
+function createTutorialStep(config) {
+    return {
+        id: config.id,
+        title: config.title,
+        description: config.description,
+        highlightArea: config.highlightArea || null, // {x, y, width, height} or 'grid' | 'shop' | 'sidebar' | 'topbar'
+        highlightAreas: config.highlightAreas || null, // Array of areas to highlight simultaneously
+        arrowDirection: config.arrowDirection || null, // 'up' | 'down' | 'left' | 'right'
+        arrowTarget: config.arrowTarget || null,
+        waitForAction: config.waitForAction || null, // 'tap' | 'place_tower' | 'merge' | 'start_wave' | null
+        autoAdvanceDelay: config.autoAdvanceDelay || null, // ms to auto-advance, null = wait for action/tap
+        condition: config.condition || null, // Function to check if step is complete
+        onEnter: config.onEnter || null, // Callback when step starts
+        onExit: config.onExit || null, // Callback when step ends
+        position: config.position || 'center', // 'top' | 'center' | 'bottom'
+        icon: config.icon || '💡',
+        allowedTowerTypes: config.allowedTowerTypes || null, // Array of allowed tower type IDs during this step
+        showFirstTowerArrow: config.showFirstTowerArrow || false // Show exaggerated arrow pointing to first tower
+    };
 }
 
 /**
@@ -75,7 +77,7 @@ export class TutorialManager {
     initializeSteps() {
         this.steps = [
             // Step 1: Welcome
-            new TutorialStep({
+            createTutorialStep({
                 id: 'welcome',
                 title: '🏰 Welcome to Merge Tower Defense!',
                 description: 'Defend your base from waves of enemies by building and upgrading turrets!',
@@ -85,7 +87,7 @@ export class TutorialManager {
             }),
 
             // Step 2: Explain the grid
-            new TutorialStep({
+            createTutorialStep({
                 id: 'grid_intro',
                 title: '🎮 The Battlefield',
                 description: 'Enemies come from above. The green zone at the bottom is where you can place turrets.',
@@ -96,7 +98,7 @@ export class TutorialManager {
             }),
 
             // Step 3: Show the shop
-            new TutorialStep({
+            createTutorialStep({
                 id: 'shop_intro',
                 title: '🛒 Turret Shop',
                 description: 'At the bottom you find different turret types. Each type has unique characteristics!',
@@ -107,7 +109,7 @@ export class TutorialManager {
             }),
 
             // Step 4: Place first tower
-            new TutorialStep({
+            createTutorialStep({
                 id: 'place_tower',
                 title: '🔫 Place Your First Turret',
                 description: 'The Basic turret is already selected. Tap a green cell to place it!',
@@ -127,7 +129,7 @@ export class TutorialManager {
             }),
 
             // Step 5: Move tower by dragging
-            new TutorialStep({
+            createTutorialStep({
                 id: 'move_tower',
                 title: '↔️ Move the Turret',
                 description: 'Now try moving the turret! Hold on the turret and drag it to another empty cell.',
@@ -141,7 +143,7 @@ export class TutorialManager {
             }),
 
             // Step 6: Place more towers
-            new TutorialStep({
+            createTutorialStep({
                 id: 'place_more',
                 title: '🔫 Place More Turrets',
                 description: 'Place 2 more BASIC turrets so you can merge them! (Use only Basic turrets)',
@@ -169,7 +171,7 @@ export class TutorialManager {
             }),
 
             // Step 7: Explain merge system
-            new TutorialStep({
+            createTutorialStep({
                 id: 'merge_intro',
                 title: '🔄 Merge System',
                 description: 'Tap 3 IDENTICAL turrets (same type and level) to merge them into a more powerful one!',
@@ -178,7 +180,7 @@ export class TutorialManager {
             }),
 
             // Step 7: Perform merge
-            new TutorialStep({
+            createTutorialStep({
                 id: 'perform_merge',
                 title: '🔄 Merge the Turrets!',
                 description: 'Select 3 turrets of the same type by tapping them one at a time.',
@@ -192,7 +194,7 @@ export class TutorialManager {
             }),
 
             // Step 8: Explain energy
-            new TutorialStep({
+            createTutorialStep({
                 id: 'energy_intro',
                 title: '⚡ Energy and Wall',
                 description: 'The brick wall represents your energy. If enemies reach it, you lose energy!',
@@ -203,7 +205,7 @@ export class TutorialManager {
             }),
 
             // Step 9: Explain coins
-            new TutorialStep({
+            createTutorialStep({
                 id: 'coins_intro',
                 title: '💰 Coins',
                 description: 'Earn coins by eliminating enemies. Use them to buy new turrets!',
@@ -213,7 +215,7 @@ export class TutorialManager {
             }),
 
             // Step 10: Explain sidebar abilities
-            new TutorialStep({
+            createTutorialStep({
                 id: 'abilities_intro',
                 title: '💥 Special Abilities',
                 description: 'Top left you find abilities: Bomb explodes enemies, Push knocks them back, Stun freezes them!',
@@ -223,7 +225,7 @@ export class TutorialManager {
             }),
 
             // Step 11: Explain shop items in sidebar
-            new TutorialStep({
+            createTutorialStep({
                 id: 'shop_items_intro',
                 title: '🛍️ Purchasable Items',
                 description: 'Below abilities you find special items: Energy, Damage/Speed/Range boosts! Boosts last N seconds and power up ALL turrets. Use them in tough waves!',
@@ -233,7 +235,7 @@ export class TutorialManager {
             }),
 
             // Step 12: Open MTDPEDIA
-            new TutorialStep({
+            createTutorialStep({
                 id: 'open_mtdpedia',
                 title: '📖 MTD-Pedia',
                 description: 'Tap the 📖 button at top right to open the MTD-Pedia. You\'ll find info on enemies, turrets, abilities and items!',
@@ -248,7 +250,7 @@ export class TutorialManager {
             }),
 
             // Step 13: Ready to play
-            new TutorialStep({
+            createTutorialStep({
                 id: 'ready',
                 title: '⚔️ You\'re Ready!',
                 description: 'Waves will start automatically. Good luck, commander!',
@@ -262,11 +264,7 @@ export class TutorialManager {
      * Check if tutorial has been completed before
      */
     static hasCompletedTutorial() {
-        try {
-           // return localStorage.getItem('mergeTower_tutorialCompleted') === 'true';
-        } catch (e) {
-            return false;
-        }
+        //nothing 
     }
 
 
@@ -331,8 +329,8 @@ export class TutorialManager {
         this.stop();
         
         // Show wave mode selection after tutorial
-        if (window.showWaveModeSelection) {
-            window.showWaveModeSelection();
+        if (globalThis.showWaveModeSelection) {
+            globalThis.showWaveModeSelection();
         }
     }
 
@@ -359,14 +357,10 @@ export class TutorialManager {
         }
         
         // Resume game for action steps
-        if (step.waitForAction) {
-            if (this.game) {
-                this.game.resume();
-            }
-        } else {
-            if (this.game) {
-                this.game.pause();
-            }
+        if (step.waitForAction && this.game) {
+            this.game.resume();
+        } else if (this.game) {
+            this.game.pause();
         }
         
         // Reset animation
@@ -379,9 +373,7 @@ export class TutorialManager {
      */
     exitCurrentStep() {
         const step = this.getCurrentStep();
-        if (step && step.onExit) {
-            step.onExit(this);
-        }
+        step?.onExit?.(this);
     }
 
     /**
@@ -465,7 +457,7 @@ export class TutorialManager {
         }
         
         // Check condition-based steps
-        if (step.condition && step.condition(this)) {
+        if (step.condition?.(this)) {
             this.nextStep();
         }
     }
@@ -477,7 +469,7 @@ export class TutorialManager {
         if (!this.isActive) return false;
         
         // Don't handle taps when MTDPedia is open - let it handle its own clicks
-        if (this.ui && this.ui.isInfoPagesOpen && this.ui.isInfoPagesOpen()) {
+        if (this.ui?.isInfoPagesOpen?.()) {
             return false;
         }
         
@@ -491,7 +483,7 @@ export class TutorialManager {
         // Check next button (for non-action steps)
         if (!step.waitForAction) {
             const nextBtn = this.getNextButtonBounds(width, height);
-            if (this.isPointInRect(screenPos, nextBtn)) {
+            if (Utils.isPointInRect(screenPos, nextBtn)) {
                 this.nextStep();
                 return true;
             }
@@ -524,12 +516,10 @@ export class TutorialManager {
         
         // Check auto-advance
         const step = this.getCurrentStep();
-        if (step && step.autoAdvanceDelay) {
-            // Auto advance logic would go here if needed
-        }
+
         
         // Check condition-based completion
-        if (step && step.condition && step.condition(this)) {
+        if (step?.condition?.(this)) {
             this.nextStep();
         }
     }
@@ -541,7 +531,7 @@ export class TutorialManager {
         if (!this.isActive) return;
         
         // Don't render tutorial overlay when MTDPedia is open
-        if (this.ui && this.ui.isInfoPagesOpen && this.ui.isInfoPagesOpen()) {
+        if (this.ui?.isInfoPagesOpen?.()) {
             return;
         }
         
@@ -797,7 +787,7 @@ export class TutorialManager {
                     height: height - UI_CONFIG.TOP_BAR_HEIGHT - UI_CONFIG.SHOP_HEIGHT - 180
                 };
             
-            case 'info_button':
+            case 'info_button': {
                 // Info/MTDPedia button in top right corner
                 const infoButton = this.ui?.infoButton;
                 if (infoButton) {
@@ -815,6 +805,7 @@ export class TutorialManager {
                     width: 38,
                     height: 38
                 };
+            }
                 
             default:
                 if (typeof area === 'object') {
@@ -877,7 +868,7 @@ export class TutorialManager {
         
         // Get first shop button position from UI
         const ui = this.game?.ui;
-        if (!ui || !ui.shopButtons || ui.shopButtons.length === 0) return;
+        if (!ui?.shopButtons?.length) return;
         
         const firstButton = ui.shopButtons[0];
         const time = this.animationTime;
@@ -1280,15 +1271,6 @@ export class TutorialManager {
         };
     }
 
-    /**
-     * Check if point is in rectangle
-     */
-    isPointInRect(point, rect) {
-        return point.x >= rect.x && 
-               point.x <= rect.x + rect.width &&
-               point.y >= rect.y && 
-               point.y <= rect.y + rect.height;
-    }
 }
 
 /**
@@ -1329,13 +1311,13 @@ export class TutorialPrompt {
         const yesBtn = this.getYesButtonBounds(width, height);
         const noBtn = this.getNoButtonBounds(width, height);
         
-        if (this.isPointInRect(screenPos, yesBtn)) {
+        if (Utils.isPointInRect(screenPos, yesBtn)) {
             this.hide();
             if (this.onChoice) this.onChoice(true);
             return true;
         }
         
-        if (this.isPointInRect(screenPos, noBtn)) {
+        if (Utils.isPointInRect(screenPos, noBtn)) {
             this.hide();
             if (this.onChoice) this.onChoice(false);
             return true;
@@ -1471,12 +1453,5 @@ export class TutorialPrompt {
             width: btnWidth,
             height: 40
         };
-    }
-
-    isPointInRect(point, rect) {
-        return point.x >= rect.x && 
-               point.x <= rect.x + rect.width &&
-               point.y >= rect.y && 
-               point.y <= rect.y + rect.height;
     }
 }

@@ -191,8 +191,6 @@ export class BackgroundRenderer {
             
             if (layerRenderer) {
                 layerRenderer.render(layer, context);
-            } else {
-
             }
         }
     }
@@ -207,9 +205,7 @@ export class BackgroundRenderer {
             
             if (particleRenderer) {
                 particleRenderer.render(particle, context);
-            } else {
-
-            }
+            } 
         }
     }
 

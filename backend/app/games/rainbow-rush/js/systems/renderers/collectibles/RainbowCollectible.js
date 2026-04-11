@@ -35,7 +35,7 @@ export class RainbowCollectible extends BaseCollectible {
     renderOrbitingParticles(x, y, size, rainbowPhase, time) {
         for (let i = 0; i < 15; i++) {
             const orbitAngle = (i / 15) * Math.PI * 2 + time * 4;
-            const orbitRadius = size * (2.0 + Math.sin(time * 6 + i) * 0.3);
+            const orbitRadius = size * (2 + Math.sin(time * 6 + i) * 0.3);
             const px = x + Math.cos(orbitAngle) * orbitRadius;
             const py = y + Math.sin(orbitAngle) * orbitRadius;
             const hue = ((rainbowPhase * 100 + i * 24) % 360) / 360;

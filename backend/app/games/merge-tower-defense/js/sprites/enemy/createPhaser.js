@@ -62,7 +62,7 @@ export function phaser() {
             points: [
                 { x: 0, y: 0 },
                 { x: -0.15, y: -0.05 },
-                { x: -0.20, y: 0.08 },
+                { x: -0.2, y: 0.08 },
                 { x: -0.12, y: 0.18 },
                 { x: -0.05, y: 0.12 }
             ],
@@ -88,7 +88,7 @@ export function phaser() {
             points: [
                 { x: 0, y: 0 },
                 { x: 0.15, y: -0.05 },
-                { x: 0.20, y: 0.08 },
+                { x: 0.2, y: 0.08 },
                 { x: 0.12, y: 0.18 },
                 { x: 0.05, y: 0.12 }
             ],
@@ -167,60 +167,60 @@ export function phaser() {
     const allParts = ['body', 'head', 'wispLeft', 'wispRight', 'tail', 'orb'];
 
     // IDLE - gentle phase shimmer
-    const idle = new AnimationClip('idle', 2.0, true);
+    const idle = new AnimationClip('idle', 2, true);
     idle.addTrack('body', [
-        { time: 0, transform: { y: 0, scaleX: 1.0, scaleY: 1.0, alpha: 0.7 } },
+        { time: 0, transform: { y: 0, scaleX: 1, scaleY: 1, alpha: 0.7 } },
         { time: 0.5, transform: { y: -0.04, scaleX: 1.03, scaleY: 0.98, alpha: 0.85 } },
-        { time: 1.0, transform: { y: -0.06, scaleX: 1.05, scaleY: 0.96, alpha: 0.9 } },
+        { time: 1, transform: { y: -0.06, scaleX: 1.05, scaleY: 0.96, alpha: 0.9 } },
         { time: 1.5, transform: { y: -0.04, scaleX: 1.03, scaleY: 0.98, alpha: 0.75 } },
-        { time: 2.0, transform: { y: 0, scaleX: 1.0, scaleY: 1.0, alpha: 0.7 } }
+        { time: 2, transform: { y: 0, scaleX: 1, scaleY: 1, alpha: 0.7 } }
     ]);
     idle.addTrack('head', [
-        { time: 0, transform: { y: 0, rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { y: 0, rotation: 0, scaleX: 1 } },
         { time: 0.5, transform: { y: -0.02, rotation: 0.05, scaleX: 1.02 } },
-        { time: 1.0, transform: { y: -0.04, rotation: 0, scaleX: 1.04 } },
+        { time: 1, transform: { y: -0.04, rotation: 0, scaleX: 1.04 } },
         { time: 1.5, transform: { y: -0.02, rotation: -0.05, scaleX: 1.02 } },
-        { time: 2.0, transform: { y: 0, rotation: 0, scaleX: 1.0 } }
+        { time: 2, transform: { y: 0, rotation: 0, scaleX: 1 } }
     ]);
     idle.addTrack('wispLeft', [
         { time: 0, transform: { rotation: 0, x: 0, y: 0, alpha: 0.65 } },
         { time: 0.5, transform: { rotation: -0.2, x: -0.02, y: -0.02, alpha: 0.8 } },
-        { time: 1.0, transform: { rotation: 0.1, x: 0.01, y: -0.03, alpha: 0.9 } },
+        { time: 1, transform: { rotation: 0.1, x: 0.01, y: -0.03, alpha: 0.9 } },
         { time: 1.5, transform: { rotation: -0.15, x: -0.01, y: -0.02, alpha: 0.75 } },
-        { time: 2.0, transform: { rotation: 0, x: 0, y: 0, alpha: 0.65 } }
+        { time: 2, transform: { rotation: 0, x: 0, y: 0, alpha: 0.65 } }
     ]);
     idle.addTrack('wispRight', [
         { time: 0, transform: { rotation: 0, x: 0, y: 0, alpha: 0.65 } },
         { time: 0.5, transform: { rotation: 0.2, x: 0.02, y: -0.02, alpha: 0.8 } },
-        { time: 1.0, transform: { rotation: -0.1, x: -0.01, y: -0.03, alpha: 0.9 } },
+        { time: 1, transform: { rotation: -0.1, x: -0.01, y: -0.03, alpha: 0.9 } },
         { time: 1.5, transform: { rotation: 0.15, x: 0.01, y: -0.02, alpha: 0.75 } },
-        { time: 2.0, transform: { rotation: 0, x: 0, y: 0, alpha: 0.65 } }
+        { time: 2, transform: { rotation: 0, x: 0, y: 0, alpha: 0.65 } }
     ]);
     idle.addTrack('tail', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0, alpha: 0.6 } },
+        { time: 0, transform: { scaleX: 1, scaleY: 1, alpha: 0.6 } },
         { time: 0.5, transform: { scaleX: 0.95, scaleY: 1.05, alpha: 0.7 } },
-        { time: 1.0, transform: { scaleX: 0.92, scaleY: 1.08, alpha: 0.8 } },
+        { time: 1, transform: { scaleX: 0.92, scaleY: 1.08, alpha: 0.8 } },
         { time: 1.5, transform: { scaleX: 0.96, scaleY: 1.04, alpha: 0.65 } },
-        { time: 2.0, transform: { scaleX: 1.0, scaleY: 1.0, alpha: 0.6 } }
+        { time: 2, transform: { scaleX: 1, scaleY: 1, alpha: 0.6 } }
     ]);
     idle.addTrack('orb', [
-        { time: 0, transform: { y: 0, x: 0, scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { y: 0, x: 0, scaleX: 1, scaleY: 1 } },
         { time: 0.4, transform: { y: -0.04, x: -0.03, scaleX: 1.2, scaleY: 1.2 } },
         { time: 0.8, transform: { y: -0.02, x: 0.03, scaleX: 0.9, scaleY: 0.9 } },
         { time: 1.2, transform: { y: -0.05, x: 0.02, scaleX: 1.15, scaleY: 1.15 } },
         { time: 1.6, transform: { y: -0.03, x: -0.02, scaleX: 1.05, scaleY: 1.05 } },
-        { time: 2.0, transform: { y: 0, x: 0, scaleX: 1.0, scaleY: 1.0 } }
+        { time: 2, transform: { y: 0, x: 0, scaleX: 1, scaleY: 1 } }
     ]);
     sprite.addAnimation(idle);
 
     // WALK/FLY - ethereal gliding with phasing effect
     const walk = new AnimationClip('walk', 0.5, true);
     walk.addTrack('body', [
-        { time: 0, transform: { y: 0, rotation: 0.04, scaleY: 1.0, alpha: 0.75 } },
+        { time: 0, transform: { y: 0, rotation: 0.04, scaleY: 1, alpha: 0.75 } },
         { time: 0.125, transform: { y: -0.05, rotation: -0.05, scaleY: 0.96, alpha: 0.65 } },
         { time: 0.25, transform: { y: -0.02, rotation: -0.03, scaleY: 1.02, alpha: 0.85 } },
         { time: 0.375, transform: { y: -0.05, rotation: 0.05, scaleY: 0.96, alpha: 0.7 } },
-        { time: 0.5, transform: { y: 0, rotation: 0.04, scaleY: 1.0, alpha: 0.75 } }
+        { time: 0.5, transform: { y: 0, rotation: 0.04, scaleY: 1, alpha: 0.75 } }
     ]);
     walk.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0.05 } },
@@ -230,23 +230,23 @@ export function phaser() {
         { time: 0.5, transform: { y: 0, rotation: 0.05 } }
     ]);
     walk.addTrack('wispLeft', [
-        { time: 0, transform: { rotation: 0.15, x: 0.01, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0.15, x: 0.01, scaleY: 1 } },
         { time: 0.125, transform: { rotation: -0.25, x: -0.03, scaleY: 0.9 } },
         { time: 0.25, transform: { rotation: 0.1, x: 0.01, scaleY: 1.05 } },
         { time: 0.375, transform: { rotation: -0.2, x: -0.02, scaleY: 0.95 } },
-        { time: 0.5, transform: { rotation: 0.15, x: 0.01, scaleY: 1.0 } }
+        { time: 0.5, transform: { rotation: 0.15, x: 0.01, scaleY: 1 } }
     ]);
     walk.addTrack('wispRight', [
-        { time: 0, transform: { rotation: -0.15, x: -0.01, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: -0.15, x: -0.01, scaleY: 1 } },
         { time: 0.125, transform: { rotation: 0.25, x: 0.03, scaleY: 0.9 } },
         { time: 0.25, transform: { rotation: -0.1, x: -0.01, scaleY: 1.05 } },
         { time: 0.375, transform: { rotation: 0.2, x: 0.02, scaleY: 0.95 } },
-        { time: 0.5, transform: { rotation: -0.15, x: -0.01, scaleY: 1.0 } }
+        { time: 0.5, transform: { rotation: -0.15, x: -0.01, scaleY: 1 } }
     ]);
     walk.addTrack('tail', [
-        { time: 0, transform: { scaleX: 1.0, rotation: 0.1 } },
+        { time: 0, transform: { scaleX: 1, rotation: 0.1 } },
         { time: 0.25, transform: { scaleX: 0.95, rotation: -0.15 } },
-        { time: 0.5, transform: { scaleX: 1.0, rotation: 0.1 } }
+        { time: 0.5, transform: { scaleX: 1, rotation: 0.1 } }
     ]);
     walk.addTrack('orb', [
         { time: 0, transform: { x: 0, y: 0 } },
@@ -265,11 +265,11 @@ export function phaser() {
     // ATTACK - phase strike with energy surge
     const attack = new AnimationClip('attack', 0.6, false);
     attack.addTrack('body', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0, alpha: 0.75 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1, alpha: 0.75 } },
         { time: 0.15, transform: { rotation: -0.15, scaleX: 0.85, alpha: 0.4 } },
-        { time: 0.3, transform: { rotation: 0.2, scaleX: 1.2, alpha: 1.0 } },
+        { time: 0.3, transform: { rotation: 0.2, scaleX: 1.2, alpha: 1 } },
         { time: 0.45, transform: { rotation: 0.1, scaleX: 1.05, alpha: 0.85 } },
-        { time: 0.6, transform: { rotation: 0, scaleX: 1.0, alpha: 0.75 } }
+        { time: 0.6, transform: { rotation: 0, scaleX: 1, alpha: 0.75 } }
     ]);
     attack.addTrack('head', [
         { time: 0, transform: { rotation: 0, y: 0 } },
@@ -279,34 +279,34 @@ export function phaser() {
         { time: 0.6, transform: { rotation: 0, y: 0 } }
     ]);
     attack.addTrack('wispLeft', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.15, transform: { rotation: 0.4, scaleX: 0.7 } },
         { time: 0.3, transform: { rotation: -0.5, scaleX: 1.3 } },
-        { time: 0.6, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 0.6, transform: { rotation: 0, scaleX: 1 } }
     ]);
     attack.addTrack('wispRight', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.15, transform: { rotation: -0.4, scaleX: 0.7 } },
         { time: 0.3, transform: { rotation: 0.5, scaleX: 1.3 } },
-        { time: 0.6, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 0.6, transform: { rotation: 0, scaleX: 1 } }
     ]);
     attack.addTrack('orb', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { scaleX: 1, scaleY: 1 } },
         { time: 0.15, transform: { scaleX: 0.5, scaleY: 0.5 } },
-        { time: 0.3, transform: { scaleX: 2.0, scaleY: 2.0 } },
+        { time: 0.3, transform: { scaleX: 2, scaleY: 2 } },
         { time: 0.45, transform: { scaleX: 1.3, scaleY: 1.3 } },
-        { time: 0.6, transform: { scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.6, transform: { scaleX: 1, scaleY: 1 } }
     ]);
     sprite.addAnimation(attack);
 
     // PHASE animation - becoming intangible
     const phase = new AnimationClip('phase', 0.7, false);
     phase.addTrack('body', [
-        { time: 0, transform: { alpha: 0.75, scaleX: 1.0, scaleY: 1.0 } },
+        { time: 0, transform: { alpha: 0.75, scaleX: 1, scaleY: 1 } },
         { time: 0.2, transform: { alpha: 0.4, scaleX: 1.1, scaleY: 0.95 } },
         { time: 0.35, transform: { alpha: 0.25, scaleX: 1.15, scaleY: 0.9 } },
         { time: 0.5, transform: { alpha: 0.4, scaleX: 1.1, scaleY: 0.95 } },
-        { time: 0.7, transform: { alpha: 0.75, scaleX: 1.0, scaleY: 1.0 } }
+        { time: 0.7, transform: { alpha: 0.75, scaleX: 1, scaleY: 1 } }
     ]);
     phase.addTrack('head', [
         { time: 0, transform: { alpha: 0.8 } },
@@ -316,14 +316,14 @@ export function phaser() {
         { time: 0.7, transform: { alpha: 0.8 } }
     ]);
     phase.addTrack('wispLeft', [
-        { time: 0, transform: { alpha: 0.65, scaleX: 1.0 } },
+        { time: 0, transform: { alpha: 0.65, scaleX: 1 } },
         { time: 0.35, transform: { alpha: 0.15, scaleX: 1.4 } },
-        { time: 0.7, transform: { alpha: 0.65, scaleX: 1.0 } }
+        { time: 0.7, transform: { alpha: 0.65, scaleX: 1 } }
     ]);
     phase.addTrack('wispRight', [
-        { time: 0, transform: { alpha: 0.65, scaleX: 1.0 } },
+        { time: 0, transform: { alpha: 0.65, scaleX: 1 } },
         { time: 0.35, transform: { alpha: 0.15, scaleX: 1.4 } },
-        { time: 0.7, transform: { alpha: 0.65, scaleX: 1.0 } }
+        { time: 0.7, transform: { alpha: 0.65, scaleX: 1 } }
     ]);
     phase.addTrack('tail', [
         { time: 0, transform: { alpha: 0.6 } },
@@ -331,11 +331,11 @@ export function phaser() {
         { time: 0.7, transform: { alpha: 0.6 } }
     ]);
     phase.addTrack('orb', [
-        { time: 0, transform: { scaleX: 1.0, scaleY: 1.0, alpha: 0.9 } },
-        { time: 0.2, transform: { scaleX: 1.5, scaleY: 1.5, alpha: 1.0 } },
-        { time: 0.35, transform: { scaleX: 2.0, scaleY: 2.0, alpha: 0.3 } },
-        { time: 0.5, transform: { scaleX: 1.5, scaleY: 1.5, alpha: 1.0 } },
-        { time: 0.7, transform: { scaleX: 1.0, scaleY: 1.0, alpha: 0.9 } }
+        { time: 0, transform: { scaleX: 1, scaleY: 1, alpha: 0.9 } },
+        { time: 0.2, transform: { scaleX: 1.5, scaleY: 1.5, alpha: 1 } },
+        { time: 0.35, transform: { scaleX: 2, scaleY: 2, alpha: 0.3 } },
+        { time: 0.5, transform: { scaleX: 1.5, scaleY: 1.5, alpha: 1 } },
+        { time: 0.7, transform: { scaleX: 1, scaleY: 1, alpha: 0.9 } }
     ]);
     sprite.addAnimation(phase);
 

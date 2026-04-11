@@ -38,8 +38,8 @@ export class WaveManager {
         state.waveInProgress = true;
         state.waveZombiesSpawned = 0;
 
-        const scalingFactor = 2.0 + Math.floor(state.wave / 8);
-        const growthRate    = 6.0 + Math.floor(state.wave / 10);
+        const scalingFactor = 2 + Math.floor(state.wave / 8);
+        const growthRate    = 6 + Math.floor(state.wave / 10);
         let additionalZombies = Math.floor(
             Math.log10(1 + (state.wave - 1) * scalingFactor) * growthRate
         );
@@ -62,7 +62,7 @@ export class WaveManager {
         if (state.specialWave) waveText += `\n${state.specialWave}`;
         particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 - 2, {
             text: waveText, color: CONFIG.COLORS.TEXT_WARNING,
-            vy: -0.5, life: 2.0, scale: 2.0, glow: true,
+            vy: -0.5, life: 2, scale: 2, glow: true,
         });
         audio.waveStart();
     }
@@ -130,9 +130,9 @@ export class WaveManager {
         state.waveInProgress = false;
 
         const baseReward        = 20;
-        const rewardScalingFactor = 1.0;
+        const rewardScalingFactor = 1;
         const rewardGrowthRate  = 0.8;
-        const logMultiplier     = 1.0 + Math.log10(1 + (state.wave - 1) * rewardScalingFactor) * rewardGrowthRate;
+        const logMultiplier     = 1 + Math.log10(1 + (state.wave - 1) * rewardScalingFactor) * rewardGrowthRate;
         const waveBonus         = Math.floor(baseReward * logMultiplier * 0.6);
         const energyBonus       = Math.floor(state.energy / 15);
         const totalReward       = baseReward + waveBonus + energyBonus;
@@ -145,7 +145,7 @@ export class WaveManager {
         particles.createWaveClearEffect(CONFIG.COLS / 2, CONFIG.ROWS / 2);
         particles.emit(CONFIG.COLS / 2, CONFIG.ROWS / 2 + 1, {
             text: `+${totalReward} 💰`, color: CONFIG.COLORS.TEXT_WARNING,
-            vy: -1, life: 2.0, scale: 1.5, glow: true,
+            vy: -1, life: 2, scale: 1.5, glow: true,
         });
         audio.waveComplete();
 

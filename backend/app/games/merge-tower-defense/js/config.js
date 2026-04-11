@@ -12,7 +12,7 @@ export const CONFIG = {
     // Game Balance - Inizio più facile, late game difficile
     INITIAL_COINS: 100,  // Aumentato da 80 - 5 torri per iniziare
     INITIAL_ENERGY: 100,  // Ripristinato
-    ENERGY_DRAIN_PER_ZOMBIE: 2.0,  // Ridotto da 4.0 - meno punitivo all'inizio
+    ENERGY_DRAIN_PER_ZOMBIE: 2,  // Ridotto da 4 - meno punitivo all'inizio
     ENERGY_REGEN_RATE: 0.15,  // Aumentato da 0.05 - regen decente
 
     // Wave Configuration
@@ -85,7 +85,7 @@ export const CONFIG = {
 
 // Cannon Types - Strategic variety with unique roles
 // NOTA: I costi usano una curva ESPONENZIALE AGGRESSIVA per gli upgrade
-// Formula costo: baseCost * (2.0 ^ (level - 1)) * complexityMultiplier
+// Formula costo: baseCost * (2 ^ (level - 1)) * complexityMultiplier
 import { MultiPartEnemySprites } from './sprites/multi-part-enemies.js';
 import { MultiPartTowerSprites } from './sprites/multi-part-towers.js';
 
@@ -102,8 +102,8 @@ export const CANNON_TYPES = {
         projectileSpeed: 8,
         color: '#00ff88',
         description: 'Balanced, decent vs all',
-        costMultiplier: 1.0,
-        effectiveness: { NORMAL: 1.0, TANK: 0.9, RUSHER: 1.0, FLYER: 1.0, SPLITTER: 1.2, ARMORED: 0.8, BOSS: 0.9, HEALER: 1.1, PHASER: 0.9, VAMPIRE: 1.0, BOMBER: 1.0, SHADOW: 0.9, SIREN: 1.0, GOLEM: 0.8 },
+        costMultiplier: 1,
+        effectiveness: { NORMAL: 1, TANK: 0.9, RUSHER: 1, FLYER: 1, SPLITTER: 1.2, ARMORED: 0.8, BOSS: 0.9, HEALER: 1.1, PHASER: 0.9, VAMPIRE: 1, BOMBER: 1, SHADOW: 0.9, SIREN: 1, GOLEM: 0.8 },
         // Merge strategy: Versatile, okay against everything
     },
 
@@ -136,8 +136,8 @@ export const CANNON_TYPES = {
         projectileSpeed: 25,
         color: '#0088ff',
         description: 'Assassinates priority targets',
-        costMultiplier: 2.0,
-        effectiveness: { NORMAL: 0.8, TANK: 1.0, RUSHER: 0.7, FLYER: 1.0, SPLITTER: 1.0, ARMORED: 0.9, BOSS: 1.3, HEALER: 2.2, PHASER: 0.9, VAMPIRE: 1.8, BOMBER: 1.5, SHADOW: 0.8, SIREN: 2.0, GOLEM: 1.2 },
+        costMultiplier: 2,
+        effectiveness: { NORMAL: 0.8, TANK: 1, RUSHER: 0.7, FLYER: 1, SPLITTER: 1, ARMORED: 0.9, BOSS: 1.3, HEALER: 2.2, PHASER: 0.9, VAMPIRE: 1.8, BOMBER: 1.5, SHADOW: 0.8, SIREN: 2, GOLEM: 1.2 },
         // Merge strategy: COUNTER per priority targets (HEALER, SIREN, VAMPIRE) - one-shot elimination
     },
 
@@ -149,13 +149,13 @@ export const CANNON_TYPES = {
         cost: 90,
         damage: 5,
         fireRate: 1800,
-        range: 3.0,
+        range: 3,
         splashRadius: 2.2,
         projectileSpeed: 6,
         color: '#ffaa00',
         description: 'Destroys grouped enemies',
         costMultiplier: 1.6,
-        effectiveness: { NORMAL: 1.5, TANK: 1.3, RUSHER: 1.4, FLYER: 1.3, SPLITTER: 2.0, ARMORED: 1.2, BOSS: 0.8, HEALER: 1.4, PHASER: 1.2, VAMPIRE: 1.3, BOMBER: 1.8, SHADOW: 1.3, SIREN: 1.3, GOLEM: 0.9 },
+        effectiveness: { NORMAL: 1.5, TANK: 1.3, RUSHER: 1.4, FLYER: 1.3, SPLITTER: 2, ARMORED: 1.2, BOSS: 0.8, HEALER: 1.4, PHASER: 1.2, VAMPIRE: 1.3, BOMBER: 1.8, SHADOW: 1.3, SIREN: 1.3, GOLEM: 0.9 },
         // Merge strategy: COUNTER per nemici raggruppati e BOMBER (li uccide prima che esplodano)
     },
 
@@ -174,7 +174,7 @@ export const CANNON_TYPES = {
         color: '#00ddff',
         description: 'Slows all enemies effectively',
         costMultiplier: 1.4,
-        effectiveness: { NORMAL: 1.1, TANK: 1.3, RUSHER: 1.8, FLYER: 1.5, SPLITTER: 1.3, ARMORED: 1.2, BOSS: 1.6, HEALER: 1.2, PHASER: 1.9, VAMPIRE: 1.3, BOMBER: 1.4, SHADOW: 1.7, SIREN: 1.3, GOLEM: 2.0 },
+        effectiveness: { NORMAL: 1.1, TANK: 1.3, RUSHER: 1.8, FLYER: 1.5, SPLITTER: 1.3, ARMORED: 1.2, BOSS: 1.6, HEALER: 1.2, PHASER: 1.9, VAMPIRE: 1.3, BOMBER: 1.4, SHADOW: 1.7, SIREN: 1.3, GOLEM: 2 },
         // Merge strategy: COUNTER per nemici veloci e boss/golem - rallenta avanzamento
     },
 
@@ -186,7 +186,7 @@ export const CANNON_TYPES = {
         cost: 110,
         damage: 6,
         fireRate: 850,
-        range: 4.0,
+        range: 4,
         piercing: 4,  // Piercing forte
         projectileSpeed: 30,
         color: '#ffff00',
@@ -210,7 +210,7 @@ export const CANNON_TYPES = {
         color: '#aa00ff',
         description: 'Chains between groups',
         costMultiplier: 1.7,
-        effectiveness: { NORMAL: 1.6, TANK: 1.2, RUSHER: 1.3, FLYER: 1.4, SPLITTER: 1.9, ARMORED: 1.0, BOSS: 0.9, HEALER: 1.9, PHASER: 1.3, VAMPIRE: 1.5, BOMBER: 1.4, SHADOW: 1.3, SIREN: 1.7, GOLEM: 1.0 },
+        effectiveness: { NORMAL: 1.6, TANK: 1.2, RUSHER: 1.3, FLYER: 1.4, SPLITTER: 1.9, ARMORED: 1, BOSS: 0.9, HEALER: 1.9, PHASER: 1.3, VAMPIRE: 1.5, BOMBER: 1.4, SHADOW: 1.3, SIREN: 1.7, GOLEM: 1 },
         // Merge strategy: Eccellente vs gruppi e priority targets (chain hit su HEALER/SIREN)
     }
 };
@@ -227,7 +227,7 @@ export const ZOMBIE_TYPES = {
         speed: 0.5,
         reward: 15,
         color: '#00ff00',
-        scale: 1.0,
+        scale: 1,
     },
 
 
@@ -249,7 +249,7 @@ export const ZOMBIE_TYPES = {
         icon: '🦇', // Legacy fallback
         sprite: () => MultiPartEnemySprites.createRusher(),
         hp: 12,
-        speed: 1.0,
+        speed: 1,
         dodgeChance: 0.25,  // Can dodge projectiles
         reward: 40,
         color: '#ff00ff',
@@ -320,7 +320,7 @@ export const ZOMBIE_TYPES = {
         sprite: () => MultiPartEnemySprites.createHealer(),
         hp: 15,
         speed: 0.7,
-        healRange: 3.0,  // Cura nemici in raggio 3 celle
+        healRange: 3,  // Cura nemici in raggio 3 celle
         healAmount: 3,  // Cura 3 HP ogni 2 secondi
         healInterval: 2000,
         reward: 70,  // Alta ricompensa - PRIORITY TARGET
@@ -354,7 +354,7 @@ export const ZOMBIE_TYPES = {
         hp: 22,
         speed: 0.7,
         lifesteal: 0.3,  // Ruba 30% del danno subito come HP quando attacca
-        lifestealRange: 2.0,  // Range di attacco per rubare vita
+        lifestealRange: 2,  // Range di attacco per rubare vita
         reward: 75,
         color: '#8B0000',
         scale: 1.15,
@@ -368,7 +368,7 @@ export const ZOMBIE_TYPES = {
         sprite: () => MultiPartEnemySprites.createBomber(),
         hp: 18,
         speed: 0.9,
-        explosionRadius: 2.0,  // Esplode alla morte stunnando torrette vicine
+        explosionRadius: 2,  // Esplode alla morte stunnando torrette vicine
         stunDuration: 2000,  // Stun le torri per 2 secondi
         reward: 50,
         color: '#FF4500',
@@ -545,7 +545,7 @@ export const SPECIAL_ABILITIES = {
         description: 'Massive 4x4 explosion',
         icon: '💣',
         baseCooldown: 15000, // 15 seconds cooldown
-        baseRadius: 3.0, // 4x4 area = radius 2
+        baseRadius: 3, // 4x4 area = radius 2
         baseDamage: 70, // Base damage (scales with wave)
         damagePerLevel: 50, // +25 damage per ability level
         maxLevel: 999, // Effectively no limit
@@ -553,7 +553,7 @@ export const SPECIAL_ABILITIES = {
         glowColor: '#ff8800',
         // Visual settings
         explosionDuration: 800, // ms
-        shockwaveSpeed: 3.0,
+        shockwaveSpeed: 3,
         particleCount: 20
     },
     PUSHBACK: {
@@ -562,7 +562,7 @@ export const SPECIAL_ABILITIES = {
         description: 'Push enemies back',
         icon: '🌊',
         baseCooldown: 12000, // 12 seconds cooldown
-        basePushDistance: 3.0, // Push back 3 cells
+        basePushDistance: 3, // Push back 3 cells
         pushDistancePerLevel: 0.5, // +0.5 cells per level
         maxLevel: 999, // Effectively no limit
         color: '#00aaff',
@@ -570,7 +570,7 @@ export const SPECIAL_ABILITIES = {
         // Visual settings
         waveDuration: 600, // ms
         waveWidth: 7, // Full grid width
-        waveSpeed: 8.0,
+        waveSpeed: 8,
         particleCount: 15
     },
     STUN: {

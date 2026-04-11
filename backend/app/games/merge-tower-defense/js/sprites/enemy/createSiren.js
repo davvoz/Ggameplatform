@@ -9,7 +9,7 @@ export function siren() {
         {
             type: 'ellipse',
             x: 0, y: 0.15,
-            width: 0.18, height: 0.40,
+            width: 0.18, height: 0.4,
             color: '#2a8a9a',
             fill: true
         },
@@ -17,9 +17,9 @@ export function siren() {
             type: 'polygon', // Tail fin
             points: [
                 { x: 0, y: 0.35 },
-                { x: -0.12, y: 0.50 },
+                { x: -0.12, y: 0.5 },
                 { x: 0, y: 0.45 },
-                { x: 0.12, y: 0.50 }
+                { x: 0.12, y: 0.5 }
             ],
             color: '#1a7a8a',
             fill: true
@@ -63,8 +63,8 @@ export function siren() {
         points: [
             { x: 0, y: 0 },
             { x: -0.15, y: 0.05 },
-            { x: -0.20, y: 0.25 },
-            { x: -0.08, y: 0.20 },
+            { x: -0.2, y: 0.25 },
+            { x: -0.08, y: 0.2 },
             { x: 0, y: 0.12 }
         ],
         color: '#4aaaba',
@@ -79,8 +79,8 @@ export function siren() {
         points: [
             { x: 0, y: 0 },
             { x: 0.15, y: 0.05 },
-            { x: 0.20, y: 0.25 },
-            { x: 0.08, y: 0.20 },
+            { x: 0.2, y: 0.25 },
+            { x: 0.08, y: 0.2 },
             { x: 0, y: 0.12 }
         ],
         color: '#4aaaba',
@@ -100,21 +100,21 @@ export function siren() {
         },
         {
             type: 'ellipse', // Hair flowing left
-            x: -0.10, y: -0.02,
+            x: -0.1, y: -0.02,
             width: 0.16, height: 0.22,
             color: '#2080a0',
             fill: true
         },
         {
             type: 'ellipse', // Hair flowing right
-            x: 0.10, y: -0.02,
+            x: 0.1, y: -0.02,
             width: 0.16, height: 0.22,
             color: '#2080a0',
             fill: true
         },
         {
             type: 'ellipse', // Hair top
-            x: 0, y: -0.10,
+            x: 0, y: -0.1,
             width: 0.28, height: 0.14,
             color: '#1a70a0',
             fill: true
@@ -137,7 +137,7 @@ export function siren() {
         },
         {
             type: 'ellipse', // Lips
-            x: 0, y: 0.10,
+            x: 0, y: 0.1,
             width: 0.08, height: 0.04,
             color: '#ff6688',
             fill: true
@@ -151,8 +151,8 @@ export function siren() {
         type: 'polygon',
         points: [
             { x: 0, y: 0 },
-            { x: -0.06, y: 0.10 },
-            { x: -0.10, y: 0.28 },
+            { x: -0.06, y: 0.1 },
+            { x: -0.1, y: 0.28 },
             { x: -0.04, y: 0.22 },
             { x: 0, y: 0.08 }
         ],
@@ -166,8 +166,8 @@ export function siren() {
         type: 'polygon',
         points: [
             { x: 0, y: 0 },
-            { x: 0.06, y: 0.10 },
-            { x: 0.10, y: 0.28 },
+            { x: 0.06, y: 0.1 },
+            { x: 0.1, y: 0.28 },
             { x: 0.04, y: 0.22 },
             { x: 0, y: 0.08 }
         ],
@@ -186,7 +186,7 @@ export function siren() {
         fill: true,
         glow: { color: '#ff66cc', blur: 6 }
     }, 0.5, 0.5, 20);
-    aura1.setBaseTransform(-0.20, 0.0);
+    aura1.setBaseTransform(-0.2, 0);
 
     const aura2 = sprite.addPart('aura2', {
         type: 'circle',
@@ -196,7 +196,7 @@ export function siren() {
         fill: true,
         glow: { color: '#ff88dd', blur: 6 }
     }, 0.5, 0.5, 20);
-    aura2.setBaseTransform(0.20, 0.05);
+    aura2.setBaseTransform(0.2, 0.05);
 
     const aura3 = sprite.addPart('aura3', {
         type: 'circle',
@@ -206,7 +206,7 @@ export function siren() {
         fill: true,
         glow: { color: '#ffaaee', blur: 5 }
     }, 0.5, 0.5, 20);
-    aura3.setBaseTransform(0, -0.20);
+    aura3.setBaseTransform(0, -0.2);
 
     // Parts groups
     const allParts = ['body', 'head', 'tail', 'finLeft', 'finRight', 'hairLeft', 'hairRight', 'aura1', 'aura2', 'aura3'];
@@ -229,52 +229,52 @@ export function siren() {
         { time: 2.5, transform: { y: 0, rotation: 0 } }
     ]);
     idle.addTrack('tail', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.625, transform: { rotation: 0.15, scaleX: 0.95 } },
-        { time: 1.25, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 1.25, transform: { rotation: 0, scaleX: 1 } },
         { time: 1.875, transform: { rotation: -0.15, scaleX: 0.95 } },
-        { time: 2.5, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 2.5, transform: { rotation: 0, scaleX: 1 } }
     ]);
     idle.addTrack('finLeft', [
         { time: 0, transform: { rotation: 0, y: 0 } },
         { time: 0.5, transform: { rotation: -0.2, y: -0.02 } },
-        { time: 1.0, transform: { rotation: 0.1, y: 0.01 } },
+        { time: 1, transform: { rotation: 0.1, y: 0.01 } },
         { time: 1.5, transform: { rotation: -0.15, y: -0.01 } },
-        { time: 2.0, transform: { rotation: 0.05, y: 0 } },
+        { time: 2, transform: { rotation: 0.05, y: 0 } },
         { time: 2.5, transform: { rotation: 0, y: 0 } }
     ]);
     idle.addTrack('finRight', [
         { time: 0, transform: { rotation: 0, y: 0 } },
         { time: 0.5, transform: { rotation: 0.2, y: -0.02 } },
-        { time: 1.0, transform: { rotation: -0.1, y: 0.01 } },
+        { time: 1, transform: { rotation: -0.1, y: 0.01 } },
         { time: 1.5, transform: { rotation: 0.15, y: -0.01 } },
-        { time: 2.0, transform: { rotation: -0.05, y: 0 } },
+        { time: 2, transform: { rotation: -0.05, y: 0 } },
         { time: 2.5, transform: { rotation: 0, y: 0 } }
     ]);
     idle.addTrack('hairLeft', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.625, transform: { rotation: -0.15, scaleY: 1.08 } },
         { time: 1.25, transform: { rotation: 0.1, scaleY: 0.95 } },
         { time: 1.875, transform: { rotation: -0.1, scaleY: 1.05 } },
-        { time: 2.5, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 2.5, transform: { rotation: 0, scaleY: 1 } }
     ]);
     idle.addTrack('hairRight', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.625, transform: { rotation: 0.15, scaleY: 1.08 } },
         { time: 1.25, transform: { rotation: -0.1, scaleY: 0.95 } },
         { time: 1.875, transform: { rotation: 0.1, scaleY: 1.05 } },
-        { time: 2.5, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 2.5, transform: { rotation: 0, scaleY: 1 } }
     ]);
     sprite.addAnimation(idle);
 
     // Custom WALK animation - swimming/gliding motion
     const walk = new AnimationClip('walk', 0.7, true);
     walk.addTrack('body', [
-        { time: 0, transform: { y: 0, rotation: 0.04, scaleY: 1.0 } },
+        { time: 0, transform: { y: 0, rotation: 0.04, scaleY: 1 } },
         { time: 0.175, transform: { y: -0.05, rotation: -0.04, scaleY: 0.97 } },
-        { time: 0.35, transform: { y: 0, rotation: -0.04, scaleY: 1.0 } },
+        { time: 0.35, transform: { y: 0, rotation: -0.04, scaleY: 1 } },
         { time: 0.525, transform: { y: -0.05, rotation: 0.04, scaleY: 0.97 } },
-        { time: 0.7, transform: { y: 0, rotation: 0.04, scaleY: 1.0 } }
+        { time: 0.7, transform: { y: 0, rotation: 0.04, scaleY: 1 } }
     ]);
     walk.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0.05 } },
@@ -305,49 +305,49 @@ export function siren() {
         { time: 0.7, transform: { rotation: -0.2, y: 0 } }
     ]);
     walk.addTrack('hairLeft', [
-        { time: 0, transform: { rotation: 0.2, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0.2, scaleY: 1 } },
         { time: 0.35, transform: { rotation: -0.25, scaleY: 1.1 } },
-        { time: 0.7, transform: { rotation: 0.2, scaleY: 1.0 } }
+        { time: 0.7, transform: { rotation: 0.2, scaleY: 1 } }
     ]);
     walk.addTrack('hairRight', [
-        { time: 0, transform: { rotation: -0.2, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: -0.2, scaleY: 1 } },
         { time: 0.35, transform: { rotation: 0.25, scaleY: 1.1 } },
-        { time: 0.7, transform: { rotation: -0.2, scaleY: 1.0 } }
+        { time: 0.7, transform: { rotation: -0.2, scaleY: 1 } }
     ]);
     sprite.addAnimation(walk);
 
     // Aura orbit animation (runs alongside idle/walk)
-    const auraOrbit = new AnimationClip('auraOrbit', 3.0, true);
+    const auraOrbit = new AnimationClip('auraOrbit', 3, true);
     auraOrbit.addTrack('aura1', [
-        { time: 0, transform: { x: -0.20, y: 0.0 } },
+        { time: 0, transform: { x: -0.2, y: 0 } },
         { time: 0.75, transform: { x: 0, y: -0.22 } },
-        { time: 1.5, transform: { x: 0.20, y: 0.0 } },
-        { time: 2.25, transform: { x: 0, y: 0.20 } },
-        { time: 3.0, transform: { x: -0.20, y: 0.0 } }
+        { time: 1.5, transform: { x: 0.2, y: 0 } },
+        { time: 2.25, transform: { x: 0, y: 0.2 } },
+        { time: 3, transform: { x: -0.2, y: 0 } }
     ]);
     auraOrbit.addTrack('aura2', [
-        { time: 0, transform: { x: 0.20, y: 0.05 } },
+        { time: 0, transform: { x: 0.2, y: 0.05 } },
         { time: 0.75, transform: { x: 0.05, y: 0.22 } },
-        { time: 1.5, transform: { x: -0.20, y: 0.05 } },
+        { time: 1.5, transform: { x: -0.2, y: 0.05 } },
         { time: 2.25, transform: { x: -0.05, y: -0.18 } },
-        { time: 3.0, transform: { x: 0.20, y: 0.05 } }
+        { time: 3, transform: { x: 0.2, y: 0.05 } }
     ]);
     auraOrbit.addTrack('aura3', [
-        { time: 0, transform: { x: 0, y: -0.20 } },
+        { time: 0, transform: { x: 0, y: -0.2 } },
         { time: 0.75, transform: { x: -0.18, y: 0.06 } },
         { time: 1.5, transform: { x: 0.18, y: 0.06 } },
-        { time: 2.25, transform: { x: -0.10, y: -0.15 } },
-        { time: 3.0, transform: { x: 0, y: -0.20 } }
+        { time: 2.25, transform: { x: -0.1, y: -0.15 } },
+        { time: 3, transform: { x: 0, y: -0.2 } }
     ]);
     sprite.addAnimation(auraOrbit);
 
     // Custom ATTACK animation
     const attack = new AnimationClip('attack', 0.5, false);
     attack.addTrack('body', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.15, transform: { rotation: -0.15, scaleX: 0.95 } },
         { time: 0.3, transform: { rotation: 0.2, scaleX: 1.08 } },
-        { time: 0.5, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 0.5, transform: { rotation: 0, scaleX: 1 } }
     ]);
     attack.addTrack('head', [
         { time: 0, transform: { rotation: 0, y: 0 } },
@@ -376,13 +376,13 @@ export function siren() {
     sprite.addAnimation(attack);
 
     // CHARM animation - siren's special ability (mesmerizing song)
-    const charm = new AnimationClip('charm', 1.0, false);
+    const charm = new AnimationClip('charm', 1, false);
     charm.addTrack('body', [
-        { time: 0, transform: { rotation: 0, y: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, y: 0, scaleY: 1 } },
         { time: 0.25, transform: { rotation: -0.08, y: -0.04, scaleY: 1.05 } },
         { time: 0.5, transform: { rotation: 0.08, y: -0.06, scaleY: 1.08 } },
         { time: 0.75, transform: { rotation: -0.04, y: -0.04, scaleY: 1.04 } },
-        { time: 1.0, transform: { rotation: 0, y: 0, scaleY: 1.0 } }
+        { time: 1, transform: { rotation: 0, y: 0, scaleY: 1 } }
     ]);
     charm.addTrack('head', [
         { time: 0, transform: { rotation: 0, y: 0 } },
@@ -390,42 +390,42 @@ export function siren() {
         { time: 0.4, transform: { rotation: 0.2, y: 0.05 } },
         { time: 0.6, transform: { rotation: 0.15, y: 0.04 } },
         { time: 0.8, transform: { rotation: -0.1, y: 0.02 } },
-        { time: 1.0, transform: { rotation: 0, y: 0 } }
+        { time: 1, transform: { rotation: 0, y: 0 } }
     ]);
     charm.addTrack('finLeft', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.25, transform: { rotation: -0.4, scaleY: 1.15 } },
         { time: 0.5, transform: { rotation: -0.5, scaleY: 1.2 } },
         { time: 0.75, transform: { rotation: -0.3, scaleY: 1.1 } },
-        { time: 1.0, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 1, transform: { rotation: 0, scaleY: 1 } }
     ]);
     charm.addTrack('finRight', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.25, transform: { rotation: 0.4, scaleY: 1.15 } },
         { time: 0.5, transform: { rotation: 0.5, scaleY: 1.2 } },
         { time: 0.75, transform: { rotation: 0.3, scaleY: 1.1 } },
-        { time: 1.0, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 1, transform: { rotation: 0, scaleY: 1 } }
     ]);
     charm.addTrack('hairLeft', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.25, transform: { rotation: -0.25, scaleY: 1.2 } },
         { time: 0.5, transform: { rotation: -0.35, scaleY: 1.3 } },
         { time: 0.75, transform: { rotation: -0.2, scaleY: 1.15 } },
-        { time: 1.0, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 1, transform: { rotation: 0, scaleY: 1 } }
     ]);
     charm.addTrack('hairRight', [
-        { time: 0, transform: { rotation: 0, scaleY: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleY: 1 } },
         { time: 0.25, transform: { rotation: 0.25, scaleY: 1.2 } },
         { time: 0.5, transform: { rotation: 0.35, scaleY: 1.3 } },
         { time: 0.75, transform: { rotation: 0.2, scaleY: 1.15 } },
-        { time: 1.0, transform: { rotation: 0, scaleY: 1.0 } }
+        { time: 1, transform: { rotation: 0, scaleY: 1 } }
     ]);
     charm.addTrack('tail', [
-        { time: 0, transform: { rotation: 0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0, scaleX: 1 } },
         { time: 0.25, transform: { rotation: 0.2, scaleX: 1.05 } },
         { time: 0.5, transform: { rotation: -0.2, scaleX: 1.1 } },
         { time: 0.75, transform: { rotation: 0.1, scaleX: 1.05 } },
-        { time: 1.0, transform: { rotation: 0, scaleX: 1.0 } }
+        { time: 1, transform: { rotation: 0, scaleX: 1 } }
     ]);
     sprite.addAnimation(charm);
 

@@ -4,8 +4,9 @@
  * Uses the global PlatformSDK instance loaded by the platform
  */
 export class PlatformSDKManager {
+    initialized = false;
+
     constructor() {
-        this.initialized = false;
         this.parentOrigin = this._getParentOrigin();
     }
 
@@ -24,13 +25,10 @@ export class PlatformSDKManager {
     async initialize() {
         try {
             // Use the global PlatformSDK instance
-            if (typeof window.PlatformSDK !== 'undefined') {
+            if (globalThis.PlatformSDK !== 'undefined') {
                 // Initialize if needed
-                await window.PlatformSDK.init();
+                await globalThis.PlatformSDK.init();
                 this.initialized = true;
-
-            } else {
-
             }
         } catch (error) {
             console.error('Failed to initialize Platform SDK:', error);
@@ -40,13 +38,11 @@ export class PlatformSDKManager {
 
     async submitScore(score) {
         try {
-            if (typeof window.PlatformSDK !== 'undefined') {
-                window.PlatformSDK.sendScore(score);
-
-                return { success: true, score };
-            } else {
-
+            if (globalThis.PlatformSDK === 'undefined') {
                 return { success: false, score: null };
+            } else {
+                globalThis.PlatformSDK.sendScore(score);
+                return { success: true, score };
             }
         } catch (error) {
             console.error('Failed to submit score:', error);
@@ -56,20 +52,16 @@ export class PlatformSDKManager {
 
     async gameOver(score, details) {
 
-        
+
         try {
             // Primary: Use PlatformSDK if available
-            if (typeof window.PlatformSDK !== 'undefined') {
+            if ( globalThis.PlatformSDK !== 'undefined') {
+                globalThis.PlatformSDK.gameOver(score, details);
+            } 
 
-                window.PlatformSDK.gameOver(score, details);
-
-            } else {
-
-            }
-            
             // ALWAYS send postMessage as backup (critical for mobile)
-            if (window.parent && typeof window.parent.postMessage === 'function' && this.parentOrigin) {
-                window.parent.postMessage({
+            if (globalThis.parent?.postMessage && typeof globalThis.parent.postMessage === 'function' && this.parentOrigin) {
+                globalThis.parent.postMessage({
                     type: 'gameOver',
                     payload: {
                         score: score,
@@ -89,17 +81,15 @@ export class PlatformSDKManager {
         try {
             // Send message directly to parent window (platform)
             // Always send this message even if SDK didn't initialize properly
-            if (window.parent && typeof window.parent.postMessage === 'function' && this.parentOrigin) {
-                window.parent.postMessage({
+            if (globalThis.parent?.postMessage && typeof globalThis.parent.postMessage === 'function' && this.parentOrigin) {
+                globalThis.parent.postMessage({
                     type: 'gameStarted',
                     payload: {},
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
                 }, this.parentOrigin);
 
-            } else {
-
-            }
+            } 
         } catch (error) {
             console.error('Failed to report game started:', error);
         }
@@ -126,14 +116,8 @@ export class PlatformSDKManager {
     }
 
     async trackEvent(eventName, eventData) {
-        if (!this.initialized || typeof window.PlatformSDK === 'undefined') {
+        if (!this.initialized ||  globalThis.PlatformSDK === 'undefined') {
             return;
-        }
-
-        try {
-
-        } catch (error) {
-            console.error('Failed to track event:', error);
         }
     }
 }

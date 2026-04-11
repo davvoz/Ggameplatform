@@ -126,7 +126,6 @@ export class CelestialRenderer extends BaseLayerRenderer {
         const x = layer.x + offset;
         
         const rayEndX = x + Math.cos(layer.angle) * layer.length;
-        const rayEndY = layer.y + Math.sin(layer.angle) * layer.length;
         this.renderer.drawRect(
             x,
             layer.y,

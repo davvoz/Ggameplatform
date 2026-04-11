@@ -25,7 +25,7 @@ class Platform {
         this.type = type;
         this.platformType = type; // Alias per compatibilità
         this.index = index;
-        
+
         // Proprietà per i nuovi tipi di piattaforma
         this.isDissolving = false;
         this.dissolveTimer = 0;
@@ -50,27 +50,27 @@ class Platform {
 }
 
 /**
- * Classe Enemy - Rappresenta un nemico
+ * Factory function to create an enemy object
  */
-class Enemy {
-    constructor(enemyId, x, y, platformIndex = 0) {
-        this.enemyId = enemyId; // Changed from 'type' to avoid conflict with entity type
-        this.x = x;
-        this.y = y;
-        this.platformIndex = platformIndex;
-    }
+function createEnemy(enemyId, x, y, platformIndex = 0) {
+    return {
+        enemyId: enemyId, // Changed from 'type' to avoid conflict with entity type
+        x: x,
+        y: y,
+        platformIndex: platformIndex
+    };
 }
 
 /**
- * Classe Collectible - Rappresenta un oggetto collezionabile
+ * Factory function to create a collectible object
  */
-class Collectible {
-    constructor(type, x, y, options = {}) {
-        this.type = type;
-        this.x = x;
-        this.y = y;
-        Object.assign(this, options);
-    }
+function createCollectible(type, x, y, options = {}) {
+    return {
+        type: type,
+        x: x,
+        y: y,
+        ...options
+    };
 }
 
 /**
@@ -89,9 +89,9 @@ class Level {
         this.objectives = ['reach_end'];
         this.parTime = { threeStars: 20, twoStars: 30, oneStar: 45 };
         this.starRequirements = {
-            threeStars: { time: 20, coins: 0.70, maxDamage: 1 },
-            twoStars: { time: 30, coins: 0.50, maxDamage: 3 },
-            oneStar: { time: 45, coins: 0.30 }
+            threeStars: { time: 20, coins: 0.7, maxDamage: 1 },
+            twoStars: { time: 30, coins: 0.5, maxDamage: 3 },
+            oneStar: { time: 45, coins: 0.3 }
         };
         this.length = 0; // Lunghezza totale del livello in pixel (calcolata dopo aver aggiunto le piattaforme)
         this.fineLivello = 3000; // NUOVO: Lunghezza fissa del livello in pixel (configurabile per ogni livello)
@@ -106,7 +106,7 @@ class Level {
     updateLength() {
         if (this.platforms.length > 0) {
             // La lunghezza è la X della piattaforma più lontana + la sua larghezza
-            const lastPlatform = this.platforms[this.platforms.length - 1];
+            const lastPlatform = this.platforms.at(-1);
             this.length = lastPlatform.x + lastPlatform.width;
         }
     }
@@ -157,226 +157,139 @@ class PlatformGenerator {
         const width = options.width || 250;
         const height = 20;
         const platformType = options.platformType || 'normal';
-        const level = options.level || 1; // Livello per determinare quali tipi spawnare
-        
-        // Garantisce che lo spacing effettivo includa sempre la larghezza + gap minimo
+        const level = options.level || 1;
+
         const effectiveSpacing = Math.max(spacing, width + this.MIN_HORIZONTAL_GAP);
 
-        for (let i = 0; i < count; i++) {
-            let x = startX;
-            let y = startY;
-
-            switch (pattern) {
-                case PlatformPatterns.STRAIGHT:
-                    // STRAIGHT con GAP ampio periodico
-                    x = startX + i * effectiveSpacing;
-                    // Ogni 4-5 piattaforme, crea un GAP AMPIO
-                    if (i > 0 && i % 5 === 2) {
-                        x += effectiveSpacing * 2.5; // GAP LARGO extra
-                    }
-                    if (i % 4 === 3) {
-                        y = startY + (Math.random() - 0.5) * 60;
-                    }
-                    break;
-
-                case PlatformPatterns.STAIRS_UP:
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO a metà della scala
-                    if (i > 0 && i === Math.floor(count / 2)) {
-                        x += effectiveSpacing * 2.8; // GAP LARGO
-                    }
-                    // Garantisce gap verticale minimo
-                    y = startY - i * Math.max(45, height + this.MIN_VERTICAL_GAP);
-                    break;
-
-                case PlatformPatterns.STAIRS_DOWN:
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO a metà della scala
-                    if (i > 0 && i === Math.floor(count / 2)) {
-                        x += effectiveSpacing * 2.8; // GAP LARGO
-                    }
-                    // Garantisce gap verticale minimo
-                    y = startY + i * Math.max(45, height + this.MIN_VERTICAL_GAP);
-                    break;
-
-                case PlatformPatterns.ZIGZAG:
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO dopo ogni ciclo completo di zigzag
-                    if (i > 0 && i % 6 === 3) {
-                        x += effectiveSpacing * 2.5; // GAP LARGO
-                    }
-                    const zigLevel = i % 3;
-                    y = startY + (zigLevel === 0 ? 0 : zigLevel === 1 ? -50 : -25);
-                    break;
-
-                case PlatformPatterns.GAPS:
-                    // Gaps con variazione verticale + GAP EXTRA LARGO
-                    x = startX + i * effectiveSpacing * 1.8;
-                    // Ogni 4 piattaforme, GAP EXTRA LARGO
-                    if (i > 0 && i % 4 === 2) {
-                        x += effectiveSpacing * 2.0; // GAP MOLTO LARGO
-                    }
-                    y = startY + (i % 2 === 0 ? 0 : -40);
-                    break;
-
-                case PlatformPatterns.WAVE:
-                    // Onda sinusoidale con GAP al picco
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO al picco dell'onda
-                    if (i > 0 && Math.abs(Math.sin(i * 0.6)) > 0.9) {
-                        x += effectiveSpacing * 2.2; // GAP LARGO al picco
-                    }
-                    y = startY + Math.sin(i * 0.6) * 70;
-                    break;
-
-                case PlatformPatterns.SPIRAL_UP:
-                    // Spirale ascendente con GAP
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO a metà spirale
-                    if (i > 0 && i === Math.floor(count / 2)) {
-                        x += effectiveSpacing * 2.6; // GAP LARGO
-                    }
-                    y = startY - i * 25 + Math.sin(i * 0.9) * 50;
-                    break;
-
-                case PlatformPatterns.SPIRAL_DOWN:
-                    // Spirale discendente con GAP
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO a metà spirale
-                    if (i > 0 && i === Math.floor(count / 2)) {
-                        x += effectiveSpacing * 2.6; // GAP LARGO
-                    }
-                    y = startY + i * 25 + Math.sin(i * 0.9) * 50;
-                    break;
-
-                case PlatformPatterns.SNAKE:
-                    // Serpente S con GAP al cambio direzione
-                    x = startX + i * effectiveSpacing;
-                    // GAP AMPIO al cambio direzione del serpente
-                    const snakePhase = Math.sin(i * 0.45);
-                    if (i > 0 && Math.abs(snakePhase) < 0.1) {
-                        x += effectiveSpacing * 2.3; // GAP LARGO al cambio direzione
-                    }
-                    y = startY + snakePhase * 80;
-                    break;
-
-                case PlatformPatterns.DOUBLE_HELIX:
-                    // Doppia elica con GAP al crossover
-                    x = startX + i * effectiveSpacing;
-                    const helixAngle = i * 0.5;
-                    // GAP AMPIO quando le eliche si incrociano
-                    if (i > 0 && i % 4 === 2) {
-                        x += effectiveSpacing * 2.4; // GAP LARGO al crossover
-                    }
-                    if (i % 2 === 0) {
-                        y = startY + Math.sin(helixAngle) * 60;
-                    } else {
-                        y = startY - Math.sin(helixAngle) * 60;
-                    }
-                    break;
-
-                case PlatformPatterns.VERTICAL_TOWER:
-                    // Torre verticale con GAP intermedio
-                    const towerCol = i % 2;
-                    x = startX + towerCol * Math.max(140, width + this.MIN_HORIZONTAL_GAP);
-                    // GAP AMPIO dopo ogni 3 livelli verticali
-                    if (i > 0 && i % 6 === 3) {
-                        x += effectiveSpacing * 2.5; // GAP LARGO verticale
-                    }
-                    // Garantisce gap verticale minimo
-                    y = startY - Math.floor(i / 2) * Math.max(55, height + this.MIN_VERTICAL_GAP);
-                    break;
-
-                case PlatformPatterns.SCATTERED:
-                    // Piattaforme sparse con GAP EXTRA casuali
-                    x = startX + i * effectiveSpacing + (Math.random() - 0.5) * 60;
-                    // Ogni 4-5 piattaforme, GAP EXTRA LARGO casuale
-                    if (i > 0 && Math.random() < 0.3) {
-                        x += effectiveSpacing * (2.0 + Math.random() * 1.5); // GAP MOLTO LARGO casuale
-                    }
-                    y = startY + (Math.random() - 0.5) * 90;
-                    break;
-
-                case PlatformPatterns.PYRAMID:
-                    // Piramide con GAP tra righe
-                    const row = Math.floor(Math.sqrt(i * 2));
-                    const col = i - (row * (row + 1)) / 2;
-                    x = startX + col * (effectiveSpacing * 0.9) - row * (effectiveSpacing * 0.45);
-                    // GAP AMPIO tra una riga e l'altra
-                    if (col === 0 && row > 0) {
-                        x += effectiveSpacing * 1.8; // GAP LARGO tra righe
-                    }
-                    // Garantisce gap verticale minimo tra righe
-                    y = startY - row * Math.max(60, height + this.MIN_VERTICAL_GAP);
-                    break;
-
-                case PlatformPatterns.BRIDGE:
-                    // Ponte con ondulazioni e GAP centrale
-                    x = startX + i * (effectiveSpacing * 0.7);
-                    // GAP AMPIO al centro del ponte
-                    if (i > 0 && i === Math.floor(count / 2)) {
-                        x += effectiveSpacing * 2.5; // GAP LARGO centrale
-                    }
-                    y = startY + Math.sin(i * 0.25) * 35;
-                    break;
-
-                default:
-                    x = startX + i * effectiveSpacing;
-                    y = startY;
-            }
-
-            // Determina tipo specifico di piattaforma casualmente
-            let specificType = platformType;
-            if (platformType === 'normal' && i > 2) { // Non sui primi 3
-                const rand = Math.random();
-                
-                // Rotating dal livello 5 - AUMENTATO AL 12%
-                if (level >= 5 && rand < 0.12) {
-                    specificType = 'rotating';
-                }
-                // Dissolving dal livello 3
-                else if (level >= 3 && rand < 0.18) {
-                    specificType = 'dissolving';
-                }
-                // Bouncing dal livello 4  
-                else if (level >= 4 && rand < 0.24) {
-                    specificType = 'bouncing';
-                }
-                // Bouncy normale
-                else if (rand < 0.34) {
-                    specificType = 'bouncy';
-                }
-                // Spring
-                else if (rand < 0.42) {
-                    specificType = 'spring';
-                }
-                // Icy dal livello 5
-                else if (level >= 5 && rand < 0.52) {
-                    specificType = 'icy';
-                }
-            }
-            
-            const platform = new Platform(x, this.clampY(y), width, height, specificType, i);
-            
-            // Inizializza proprietà speciali per tipi dinamici
-            if (specificType === 'rotating') {
-                platform.isRotating = false; // Inizia ferma, si attiva quando il player ci atterra
-                platform.rotationSpeed = 0.3 + Math.random() * 0.5; // Velocità ridotta 0.3-0.8 per rotazione lenta
-                platform.rotationAngle = Math.random() * Math.PI * 2; // Angolo iniziale casuale
-            } else if (specificType === 'bouncing') {
-                platform.isBouncing = true;
-                platform.bounceSpeed = 1.5 + Math.random() * 1; // Velocità casuale
-                platform.bounceAmplitude = 20 + Math.random() * 20; // Ampiezza casuale 20-40
-            } else if (specificType === 'dissolving') {
-                platform.isDissolving = false; // Inizialmente non sta dissolvendo
-                platform.dissolveDuration = 0.8;
-                platform.dissolveAlpha = 1;
-            }
-            
-            platforms.push(platform);
-        }
+        const config = { pattern, startX, startY, count, spacing: effectiveSpacing, height, width, platformType, level };
+        this.generatePlatforms(config, platforms);
 
         return platforms;
+    }
+
+    static generatePlatforms(config, platforms) {
+        const { pattern, startX, startY, count, spacing, height, width, platformType, level } = config;
+        for (let i = 0; i < count; i++) {
+            const coords = this.calculatePatternCoords({ pattern, i, count, startX, startY, spacing, height, width });
+            const specificType = this.determinePlatformType(platformType, i, level);
+            const platform = new Platform(coords.x, this.clampY(coords.y), width, height, specificType, i);
+
+            this.initializePlatformProperties(platform, specificType);
+            platforms.push(platform);
+        }
+    }
+
+    static calculatePatternCoords({ pattern, i, count, startX, startY, spacing, height, width }) {
+        let x = startX + i * spacing;
+        let y = startY;
+
+        const patternHandlers = {
+            [PlatformPatterns.STRAIGHT]: () => {
+                if (i > 0 && i % 5 === 2) x += spacing * 2.5;
+                if (i % 4 === 3) y = startY + (Math.random() - 0.5) * 60;
+            },
+            [PlatformPatterns.STAIRS_UP]: () => {
+                if (i > 0 && i === Math.floor(count / 2)) x += spacing * 2.8;
+                y = startY - i * Math.max(45, height + this.MIN_VERTICAL_GAP);
+            },
+            [PlatformPatterns.STAIRS_DOWN]: () => {
+                if (i > 0 && i === Math.floor(count / 2)) x += spacing * 2.8;
+                y = startY + i * Math.max(45, height + this.MIN_VERTICAL_GAP);
+            },
+            [PlatformPatterns.ZIGZAG]: () => {
+                if (i > 0 && i % 6 === 3) x += spacing * 2.5;
+                const zigLevel = i % 3;
+                const offsets = [0, -50, -25];
+                y = startY + offsets[zigLevel];
+            },
+            [PlatformPatterns.GAPS]: () => {
+                x = startX + i * spacing * 1.8;
+                if (i > 0 && i % 4 === 2) x += spacing * 2;
+                y = startY + (i % 2 === 0 ? 0 : -40);
+            },
+            [PlatformPatterns.WAVE]: () => {
+                if (i > 0 && Math.abs(Math.sin(i * 0.6)) > 0.9) x += spacing * 2.2;
+                y = startY + Math.sin(i * 0.6) * 70;
+            },
+            [PlatformPatterns.SPIRAL_UP]: () => {
+                if (i > 0 && i === Math.floor(count / 2)) x += spacing * 2.6;
+                y = startY - i * 25 + Math.sin(i * 0.9) * 50;
+            },
+            [PlatformPatterns.SPIRAL_DOWN]: () => {
+                if (i > 0 && i === Math.floor(count / 2)) x += spacing * 2.6;
+                y = startY + i * 25 + Math.sin(i * 0.9) * 50;
+            },
+            [PlatformPatterns.SNAKE]: () => {
+                const snakePhase = Math.sin(i * 0.45);
+                if (i > 0 && Math.abs(snakePhase) < 0.1) x += spacing * 2.3;
+                y = startY + snakePhase * 80;
+            },
+            [PlatformPatterns.DOUBLE_HELIX]: () => {
+                const helixAngle = i * 0.5;
+                if (i > 0 && i % 4 === 2) x += spacing * 2.4;
+                y = (i % 2 === 0) ? startY + Math.sin(helixAngle) * 60 : startY - Math.sin(helixAngle) * 60;
+            },
+            [PlatformPatterns.VERTICAL_TOWER]: () => {
+                const towerCol = i % 2;
+                x = startX + towerCol * Math.max(140, width + this.MIN_HORIZONTAL_GAP);
+                if (i > 0 && i % 6 === 3) x += spacing * 2.5;
+                y = startY - Math.floor(i / 2) * Math.max(55, height + this.MIN_VERTICAL_GAP);
+            },
+            [PlatformPatterns.SCATTERED]: () => {
+                x = startX + i * spacing + (Math.random() - 0.5) * 60;
+                if (i > 0 && Math.random() < 0.3) x += spacing * (2 + Math.random() * 1.5);
+                y = startY + (Math.random() - 0.5) * 90;
+            },
+            [PlatformPatterns.PYRAMID]: () => {
+                const row = Math.floor(Math.sqrt(i * 2));
+                const col = i - (row * (row + 1)) / 2;
+                x = startX + col * (spacing * 0.9) - row * (spacing * 0.45);
+                if (col === 0 && row > 0) x += spacing * 1.8;
+                y = startY - row * Math.max(60, height + this.MIN_VERTICAL_GAP);
+            },
+            [PlatformPatterns.BRIDGE]: () => {
+                x = startX + i * (spacing * 0.7);
+                if (i > 0 && i === Math.floor(count / 2)) x += spacing * 2.5;
+                y = startY + Math.sin(i * 0.25) * 35;
+            }
+        };
+
+        const handler = patternHandlers[pattern];
+        if (handler) handler();
+
+        return { x, y };
+    }
+
+    static determinePlatformType(platformType, i, level) {
+        if (platformType !== 'normal' || i <= 2) return platformType;
+
+        const rand = Math.random();
+        const typeMap = [
+            { condition: level >= 5 && rand < 0.12, type: 'rotating' },
+            { condition: level >= 3 && rand < 0.18, type: 'dissolving' },
+            { condition: level >= 4 && rand < 0.24, type: 'bouncing' },
+            { condition: rand < 0.34, type: 'bouncy' },
+            { condition: rand < 0.42, type: 'spring' },
+            { condition: level >= 5 && rand < 0.52, type: 'icy' }
+        ];
+
+        return typeMap.find(t => t.condition)?.type || platformType;
+    }
+
+    static initializePlatformProperties(platform, specificType) {
+        if (specificType === 'rotating') {
+            platform.isRotating = false;
+            platform.rotationSpeed = 0.3 + Math.random() * 0.5;
+            platform.rotationAngle = Math.random() * Math.PI * 2;
+        } else if (specificType === 'bouncing') {
+            platform.isBouncing = true;
+            platform.bounceSpeed = 1.5 + Math.random() * 1;
+            platform.bounceAmplitude = 20 + Math.random() * 20;
+        } else if (specificType === 'dissolving') {
+            platform.isDissolving = false;
+            platform.dissolveDuration = 0.8;
+            platform.dissolveAlpha = 1;
+        }
     }
 }
 
@@ -391,7 +304,7 @@ class CollectibleSpawner {
         // Find powerup config from PowerupTypes
         const powerupEntry = Object.values(PowerupTypes).find(p => p.id === powerupId);
 
-        if (powerupEntry && powerupEntry.duration && powerupEntry.cooldown) {
+        if (powerupEntry?.duration && powerupEntry?.cooldown) {
             return {
                 duration: powerupEntry.duration,
                 cooldown: powerupEntry.cooldown
@@ -420,7 +333,7 @@ class CollectibleSpawner {
             const randomPowerup = availablePowerups[Math.floor(Math.random() * availablePowerups.length)];
             const powerupConfig = this.getPowerupConfig(randomPowerup.id);
 
-            collectibles.push(new Collectible('powerup', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('powerup', platform.getCenterX(), platform.y - 80, {
                 powerupType: randomPowerup.id,
                 duration: powerupConfig.duration,
                 cooldown: powerupConfig.cooldown
@@ -441,7 +354,7 @@ class CollectibleSpawner {
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('shield', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('shield', platform.getCenterX(), platform.y - 80, {
                 value: 1,
                 duration: BonusTypes.SHIELD.duration
             }));
@@ -461,7 +374,7 @@ class CollectibleSpawner {
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('magnet', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('magnet', platform.getCenterX(), platform.y - 80, {
                 value: 1,
                 duration: BonusTypes.MAGNET.duration
             }));
@@ -496,7 +409,7 @@ class CollectibleSpawner {
             );
 
             const platform = platforms[platformIndex];
-            collectibles.push(new Collectible('health', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('health', platform.getCenterX(), platform.y - 80, {
                 value: 1
             }));
         }
@@ -511,41 +424,41 @@ class CollectibleSpawner {
      */
     static spawnCoins(platforms, config, levelId) {
         const collectibles = [];
-        
+
         // 🎯 BUDGET MONETE FISSO PER TIER
         const coinBudget = this.getCoinBudgetForLevel(levelId, config);
-        
+
         if (platforms.length === 0 || coinBudget <= 0) {
             return collectibles;
         }
-        
+
         // Distribuisci monete uniformemente
         const step = Math.max(1, Math.floor(platforms.length / (coinBudget + 1)));
-        
+
         for (let i = 0; i < coinBudget; i++) {
             const platformIndex = Math.min(
                 step * (i + 1),
                 platforms.length - 1
             );
             const platform = platforms[platformIndex];
-            
-            collectibles.push(new Collectible('coin', 
-                platform.getCenterX(), 
-                platform.y - 60, 
+
+            collectibles.push(createCollectible('coin',
+                platform.getCenterX(),
+                platform.y - 60,
                 { value: 10 }
             ));
         }
-        
+
 
         return collectibles;
     }
-    
+
     /**
      * Calcola budget monete per livello
      */
     static getCoinBudgetForLevel(levelId, config) {
         const tier = LevelGenerator.getDifficultyTier(levelId);
-        
+
         // Budget base per tier
         const budgetByTier = {
             TUTORIAL: { min: 3, max: 5 },      // Tutorial: 3-5 monete
@@ -555,16 +468,16 @@ class CollectibleSpawner {
             EXPERT: { min: 30, max: 40 },      // Expert: 30-40 monete
             MASTER: { min: 40, max: 50 }       // Master: 40-50 monete
         };
-        
+
         const budget = budgetByTier[tier] || { min: 5, max: 10 };
-        
+
         // Variazione progressiva: cresce con il livello all'interno del tier
         const range = LevelRanges[tier];
         const progress = (levelId - range.start) / (range.end - range.start);
-        
+
         return Math.floor(budget.min + (budget.max - budget.min) * progress);
     }
-    
+
     /**
      * Spawna coin rain bonus
      */
@@ -572,20 +485,20 @@ class CollectibleSpawner {
         const collectibles = [];
         const frequency = config.coinRainFrequency || 0;
         if (frequency === 0) return collectibles;
-        
+
         const count = Math.floor(platforms.length * frequency);
         const step = Math.max(1, Math.floor(platforms.length / (count + 1)));
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('coinRain', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('coinRain', platform.getCenterX(), platform.y - 80, {
                 value: 1
             }));
         }
 
         return collectibles;
     }
-    
+
     /**
      * Spawna multiplier bonus
      */
@@ -593,13 +506,13 @@ class CollectibleSpawner {
         const collectibles = [];
         const frequency = config.multiplierFrequency || 0;
         if (frequency === 0) return collectibles;
-        
+
         const count = Math.floor(platforms.length * frequency);
         const step = Math.max(1, Math.floor(platforms.length / (count + 1)));
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('multiplier', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('multiplier', platform.getCenterX(), platform.y - 80, {
                 multiplier: 2,
                 duration: 15000 // 15 secondi
             }));
@@ -607,7 +520,7 @@ class CollectibleSpawner {
 
         return collectibles;
     }
-    
+
     /**
      * Spawna rainbow bonus
      */
@@ -615,20 +528,20 @@ class CollectibleSpawner {
         const collectibles = [];
         const frequency = config.rainbowFrequency || 0;
         if (frequency === 0) return collectibles;
-        
+
         const count = Math.floor(platforms.length * frequency);
         const step = Math.max(1, Math.floor(platforms.length / (count + 1)));
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('rainbow', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('rainbow', platform.getCenterX(), platform.y - 80, {
                 value: 1
             }));
         }
 
         return collectibles;
     }
-    
+
     /**
      * Spawna flight bonus
      */
@@ -636,20 +549,20 @@ class CollectibleSpawner {
         const collectibles = [];
         const frequency = config.flightBonusFrequency || 0;
         if (frequency === 0) return collectibles;
-        
+
         const count = Math.floor(platforms.length * frequency);
         const step = Math.max(1, Math.floor(platforms.length / (count + 1)));
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('flightBonus', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('flightBonus', platform.getCenterX(), platform.y - 80, {
                 duration: 8000 // 8 secondi
             }));
         }
 
         return collectibles;
     }
-    
+
     /**
      * Spawna recharge bonus (ricarica turbo)
      */
@@ -657,20 +570,20 @@ class CollectibleSpawner {
         const collectibles = [];
         const frequency = config.rechargeBonusFrequency || 0;
         if (frequency === 0) return collectibles;
-        
+
         const count = Math.floor(platforms.length * frequency);
         const step = Math.max(1, Math.floor(platforms.length / (count + 1)));
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('rechargeBonus', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('rechargeBonus', platform.getCenterX(), platform.y - 80, {
                 rechargeAmount: 50 // Ricarica 50% turbo
             }));
         }
 
         return collectibles;
     }
-    
+
     /**
      * Spawna heart recharge bonus (ricarica cuori)
      */
@@ -678,13 +591,13 @@ class CollectibleSpawner {
         const collectibles = [];
         const frequency = config.heartRechargeBonusFrequency || 0;
         if (frequency === 0) return collectibles;
-        
+
         const count = Math.floor(platforms.length * frequency);
         const step = Math.max(1, Math.floor(platforms.length / (count + 1)));
 
         for (let i = step; i < platforms.length; i += step) {
             const platform = platforms[i];
-            collectibles.push(new Collectible('heartRechargeBonus', platform.getCenterX(), platform.y - 80, {
+            collectibles.push(createCollectible('heartRechargeBonus', platform.getCenterX(), platform.y - 80, {
                 hearts: 1 // Ricarica 1 cuore
             }));
         }
@@ -708,7 +621,8 @@ class EnemySpawner {
         const availableEnemies = Object.values(EnemyTypes)
             .filter(e => e.unlockLevel <= levelId);
 
-        if (availableEnemies.length === 0) return enemies;
+        if (availableEnemies.length === 0)
+            return enemies;
 
         // Separa nemici per categoria per distribuzione bilanciata
         const groundEnemies = availableEnemies.filter(e => e.category === 'ground');
@@ -726,9 +640,23 @@ class EnemySpawner {
         if (validPlatforms.length === 0) return enemies;
 
         // DISTRIBUZIONE MIGLIORATA: mix di singoli e gruppi
-        let count = 0;
-        const platformsPerEnemy = Math.max(1, Math.floor(validPlatforms.length / enemyCount));
 
+        const platformsPerEnemy = Math.max(1, Math.floor(validPlatforms.length / enemyCount));
+        EnemySpawner.distributeEnemiesAcrossPlatforms(enemyCount, platformsPerEnemy, validPlatforms, enemies, {
+            availableEnemies,
+            flyingEnemies,
+            groundEnemies,
+            chaserEnemies,
+            shooterEnemies,
+            jumperEnemies
+        });
+
+        return enemies;
+    }
+
+    static distributeEnemiesAcrossPlatforms(enemyCount, platformsPerEnemy, validPlatforms, enemies, enemyGroups) {
+        const { availableEnemies, flyingEnemies, groundEnemies, chaserEnemies, shooterEnemies, jumperEnemies } = enemyGroups;
+        let count = 0;
         for (let i = 0; i < enemyCount; i++) {
             // Distribuisci uniformemente ma con variazione casuale
             const baseIdx = Math.floor(i * platformsPerEnemy);
@@ -746,18 +674,22 @@ class EnemySpawner {
             if (isHighPlatform && flyingEnemies.length > 0 && rand < 0.5) {
                 enemyPool = flyingEnemies;
             }
+
             // Ground enemies in basso
             else if (isLowPlatform && groundEnemies.length > 0 && rand < 0.4) {
                 enemyPool = groundEnemies;
             }
+
             // Chasers sparsi
             else if (rand < 0.25 && chaserEnemies.length > 0) {
                 enemyPool = chaserEnemies;
             }
+
             // Shooters per varietà
             else if (rand < 0.35 && shooterEnemies.length > 0) {
                 enemyPool = shooterEnemies;
             }
+
             // Jumpers per dinamismo
             else if (rand < 0.45 && jumperEnemies.length > 0) {
                 enemyPool = jumperEnemies;
@@ -771,7 +703,7 @@ class EnemySpawner {
                 yOffset = -50 - Math.random() * 80; // Volano più in alto
             }
 
-            enemies.push(new Enemy(
+            enemies.push(createEnemy(
                 randomEnemy.id,
                 platform.getCenterX() + (Math.random() - 0.5) * 40, // Variazione orizzontale
                 platform.y + yOffset,
@@ -780,8 +712,7 @@ class EnemySpawner {
 
             count++;
         }
-
-        return enemies;
+        return count;
     }
 }
 
@@ -852,7 +783,7 @@ export class LevelGenerator {
         const powerups = CollectibleSpawner.spawnPowerups(platforms, config, levelId);
         const shields = CollectibleSpawner.spawnShields(platforms, config);
         const magnets = CollectibleSpawner.spawnMagnets(platforms, config);
-        
+
         // Spawna i nuovi bonus
         const coinRains = CollectibleSpawner.spawnCoinRains(platforms, config);
         const multipliers = CollectibleSpawner.spawnMultipliers(platforms, config);
@@ -870,12 +801,6 @@ export class LevelGenerator {
         flightBonuses.forEach(c => level.addCollectible(c));
         rechargeBonuses.forEach(c => level.addCollectible(c));
         heartRechargeBonuses.forEach(c => level.addCollectible(c));
-
-        // Spawna health - SEMPRE garantito almeno 1 cuore per livello
-        const guaranteedHealthThreshold = 30;
-        const shouldSpawnHealth = platformCount >= guaranteedHealthThreshold ||
-            Math.random() < config.healthFrequency ||
-            platformCount >= 10;
 
 
         // FORZA almeno 1 cuore in OGNI livello
@@ -896,10 +821,10 @@ export class LevelGenerator {
         const baseSpeed = 180; // px/s dalla velocità base del gioco
         const secondsPerLevelGrowth = 1; // Crescita di 1 secondo per livello
         const incrementPerLevel = baseSpeed * secondsPerLevelGrowth; // 180 px per livello
-        
+
         // Lunghezza base del primo livello (circa 15 secondi)
         const baseLengthFirstLevel = 2700;
-        
+
         // Calcola la lunghezza per questo livello
         level.fineLivello = baseLengthFirstLevel + (levelId - 1) * incrementPerLevel;
 
@@ -907,17 +832,17 @@ export class LevelGenerator {
         level.starRequirements = {
             threeStars: {
                 time: config.parTime.threeStars,
-                coins: 0.70,  // ✅ 70% monete
+                coins: 0.7,  // ✅ 70% monete
                 maxDamage: 1  // ✅ Max 1 danno
             },
             twoStars: {
                 time: config.parTime.twoStars,
-                coins: 0.50,  // ✅ 50% monete
+                coins: 0.5,  // ✅ 50% monete
                 maxDamage: 3  // ✅ Max 3 danni
             },
             oneStar: {
                 time: config.parTime.oneStar,
-                coins: 0.30   // ✅ 30% monete
+                coins: 0.3   // ✅ 30% monete
             }
         };
 
@@ -938,11 +863,15 @@ export class LevelGenerator {
         let currentY = 400; // Partenza più bassa
 
         // MOLTE sezioni corte (5-12 piattaforme per sezione) per massima varietà
-        const platformsPerSection = tier === 'TUTORIAL' ? 8 :
-            tier === 'EASY' ? 10 :
-                tier === 'NORMAL' ? 12 :
-                    tier === 'HARD' ? 10 :
-                        tier === 'EXPERT' ? 12 : 15;
+        const platformsPerSectionMap = {
+            'TUTORIAL': 8,
+            'EASY': 10,
+            'NORMAL': 12,
+            'HARD': 10,
+            'EXPERT': 12,
+            'MASTER': 15
+        };
+        const platformsPerSection = platformsPerSectionMap[tier] || 15;
 
         const numSections = Math.ceil(totalCount / platformsPerSection);
         const availablePatterns = this.getAvailablePatterns(tier);
@@ -980,7 +909,7 @@ export class LevelGenerator {
 
             // Aggiorna posizione iniziale per la prossima sezione
             if (sectionPlatforms.length > 0) {
-                const lastPlatform = sectionPlatforms[sectionPlatforms.length - 1];
+                const lastPlatform = sectionPlatforms.at(-1);
                 currentX = lastPlatform.x + spacing;
                 currentY = lastPlatform.y + (Math.random() - 0.5) * 100; // Varia leggermente l'altezza
             }
@@ -1016,11 +945,6 @@ export class LevelGenerator {
             PlatformPatterns.SCATTERED,
             PlatformPatterns.VERTICAL_TOWER,
             PlatformPatterns.PYRAMID
-        ];
-
-        // Pattern statici (usati raramente)
-        const staticPatterns = [
-            PlatformPatterns.STRAIGHT
         ];
 
         switch (tier) {
@@ -1123,7 +1047,7 @@ export class LevelGenerator {
 
             const bossType = bossTypes[Math.floor(levelId / 50) % bossTypes.length] || EnemyTypes.SLUG.id;
 
-            level.addEnemy(new Enemy(bossType, bossPlatform.getCenterX(), bossPlatform.y - 80, bossPlatform.index));
+            level.addEnemy(createEnemy(bossType, bossPlatform.getCenterX(), bossPlatform.y - 80, bossPlatform.index));
         }
     }
 

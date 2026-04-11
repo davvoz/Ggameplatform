@@ -23,7 +23,7 @@ export class EffectRenderer {
     }
 
     renderShield(player, time, x, y, radius) {
-        const shieldRadius = radius * 2.0; // PIÙ GRANDE
+        const shieldRadius = radius * 2; // PIÙ GRANDE
         const shieldPulse = Math.sin(player.animationTime * 4) * 0.15 + 0.85;
         const electricPulse = Math.sin(time * 10) * 0.5 + 0.5;
         const sides = 6;

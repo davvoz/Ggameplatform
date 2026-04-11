@@ -22,7 +22,7 @@ export class DamageHandler {
     damageZombie(zombie, proj, currentTime) {
         const cannonType   = proj.cannonType || 'BASIC';
         const cannonConfig = CANNON_TYPES[cannonType];
-        const effectiveness = (cannonConfig.effectiveness && cannonConfig.effectiveness[zombie.type]) || 1.0;
+        const effectiveness = cannonConfig.effectiveness?.[zombie.type] || 1;
 
         const baseDamage = proj.damage * effectiveness;
         const result     = zombie.takeDamage(baseDamage, currentTime);
@@ -154,7 +154,7 @@ export class DamageHandler {
             cannon.stunDuration = 2000;
             towersHit++;
             this.particles.emit(cannon.col, cannon.row, {
-                text: '💥STUN', color: '#ff4500', vy: -1.2, life: 1.0, scale: 1.1,
+                text: '💥STUN', color: '#ff4500', vy: -1.2, life: 1, scale: 1.1,
             });
         });
 
@@ -177,7 +177,7 @@ export class DamageHandler {
             child.col   += (Math.random() - 0.5) * 0.5;
         }
         this.particles.emit(zombie.col, zombie.row, {
-            text: 'SPLIT!', color: '#ff00ff', vy: -1.5, life: 1.0, scale: 1.2,
+            text: 'SPLIT!', color: '#ff00ff', vy: -1.5, life: 1, scale: 1.2,
         });
     }
 

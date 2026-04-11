@@ -27,9 +27,9 @@ export class SpriteRenderer {
      */
     renderSprite(ctx, spriteDefinition, x, y, size, options = {}) {
         const {
-            scale = 1.0,
+            scale = 1,
             rotation = 0,
-            opacity = 1.0,
+            opacity = 1,
             tint = null,
             flipX = false,
             flipY = false,
@@ -86,10 +86,10 @@ export class SpriteRenderer {
 
         switch (type) {
             case 'circle':
-                this.drawCircle(ctx, x * size, y * size, radius * size, finalColor, fill, stroke, strokeWidth);
+                this.drawCircle(ctx, { x: x * size, y: y * size, radius: radius * size, color: finalColor, fill, stroke, strokeWidth });
                 break;
             case 'rect':
-                this.drawRect(ctx, x * size, y * size, width * size, height * size, finalColor, fill, stroke, strokeWidth);
+                this.drawRect(ctx, { x: x * size, y: y * size, width: width * size, height: height * size, color: finalColor, fill, stroke, strokeWidth });
                 break;
             case 'polygon':
                 this.drawPolygon(ctx, points, size, finalColor, fill, stroke, strokeWidth);
@@ -98,14 +98,14 @@ export class SpriteRenderer {
                 this.drawPath(ctx, points, size, finalColor, stroke, strokeWidth, fill);
                 break;
             case 'ellipse':
-                this.drawEllipse(ctx, x * size, y * size, width * size, height * size, finalColor, fill, stroke, strokeWidth);
+                this.drawEllipse(ctx, { x: x * size, y: y * size, width: width * size, height: height * size, color: finalColor, fill, stroke, strokeWidth });
                 break;
         }
 
         ctx.restore();
     }
 
-    drawCircle(ctx, x, y, radius, color, fill = true, stroke = false, strokeWidth = 1) {
+    drawCircle(ctx, { x, y, radius, color, fill = true, stroke = false, strokeWidth = 1 }) {
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
         
@@ -120,7 +120,7 @@ export class SpriteRenderer {
         }
     }
 
-    drawRect(ctx, x, y, width, height, color, fill = true, stroke = false, strokeWidth = 1) {
+    drawRect(ctx, { x, y, width, height, color, fill = true, stroke = false, strokeWidth = 1 }) {
         if (fill) {
             ctx.fillStyle = color;
             ctx.fillRect(x, y, width, height);
@@ -176,7 +176,7 @@ export class SpriteRenderer {
         }
     }
 
-    drawEllipse(ctx, x, y, width, height, color, fill = true, stroke = false, strokeWidth = 1) {
+    drawEllipse(ctx, { x, y, width, height, color, fill = true, stroke = false, strokeWidth = 1 }) {
         ctx.beginPath();
         ctx.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
         
@@ -249,7 +249,7 @@ class AnimationController {
             this.previousAnimation = {
                 name: this.currentAnimation,
                 frame: this.currentFrame,
-                blend: 1.0,
+                blend: 1,
                 blendTime: blendTime
             };
             this.transitionBlend = 0;
@@ -278,14 +278,14 @@ class AnimationController {
         // Update blend transition
         if (this.previousAnimation) {
             this.transitionBlend += dt / this.previousAnimation.blendTime;
-            if (this.transitionBlend >= 1.0) {
+            if (this.transitionBlend >= 1) {
                 this.previousAnimation = null;
                 this.transitionBlend = 0;
             }
         }
 
         // Frame advancement
-        const frameDuration = 1.0 / (anim.fps || 8);
+        const frameDuration = 1 / (anim.fps || 8);
         
         if (this.frameTime >= frameDuration) {
             this.frameTime -= frameDuration;
@@ -362,5 +362,5 @@ class AnimationController {
 }
 
 // Export to global scope
-window.SpriteRenderer = SpriteRenderer;
-window.AnimationController = AnimationController;
+globalThis.SpriteRenderer = SpriteRenderer;
+globalThis.AnimationController = AnimationController;

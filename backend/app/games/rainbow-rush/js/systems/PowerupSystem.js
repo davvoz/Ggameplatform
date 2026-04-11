@@ -130,7 +130,6 @@ export class PowerupSystem {
     }
     
     update(deltaTime) {
-        const now = Date.now();
         const deltaMs = deltaTime * 1000;
         
         for (const [type, timer] of this.powerupTimers.entries()) {

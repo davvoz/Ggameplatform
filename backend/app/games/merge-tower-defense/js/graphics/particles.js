@@ -21,7 +21,7 @@ export class Particle {
         this.maxLife = 0;
         this.text = '';
         this.color = '#ffffff';
-        this.scale = 1.0;
+        this.scale = 1;
         this.gravity = 0;
         this.fadeOut = true;
         this.glow = false;
@@ -33,11 +33,11 @@ export class Particle {
         this.y = y;
         this.vx = options.vx || 0;
         this.vy = options.vy || -1;
-        this.life = options.life || 1.0;
+        this.life = options.life || 1;
         this.maxLife = this.life;
         this.text = options.text || '•';
         this.color = options.color || '#ffffff';
-        this.scale = options.scale || 1.0;
+        this.scale = options.scale || 1;
         this.gravity = options.gravity || 0;
         this.fadeOut = options.fadeOut !== false;
         this.glow = options.glow || false;
@@ -60,7 +60,7 @@ export class Particle {
     render(graphics) {
         if (!this.active) return;
         
-        const opacity = this.fadeOut ? (this.life / this.maxLife) : 1.0;
+        const opacity = this.fadeOut ? (this.life / this.maxLife) : 1;
         const currentScale = this.scale * (0.5 + opacity * 0.5);
         
         graphics.drawParticle(this.x, this.y, {
@@ -104,8 +104,8 @@ export class ParticleSystem {
             color: isCritical ? '#ff0000' : '#ffaa00',
             vy: -2,
             vx: Utils.randomFloat(-0.5, 0.5),
-            life: 1.0,
-            scale: isCritical ? 1.5 : 1.0,
+            life:1,
+            scale: isCritical ? 1.5 :1,
             glow: isCritical
         });
     }
@@ -136,7 +136,7 @@ export class ParticleSystem {
             vy: -2,
             vx: 0,
             gravity: 2,
-            life: 1.0,
+            life:1,
             scale: 1.5,
             glow: true
         });
@@ -170,7 +170,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * 2,
                 gravity: 1,
                 life: 0.8,
-                scale: 1.0,
+                scale:1,
                 glow: true
             });
         }
@@ -194,7 +194,7 @@ export class ParticleSystem {
             vy: -1,
             vx: 0,
             life: 1.2,
-            scale: 1.0,
+            scale:1,
             glow: true
         });
     }
@@ -217,7 +217,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * speed,
                 gravity: 1.5,
                 life: 0.6,
-                scale: 1.0,
+                scale:1,
                 glow: true
             });
         }
@@ -299,7 +299,7 @@ export class ParticleSystem {
             color: '#00ff88',
             vy: -1,
             vx: 0,
-            life: 2.0,
+            life: 2,
             scale: 1.5,
             glow: true
         });
@@ -349,7 +349,7 @@ export class ParticleSystem {
             text: icon,
             color: color,
             vy: -1.5,
-            life: 1.0,
+            life:1,
             scale: 1.8,
             glow: true
         });
@@ -380,7 +380,7 @@ export class ParticleSystem {
             color: '#ff4444',
             vy: -2,
             life: 1.2,
-            scale: 2.0,
+            scale: 2,
             glow: true
         });
 
@@ -393,7 +393,7 @@ export class ParticleSystem {
                 vx: Math.cos(angle) * 3,
                 vy: Math.sin(angle) * 3 - 1,
                 gravity: 1.5,
-                life: 1.0,
+                life:1,
                 scale: 0.9,
                 glow: true
             });
@@ -409,7 +409,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * 2 - 0.5,
                 gravity: 1,
                 life: 0.7,
-                scale: 1.0,
+                scale:1,
                 glow: true
             });
         }
@@ -435,7 +435,7 @@ export class ParticleSystem {
             color: '#4488ff',
             vy: -1.5,
             life: 1.2,
-            scale: 2.0,
+            scale: 2,
             glow: true
         });
 
@@ -445,9 +445,17 @@ export class ParticleSystem {
             for (let i = 0; i < ringParticles; i++) {
                 const angle = (Math.PI * 2 * i) / ringParticles;
                 const speed = 2 + wave * 0.8;
+                let ringColor;
+                if (wave === 0) {
+                    ringColor = '#66aaff';
+                } else if (wave === 1) {
+                    ringColor = '#4488ff';
+                } else {
+                    ringColor = '#2266dd';
+                }
                 this.emit(x, y, {
                     text: '◯',
-                    color: wave === 0 ? '#66aaff' : wave === 1 ? '#4488ff' : '#2266dd',
+                    color: ringColor,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     gravity: 0.2,
@@ -494,7 +502,7 @@ export class ParticleSystem {
             color: '#ffcc00',
             vy: -2,
             life: 1.2,
-            scale: 2.0,
+            scale: 2,
             glow: true
         });
 
@@ -538,7 +546,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * 1.8,
                 gravity: 0.3,
                 life: 0.7,
-                scale: 1.0,
+                scale:1,
                 glow: true
             });
         }
@@ -564,7 +572,7 @@ export class ParticleSystem {
             color: amount >= 50 ? '#00ff88' : '#00ffff',
             vy: -1.5,
             life: 1.2,
-            scale: 2.0,
+            scale: 2,
             glow: true
         });
 
@@ -577,7 +585,7 @@ export class ParticleSystem {
                 vx: offsetX * 0.3,
                 vy: -2 - Math.random(),
                 gravity: -0.5,
-                life: 1.0 + Math.random() * 0.5,
+                life: 1 + Math.random() * 0.5,
                 scale: 0.5 + Math.random() * 0.5,
                 glow: true
             });
@@ -618,7 +626,7 @@ export class ParticleSystem {
             text: icon,
             color: '#888888',
             vy: -1,
-            life: 1.0,
+            life:1,
             scale: 1.5,
             glow: false,
             fadeOut: true
@@ -646,7 +654,7 @@ export class ParticleSystem {
             color: '#888888',
             vy: -1,
             life: 1.2,
-            scale: 1.0,
+            scale:1,
             glow: false
         });
     }
@@ -679,7 +687,7 @@ export class ParticleSystem {
             text: 'EVOLUTION!',
             color: '#ffdd00',
             vy: -1.8,
-            life: 2.0,
+            life: 2,
             scale: 1.6,
             glow: true
         });
@@ -688,9 +696,17 @@ export class ParticleSystem {
     shiningParticlesFloatingUp(x, y) {
         for (let i = 0; i < 10; i++) {
             const offsetX = (Math.random() - 0.5) * 1.5;
+            let particleColor;
+            if (i % 3 === 0) {
+                particleColor = '#ffff00';
+            } else if (i % 3 === 1) {
+                particleColor = '#ffdd00';
+            } else {
+                particleColor = '#ffaa00';
+            }
             this.emit(x + offsetX, y + 0.5, {
                 text: '✦',
-                color: i % 3 === 0 ? '#ffff00' : i % 3 === 1 ? '#ffdd00' : '#ffaa00',
+                color: particleColor,
                 vx: offsetX * 0.2,
                 vy: -2 - Math.random() * 1.5,
                 gravity: -0.3,
@@ -707,13 +723,21 @@ export class ParticleSystem {
             for (let i = 0; i < ringParticles; i++) {
                 const angle = (Math.PI * 2 * i) / ringParticles;
                 const speed = 1.5 + ring * 0.5;
+                let ringColor;
+                if (ring === 0) {
+                    ringColor = '#ffee00';
+                } else if (ring === 1) {
+                    ringColor = '#ffcc00';
+                } else {
+                    ringColor = '#ffaa00';
+                }
                 this.emit(x, y, {
                     text: '◆',
-                    color: ring === 0 ? '#ffee00' : ring === 1 ? '#ffcc00' : '#ffaa00',
+                    color: ringColor,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed - 0.5,
                     gravity: 0.3,
-                    life: 1.0 + ring * 0.2,
+                    life: 1 + ring * 0.2,
                     scale: 0.7 + ring * 0.1,
                     glow: true
                 });
@@ -731,7 +755,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * 2.5 - 1.5,
                 gravity: 1.2,
                 life: 1.2,
-                scale: 1.0,
+                scale:1,
                 glow: true
             });
         }
@@ -748,7 +772,7 @@ export class ParticleSystem {
             vx: 0,
             vy: 0,
             life: 0.15,
-            scale: 4.0,
+            scale: 4,
             glow: true,
             fadeOut: true
         });
@@ -797,8 +821,8 @@ export class ParticleSystem {
                 vx: (Math.random() - 0.5) * 0.5,
                 vy: -0.8 - Math.random() * 0.5,
                 gravity: -0.3,
-                life: 1.0,
-                scale: 1.0 + Math.random() * 0.5,
+                life:1,
+                scale: 1 + Math.random() * 0.5,
                 fadeOut: true
             });
         }
@@ -842,7 +866,7 @@ export class ParticleSystem {
             color: '#00eeff',
             vy: -2,
             life: 0.8,
-            scale: 2.0,
+            scale: 2,
             glow: true
         });
     }
@@ -905,7 +929,7 @@ export class ParticleSystem {
                 vy: Math.sin(angle) * speed,
                 gravity: 0,
                 life: 0.5,
-                scale: 1.0,
+                scale:1,
                 glow: true,
                 fadeOut: true
             });
@@ -966,8 +990,8 @@ export class ParticleSystem {
             text: icon,
             color: color,
             vy: -1,
-            life: 1.0,
-            scale: 2.0,
+            life:1,
+            scale: 2,
             glow: true
         });
 

@@ -50,33 +50,36 @@ export class VolcanoThemeGenerator extends BaseThemeGenerator {
         const config = VOLCANO_THEME_CONFIG;
         const groundY = this.getGroundY(0.85);
 
-        // Main volcano
-        layers.push({
-            x: this.canvasWidth * 0.65,
-            y: groundY - config.MAIN_VOLCANO_HEIGHT,
-            width: config.MAIN_VOLCANO_WIDTH,
-            height: config.MAIN_VOLCANO_HEIGHT,
-            color: [0.15, 0.08, 0.05, 1],
-            type: 'volcano',
-            speed: 12,
-            craterWidth: config.MAIN_VOLCANO_CRATER_WIDTH,
-            craterDepth: config.MAIN_VOLCANO_CRATER_DEPTH,
-            offset: 0
-        });
+        const volcanoes = [
+            // Main volcano
+            {
+                x: this.canvasWidth * 0.65,
+                y: groundY - config.MAIN_VOLCANO_HEIGHT,
+                width: config.MAIN_VOLCANO_WIDTH,
+                height: config.MAIN_VOLCANO_HEIGHT,
+                color: [0.15, 0.08, 0.05, 1],
+                type: 'volcano',
+                speed: 12,
+                craterWidth: config.MAIN_VOLCANO_CRATER_WIDTH,
+                craterDepth: config.MAIN_VOLCANO_CRATER_DEPTH,
+                offset: 0
+            },
+            // Secondary volcano
+            {
+                x: this.canvasWidth * 0.25,
+                y: groundY - config.SECONDARY_VOLCANO_HEIGHT,
+                width: config.SECONDARY_VOLCANO_WIDTH,
+                height: config.SECONDARY_VOLCANO_HEIGHT,
+                color: [0.12, 0.06, 0.04, 0.85],
+                type: 'volcano',
+                speed: 8,
+                craterWidth: config.SECONDARY_VOLCANO_CRATER_WIDTH,
+                craterDepth: config.SECONDARY_VOLCANO_CRATER_DEPTH,
+                offset: 0
+            }
+        ];
 
-        // Secondary volcano
-        layers.push({
-            x: this.canvasWidth * 0.25,
-            y: groundY - config.SECONDARY_VOLCANO_HEIGHT,
-            width: config.SECONDARY_VOLCANO_WIDTH,
-            height: config.SECONDARY_VOLCANO_HEIGHT,
-            color: [0.12, 0.06, 0.04, 0.85],
-            type: 'volcano',
-            speed: 8,
-            craterWidth: config.SECONDARY_VOLCANO_CRATER_WIDTH,
-            craterDepth: config.SECONDARY_VOLCANO_CRATER_DEPTH,
-            offset: 0
-        });
+        layers.push(...volcanoes);
     }
 
     generateSmoke(particles) {

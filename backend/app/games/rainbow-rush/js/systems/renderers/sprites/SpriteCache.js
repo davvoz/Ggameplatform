@@ -60,7 +60,7 @@ export class SpriteCache {
         
         const now = Date.now();
         
-        for (const [key, frames] of this.cache.entries()) {
+        for (const [key] of this.cache.entries()) {
             const accessCount = this.accessCount.get(key) || 0;
             const lastAccess = this.lastAccessTime.get(key) || 0;
             const timeSinceAccess = now - lastAccess;

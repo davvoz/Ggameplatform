@@ -8,7 +8,7 @@ export function flyer() {
     const body = sprite.addPart('body', {
         type: 'ellipse',
         x: 0, y: 0,
-        width: 0.40, height: 0.50,
+        width: 0.4, height: 0.5,
         color: '#4a3a5a',
         fill: true
     }, 0.5, 0.5);
@@ -49,8 +49,8 @@ export function flyer() {
                 { x: 0, y: 0 },
                 { x: -0.42, y: -0.22 },
                 { x: -0.48, y: 0.06 },
-                { x: -0.32, y: 0.20 },
-                { x: -0.10, y: 0.16 }
+                { x: -0.32, y: 0.2 },
+                { x: -0.1, y: 0.16 }
             ],
             color: '#6a4a7a',
             fill: true,
@@ -62,7 +62,7 @@ export function flyer() {
             points: [
                 { x: -0.18, y: -0.08 },
                 { x: -0.38, y: -0.16 },
-                { x: -0.28, y: 0.10 }
+                { x: -0.28, y: 0.1 }
             ],
             color: 'rgba(138, 98, 158, 0.6)',
             fill: true
@@ -79,8 +79,8 @@ export function flyer() {
                 { x: 0, y: 0 },
                 { x: 0.42, y: -0.22 },
                 { x: 0.48, y: 0.06 },
-                { x: 0.32, y: 0.20 },
-                { x: 0.10, y: 0.16 }
+                { x: 0.32, y: 0.2 },
+                { x: 0.1, y: 0.16 }
             ],
             color: '#6a4a7a',
             fill: true,
@@ -92,7 +92,7 @@ export function flyer() {
             points: [
                 { x: 0.18, y: -0.08 },
                 { x: 0.38, y: -0.16 },
-                { x: 0.28, y: 0.10 }
+                { x: 0.28, y: 0.1 }
             ],
             color: 'rgba(138, 98, 158, 0.6)',
             fill: true
@@ -116,46 +116,46 @@ export function flyer() {
     sprite.setParent('tail', 'body');
 
     // Wing flap animation - MOLTO più ampio e visibile
-    const fly = new AnimationClip('fly', 0.20, true);
+    const fly = new AnimationClip('fly', 0.2, true);
     fly.addTrack('wingLeft', [
-        { time: 0, transform: { rotation: 0.5, scaleY: 1.0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: 0.5, scaleY: 1, scaleX: 1 } },
         { time: 0.05, transform: { rotation: -1.2, scaleY: 0.75, scaleX: 0.9 } },
-        { time: 0.10, transform: { rotation: -0.8, scaleY: 0.85, scaleX: 0.95 } },
-        { time: 0.15, transform: { rotation: -0.3, scaleY: 0.95, scaleX: 1.0 } },
-        { time: 0.20, transform: { rotation: 0.5, scaleY: 1.0, scaleX: 1.0 } }
+        { time: 0.1, transform: { rotation: -0.8, scaleY: 0.85, scaleX: 0.95 } },
+        { time: 0.15, transform: { rotation: -0.3, scaleY: 0.95, scaleX: 1 } },
+        { time: 0.2, transform: { rotation: 0.5, scaleY: 1, scaleX: 1 } }
     ]);
     fly.addTrack('wingRight', [
-        { time: 0, transform: { rotation: -0.5, scaleY: 1.0, scaleX: 1.0 } },
+        { time: 0, transform: { rotation: -0.5, scaleY: 1, scaleX: 1 } },
         { time: 0.05, transform: { rotation: 1.2, scaleY: 0.75, scaleX: 0.9 } },
-        { time: 0.10, transform: { rotation: 0.8, scaleY: 0.85, scaleX: 0.95 } },
-        { time: 0.15, transform: { rotation: 0.3, scaleY: 0.95, scaleX: 1.0 } },
-        { time: 0.20, transform: { rotation: -0.5, scaleY: 1.0, scaleX: 1.0 } }
+        { time: 0.1, transform: { rotation: 0.8, scaleY: 0.85, scaleX: 0.95 } },
+        { time: 0.15, transform: { rotation: 0.3, scaleY: 0.95, scaleX: 1 } },
+        { time: 0.2, transform: { rotation: -0.5, scaleY: 1, scaleX: 1 } }
     ]);
     fly.addTrack('body', [
         { time: 0, transform: { y: 0.03, rotation: 0.03 } },
         { time: 0.05, transform: { y: -0.08, rotation: -0.04 } },
-        { time: 0.10, transform: { y: -0.05, rotation: -0.02 } },
+        { time: 0.1, transform: { y: -0.05, rotation: -0.02 } },
         { time: 0.15, transform: { y: -0.02, rotation: 0 } },
-        { time: 0.20, transform: { y: 0.03, rotation: 0.03 } }
+        { time: 0.2, transform: { y: 0.03, rotation: 0.03 } }
     ]);
     fly.addTrack('head', [
         { time: 0, transform: { y: 0, rotation: 0.05 } },
         { time: 0.05, transform: { y: -0.04, rotation: -0.08 } },
-        { time: 0.10, transform: { y: -0.02, rotation: -0.03 } },
+        { time: 0.1, transform: { y: -0.02, rotation: -0.03 } },
         { time: 0.15, transform: { y: -0.01, rotation: 0 } },
-        { time: 0.20, transform: { y: 0, rotation: 0.05 } }
+        { time: 0.2, transform: { y: 0, rotation: 0.05 } }
     ]);
     fly.addTrack('tail', [
         { time: 0, transform: { rotation: 0.15 } },
-        { time: 0.10, transform: { rotation: -0.20 } },
-        { time: 0.20, transform: { rotation: 0.15 } }
+        { time: 0.1, transform: { rotation: -0.2 } },
+        { time: 0.2, transform: { rotation: 0.15 } }
     ]);
 
     sprite.addAnimation(fly);
 
-    // --- AGGIUNTA: walk = fly (stessa durata 0.20) ---
-    const walk = new AnimationClip('walk', 0.20, true);
-    walk.tracks = JSON.parse(JSON.stringify(fly.tracks));
+    // --- AGGIUNTA: walk = fly (stessa durata 0.2) ---
+    const walk = new AnimationClip('walk', 0.2, true);
+    walk.tracks = structuredClone(fly.tracks);
     sprite.addAnimation(walk);
 
     // Idle - gentle hovering
@@ -178,7 +178,7 @@ export function flyer() {
     sprite.addAnimation(idle);
 
     sprite.addAnimation(AnimationBuilder.createHitAnimation(['body', 'head', 'wingLeft', 'wingRight'], 0.2));
-    sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'wingLeft', 'wingRight', 'tail'], 1.0));
+    sprite.addAnimation(AnimationBuilder.createDeathAnimation(['body', 'head', 'wingLeft', 'wingRight', 'tail'], 1));
 
     return sprite;
 }

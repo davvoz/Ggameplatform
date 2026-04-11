@@ -4,45 +4,48 @@
  * Integrato con RainbowRushSDK per high score sicuro
  */
 export class ScoreSystem {
+    score = 0;
+    totalScore = 0; // Punteggio totale cumulativo
+    highScore = 0; // Inizializzato a 0, caricato in modo asincrono
+    distance = 0;
+    level = 1;
+    collectibles = 0;
+    multiplier = 1;
+    scoreListeners = [];
+    levelListeners = [];
+    
+    // Sistema combo
+    combo = 0;
+    comboTimer = 0;
+    comboTimeout = 3; // 3 secondi per mantenere la combo
+    comboMultiplier = 1;
+    maxCombo = 0;
+    comboListeners = [];
+    
+    // Bonus multiplier (da bonus speciali)
+    bonusMultiplier = 1;
+    bonusMultiplierDuration = 0;
+    
+    // Speed multiplier (basato sulla velocità del gioco)
+    speedMultiplier = 1;
+    currentSpeed = 0;
+    
+    // Level time tracking for speed bonus
+    levelStartTime = Date.now();
+    levelTimeBonus = [];
+    
+    // Extra stats for XP system
+    enemiesDefeated = 0;
+    powerupsCollected = 0;
+
+    // Rainbow Rush SDK per persistenza sicura
+    sdk;
+    sdkEnabled;
+    highScoreLoaded = false;
+
     constructor(sdk = null) {
-        this.score = 0;
-        this.totalScore = 0; // Punteggio totale cumulativo
-        this.highScore = 0; // Inizializzato a 0, caricato in modo asincrono
-        this.distance = 0;
-        this.level = 1;
-        this.collectibles = 0;
-        this.multiplier = 1;
-        this.scoreListeners = [];
-        this.levelListeners = [];
-        
-        // Rainbow Rush SDK per persistenza sicura
         this.sdk = sdk;
         this.sdkEnabled = sdk !== null;
-        this.highScoreLoaded = false;
-        
-        // Sistema combo
-        this.combo = 0;
-        this.comboTimer = 0;
-        this.comboTimeout = 3.0; // 3 secondi per mantenere la combo
-        this.comboMultiplier = 1;
-        this.maxCombo = 0;
-        this.comboListeners = [];
-        
-        // Bonus multiplier (da bonus speciali)
-        this.bonusMultiplier = 1;
-        this.bonusMultiplierDuration = 0;
-        
-        // Speed multiplier (basato sulla velocità del gioco)
-        this.speedMultiplier = 1;
-        this.currentSpeed = 0;
-        
-        // Level time tracking for speed bonus
-        this.levelStartTime = Date.now();
-        this.levelTimeBonus = [];
-        
-        // Extra stats for XP system
-        this.enemiesDefeated = 0;
-        this.powerupsCollected = 0;
     }
     
     /**
@@ -120,7 +123,7 @@ export class ScoreSystem {
     updateSpeedMultiplier(currentSpeed) {
         this.currentSpeed = currentSpeed;
         // Calcola moltiplicatore basato su velocità (speed 120 = 1x, 240 = 2x, 360 = 3x, etc.)
-        this.speedMultiplier = 1.0 + Math.max(0, (currentSpeed - 120) / 120);
+        this.speedMultiplier = 1 + Math.max(0, (currentSpeed - 120) / 120);
     }
     
     getSpeedMultiplier() {
@@ -138,7 +141,7 @@ export class ScoreSystem {
         
         // Moltiplicatore esponenziale più generoso
         // x1 → x1.2 → x1.5 → x2.0 → x2.6 → x3.5 → x4.5...
-        this.comboMultiplier = 1.0 + (Math.pow(this.combo, 1.3) * 0.15);
+        this.comboMultiplier = 1 + (Math.pow(this.combo, 1.3) * 0.15);
         
         // Notifica listeners
         this.notifyComboChange();
@@ -231,7 +234,7 @@ export class ScoreSystem {
         
         if (this.speedMultiplier >= 1.5) {
             text = `+${finalPoints} ×${this.speedMultiplier.toFixed(1)}`;
-            if (this.speedMultiplier >= 3.0) {
+            if (this.speedMultiplier >= 3) {
                 color = '#ff0066'; // Rosa intenso per moltiplicatori alti
             } else if (this.speedMultiplier >= 2) {
                 color = '#ff6600'; // Arancione
@@ -240,7 +243,7 @@ export class ScoreSystem {
             }
         }
         
-        window.dispatchEvent(new CustomEvent('scoreAdded', {
+        globalThis.dispatchEvent(new CustomEvent('scoreAdded', {
             detail: {
                 points: finalPoints,
                 text: text,
@@ -295,48 +298,41 @@ export class ScoreSystem {
         
         const perfectTime = baseTargetTime + levelAdjustment;
         const goldTime = perfectTime * 1.5;      // 50% più tempo
-        const silverTime = perfectTime * 2.0;     // Doppio tempo
-        const bronzeTime = perfectTime * 3.0;     // Triplo tempo
+        const silverTime = perfectTime * 2;     // Doppio tempo
+        const bronzeTime = perfectTime * 3;     // Triplo tempo
         
         // MOLTIPLICATORE invece di bonus fisso - PIÙ AGGRESSIVO!
-        let multiplier = 0;
         let bonusMultiplier = 1;
-        let rank = 'none';
+        let rank ;
         let rankIcon = '';
-        let color = [0.7, 0.7, 0.7, 1];
+        let color;
         
         if (timeInSeconds <= perfectTime) {
-            // PERFECT! Moltiplicatore 1.20x - +20% punti
-            multiplier = 1;
-            bonusMultiplier = 1.20;
+            // PERFECT! Moltiplicatore 1.2x - +20% punti
+            bonusMultiplier = 1.2;
             rank = 'perfect';
             rankIcon = '💎';
             color = [0.4, 0.9, 1, 1]; // Cyan brillante
         } else if (timeInSeconds <= goldTime) {
             // GOLD! Moltiplicatore 1.15x - +15% punti
-            multiplier = 0.8;
             bonusMultiplier = 1.15;
             rank = 'gold';
             rankIcon = '🥇';
             color = [1, 0.84, 0, 1]; // Gold
         } else if (timeInSeconds <= silverTime) {
-            // SILVER! Moltiplicatore 1.10x - +10% punti
-            multiplier = 0.6;
-            bonusMultiplier = 1.10;
+            // SILVER! Moltiplicatore 1.1x - +10% punti
+            bonusMultiplier = 1.1;
             rank = 'silver';
             rankIcon = '🥈';
             color = [0.75, 0.75, 0.75, 1]; // Silver
         } else if (timeInSeconds <= bronzeTime) {
             // BRONZE! Moltiplicatore 1.05x - +5% punti
-            multiplier = 0.4;
             bonusMultiplier = 1.05;
             rank = 'bronze';
             rankIcon = '🥉';
             color = [0.8, 0.5, 0.2, 1]; // Bronze
         } else {
             // TOO SLOW - NESSUN BONUS
-            multiplier = 0;
-            bonusMultiplier = 1; // Nessun bonus/penalità
             rank = 'slow';
             rankIcon = '⏱️';
             color = [0.5, 0.5, 0.5, 1]; // Gray
@@ -357,7 +353,7 @@ export class ScoreSystem {
     }
     
     getLastLevelBonus() {
-        return this.levelTimeBonus[this.levelTimeBonus.length - 1] || null;
+        return this.levelTimeBonus.at(-1) || null;
     }
 
     getScore() {
@@ -389,59 +385,15 @@ export class ScoreSystem {
      */
     async loadHighScore() {
         if (this.sdkEnabled && this.sdk) {
-            try {
+
                 // Usa il nuovo metodo getUserHighScore per ottenere il vero high score dal backend
                 const highScore = await this.sdk.getUserHighScore();
 
                 return highScore;
-            } catch (error) {
-
-                return this.loadHighScoreLocal();
-            }
-        } else {
-            return this.loadHighScoreLocal();
-        }
+        } 
     }
     
-    /**
-     * Carica high score da localStorage (fallback)
-     * @private
-     */
-    loadHighScoreLocal() {
-        try {
-            const saved = localStorage.getItem('rainbowRush_highScore');
-            return saved ?  Number.parseInt(saved, 10) : 0;
-        } catch (error) {
-            return 0;
-        }
-    }
-
-    /**
-     * Salva high score su SDK o localStorage
-     * NOTA: Non più utilizzato durante il gioco - SDK gestisce automaticamente
-     * l'high score tramite leaderboard quando si completa un livello
-     */
-    async saveHighScore() {
-        if (this.sdkEnabled && this.sdk) {
-            // SDK gestisce automaticamente l'aggiornamento del high score
-            // tramite leaderboard quando si completa un livello
-
-        } else {
-            this.saveHighScoreLocal();
-        }
-    }
     
-    /**
-     * Salva high score su localStorage (fallback)
-     * @private
-     */
-    saveHighScoreLocal() {
-        try {
-            localStorage.setItem('rainbowRush_highScore', this.highScore.toString());
-        } catch (error) {
-
-        }
-    }
 
     onScoreChange(callback) {
         this.scoreListeners.push(callback);

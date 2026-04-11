@@ -46,7 +46,6 @@ export class RotatingEffectRenderer extends PlatformEffectRenderer {
     }
 
     renderIdleState(platform, x, y, time) {
-        const centerX = x + platform.width / 2;
         const centerY = y + platform.height / 2;
         const pulse = Math.sin(time * 3) * 0.3 + 0.5;
         

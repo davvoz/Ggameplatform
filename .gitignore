@@ -316,3 +316,4 @@ backend/scripts/initialize_platform_from_backup_ignore.py
 .agents/
 backend/scripts/register_modern_pong.old
 backend/scripts/register_altitude.old
+backend/app/games/merge-tower-defense/fix-trailing-zeros.mjs

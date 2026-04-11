@@ -170,7 +170,7 @@ export const EnemyTypes = {
         color: [0.7, 0.7, 1, 0.6],
         points: 50,
         pattern: 'phase', // Può attraversare piattaforme
-        phaseInterval: 3.0,
+        phaseInterval: 3,
         description: 'Fantasma che può attraversare le piattaforme',
         unlockLevel: 51
     },
@@ -228,7 +228,7 @@ export const EnemyTypes = {
         pattern: 'laser', // Spara laser continuo
         laserChargeTime: 1.5,
         laserDuration: 1,
-        laserCooldown: 3.0,
+        laserCooldown: 3,
         laserRange: 400,
         description: 'Torretta che spara laser devastanti',
         unlockLevel: 80
@@ -272,7 +272,7 @@ export const EnemyTypes = {
         points: 90,
         pattern: 'dive_bomb', // Vola, poi si tuffa sul player
         diveSpeed: 400,
-        diveCooldown: 4.0,
+        diveCooldown: 4,
         respawns: 1, // Rinasce una volta
         description: 'Uccello di fuoco che si tuffa e rinasce',
         unlockLevel: 110
@@ -291,7 +291,7 @@ export const EnemyTypes = {
         color: [0.8, 0.2, 0.8, 1],
         points: 100,
         pattern: 'teleport', // Si teletrasporta vicino al player
-        teleportInterval: 3.0,
+        teleportInterval: 3,
         teleportRange: 150,
         description: 'Nemico che si teletrasporta imprevedibilmente',
         unlockLevel: 120
@@ -310,7 +310,7 @@ export const EnemyTypes = {
         color: [0.6, 0.4, 0.8, 1],
         points: 110,
         pattern: 'spawn', // Genera nemici minori
-        spawnInterval: 5.0,
+        spawnInterval: 5,
         maxSpawns: 3,
         spawnType: 'slug', // Genera lumache
         description: 'Genera continuamente nemici minori',
@@ -357,8 +357,8 @@ export const EnemyTypes = {
         points: 300,
         pattern: 'boss_multi',
         phases: [
-            { hp: 20, pattern: 'fly_circle', fireBreath: true, fireInterval: 2.0 },
-            { hp: 10, pattern: 'swoop', swoopSpeed: 500, swoopInterval: 3.0 },
+            { hp: 20, pattern: 'fly_circle', fireBreath: true, fireInterval: 2 },
+            { hp: 10, pattern: 'swoop', swoopSpeed: 500, swoopInterval: 3 },
             { hp: 5, pattern: 'meteor_shower', meteorCount: 8 }
         ],
         description: 'Drago maestoso con soffio di fuoco',

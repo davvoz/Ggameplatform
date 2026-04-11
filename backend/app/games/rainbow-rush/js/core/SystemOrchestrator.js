@@ -23,10 +23,6 @@ export class SystemOrchestrator {
      * @param {ISystem} system - System instance
      */
     registerSystem(name, system) {
-        if (this.systems.has(name)) {
-
-        }
-        
         this.systems.set(name, system);
         this._sortSystems();
     }

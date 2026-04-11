@@ -6,12 +6,10 @@ import { createGameController } from './GameControllerBuilder.js';
 import { ScreenManager } from './ui/ScreenManager.js';
 
 class RainbowRushApp {
-    constructor() {
-        this.gameController = null;
-        this.screenManager = null;
-        this.initialized = false;
-        this.parentOrigin = null;  // validated parent origin for postMessage
-    }
+    gameController = null;
+    screenManager = null;
+    initialized = false;
+    parentOrigin = null;  // validated parent origin for postMessage
 
     async init() {
         if (this.initialized) return;
@@ -73,9 +71,9 @@ class RainbowRushApp {
      * Signal game ready to platform immediately to prevent timeout
      */
     signalGameReady() {
-        if (window.parent !== window) {
-            const targetOrigin = this.parentOrigin || (document.referrer ? new URL(document.referrer).origin : window.location.origin);
-            window.parent.postMessage({
+        if (globalThis.parent != globalThis) {
+            const targetOrigin = this.parentOrigin || (document.referrer ? new URL(document.referrer).origin : globalThis.location.origin);
+            globalThis.parent.postMessage({
                 type: 'gameReady',
                 gameId: 'rainbow-rush',
                 timestamp: Date.now(),
@@ -149,9 +147,9 @@ class RainbowRushApp {
             this.gameController.audioManager?.playSound('click');
             
             // Reset platform session before showing level select
-            if (typeof window.PlatformSDK !== 'undefined') {
+            if (globalThis.PlatformSDK !== undefined) {
                 // Wait for the reset to complete (includes ending old session and starting new one)
-                await window.PlatformSDK.resetSession();
+                await globalThis.PlatformSDK.resetSession();
             }
             
             // Force reload progress from backend to show updated levels
@@ -183,7 +181,7 @@ class RainbowRushApp {
     
     getLevelProgress() {
         // Usa il metodo getSavedProgress() che usa la cache
-        if (this.gameController && this.gameController.levelManager) {
+        if (this.gameController?.levelManager) {
             return this.gameController.levelManager.getSavedProgress();
         }
         return {};
@@ -191,32 +189,32 @@ class RainbowRushApp {
 
     setupGameListeners() {
         // Listen for game events
-        window.addEventListener('gameUpdate', (e) => {
+        globalThis.addEventListener('gameUpdate', (e) => {
             if (this.screenManager) {
                 this.screenManager.updateHighScore(e.detail.highScore);
             }
         });
         
-        window.addEventListener('gameOver', (e) => {
+        globalThis.addEventListener('gameOver', (e) => {
             if (this.screenManager) {
                 this.screenManager.showGameOver(e.detail);
             }
         });
         
-        window.addEventListener('gameStart', () => {
+        globalThis.addEventListener('gameStart', () => {
             if (this.screenManager) {
                 this.screenManager.hideAllScreens();
             }
         });
         
-        window.addEventListener('showMenu', async (e) => {
+        globalThis.addEventListener('showMenu', async (e) => {
             if (this.screenManager && this.gameController) {
                 await this.screenManager.showMenu(this.gameController.scoreSystem, this.gameController?.rainbowRushSDK);
                 // Non serve più updateHighScore manualmente, showMenu lo fa già
             }
         });
         
-        window.addEventListener('showLevelSelect', async () => {
+        globalThis.addEventListener('showLevelSelect', async () => {
             if (this.screenManager && this.gameController) {
                 // Force reload progress from backend to show updated levels
                 const progress = await this.gameController.levelManager.loadProgress(true);
@@ -224,7 +222,7 @@ class RainbowRushApp {
             }
         });
         
-        window.addEventListener('showLevelSummary', (e) => {
+        globalThis.addEventListener('showLevelSummary', (e) => {
             if (this.screenManager) {
                 this.screenManager.showLevelSummary(e.detail);
             }
@@ -374,17 +372,17 @@ class RainbowRushApp {
 
     setupWindowListeners() {
         // Register with PlatformSDK for XP banner events
-        if (window.PlatformSDK) {
-            window.PlatformSDK.on('showXPBanner', (payload) => {
+        if (globalThis.PlatformSDK) {
+            globalThis.PlatformSDK.on('showXPBanner', (payload) => {
 
-                if (payload && payload.xp_earned !== undefined) {
+                if (payload?.xp_earned !== undefined) {
                     this.showXPBanner(payload.xp_earned, payload);
                 }
             });
         }
         
         // Listen for messages from platform (e.g., XP banner requests) - fallback
-        window.addEventListener('message', (event) => {
+        globalThis.addEventListener('message', (event) => {
             if (!event.data?.type) return;
             // Validate protocol version
             if (event.data.protocolVersion !== '1.0.0') return;
@@ -401,7 +399,7 @@ class RainbowRushApp {
         });
         
         // Handle window resize
-        window.addEventListener('resize', () => {
+        globalThis.addEventListener('resize', () => {
            
         });
 
@@ -448,17 +446,16 @@ class RainbowRushApp {
                     // Segna che è stata messa in pausa automaticamente
                     this.gameController.autoPaused = true;
                 }
-            } else {
-                // Tab visibile - riprendi solo se era stata pausata automaticamente
-                if (this.gameController.stateMachine.isPaused() && this.gameController.autoPaused) {
-                    this.gameController.resumeGame();
-                    this.gameController.autoPaused = false;
-                }
+            }
+            // Tab visibile - riprendi solo se era stata pausata automaticamente
+            if (!document.hidden && this.gameController.stateMachine.isPaused() && this.gameController.autoPaused) {
+                this.gameController.resumeGame();
+                this.gameController.autoPaused = false;
             }
         });
         
         // Handle page unload - cleanup session if user closes/leaves page
-        window.addEventListener('beforeunload', () => {
+        globalThis.addEventListener('beforeunload', () => {
             if (this.gameController?.rainbowRushSDK?.sessionId) {
                 // Use synchronous beacon API for reliable cleanup on page unload
                 navigator.sendBeacon(
@@ -470,7 +467,7 @@ class RainbowRushApp {
         });
         
         // Also handle pagehide for mobile browsers
-        window.addEventListener('pagehide', () => {
+        globalThis.addEventListener('pagehide', () => {
             if (this.gameController?.rainbowRushSDK?.sessionId) {
                 navigator.sendBeacon(
                     `${this.gameController.rainbowRushSDK.apiBaseUrl}/api/rainbow-rush/session/${this.gameController.rainbowRushSDK.sessionId}/end`,
@@ -516,7 +513,7 @@ class RainbowRushApp {
     }
     
     showPauseMenu() {
-        if (this.gameController && this.gameController.stateMachine.isPlaying()) {
+        if (this.gameController?.stateMachine?.isPlaying()) {
             this.gameController.pauseGame();
             const pauseScreen = document.getElementById('pause-screen');
             if (pauseScreen) {
@@ -544,7 +541,7 @@ class RainbowRushApp {
     
     updateSFXVolume(value) {
         const volume = value / 100;
-        if (this.gameController && this.gameController.audioManager) {
+        if (this.gameController?.audioManager) {
             this.gameController.audioManager.setVolume(volume);
         }
         const valueDisplay = document.querySelector('#sfx-volume + .volume-value');
@@ -555,7 +552,7 @@ class RainbowRushApp {
     
     updateMusicVolume(value) {
         const volume = value / 100;
-        if (this.gameController && this.gameController.audioManager) {
+        if (this.gameController?.audioManager) {
             this.gameController.audioManager.setMusicVolume(volume);
         }
         const valueDisplay = document.querySelector('#music-volume + .volume-value');
@@ -585,7 +582,7 @@ class RainbowRushApp {
         this.updateFullscreenButtonVisibility();
         
         // Scroll to top per nascondere la barra degli indirizzi su mobile
-        window.scrollTo(0, 0);
+        globalThis.scrollTo(0, 0);
         
         // Prova anche l'API fullscreen nativa (funziona su desktop/Android)
         const elem = document.documentElement;
@@ -608,7 +605,7 @@ class RainbowRushApp {
         this.updateFullscreenButtonVisibility();
         
         // Scroll to top
-        window.scrollTo(0, 0);
+        globalThis.scrollTo(0, 0);
         
         // Esci dal fullscreen nativo se attivo
         if (document.exitFullscreen) {
@@ -627,12 +624,12 @@ class RainbowRushApp {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         const app = new RainbowRushApp();
-        window.rainbowRushApp = app;  // Make app globally accessible
+        globalThis.rainbowRushApp = app;  // Make app globally accessible
         app.init();
     });
 } else {
     const app = new RainbowRushApp();
-    window.rainbowRushApp = app;  // Make app globally accessible
+    globalThis.rainbowRushApp = app;  // Make app globally accessible
     app.init();
 }
 

@@ -111,7 +111,7 @@ export class FloatingTextSystem {
         }
         
         // Rimuovi testi di power-up non più attivi
-        for (const [type, texts] of this.activePowerupTexts.entries()) {
+        for (const [type] of this.activePowerupTexts.entries()) {
             const stillActive = activePowerups.find(p => p.type === type);
             if (!stillActive) {
                 this.activePowerupTexts.delete(type);
@@ -124,7 +124,7 @@ export class FloatingTextSystem {
         const topMargin = 100; // Margine dall'alto
         
         activePowerups.forEach((powerup, index) => {
-            const { type, timer } = powerup;
+            const { type } = powerup;
             
             if (!this.activePowerupTexts.has(type)) {
                 // Crea nuovi testi per questo power-up
@@ -172,7 +172,7 @@ export class FloatingTextSystem {
         // Renderizza testi per power-up attivi - SEMPLIFICATO
         for (const [type, texts] of this.activePowerupTexts.entries()) {
             const timer = powerupTimers[type];
-            if (!timer || !timer.active) continue;
+            if (!timer?.active) continue;
             
             // RIMOSSO: pulse e bounce per performance
             
@@ -186,7 +186,7 @@ export class FloatingTextSystem {
                 y,
                 texts.color,
                 20,
-                1.0 // Scala fissa
+                1 // Scala fissa
             );
             
             // Cooldown - SEMPLIFICATO
@@ -206,7 +206,7 @@ export class FloatingTextSystem {
                 x,
                 y + 20,
                 cooldownColor,
-                1.0 // Scala fissa
+                1 // Scala fissa
             );
         }
         

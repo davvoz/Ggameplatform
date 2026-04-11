@@ -40,7 +40,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 const collectibles = entityManager.getEntities('collectibles');
                 collectibles.forEach(c => {
                     c.magnetized = true;
-                    c.magnetDuration = this.context.player.isTurboActive ? 8.0 : 5.0;
+                    c.magnetDuration = this.context.player.isTurboActive ? 8 : 5;
                 });
 
                 this._handlePowerupCollection(magnet, magnetBonuses, i, entityManager, {
@@ -71,7 +71,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 this.context.scoreSystem.addPowerupCollected();
                 this.addNotification('💰 Pioggia di Monete!', 'Pioveranno monete per 10 secondi!', 'achievement');
 
-                return { type: 'coinRain', activated: true, duration: 10.0 };
+                return { type: 'coinRain', activated: true, duration: 10 };
             }
         }
         return null;
@@ -85,7 +85,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 const shield = shieldBonuses[i];
 
                 this.context.player.shieldActive = true;
-                this.context.player.shieldDuration = 10.0;
+                this.context.player.shieldDuration = 10;
 
                 this._handlePowerupCollection(shield, shieldBonuses, i, entityManager, {
                     text: '🛡️ SCUDO!',
@@ -106,8 +106,8 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
             if (this.checkCollision(multiplierBonuses[i])) {
                 const multi = multiplierBonuses[i];
 
-                this.context.scoreSystem.bonusMultiplier = 3.0;
-                this.context.scoreSystem.bonusMultiplierDuration = 12.0;
+                this.context.scoreSystem.bonusMultiplier = 3;
+                this.context.scoreSystem.bonusMultiplierDuration = 12;
 
                 this._handlePowerupCollection(multi, multiplierBonuses, i, entityManager, {
                     text: '✖️3 POINTS!',
@@ -194,7 +194,7 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                     50,
                     entityManager,
                     150,
-                    1.0
+                    1
                 );
 
                 this._handlePowerupCollection(heartRecharge, heartRechargeBonuses, i, entityManager, {
@@ -226,13 +226,13 @@ export class AdvancedBonusHandler extends PowerupCollisionHandler {
                 const collectibles = entityManager.getEntities('collectibles');
                 collectibles.forEach(c => {
                     c.magnetized = true;
-                    c.magnetDuration = 8.0;
+                    c.magnetDuration = 8;
                 });
 
                 this.context.player.shieldActive = true;
-                this.context.player.shieldDuration = 15.0;
-                this.context.scoreSystem.bonusMultiplier = 5.0;
-                this.context.scoreSystem.bonusMultiplierDuration = 15.0;
+                this.context.player.shieldDuration = 15;
+                this.context.scoreSystem.bonusMultiplier = 5;
+                this.context.scoreSystem.bonusMultiplierDuration = 15;
 
                 // Rainbow explosion sequence
                 for (let j = 0; j < 5; j++) {

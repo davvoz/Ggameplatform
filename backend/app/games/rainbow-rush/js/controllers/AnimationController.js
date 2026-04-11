@@ -3,27 +3,26 @@
  * Handles level transitions, combo animations, death sequences, level up animations, floating texts
  */
 export class AnimationController {
-    constructor() {
-        // Level transition
-        this.levelTransition = null;
-        this.isInLevelTransition = false;
-        
-        // Level up animation
-        this.levelUpAnimation = null;
-        
-        // Combo animation
-        this.comboAnimation = null;
-        
-        // Death animation
-        this.deathAnimation = null;
-        this.isShowingDeathAnimation = false;
-        
-        // Screen flash for combos
-        this.screenFlash = {
-            alpha: 0,
-            color: [1, 1, 1]
-        };
-    }
+    // Level transition
+    levelTransition = null;
+    isInLevelTransition = false;
+    
+    // Level up animation
+    levelUpAnimation = null;
+    
+    // Combo animation
+    comboAnimation = null;
+    
+    // Death animation
+    deathAnimation = null;
+    isShowingDeathAnimation = false;
+    
+    // Screen flash for combos
+    screenFlash = {
+        alpha: 0,
+        color: [1, 1, 1]
+    };
+
 
     /**
      * Update all animations
@@ -91,11 +90,11 @@ export class AnimationController {
             // Grow rapido (0 to 1)
             this.levelUpAnimation.scale = progress / 0.15;
         } else if (progress < 0.85) {
-            // Stabile a 1.0 - NO oscillazioni
+            // Stabile a 1 - NO oscillazioni
             this.levelUpAnimation.scale = 1;
         } else {
-            // Shrink rapido (1.0 to 0)
-            this.levelUpAnimation.scale = 1.0 - ((progress - 0.85) / 0.15);
+            // Shrink rapido (1 to 0)
+            this.levelUpAnimation.scale = 1 - ((progress - 0.85) / 0.15);
         }
         
         if (this.levelUpAnimation.life <= 0) {
@@ -126,9 +125,9 @@ export class AnimationController {
         
         this.deathAnimation.timer += deltaTime;
         this.deathAnimation.fadeAlpha = Math.min(1, this.deathAnimation.timer / 0.8);
-        this.deathAnimation.playerAlpha = Math.max(0, 1.0 - (this.deathAnimation.timer / 1.5));
+        this.deathAnimation.playerAlpha = Math.max(0, 1 - (this.deathAnimation.timer / 1.5));
         this.deathAnimation.rotation += deltaTime * 3;
-        this.deathAnimation.scale = 1.0 + (this.deathAnimation.timer * 0.5);
+        this.deathAnimation.scale = 1 + (this.deathAnimation.timer * 0.5);
         
         // Update death particles
         this.deathAnimation.particles.forEach(p => {
@@ -208,7 +207,7 @@ export class AnimationController {
         if (combo <= 1) return;
         
         let message = '';
-        let color = [1, 1, 1, 1];
+        let color;
         let intensity = 1;
         let flashIntensity = 0;
         
@@ -217,7 +216,7 @@ export class AnimationController {
         if (combo >= 50) {
             message = `🌟 DIVINO! x${multiplierText} 🌟`;
             color = [1, 0, 1, 1];
-            intensity = 3.0;
+            intensity = 3;
             flashIntensity = 0.4;
         } else if (combo >= 30) {
             message = `🔥 EPICO! x${multiplierText} 🔥`;
@@ -227,7 +226,7 @@ export class AnimationController {
         } else if (combo >= 20) {
             message = `💥 BRUTALE! x${multiplierText} 💥`;
             color = [1, 0.2, 0.2, 1];
-            intensity = 2.0;
+            intensity = 2;
             flashIntensity = 0.25;
         } else if (combo >= 15) {
             message = `⚡ PAZZESCO! x${multiplierText} ⚡`;
@@ -247,7 +246,6 @@ export class AnimationController {
         } else {
             message = `COMBO x${multiplierText}`;
             color = [1, 1, 1, 1];
-            intensity = 1;
         }
         
         // Trigger screen flash for big combos
@@ -289,7 +287,7 @@ export class AnimationController {
             playerWidth: playerWidth,
             playerHeight: playerHeight,
             timer: 0,
-            duration: 4.0,
+            duration: 4,
             fadeAlpha: 0,
             playerAlpha: 1,
             rotation: 0,
@@ -302,7 +300,6 @@ export class AnimationController {
      * Create floating text STRABELLLO con effetti EPICI
      */
     createFloatingText(text, x, y, color, entityManager, duration = 2.5) {
-        //console.log('🎯 CREATING FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
         const floatingText = {
             text: text,
             x: x,
@@ -317,17 +314,15 @@ export class AnimationController {
             scale: 0.1,       // Parte piccolo
             rotation: 0,      // NIENTE ROTAZIONE per bonus livello
             pulsePhase: 0,    // Per effetto pulsante
-            glowIntensity: 1.0 // Intensità del bagliore
+            glowIntensity: 1 // Intensità del bagliore
         };
         entityManager.addEntity('floatingTexts', floatingText);
-        //console.log('✅ Floating text added to entityManager. Total floatingTexts:', entityManager.floatingTexts.length);
     }
     
     /**
      * Create EPIC floating text con dimensioni ENORMI per bonus livello
      */
-    createEpicFloatingText(text, x, y, color, entityManager, duration = 3.0) {
-        //console.log('🌟 CREATING EPIC FLOATING TEXT:', text, 'at position:', x, y, 'color:', color);
+    createEpicFloatingText(text, x, y, color, entityManager, duration = 3) {
         const floatingText = {
             text: text,
             x: x,
@@ -345,7 +340,6 @@ export class AnimationController {
             glowIntensity: 1.5 // Bagliore più intenso
         };
         entityManager.addEntity('floatingTexts', floatingText);
-        //console.log('✅ EPIC floating text added! Total floatingTexts:', entityManager.floatingTexts.length);
     }
 
     /**

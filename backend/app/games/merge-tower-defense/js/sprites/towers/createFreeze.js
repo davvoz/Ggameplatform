@@ -129,7 +129,7 @@ export function freeze() {
     sprite.setParent('emitterRight', 'core');
 
     // Setup animations
-    sprite.addAnimation(AnimationBuilder.createTowerIdleAnimation(['core', 'emitterTop', 'emitterLeft', 'emitterRight'], 2.0));
+    sprite.addAnimation(AnimationBuilder.createTowerIdleAnimation(['core', 'emitterTop', 'emitterLeft', 'emitterRight'], 2));
     sprite.addAnimation(AnimationBuilder.createTowerFireAnimation(['emitterTop', 'emitterLeft', 'emitterRight', 'core'], 0.25));
 
     return sprite;

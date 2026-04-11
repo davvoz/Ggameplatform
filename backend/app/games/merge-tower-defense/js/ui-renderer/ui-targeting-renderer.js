@@ -34,7 +34,7 @@ export class TargetingRenderer {
         this.targetingHasTouch = false;
         this.targetingCursorPos = { x: 0, y: 0 };
 
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isMobile = 'ontouchstart' in globalThis || navigator.maxTouchPoints > 0;
         if (!isMobile) {
             this.canvas.style.cursor = 'none';
         }
@@ -84,7 +84,7 @@ export class TargetingRenderer {
         const abilityConfig = SPECIAL_ABILITIES[abilityType];
         const abilityColor = abilityConfig?.color || '#ff4400';
 
-        const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        const isMobile = 'ontouchstart' in globalThis || navigator.maxTouchPoints > 0;
         const hasTouchPosition = this.targetingHasTouch && this.targetingCursorPos.x > 0;
 
         // Semi-transparent overlay
@@ -109,35 +109,20 @@ export class TargetingRenderer {
         const pulse = Math.sin(time * 5) * 0.2 + 0.8;
         ctx.globalAlpha = pulse;
 
-        const instructionText = abilityType === 'BOMB' ?
-            (isMobile ? '👆 TAP WHERE TO DROP BOMB' : 'TAP TO DROP BOMB') :
-            abilityType === 'STUN' ?
-            (isMobile ? '👆 TAP WHERE TO STUN' : 'TAP TO STUN ENEMIES') :
-            'TAP TO ACTIVATE';
+        let instructionText = 'TAP TO ACTIVATE';
+        if (abilityType === 'BOMB') {
+            instructionText = isMobile ? '👆 TAP WHERE TO DROP BOMB' : 'TAP TO DROP BOMB';
+        } else if (abilityType === 'STUN') {
+            instructionText = isMobile ? '👆 TAP WHERE TO STUN' : 'TAP TO STUN ENEMIES';
+        }
         ctx.fillText(instructionText, width / 2, UI_CONFIG.TOP_BAR_HEIGHT + 35);
         ctx.restore();
 
         // Mobile: show hint in grid centre if no touch yet
         if (isMobile && !hasTouchPosition) {
-            const gridCenterX = this.graphics.offsetX + (CONFIG.COLS * this.graphics.cellSize) / 2;
-            const gridCenterY = this.graphics.offsetY + (CONFIG.ROWS * this.graphics.cellSize) / 2;
-            this.renderMobileTargetingHint(ctx, gridCenterX, gridCenterY, abilityType, time);
+            this.handleMobileHint(ctx, abilityType, time);
         } else {
-            const cursorGridPos = this.graphics.screenToGrid(this.targetingCursorPos.x, this.targetingCursorPos.y);
-            const cursorScreenPos = this.graphics.gridToScreen(cursorGridPos.col, cursorGridPos.row);
-
-            if (cursorGridPos.col >= 0 && cursorGridPos.col < CONFIG.COLS &&
-                cursorGridPos.row >= 0 && cursorGridPos.row < CONFIG.ROWS) {
-                this.renderTargetingAreaPreview(ctx, cursorScreenPos.x, cursorScreenPos.y, abilityType, time);
-
-                if (isMobile && hasTouchPosition) {
-                    this.renderMobileTouchIndicator(ctx, this.targetingCursorPos.x, this.targetingCursorPos.y, abilityType, time);
-                }
-            }
-
-            if (!isMobile) {
-                this.renderTargetingCursor(ctx, this.targetingCursorPos.x, this.targetingCursorPos.y, abilityType, time);
-            }
+            this.handleDesktopHint(ctx, abilityType, time, isMobile, hasTouchPosition);
         }
 
         // Cancel button
@@ -175,6 +160,30 @@ export class TargetingRenderer {
             width: cancelBtnWidth,
             height: cancelBtnHeight
         };
+    }
+
+    handleDesktopHint(ctx, abilityType, time, isMobile, hasTouchPosition) {
+        const cursorGridPos = this.graphics.screenToGrid(this.targetingCursorPos.x, this.targetingCursorPos.y);
+        const cursorScreenPos = this.graphics.gridToScreen(cursorGridPos.col, cursorGridPos.row);
+
+        if (cursorGridPos.col >= 0 && cursorGridPos.col < CONFIG.COLS &&
+            cursorGridPos.row >= 0 && cursorGridPos.row < CONFIG.ROWS) {
+            this.renderTargetingAreaPreview(ctx, cursorScreenPos.x, cursorScreenPos.y, abilityType, time);
+
+            if (isMobile && hasTouchPosition) {
+                this.renderMobileTouchIndicator(ctx, this.targetingCursorPos.x, this.targetingCursorPos.y, abilityType, time);
+            }
+        }
+
+        if (!isMobile) {
+            this.renderTargetingCursor(ctx, this.targetingCursorPos.x, this.targetingCursorPos.y, abilityType, time);
+        }
+    }
+
+    handleMobileHint(ctx, abilityType, time) {
+        const gridCenterX = this.graphics.offsetX + (CONFIG.COLS * this.graphics.cellSize) / 2;
+        const gridCenterY = this.graphics.offsetY + (CONFIG.ROWS * this.graphics.cellSize) / 2;
+        this.renderMobileTargetingHint(ctx, gridCenterX, gridCenterY, abilityType, time);
     }
 
     renderMobileTargetingHint(ctx, x, y, abilityType, time) {
@@ -288,7 +297,13 @@ export class TargetingRenderer {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const floatY = -pulseSize - 25 + Math.sin(time * 4) * 4;
-        const icon = abilityType === 'BOMB' ? '💣' : abilityType === 'STUN' ? '⚡' : '🎯';
+        
+        let icon = '🎯';
+        if (abilityType === 'BOMB') {
+            icon = '💣';
+        } else if (abilityType === 'STUN') {
+            icon = '⚡';
+        }
         ctx.fillText(icon, 0, floatY);
 
         ctx.restore();

@@ -1,8 +1,17 @@
 {
-  "version": "5.0.6",
-  "timestamp": "2026-04-11T15:50:16.405Z",
-  "buildNumber": 519,
+  "version": "5.0.7",
+  "timestamp": "2026-04-11T18:52:27.632Z",
+  "buildNumber": 520,
   "changelog": [
+    {
+      "version": "5.0.7",
+      "date": "2026-04-11",
+      "type": "patch",
+      "changes": [
+        "fif: [FE] Sonar",
+        "🔖 Bump version to 5.0.6 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.6",
       "date": "2026-04-11",
@@ -83,16 +92,6 @@
       "changes": [
         "fix: [A] TRY Enhance performance optimizations for mobile devices",
         "🔖 Bump version to 4.2.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.9",
-      "date": "2026-04-07",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[A]Implement dash mechanics and prestige badge rendering",
-        "🔖 Bump version to 4.2.8 [skip-version]"
       ]
     }
   ]

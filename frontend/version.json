@@ -1,8 +1,17 @@
 {
-  "version": "5.0.8",
-  "timestamp": "2026-04-11T21:02:09.202Z",
-  "buildNumber": 521,
+  "version": "5.0.9",
+  "timestamp": "2026-04-11T23:30:09.673Z",
+  "buildNumber": 522,
   "changelog": [
+    {
+      "version": "5.0.9",
+      "date": "2026-04-11",
+      "type": "patch",
+      "changes": [
+        "fix:[GAMES] Sonar",
+        "🔖 Bump version to 5.0.8 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.8",
       "date": "2026-04-11",
@@ -83,15 +92,6 @@
       "changes": [
         "BREAKING : BE refractor , [A] refraactor",
         "🔖 Bump version to 4.2.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.11",
-      "date": "2026-04-08",
-      "type": "patch",
-      "changes": [
-        "fix:[A] Enhance mobile performance and visuals with quality adjustments",
-        "🔖 Bump version to 4.2.10 [skip-version]"
       ]
     }
   ]

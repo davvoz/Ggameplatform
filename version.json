@@ -1,8 +1,18 @@
 {
-  "version": "5.0.5",
-  "timestamp": "2026-04-11T11:13:04.622Z",
-  "buildNumber": 518,
+  "version": "5.0.6",
+  "timestamp": "2026-04-11T15:50:16.405Z",
+  "buildNumber": 519,
   "changelog": [
+    {
+      "version": "5.0.6",
+      "date": "2026-04-11",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[MTD][RR] Sonar",
+        "🔖 Bump version to 5.0.5 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.5",
       "date": "2026-04-11",
@@ -83,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[A]Implement dash mechanics and prestige badge rendering",
         "🔖 Bump version to 4.2.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "4.2.8",
-      "date": "2026-04-06",
-      "type": "patch",
-      "changes": [
-        "Refactor particle and tween management for performance improvements",
-        "🔖 Bump version to 4.2.7 [skip-version]"
       ]
     }
   ]

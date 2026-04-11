@@ -351,7 +351,9 @@ def resolve_hands(game: "GameSession"):
 
 # ─── API Endpoints ───────────────────────────────────────────────────
 
-@router.post("/deal", response_model=GameStateResponse)
+@router.post("/deal", response_model=GameStateResponse, responses={
+    400: {"description": "Insufficient balance or validation error"},
+})
 async def deal(
     req: DealRequest,
     db: DbSession,
@@ -492,7 +494,11 @@ def _finalize_round(game: GameSession, coin_service: CoinService, user_id: str, 
     active_games.pop(game_id, None)
 
 
-@router.post("/action", response_model=GameStateResponse)
+@router.post("/action", response_model=GameStateResponse, responses={
+    400: {"description": "Game already resolved, no active hand, or action not available"},
+    403: {"description": "Not your game"},
+    404: {"description": "Game not found or expired"},
+})
 async def action(
     req: ActionRequest,
     db: DbSession,
@@ -537,7 +543,10 @@ async def action(
     return GameStateResponse(**state)
 
 
-@router.get("/state")
+@router.get("/state", responses={
+    403: {"description": "Not your game"},
+    404: {"description": "Game not found or expired"},
+})
 async def get_game_state(game_id: str, user_id: str):
     """Get current state of an active game."""
     game = active_games.get(game_id)

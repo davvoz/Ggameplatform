@@ -3,20 +3,20 @@
  * Each enemy built from independent animated parts
  */
 
-import { grunt } from './sprites/enemy/createGrunt.js';
-import { rusher } from './sprites/enemy/createRusher.js';
-import { tank } from './sprites/enemy/createTank.js';
-import { flyer } from './sprites/enemy/createFlyer.js';
-import { healer } from './sprites/enemy/createHealer.js';
-import { armored } from './sprites/enemy/createArmored.js';
-import { boss } from './sprites/enemy/createBoss.js';
-import { vampire } from './sprites/enemy/createVampire.js';
-import { bomber } from './sprites/enemy/createBomber.js';
-import { shadow } from './sprites/enemy/createShadow.js';
-import { siren } from './sprites/enemy/createSiren.js';
-import { golem } from './sprites/enemy/createGolem.js';
-import { phaser } from './sprites/enemy/createPhaser.js';
-import { splitter } from './sprites/enemy/createSplitter.js';
+import { grunt } from './enemy/createGrunt.js';
+import { rusher } from './enemy/createRusher.js';
+import { tank } from './enemy/createTank.js';
+import { flyer } from './enemy/createFlyer.js';
+import { healer } from './enemy/createHealer.js';
+import { armored } from './enemy/createArmored.js';
+import { boss } from './enemy/createBoss.js';
+import { vampire } from './enemy/createVampire.js';
+import { bomber } from './enemy/createBomber.js';
+import { shadow } from './enemy/createShadow.js';
+import { siren } from './enemy/createSiren.js';
+import { golem } from './enemy/createGolem.js';
+import { phaser } from './enemy/createPhaser.js';
+import { splitter } from './enemy/createSplitter.js';
 
 export const MultiPartEnemySprites = {
 

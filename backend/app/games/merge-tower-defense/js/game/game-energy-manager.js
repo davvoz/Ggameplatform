@@ -1,7 +1,7 @@
 /**
  * EnergyManager — SRP: wall energy consumption and regeneration logic.
  */
-import { CONFIG } from './config.js';
+import { CONFIG } from '../config.js';
 
 export class EnergyManager {
     constructor(game) {

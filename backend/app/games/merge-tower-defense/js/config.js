@@ -86,8 +86,8 @@ export const CONFIG = {
 // Cannon Types - Strategic variety with unique roles
 // NOTA: I costi usano una curva ESPONENZIALE AGGRESSIVA per gli upgrade
 // Formula costo: baseCost * (2.0 ^ (level - 1)) * complexityMultiplier
-import { MultiPartEnemySprites } from './multi-part-enemies.js';
-import { MultiPartTowerSprites } from './multi-part-towers.js';
+import { MultiPartEnemySprites } from './sprites/multi-part-enemies.js';
+import { MultiPartTowerSprites } from './sprites/multi-part-towers.js';
 
 export const CANNON_TYPES = {
     BASIC: {

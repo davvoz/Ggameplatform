@@ -1,5 +1,5 @@
 import { ZOMBIE_TYPES, CONFIG } from '../config.js';
-import { MultiPartEnemySprites } from '../multi-part-enemies.js';
+import { MultiPartEnemySprites } from '../sprites/multi-part-enemies.js';
 
 // ============ ZOMBIE ENTITY ============
 export class Zombie {

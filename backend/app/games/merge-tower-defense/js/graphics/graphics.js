@@ -2,9 +2,9 @@
  * Graphics Engine
  * Handles all rendering with sprite-based system
  */
-import { SpriteRenderer } from './sprite-renderer.js';
-import { UI_CONFIG, CONFIG } from './config.js';
-import { Utils } from './utils.js';
+import { SpriteRenderer } from '../sprites/sprite-renderer.js';
+import { UI_CONFIG, CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
 
 export class Graphics {
     constructor(canvas) {

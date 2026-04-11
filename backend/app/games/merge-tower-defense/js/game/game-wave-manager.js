@@ -2,8 +2,8 @@
  * WaveManager — SRP: handles all wave lifecycle logic.
  * Extracted from Game to comply with SonarQube single-responsibility.
  */
-import { CONFIG } from './config.js';
-import { Utils } from './utils.js';
+import { CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
 
 const SPECIAL_WAVE = Object.freeze({
     ASSALTO: 'Assalto Speciale!',

@@ -1,6 +1,6 @@
 
 import { MultiPartSprite, AnimationBuilder } from
-    './../../sprite-animation-system.js';
+    '../sprite-animation-system.js';
 export function freeze() {
     const sprite = new MultiPartSprite('freeze');
 

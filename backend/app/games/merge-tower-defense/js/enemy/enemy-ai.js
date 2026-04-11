@@ -4,7 +4,7 @@
  * Handles lane switching, obstacle avoidance, and tactical positioning
  */
 
-import { CONFIG } from './config.js';
+import { CONFIG } from '../config.js';
 
 // ========== BASE MOVEMENT STRATEGY ==========
 

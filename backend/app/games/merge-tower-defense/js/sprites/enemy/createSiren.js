@@ -1,5 +1,5 @@
 import { MultiPartSprite, AnimationBuilder, AnimationClip } from
-    './../../sprite-animation-system.js';
+    './../sprite-animation-system.js';
 
 export function siren() {
     const sprite = new MultiPartSprite('siren');

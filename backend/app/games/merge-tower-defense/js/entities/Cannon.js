@@ -1,5 +1,5 @@
 import { CANNON_TYPES, MERGE_LEVELS } from '../config.js';
-import { MultiPartTowerSprites } from '../multi-part-towers.js';
+import { MultiPartTowerSprites } from '../sprites/multi-part-towers.js';
 import { Utils } from '../utils.js';
 
 export class Cannon {

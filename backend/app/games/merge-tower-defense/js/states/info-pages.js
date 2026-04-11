@@ -4,8 +4,8 @@
  * Professional and visually appealing information panels
  */
 
-import { CANNON_TYPES, ZOMBIE_TYPES, SPECIAL_ABILITIES, SHOP_ITEMS, CONFIG } from './config.js';
-import { Utils } from './utils.js';
+import { CANNON_TYPES, ZOMBIE_TYPES, SPECIAL_ABILITIES, SHOP_ITEMS, CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
 
 /**
  * Info Pages Manager - handles the encyclopedia/codex system
@@ -693,21 +693,7 @@ export class InfoPagesManager {
 
         // Render sprite
         const sprite = this.cachedSprites.towers[key];
-        if (sprite && sprite.render) {
-            try {
-                sprite.render(ctx, spriteX + spriteSize / 2, spriteY + spriteSize / 2, spriteSize);
-            } catch (e) {
-                ctx.font = `${spriteSize * 0.6}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(tower.icon || '🗼', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
-            }
-        } else {
-            ctx.font = `${spriteSize * 0.6}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(tower.icon || '🗼', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
-        }
+        this.drawSprite(sprite, ctx, spriteX, spriteSize, spriteY, tower);
 
         // Tower name and cost
         const textX = x + spriteSize + 30;
@@ -738,17 +724,7 @@ export class InfoPagesManager {
         ctx.fillText(`🎯 Range: ${tower.range} cells`, textX, statsY + 28);
 
         // Special properties
-        let specialProps = [];
-        if (tower.splashRadius) specialProps.push(`💥 Splash: ${tower.splashRadius}`);
-        if (tower.slowFactor) specialProps.push(`❄️ Slow: ${(1 - tower.slowFactor) * 100}%`);
-        if (tower.piercing) specialProps.push(`🔆 Piercing: ${tower.piercing}`);
-        if (tower.chainTargets) specialProps.push(`⚡ Chain: ${tower.chainTargets}`);
-
-        if (specialProps.length > 0) {
-            ctx.font = '10px Arial';
-            ctx.fillStyle = '#88ccff';
-            ctx.fillText(specialProps.join(' • '), textX, statsY + 44);
-        }
+        this.drawSpecialProps(tower, ctx, textX, statsY);
 
         // Description
         ctx.font = 'italic 11px Arial';
@@ -761,6 +737,38 @@ export class InfoPagesManager {
             ctx.font = '10px Arial';
             ctx.fillStyle = '#88ff88';
             ctx.fillText(`✓ Effective vs: ${bestAgainst}`, textX, statsY + 76);
+        }
+    }
+
+    drawSprite(sprite, ctx, spriteX, spriteSize, spriteY, tower) {
+        if (sprite && sprite.render) {
+            try {
+                sprite.render(ctx, spriteX + spriteSize / 2, spriteY + spriteSize / 2, spriteSize);
+            } catch (e) {
+                ctx.font = `${spriteSize * 0.6}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(tower.icon || '🗼', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
+            }
+        } else {
+            ctx.font = `${spriteSize * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(tower.icon || '🗼', spriteX + spriteSize / 2, spriteY + spriteSize / 2);
+        }
+    }
+
+    drawSpecialProps(tower, ctx, textX, statsY) {
+        let specialProps = [];
+        if (tower.splashRadius) specialProps.push(`💥 Splash: ${tower.splashRadius}`);
+        if (tower.slowFactor) specialProps.push(`❄️ Slow: ${(1 - tower.slowFactor) * 100}%`);
+        if (tower.piercing) specialProps.push(`🔆 Piercing: ${tower.piercing}`);
+        if (tower.chainTargets) specialProps.push(`⚡ Chain: ${tower.chainTargets}`);
+
+        if (specialProps.length > 0) {
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#88ccff';
+            ctx.fillText(specialProps.join(' • '), textX, statsY + 44);
         }
     }
 

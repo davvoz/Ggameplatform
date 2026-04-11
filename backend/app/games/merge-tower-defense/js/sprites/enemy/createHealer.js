@@ -1,6 +1,6 @@
 import { MultiPartSprite, AnimationBuilder, AnimationClip } from
     //backend\app\games\merge-tower-defense\js\sprite-animation-system.js
-    './../../sprite-animation-system.js';
+    './../sprite-animation-system.js';
 
 export function healer() {
     const sprite = new MultiPartSprite('healer');

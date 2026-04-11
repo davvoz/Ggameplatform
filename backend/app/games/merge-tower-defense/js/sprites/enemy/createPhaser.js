@@ -1,5 +1,5 @@
 import { MultiPartSprite, AnimationBuilder, AnimationClip } from
-    './../../sprite-animation-system.js';
+    './../sprite-animation-system.js';
 
 export function phaser() {
     const sprite = new MultiPartSprite('phaser');

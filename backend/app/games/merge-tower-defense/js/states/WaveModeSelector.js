@@ -1,5 +1,5 @@
-import { CONFIG } from './config.js';
-import { Utils } from './utils.js';
+import { CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
 
 /**
  * Wave Mode Selection Screen

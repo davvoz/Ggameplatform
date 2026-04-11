@@ -3,8 +3,8 @@
  * OOP-based combat management with ability handlers
  */
 
-import { CONFIG } from './config.js';
-import { Utils } from './utils.js';
+import { CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
 
 // ========== ABILITY HANDLERS ==========
 

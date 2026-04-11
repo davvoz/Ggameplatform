@@ -9,21 +9,21 @@
  * Backward compatibility: game_old.js remains untouched and still works.
  * This file is what gets bundled + obfuscated by offusca_game.bat.
  */
-import { CONFIG, CANNON_TYPES, MERGE_LEVELS, ZOMBIE_TYPES, SHOP_ITEMS, SPECIAL_ABILITIES } from './config.js';
+import { CONFIG} from './config.js';
 import { Utils } from './utils.js';
-import { ParticleSystem } from './particles.js';
-import { EntityManager } from './entities.js';
-import { AudioEngine } from './audio.js';
-import { CombatSystem } from './combat.js';
+import { ParticleSystem } from './graphics/particles.js';
+import { EntityManager } from './entities/entities.js';
+import { AudioEngine } from './audio/audio.js';
+import { CombatSystem } from './enemy/combat.js';
 
-import { WaveManager }        from './game-wave-manager.js';
-import { DamageHandler }      from './game-damage-handler.js';
-import { TowerManager }       from './game-tower-manager.js';
-import { BoostManager }       from './game-boost-manager.js';
-import { AbilityManager }     from './game-abilities-manager.js';
-import { FullscreenManager }  from './game-fullscreen-manager.js';
-import { PlatformBridge }     from './game-platform-bridge.js';
-import { EnergyManager }      from './game-energy-manager.js';
+import { WaveManager }        from './game/game-wave-manager.js';
+import { DamageHandler }      from './game/game-damage-handler.js';
+import { TowerManager }       from './game/game-tower-manager.js';
+import { BoostManager }       from './game/game-boost-manager.js';
+import { AbilityManager }     from './game/game-abilities-manager.js';
+import { FullscreenManager }  from './game/game-fullscreen-manager.js';
+import { PlatformBridge }     from './game/game-platform-bridge.js';
+import { EnergyManager }      from './game/game-energy-manager.js';
 
 export class Game {
     constructor(graphics, input, ui) {
@@ -162,46 +162,51 @@ export class Game {
             return;
         }
 
-        const uiAction = this.ui.handleTap(gridPos, screenPos, this.state);
+        const uiAction = this.ui.handleTap(gridPos, screenPos);
         if (uiAction) {
             this._handleUiAction(uiAction, gridPos);
         }
     }
 
     _handleUiAction(uiAction, gridPos) {
-        if (uiAction.type === 'towerInfo') return;
-
-        if (uiAction.type === 'settings') {
-            this._handleSettingsAction(uiAction);
-            return;
-        }
-
-        if (uiAction.type === 'info') {
-            if (uiAction.action === 'open') {
-                this.pause();
-                this.tutorial?.isActive && this.tutorial.onGameAction('mtdpedia_opened', {});
-            } else if (uiAction.action === 'close') {
-                this.resume();
-            }
-            return;
+        switch (uiAction.type) {
+            case 'towerInfo': return;
+            case 'settings':  this._handleSettingsAction(uiAction); return;
+            case 'info':      this._handleInfo(uiAction); return;
         }
 
         if (this.state.isPaused) return;
 
-        if (uiAction.type === 'ability') {
-            if (uiAction.action === 'activate')         this.activateSpecialAbility(uiAction.abilityId);
-            if (uiAction.action === 'cancel_targeting') this.input.setDragEnabled(true);
-        } else if (uiAction.type === 'shop') {
-            if (uiAction.action === 'purchase' && uiAction.item) {
-                this.purchaseShopItem(uiAction.item.id);
-            } else if (uiAction.action === 'select') {
-                this.particles.emit(gridPos.col, gridPos.row, {
-                    text: '✓', color: CONFIG.COLORS.TEXT_PRIMARY, vy: -1, life: 0.5,
-                });
-            }
-        } else if (uiAction.type === 'grid') {
-            this.towerManager.handleGridTap(gridPos);
+        const activeHandlers = {
+            ability: () => this._handleAbility(uiAction),
+            shop:    () => this._handleShop(uiAction, gridPos),
+            grid:    () => this.towerManager.handleGridTap(gridPos),
+        };
+        activeHandlers[uiAction.type]?.();
+    }
+
+    _handleInfo(uiAction) {
+        if (uiAction.action === 'open') {
+            this.pause();
+            this.tutorial?.isActive && this.tutorial.onGameAction('mtdpedia_opened', {});
+        } else if (uiAction.action === 'close') {
+            this.resume();
         }
+    }
+
+    _handleShop(uiAction, gridPos) {
+        if (uiAction.action === 'purchase' && uiAction.item) {
+            this.purchaseShopItem(uiAction.item.id);
+        } else if (uiAction.action === 'select') {
+            this.particles.emit(gridPos.col, gridPos.row, {
+                text: '✓', color: CONFIG.COLORS.TEXT_PRIMARY, vy: -1, life: 0.5,
+            });
+        }
+    }
+
+    _handleAbility(uiAction) {
+        if (uiAction.action === 'activate') this.activateSpecialAbility(uiAction.abilityId);
+        if (uiAction.action === 'cancel_targeting') this.input.setDragEnabled(true);
     }
 
     _handleSettingsAction(uiAction) {

@@ -1,6 +1,6 @@
 import { MultiPartSprite ,AnimationBuilder} from 
 //backend\app\games\merge-tower-defense\js\sprite-animation-system.js
-'./../../sprite-animation-system.js';
+'./../sprite-animation-system.js';
 
 export function tank() {
     const sprite = new MultiPartSprite('tank');

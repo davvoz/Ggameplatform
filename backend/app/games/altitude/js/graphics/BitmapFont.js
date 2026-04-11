@@ -349,72 +349,8 @@ class BitmapFont {
         // while black outline cores are 0-30 and anti-alias edges rarely exceed 180.
         const isLight = (i4) => px[i4] > 200 && px[i4 + 1] > 200 && px[i4 + 2] > 200;
 
-        // Iterative flood-fill (stack-based BFS)
-        const queue = [];
-        const seed  = (xi, yi) => {
-            xi = Math.round(xi); yi = Math.round(yi);
-            if (xi < 0 || xi >= W || yi < 0 || yi >= H) return;
-            const i = yi * W + xi;
-            if (!visited[i] && isLight(i * 4)) { visited[i] = 1; queue.push(i); }
-        };
-
-        if (gridSeed) {
-            // Interior cell seeding for sheets with thick physical borders (sym sheet).
-            // Seeds are placed at 15% inset inside each cell so they land safely in the
-            // white background region, not on the dark separator lines.
-            const cellW = W / COLS;
-            const cellH = H / ROWS;
-            const iX = cellW * 0.15;
-            const iY = cellH * 0.15;
-            for (let row = 0; row < ROWS; row++) {
-                for (let col = 0; col < COLS; col++) {
-                    const x0 = col * cellW,       y0 = row * cellH;
-                    const x1 = (col + 1) * cellW, y1 = (row + 1) * cellH;
-                    const mx = (x0 + x1) / 2,     my = (y0 + y1) / 2;
-                    seed(x0 + iX, y0 + iY); seed(x1 - iX, y0 + iY);
-                    seed(x0 + iX, y1 - iY); seed(x1 - iX, y1 - iY);
-                    seed(mx,      y0 + iY); seed(mx,      y1 - iY);
-                    seed(x0 + iX, my);      seed(x1 - iX, my);
-                }
-            }
-        } else {
-            // Border seeding for letter sheets (PNG or JPEG, no physical separators).
-            // Seeds are placed every ~5% along all 4 image edges (not just 4 corners).
-            // This guarantees at least one seed lands on accessible white background even
-            // when JPEG compression darkens individual corner pixels below threshold.
-            // Seeds are always on the image border → they can NEVER land inside a letter's
-            // enclosed white fill (which is surrounded by black outlines), so there is no
-            // risk of accidentally flood-filling letter interiors.
-            const N = 20;
-            for (let i = 0; i <= N; i++) {
-                const px_ = Math.round(i / N * (W - 1));
-                const py_ = Math.round(i / N * (H - 1));
-                seed(px_, 0);     // top edge
-                seed(px_, H - 1); // bottom edge
-                seed(0,   py_);   // left edge
-                seed(W - 1, py_); // right edge
-            }
-        }
-
-        while (queue.length) {
-            const pos = queue.pop();
-            px[pos * 4 + 3] = 0;                         // make transparent
-
-            const xi = pos % W;
-            const yi = Math.trunc(pos / W);
-            const neighbours = [
-                xi > 0     ? pos - 1 : -1,
-                xi < W - 1 ? pos + 1 : -1,
-                yi > 0     ? pos - W : -1,
-                yi < H - 1 ? pos + W : -1,
-            ];
-            for (const n of neighbours) {
-                if (n >= 0 && !visited[n] && isLight(n * 4)) {
-                    visited[n] = 1;
-                    queue.push(n);
-                }
-            }
-        }
+        const queue = this.#buildSeedQueue(px, W, H, visited, isLight, gridSeed);
+        this.#drainFloodQueue(px, W, H, queue, visited, isLight);
 
         // Remap green-ink pixels → white so that multiply-blend tinting works correctly.
         // The PNG glyphs are drawn in green (G≈255, R≈0, B≈0); the multiply composite
@@ -430,6 +366,78 @@ class BitmapFont {
 
         ctx.putImageData(imgData, 0, 0);
         return canvas;
+    }
+
+    /** Build the initial flood-fill queue by seeding from background pixels. */
+    #buildSeedQueue(px, W, H, visited, isLight, gridSeed) {
+        const queue = [];
+        const seed  = (xi, yi) => {
+            xi = Math.round(xi); yi = Math.round(yi);
+            if (xi < 0 || xi >= W || yi < 0 || yi >= H) return;
+            const i = yi * W + xi;
+            if (!visited[i] && isLight(i * 4)) { visited[i] = 1; queue.push(i); }
+        };
+        if (gridSeed) {
+            this.#seedGrid(seed, W, H);   // interior cell corners (sym sheet)
+        } else {
+            this.#seedBorder(seed, W, H); // all 4 image edges (letter sheets)
+        }
+        return queue;
+    }
+
+    /**
+     * Seed from the interior corners of every grid cell.
+     * Required for sheets with thick dark separator lines at the image edges.
+     */
+    #seedGrid(seed, W, H) {
+        const cellW = W / COLS;
+        const cellH = H / ROWS;
+        const iX = cellW * 0.15;
+        const iY = cellH * 0.15;
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                const x0 = col * cellW,       y0 = row * cellH;
+                const x1 = (col + 1) * cellW, y1 = (row + 1) * cellH;
+                const mx = (x0 + x1) / 2,     my = (y0 + y1) / 2;
+                seed(x0 + iX, y0 + iY); seed(x1 - iX, y0 + iY);
+                seed(x0 + iX, y1 - iY); seed(x1 - iX, y1 - iY);
+                seed(mx,      y0 + iY); seed(mx,      y1 - iY);
+                seed(x0 + iX, my);      seed(x1 - iX, my);
+            }
+        }
+    }
+
+    /**
+     * Seed every ~5% along all 4 image edges.
+     * Seeds on the border can never land inside a letter's enclosed white fill.
+     */
+    #seedBorder(seed, W, H) {
+        const steps = 20;
+        for (let i = 0; i <= steps; i++) {
+            const px_ = Math.round(i / steps * (W - 1));
+            const py_ = Math.round(i / steps * (H - 1));
+            seed(px_, 0);     // top edge
+            seed(px_, H - 1); // bottom edge
+            seed(0,   py_);   // left edge
+            seed(W - 1, py_); // right edge
+        }
+    }
+
+    /** Iterative stack-based BFS: marks all reachable background pixels transparent. */
+    #drainFloodQueue(px, W, H, queue, visited, isLight) {
+        const enqueue = (n) => {
+            if (!visited[n] && isLight(n * 4)) { visited[n] = 1; queue.push(n); }
+        };
+        while (queue.length) {
+            const pos = queue.pop();
+            px[pos * 4 + 3] = 0;                         // make transparent
+            const xi = pos % W;
+            const yi = Math.trunc(pos / W);
+            if (xi > 0)     enqueue(pos - 1);
+            if (xi < W - 1) enqueue(pos + 1);
+            if (yi > 0)     enqueue(pos - W);
+            if (yi < H - 1) enqueue(pos + W);
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 
 import { MultiPartSprite, AnimationBuilder } from
-    './../../sprite-animation-system.js';
+    '../sprite-animation-system.js';
 
 export function electric() {
         const sprite = new MultiPartSprite('electric');

@@ -33,7 +33,7 @@ export class AudioSynthesizer {
         param.linearRampToValueAtTime(0, now + attack + decay + release);
     }
 
-    playNote(frequency, type, duration, envelope, options = {}) {
+    playNote(frequency, type,  envelope, options = {}) {
         if (!this.initialized) this.init();
         if (!this.ctx) return;
 
@@ -74,9 +74,9 @@ export class AudioSynthesizer {
         osc.stop(this.ctx.currentTime + envelope.attack + envelope.decay + envelope.release);
     }
 
-    playChord(frequencies, type, duration, envelope, options = {}) {
+    playChord(frequencies, type, envelope, options = {}) {
         frequencies.forEach(freq => {
-            this.playNote(freq, type, duration, envelope, options);
+            this.playNote(freq, type, envelope, options);
         });
     }
 
@@ -208,7 +208,6 @@ export class SoundLibrary {
         this.synth.playChord(
             [330, 415, 523],
             'sine',
-            0.3,
             { attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.2 },
             { volume: 0.4 }
         );
@@ -220,7 +219,6 @@ export class SoundLibrary {
         this.synth.playNote(
             800,
             'sine',
-            0.08,
             { attack: 0.001, decay: 0.03, sustain: 0, release: 0.05 },
             { volume: 0.35, filter: { type: 'lowpass', freq: 2500, q: 3 } }
         );
@@ -228,7 +226,6 @@ export class SoundLibrary {
             this.synth.playNote(
                 400,
                 'sine',
-                0.05,
                 { attack: 0.001, decay: 0.02, sustain: 0, release: 0.03 },
                 { volume: 0.2 }
             );
@@ -245,7 +242,6 @@ export class SoundLibrary {
         this.synth.playNote(
             1200,
             'square',
-            0.04,
             { attack: 0.001, decay: 0.015, sustain: 0, release: 0.025 },
             { volume: 0.3, filter: { type: 'bandpass', freq: 2000, q: 8 } }
         );
@@ -257,7 +253,6 @@ export class SoundLibrary {
         this.synth.playNote(
             80,
             'sine',
-            0.5,
             { attack: 0.002, decay: 0.2, sustain: 0.1, release: 0.3 },
             { volume: 0.6, filter: { type: 'lowpass', freq: 400, q: 2 } }
         );
@@ -266,7 +261,6 @@ export class SoundLibrary {
             this.synth.playNote(
                 150,
                 'triangle',
-                0.3,
                 { attack: 0.001, decay: 0.15, sustain: 0, release: 0.15 },
                 { volume: 0.4 }
             );
@@ -286,7 +280,6 @@ export class SoundLibrary {
         this.synth.playNote(
             120,
             'sine',
-            0.25,
             { attack: 0.01, decay: 0.12, sustain: 0.2, release: 0.13 },
             { volume: 0.45, filter: { type: 'lowpass', freq: 800, q: 4 } }
         );
@@ -315,7 +308,6 @@ export class SoundLibrary {
             this.synth.playChord(
                 [2637, 3136, 3951],
                 'sine',
-                0.15,
                 { attack: 0.001, decay: 0.06, sustain: 0.1, release: 0.09 },
                 { volume: 0.25, filter: { type: 'highpass', freq: 2500, q: 4 } }
             );
@@ -361,7 +353,6 @@ export class SoundLibrary {
                 this.synth.playNote(
                     freq,
                     'square',
-                    0.015,
                     { attack: 0.001, decay: 0.005, sustain: 0, release: 0.01 },
                     { volume: 0.3, filter: { type: 'bandpass', freq: 2000, q: 8 } }
                 );
@@ -382,7 +373,6 @@ export class SoundLibrary {
                 this.synth.playNote(
                     freq,
                     'triangle',
-                    0.2,
                     { attack: 0.01, decay: 0.05, sustain: 0.5, release: 0.15 },
                     { volume: 0.4 }
                 );
@@ -404,7 +394,6 @@ export class SoundLibrary {
             this.synth.playChord(
                 [523, 659, 784],
                 'sine',
-                0.4,
                 { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.3 },
                 { volume: 0.4 }
             );
@@ -415,7 +404,6 @@ export class SoundLibrary {
         this.synth.playNote(
             330,
             'sine',
-            0.4,
             { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.2 },
             { volume: 0.3, filter: { type: 'lowpass', freq: 1000 } }
         );
@@ -436,7 +424,6 @@ export class SoundLibrary {
         this.synth.playNote(
             200 * pitch,
             'square',
-            0.08,
             { attack: 0.001, decay: 0.03, sustain: 0, release: 0.05 },
             { volume: 0.28, filter: { type: 'lowpass', freq: 1200, q: 5 } }
         );
@@ -453,7 +440,6 @@ export class SoundLibrary {
             this.synth.playNote(
                 150 * pitch,
                 'sine',
-                0.06,
                 { attack: 0.001, decay: 0.025, sustain: 0, release: 0.035 },
                 { volume: 0.15, filter: { type: 'lowpass', freq: 800 } }
             );
@@ -464,7 +450,6 @@ export class SoundLibrary {
         this.synth.playNote(
             150,
             'sawtooth',
-            0.4,
             { attack: 0.001, decay: 0.15, sustain: 0, release: 0.25 },
             { volume: 0.3, filter: { type: 'lowpass', freq: 800 } }
         );
@@ -484,7 +469,6 @@ export class SoundLibrary {
         this.synth.playNote(
             100,
             'sine',
-            0.15,
             { attack: 0.001, decay: 0.06, sustain: 0, release: 0.09 },
             { volume: 0.3, filter: { type: 'lowpass', freq: 500, q: 3 } }
         );
@@ -501,7 +485,6 @@ export class SoundLibrary {
             this.synth.playNote(
                 400,
                 'square',
-                0.05,
                 { attack: 0.001, decay: 0.02, sustain: 0, release: 0.03 },
                 { volume: 0.15, filter: { type: 'highpass', freq: 800, q: 4 } }
             );
@@ -543,7 +526,6 @@ export class SoundLibrary {
         this.synth.playNote(
             880,
             'sine',
-            0.08,
             { attack: 0.001, decay: 0.03, sustain: 0, release: 0.05 },
             { volume: 0.3 }
         );
@@ -553,7 +535,6 @@ export class SoundLibrary {
         this.synth.playNote(
             200,
             'square',
-            0.2,
             { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 },
             { volume: 0.35, filter: { type: 'lowpass', freq: 800 } }
         );
@@ -566,7 +547,6 @@ export class SoundLibrary {
                 this.synth.playNote(
                     freq,
                     'triangle',
-                    0.3,
                     { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.2 },
                     { volume: 0.5 }
                 );
@@ -581,7 +561,6 @@ export class SoundLibrary {
                 this.synth.playNote(
                     freq,
                     'sine',
-                    0.4,
                     { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.3 },
                     { volume: 0.4 }
                 );
@@ -592,7 +571,6 @@ export class SoundLibrary {
             this.synth.playChord(
                 [523, 659, 784, 1047],
                 'sine',
-                0.6,
                 { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.4 },
                 { volume: 0.5 }
             );
@@ -603,7 +581,6 @@ export class SoundLibrary {
         this.synth.playNote(
             1047,
             'triangle',
-            0.15,
             { attack: 0.001, decay: 0.05, sustain: 0.3, release: 0.1 },
             { volume: 0.35 }
         );
@@ -612,7 +589,6 @@ export class SoundLibrary {
             this.synth.playNote(
                 1318,
                 'triangle',
-                0.15,
                 { attack: 0.001, decay: 0.05, sustain: 0.3, release: 0.1 },
                 { volume: 0.35 }
             );
@@ -627,7 +603,6 @@ export class SoundLibrary {
                 this.synth.playNote(
                     freq,
                     'sine',
-                    0.5,
                     { attack: 0.02, decay: 0.2, sustain: 0.3, release: 0.3 },
                     { volume: 0.5 }
                 );
@@ -642,7 +617,6 @@ export class SoundLibrary {
                 this.synth.playChord(
                     [freq, freq * 1.25],
                     'triangle',
-                    0.5,
                     { attack: 0.01, decay: 0.15, sustain: 0.4, release: 0.4 },
                     { volume: 0.5 }
                 );
@@ -655,7 +629,6 @@ export class SoundLibrary {
         this.synth.playNote(
             baseFreq,
             'sine',
-            0.2,
             { attack: 0.001, decay: 0.05, sustain: 0.5, release: 0.15 },
             { volume: 0.4 + (level * 0.05) }
         );
@@ -664,7 +637,6 @@ export class SoundLibrary {
             this.synth.playNote(
                 baseFreq * 1.5,
                 'sine',
-                0.2,
                 { attack: 0.001, decay: 0.05, sustain: 0.5, release: 0.15 },
                 { volume: 0.4 + (level * 0.05) }
             );
@@ -678,7 +650,6 @@ export class SoundLibrary {
                 this.synth.playNote(
                     freq,
                     'triangle',
-                    0.15,
                     { attack: 0.001, decay: 0.05, sustain: 0.4, release: 0.1 },
                     { volume: 0.45 }
                 );

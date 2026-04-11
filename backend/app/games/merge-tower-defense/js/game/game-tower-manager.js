@@ -4,8 +4,8 @@
  * Dependencies on BoostManager are resolved through game.boostManager,
  * keeping TowerManager decoupled from boost internals.
  */
-import { CONFIG, CANNON_TYPES, MERGE_LEVELS } from './config.js';
-import { Utils } from './utils.js';
+import { CONFIG, CANNON_TYPES, MERGE_LEVELS } from '../config.js';
+import { Utils } from '../utils.js';
 
 export class TowerManager {
     constructor(game) {

@@ -4,8 +4,8 @@
  * SonarQube deduplication: the `result.blocked` rendering pattern appeared
  * three times in game_old.js. It is now consolidated in `_renderHitResult`.
  */
-import { CANNON_TYPES, ZOMBIE_TYPES } from './config.js';
-import { Utils } from './utils.js';
+import { CANNON_TYPES, ZOMBIE_TYPES } from '../config.js';
+import { Utils } from '../utils.js';
 
 export class DamageHandler {
     constructor(game) {

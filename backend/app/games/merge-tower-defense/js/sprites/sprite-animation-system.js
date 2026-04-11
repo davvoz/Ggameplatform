@@ -33,13 +33,13 @@ export class Transform {
         }
 
         const parentWorld = this.parent.getWorldTransform();
-        
+
         // Apply parent rotation to local position
         const cos = Math.cos(parentWorld.rotation);
         const sin = Math.sin(parentWorld.rotation);
         const localX = this.x * parentWorld.scaleX;
         const localY = this.y * parentWorld.scaleY;
-        
+
         return {
             x: parentWorld.x + (localX * cos - localY * sin),
             y: parentWorld.y + (localX * sin + localY * cos),
@@ -78,7 +78,7 @@ export class SpritePart {
         this.opacity = 1.0;
         this.tint = null;
         this.zOrder = zOrder; // Lower = rendered first (behind)
-        
+
         // Animation state
         this.baseTransform = {
             x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1
@@ -191,7 +191,7 @@ export class AnimationClip {
         // Interpolation factor
         const duration = nextFrame.time - prevFrame.time;
         const t = duration > 0 ? (time - prevFrame.time) / duration : 0;
-        
+
         // Smooth interpolation (ease in-out)
         const smoothT = this.smoothstep(t);
 
@@ -227,7 +227,7 @@ export class MultiPartSprite {
         this.animationTime = 0;
         this.playbackSpeed = 1.0;
         this.playing = false;
-        
+
         // Root transform
         this.rootTransform = new Transform();
     }
@@ -252,7 +252,7 @@ export class MultiPartSprite {
     setParent(childName, parentName) {
         const child = this.parts.get(childName);
         const parent = this.parts.get(parentName);
-        
+
         if (child && parent) {
             parent.transform.addChild(child.transform);
         }
@@ -279,7 +279,7 @@ export class MultiPartSprite {
             this.currentAnimation = animationName;
             this.animationTime = 0;
         }
-        
+
         this.playing = true;
     }
 
@@ -336,7 +336,7 @@ export class MultiPartSprite {
      */
     render(ctx, x, y, size, options = {}) {
         ctx.save();
-        
+
         // Position sprite at the center (x,y is already the cell center)
         // Parts use coordinates where 0,0 is the center, ranging roughly -0.5 to 0.5
         ctx.translate(x, y);
@@ -350,10 +350,10 @@ export class MultiPartSprite {
         // Render parts in z-order (lower zOrder = rendered first = behind)
         const partsArray = Array.from(this.parts.values())
             .sort((a, b) => a.zOrder - b.zOrder);
-        
+
         for (const part of partsArray) {
             if (!part.visible) continue;
-            
+
             this.renderPart(ctx, part, size, options);
         }
 
@@ -379,7 +379,7 @@ export class MultiPartSprite {
         // Render geometry - handle array or single geometry
         const geometries = Array.isArray(part.geometry) ? part.geometry : [part.geometry];
         const tint = part.tint || options.tint;
-        
+
         for (const geom of geometries) {
             this.drawGeometry(ctx, geom, size, tint);
         }
@@ -401,97 +401,121 @@ export class MultiPartSprite {
         if (geom.x || geom.y) {
             ctx.translate((geom.x || 0) * size, (geom.y || 0) * size);
         }
-        
+
         if (geom.glow) {
             ctx.shadowColor = geom.glow.color || color;
             ctx.shadowBlur = (geom.glow.blur || 10) * (size / 100);
         }
 
+        this.switchGeomType(geom, ctx, size, color);
+
+        ctx.restore();
+    }
+
+    switchGeomType(geom, ctx, size, color) {
         switch (geom.type) {
             case 'circle':
                 // Circle centered at (0,0) - no offset needed
-                ctx.beginPath();
-                ctx.arc(0, 0, geom.radius * size, 0, Math.PI * 2);
-                if (geom.fill) {
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                }
-                if (geom.stroke) {
-                    ctx.strokeStyle = geom.strokeColor || color;
-                    ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
-                    ctx.stroke();
-                }
+                this.caseCircle(ctx, geom, size, color);
                 break;
 
             case 'rect':
                 // Rectangle centered at (0,0)
-                const rw = geom.width * size;
-                const rh = geom.height * size;
-                if (geom.fill) {
-                    ctx.fillStyle = color;
-                    ctx.fillRect(-rw/2, -rh/2, rw, rh);
-                }
-                if (geom.stroke) {
-                    ctx.strokeStyle = geom.strokeColor || color;
-                    ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
-                    ctx.strokeRect(-rw/2, -rh/2, rw, rh);
-                }
+                this.caseRect(geom, size, ctx, color);
                 break;
 
             case 'ellipse':
                 // Ellipse centered at (0,0)
-                ctx.beginPath();
-                ctx.ellipse(0, 0, (geom.width / 2) * size, (geom.height / 2) * size, 0, 0, Math.PI * 2);
-                if (geom.fill) {
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                }
-                if (geom.stroke) {
-                    ctx.strokeStyle = geom.strokeColor || color;
-                    ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
-                    ctx.stroke();
-                }
+                this.caseEllipse(ctx, geom, size, color);
                 break;
 
             case 'polygon':
                 // Polygon points should be defined relative to (0,0) center
-                if (geom.points && geom.points.length > 0) {
-                    ctx.beginPath();
-                    ctx.moveTo(geom.points[0].x * size, geom.points[0].y * size);
-                    for (let i = 1; i < geom.points.length; i++) {
-                        ctx.lineTo(geom.points[i].x * size, geom.points[i].y * size);
-                    }
-                    ctx.closePath();
-                    
-                    if (geom.fill) {
-                        ctx.fillStyle = color;
-                        ctx.fill();
-                    }
-                    if (geom.stroke) {
-                        ctx.strokeStyle = geom.strokeColor || color;
-                        ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
-                        ctx.stroke();
-                    }
-                }
+                this.casePolygon(geom, ctx, size, color);
                 break;
 
             case 'path':
-                if (geom.path) {
-                    const p = new Path2D(geom.path);
-                    if (geom.fill) {
-                        ctx.fillStyle = color;
-                        ctx.fill(p);
-                    }
-                    if (geom.stroke) {
-                        ctx.strokeStyle = geom.strokeColor || color;
-                        ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
-                        ctx.stroke(p);
-                    }
-                }
+                this.casePath(geom, ctx, color, size);
                 break;
         }
+    }
 
-        ctx.restore();
+    casePath(geom, ctx, color, size) {
+        if (geom.path) {
+            const p = new Path2D(geom.path);
+            if (geom.fill) {
+                ctx.fillStyle = color;
+                ctx.fill(p);
+            }
+            if (geom.stroke) {
+                ctx.strokeStyle = geom.strokeColor || color;
+                ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
+                ctx.stroke(p);
+            }
+        }
+    }
+
+    casePolygon(geom, ctx, size, color) {
+        if (geom.points && geom.points.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo(geom.points[0].x * size, geom.points[0].y * size);
+            for (let i = 1; i < geom.points.length; i++) {
+                ctx.lineTo(geom.points[i].x * size, geom.points[i].y * size);
+            }
+            ctx.closePath();
+
+            if (geom.fill) {
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+            if (geom.stroke) {
+                ctx.strokeStyle = geom.strokeColor || color;
+                ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
+                ctx.stroke();
+            }
+        }
+    }
+
+    caseEllipse(ctx, geom, size, color) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, (geom.width / 2) * size, (geom.height / 2) * size, 0, 0, Math.PI * 2);
+        if (geom.fill) {
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+        if (geom.stroke) {
+            ctx.strokeStyle = geom.strokeColor || color;
+            ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
+            ctx.stroke();
+        }
+    }
+
+    caseRect(geom, size, ctx, color) {
+        const rw = geom.width * size;
+        const rh = geom.height * size;
+        if (geom.fill) {
+            ctx.fillStyle = color;
+            ctx.fillRect(-rw / 2, -rh / 2, rw, rh);
+        }
+        if (geom.stroke) {
+            ctx.strokeStyle = geom.strokeColor || color;
+            ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
+            ctx.strokeRect(-rw / 2, -rh / 2, rw, rh);
+        }
+    }
+
+    caseCircle(ctx, geom, size, color) {
+        ctx.beginPath();
+        ctx.arc(0, 0, geom.radius * size, 0, Math.PI * 2);
+        if (geom.fill) {
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+        if (geom.stroke) {
+            ctx.strokeStyle = geom.strokeColor || color;
+            ctx.lineWidth = (geom.strokeWidth || 1) * (size / 100);
+            ctx.stroke();
+        }
     }
 
     /**

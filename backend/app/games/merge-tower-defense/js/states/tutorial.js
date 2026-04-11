@@ -4,8 +4,8 @@
  * OOP design for scalability and maintainability
  */
 
-import { CONFIG, CANNON_TYPES, UI_CONFIG } from './config.js';
-import { Utils } from './utils.js';
+import { CONFIG,  UI_CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
 
 /**
  * Represents a single tutorial step
@@ -582,8 +582,20 @@ export class TutorialManager {
         ctx.fillStyle = 'rgba(0, 0, 0, 1)';
         
         // Get all highlight bounds (support both single and multiple areas)
-        let allBounds = [];
+        let allBounds = this.getAllHighlightBounds(step, width, height);
         
+        if (allBounds.length > 0) {
+            this.handleBounds(ctx, width, height, allBounds);
+        } else {
+            // No highlight - just draw full overlay
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+        }
+    }
+
+    getAllHighlightBounds(step, width, height) {
+        let allBounds = [];
+
         if (step.highlightAreas && step.highlightAreas.length > 0) {
             // Multiple areas
             for (const area of step.highlightAreas) {
@@ -595,69 +607,66 @@ export class TutorialManager {
             const bounds = this.getHighlightBounds(step.highlightArea, width, height);
             if (bounds) allBounds.push(bounds);
         }
-        
-        if (allBounds.length > 0) {
-            const pulse = this.highlightPulse;
-            const expandAmount = pulse * 4 + 5;
-            
-            // Create a path that covers the whole screen except the highlighted areas
-            // Using canvas clipping with "evenodd" fill rule
+        return allBounds;
+    }
+
+    handleBounds(ctx, width, height, allBounds) {
+        const pulse = this.highlightPulse;
+        const expandAmount = pulse * 4 + 5;
+
+        // Create a path that covers the whole screen except the highlighted areas
+        // Using canvas clipping with "evenodd" fill rule
+        ctx.beginPath();
+
+        // Outer rectangle (full screen)
+        ctx.rect(0, 0, width, height);
+
+        // Inner rectangles (holes) - draw them counterclockwise to create holes
+        for (const bounds of allBounds) {
+            const hx = bounds.x - expandAmount;
+            const hy = bounds.y - expandAmount;
+            const hw = bounds.width + expandAmount * 2;
+            const hh = bounds.height + expandAmount * 2;
+            const radius = 12;
+
+            // Draw rounded rect counterclockwise to create hole
+            ctx.moveTo(hx + radius, hy);
+            ctx.lineTo(hx, hy);
+            ctx.lineTo(hx, hy + hh);
+            ctx.lineTo(hx + hw, hy + hh);
+            ctx.lineTo(hx + hw, hy);
+            ctx.lineTo(hx + radius, hy);
+        }
+
+        ctx.fill('evenodd');
+        ctx.restore();
+
+        // Draw glowing borders around each highlight
+        for (const bounds of allBounds) {
+            const hx = bounds.x - expandAmount;
+            const hy = bounds.y - expandAmount;
+            const hw = bounds.width + expandAmount * 2;
+            const hh = bounds.height + expandAmount * 2;
+            const radius = 12;
+
+            ctx.save();
+            ctx.strokeStyle = `rgba(0, 255, 136, ${0.6 + pulse * 0.4})`;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#00ff88';
+            ctx.shadowBlur = 10 + pulse * 10;
+
             ctx.beginPath();
-            
-            // Outer rectangle (full screen)
-            ctx.rect(0, 0, width, height);
-            
-            // Inner rectangles (holes) - draw them counterclockwise to create holes
-            for (const bounds of allBounds) {
-                const hx = bounds.x - expandAmount;
-                const hy = bounds.y - expandAmount;
-                const hw = bounds.width + expandAmount * 2;
-                const hh = bounds.height + expandAmount * 2;
-                const radius = 12;
-                
-                // Draw rounded rect counterclockwise to create hole
-                ctx.moveTo(hx + radius, hy);
-                ctx.lineTo(hx, hy);
-                ctx.lineTo(hx, hy + hh);
-                ctx.lineTo(hx + hw, hy + hh);
-                ctx.lineTo(hx + hw, hy);
-                ctx.lineTo(hx + radius, hy);
-            }
-            
-            ctx.fill('evenodd');
-            ctx.restore();
-            
-            // Draw glowing borders around each highlight
-            for (const bounds of allBounds) {
-                const hx = bounds.x - expandAmount;
-                const hy = bounds.y - expandAmount;
-                const hw = bounds.width + expandAmount * 2;
-                const hh = bounds.height + expandAmount * 2;
-                const radius = 12;
-                
-                ctx.save();
-                ctx.strokeStyle = `rgba(0, 255, 136, ${0.6 + pulse * 0.4})`;
-                ctx.lineWidth = 3;
-                ctx.shadowColor = '#00ff88';
-                ctx.shadowBlur = 10 + pulse * 10;
-                
-                ctx.beginPath();
-                ctx.moveTo(hx + radius, hy);
-                ctx.lineTo(hx + hw - radius, hy);
-                ctx.quadraticCurveTo(hx + hw, hy, hx + hw, hy + radius);
-                ctx.lineTo(hx + hw, hy + hh - radius);
-                ctx.quadraticCurveTo(hx + hw, hy + hh, hx + hw - radius, hy + hh);
-                ctx.lineTo(hx + radius, hy + hh);
-                ctx.quadraticCurveTo(hx, hy + hh, hx, hy + hh - radius);
-                ctx.lineTo(hx, hy + radius);
-                ctx.quadraticCurveTo(hx, hy, hx + radius, hy);
-                ctx.closePath();
-                ctx.stroke();
-                ctx.restore();
-            }
-        } else {
-            // No highlight - just draw full overlay
-            ctx.fillRect(0, 0, width, height);
+            ctx.moveTo(hx + radius, hy);
+            ctx.lineTo(hx + hw - radius, hy);
+            ctx.quadraticCurveTo(hx + hw, hy, hx + hw, hy + radius);
+            ctx.lineTo(hx + hw, hy + hh - radius);
+            ctx.quadraticCurveTo(hx + hw, hy + hh, hx + hw - radius, hy + hh);
+            ctx.lineTo(hx + radius, hy + hh);
+            ctx.quadraticCurveTo(hx, hy + hh, hx, hy + hh - radius);
+            ctx.lineTo(hx, hy + radius);
+            ctx.quadraticCurveTo(hx, hy, hx + radius, hy);
+            ctx.closePath();
+            ctx.stroke();
             ctx.restore();
         }
     }

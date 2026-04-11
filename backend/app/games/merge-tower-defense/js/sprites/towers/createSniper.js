@@ -1,5 +1,5 @@
 import { MultiPartSprite, AnimationBuilder } from
-    './../../sprite-animation-system.js';
+    '../sprite-animation-system.js';
 
 export function sniper() {
     const sprite = new MultiPartSprite('sniper');

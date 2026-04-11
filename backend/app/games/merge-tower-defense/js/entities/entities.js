@@ -4,12 +4,12 @@
  */
 
 // ============ CANNON ENTITY ============
-import { CONFIG } from './config.js';
-import { Utils } from './utils.js';
-import { enemyAI } from './enemy-ai.js';
-import { Cannon } from './entities/Cannon.js';
-import { Zombie } from './entities/Zombie.js';
-import { Projectile } from './entities/Projectile.js';
+import { CONFIG } from '../config.js';
+import { Utils } from '../utils.js';
+import { enemyAI } from '../enemy/enemy-ai.js';
+import { Cannon } from './Cannon.js';
+import { Zombie } from './Zombie.js';
+import { Projectile } from './Projectile.js';
 // If MERGE_LEVELS is defined elsewhere, import it here
 
 /**

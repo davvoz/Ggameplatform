@@ -1,5 +1,5 @@
 import { MultiPartSprite, AnimationBuilder } from
-    './../../sprite-animation-system.js';
+    '../sprite-animation-system.js';
 
 export function basic() {
     const sprite = new MultiPartSprite('basic');

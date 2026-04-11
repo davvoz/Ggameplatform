@@ -1,4 +1,4 @@
-import { MultiPartSprite, AnimationClip, AnimationBuilder } from './../../sprite-animation-system.js';
+import { MultiPartSprite, AnimationClip, AnimationBuilder } from './../sprite-animation-system.js';
 
 
 export function flyer() {

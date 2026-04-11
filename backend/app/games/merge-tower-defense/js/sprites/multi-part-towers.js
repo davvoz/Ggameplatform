@@ -4,13 +4,13 @@
  */
 
 import { AnimationBuilder, AnimationClip } from './sprite-animation-system.js';
-import { basic } from './sprites/towers/createBasic.js';
-import { electric } from './sprites/towers/createElectric.js';
-import { freeze } from './sprites/towers/createFreeze.js';
-import { laser } from './sprites/towers/createLaser.js';
-import { rapid } from './sprites/towers/createRapid.js';
-import { sniper } from './sprites/towers/createSniper.js';
-import { splash } from './sprites/towers/createSplash.js';
+import { basic } from './towers/createBasic.js';
+import { electric } from './towers/createElectric.js';
+import { freeze } from './towers/createFreeze.js';
+import { laser } from './towers/createLaser.js';
+import { rapid } from './towers/createRapid.js';
+import { sniper } from './towers/createSniper.js';
+import { splash } from './towers/createSplash.js';
 
 export const MultiPartTowerSprites = {
 

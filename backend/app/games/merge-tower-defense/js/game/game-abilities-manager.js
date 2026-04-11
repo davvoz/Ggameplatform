@@ -4,8 +4,8 @@
  * SonarQube deduplication: the ability level-up check appeared identically in
  * executeBomb, executeStun, and activatePushbackAbility. It is now in `_checkLevelUp`.
  */
-import { CONFIG, SPECIAL_ABILITIES } from './config.js';
-import { Utils } from './utils.js';
+import { CONFIG, SPECIAL_ABILITIES } from '../config.js';
+import { Utils } from '../utils.js';
 
 export class AbilityManager {
     constructor(game) {

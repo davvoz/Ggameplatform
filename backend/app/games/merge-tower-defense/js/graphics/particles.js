@@ -3,8 +3,8 @@
  * Advanced particle effects with pooling
  */
 
-import { Utils } from './utils.js';
-import { CONFIG } from './config.js';
+import { Utils } from '../utils.js';
+import { CONFIG } from '../config.js';
 
 export class Particle {
     constructor() {
@@ -666,21 +666,42 @@ export class ParticleSystem {
         });
 
         // Rising stars
-        for (let i = 0; i < 8; i++) {
-            const angle = (Math.PI * 2 * i) / 8;
-            this.emit(x, y, {
-                text: '✨',
-                color: '#ffff88',
-                vx: Math.cos(angle) * 2.5,
-                vy: Math.sin(angle) * 2.5 - 1.5,
-                gravity: 1.2,
-                life: 1.2,
-                scale: 1.0,
+        this.risingStar(x, y);
+
+        // Golden rings expanding
+        this.goldenRingsExpanding(x, y);
+
+        // Shining particles floating up
+        this.shiningParticlesFloatingUp(x, y);
+
+        // Evolution text
+        this.emit(x, y - 0.7, {
+            text: 'EVOLUTION!',
+            color: '#ffdd00',
+            vy: -1.8,
+            life: 2.0,
+            scale: 1.6,
+            glow: true
+        });
+    }
+
+    shiningParticlesFloatingUp(x, y) {
+        for (let i = 0; i < 10; i++) {
+            const offsetX = (Math.random() - 0.5) * 1.5;
+            this.emit(x + offsetX, y + 0.5, {
+                text: '✦',
+                color: i % 3 === 0 ? '#ffff00' : i % 3 === 1 ? '#ffdd00' : '#ffaa00',
+                vx: offsetX * 0.2,
+                vy: -2 - Math.random() * 1.5,
+                gravity: -0.3,
+                life: 1.5 + Math.random() * 0.5,
+                scale: 0.6 + Math.random() * 0.4,
                 glow: true
             });
         }
+    }
 
-        // Golden rings expanding
+    goldenRingsExpanding(x, y) {
         for (let ring = 0; ring < 3; ring++) {
             const ringParticles = 6 + ring * 2;
             for (let i = 0; i < ringParticles; i++) {
@@ -698,31 +719,22 @@ export class ParticleSystem {
                 });
             }
         }
+    }
 
-        // Shining particles floating up
-        for (let i = 0; i < 10; i++) {
-            const offsetX = (Math.random() - 0.5) * 1.5;
-            this.emit(x + offsetX, y + 0.5, {
-                text: '✦',
-                color: i % 3 === 0 ? '#ffff00' : i % 3 === 1 ? '#ffdd00' : '#ffaa00',
-                vx: offsetX * 0.2,
-                vy: -2 - Math.random() * 1.5,
-                gravity: -0.3,
-                life: 1.5 + Math.random() * 0.5,
-                scale: 0.6 + Math.random() * 0.4,
+    risingStar(x, y) {
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 * i) / 8;
+            this.emit(x, y, {
+                text: '✨',
+                color: '#ffff88',
+                vx: Math.cos(angle) * 2.5,
+                vy: Math.sin(angle) * 2.5 - 1.5,
+                gravity: 1.2,
+                life: 1.2,
+                scale: 1.0,
                 glow: true
             });
         }
-
-        // Evolution text
-        this.emit(x, y - 0.7, {
-            text: 'EVOLUTION!',
-            color: '#ffdd00',
-            vy: -1.8,
-            life: 2.0,
-            scale: 1.6,
-            glow: true
-        });
     }
 
     /**

@@ -5,7 +5,7 @@
  * in game_old.js (performMerge, upgradeTower, updateTowerBoosts).
  * It is now consolidated in `applyBoostsToTower` and `_buildMultipliers`.
  */
-import { CONFIG, SHOP_ITEMS } from './config.js';
+import { CONFIG, SHOP_ITEMS } from '../config.js';
 
 export class BoostManager {
     constructor(game) {

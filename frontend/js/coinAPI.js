@@ -5,7 +5,7 @@
 
 class CoinAPI {
     constructor(baseUrl) {
-        this.baseUrl = baseUrl || window.ENV?.API_URL || 'http://localhost:8000';
+        this.baseUrl = baseUrl || globalThis.ENV?.API_URL || 'http://localhost:8000';
     }
 
     /**
@@ -134,12 +134,12 @@ class CoinAPI {
         try {
             const response = await fetch(`${this.baseUrl}/api/coins/${userId}/stats?days=${days}`);
             if (!response.ok) {
-
+                console.error('Failed to fetch detailed stats');
                 return null;
             }
             return await response.json();
         } catch (error) {
-
+            console.error('Error fetching detailed stats:', error);
             return null;
         }
     }

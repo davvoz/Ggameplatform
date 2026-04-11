@@ -33,7 +33,7 @@ class CoinBalanceWidget {
                 coinWidget.className = 'coin-balance';
                 // Insert before logout button
                 const logoutBtn = document.getElementById('logoutBtn');
-                userInfo.insertBefore(coinWidget, logoutBtn);
+                logoutBtn.before(coinWidget);
             }
         }
 
@@ -62,7 +62,7 @@ class CoinBalanceWidget {
                 coinWidget.style.transform = 'scale(1)';
             });
             coinWidget.addEventListener('click', () => {
-                window.location.hash = '#/wallet';
+                globalThis.location.hash = '#/wallet';
             });
         }
     }

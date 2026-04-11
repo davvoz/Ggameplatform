@@ -45,7 +45,7 @@
     padding: 30px;
     margin-bottom: 25px;
     box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
-    color: white;
+    color: var(--text-primary)  ;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -56,10 +56,11 @@
 }
 
 .balance-amount {
-    font-size: 3rem;
+    font-size: 4rem;
     font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
     line-height: 1;
-    margin-bottom: 5px;
 }
 
 .balance-label {
@@ -159,8 +160,8 @@
 .no-transactions {
     text-align: center;
     color: var(--text-secondary);
-    padding: 20px;
-    font-style: italic;
+    padding: 60px 20px;
+    font-size: 1.1rem;
 }
 
 .wallet-earn-info {
@@ -179,32 +180,6 @@
     gap: 12px;
 }
 
-.earn-method {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    background: var(--bg-primary);
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-
-.earn-method .earn-icon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.earn-method .earn-text {
-    flex: 1;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-}
-
-.earn-method .earn-amount {
-    font-weight: bold;
-    color: #28a745;
-    font-size: 1rem;
-}
 
 .wallet-error {
     text-align: center;
@@ -223,7 +198,7 @@
     padding: 20px;
     background: rgba(220, 53, 69, 0.1);
     border-radius: 8px;
-    color: #dc3545;
+    color: var(--error, #dc3545);
     text-align: center;
 }
 
@@ -271,7 +246,7 @@
     padding: 40px;
     margin-bottom: 30px;
     box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
-    color: white;
+    color: var(--text-primary);
 }
 
 .balance-header {
@@ -288,13 +263,6 @@
 .balance-header h2 {
     margin: 0;
     font-size: 1.8rem;
-}
-
-.balance-amount {
-    font-size: 4rem;
-    font-weight: bold;
-    text-align: center;
-    margin: 20px 0;
 }
 
 .balance-amount .coin-label {
@@ -415,13 +383,6 @@
     font-size: 1.2rem;
 }
 
-.no-transactions {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-secondary, #b4bcd0);
-    font-size: 1.1rem;
-}
-
 /* Earn Coins Section */
 .earn-coins-section {
     margin-top: 40px;
@@ -440,6 +401,9 @@
 }
 
 .earn-method {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     background: var(--surface, rgba(255, 255, 255, 0.04));
     border-radius: 16px;
     padding: 30px 24px;

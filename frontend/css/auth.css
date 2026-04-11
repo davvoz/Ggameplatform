@@ -47,8 +47,15 @@
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .hero-title {
@@ -219,8 +226,15 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .method-description {
@@ -396,6 +410,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -433,7 +448,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Auth Footer */
@@ -519,8 +536,13 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .modal-content {
@@ -542,6 +564,7 @@
         transform: translateY(-50px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -749,7 +772,7 @@
         grid-template-columns: repeat(3, 1fr);
         gap: var(--spacing-md);
     }
-    
+
     .auth-card {
         padding: var(--spacing-lg);
         min-height: 480px;
@@ -761,7 +784,7 @@
         grid-template-columns: 1fr;
         gap: var(--spacing-xl);
     }
-    
+
     .auth-card {
         min-height: auto;
     }
@@ -769,109 +792,110 @@
 
 @media (max-width: 768px) {
     .auth-container {
-        max-width: 100%;\n        padding: var(--spacing-lg) var(--spacing-sm);
+        max-width: 100%;
+        padding: var(--spacing-lg) var(--spacing-sm);
         gap: var(--spacing-xl);
     }
-    
+
     .hero-logo {
         width: 80px;
         height: 80px;
         margin-bottom: var(--spacing-md);
     }
-    
+
     .hero-title {
         font-size: 2.8rem;
     }
-    
+
     .hero-subtitle {
         font-size: 1.4rem;
         margin-bottom: var(--spacing-lg);
     }
-    
+
     .hero-stats {
         gap: var(--spacing-xs);
         flex-wrap: nowrap;
     }
-    
+
     .stat-pill {
         font-size: 0.7rem;
         padding: var(--spacing-xs) var(--spacing-sm);
         white-space: nowrap;
     }
-    
+
     .auth-header h2 {
         font-size: 1.25rem;
     }
-    
+
     .auth-card-unified {
         border-radius: var(--radius-xl);
         padding: var(--spacing-lg);
     }
-    
+
     .method-switcher {
         gap: var(--spacing-sm);
         margin-bottom: var(--spacing-lg);
     }
-    
+
     .method-tab {
         padding: var(--spacing-md);
         font-size: 1rem;
         gap: var(--spacing-xs);
     }
-    
+
     .method-tab span {
         font-size: 2.2rem;
     }
-    
+
     .method-description h3 {
         font-size: 1.5rem;
         margin-bottom: var(--spacing-sm);
     }
-    
+
     .method-description p {
         font-size: 1.15rem;
         line-height: 1.5;
     }
-    
+
     .auth-method-content {
         min-height: 310px;
     }
-    
+
     .form-group-compact input {
         padding: var(--spacing-md);
         font-size: 1.1rem;
     }
-    
+
     .btn-auth {
         padding: var(--spacing-md) var(--spacing-xl);
         font-size: 1.1rem;
     }
-    
+
     .btn-icon {
         font-size: 1.4rem;
     }
-    
+
     .auth-status {
         font-size: 1rem;
         padding: var(--spacing-md) var(--spacing-lg);
     }
-    
+
     .modal-content {
         width: 95%;
         margin: 5% auto;
         padding: var(--spacing-lg);
         max-height: 95vh;
     }
-    
+
     .user-info {
         gap: var(--spacing-sm);
         padding: var(--spacing-sm) var(--spacing-md);
     }
-    
+
     .user-info #userName {
         font-size: 0.85rem;
     }
-    
+
     .btn-logout {
         font-size: 0.75rem;
         padding: var(--spacing-xs) var(--spacing-sm);
@@ -883,36 +907,36 @@
         width: 64px;
         height: 64px;
     }
-    
+
     .hero-title {
         font-size: 2.2rem;
     }
-    
+
     .hero-subtitle {
         font-size: 1.15rem;
     }
-    
+
     .stat-pill {
         font-size: 0.95rem;
     }
-    
+
     .auth-header h2 {
         font-size: 1.1rem;
     }
-    
+
     .auth-container {
         padding: var(--spacing-lg) var(--spacing-xs);
     }
-    
+
     .auth-card-unified {
         padding: var(--spacing-md);
     }
-    
+
     .method-tab {
         padding: var(--spacing-md);
         font-size: 0.85rem;
     }
-    
+
     .method-tab span {
         font-size: 1.4rem;
     }

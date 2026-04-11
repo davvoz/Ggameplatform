@@ -36,6 +36,9 @@
     flex-shrink: 0;
     position: relative;
     z-index: 3001;
+    display: flex !important;
+    gap: var(--spacing-sm);
+    align-items: center;
 }
 
 .exit-btn,
@@ -66,13 +69,6 @@
 
 .control-btn:active {
     transform: translateY(0);
-}
-
-.player-controls {
-    display: flex !important;
-    gap: var(--spacing-sm);
-    align-items: center;
-    flex-shrink: 0; /* Prevent controls from being hidden */
 }
 
 .player-container {

@@ -104,6 +104,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    gap: 8px;
+    padding: 4px 6px;
+    max-width: 260px; /* prevent the profile card from growing too wide */
+    flex: 0 0 auto;
+    /* inner container should be transparent — outer `.user-info` provides the card chrome */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 /* Themed glassy card style for profile (outer), multiplier and outer level card wrapper */
@@ -124,17 +132,6 @@
     transition: none !important;
 }
 
-/* Compact profile card adjustments */
-.nav-user-card {
-    gap: 8px;
-    padding: 4px 6px;
-    max-width: 260px; /* prevent the profile card from growing too wide */
-    flex: 0 0 auto;
-    /* inner container should be transparent — outer `.user-info` provides the card chrome */
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
 
 .nav-username {
     display: inline-block;
@@ -147,6 +144,13 @@
 
 .nav-multiplier {
     margin: 0 8px;
+    font-weight: 900;
+    font-size: 1.02rem;
+    color: var(--primary-color);
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* Container holding username + multiplier inline */
@@ -159,11 +163,6 @@
     overflow: hidden;
 }
 
-.nav-multiplier {
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
 /* Multiplier badge inside navbar user card */
 .nav-multiplier-badge {
     display: inline-flex;
@@ -172,31 +171,6 @@
     margin-top: 4px;
 }
 
-.nav-multiplier {
-    font-weight: 900;
-    font-size: 1.02rem;
-    color: var(--primary-color);
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    box-shadow: none;
-    margin: 0 10px;
-}
-
-
-/* Level card: keep pointer but remove hover animation */
-.level-badge-container { cursor: pointer; }
-.level-badge-container:hover { transform: none !important; transition: none !important; }
-
-/* subtle pulse when XP increases can be triggered by adding .xp-pulse */
-.xp-pulse { animation: pulse 1.2s ease-in-out; }
-
-.user-info #userName,
-.nav-username {
-    color: var(--text-primary);
-    font-weight: 700;
-    font-size: 0.95rem;
-}
 
 /* Level Badge Styles */
 .user-info .cur8-badge {
@@ -215,6 +189,7 @@
     text-overflow: ellipsis;
 }
 
+/* Level card: keep pointer but remove hover animation */
 .level-badge-container {
     display: flex;
     align-items: center;
@@ -228,6 +203,22 @@
     min-width: 180px;
     max-width: 480px;
     flex: 0 0 auto;
+    cursor: pointer;
+}
+
+.level-badge-container:hover {
+    transform: none !important;
+    transition: none !important;
+}
+
+/* subtle pulse when XP increases can be triggered by adding .xp-pulse */
+.xp-pulse { animation: pulse 1.2s ease-in-out; }
+
+.user-info #userName,
+.nav-username {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.95rem;
 }
 
 /* Reset any inner widget chrome so the outer card provides the visual frame */
@@ -236,9 +227,6 @@
     border: none !important;
     box-shadow: none !important;
 }
-
-/* Ensure badge container can position the multiplier inside it */
-.level-badge-container { position: relative; }
 
 .level-badge-container .level-multiplier {
     position: absolute;
@@ -262,6 +250,7 @@
 .nav-level-card {
     display: flex;
     align-items: center;
+    justify-content: center;
     margin-left: 1.25rem;
     padding: 10px 12px;
     min-width: 120px;
@@ -275,11 +264,6 @@
     box-shadow: 0 8px 30px color-mix(in srgb, var(--level-color, #6366f1) 12%, rgba(2,6,23,0.6)), 
                 0 2px 8px rgba(0,0,0,0.6) !important;
     position: relative;
-}
-
-/* Center the content inside the standalone level card so the badge looks aligned */
-.nav-level-card {
-    justify-content: center;
 }
 
 /* When the badge container is inside the navbar-level card, center its children
@@ -315,7 +299,7 @@
     color: var(--primary-color);
     font-size: 1rem;
     white-space: nowrap;
-    margin-left: 6px;
+    margin-left: 10px;
 }
 
 /* When multiplier is placed inside the badge container, align it to the right area */
@@ -323,10 +307,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.level-multiplier {
-    margin-left: 10px;
 }
 
 /* New multiplier card styles */
@@ -348,13 +328,10 @@
     border: 1px solid rgba(0, 200, 255, 0.3) !important;
     box-shadow: 0 8px 30px rgba(0, 200, 255, 0.15), 0 2px 8px rgba(0,0,0,0.6) !important;
     position: relative;
+    text-align: left;
 }
 
 /* Center the multiplier title and value horizontally and vertically */
-
-.nav-multiplier-card {
-    text-align: left;
-}
 
 .nav-multiplier-card .multiplier-title {
     display: flex;
@@ -362,10 +339,24 @@
     align-items: flex-start; /* left-align the two-line title */
     justify-content: center;
     text-align: left;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.95);
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
 }
 
 .nav-multiplier-card .multiplier-value {
     margin: 0;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #00d4ff;
+    text-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+    position: relative;
+    z-index: 1;
 }
 
 /* Increase horizontal spacing between links and the nav cards on desktop */
@@ -378,32 +369,12 @@
     }
 }
 
-.nav-multiplier-card .multiplier-title {
-    font-size: 0.78rem;
-    color: rgba(255,255,255,0.95);
-    font-weight: 800;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    line-height: 1;
-    position: relative;
-    z-index: 1;
-}
-
 .nav-multiplier-card .multiplier-title span:first-child {
     font-size: 12px;
 }
 
 .nav-multiplier-card .multiplier-title span:last-child {
     font-weight: 700;
-}
-
-.nav-multiplier-card .multiplier-value {
-    font-size: 1.1rem;
-    font-weight: 900;
-    color: #00d4ff;
-    text-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
-    position: relative;
-    z-index: 1;
 }
 
 @media (max-width: 768px) {
@@ -639,7 +610,7 @@
     height: 20px;
     padding: 0 6px;
     background: linear-gradient(135deg, var(--secondary-color), #ff6b9d);
-    color: white;
+    color:var(--text-primary);
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
@@ -733,7 +704,7 @@
     height: 20px;
     padding: 0 6px;
     background: linear-gradient(135deg, #00d4aa, #00b4d8);
-    color: white;
+    color: var(--text-primary);
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
@@ -858,7 +829,7 @@
     height: 12px;
     padding: 0;
     background: linear-gradient(135deg, var(--secondary-color), #ff6b9d);
-    color: white;
+    color: var(--text-primary);
     border-radius: 50%;
     font-size: 0.55rem;
     font-weight: 800;
@@ -881,7 +852,7 @@
     min-width: 12px;
     padding: 0;
     background: linear-gradient(135deg, #00d4aa, #00b4d8);
-    color: white;
+    color: var(--text-primary);
     border-radius: 50%;
     font-size: 0.55rem;
     font-weight: 800;
@@ -965,7 +936,7 @@
 
     /* Make level card full width inside the mobile menu and remove left margin */
     .nav-level-card {
-        margin-left: 0;
+        margin-left: 0 !important;
         width: 100%;
         justify-content: center;
         padding: 10px 12px;
@@ -1095,13 +1066,6 @@
         padding: var(--spacing-sm);
     }
 
-    /* Ensure level card and its badge take full width inside mobile menu */
-    .nav-level-card {
-        width: 100%;
-        margin-left: 0 !important;
-        padding: 10px 12px;
-        justify-content: center;
-    }
 
     #levelBadgeContainer, .level-badge-container {
         width: 100%;
@@ -1206,11 +1170,6 @@ body.ios-pwa .navbar .container,
 html.ios-standalone .navbar .container,
 body.display-standalone .navbar .container {
     padding-top: calc(env(safe-area-inset-top, 0px));
-}
-
-/* ensure the hamburger/menu toggle is above overlays */
-.nav-toggle {
-    z-index: 11001;
 }
 
 /* slide-out menu positioning is default (no iOS-only overrides) */

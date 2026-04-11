@@ -1,21 +1,21 @@
 import { calculateXpData } from './level-widget.js';
 
 // Authentication Manager
-const AuthManager = {
-    currentUser: null,
-    platformEpoch: null,
+class AuthManager {
+    currentUser = null;
+    platformEpoch = null;
 
     // Get API base URL from globalThis.ENV (set by env.js)
     get apiBase() {
         const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin || 'http://localhost:8000';
         return `${apiUrl}/users`;
-    },
+    }
 
     // Get Platform API base URL
     get platformApiBase() {
         const apiUrl = globalThis.ENV?.API_URL || globalThis.location.origin || 'http://localhost:8000';
         return `${apiUrl}/api/platform`;
-    },
+    }
 
     async init() {
         // Pulisci eventuali banner residui da vecchie sessioni
@@ -23,14 +23,14 @@ const AuthManager = {
         document.body.classList.remove('has-auth-banner');
 
         this.loadUserFromStorage();
-        
+
         // Verifica platform epoch prima di continuare
         const epochValid = await this.checkPlatformEpoch();
         if (!epochValid) {
             // L'utente è stato sloggato perché la piattaforma è stata resettata
             return;
         }
-        
+
         this.attachEventListeners();
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
 
@@ -39,42 +39,38 @@ const AuthManager = {
         setTimeout(() => {
             this.updateUI().catch(err => console.error('Failed to update UI:', err));
         }, 100);
-    },
+    }
 
-    /**
-     * Verifica il platform epoch e fa logout se la piattaforma è stata resettata
-     * @returns {Promise<boolean>} true se l'epoch è valido, false se l'utente deve fare login
-     */
     async checkPlatformEpoch() {
         try {
             const response = await fetch(`${this.platformApiBase}/info`);
-            
+
             if (response.ok) {
                 const data = await response.json();
                 const serverEpoch = data.platform_epoch;
                 const storedEpoch = localStorage.getItem('platformEpoch');
-                
+
                 // Se abbiamo un epoch salvato e un utente loggato, verifica
                 if (storedEpoch && serverEpoch && storedEpoch !== serverEpoch && this.currentUser) {
                     console.log('🔄 Platform has been reset. Logging out user...');
-                    
+
                     // Logout l'utente
                     this.currentUser = null;
                     localStorage.removeItem('gameplatform_user');
                     localStorage.removeItem('currentUser');
                     localStorage.removeItem('authMethod');
-                    
+
                     // Salva il nuovo epoch
                     localStorage.setItem('platformEpoch', serverEpoch);
                     this.platformEpoch = serverEpoch;
-                    
+
                     // Se non siamo sulla pagina auth, redirect
                     if (!globalThis.location.pathname.includes('auth.html')) {
                         globalThis.location.href = '/auth.html?reason=platform_reset';
                         return false;
                     }
                 }
-                
+
                 // Aggiorna l'epoch salvato
                 localStorage.setItem('platformEpoch', serverEpoch);
                 this.platformEpoch = serverEpoch;
@@ -83,7 +79,7 @@ const AuthManager = {
             console.warn('Failed to check platform epoch:', e);
         }
         return true;
-    },
+    }
 
     attachEventListeners() {
         // Login button
@@ -125,7 +121,7 @@ const AuthManager = {
                 this.hideAuthModal();
             }
         });
-    },
+    }
 
     switchTab(tabName) {
         // Update tab buttons
@@ -138,18 +134,18 @@ const AuthManager = {
             content.classList.remove('active');
         });
         document.getElementById(`${tabName}-tab`)?.classList.add('active');
-    },
+    }
 
     showAuthModal() {
         document.getElementById('authModal').style.display = 'block';
-    },
+    }
 
     hideAuthModal() {
         document.getElementById('authModal').style.display = 'none';
         // Clear status messages
         document.getElementById('keychainStatus').textContent = '';
         document.getElementById('anonymousStatus').textContent = '';
-    },
+    }
 
     async loginWithKeychain() {
         const username = document.getElementById('steemUsername').value.trim();
@@ -259,7 +255,7 @@ const AuthManager = {
             statusEl.textContent = `❌ Error: ${error.message}`;
             statusEl.className = 'status-message error';
         }
-    },
+    }
 
     async loginAnonymous() {
         const statusEl = document.getElementById('anonymousStatus');
@@ -294,14 +290,14 @@ const AuthManager = {
             statusEl.textContent = `❌ Error: ${error.message}`;
             statusEl.className = 'status-message error';
         }
-    },
+    }
 
     setUser(userData) {
         this.currentUser = userData;
         // Usa la stessa chiave usata da authManager.js per compatibilità
         localStorage.setItem('currentUser', JSON.stringify(userData));
         localStorage.setItem('gameplatform_user', JSON.stringify(userData));
-        
+
         // Salva anche il platform epoch corrente per verifiche future
         if (this.platformEpoch) {
             localStorage.setItem('platformEpoch', this.platformEpoch);
@@ -311,12 +307,12 @@ const AuthManager = {
 
         // Dispatch custom event
         globalThis.dispatchEvent(new CustomEvent('userLogin', { detail: userData }));
-    },
+    }
 
     loadUserFromStorage() {
         // Carica platform epoch salvato
         this.platformEpoch = localStorage.getItem('platformEpoch');
-        
+
         // Prova prima con 'gameplatform_user', poi con 'currentUser' per compatibilità
         let stored = localStorage.getItem('gameplatform_user');
         if (!stored) {
@@ -330,10 +326,8 @@ const AuthManager = {
                 localStorage.removeItem('gameplatform_user');
                 localStorage.removeItem('currentUser');
             }
-        } else {
-
         }
-    },
+    }
 
     logout() {
         this.currentUser = null;
@@ -347,7 +341,7 @@ const AuthManager = {
 
         // Redirect to auth page
         globalThis.location.href = '/auth.html';
-    },
+    }
 
     async updateUI() {
         const userInfo = document.getElementById('userInfo');
@@ -367,134 +361,15 @@ const AuthManager = {
 
         if (this.currentUser) {
             // User logged in
-            userInfo.style.display = 'flex';
-
-            // Ensure navbar multiplier reflects current user immediately
-            try {
-                const navMultiplierEl = document.getElementById('navMultiplier');
-                if (navMultiplierEl) {
-                    const mult = Number(this.currentUser.cur8_multiplier || 1).toFixed(2);
-                    navMultiplierEl.textContent = `${mult}x`;
-                }
-            } catch (e) {
-
-            }
-
-            // Show profile link
-            if (profileLink) {
-                profileLink.classList.remove('auth-required');
-                profileLink.style.display = 'inline-block';
-            }
-
-            // Show Quests link only for non-anonymous users
-            if (questsLink) {
-                if (this.currentUser.is_anonymous) {
-                    questsLink.classList.add('auth-required');
-                    questsLink.style.display = 'none';
-                } else {
-                    questsLink.classList.remove('auth-required');
-                    questsLink.style.display = 'inline-block';
-                }
-            } else {
-
-            }
-
-            // Show Community link only for non-anonymous users
-            if (communityLink) {
-                if (this.currentUser.is_anonymous) {
-                    communityLink.classList.add('auth-required');
-                    communityLink.style.display = 'none';
-                } else {
-                    communityLink.classList.remove('auth-required');
-                    communityLink.style.display = 'inline-block';
-                }
-            }
-
-
-
-            let displayName = '';
-            let badge = '';
-
-            if (this.currentUser.is_anonymous) {
-                badge = '👤 ';
-                displayName = `Guest #${this.currentUser.user_id.slice(-6)}`;
-            } else if (this.currentUser.steemUsername) {
-                badge = '⚡ ';
-                displayName = this.currentUser.steemUsername;
-            } else {
-                displayName = this.currentUser.username || 'User';
-            }
-
-            userName.textContent = badge + displayName;
-
-            // Popola anche il nome utente sopra il logout
-            const navUserNameTop = document.getElementById('navUserNameTop');
-            if (navUserNameTop) {
-                navUserNameTop.textContent = displayName;
-            }
-
-            // Carica info livello
-            try {
-                const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
-                const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
-                if (response.ok) {
-                    const levelInfo = await response.json();
-                    // Use a small swatch showing the level color instead of coloring the whole container
-                    levelBadgeContainer.innerHTML = `
-                        <div class="level-badge-container">
-                            <span class="level-color-swatch"><span class="level-badge-icon">${levelInfo.badge}</span></span>
-                            <div class="level-badge-info">
-                                <div class="level-badge-title">
-                                    <span class="level-badge-number">Lv${levelInfo.current_level}</span>
-                                    <span class="level-badge-separator">·</span>
-                                    <span>${levelInfo.title}</span>
-                                </div>
-                                <div class="level-badge-progress-container">
-                                    <div class="level-badge-progress-bar">
-                                        <div class="level-badge-progress-fill"></div>
-                                    </div>
-                                    <span class="level-badge-progress-text">${(() => {
-                                        const { xpInLevel, xpRequiredForNext } = calculateXpData(levelInfo);
-                                        return `${Math.round(xpInLevel)} / ${Math.round(xpRequiredForNext)} XP`;
-                                    })()}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    // Apply CSS variables safely so invalid/undefined values don't leak into styles
-                    try {
-                        const created = levelBadgeContainer.querySelector('.level-badge-container');
-                        if (created) {
-                            const safeColor = levelInfo.color || getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#6366f1';
-                            const percent = Number(levelInfo.progress_percent) || 0;
-                            created.style.setProperty('--level-color', safeColor);
-                            created.style.setProperty('--progress-percent', `${percent}%`);
-                            
-                            // Applica anche al parent .nav-level-card per il gradiente
-                            const navLevelCard = levelBadgeContainer.closest('.nav-level-card');
-                            if (navLevelCard) {
-                                navLevelCard.style.setProperty('--level-color', safeColor);
-                            }
-                        }
-                    } catch (e) {
-
-                    }
-                } else {
-                    // Fallback se API non risponde
-                    const cur8Total = this.currentUser.total_xp_earned || 0;
-                    const multiplier = this.currentUser.cur8_multiplier || 1;
-                    levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
-                }
-            } catch (error) {
-                console.error('Failed to load level info:', error);
-                const cur8Total = this.currentUser.total_xp_earned || 0;
-                const multiplier = this.currentUser.cur8_multiplier || 1;
-                levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
-            }
+            await this.updateUserInterface(userInfo, profileLink, questsLink, communityLink, userName, levelBadgeContainer);
 
         } else {
             // User not logged in
+            userNotLoggedIn();
+
+        }
+
+        function userNotLoggedIn() {
             userInfo.style.display = 'none';
             if (profileLink) {
                 profileLink.classList.add('auth-required');
@@ -508,9 +383,141 @@ const AuthManager = {
                 communityLink.classList.add('auth-required');
                 communityLink.style.display = 'none';
             }
-
         }
-    },
+    }
+
+    async updateUserInterface(userInfo, profileLink, questsLink, communityLink, userName, levelBadgeContainer) {
+        userInfo.style.display = 'flex';
+
+        // Ensure navbar multiplier reflects current user immediately
+        const navMultiplierEl = document.getElementById('navMultiplier');
+        if (navMultiplierEl) {
+            const mult = Number(this.currentUser.cur8_multiplier || 1).toFixed(2);
+            navMultiplierEl.textContent = `${mult}x`;
+        }
+
+
+        // Show profile link
+        if (profileLink) {
+            profileLink.classList.remove('auth-required');
+            profileLink.style.display = 'inline-block';
+        }
+
+        // Show Quests link only for non-anonymous users
+        if (questsLink) {
+            if (this.currentUser.is_anonymous) {
+                questsLink.classList.add('auth-required');
+                questsLink.style.display = 'none';
+            } else {
+                questsLink.classList.remove('auth-required');
+                questsLink.style.display = 'inline-block';
+            }
+        }
+
+        // Show Community link only for non-anonymous users
+        if (communityLink) {
+            if (this.currentUser.is_anonymous) {
+                communityLink.classList.add('auth-required');
+                communityLink.style.display = 'none';
+            } else {
+                communityLink.classList.remove('auth-required');
+                communityLink.style.display = 'inline-block';
+            }
+        }
+
+
+
+        let { badge, displayName } = this.getUserDisplayInfo();
+
+        userName.textContent = badge + displayName;
+
+        // Popola anche il nome utente sopra il logout
+        const navUserNameTop = document.getElementById('navUserNameTop');
+        if (navUserNameTop) {
+            navUserNameTop.textContent = displayName;
+        }
+
+        // Carica info livello
+        try {
+            await this.loadUserLevelInfo(levelBadgeContainer);
+        } catch (error) {
+            console.error('Failed to load level info:', error);
+            const cur8Total = this.currentUser.total_xp_earned || 0;
+            const multiplier = this.currentUser.cur8_multiplier || 1;
+            levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+        }
+    }
+
+    getUserDisplayInfo() {
+        let displayName = '';
+        let badge = '';
+
+        if (this.currentUser.is_anonymous) {
+            badge = '👤 ';
+            displayName = `Guest #${this.currentUser.user_id.slice(-6)}`;
+        } else if (this.currentUser.steemUsername) {
+            badge = '⚡ ';
+            displayName = this.currentUser.steemUsername;
+        } else {
+            displayName = this.currentUser.username || 'User';
+        }
+        return { badge, displayName };
+    }
+
+    async loadUserLevelInfo(levelBadgeContainer) {
+        const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
+        const response = await fetch(`${API_URL}/api/levels/${this.currentUser.user_id}`);
+        if (response.ok) {
+            const levelInfo = await response.json();
+            // Use a small swatch showing the level color instead of coloring the whole container
+            levelBadgeContainer.innerHTML = `
+                        <div class="level-badge-container">
+                            <span class="level-color-swatch"><span class="level-badge-icon">${levelInfo.badge}</span></span>
+                            <div class="level-badge-info">
+                                <div class="level-badge-title">
+                                    <span class="level-badge-number">Lv${levelInfo.current_level}</span>
+                                    <span class="level-badge-separator">·</span>
+                                    <span>${levelInfo.title}</span>
+                                </div>
+                                <div class="level-badge-progress-container">
+                                    <div class="level-badge-progress-bar">
+                                        <div class="level-badge-progress-fill"></div>
+                                    </div>
+                                    <span class="level-badge-progress-text">${(() => {
+                    const { xpInLevel, xpRequiredForNext } = calculateXpData(levelInfo);
+                    return `${Math.round(xpInLevel)} / ${Math.round(xpRequiredForNext)} XP`;
+                })()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+            // Apply CSS variables safely so invalid/undefined values don't leak into styles
+            const created = levelBadgeContainer.querySelector('.level-badge-container');
+            if (created) {
+                const safeColor = levelInfo.color || getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#6366f1';
+                const percent = Number(levelInfo.progress_percent) || 0;
+                created.style.setProperty('--level-color', safeColor);
+                created.style.setProperty('--progress-percent', `${percent}%`);
+
+                // Applica anche al parent .nav-level-card per il gradiente
+                const navLevelCard = levelBadgeContainer.closest('.nav-level-card');
+                if (navLevelCard) {
+                    navLevelCard.style.setProperty('--level-color', safeColor);
+                }
+            }
+
+        } else {
+            // Fallback se API non risponde
+            const cur8Total = this.currentUser.total_xp_earned || 0;
+            const multiplier = this.currentUser.cur8_multiplier || 1;
+            levelBadgeContainer.textContent = `XP ${multiplier}x 💰 ${cur8Total.toFixed(2)} XP`;
+        }
+    }
+
+    userAreLoggedIn() {
+        return this.currentUser !== null;
+    }
 
     updateCur8(amount) {
         if (this.currentUser) {
@@ -523,18 +530,16 @@ const AuthManager = {
 
             // Aggiorna UI immediatamente
             this.updateUI().catch(err => console.error('Failed to update UI:', err));
-        } else {
-
         }
-    },
+    }
 
     getUser() {
         return this.currentUser;
-    },
+    }
 
     isLoggedIn() {
         return this.currentUser !== null;
-    },
+    }
 
     requireAuth(callback) {
         if (!this.isLoggedIn()) {
@@ -543,14 +548,14 @@ const AuthManager = {
         }
         if (callback) callback();
         return true;
-    },
+    }
 
     /**
      * Track daily access for login quests
      * Called once per day to update login streak and login quests
      */
     async trackDailyAccess() {
-        if (!this.currentUser || !this.currentUser.user_id) {
+        if (!this.currentUser?.user_id) {
             return;
         }
 
@@ -558,7 +563,7 @@ const AuthManager = {
             // Check if we already tracked today
             const lastTrackedDate = localStorage.getItem('lastDailyAccessTracked');
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            
+
             if (lastTrackedDate === today) {
                 // Already tracked today, skip
                 return;
@@ -575,17 +580,17 @@ const AuthManager = {
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 // Save that we tracked today
                 localStorage.setItem('lastDailyAccessTracked', today);
-                
+
                 // Update login streak if available
                 if (data.login_streak !== undefined) {
                     this.currentUser.login_streak = data.login_streak;
                     localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
                     localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
                 }
-                
+
 
             }
         } catch (error) {
@@ -594,5 +599,6 @@ const AuthManager = {
     }
 };
 
-// ES6 export
-export default AuthManager;
+//export singleton instance
+const authManager = new AuthManager();
+export default authManager;

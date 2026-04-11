@@ -162,7 +162,7 @@ export async function trackGamePlay(gameId) {
  */
 export async function getUserSessions(userId, limit) {
     try {
-        const url = `${API_BASE_URL}/users/${userId}/sessions` + (typeof limit !== 'undefined' ? `?limit=${limit}` : '');
+        const url = `${API_BASE_URL}/users/${userId}/sessions` + (limit !== undefined && `?limit=${limit}` || '');
         const response = await fetch(url);
 
         if (!response.ok) {

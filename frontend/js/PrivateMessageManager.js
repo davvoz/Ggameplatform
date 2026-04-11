@@ -257,6 +257,14 @@ class PrivateMessageManager {
         this.activePeerUsername = null;
         this.messages = [];
         this.isInitialized = false;
+
+        // Emoji data (same as community chat)
+        this.commonEmojis = [
+            '😀', '😂', '🤣', '😊', '😍', '🥰', '😎', '🤔',
+            '😭', '😱', '🔥', '❤️', '💯', '👍', '👎', '👏',
+            '🎮', '🎯', '🏆', '⭐', '💎', '🚀', '💪', '🙏',
+            '😈', '👀', '🤝', '✌️', '🎉', '🎊', '💥', '⚡'
+        ];
     }
 
     // ─── Public API ───
@@ -652,28 +660,52 @@ class PrivateMessageManager {
         const inputArea = document.createElement('div');
         inputArea.className = 'pm-chat-input-area';
 
+        const inputRow = document.createElement('div');
+        inputRow.className = 'chat-input-row';
+
+        // Action buttons (emoji)
+        const actions = document.createElement('div');
+        actions.className = 'chat-input-actions';
+
+        const emojiBtn = document.createElement('button');
+        emojiBtn.className = 'chat-action-btn';
+        emojiBtn.id = 'pmEmojiBtn';
+        emojiBtn.title = 'Emoji';
+        emojiBtn.innerHTML = '<span>😊</span>';
+        actions.appendChild(emojiBtn);
+
+        inputRow.appendChild(actions);
+
+        // Input field
+        const inputField = document.createElement('div');
+        inputField.className = 'chat-input-field';
+
         const input = document.createElement('input');
         input.type = 'text';
-        input.className = 'pm-chat-input';
         input.id = 'pmChatInput';
         input.placeholder = 'Message...';
         input.maxLength = 500;
         input.autocomplete = 'off';
-        inputArea.appendChild(input);
+        inputField.appendChild(input);
+        inputRow.appendChild(inputField);
 
+        // Send button
         const sendBtn = document.createElement('button');
-        sendBtn.className = 'pm-send-btn';
+        sendBtn.className = 'chat-send-btn';
         sendBtn.id = 'pmSendBtn';
+        sendBtn.title = 'Send';
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', '20');
-        svg.setAttribute('height', '20');
+        svg.setAttribute('width', '24');
+        svg.setAttribute('height', '24');
         svg.setAttribute('viewBox', '0 0 24 24');
         svg.setAttribute('fill', 'currentColor');
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', 'M2.01 21L23 12 2.01 3 2 10l15 2-15 2z');
         svg.appendChild(path);
         sendBtn.appendChild(svg);
-        inputArea.appendChild(sendBtn);
+        inputRow.appendChild(sendBtn);
+
+        inputArea.appendChild(inputRow);
 
         chatArea.replaceChildren(header, messagesArea, inputArea);
 
@@ -694,7 +726,7 @@ class PrivateMessageManager {
 
         const textDiv = document.createElement('div');
         textDiv.className = 'pm-message-text';
-        textDiv.textContent = message.text;
+        textDiv.appendChild(this._processMessageText(message.text));
         bubble.appendChild(textDiv);
 
         const footer = document.createElement('div');
@@ -744,6 +776,13 @@ class PrivateMessageManager {
             }
         });
 
+        // Emoji button
+        const emojiBtn = chatArea.querySelector('#pmEmojiBtn');
+        emojiBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this._toggleEmojiPicker();
+        });
+
         // Edit button delegation
         const messagesEl = chatArea.querySelector('#pmChatMessages');
         messagesEl?.addEventListener('click', (e) => {
@@ -760,6 +799,32 @@ class PrivateMessageManager {
         input?.focus();
     }
 
+    _processMessageText(text) {
+        const fragment = document.createDocumentFragment();
+        const urlRegex = /(https?:\/\/[^\s<]+)/gi;
+        let lastIndex = 0;
+        let match;
+
+        while ((match = urlRegex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+            }
+            const a = document.createElement('a');
+            a.href = match[1];
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = match[1];
+            fragment.appendChild(a);
+            lastIndex = urlRegex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+
+        return fragment;
+    }
+
     _sendCurrentMessage(inputEl) {
         if (!inputEl || !this.activePeerId) {
             return;
@@ -770,6 +835,64 @@ class PrivateMessageManager {
         }
         inputEl.value = '';
         this.api.sendMessage(this.activePeerId, text);
+    }
+
+    _toggleEmojiPicker() {
+        const inputArea = this.container.querySelector('.pm-chat-input-area');
+        if (!inputArea) return;
+
+        let picker = inputArea.querySelector('.emoji-picker-container');
+
+        if (!picker) {
+            picker = document.createElement('div');
+            picker.className = 'emoji-picker-container';
+
+            const grid = document.createElement('div');
+            grid.className = 'emoji-grid';
+
+            this.commonEmojis.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.addEventListener('click', () => {
+                    this._insertEmoji(emoji);
+                });
+                grid.appendChild(btn);
+            });
+
+            picker.appendChild(grid);
+            inputArea.style.position = 'relative';
+            inputArea.insertBefore(picker, inputArea.firstChild);
+        }
+
+        const isNowActive = !picker.classList.contains('active');
+        picker.classList.toggle('active');
+
+        if (isNowActive) {
+            const emojiBtn = this.container.querySelector('#pmEmojiBtn');
+            setTimeout(() => {
+                const closeHandler = (e) => {
+                    if (!picker.contains(e.target) && (!emojiBtn?.contains(e.target))) {
+                        picker.classList.remove('active');
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                document.addEventListener('click', closeHandler);
+            }, 10);
+        }
+    }
+
+    _insertEmoji(emoji) {
+        const input = this.container.querySelector('#pmChatInput');
+        if (!input) return;
+
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+
+        input.value = text.substring(0, start) + emoji + text.substring(end);
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+        input.focus();
     }
 
     _closeChat() {

@@ -47,7 +47,7 @@
 .close-banner {
     background: rgba(255, 255, 255, 0.2);
     border: none;
-    color: white;
+    color: var(--text-primary, #ffffff);
     font-size: 24px;
     width: 36px;
     height: 36px;
@@ -154,7 +154,7 @@
     top: -8px;
     right: -8px;
     background: #ff5722;
-    color: white;
+    color: var(--text-primary, #ffffff);
     width: 28px;
     height: 28px;
     border-radius: 50%;
@@ -172,7 +172,7 @@
 
 .claim-button {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
+    color: var(--text-primary, #ffffff);
     border: none;
     padding: 12px 32px;
     border-radius: 50px;
@@ -183,6 +183,8 @@
     box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
     text-transform: uppercase;
     letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
 }
 
 .claim-button:hover:not(:disabled) {
@@ -279,7 +281,7 @@
 }
 
 .success-animation .success-text {
-    color: white;
+    color: var(--text-primary, #ffffff);
     font-size: 18px;
     font-weight: 700;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -289,9 +291,6 @@
     font-size: 14px;
     color: #ffd700;
     margin-top: 4px;
-}
-
-/* Overlay */
 }
 
 .cycle-complete span {
@@ -316,7 +315,7 @@
     height: 60px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    color: var(--text-primary, #ffffff);
     border: none;
     font-size: 28px;
     cursor: pointer;
@@ -431,11 +430,6 @@
 }
 
 /* Glow effect on claim button */
-.claim-button {
-    position: relative;
-    overflow: hidden;
-}
-
 .claim-button::before {
     content: '';
     position: absolute;

@@ -129,7 +129,7 @@
 
 .pm-btn--accept {
     background: #22c55e;
-    color: #fff;
+    color: #414040;
 }
 
 .pm-btn--accept:hover {
@@ -143,7 +143,7 @@
 
 .pm-btn--reject:hover {
     background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    color: #2c0000;
 }
 
 /* ========== Connections List ========== */
@@ -196,7 +196,7 @@
     height: 20px;
     padding: 0 6px;
     background: linear-gradient(135deg, #f59e0b, #ef4444);
-    color: #fff;
+    color: var(--text-primary);
     border-radius: 10px;
     font-size: 0.7rem;
     font-weight: 700;
@@ -352,6 +352,18 @@
     font-size: 0.9rem;
     line-height: 1.4;
     color: var(--text-primary);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.pm-message-text a {
+    color: #38bdf8;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.pm-message--own .pm-message-text a {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .pm-message-time {
@@ -472,13 +484,14 @@
 /* ========== Chat Input ========== */
 .pm-chat-input-area {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
-    padding: 10px 14px;
+    padding: 12px 16px;
     background: var(--chat-input-bg, #1a1f2e);
     border-top: 1px solid var(--border);
     border-radius: 0 0 12px 12px;
     flex-shrink: 0;
+    position: relative;
 }
 
 .pm-chat-input {
@@ -507,7 +520,7 @@
     border-radius: 50%;
     background: var(--primary-color, #0ea5e9);
     border: none;
-    color: white;
+    color: var(--text-primary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -540,7 +553,7 @@
 
 .user-profile-connect-btn:hover:not(:disabled) {
     background: var(--primary-color, #0ea5e9);
-    color: #fff;
+    color: var(--text-primary);
 }
 
 .user-profile-connect-btn:active:not(:disabled) {

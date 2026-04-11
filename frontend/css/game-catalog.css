@@ -12,7 +12,6 @@
     background: var(--surface);
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
-    /* max-width: 400px; */
     margin-left: auto;
     margin-right: auto;
     position: relative;
@@ -337,14 +336,6 @@
     color: var(--background);
 }
 
-/* Game Grid */
-
-.game-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--spacing-lg);
-}
-
 /* Game Card */
 
 .game-card {
@@ -390,7 +381,7 @@
     top: 12px;
     right: -32px;
     background: var(--ribbon-color, #6c757d);
-    color: rgb(0, 0, 0);
+    color: rgb(255, 255, 255);
     padding: 5px 38px;
     font-size: 0.6rem;
     font-weight: 600;
@@ -458,7 +449,7 @@
 /* COIN Rewards Badge - similar placement to STEEM but gold theme */
 .coin-rewards-badge {
     background: linear-gradient(180deg, #ffd966 0%, #f7b733 100%);
-    color: #ffffff;
+    color: var(--text-primary, #000);
     padding: 4px 10px;
     border-radius: var(--radius-sm);
     font-size: 0.7rem;
@@ -526,7 +517,7 @@
 
 .campaign-badge {
     background: linear-gradient(135deg, var(--campaign-color, #ff6b00), #ff9500);
-    color: #fff;
+    color: var(  --text-primary, #ffffff);
     padding: 4px 10px;
     border-radius: var(--radius-sm);
     font-size: 0.7rem;
@@ -634,10 +625,10 @@
     letter-spacing: 1px;
     white-space: nowrap;
     text-transform: uppercase;
-    background: linear-gradient(135deg, var(--campaign-color, #ff6b00), color-mix(in srgb, var(--campaign-color, #ff6b00) 70%, #000));
+    background: linear-gradient(135deg, var(--campaign-color, #ff6b00), color-mix(in srgb, var(--campaign-color, #ff6b00) 70%, #000000));
     padding: 3px 8px;
     border-radius: 4px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     box-shadow: 0 0 8px color-mix(in srgb, var(--campaign-color, #ff6b00) 50%, transparent),
                 inset 0 1px 0 rgba(255,255,255,0.2);
     animation: countdown-glow 2s ease-in-out infinite;

@@ -100,7 +100,7 @@
     height: 18px;
     padding: 0 5px;
     background: linear-gradient(135deg, #f59e0b, #ef4444);
-    color: #fff;
+    color: var(--background-light)  ;
     border-radius: 9px;
     font-size: 0.65rem;
     font-weight: 700;

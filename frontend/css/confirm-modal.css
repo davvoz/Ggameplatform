@@ -127,7 +127,7 @@
 
 .confirm-modal__btn--danger {
     background: var(--error, #ff3d71);
-    color: #fff;
+    color: var(--text-primary, #ffffff);
 }
 
 .confirm-modal__btn--danger:hover {

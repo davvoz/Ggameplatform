@@ -20,16 +20,16 @@ class CommunityAPI {
     constructor(options = {}) {
         this.userId = options.userId || null;
         this.username = options.username || 'Anonymous';
-        this.onMessage = options.onMessage || (() => {});
-        this.onConnect = options.onConnect || (() => {});
-        this.onDisconnect = options.onDisconnect || (() => {});
-        this.onError = options.onError || (() => {});
-        this.onUserJoin = options.onUserJoin || (() => {});
-        this.onUserLeave = options.onUserLeave || (() => {});
-        this.onHistoryLoad = options.onHistoryLoad || (() => {});
-        this.onStatsUpdate = options.onStatsUpdate || (() => {});
-        this.onMessageEdited = options.onMessageEdited || (() => {});
-        this.onMessageDeleted = options.onMessageDeleted || (() => {});
+        this.onMessage = options.onMessage || (() => { });
+        this.onConnect = options.onConnect || (() => { });
+        this.onDisconnect = options.onDisconnect || (() => { });
+        this.onError = options.onError || (() => { });
+        this.onUserJoin = options.onUserJoin || (() => { });
+        this.onUserLeave = options.onUserLeave || (() => { });
+        this.onHistoryLoad = options.onHistoryLoad || (() => { });
+        this.onStatsUpdate = options.onStatsUpdate || (() => { });
+        this.onMessageEdited = options.onMessageEdited || (() => { });
+        this.onMessageDeleted = options.onMessageDeleted || (() => { });
 
         this.ws = null;
         this.isConnected = false;
@@ -38,10 +38,10 @@ class CommunityAPI {
         this.reconnectDelay = 1000;
         this.pingInterval = null;
         this.messageQueue = [];
-        
+
         // API base URL for REST endpoints
-        this.apiBaseUrl = window.ENV?.API_URL || '';
-        
+        this.apiBaseUrl = globalThis.ENV?.API_URL || '';
+
         this._boundHandlers = {
             onOpen: this._handleOpen.bind(this),
             onMessage: this._handleMessage.bind(this),
@@ -56,10 +56,10 @@ class CommunityAPI {
      * @returns {string}
      */
     _getWebSocketUrl() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.ENV?.API_URL 
-            ? new URL(window.ENV.API_URL).host 
-            : window.location.host;
+        const protocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = globalThis.ENV?.API_URL
+            ? new URL(globalThis.ENV.API_URL).host
+            : globalThis.location.host;
         return `${protocol}//${host}/ws/community`;
     }
 
@@ -68,21 +68,21 @@ class CommunityAPI {
      * @returns {Promise<void>}
      */
     async connect() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws?.readyState === WebSocket.OPEN) {
             return;
         }
 
         return new Promise((resolve, reject) => {
             try {
                 const url = this._getWebSocketUrl();
-                
+
                 this.ws = new WebSocket(url);
-                
+
                 this.ws.onopen = (event) => {
                     this._boundHandlers.onOpen(event);
                     resolve();
                 };
-                
+
                 this.ws.onmessage = this._boundHandlers.onMessage;
                 this.ws.onclose = this._boundHandlers.onClose;
                 this.ws.onerror = (error) => {
@@ -102,20 +102,20 @@ class CommunityAPI {
     _handleOpen() {
         this.isConnected = true;
         this.reconnectAttempts = 0;
-        
+
         // Send authentication/join message
         this._sendRaw({
             type: 'join',
             user_id: this.userId,
             username: this.username
         });
-        
+
         // Start ping interval
         this._startPing();
-        
+
         // Process queued messages
         this._processQueue();
-        
+
         this.onConnect();
     }
 
@@ -125,58 +125,55 @@ class CommunityAPI {
      * @param {MessageEvent} event
      */
     _handleMessage(event) {
-        try {
-            const data = JSON.parse(event.data);
-            
-            switch (data.type) {
-                case 'message':
-                    this.onMessage(data.message);
-                    break;
-                    
-                case 'history':
-                    this.onHistoryLoad(data.messages || []);
-                    break;
-                    
-                case 'user_join':
-                    this.onUserJoin(data.user);
-                    if (data.stats) this.onStatsUpdate(data.stats);
-                    break;
-                    
-                case 'user_leave':
-                    this.onUserLeave(data.user);
-                    if (data.stats) this.onStatsUpdate(data.stats);
-                    break;
-                    
-                case 'stats':
-                    this.onStatsUpdate(data.stats);
-                    break;
 
-                case 'message_edited':
-                    this.onMessageEdited({
-                        message_id: data.message_id,
-                        text: data.text,
-                        is_edited: data.is_edited,
-                        edited_at: data.edited_at
-                    });
-                    break;
+        const data = JSON.parse(event.data);
 
-                case 'message_deleted':
-                    this.onMessageDeleted({ message_id: data.message_id });
-                    break;
-                    
-                case 'error':
-                    this.onError(data.error);
-                    break;
-                    
-                case 'pong':
-                    // Keep-alive response
-                    break;
-                    
-                default:
-                    // Unknown message type
-            }
-        } catch (error) {
-            // Error parsing message
+        switch (data.type) {
+            case 'message':
+                this.onMessage(data.message);
+                break;
+
+            case 'history':
+                this.onHistoryLoad(data.messages || []);
+                break;
+
+            case 'user_join':
+                this.onUserJoin(data.user);
+                if (data.stats) this.onStatsUpdate(data.stats);
+                break;
+
+            case 'user_leave':
+                this.onUserLeave(data.user);
+                if (data.stats) this.onStatsUpdate(data.stats);
+                break;
+
+            case 'stats':
+                this.onStatsUpdate(data.stats);
+                break;
+
+            case 'message_edited':
+                this.onMessageEdited({
+                    message_id: data.message_id,
+                    text: data.text,
+                    is_edited: data.is_edited,
+                    edited_at: data.edited_at
+                });
+                break;
+
+            case 'message_deleted':
+                this.onMessageDeleted({ message_id: data.message_id });
+                break;
+
+            case 'error':
+                this.onError(data.error);
+                break;
+
+            case 'pong':
+                // Keep-alive response
+                break;
+
+            default:
+            // Unknown message type
         }
     }
 
@@ -188,16 +185,16 @@ class CommunityAPI {
     _handleClose(event) {
         this.isConnected = false;
         this._stopPing();
-        
+
         this.onDisconnect(event);
-        
+
         // Attempt reconnection
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
             const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
-            
+
             setTimeout(() => {
                 this.reconnectAttempts++;
-                this.connect().catch(() => {});
+                this.connect().catch(() => { });
             }, delay);
         }
     }
@@ -241,7 +238,7 @@ class CommunityAPI {
      * @param {Object} data
      */
     _sendRaw(data) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        if (this.ws?.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(data));
         }
     }
@@ -325,12 +322,12 @@ class CommunityAPI {
     disconnect() {
         this.maxReconnectAttempts = 0; // Prevent reconnection
         this._stopPing();
-        
+
         if (this.ws) {
             this.ws.close(1000, 'User disconnected');
             this.ws = null;
         }
-        
+
         this.isConnected = false;
     }
 
@@ -374,9 +371,9 @@ class CommunityAPI {
             const data = await response.json();
 
             if (!response.ok) {
-                return { 
-                    success: false, 
-                    error: data.detail || 'Upload failed' 
+                return {
+                    success: false,
+                    error: data.detail || 'Upload failed'
                 };
             }
 
@@ -387,10 +384,11 @@ class CommunityAPI {
                 is_gif: data.is_gif
             };
         } catch (error) {
+            console.error('Upload error:', error);
             // Network error during upload
-            return { 
-                success: false, 
-                error: 'Network error during upload' 
+            return {
+                success: false,
+                error: 'Network error during upload'
             };
         }
     }

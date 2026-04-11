@@ -127,6 +127,7 @@ class CommunityManager {
                 setCommunityWS(this.communityAPI);
                 this.communityAPI._lastKnownMsgId = null;
             } catch (error) {
+                console.error('Failed to connect to community WebSocket:', error);
                 this._updateConnectionStatus('disconnected', 'Connection failed');
             }
         }
@@ -285,7 +286,7 @@ class CommunityManager {
                 this._showMessagesTabBadge(count);
             }
         };
-        window.addEventListener('pm:notification', this._boundHandlers.onPMNotification);
+        globalThis.addEventListener('pm:notification', this._boundHandlers.onPMNotification);
     }
 
     /**
@@ -307,17 +308,34 @@ class CommunityManager {
         const wasNearBottom = this._isNearBottom();
 
         // Render new message
-        const messageEl = this._renderMessage(message, 0);
-        if (messageEl && this.elements.chatMessages) {
-            this.elements.chatMessages.appendChild(messageEl);
-
-            // Remove excess messages from DOM (oldest first)
-            while (this.elements.chatMessages.children.length > 100) {
-                this.elements.chatMessages.firstChild.remove();
-            }
-        }
+        this.renderNewMessage(message);
 
         // Auto-scroll or show badge
+        this.handleScrollOrBadge(wasNearBottom);
+
+        // Update stats
+        this.stats.totalMessages++;
+        this._updateStats();
+
+        // If the user is viewing the chat tab, mark as seen immediately.
+        // Otherwise (e.g. on Stats tab) show a badge on the Chat tab.
+        this.updateLastSeenMessage(message);
+    }
+
+    updateLastSeenMessage(message) {
+        if (this.currentSection === 'chat') {
+            if (message?.id) {
+                localStorage.setItem('community_last_seen_msg', message.id);
+                if (getCommunityWS()) {
+                    getCommunityWS()._lastKnownMsgId = message.id;
+                }
+            }
+        } else {
+            this._showChatTabBadge();
+        }
+    }
+
+    handleScrollOrBadge(wasNearBottom) {
         if (wasNearBottom) {
             this._scrollToBottom();
         } else {
@@ -329,22 +347,17 @@ class CommunityManager {
             }
             this._showScrollFab();
         }
+    }
 
-        // Update stats
-        this.stats.totalMessages++;
-        this._updateStats();
+    renderNewMessage(message) {
+        const messageEl = this._renderMessage(message, 0);
+        if (messageEl && this.elements.chatMessages) {
+            this.elements.chatMessages.appendChild(messageEl);
 
-        // If the user is viewing the chat tab, mark as seen immediately.
-        // Otherwise (e.g. on Stats tab) show a badge on the Chat tab.
-        if (this.currentSection === 'chat') {
-            if (message && message.id) {
-                localStorage.setItem('community_last_seen_msg', message.id);
-                if (getCommunityWS()) {
-                    getCommunityWS()._lastKnownMsgId = message.id;
-                }
+            // Remove excess messages from DOM (oldest first)
+            while (this.elements.chatMessages.children.length > 100) {
+                this.elements.chatMessages.firstChild.remove();
             }
-        } else {
-            this._showChatTabBadge();
         }
     }
 
@@ -377,8 +390,8 @@ class CommunityManager {
 
         // Mark the latest message as seen so the nav badge clears
         if (this.messages.length > 0) {
-            const latest = this.messages[this.messages.length - 1];
-            if (latest && latest.id) {
+            const latest = this.messages.at(-1);
+            if (latest?.id) {
                 localStorage.setItem('community_last_seen_msg', latest.id);
                 if (getCommunityWS()) {
                     getCommunityWS()._lastKnownMsgId = latest.id;
@@ -470,10 +483,6 @@ class CommunityManager {
 
         container.replaceChildren();
         const MAX_VISIBLE = 8;
-        const AVATAR_COLORS = [
-            '#6366f1', '#8b5cf6', '#0ea5e9', '#14b8a6',
-            '#f59e0b', '#ef4444', '#ec4899', '#22c55e'
-        ];
 
         const visible = users.slice(0, MAX_VISIBLE);
         const overflow = users.length - MAX_VISIBLE;
@@ -825,7 +834,7 @@ class CommunityManager {
                 label.textContent = 'edited';
                 const timeEl = footer.querySelector('.message-time');
                 if (timeEl) {
-                    footer.insertBefore(label, timeEl);
+                    timeEl.before(label);
                 } else {
                     footer.appendChild(label);
                 }
@@ -947,7 +956,7 @@ class CommunityManager {
      */
     _finishEditUI(confirmedText = null) {
         const messageEl = this._editingElement;
-        const textToRender = confirmedText !== null ? confirmedText : this._editingOriginalText;
+        const textToRender = confirmedText ?? this._editingOriginalText;
 
         this._editingMessageId = null;
         this._editingOriginalText = null;
@@ -1122,7 +1131,7 @@ class CommunityManager {
         }
 
         const navigate = () => {
-            window.location.hash = `#/user/${encodeURIComponent(userId)}`;
+            globalThis.location.hash = `#/user/${encodeURIComponent(userId)}`;
         };
 
         avatarEl.addEventListener('click', navigate);
@@ -1195,49 +1204,49 @@ class CommunityManager {
     _toggleEmojiPicker() {
         let picker = document.querySelector('.emoji-picker-container');
 
-        if (picker) {
-            picker.classList.toggle('active');
-            return;
-        }
+        if (!picker) {
+            // Create emoji picker
+            picker = document.createElement('div');
+            picker.className = 'emoji-picker-container';
 
-        // Create emoji picker
-        picker = document.createElement('div');
-        picker.className = 'emoji-picker-container';
+            const grid = document.createElement('div');
+            grid.className = 'emoji-grid';
 
-        const grid = document.createElement('div');
-        grid.className = 'emoji-grid';
-
-        this.commonEmojis.forEach(emoji => {
-            const btn = document.createElement('button');
-            btn.className = 'emoji-btn';
-            btn.textContent = emoji;
-            btn.addEventListener('click', () => {
-                this._insertEmoji(emoji);
+            this.commonEmojis.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.className = 'emoji-btn';
+                btn.textContent = emoji;
+                btn.addEventListener('click', () => {
+                    this._insertEmoji(emoji);
+                });
+                grid.appendChild(btn);
             });
-            grid.appendChild(btn);
-        });
 
-        picker.appendChild(grid);
+            picker.appendChild(grid);
 
-        // Position relative to input area
-        const inputArea = document.querySelector('.chat-input-area');
-        if (inputArea) {
-            inputArea.style.position = 'relative';
-            inputArea.appendChild(picker);
+            // Position relative to input area
+            const inputArea = document.querySelector('.chat-input-area');
+            if (inputArea) {
+                inputArea.style.position = 'relative';
+                inputArea.appendChild(picker);
+            }
         }
 
-        picker.classList.add('active');
+        const isNowActive = !picker.classList.contains('active');
+        picker.classList.toggle('active');
 
-        // Close on click outside (with delay to avoid immediate close)
-        setTimeout(() => {
-            const closeHandler = (e) => {
-                if (!picker.contains(e.target) && !this.elements.emojiBtn.contains(e.target)) {
-                    picker.classList.remove('active');
-                    document.removeEventListener('click', closeHandler);
-                }
-            };
-            document.addEventListener('click', closeHandler);
-        }, 10);
+        // Register click-outside handler when opening
+        if (isNowActive) {
+            setTimeout(() => {
+                const closeHandler = (e) => {
+                    if (!picker.contains(e.target) && !this.elements.emojiBtn.contains(e.target)) {
+                        picker.classList.remove('active');
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                document.addEventListener('click', closeHandler);
+            }, 10);
+        }
     }
 
     /**
@@ -1310,6 +1319,7 @@ class CommunityManager {
                     this._showNotification(result.error || 'Upload failed', 'error');
                 }
             } catch (error) {
+                console.error('Upload error:', error);
                 this._showNotification('Failed to upload file', 'error');
             } finally {
                 this.elements.sendBtn.disabled = false;
@@ -1462,7 +1472,11 @@ class CommunityManager {
         }
         badge = document.createElement('span');
         badge.className = 'messages-tab-badge';
-        badge.textContent = (count != null && count > 0) ? (count > 99 ? '99+' : String(count)) : '';
+        let badgeText = '';
+        if (count != null && count > 0) {
+            badgeText = count > 99 ? '99+' : String(count);
+        }
+        badge.textContent = badgeText;
         msgTab.appendChild(badge);
     }
 
@@ -1518,17 +1532,21 @@ class CommunityManager {
 
         // Switching to chat → clear the tab badge and mark messages as seen
         if (section === 'chat') {
-            this._hideChatTabBadge();
-            const latest = this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
-            if (latest && latest.id) {
-                localStorage.setItem('community_last_seen_msg', latest.id);
-                if (getCommunityWS()) {
-                    getCommunityWS()._lastKnownMsgId = latest.id;
-                }
-            }
-            removeCommunityBadge();
+            this.clearChatBadgeAndUpdateLastSeen();
         }
 
+    }
+
+    clearChatBadgeAndUpdateLastSeen() {
+        this._hideChatTabBadge();
+        const latest = this.messages.length > 0 ? this.messages.at(-1) : null;
+        if (latest?.id) {
+            localStorage.setItem('community_last_seen_msg', latest.id);
+            if (getCommunityWS()) {
+                getCommunityWS()._lastKnownMsgId = latest.id;
+            }
+        }
+        removeCommunityBadge();
     }
 
     /**
@@ -1543,6 +1561,8 @@ class CommunityManager {
             this.privateMessageManager = new PrivateMessageManager(this.elements.messagesSection);
             await this.privateMessageManager.init();
         } catch (err) {
+            console.error('Failed to initialize private messages:', err);
+
             if (this.elements.messagesSection) {
                 this.elements.messagesSection.replaceChildren(
                     this._buildErrorBlock('Failed to load private messages.')
@@ -1563,6 +1583,7 @@ class CommunityManager {
             this.statsRenderer = new CommunityStatsRenderer();
             await this.statsRenderer.mount(this.elements.statsSection);
         } catch (err) {
+            console.error('Failed to initialize community stats:', err);
             if (this.elements.statsSection) {
                 this.elements.statsSection.replaceChildren(
                     this._buildErrorBlock('Failed to load community stats.')
@@ -1641,7 +1662,7 @@ class CommunityManager {
 
         // Remove PM notification listener
         if (this._boundHandlers.onPMNotification) {
-            window.removeEventListener('pm:notification', this._boundHandlers.onPMNotification);
+            globalThis.removeEventListener('pm:notification', this._boundHandlers.onPMNotification);
         }
 
         // Clear state

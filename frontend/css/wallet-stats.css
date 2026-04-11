@@ -89,6 +89,14 @@
     transition: transform 0.1s ease-out,
         opacity 0.1s ease-out,
         padding 0.1s ease-out;
+    position: relative;
+    background: linear-gradient(135deg, rgba(30, 30, 45, 0.95) 0%, rgba(20, 20, 35, 0.98) 100%);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .balance-hero.hero-compressing {
@@ -292,16 +300,6 @@
 }
 
 /* ========== Balance Hero Section ========== */
-.balance-hero {
-    position: relative;
-    background: linear-gradient(135deg, rgba(30, 30, 45, 0.95) 0%, rgba(20, 20, 35, 0.98) 100%);
-    border-radius: 20px;
-    padding: 40px;
-    margin-bottom: 30px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
 
 .hero-glass-overlay {
     position: absolute;
@@ -632,12 +630,12 @@
 
 .stat-trend.positive {
     background: rgba(40, 167, 69, 0.2);
-    color: #28a745;
+    color: var(--bg-primary)    ;
 }
 
 .stat-trend.negative {
     background: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
+    color: var(--text-secondary)    ;
 }
 
 .stat-mini-chart {
@@ -1094,7 +1092,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--text-primary);
     font-weight: bold;
     flex-shrink: 0;
 }
@@ -1171,7 +1169,7 @@
     width: 24px;
     height: 24px;
     background: rgba(40, 167, 69, 0.2);
-    color: #28a745;
+    color: var(--text-secondary)    ;
     border-radius: 50%;
     font-size: 0.75rem;
 }
@@ -1185,7 +1183,7 @@
     background: rgba(220, 53, 69, 0.1);
     border-radius: 12px;
     margin-top: 15px;
-    color: #dc3545;
+    color: var(--error, #dc3545);
 }
 
 .infinite-scroll-error .retry-btn {
@@ -1193,7 +1191,7 @@
     border: none;
     padding: 6px 12px;
     border-radius: 6px;
-    color: #dc3545;
+    color: var(--error, #dc3545);
     cursor: pointer;
     transition: background 0.2s;
 }

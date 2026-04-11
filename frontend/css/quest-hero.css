@@ -13,6 +13,11 @@ main:has(.quests) {
     padding: 0;
 }
 
+/* Quests container with max-width constraint */
+main:has(.quests) .quests {
+    max-width: 1000px;
+}
+
 /* Hero Section */
 .quests-hero {
     position: relative;
@@ -40,7 +45,7 @@ main:has(.quests) {
     right: 0;
     bottom: 0;
     background: var(--background);
-    background-image: 
+    background-image:
         linear-gradient(var(--grid-color) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
         radial-gradient(circle at 20% 30%, rgba(0, 217, 255, 0.08) 0%, transparent 50%),
@@ -233,14 +238,6 @@ main:has(.quests) {
     padding: 0 var(--spacing-md);
 }
 
-/* Hide old header and stats */
-.quests-header {
-    display: none !important;
-}
-
-.quests-stats {
-    display: none !important;
-}
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
@@ -261,11 +258,11 @@ main:has(.quests) {
         letter-spacing: 1px;
         margin-bottom: var(--spacing-md);
     }
-    
+
     .hero-title {
         margin-bottom: var(--spacing-md);
     }
-    
+
     .hero-description {
         margin-bottom: var(--spacing-lg);
     }
@@ -288,15 +285,15 @@ main:has(.quests) {
     .hero-stat-label {
         font-size: 0.7rem;
     }
-    
+
     .hero-scroll-indicator {
         margin-top: var(--spacing-md);
     }
-    
+
     .hero-scroll-indicator span {
         font-size: 0.75rem;
     }
-    
+
     .scroll-arrow {
         font-size: 1.5rem;
     }
@@ -313,15 +310,15 @@ main:has(.quests) {
         grid-template-columns: 1fr 1fr;
         gap: var(--spacing-xs);
     }
-    
+
     .hero-stat {
         padding: var(--spacing-sm);
     }
-    
+
     .hero-stat-value {
         font-size: 1.5rem;
     }
-    
+
     .hero-stat-label {
         font-size: 0.65rem;
     }
@@ -334,11 +331,6 @@ main:has(.quests) {
 /* ========================================
    Quests Styles
    ======================================== */
-
-.quests {
-    max-width: 1000px;
-    margin: 0 auto;
-}
 
 .quests-header {
     text-align: center;
@@ -446,6 +438,8 @@ main:has(.quests) {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
 }
 
 .quest-card::before {
@@ -778,7 +772,7 @@ main:has(.quests) {
 
 .quest-daily-badge {
     background: linear-gradient(135deg, #00BCD4 0%, #2196F3 100%);
-    color: white;
+    color: var(--text-primary);
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--radius-lg);
     font-size: 0.75rem;
@@ -1282,7 +1276,7 @@ main:has(.quests) {
     border-color: #FFD700;
     color: var(--text-primary);
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3),
-                0 4px 12px rgba(255, 215, 0, 0.2);
+        0 4px 12px rgba(255, 215, 0, 0.2);
     animation: ready-pulse-subtle 3s ease-in-out infinite;
 }
 
@@ -1291,20 +1285,26 @@ main:has(.quests) {
 }
 
 @keyframes ready-pulse-subtle {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 20px rgba(255, 215, 0, 0.3),
-                    0 4px 12px rgba(255, 215, 0, 0.2);
+            0 4px 12px rgba(255, 215, 0, 0.2);
     }
+
     50% {
         box-shadow: 0 0 30px rgba(255, 215, 0, 0.5),
-                    0 6px 16px rgba(255, 215, 0, 0.3);
+            0 6px 16px rgba(255, 215, 0, 0.3);
     }
 }
 
 @keyframes gentle-bounce {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0) scale(1);
     }
+
     50% {
         transform: translateY(-3px) scale(1.05);
     }
@@ -1339,11 +1339,6 @@ main:has(.quests) {
 }
 
 /* Quest Card Enhanced Styling */
-.quest-card {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
 .quest-card.fade-in {
     animation: fadeInUp 0.4s ease-out forwards;
 }
@@ -1355,44 +1350,6 @@ main:has(.quests) {
     }
 }
 
-/* Enhanced Quest Stats Badges */
-.quests-stats {
-    background: linear-gradient(135deg, var(--background-lighter) 0%, var(--surface) 100%);
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.quests-stats .stat-badge {
-    background: linear-gradient(135deg, var(--surface-elevated) 0%, var(--surface) 100%);
-    border: 1px solid var(--border-light);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.quests-stats .stat-badge::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.quests-stats .stat-badge:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 217, 255, 0.2);
-    border-color: var(--primary-color);
-}
-
-.quests-stats .stat-badge:hover::after {
-    opacity: 1;
-}
 
 /* Mobile Responsive for Filters */
 @media (max-width: 768px) {

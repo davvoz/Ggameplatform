@@ -982,7 +982,7 @@
 .reward-steem {
     color: #00d9ff;
     padding: 4px 8px;
-    background: rgba(0, 217, 255, 0.12);
+    background: var(--bg-secondary);
     border-radius: var(--radius-sm);
     border: 1px solid rgba(0, 217, 255, 0.3);
     font-weight: 600;
@@ -994,7 +994,7 @@
 .reward-coins {
     color: #fbbf24;
     padding: 4px 8px;
-    background: rgba(251, 191, 36, 0.12);
+    background: var(--bg-secondary);
     border-radius: var(--radius-sm);
     border: 1px solid rgba(251, 191, 36, 0.3);
     font-weight: 600;
@@ -1318,13 +1318,13 @@
 
 .gdl-reward-steem {
     color: #3fa7ff;
-    background: rgba(0, 150, 255, 0.12);
+    background: var(--bg-secondary);
     border: 1px solid rgba(0, 150, 255, 0.25);
 }
 
 .gdl-reward-coin {
     color: #eab308;
-    background: rgba(234, 179, 8, 0.12);
+    background: var(--bg-secondary);
     border: 1px solid rgba(234, 179, 8, 0.25);
 }
 
@@ -1403,13 +1403,6 @@
     font-weight: 700;
     color: var(--text-secondary);
     text-align: center;
-}
-
-.gdl-list-player {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
 }
 
 .gdl-list-avatar {
@@ -1608,10 +1601,6 @@
         width: auto;
         text-align: center;
         font-size: 0.9rem;
-    }
-
-    .gdl-list-player {
-        min-width: 0;
     }
 
     .gdl-list-score {

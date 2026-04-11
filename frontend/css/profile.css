@@ -105,14 +105,14 @@
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.9);
+    color:var(--text-primary);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .profile-sticky-navbar .sticky-stat.multiplier {
     color: #a78bfa;
-    background: rgba(167, 139, 250, 0.1);
+    background:var(--background);
     border-color: rgba(167, 139, 250, 0.2);
 }
 
@@ -124,7 +124,7 @@
 
 .profile-sticky-navbar .sticky-stat.coins {
     color: #fbbf24;
-    background: rgba(234, 179, 8, 0.1);
+    background:var(--background);
     border-color: rgba(234, 179, 8, 0.2);
 }
 
@@ -139,6 +139,16 @@
     --compress-progress: 0;
     transition: transform 0.1s ease-out,
         opacity 0.1s ease-out;
+    background: var(--background-light);
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-lg);
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
 }
 
 .profile-header.header-compressing {
@@ -260,7 +270,7 @@
 
 .btn-share-steem {
     background: linear-gradient(135deg, #10b981, #059669);
-    color: #fff;
+    color: var(--text-primary);
     border: none;
     padding: 16px 32px;
     border-radius: 12px;
@@ -330,19 +340,6 @@
         width: 100%;
         justify-content: center;
     }
-}
-
-.profile-header {
-    background: var(--background-light);
-    padding: var(--spacing-2xl);
-    border-radius: var(--radius-lg);
-    display: flex;
-    gap: var(--spacing-xl);
-    align-items: center;
-    margin-bottom: var(--spacing-xl);
-    box-shadow: var(--shadow-lg);
-    position: relative;
-    overflow: hidden;
 }
 
 .profile-header::before {
@@ -425,7 +422,7 @@
     border: 1px solid rgba(0, 200, 255, 0.25);
     border-radius: 14px;
     text-decoration: none;
-    color: white;
+    color: var(--text-primary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -1020,7 +1017,7 @@
     font-size: 0.85rem;
     font-weight: 700;
     color: #eab308;
-    background: rgba(234, 179, 8, 0.12);
+    background: var(--background);
     padding: 4px 10px;
     border-radius: var(--radius-md);
     border: 1px solid rgba(234, 179, 8, 0.25);
@@ -1112,13 +1109,13 @@
 
 .ws-badge-steem {
     color: #3fa7ff;
-    background: rgba(0, 150, 255, 0.12);
+    background: var(--background);
     border: 1px solid rgba(0, 150, 255, 0.25);
 }
 
 .ws-badge-coin {
     color: #eab308;
-    background: rgba(234, 179, 8, 0.12);
+    background: var(--background);
     border: 1px solid rgba(234, 179, 8, 0.25);
 }
 

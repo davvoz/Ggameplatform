@@ -229,7 +229,7 @@
 .level-up-close {
     background: linear-gradient(145deg, #00a8ff 0%, #0066cc 100%);
     border: none;
-    color: white;
+    color: var(--text-primary);
     padding: 12px 32px;
     border-radius: 25px;
     font-size: 1.1em;

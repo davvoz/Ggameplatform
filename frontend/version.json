@@ -1,8 +1,17 @@
 {
-  "version": "5.0.9",
-  "timestamp": "2026-04-11T23:30:09.673Z",
-  "buildNumber": 522,
+  "version": "5.0.10",
+  "timestamp": "2026-04-12T10:09:10.913Z",
+  "buildNumber": 523,
   "changelog": [
+    {
+      "version": "5.0.10",
+      "date": "2026-04-12",
+      "type": "patch",
+      "changes": [
+        "fix:image upload steempost.py , [SS SS2] Sonar",
+        "🔖 Bump version to 5.0.9 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.9",
       "date": "2026-04-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix : [MP][A] Sonar",
         "🔖 Bump version to 5.0.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.0",
-      "date": "2026-04-10",
-      "type": "major",
-      "changes": [
-        "BREAKING : BE refractor , [A] refraactor",
-        "🔖 Bump version to 4.2.11 [skip-version]"
       ]
     }
   ]

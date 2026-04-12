@@ -1,8 +1,17 @@
 {
-  "version": "5.0.10",
-  "timestamp": "2026-04-12T10:09:10.913Z",
-  "buildNumber": 523,
+  "version": "5.0.11",
+  "timestamp": "2026-04-12T20:54:45.453Z",
+  "buildNumber": 524,
   "changelog": [
+    {
+      "version": "5.0.11",
+      "date": "2026-04-12",
+      "type": "patch",
+      "changes": [
+        "fix:[GAMES] Sonar",
+        "🔖 Bump version to 5.0.10 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.10",
       "date": "2026-04-12",
@@ -83,15 +92,6 @@
       "changes": [
         "fix : [GAMES] Sonar",
         "🔖 Bump version to 5.0.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.1",
-      "date": "2026-04-10",
-      "type": "patch",
-      "changes": [
-        "fix : [MP][A] Sonar",
-        "🔖 Bump version to 5.0.0 [skip-version]"
       ]
     }
   ]

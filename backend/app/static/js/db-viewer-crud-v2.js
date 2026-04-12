@@ -30,7 +30,7 @@ class CRUDManager {
                 this.formOptions = await response.json();
             }
         } catch (error) {
-
+            console.error('Error loading form options:', error);
             // Fallback: generate from schema
             this.formOptions = this.generateFormOptionsFromSchema();
         }
@@ -323,91 +323,7 @@ class CRUDManager {
         if (isForeignKey) {
             inputHTML = this.renderSelectField(field, value, schema, isReadonly);
         } else {
-            switch (field.type) {
-                case 'TEXT':
-                    inputHTML = `<textarea 
-                        id="field_${field.name}" 
-                        name="${field.name}" 
-                        rows="3"
-                        ${isReadonly ? 'readonly' : ''}
-                        ${isRequired ? 'required' : ''}
-                        placeholder="Inserisci ${field.label || field.name}..."
-                    >${Utils.escapeHtml(String(value || ''))}</textarea>`;
-                    break;
-                    
-                case 'JSON':
-                    const jsonValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
-                    inputHTML = `<textarea 
-                        id="field_${field.name}" 
-                        name="${field.name}" 
-                        rows="5"
-                        class="json-input"
-                        ${isReadonly ? 'readonly' : ''}
-                        placeholder='{"key": "value"}'
-                    >${Utils.escapeHtml(String(jsonValue || '{}'))}</textarea>`;
-                    break;
-                    
-                case 'BOOLEAN':
-                    const checked = Boolean(value);
-                    inputHTML = `
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" 
-                                id="field_${field.name}" 
-                                name="${field.name}" 
-                                ${checked ? 'checked' : ''}
-                                ${isReadonly ? 'disabled' : ''}
-                                style="width: 18px; height: 18px; cursor: pointer;">
-                            <span>${checked ? 'Sì' : 'No'}</span>
-                        </label>`;
-                    break;
-                    
-                case 'INTEGER':
-                    inputHTML = `<input type="number" 
-                        id="field_${field.name}" 
-                        name="${field.name}" 
-                        value="${value}" 
-                        step="1"
-                        ${isReadonly ? 'readonly' : ''}
-                        ${isRequired ? 'required' : ''}>`;
-                    break;
-                    
-                case 'FLOAT':
-                    inputHTML = `<input type="number" 
-                        id="field_${field.name}" 
-                        name="${field.name}" 
-                        value="${value}" 
-                        step="0.01"
-                        ${isReadonly ? 'readonly' : ''}
-                        ${isRequired ? 'required' : ''}>`;
-                    break;
-                    
-                case 'DATETIME':
-                case 'DATE':
-                    let dateValue = value;
-                    if (value && !isReadonly) {
-                        try {
-                            dateValue = new Date(value).toISOString().slice(0, 16);
-                        } catch (e) {
-                            dateValue = value;
-                        }
-                    }
-                    inputHTML = `<input type="${isReadonly ? 'text' : 'datetime-local'}" 
-                        id="field_${field.name}" 
-                        name="${field.name}" 
-                        value="${dateValue || ''}" 
-                        ${isReadonly ? 'readonly' : ''}
-                        ${isRequired ? 'required' : ''}>`;
-                    break;
-                    
-                default: // STRING
-                    inputHTML = `<input type="text" 
-                        id="field_${field.name}" 
-                        name="${field.name}" 
-                        value="${Utils.escapeHtml(String(value || ''))}" 
-                        ${isReadonly ? 'readonly' : ''}
-                        ${isRequired ? 'required' : ''}
-                        placeholder="Inserisci ${field.label || field.name}...">`;
-            }
+            inputHTML = this.renderInputField(field, inputHTML, isReadonly, isRequired, value);
         }
         
         const requiredBadge = isRequired ? '<span class="required-badge">*</span>' : '';
@@ -422,6 +338,98 @@ class CRUDManager {
                 ${inputHTML}
             </div>
         `;
+    }
+
+    renderInputField(field, inputHTML, isReadonly, isRequired, value) {
+        const typeHandlers = {
+            'TEXT': () => this.renderTextarea(field, value, isReadonly, isRequired),
+            'JSON': () => this.renderJsonTextarea(field, value, isReadonly),
+            'BOOLEAN': () => this.renderCheckbox(field, value, isReadonly),
+            'INTEGER': () => this.renderNumberInput(field, value, isReadonly, isRequired, '1'),
+            'FLOAT': () => this.renderNumberInput(field, value, isReadonly, isRequired, '0.01'),
+            'DATETIME': () => this.renderDateTimeInput(field, value, isReadonly, isRequired, 'datetime-local'),
+            'DATE': () => this.renderDateTimeInput(field, value, isReadonly, isRequired, 'date')
+        };
+        
+        const handler = typeHandlers[field.type] || (() => this.renderStringInput(field, value, isReadonly, isRequired));
+        return handler();
+    }
+
+    renderTextarea(field, value, isReadonly, isRequired) {
+        return `<textarea 
+                    id="field_${field.name}" 
+                    name="${field.name}" 
+                    rows="3"
+                    ${isReadonly ? 'readonly' : ''}
+                    ${isRequired ? 'required' : ''}
+                    placeholder="Inserisci ${field.label || field.name}..."
+                >${Utils.escapeHtml(String(value || ''))}</textarea>`;
+    }
+
+    renderJsonTextarea(field, value, isReadonly) {
+        const jsonValue = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
+        return `<textarea 
+                    id="field_${field.name}" 
+                    name="${field.name}" 
+                    rows="5"
+                    class="json-input"
+                    ${isReadonly ? 'readonly' : ''}
+                    placeholder='{"key": "value"}'
+                >${Utils.escapeHtml(String(jsonValue || '{}'))}</textarea>`;
+    }
+
+    renderCheckbox(field, value, isReadonly) {
+        const checked = Boolean(value);
+        return `
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" 
+                        id="field_${field.name}" 
+                        name="${field.name}" 
+                        ${checked ? 'checked' : ''}
+                        ${isReadonly ? 'disabled' : ''}
+                        style="width: 18px; height: 18px; cursor: pointer;">
+                    <span>${checked ? 'Sì' : 'No'}</span>
+                </label>`;
+    }
+
+    renderNumberInput(field, value, isReadonly, isRequired, step) {
+        return `<input type="number" 
+                    id="field_${field.name}" 
+                    name="${field.name}" 
+                    value="${value}" 
+                    step="${step}"
+                    ${isReadonly ? 'readonly' : ''}
+                    ${isRequired ? 'required' : ''}>`;
+    }
+
+    renderDateTimeInput(field, value, isReadonly, isRequired, inputType) {
+        let dateValue = value;
+        if (value && !isReadonly) {
+            try {
+                dateValue = new Date(value).toISOString().slice(0, 16);
+            } catch (e) {
+                console.error('Error parsing date value:', e);
+                dateValue = value;
+            }
+        }
+        
+        const actualType = isReadonly ? 'text' : inputType;
+        return `<input type="${actualType}" 
+                    id="field_${field.name}" 
+                    name="${field.name}" 
+                    value="${dateValue || ''}" 
+                    ${isReadonly ? 'readonly' : ''}
+                    ${isRequired ? 'required' : ''}>`;
+    }
+
+    renderStringInput(field, value, isReadonly, isRequired) {
+        return `<input type="text" 
+                    id="field_${field.name}" 
+                    name="${field.name}" 
+                    value="${Utils.escapeHtml(String(value || ''))}" 
+                    ${isReadonly ? 'readonly' : ''}
+                    ${isRequired ? 'required' : ''}
+                    placeholder="Inserisci ${field.label || field.name}...">`;
     }
 
     renderSelectField(field, value, schema, isReadonly) {
@@ -488,6 +496,8 @@ class CRUDManager {
                 try {
                     value = JSON.parse(input.value || '{}');
                 } catch (e) {
+                    console.error('Error parsing JSON value:', e);
+
                     value = input.value;
                 }
             } else if (input.type === 'number') {
@@ -642,7 +652,7 @@ class CRUDManager {
 let crudManager;
 
 // Initialize when DOM is ready
-window.addEventListener('DOMContentLoaded', async () => {
+globalThis.addEventListener('DOMContentLoaded', async () => {
     crudManager = await CRUDManager.create(CONFIG?.API_BASE || '/admin');
 });
 
@@ -673,7 +683,7 @@ function closeCRUDModal() {
 }
 
 // Export
-if (typeof window !== 'undefined') {
-    window.CRUDManager = CRUDManager;
-    window.crudManager = crudManager;
+if (typeof globalThis !== 'undefined') {
+    globalThis.CRUDManager = CRUDManager;
+    globalThis.crudManager = crudManager;
 }

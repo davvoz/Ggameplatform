@@ -20,13 +20,13 @@ import { drawPolygon, generateShape } from './RenderHelpers.js';
 // ── Color palettes ─────────────────────────────
 const GLITCH_BLOCK_PALETTE = [
     { weight: 0.35, hue: [180, 30], sat: [50, 30], light: [14, 8, 6] },
-    { weight: 0.30, hue: [280, 40], sat: [40, 25], light: [12, 6, 5] },
-    { weight: 0.20, hue: [120, 30], sat: [60, 20], light: [10, 6, 4] },
+    { weight: 0.3, hue: [280, 40], sat: [40, 25], light: [12, 6, 5] },
+    { weight: 0.2, hue: [120, 30], sat: [60, 20], light: [10, 6, 4] },
     { weight: 0.15, hue: [0, 20],   sat: [70, 20], light: [16, 6, 5] }
 ];
 
 const BROKEN_POLY_PALETTE = [
-    { weight: 0.40, hue: [170, 30], sat: [35, 25], light: [20, 12] },
+    { weight: 0.4, hue: [170, 30], sat: [35, 25], light: [20, 12] },
     { weight: 0.35, hue: [270, 30], sat: [30, 20], light: [18, 10] },
     { weight: 0.25, hue: [90, 30],  sat: [45, 20], light: [16, 8] }
 ];
@@ -56,7 +56,7 @@ export class GlitchFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const gc = this.config;
-        const d = gc ? gc.dist : [0.35, 0.55, 0.75, 0.90];
+        const d = gc ? gc.dist : [0.35, 0.55, 0.75, 0.9];
         const roll = Math.random();
 
         if (roll < d[0])      this._initGlitchBlock(W, H, initial, gc);

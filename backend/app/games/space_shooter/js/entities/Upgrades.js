@@ -115,12 +115,12 @@ class UpgradeManager {
     upgradeBarrier() {
         this.barrierLevel++;
         
-        if (!this.barrier) {
-            // Create new barrier
-            this.barrier = new EnergyBarrier(this.game.player, this);
-        } else {
+        if (this.barrier) {
             // Upgrade existing
             this.barrier.upgrade();
+        } else {
+            // Create new barrier
+            this.barrier = new EnergyBarrier(this.game.player, this);
         }
     }
     
@@ -142,8 +142,10 @@ class UpgradeManager {
         
         if (this.drones.length === 0) {
             // Create initial 2 drones
-            this.drones.push(new ProtectorDrone(this.game.player, 0, this));
-            this.drones.push(new ProtectorDrone(this.game.player, 1, this));
+            this.drones.push(
+                new ProtectorDrone(this.game.player, 0, this),
+                new ProtectorDrone(this.game.player, 1, this)
+            );
         } else {
             // Upgrade existing drones
             this.drones.forEach(drone => drone.upgrade());
@@ -159,7 +161,7 @@ class UpgradeManager {
         const missileCount = this.missileLevel;
         const player = this.game.player;
         
-        if (!player || !player.active) return;
+        if (!player?.active) return;
         
         const enemies = this.game.enemies.filter(e => e.active);
         
@@ -567,53 +569,7 @@ class SmartMissile extends GameObject {
             this.position.y += this.velocity.y * deltaTime;
         } else {
             // Check if target is still valid
-            if (!this.target || !this.target.active) {
-                // Find new target
-                const enemies = game.enemies.filter(e => e.active);
-                if (enemies.length > 0) {
-                    // Find closest enemy
-                    let closest = null;
-                    let closestDist = Infinity;
-                    enemies.forEach(e => {
-                        const dist = this.position.distance(e.getCenter());
-                        if (dist < closestDist) {
-                            closestDist = dist;
-                            closest = e;
-                        }
-                    });
-                    this.target = closest;
-                }
-            }
-            
-            // Home towards target
-            if (this.target && this.target.active) {
-                const targetCenter = this.target.getCenter();
-                const toTarget = targetCenter.subtract(this.position);
-                const targetAngle = Math.atan2(toTarget.y, toTarget.x);
-                
-                // Calculate angle difference
-                let angleDiff = targetAngle - this.angle;
-                
-                // Normalize to -PI to PI
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-                
-                // Turn towards target
-                const maxTurn = this.turnSpeed * deltaTime;
-                if (Math.abs(angleDiff) < maxTurn) {
-                    this.angle = targetAngle;
-                } else {
-                    this.angle += Math.sign(angleDiff) * maxTurn;
-                }
-            }
-            
-            // Update velocity based on angle
-            this.velocity.x = Math.cos(this.angle) * this.speed;
-            this.velocity.y = Math.sin(this.angle) * this.speed;
-            
-            // Move
-            this.position.x += this.velocity.x * deltaTime;
-            this.position.y += this.velocity.y * deltaTime;
+            this.updateTargetAndMove(game, deltaTime);
         }
         
         // Update trail
@@ -650,6 +606,64 @@ class SmartMissile extends GameObject {
         }
     }
     
+    updateTargetAndMove(game, deltaTime) {
+        this.updateTarget(game);
+
+        // Home towards target
+        this.updateAngleTowardsTarget(deltaTime);
+
+        // Update velocity based on angle
+        this.velocity.x = Math.cos(this.angle) * this.speed;
+        this.velocity.y = Math.sin(this.angle) * this.speed;
+
+        // Move
+        this.position.x += this.velocity.x * deltaTime;
+        this.position.y += this.velocity.y * deltaTime;
+    }
+
+    updateAngleTowardsTarget(deltaTime) {
+        if (this.target?.active) {
+            const targetCenter = this.target.getCenter();
+            const toTarget = targetCenter.subtract(this.position);
+            const targetAngle = Math.atan2(toTarget.y, toTarget.x);
+
+            // Calculate angle difference
+            let angleDiff = targetAngle - this.angle;
+
+            // Normalize to -PI to PI
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+            // Turn towards target
+            const maxTurn = this.turnSpeed * deltaTime;
+            if (Math.abs(angleDiff) < maxTurn) {
+                this.angle = targetAngle;
+            } else {
+                this.angle += Math.sign(angleDiff) * maxTurn;
+            }
+        }
+    }
+
+    updateTarget(game) {
+        if (!this.target?.active) {
+            // Find new target
+            const enemies = game.enemies.filter(e => e.active);
+            if (enemies.length > 0) {
+                // Find closest enemy
+                let closest = null;
+                let closestDist = Infinity;
+                enemies.forEach(e => {
+                    const dist = this.position.distance(e.getCenter());
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closest = e;
+                    }
+                });
+                this.target = closest;
+            }
+        }
+    }
+
     explode(game) {
         this.active = false;
         
@@ -758,7 +772,7 @@ class ProtectorDrone {
         
         // Stats (level 1)
         this.damage = 1.2;
-        this.fireRate = 0.40; // Seconds between shots
+        this.fireRate = 0.4; // Seconds between shots
         this.fireCooldown = 0;
         this.range = 260 * this._scale;
         
@@ -779,7 +793,7 @@ class ProtectorDrone {
         const s = this._scale;
         
         this.damage = 1.2 + level * 0.6;
-        this.fireRate = Math.max(0.18, 0.40 - level * 0.03);
+        this.fireRate = Math.max(0.18, 0.4 - level * 0.03);
         this.range = (260 + level * 25) * s;
     }
     

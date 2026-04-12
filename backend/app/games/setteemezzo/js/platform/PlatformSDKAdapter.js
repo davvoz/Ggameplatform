@@ -10,7 +10,7 @@ export class PlatformSDKAdapter {
     #parentOrigin = null;
 
     constructor() {
-        this.#sdk = window.PlatformSDK;
+        this.#sdk = globalThis.PlatformSDK;
         this.#parentOrigin = this.#getParentOrigin();
     }
 
@@ -60,7 +60,9 @@ export class PlatformSDKAdapter {
         if (!this.isAvailable()) return;
         try {
             await this.#sdk.sendScore(score, { extra_data: extraData });
-        } catch (_) { /* non-blocking */ }
+        } catch (error) { /* non-blocking */
+            console.error('[PlatformSDKAdapter] Failed to send score:', error);
+        }
     }
 
     sendGameStarted() {
@@ -81,14 +83,18 @@ export class PlatformSDKAdapter {
         if (!this.isAvailable()) return;
         try {
             await this.#sdk.gameOver(score, { extra_data: extraData });
-        } catch (_) { /* non-blocking */ }
+        } catch (error) { /* non-blocking */
+            console.error('[PlatformSDKAdapter] Failed to send gameOver:', error);
+        }
     }
 
     async resetSession() {
         if (!this.isAvailable()) return;
         try {
             await this.#sdk.resetSession();
-        } catch (_) { /* non-blocking */ }
+        } catch (error) { /* non-blocking */
+            console.error('[PlatformSDKAdapter] Failed to reset session:', error);
+        }
     }
 
     // ── Coin API ──
@@ -239,8 +245,8 @@ export class PlatformSDKAdapter {
     }
 
     #resolveUserId() {
-        if (window.platformConfig?.userId) {
-            this.#userId = window.platformConfig.userId;
+        if (globalThis.platformConfig?.userId) {
+            this.#userId = globalThis.platformConfig.userId;
             return;
         }
         if (this.#sdk?.getConfig) {

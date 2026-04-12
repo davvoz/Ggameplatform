@@ -17,10 +17,10 @@ import { BaseFxStrategy } from './BaseFxStrategy.js';
 
 // ── Color palettes ─────────────────────────────
 const QUANTUM_FIELD_PALETTE = [
-    { weight: 0.30, hue: [220, 40], sat: [45, 30], light: [14, 8, 6] },   // Blue quantum
+    { weight: 0.3, hue: [220, 40], sat: [45, 30], light: [14, 8, 6] },   // Blue quantum
     { weight: 0.25, hue: [280, 35], sat: [40, 25], light: [12, 7, 5] },   // Violet Higgs
     { weight: 0.25, hue: [170, 30], sat: [50, 20], light: [10, 6, 4] },   // Teal lepton
-    { weight: 0.20, hue: [40, 30],  sat: [60, 20], light: [16, 6, 5] }    // Gold boson
+    { weight: 0.2, hue: [40, 30], sat: [60, 20], light: [16, 6, 5] }    // Gold boson
 ];
 
 const PARTICLE_TRAIL_COLORS = ['#4488ff', '#ff4488', '#44ff88', '#ffdd44', '#aa66ff', '#ff8844'];
@@ -47,14 +47,14 @@ export class QuantumFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const qc = this.config;
-        const d = qc ? qc.dist : [0.35, 0.55, 0.75, 0.90];
+        const d = qc ? qc.dist : [0.35, 0.55, 0.75, 0.9];
         const roll = Math.random();
 
-        if (roll < d[0])      this._initQuantumField(W, H, initial, qc);
+        if (roll < d[0]) this._initQuantumField(W, H, initial, qc);
         else if (roll < d[1]) this._initFeynmanLine(W, H, initial);
         else if (roll < d[2]) this._initParticleTrail(W, H, initial);
         else if (roll < d[3]) this._initDecayProduct(W, H, initial);
-        else                  this._initVacuumBubble(W, H, initial);
+        else this._initVacuumBubble(W, H, initial);
     }
 
     // ═══════════════════════════════════════════
@@ -165,23 +165,11 @@ export class QuantumFx extends BaseFxStrategy {
                 break;
 
             case 'particleTrail':
-                this.x += this.vx * dt;
-                this.vx += this.curvature * dt; // magnetic curvature
-                this.trailPoints.unshift({ x: this.x, y: this.y });
-                if (this.trailPoints.length > this.trailLen) this.trailPoints.pop();
-                if (this._isOffBottom() || this.x < -20 || this.x > W + 20) this._init(false);
+                this.updateTrailPosition(dt, W, H);
                 break;
 
             case 'decayProduct':
-                this.ringPhase += this.ringSpeed * dt;
-                for (const f of this.fragments) {
-                    f.dist = Math.min(this.maxRingRadius, f.dist + f.speed * dt);
-                }
-                if (this.ringPhase > Math.PI * 2) {
-                    this.ringPhase = 0;
-                    for (const f of this.fragments) f.dist = 0;
-                }
-                if (this._isOffBottom(this.size)) this._init(false);
+                this.updateRingPhase(dt);
                 break;
 
             case 'vacuumBubble':
@@ -191,18 +179,38 @@ export class QuantumFx extends BaseFxStrategy {
                 if (this._isOffBottom(this.size)) this._init(false);
                 break;
         }
+
+
+    }
+    updateRingPhase(dt) {
+        this.ringPhase += this.ringSpeed * dt;
+        for (const f of this.fragments) {
+            f.dist = Math.min(this.maxRingRadius, f.dist + f.speed * dt);
+        }
+        if (this.ringPhase > Math.PI * 2) {
+            this.ringPhase = 0;
+            for (const f of this.fragments) f.dist = 0;
+        }
+        if (this._isOffBottom(this.size)) this._init(false);
     }
 
+    updateTrailPosition(dt, W) {
+        this.x += this.vx * dt;
+        this.vx += this.curvature * dt; // magnetic curvature
+        this.trailPoints.unshift({ x: this.x, y: this.y });
+        if (this.trailPoints.length > this.trailLen) this.trailPoints.pop();
+        if (this._isOffBottom() || this.x < -20 || this.x > W + 20) this._init(false);
+    }
     // ═══════════════════════════════════════════
     //  RENDER
     // ═══════════════════════════════════════════
     _render(ctx, W, H) {
         switch (this.subType) {
-            case 'quantumField':  this._renderQuantumField(ctx); break;
-            case 'feynmanLine':   this._renderFeynmanLine(ctx); break;
+            case 'quantumField': this._renderQuantumField(ctx); break;
+            case 'feynmanLine': this._renderFeynmanLine(ctx); break;
             case 'particleTrail': this._renderParticleTrail(ctx); break;
-            case 'decayProduct':  this._renderDecayProduct(ctx); break;
-            case 'vacuumBubble':  this._renderVacuumBubble(ctx); break;
+            case 'decayProduct': this._renderDecayProduct(ctx); break;
+            case 'vacuumBubble': this._renderVacuumBubble(ctx); break;
         }
     }
 

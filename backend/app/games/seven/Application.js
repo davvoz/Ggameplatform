@@ -12,10 +12,8 @@ import { PlatformSDKAdapter } from './platform/PlatformSDKAdapter.js';
 import { EventHandler } from './events/EventHandler.js';
 
 export class Application {
-  constructor() {
-    this._gameController = null;
-    this._eventHandler = null;
-  }
+  _gameController = null;
+  _eventHandler = null;
 
   async start() {
     if (!this._isThreeJSLoaded()) {
@@ -26,10 +24,10 @@ export class Application {
     this._initializeComponents();
 
     await this._initializePlatformSDK();
-    
+
     // Register platform message handlers via SDK (origin validation handled by SDK)
     this._registerPlatformEventHandlers();
-    
+
     // Load coins after platform is ready
     await this._loadUserCoins();
 
@@ -37,44 +35,37 @@ export class Application {
     this._gameController.resume();
 
     const uiManager = this._gameController._ui;
-    const state = this._gameController.getState();
     uiManager.setNotice('Choose your bets and roll the dice!', NOTIFICATION_TONE.OK);
   }
-  
+
   async _loadUserCoins() {
     const platformAdapter = this._gameController._platform;
     const gameState = this._gameController._state;
-    
+
     if (!platformAdapter.isAvailable()) {
 
       return;
     }
-    
+
     // Aspetta che arrivi il config con userId (max 3 secondi)
 
     const maxWait = 3000;
     const startWait = Date.now();
-    while (!window.platformConfig?.userId && (Date.now() - startWait < maxWait)) {
+    while (!globalThis.platformConfig?.userId && (Date.now() - startWait < maxWait)) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-    
-    if (window.platformConfig?.userId) {
 
-    } else {
 
-      return;
-    }
-    
 
     const balance = await platformAdapter.getUserBalance();
 
-    
+
     // Balance can be 0, so check for null/undefined specifically
     if (balance !== null && balance !== undefined && typeof balance === 'number') {
       gameState.setPlatformBalance(balance);
       gameState.enablePlatformCoins(true);
       this._gameController._ui.updateHUD(gameState.bank);
-      
+
       if (balance > 0) {
         this._gameController._ui.setNotice(
           `You have ${balance} coins available.`,
@@ -86,8 +77,6 @@ export class Application {
           NOTIFICATION_TONE.NEUTRAL
         );
       }
-
-    } else {
 
     }
   }
@@ -118,7 +107,7 @@ export class Application {
     const state = this._gameController.getState();
     uiManager.updateBetAmount(uiManager.getBetAmount());
     uiManager.updateHUD(state.bank);
-    
+
     // Force game to start in active state - hide pause overlay
     uiManager.setControlsEnabled(true);
   }
@@ -166,9 +155,10 @@ export class Application {
         rounds_played: 0,
         bank: gameState.bank
       });
-      
+
 
     } catch (error) {
+      console.error('[Application] Platform SDK initialization error:', error);
       gameState.enablePlatformCoins(false);
       gameState.setPlatformBalance(GAME_CONSTANTS.INITIAL_BANK);
       this._gameController._ui.setNotice(

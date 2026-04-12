@@ -1114,49 +1114,113 @@ class Game {
         this.particles.update(deltaTime);
         this.postProcessing.update(deltaTime);
 
-        // Update score popups
+        this.updateScorePopups(deltaTime);
+        this.updateComboTimer(deltaTime);
+
+        if (!this.handleNonPlayingState(deltaTime)) {
+            return;
+        }
+
+        this.updatePlayerAbilities(deltaTime);
+        this.updateUpgrades(deltaTime);
+        this.updateEnemies(deltaTime);
+        this.updateBullets(deltaTime);
+        this.updateExplosions(deltaTime);
+        this.updatePowerUps(deltaTime);
+
+        this.checkCollisions();
+        this.updateWaves(deltaTime);
+
+        if (this.player && !this.player.active) {
+            this.gameOver();
+        }
+    }
+
+    updateScorePopups(deltaTime) {
         this.scorePopups = this.scorePopups.filter(popup => {
             popup.life -= deltaTime;
             popup.y -= 50 * deltaTime;
             return popup.life > 0;
         });
+    }
 
-        // Combo timer
+    updateComboTimer(deltaTime) {
         if (this.comboTimer > 0) {
             this.comboTimer -= deltaTime;
             if (this.comboTimer <= 0) {
                 this.combo = 0;
             }
         }
+    }
 
-        if (this.state !== 'playing' && this.state !== 'upgrading') {
-            // Aggiorna animazione game over
-            if (this.state === 'gameover' && this.gameOverAnimating) {
-                this.updateGameOverAnimation(deltaTime);
-            }
-            return;
+    handleNonPlayingState(deltaTime) {
+        if (this.state === 'gameover' && this.gameOverAnimating) {
+            this.updateGameOverAnimation(deltaTime);
+            return false;
         }
 
-        // If upgrading, only update particles for visual effect
         if (this.state === 'upgrading') {
-            // Keep particles updating for visual feedback
             if (this.upgrades) {
                 this.upgrades.update(deltaTime);
             }
-            return;
+            return false;
         }
 
-        // Gestione celebrazione
         if (this.celebrating) {
             this.updateCelebration(deltaTime);
-            // Durante la celebrazione aggiorna solo il player e le particelle
             if (this.player?.active) {
                 this.player.update(deltaTime, this);
             }
-            return;
+            return false;
         }
 
-        // Update player
+        return this.state === 'playing';
+    }
+
+    updateUpgrades(deltaTime) {
+        if (!this.upgrades) return;
+
+        this.upgrades.update(deltaTime);
+
+        if (this.upgrades.missileLevel > 0) {
+            this.missileTimer += deltaTime;
+            if (this.missileTimer >= this.missileInterval) {
+                this.missileTimer = 0;
+                this.upgrades.fireMissiles();
+            }
+        }
+    }
+
+    updateEnemies(deltaTime) {
+        this.enemies.forEach(enemy => enemy.update(deltaTime, this));
+        this.enemies = this.enemies.filter(e => e.active);
+    }
+
+    updateBullets(deltaTime) {
+        this.bullets.forEach(bullet => {
+            bullet.update(deltaTime, this);
+            if (Math.random() < 0.3) {
+                this.particles.emitBulletTrail(
+                    bullet.position.x + bullet.width / 2,
+                    bullet.position.y + bullet.height / 2,
+                    bullet.owner === 'player'
+                );
+            }
+        });
+        this.bullets = this.bullets.filter(b => b.active);
+    }
+
+    updateExplosions(deltaTime) {
+        this.explosions.forEach(exp => exp.update(deltaTime, this));
+        this.explosions = this.explosions.filter(e => e.active);
+    }
+
+    updatePowerUps(deltaTime) {
+        this.powerUps.forEach(p => p.update(deltaTime, this));
+        this.powerUps = this.powerUps.filter(p => p.active);
+    }
+
+    updatePlayerAbilities(deltaTime) {
         if (this.player?.active) {
             this.player.update(deltaTime, this);
 
@@ -1179,53 +1243,6 @@ class Game {
                     1 + this.player.velocity.magnitude() / 300
                 );
             }
-        }
-
-        // Update upgrades (barrier, drones, missiles)
-        if (this.upgrades) {
-            this.upgrades.update(deltaTime);
-
-            // Fire missiles periodically if unlocked
-            if (this.upgrades.missileLevel > 0) {
-                this.missileTimer += deltaTime;
-                if (this.missileTimer >= this.missileInterval) {
-                    this.missileTimer = 0;
-                    this.upgrades.fireMissiles();
-                }
-            }
-        }
-
-        // Update enemies
-        this.enemies.forEach(enemy => enemy.update(deltaTime, this));
-        this.enemies = this.enemies.filter(e => e.active);
-
-        // Update bullets
-        this.bullets.forEach(bullet => {
-            bullet.update(deltaTime, this);
-            // Bullet trail particles
-            if (Math.random() < 0.3) {
-                this.particles.emitBulletTrail(
-                    bullet.position.x + bullet.width / 2,
-                    bullet.position.y + bullet.height / 2,
-                    bullet.owner === 'player'
-                );
-            }
-        });
-        this.bullets = this.bullets.filter(b => b.active);
-
-        // Update explosions
-        this.explosions.forEach(exp => exp.update(deltaTime, this));
-        this.explosions = this.explosions.filter(e => e.active);
-
-        // Update power-ups
-        this.powerUps.forEach(p => p.update(deltaTime, this));
-        this.powerUps = this.powerUps.filter(p => p.active);
-
-        this.checkCollisions();
-        this.updateWaves(deltaTime);
-
-        if (this.player && !this.player.active) {
-            this.gameOver();
         }
     }
 
@@ -2031,6 +2048,15 @@ class Game {
         ctx.shadowBlur = 0;
 
         // Health bar
+        this.renderHealthAndWeaponHUD(s, padding, ctx);
+
+        // Performance Monitor (in basso a sinistra, sopra le abilità)
+        this.renderPerfMonitor(ctx);
+
+        ctx.restore();
+    }
+
+    renderHealthAndWeaponHUD(s, padding, ctx) {
         if (this.player) {
             const healthBarWidth = Math.round(120 * s);
             const healthBarHeight = Math.round(8 * s);
@@ -2038,87 +2064,22 @@ class Game {
             const healthY = padding + Math.round(45 * s);
 
             // Background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(healthX - 1, healthY - 1, healthBarWidth + 2, healthBarHeight + 2);
+            this.drawHealthBackground(ctx, healthX, healthY, healthBarWidth, healthBarHeight);
 
             // Health gradient
-            const healthPercent = this.player.health / this.player.maxHealth;
-            const healthGrad = ctx.createLinearGradient(healthX, healthY, healthX + healthBarWidth, healthY);
-
-            if (healthPercent > 0.5) {
-                healthGrad.addColorStop(0, '#00ff88');
-                healthGrad.addColorStop(1, '#00cc66');
-            } else if (healthPercent > 0.25) {
-                healthGrad.addColorStop(0, '#ffcc00');
-                healthGrad.addColorStop(1, '#ff9900');
-            } else {
-                healthGrad.addColorStop(0, '#ff4444');
-                healthGrad.addColorStop(1, '#cc0000');
-            }
-
-            ctx.fillStyle = healthGrad;
-            ctx.fillRect(healthX, healthY, healthBarWidth * healthPercent, healthBarHeight);
+            const healthPercent = this.drawHealthBar(ctx, healthX, healthY, healthBarWidth, healthBarHeight);
 
             // Shine effect
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.fillRect(healthX, healthY, healthBarWidth * healthPercent, healthBarHeight / 2);
-
-            // Health segments
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.lineWidth = 1;
-            for (let i = 1; i < this.player.maxHealth; i++) {
-                const segX = healthX + (healthBarWidth / this.player.maxHealth) * i;
-                ctx.beginPath();
-                ctx.moveTo(segX, healthY);
-                ctx.lineTo(segX, healthY + healthBarHeight);
-                ctx.stroke();
-            }
+            this.renderHealthShine(ctx, healthX, healthY, healthBarWidth, healthPercent, healthBarHeight);
 
             // Weapon level indicator
-            const wpnY = healthY + healthBarHeight + Math.round(8 * s);
-            ctx.font = `${Math.round(10 * s)}px Rajdhani, Arial`;
-            ctx.textAlign = 'left';
-            ctx.fillStyle = '#668899';
-            ctx.fillText('WEAPON', padding, wpnY);
+            const wpnY = this.drawWeaponText(healthY, healthBarHeight, s, ctx, padding);
 
             // Weapon level stars
-            for (let i = 0; i < this.player.maxWeaponLevel; i++) {
-                const starX = padding + Math.round(50 * s) + i * Math.round(14 * s);
-                ctx.fillStyle = i < this.player.weaponLevel ? '#ffaa00' : '#333344';
-                ctx.shadowColor = i < this.player.weaponLevel ? '#ff8800' : 'transparent';
-                ctx.shadowBlur = i < this.player.weaponLevel ? 5 : 0;
-                ctx.font = `${Math.round(12 * s)}px Arial`;
-                ctx.fillText('★', starX, wpnY);
-            }
-            ctx.shadowBlur = 0;
+            this.renderWeaponLevelIndicators(padding, s, ctx, wpnY);
 
             // Heat bar VERTICALE (barra surriscaldamento)
-            const heatBarWidth = Math.round(12 * s);
-            const heatBarHeight = Math.round(60 * s);
-            const heatX = this.canvas.width - padding - heatBarWidth;
-            const heatY = Math.round(70 * s);
-            const heatPercent = this.player.heat / this.player.maxHeat;
-
-            // Background con bordo
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(heatX - 2, heatY - 2, heatBarWidth + 4, heatBarHeight + 4);
-            ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(heatX - 2, heatY - 2, heatBarWidth + 4, heatBarHeight + 4);
-
-            // Heat color gradient (blu -> giallo -> rosso)
-            let heatGrad = ctx.createLinearGradient(heatX, heatY + heatBarHeight, heatX, heatY);
-            if (this.player.overheated) {
-                // Lampeggia rosso quando surriscaldato
-                const blink = Math.sin(this.time * 15) > 0;
-                heatGrad.addColorStop(0, blink ? '#ff0000' : '#ff4444');
-                heatGrad.addColorStop(1, blink ? '#ff4444' : '#ff0000');
-            } else {
-                heatGrad.addColorStop(0, '#00aaff');
-                heatGrad.addColorStop(0.4, '#ffaa00');
-                heatGrad.addColorStop(0.7, '#ff4400');
-                heatGrad.addColorStop(1, '#ff0000');
-            }
+            const { heatBarHeight, heatPercent, heatGrad, heatX, heatY, heatBarWidth } = this.calculateHeatBar(s, padding, ctx);
 
             // Disegna barra dal basso verso l'alto
             const filledHeight = heatBarHeight * heatPercent;
@@ -2191,11 +2152,98 @@ class Game {
                 this.renderAbilityHUD(ctx);
             }
         }
+    }
 
-        // Performance Monitor (in basso a sinistra, sopra le abilità)
-        this.renderPerfMonitor(ctx);
+    calculateHeatBar(s, padding, ctx) {
+        const heatBarWidth = Math.round(12 * s);
+        const heatBarHeight = Math.round(60 * s);
+        const heatX = this.canvas.width - padding - heatBarWidth;
+        const heatY = Math.round(70 * s);
+        const heatPercent = this.player.heat / this.player.maxHeat;
 
-        ctx.restore();
+        // Background con bordo
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(heatX - 2, heatY - 2, heatBarWidth + 4, heatBarHeight + 4);
+        ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(heatX - 2, heatY - 2, heatBarWidth + 4, heatBarHeight + 4);
+
+        // Heat color gradient (blu -> giallo -> rosso)
+        let heatGrad = ctx.createLinearGradient(heatX, heatY + heatBarHeight, heatX, heatY);
+        if (this.player.overheated) {
+            // Lampeggia rosso quando surriscaldato
+            const blink = Math.sin(this.time * 15) > 0;
+            heatGrad.addColorStop(0, blink ? '#ff0000' : '#ff4444');
+            heatGrad.addColorStop(1, blink ? '#ff4444' : '#ff0000');
+        } else {
+            heatGrad.addColorStop(0, '#00aaff');
+            heatGrad.addColorStop(0.4, '#ffaa00');
+            heatGrad.addColorStop(0.7, '#ff4400');
+            heatGrad.addColorStop(1, '#ff0000');
+        }
+        return { heatBarHeight, heatPercent, heatGrad, heatX, heatY, heatBarWidth };
+    }
+
+    renderWeaponLevelIndicators(padding, s, ctx, wpnY) {
+        for (let i = 0; i < this.player.maxWeaponLevel; i++) {
+            const starX = padding + Math.round(50 * s) + i * Math.round(14 * s);
+            ctx.fillStyle = i < this.player.weaponLevel ? '#ffaa00' : '#333344';
+            ctx.shadowColor = i < this.player.weaponLevel ? '#ff8800' : 'transparent';
+            ctx.shadowBlur = i < this.player.weaponLevel ? 5 : 0;
+            ctx.font = `${Math.round(12 * s)}px Arial`;
+            ctx.fillText('★', starX, wpnY);
+        }
+        ctx.shadowBlur = 0;
+    }
+
+    drawWeaponText(healthY, healthBarHeight, s, ctx, padding) {
+        const wpnY = healthY + healthBarHeight + Math.round(8 * s);
+        ctx.font = `${Math.round(10 * s)}px Rajdhani, Arial`;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#668899';
+        ctx.fillText('WEAPON', padding, wpnY);
+        return wpnY;
+    }
+
+    renderHealthShine(ctx, healthX, healthY, healthBarWidth, healthPercent, healthBarHeight) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillRect(healthX, healthY, healthBarWidth * healthPercent, healthBarHeight / 2);
+
+        // Health segments
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < this.player.maxHealth; i++) {
+            const segX = healthX + (healthBarWidth / this.player.maxHealth) * i;
+            ctx.beginPath();
+            ctx.moveTo(segX, healthY);
+            ctx.lineTo(segX, healthY + healthBarHeight);
+            ctx.stroke();
+        }
+    }
+
+    drawHealthBar(ctx, healthX, healthY, healthBarWidth, healthBarHeight) {
+        const healthPercent = this.player.health / this.player.maxHealth;
+        const healthGrad = ctx.createLinearGradient(healthX, healthY, healthX + healthBarWidth, healthY);
+
+        if (healthPercent > 0.5) {
+            healthGrad.addColorStop(0, '#00ff88');
+            healthGrad.addColorStop(1, '#00cc66');
+        } else if (healthPercent > 0.25) {
+            healthGrad.addColorStop(0, '#ffcc00');
+            healthGrad.addColorStop(1, '#ff9900');
+        } else {
+            healthGrad.addColorStop(0, '#ff4444');
+            healthGrad.addColorStop(1, '#cc0000');
+        }
+
+        ctx.fillStyle = healthGrad;
+        ctx.fillRect(healthX, healthY, healthBarWidth * healthPercent, healthBarHeight);
+        return healthPercent;
+    }
+
+    drawHealthBackground(ctx, healthX, healthY, healthBarWidth, healthBarHeight) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(healthX - 1, healthY - 1, healthBarWidth + 2, healthBarHeight + 2);
     }
 
     /**

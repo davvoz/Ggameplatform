@@ -4,18 +4,18 @@
 // ═══════════════════════════════════════════════
 
 import { BaseFxStrategy } from './BaseFxStrategy.js';
-import { drawPolygon, pickColor, generateShape } from './RenderHelpers.js';
+import {  pickColor, generateShape } from './RenderHelpers.js';
 
 // ── Color palettes ─────────────────────────────
 const METAL_PALETTE = [
     { weight: 0.45, hue: [210, 15], sat: [8, 10],  light: [30, 12, 4] },
-    { weight: 0.30, hue: [200, 20], sat: [6, 8],   light: [25, 10, 3] },
+    { weight: 0.3, hue: [200, 20], sat: [6, 8],   light: [25, 10, 3] },
     { weight: 0.25, hue: [30, 15],  sat: [12, 10],  light: [20, 8, 3] }
 ];
 
 const RUST_PALETTE = [
-    { weight: 0.50, hue: [18, 12], sat: [40, 20], light: [22, 10, 3] },
-    { weight: 0.50, hue: [25, 15], sat: [35, 18], light: [18, 8, 3] }
+    { weight: 0.5, hue: [18, 12], sat: [40, 20], light: [22, 10, 3] },
+    { weight: 0.5, hue: [25, 15], sat: [35, 18], light: [18, 8, 3] }
 ];
 
 // ── Mechanical FX (terrain composite) ──────────
@@ -23,7 +23,7 @@ export class MechanicalFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const mc = this.config;
-        const d = mc ? mc.dist : [0.30, 0.55, 0.75, 0.90];
+        const d = mc ? mc.dist : [0.3, 0.55, 0.75, 0.9];
         const roll = Math.random();
 
         if (roll < d[0])      this._initGears(W, H, initial);

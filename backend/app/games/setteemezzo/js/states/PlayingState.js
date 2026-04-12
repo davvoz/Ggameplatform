@@ -23,5 +23,7 @@ export class PlayingState extends State {
         this._game.ui.hideAll();
     }
 
-    update(dt) {}
+    update(dt) {
+            // No dynamic elements to update in this state
+    }
 }

@@ -67,7 +67,7 @@
     right: 12px;
     background: #FF4757;
     border: none;
-    color: white;
+    color: rgb(46, 28, 28);
     font-size: 1.6em;
     width: 38px;
     height: 38px;
@@ -270,7 +270,7 @@
     color: #4A5568;
     font-weight: 500;
     font-style: italic;
-    background: rgba(255, 184, 77, 0.15);
+    background: rgba(236, 196, 135, 0.15);
     padding: 4px 8px;
     border-radius: 6px;
     text-align: center;

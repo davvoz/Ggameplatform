@@ -34,11 +34,9 @@ class RainbowRushProgress(Base):
     # Format: {"1": {"stars": 3, "coins": 50, "best_time": 45.2, "completed": true}, "2": {...}}
     level_completions = Column(Text, default='{}', nullable=False)
     
-    # Unlockables (JSON)
     # Format: {"skins": ["default"], "powerups": ["shield"], "abilities": ["double_jump"]}
     unlocked_items = Column(Text, default='{"skins": ["default"], "abilities": ["jump"]}', nullable=False)
     
-    # Statistics (JSON)
     # Format: {"total_jumps": 1234, "total_deaths": 56, "total_enemies_killed": 789, "play_time_seconds": 3600}
     statistics = Column(Text, default='{}', nullable=False)
     

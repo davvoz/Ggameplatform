@@ -85,9 +85,15 @@ export class UIManager {
     }
 
     // kept for compatibility
-    hideBetControls() {}
-    hidePlayControls() {}
-    hideResult() {}
+    hideBetControls() {
+        //keep empty, since we now rebuild buttons on mode switch
+    }
+    hidePlayControls() {
+        //keep empty, since we now rebuild buttons on mode switch
+    }
+    hideResult() {
+        //keep empty, since we now rebuild buttons on mode switch
+    }
 
     updateBetDisplay(amount) { this.#betAmount = amount; }
 
@@ -130,17 +136,21 @@ export class UIManager {
                 const bw = 120, bh = 34;
                 const cy = h - 108;
                 // −  [ amount ]  +
-                this.#buttons.push(new Btn(w / 2 - 90, cy, 36, 36, '−', 'small'));
-                this.#buttons.push(new Btn(w / 2 + 54, cy, 36, 36, '+', 'small'));
-                // DEAL below
-                this.#buttons.push(new Btn(w / 2 - bw / 2, cy + 48, bw, bh, 'DEAL', 'accent'));
+                this.#buttons.push(
+                    new Btn(w / 2 - 90, cy, 36, 36, '−', 'small'),
+                    new Btn(w / 2 + 54, cy, 36, 36, '+', 'small'),
+                    // DEAL below
+                    new Btn(w / 2 - bw / 2, cy + 48, bw, bh, 'DEAL', 'accent')
+                );
                 break;
             }
             case 'playing': {
                 const bw = 110, bh = 38;
                 const cy = h - 80;
-                this.#buttons.push(new Btn(w / 2 - bw - 8, cy, bw, bh, 'HIT', 'accent'));
-                this.#buttons.push(new Btn(w / 2 + 8, cy, bw, bh, 'STAND', 'normal'));
+                this.#buttons.push(
+                    new Btn(w / 2 - bw - 8, cy, bw, bh, 'HIT', 'accent'),
+                    new Btn(w / 2 + 8, cy, bw, bh, 'STAND', 'normal')
+                );
                 break;
             }
             case 'result': {

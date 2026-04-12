@@ -144,7 +144,7 @@ h1 {
 
 button {
     background: #2563eb;
-    color: #ffffff;
+    color: var(--accent-color);
     border: none;
     padding: 10px 20px;
     border-radius: 6px;
@@ -359,13 +359,13 @@ tbody tr:last-child td {
 
 .btn-delete {
     background: #ffffff;
-    color: #dc2626;
+    color: var(--accent-color);
     border: 1px solid #d4d4d4;
 }
 
 .btn-delete:hover {
     background: #fef2f2;
-    border-color: #dc2626;
+    border-color: var(--accent-color);
     color: #b91c1c;
 }
 
@@ -826,7 +826,7 @@ tbody tr:last-child td {
     align-items: center;
     gap: 6px;
     background: #2563eb;
-    color: #ffffff;
+    color: var(--accent-color);
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.813rem;
@@ -855,7 +855,7 @@ tbody tr:last-child td {
 .chip-remove {
     background: rgba(255,255,255,0.2);
     border: none;
-    color: #ffffff;
+    color: var(--accent-color);
     width: 18px;
     height: 18px;
     border-radius: 50%;
@@ -887,7 +887,7 @@ tbody tr:last-child td {
 .clear-filters-btn:hover {
     background: #fee2e2;
     border-color: #fca5a5;
-    color: #dc2626;
+    color: var(--accent-color)  ;
     transform: none;
 }
 
@@ -910,7 +910,7 @@ tbody tr:last-child td {
     display: inline-flex;
     align-items: center;
     background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #ffffff;
+    color: var(--accent-color);
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.75rem;
@@ -926,7 +926,7 @@ tbody tr:last-child td {
     align-items: center;
     gap: 6px;
     background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    color: #ffffff;
+    color: var(--accent-color);
     padding: 6px 12px;
     border-radius: 20px;
     font-size: 0.813rem;
@@ -950,7 +950,7 @@ tbody tr:last-child td {
 .sort-chip .chip-remove {
     background: rgba(255,255,255,0.2);
     border: none;
-    color: #ffffff;
+    color: var(--accent-color);
     width: 18px;
     height: 18px;
     border-radius: 50%;
@@ -1018,7 +1018,7 @@ tbody tr:last-child td {
 
 .close-btn:hover {
     background: #fee2e2;
-    color: #dc2626;
+    color: var(--accent-color);
     transform: none;
 }
 
@@ -1075,7 +1075,7 @@ tbody tr:last-child td {
 
 .add-filter-btn {
     background: #10b981;
-    color: #ffffff;
+    color: var(--accent-color);
     border: none;
     padding: 10px 18px;
     border-radius: 6px;
@@ -1091,7 +1091,7 @@ tbody tr:last-child td {
 
 .add-filter-or-btn {
     background: #f59e0b;
-    color: #ffffff;
+    color: var(--accent-color);
     border: none;
     padding: 10px 18px;
     border-radius: 6px;
@@ -1145,7 +1145,7 @@ tbody tr:last-child td {
 
 .apply-sort-btn {
     background: #6366f1;
-    color: #ffffff;
+    color: var(--accent-color);
     border: none;
     padding: 10px 18px;
     border-radius: 6px;
@@ -1172,7 +1172,7 @@ tbody tr:last-child td {
 .clear-sort-btn:hover {
     background: #fee2e2;
     border-color: #fca5a5;
-    color: #dc2626;
+    color: var(--accent-color);
     transform: none;
 }
 
@@ -1319,7 +1319,7 @@ tbody tr:last-child td {
 .form-group select:disabled,
 .form-group textarea:disabled {
     background-color: #f5f5f5;
-    color: #a3a3a3;
+    color: #3a1d1d;
     cursor: not-allowed;
 }
 
@@ -1339,7 +1339,7 @@ tbody tr:last-child td {
 
 .btn-primary {
     background: #2563eb;
-    color: #ffffff;
+    color: var(--accent-color);
     border: none;
     padding: 12px 24px;
     border-radius: 6px;
@@ -1376,7 +1376,7 @@ tbody tr:last-child td {
 
 #createBtn {
     background: #2563eb;
-    color: #ffffff;
+    color: var(--accent-color);
 }
 
 #createBtn:hover {
@@ -1391,7 +1391,7 @@ tbody tr:last-child td {
 
 .delete-warning-icon {
     font-size: 3rem;
-    color: #dc2626;
+    color: var(--accent-color);
     margin-bottom: 20px;
     font-weight: 300;
 }
@@ -1421,7 +1421,7 @@ tbody tr:last-child td {
 
 .btn-danger {
     background: #dc2626;
-    color: #ffffff;
+    color: var(--accent-color);
     border: 1px solid #dc2626;
     padding: 12px 24px;
     border-radius: 6px;
@@ -1483,7 +1483,7 @@ tbody tr:last-child td {
 }
 
 .toast.error .toast-icon {
-    color: #dc2626;
+    color: var(--accent-color);
 }
 
 .toast-message {
@@ -1607,13 +1607,10 @@ tbody tr:last-child td {
     .table-container {
         margin: 16px;
         border-radius: 6px;
-    }
-    
-    /* Tables - make scrollable horizontally with card layout */
-    .table-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
+    
     
     table {
         min-width: 100%;
@@ -2007,7 +2004,7 @@ tbody tr:last-child td {
 
 .record-count {
     background: #f3f4f6;
-    color: #6b7280;
+    color: #34383f;
     padding: 4px 10px;
     border-radius: 9999px;
     font-size: 0.75rem;
@@ -2016,7 +2013,7 @@ tbody tr:last-child td {
 
 .btn-create {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
+    color: var(--accent-color);
     padding: 10px 20px;
     border-radius: 8px;
     font-weight: 600;
@@ -2096,10 +2093,6 @@ tbody tr:last-child td {
     }
 }
 
-.modal-header {
-    border-bottom: 3px solid var(--accent-color, #2563eb);
-}
-
 .modal-title-group {
     display: flex;
     align-items: center;
@@ -2114,11 +2107,6 @@ tbody tr:last-child td {
     border-bottom-color: #ef4444 !important;
 }
 
-/* Delete Confirmation Styles */
-.delete-confirmation {
-    text-align: center;
-    padding: 24px 0;
-}
 
 .delete-icon-container {
     margin-bottom: 20px;
@@ -2144,12 +2132,6 @@ tbody tr:last-child td {
     font-size: 2.5rem;
 }
 
-.delete-message {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 16px;
-}
 
 .delete-item-info {
     display: inline-flex;
@@ -2171,28 +2153,11 @@ tbody tr:last-child td {
 }
 
 .delete-warning {
-    color: #dc2626;
+    color: var(--accent-color);
     font-size: 0.875rem;
     font-weight: 500;
 }
 
-.btn-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    color: white;
-    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-}
-
-.btn-danger:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-/* Enhanced Form Styles */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-}
 
 .form-grid.timestamps {
     grid-template-columns: repeat(2, 1fr);
@@ -2209,7 +2174,7 @@ tbody tr:last-child td {
 .form-group.readonly input,
 .form-group.readonly textarea {
     background: #f3f4f6;
-    color: #6b7280;
+    color: #363941;
     cursor: not-allowed;
 }
 
@@ -2344,7 +2309,7 @@ tbody tr:last-child td {
     background: rgba(0,0,0,0.05);
     padding: 4px 8px;
     border-radius: 4px;
-    color: #6b7280;
+    color: #bcd2f5;
 }
 
 .detail-section {
@@ -2358,12 +2323,6 @@ tbody tr:last-child td {
     margin-bottom: 12px;
     padding-bottom: 8px;
     border-bottom: 1px solid #e5e5e5;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
 }
 
 .detail-field {
@@ -2405,12 +2364,12 @@ tbody tr:last-child td {
 
 .status-badge.success {
     background: #dcfce7;
-    color: #16a34a;
+    color: #0b5024;
 }
 
 .status-badge.danger {
     background: #fee2e2;
-    color: #dc2626;
+    color: var(--accent-color);
 }
 
 .value-highlight {
@@ -2455,7 +2414,7 @@ tbody tr:last-child td {
     color: #9ca3af;
     font-style: italic;
     padding: 12px 16px;
-    background: #f9fafb;
+    background: #141618;
     border-radius: 8px;
 }
 
@@ -2516,31 +2475,7 @@ tbody tr:last-child td {
     max-height: 400px;
 }
 
-/* Toast Notifications */
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
 
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    background: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    min-width: 300px;
-    max-width: 450px;
-    transform: translateX(120%);
-    transition: transform 0.3s ease;
-    border-left: 4px solid #2563eb;
-}
 
 .toast.show {
     transform: translateX(0);
@@ -2560,68 +2495,6 @@ tbody tr:last-child td {
 
 .toast-info {
     border-left-color: #3b82f6;
-}
-
-.toast-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.toast-success .toast-icon {
-    background: #dcfce7;
-    color: #16a34a;
-}
-
-.toast-error .toast-icon {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.toast-warning .toast-icon {
-    background: #fef3c7;
-    color: #d97706;
-}
-
-.toast-info .toast-icon {
-    background: #dbeafe;
-    color: #2563eb;
-}
-
-.toast-message {
-    flex: 1;
-    font-size: 0.9375rem;
-    color: #374151;
-}
-
-.toast-close {
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    color: #9ca3af;
-    cursor: pointer;
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-}
-
-.toast-close:hover {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-/* Tab with accent color */
-.tab-btn {
-    position: relative;
 }
 
 .tab-btn::after {

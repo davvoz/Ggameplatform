@@ -8,19 +8,19 @@ import { drawPolygon, generateShape, pickColor } from './RenderHelpers.js';
 
 // ── Color palettes ─────────────────────────────
 const LAVA_ROCK_PALETTE = [
-    { weight: 0.40, hue: [20, 15], sat: [8, 10],  light: [14, 6, 5] },
-    { weight: 0.30, hue: [15, 15], sat: [15, 12], light: [12, 5, 4] },
-    { weight: 0.30, hue: [5, 12],  sat: [20, 18], light: [10, 4, 4] }
+    { weight: 0.4, hue: [20, 15], sat: [8, 10],  light: [14, 6, 5] },
+    { weight: 0.3, hue: [15, 15], sat: [15, 12], light: [12, 5, 4] },
+    { weight: 0.3, hue: [5, 12],  sat: [20, 18], light: [10, 4, 4] }
 ];
 
 const OBSIDIAN_PALETTE = [
-    { weight: 0.50, hue: [270, 30], sat: [12, 15], light: [8, 4, 4] },
-    { weight: 0.50, hue: [220, 30], sat: [8, 12],  light: [6, 4, 3] }
+    { weight: 0.5, hue: [270, 30], sat: [12, 15], light: [8, 4, 4] },
+    { weight: 0.5, hue: [220, 30], sat: [8, 12],  light: [6, 4, 3] }
 ];
 
 const LAVA_POOL_PALETTE = [
-    { weight: 0.50, hue: [20, 20], sat: [80, 15], light: [35, 15] },
-    { weight: 0.50, hue: [5, 15],  sat: [75, 20], light: [28, 14] }
+    { weight: 0.5, hue: [20, 20], sat: [80, 15], light: [35, 15] },
+    { weight: 0.5, hue: [5, 15],  sat: [75, 20], light: [28, 14] }
 ];
 
 // ── Volcanic FX ────────────────────────────────
@@ -28,7 +28,7 @@ export class VolcanicFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const vc = this.config;
-        const d = vc ? vc.dist : [0.35, 0.50, 0.70, 0.90];
+        const d = vc ? vc.dist : [0.35, 0.5, 0.7, 0.9];
         const roll = Math.random();
 
         if (roll < d[0])      this._initLavaRock(W, H, initial, vc);
@@ -196,7 +196,7 @@ export class VolcanicFx extends BaseFxStrategy {
             ctx.beginPath();
             ctx.moveTo(-R * 0.2, -R * 0.05);
             ctx.lineTo(R * 0.05, R * 0.1);
-            ctx.lineTo(R * 0.2, R * 0.0);
+            ctx.lineTo(R * 0.2, R * 0);
             ctx.stroke();
         }
         ctx.restore();

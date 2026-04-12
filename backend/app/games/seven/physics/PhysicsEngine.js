@@ -6,12 +6,11 @@
 import { GAME_CONSTANTS } from '../constants.js';
 
 export class PhysicsEngine {
-  constructor() {
-    this._world = null;
-    this._diceBodyA = null;
-    this._diceBodyB = null;
-    this._platformBody = null;
-  }
+  _world = null;
+  _diceBodyA = null;
+  _diceBodyB = null;
+  _platformBody = null;
+
 
   initialize() {
     // Create physics world
@@ -45,15 +44,14 @@ export class PhysicsEngine {
     const wallHeight = 3;
     const wallRadius = 5;
     const wallSegments = 16;
-    
+
     // Create circular containment with multiple wall segments
     for (let i = 0; i < wallSegments; i++) {
       const angle = (i / wallSegments) * Math.PI * 2;
-      const nextAngle = ((i + 1) / wallSegments) * Math.PI * 2;
-      
+
       const x = Math.cos(angle) * wallRadius;
       const z = Math.sin(angle) * wallRadius;
-      
+
       const wallShape = new CANNON.Box(new CANNON.Vec3(0.3, wallHeight, 0.5));
       const wall = new CANNON.Body({
         mass: 0,
@@ -61,7 +59,7 @@ export class PhysicsEngine {
         position: new CANNON.Vec3(x, 0, z),
         material: wallMaterial
       });
-      
+
       // Rotate wall to face center
       wall.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -angle);
       this._world.addBody(wall);
@@ -71,7 +69,7 @@ export class PhysicsEngine {
   createDiceBody(position) {
     const size = GAME_CONSTANTS.DICE_SIZE;
     const shape = new CANNON.Box(new CANNON.Vec3(size / 2, size / 2, size / 2));
-    
+
     const body = new CANNON.Body({
       mass: 1,
       shape: shape,
@@ -106,7 +104,7 @@ export class PhysicsEngine {
 
     // Random initial velocities - reduced to keep dice contained
     const randomVelocity = () => (Math.random() - 0.5) * 1;
-    
+
     bodyA.velocity.set(
       randomVelocity(),
       -1, // Downward
@@ -145,8 +143,8 @@ export class PhysicsEngine {
   }
 
   areDiceAtRest(bodyA, bodyB) {
-    return bodyA.sleepState === CANNON.Body.SLEEPING && 
-           bodyB.sleepState === CANNON.Body.SLEEPING;
+    return bodyA.sleepState === CANNON.Body.SLEEPING &&
+      bodyB.sleepState === CANNON.Body.SLEEPING;
   }
 
   getDiceBody(index) {

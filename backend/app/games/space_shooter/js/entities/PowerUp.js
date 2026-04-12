@@ -38,7 +38,7 @@ class PowerUp extends GameObject {
 
     update(deltaTime, game) {
         // Effetto magnete - attira verso il player
-        if (game.magnetActive && game.player && game.player.active) {
+        if (game.magnetActive && game.player?.active) {
             const playerCenter = game.player.getCenter();
             const myCenter = this.getCenter();
             const dx = playerCenter.x - myCenter.x;

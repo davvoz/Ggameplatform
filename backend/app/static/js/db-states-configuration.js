@@ -53,7 +53,7 @@ const QueryEngine = {
         // Extract sort directive first
         const sortMatch = queryString.match(/\bsort:(-?)(\w+)(?::(asc|desc))?/i);
         if (sortMatch) {
-            const isDesc = sortMatch[1] === '-' || (sortMatch[3] && sortMatch[3].toLowerCase() === 'desc');
+            const isDesc = sortMatch[1] === '-' || (sortMatch[3]?.toLowerCase() === 'desc');
             AppState.sortColumn = sortMatch[2];
             AppState.sortDirection = isDesc ? 'desc' : 'asc';
             // Remove sort directive from query
@@ -335,10 +335,10 @@ function setupEventListeners() {
         }
     });
 
-    window.addEventListener('click', (e) => {
+    globalThis.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) Modal.closeAll();
     });
-    window.addEventListener('keydown', (e) => {
+    globalThis.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') Modal.closeAll();
     });
 }
@@ -547,6 +547,36 @@ function updateSortIcons() {
     }
 }
 
+function compareNumeric(valA, valB, direction) {
+    return direction === 'asc' ? valA - valB : valB - valA;
+}
+
+function compareBoolean(valA, valB, direction) {
+    if (valA === valB) return 0;
+    const result = valA ? -1 : 1;
+    return direction === 'asc' ? result : -result;
+}
+
+function compareDate(valA, valB, direction) {
+    const dateA = new Date(valA);
+    const dateB = new Date(valB);
+    if (Number.isNaN(dateA.getTime()) || Number.isNaN(dateB.getTime())) {
+        return 0;
+    }
+    return direction === 'asc' ? dateA - dateB : dateB - dateA;
+}
+
+function compareString(valA, valB, direction) {
+    const strA = String(valA).toLowerCase();
+    const strB = String(valB).toLowerCase();
+    const result = strA.localeCompare(strB, 'it', { numeric: true });
+    return direction === 'asc' ? result : -result;
+}
+
+function isDateLike(val) {
+    return val instanceof Date || (typeof val === 'string' && !Number.isNaN(Date.parse(val)));
+}
+
 function sortItems(items) {
     if (!AppState.sortColumn) return items;
 
@@ -554,41 +584,22 @@ function sortItems(items) {
     const direction = AppState.sortDirection;
 
     return [...items].sort((a, b) => {
-        let valA = a[column];
-        let valB = b[column];
+        let valA = a[column] ?? '';
+        let valB = b[column] ?? '';
 
-        // Handle null/undefined
-        if (valA === null || valA === undefined) valA = '';
-        if (valB === null || valB === undefined) valB = '';
-
-        // Numeric comparison
         if (typeof valA === 'number' && typeof valB === 'number') {
-            return direction === 'asc' ? valA - valB : valB - valA;
+            return compareNumeric(valA, valB, direction);
         }
 
-        // Boolean comparison
         if (typeof valA === 'boolean' && typeof valB === 'boolean') {
-            return direction === 'asc' ? (valA === valB ? 0 : valA ? -1 : 1) : (valA === valB ? 0 : valA ? 1 : -1);
+            return compareBoolean(valA, valB, direction);
         }
 
-        // Date comparison
-        if (valA instanceof Date || (typeof valA === 'string' && !Number.isNaN(Date.parse(valA)))) {
-            const dateA = new Date(valA);
-            const dateB = new Date(valB);
-            if (!Number.isNaN(dateA.getTime()) && !Number.isNaN(dateB.getTime())) {
-                return direction === 'asc' ? dateA - dateB : dateB - dateA;
-            }
+        if (isDateLike(valA) && isDateLike(valB)) {
+            return compareDate(valA, valB, direction);
         }
 
-        // String comparison
-        const strA = String(valA).toLowerCase();
-        const strB = String(valB).toLowerCase();
-
-        if (direction === 'asc') {
-            return strA.localeCompare(strB, 'it', { numeric: true });
-        } else {
-            return strB.localeCompare(strA, 'it', { numeric: true });
-        }
+        return compareString(valA, valB, direction);
     });
 }
 
@@ -803,7 +814,7 @@ function clearSort() {
 
 function updateFilterButtons() {
     const container = document.getElementById('filterButtons');
-    const hasFilters = AppState.filters.filter(f => !f.isOrSeparator).length > 0;
+    const hasFilters = AppState.filters.some(f => !f.isOrSeparator);
 
     if (hasFilters) {
         // Show AND and OR buttons
@@ -860,7 +871,7 @@ function addFilterFromBuilder(asOr = false) {
     // Add OR separator if requested and there are existing filters
     if (asOr && AppState.filters.length > 0) {
         // Check if last item is not already an OR separator
-        const lastFilter = AppState.filters[AppState.filters.length - 1];
+        const lastFilter = AppState.filters.at(-1);
         if (!lastFilter.isOrSeparator) {
             AppState.filters.push({ isOrSeparator: true, display: 'OR' });
         }
@@ -888,7 +899,6 @@ function updateActiveFiltersUI() {
     const container = document.getElementById('activeFilters');
     const chipsContainer = document.getElementById('filterChips');
     const sortChip = document.getElementById('sortChip');
-    const countContainer = document.getElementById('filterCount');
     const clearAllBtn = document.getElementById('clearAllBtn');
 
     const hasFilters = AppState.filters.length > 0;
@@ -973,7 +983,8 @@ function updateSearchInputFromFilters() {
             queryParts.push(f.value);
         } else {
             const opSymbol = Object.keys(QueryEngine.operators).find(k => QueryEngine.operators[k] === f.operator) || ':';
-            queryParts.push(`${f.field}${opSymbol}${f.value.includes(' ') ? `"${f.value}"` : f.value}`);
+            const quotedValue = f.value.includes(' ') ? `"${f.value}"` : f.value;
+            queryParts.push(`${f.field}${opSymbol}${quotedValue}`);
         }
     });
 
@@ -997,13 +1008,12 @@ function removeFilter(index) {
         AppState.filters.shift();
     }
     // Remove trailing OR
-    while (AppState.filters.length > 0 && AppState.filters[AppState.filters.length - 1].isOrSeparator) {
+    while (AppState.filters.length > 0 && AppState.filters.at(-1).isOrSeparator) {
         AppState.filters.pop();
     }
     // Remove consecutive ORs
     AppState.filters = AppState.filters.filter((f, i, arr) => {
-        if (f.isOrSeparator && i > 0 && arr[i - 1].isOrSeparator) return false;
-        return true;
+        return !(f.isOrSeparator && i > 0 && arr[i - 1].isOrSeparator);
     });
 
     updateActiveFiltersUI();
@@ -1049,7 +1059,9 @@ async function checkOpenSessions() {
         } else if (btn) {
             btn.style.display = 'none';
         }
-    } catch (e) { }
+    } catch (e) {
+        console.error('Error checking open sessions:', e);
+     }
 }
 
 async function showOpenSessions() {
@@ -1231,7 +1243,7 @@ function exportCSV() {
 
 function logout() {
     document.cookie = 'admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    window.location.href = '/admin/login';
+    globalThis.location.href = '/admin/login';
 }
 
 // ============ ER DIAGRAM ============

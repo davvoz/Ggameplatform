@@ -35,8 +35,7 @@ function lerpCol(a, b, f) {
 // ───────── drawing primitives ─────────
 
 /** Glossy body fill with 3-stop radial + specular highlight */
-function glossyBody(ctx, cx, cy, r, base, edgeDark) {
-    edgeDark = edgeDark || 0.55;
+function glossyBody(ctx, cx, cy, r, base, edgeDark = 0.55) {
     const g = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.28, r * 0.04, cx, cy, r);
     g.addColorStop(0, lighten(base, 0.45));
     g.addColorStop(0.35, base);
@@ -63,14 +62,14 @@ function thickOutline(ctx, color, w) {
 
 /** Expressive eye — large, reactive, with lid control
  *  mood: 0=neutral 1=angry 2=worried 3=smug 4=shocked 5=sleepy */
-function drawBossEye(ctx, ex, ey, size, lookAng, irisColor, mood, lidOpen) {
+function drawBossEye(ctx, options) {
+    const { ex, ey, size, lookAng, irisColor, mood, lidOpen = 1 } = options;
     const s = size;
-    lidOpen = lidOpen !== undefined ? lidOpen : 1;
     ctx.save();
     // Sclera
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(ex, ey, s * 1.0, s * 0.78 * lidOpen, 0, 0, TAU);
+    ctx.ellipse(ex, ey, s * 1, s * 0.78 * lidOpen, 0, 0, TAU);
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.35)';
     ctx.lineWidth = s * 0.08;
@@ -131,12 +130,13 @@ function drawBossEye(ctx, ex, ey, size, lookAng, irisColor, mood, lidOpen) {
 // ─── Specialized Eye Types (diverse, refined) ─────────
 
 /** Cat-slit eye — vertical slit pupil, feline grace */
-function drawSlitEye(ctx, ex, ey, size, lookAng, irisColor) {
+function drawSlitEye(ctx, options) {
+    const { ex, ey, size, lookAng, irisColor } = options;
     const s = size;
     ctx.save();
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(ex, ey, s * 1.0, s * 0.68, 0, 0, TAU);
+    ctx.ellipse(ex, ey, s * 1, s * 0.68, 0, 0, TAU);
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     ctx.lineWidth = s * 0.08;
@@ -390,7 +390,7 @@ function drawStarburstEye(ctx, ex, ey, size, lookAng, irisColor, t) {
     ctx.save();
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(ex, ey, s * 1.0, s * 0.75, 0, 0, TAU);
+    ctx.ellipse(ex, ey, s * 1, s * 0.75, 0, 0, TAU);
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.3)';
     ctx.lineWidth = s * 0.07;
@@ -424,7 +424,8 @@ function drawStarburstEye(ctx, ex, ey, size, lookAng, irisColor, t) {
 }
 
 /** Draw an energy tendril between two points */
-function energyTendril(ctx, x1, y1, x2, y2, t, col, width, wiggle) {
+function energyTendril(ctx, options) {
+    const { x1, y1, x2, y2, t, col, width, wiggle } = options;
     ctx.save();
     ctx.strokeStyle = col;
     ctx.lineWidth = width || 2;
@@ -473,7 +474,8 @@ function haloRing(ctx, cx, cy, r, t, col, speed) {
 }
 
 /** Orbiting energy motes around a center */
-function orbitMotes(ctx, cx, cy, r, count, t, cols, moteR) {
+function orbitMotes(ctx, options) {
+    const { cx, cy, r, count, t, cols, moteR } = options;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < count; i++) {
@@ -581,53 +583,10 @@ function drawProtonCrusher(ctx, boss, t) {
 
     // === Confinement cage field ===
     const cores = boss.parts.filter(p => p.isCore && p.active);
-    if (cores.length >= 2) {
-        // Triangular confinement region
-        ctx.save();
-        ctx.globalAlpha = 0.07 + (st.isCritical ? 0.06 * sin(t * 12) : 0);
-        ctx.beginPath();
-        cores.forEach((c, i) => {
-            const px = c.worldX + c.width / 2, py = c.worldY + c.height / 2;
-            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        });
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(200,120,255,0.4)';
-        ctx.fill();
-        ctx.restore();
-    }
+    drawConfinementRegion();
 
     // === Gluon springs (helical energy tendrils) ===
-    for (let i = 0; i < cores.length; i++) {
-        for (let j = i + 1; j < cores.length; j++) {
-            const a = cores[i], b = cores[j];
-            const ax = a.worldX + a.width / 2, ay = a.worldY + a.height / 2;
-            const bx = b.worldX + b.width / 2, by = b.worldY + b.height / 2;
-            // Double helix
-            for (let strand = 0; strand < 2; strand++) {
-                const phase = strand * Math.PI;
-                ctx.save();
-                ctx.strokeStyle = quarkCols[(i + j + strand) % 3];
-                ctx.lineWidth = 2.5;
-                ctx.globalAlpha = 0.5;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                const segs = 18;
-                for (let s = 0; s <= segs; s++) {
-                    const f = s / segs;
-                    const mx = ax + (bx - ax) * f;
-                    const my = ay + (by - ay) * f;
-                    const perp = sin(f * Math.PI * 6 + t * 8 + phase) * 7;
-                    const nx = -(by - ay), ny = (bx - ax);
-                    const len = hypot(nx, ny) || 1;
-                    const px = mx + nx / len * perp;
-                    const py = my + ny / len * perp;
-                    s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-                ctx.restore();
-            }
-        }
-    }
+    drawDoubleHelix();
 
     // === Draw parts (arms/turrets with styled circles) ===
     for (const part of boss.parts) {
@@ -636,83 +595,142 @@ function drawProtonCrusher(ctx, boss, t) {
     }
 
     // === Quark cores — large glossy spheres with faces ===
-    for (let ci = 0; ci < cores.length; ci++) {
-        const c = cores[ci];
-        const pcx = c.worldX + c.width / 2;
-        const pcy = c.worldY + c.height / 2;
-        const pr = c.width / 2 * st.breathe;
-        const col = quarkCols[ci % 3];
-
-        ctx.save();
-        // Outer glow
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 1.55, 0, TAU);
-        ctx.fill();
-
-        // Body
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, 0, TAU);
-        glossyBody(ctx, pcx, pcy, pr, col);
-        thickOutline(ctx, darken(col, 0.45), 3);
-
-        // Decoration: spinning charge ring inside body
-        ctx.globalAlpha = 0.15;
-        ctx.strokeStyle = lighten(col, 0.4);
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 0.6, t * 3 + ci * 2, t * 3 + ci * 2 + Math.PI * 1.3);
-        ctx.stroke();
-
-        // Face — each quark has a unique personality
-        ctx.globalAlpha = 1;
-        const lookAng = Math.PI * 0.5 + sin(t * 1.5 + ci) * 0.4;
-        const eSize = pr * 0.22;
-        if (ci === 0) {
-            // Red quark — fierce angular eyes, fiery
-            drawBossEye(ctx, pcx - pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#aa1100', 1);
-            drawBossEye(ctx, pcx + pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#aa1100', 1);
-            drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.8, st.isCritical ? 'rage' : 'grin', t, '#660000');
-        } else if (ci === 1) {
-            // Green quark — sly cat-slit pupils
-            drawSlitEye(ctx, pcx - pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#116633');
-            drawSlitEye(ctx, pcx + pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#116633');
-            drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.8, st.isCritical ? 'rage' : 'smirk', t, '#004400');
-        } else {
-            // Blue quark — large cold diamond eyes
-            drawDiamondEye(ctx, pcx - pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#1133aa');
-            drawDiamondEye(ctx, pcx + pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#1133aa');
-            drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.8, st.isCritical ? 'rage' : 'serene', t, '#001166');
-        }
-
-        // Quark flavour letter (faint watermark)
-        ctx.globalAlpha = 0.18;
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.trunc(pr * 0.55)}px serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(quarkNames[ci % 3], pcx, pcy);
-
-        _drawPartHitFlash(ctx, c, pcx, pcy, pr);
-        ctx.restore();
-    }
+    drawQuarkCores();
 
     // === Confinement timer arc ===
-    if (boss._confinementTimer > 0) {
-        const ratio = boss._confinementTimer / 5;
-        ctx.save();
-        ctx.globalAlpha = 0.6;
-        ctx.strokeStyle = '#ff3355';
-        ctx.lineWidth = 4;
-        ctx.shadowColor = '#ff3355';
-        ctx.shadowBlur = 10;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.arc(cx, cy, boss.width * 0.44, -Math.PI / 2, -Math.PI / 2 + ratio * TAU);
-        ctx.stroke();
-        ctx.restore();
+    drawConfinementTimerArc();
+
+    function drawConfinementTimerArc() {
+        if (boss._confinementTimer > 0) {
+            const ratio = boss._confinementTimer / 5;
+            ctx.save();
+            ctx.globalAlpha = 0.6;
+            ctx.strokeStyle = '#ff3355';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = '#ff3355';
+            ctx.shadowBlur = 10;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(cx, cy, boss.width * 0.44, -Math.PI / 2, -Math.PI / 2 + ratio * TAU);
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    function drawQuarkCores() {
+        for (let ci = 0; ci < cores.length; ci++) {
+            const c = cores[ci];
+            const pcx = c.worldX + c.width / 2;
+            const pcy = c.worldY + c.height / 2;
+            const pr = c.width / 2 * st.breathe;
+            const col = quarkCols[ci % 3];
+
+            ctx.save();
+            // Outer glow
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 1.55, 0, TAU);
+            ctx.fill();
+
+            // Body
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, 0, TAU);
+            glossyBody(ctx, pcx, pcy, pr, col);
+            thickOutline(ctx, darken(col, 0.45), 3);
+
+            // Decoration: spinning charge ring inside body
+            ctx.globalAlpha = 0.15;
+            ctx.strokeStyle = lighten(col, 0.4);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 0.6, t * 3 + ci * 2, t * 3 + ci * 2 + Math.PI * 1.3);
+            ctx.stroke();
+
+            // Face — each quark has a unique personality
+            ctx.globalAlpha = 1;
+            const lookAng = Math.PI * 0.5 + sin(t * 1.5 + ci) * 0.4;
+            const eSize = pr * 0.22;
+            if (ci === 0) {
+                // Red quark — fierce angular eyes, fiery
+                drawBossEye(ctx, { ex: pcx - pr * 0.26, ey: pcy - pr * 0.05, size: eSize, lookAng, irisColor: '#aa1100', mood: 1 });
+                drawBossEye(ctx, { ex: pcx + pr * 0.26, ey: pcy - pr * 0.05, size: eSize, lookAng, irisColor: '#aa1100', mood: 1 });
+                drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.8, st.isCritical ? 'rage' : 'grin', t, '#660000');
+            } else if (ci === 1) {
+                // Green quark — sly cat-slit pupils
+                drawSlitEye(ctx, { ex: pcx - pr * 0.26, ey: pcy - pr * 0.05, size: eSize, lookAng, irisColor: '#116633' });
+                drawSlitEye(ctx, { ex: pcx + pr * 0.26, ey: pcy - pr * 0.05, size: eSize, lookAng, irisColor: '#116633' });
+                drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.8, st.isCritical ? 'rage' : 'smirk', t, '#004400');
+            } else {
+                // Blue quark — large cold diamond eyes
+                drawDiamondEye(ctx, pcx - pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#1133aa');
+                drawDiamondEye(ctx, pcx + pr * 0.26, pcy - pr * 0.05, eSize, lookAng, '#1133aa');
+                drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.8, st.isCritical ? 'rage' : 'serene', t, '#001166');
+            }
+
+            // Quark flavour letter (faint watermark)
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.trunc(pr * 0.55)}px serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(quarkNames[ci % 3], pcx, pcy);
+
+            _drawPartHitFlash(ctx, c, pcx, pcy, pr);
+            ctx.restore();
+        }
+    }
+
+    function drawDoubleHelix() {
+        for (let i = 0; i < cores.length; i++) {
+            for (let j = i + 1; j < cores.length; j++) {
+                const a = cores[i], b = cores[j];
+                const ax = a.worldX + a.width / 2, ay = a.worldY + a.height / 2;
+                const bx = b.worldX + b.width / 2, by = b.worldY + b.height / 2;
+                // Double helix
+                for (let strand = 0; strand < 2; strand++) {
+                    const phase = strand * Math.PI;
+                    ctx.save();
+                    ctx.strokeStyle = quarkCols[(i + j + strand) % 3];
+                    ctx.lineWidth = 2.5;
+                    ctx.globalAlpha = 0.5;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    const segs = 18;
+                    for (let s = 0; s <= segs; s++) {
+                        const f = s / segs;
+                        const mx = ax + (bx - ax) * f;
+                        const my = ay + (by - ay) * f;
+                        const perp = sin(f * Math.PI * 6 + t * 8 + phase) * 7;
+                        const nx = -(by - ay), ny = (bx - ax);
+                        const len = hypot(nx, ny) || 1;
+                        const px = mx + nx / len * perp;
+                        const py = my + ny / len * perp;
+                        s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+        }
+    }
+
+    function drawConfinementRegion() {
+        if (cores.length >= 2) {
+            // Triangular confinement region
+            ctx.save();
+            ctx.globalAlpha = 0.07 + (st.isCritical ? 0.06 * sin(t * 12) : 0);
+            ctx.beginPath();
+            cores.forEach((c, i) => {
+                const px = c.worldX + c.width / 2, py = c.worldY + c.height / 2;
+                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            });
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(200,120,255,0.4)';
+            ctx.fill();
+            ctx.restore();
+        }
     }
 }
 
@@ -749,91 +767,100 @@ function drawElectroweakUnifier(ctx, boss, t) {
     haloRing(ctx, cx, cy, boss.width * 0.45, t, pCol, isEM ? 5 : 2);
 
     // === Non-core parts ===
-    for (const part of boss.parts) {
-        if (!part.active || part.isCore) continue;
-        const partCol = (part.offsetX || 0) < 0 ? emCol : wkCol;
-        _drawStyledPart(ctx, part, t, partCol, st);
-    }
+    drawNonCoreParts();
 
     // === Unified core body ===
-    const core = boss.coreParts[0];
-    if (core && core.active) {
-        const pcx = core.worldX + core.width / 2;
-        const pcy = core.worldY + core.height / 2;
-        const pr = core.width / 2 * st.breathe;
+    drawUnifiedCore();
 
-        ctx.save();
-        // Glow halo
-        ctx.globalAlpha = 0.1;
-        ctx.fillStyle = pCol;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 1.5, 0, TAU);
-        ctx.fill();
+    function drawUnifiedCore() {
+        const core = boss.coreParts[0];
+        if (core?.active) {
+            const pcx = core.worldX + core.width / 2;
+            const pcy = core.worldY + core.height / 2;
+            const pr = core.width / 2 * st.breathe;
 
-        // Yin-yang split body
-        ctx.globalAlpha = 1;
-        // Left half (EM gold)
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, -Math.PI / 2, Math.PI / 2);
-        ctx.closePath();
-        glossyBody(ctx, pcx - pr * 0.15, pcy, pr, emCol);
-        // Right half (Weak blue)
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, Math.PI / 2, Math.PI * 1.5);
-        ctx.closePath();
-        glossyBody(ctx, pcx + pr * 0.15, pcy, pr, wkCol);
+            ctx.save();
+            // Glow halo
+            ctx.globalAlpha = 0.1;
+            ctx.fillStyle = pCol;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 1.5, 0, TAU);
+            ctx.fill();
 
-        // Full outline overtop
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, 0, TAU);
-        thickOutline(ctx, darken(pCol, 0.35), 3.5);
+            // Yin-yang split body
+            ctx.globalAlpha = 1;
+            // Left half (EM gold)
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, -Math.PI / 2, Math.PI / 2);
+            ctx.closePath();
+            glossyBody(ctx, pcx - pr * 0.15, pcy, pr, emCol);
+            // Right half (Weak blue)
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, Math.PI / 2, Math.PI * 1.5);
+            ctx.closePath();
+            glossyBody(ctx, pcx + pr * 0.15, pcy, pr, wkCol);
 
-        // Yin-yang dividing S-curve
-        ctx.save();
-        ctx.globalAlpha = 0.7;
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(pcx, pcy - pr);
-        ctx.bezierCurveTo(pcx + pr * 0.5, pcy - pr * 0.3,
-            pcx - pr * 0.5, pcy + pr * 0.3,
-            pcx, pcy + pr);
-        ctx.stroke();
-        ctx.restore();
+            // Full outline overtop
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, 0, TAU);
+            thickOutline(ctx, darken(pCol, 0.35), 3.5);
 
-        // Small yin-yang dots
-        ctx.fillStyle = wkCol; ctx.beginPath();
-        ctx.arc(pcx, pcy - pr * 0.3, pr * 0.1, 0, TAU); ctx.fill();
-        ctx.fillStyle = emCol; ctx.beginPath();
-        ctx.arc(pcx, pcy + pr * 0.3, pr * 0.1, 0, TAU); ctx.fill();
+            // Yin-yang dividing S-curve
+            ctx.save();
+            ctx.globalAlpha = 0.7;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(pcx, pcy - pr);
+            ctx.bezierCurveTo(pcx + pr * 0.5, pcy - pr * 0.3,
+                pcx - pr * 0.5, pcy + pr * 0.3,
+                pcx, pcy + pr);
+            ctx.stroke();
+            ctx.restore();
 
-        // Active phase glow overlay
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = 0.12 + 0.08 * sin(t * 5);
-        ctx.fillStyle = pCol;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 0.6, 0, TAU);
-        ctx.fill();
-        ctx.restore();
+            // Small yin-yang dots
+            ctx.fillStyle = wkCol; ctx.beginPath();
+            ctx.arc(pcx, pcy - pr * 0.3, pr * 0.1, 0, TAU); ctx.fill();
+            ctx.fillStyle = emCol; ctx.beginPath();
+            ctx.arc(pcx, pcy + pr * 0.3, pr * 0.1, 0, TAU); ctx.fill();
 
-        // Face — dual-nature: EM (starburst) left, Weak (heavy-lid) right
-        const lookAng = Math.PI * 0.5 + sin(t * 1.2) * 0.35;
-        const eS = pr * 0.17;
-        drawStarburstEye(ctx, pcx - pr * 0.25, pcy - pr * 0.08, eS, lookAng, '#cc6600', t);
-        drawBossEye(ctx, pcx + pr * 0.25, pcy - pr * 0.08, eS, lookAng, '#2244aa', 5);
-        const mMood = st.isCritical ? 'rage' : (isEM ? 'smirk' : 'grin');
-        drawMouth(ctx, pcx, pcy + pr * 0.3, pr * 0.7, mMood, t, '#333');
+            // Active phase glow overlay
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.12 + 0.08 * sin(t * 5);
+            ctx.fillStyle = pCol;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 0.6, 0, TAU);
+            ctx.fill();
+            ctx.restore();
 
-        // Phase label watermark
-        ctx.globalAlpha = 0.15;
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.trunc(pr * 0.32)}px monospace`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(isEM ? 'EM' : 'WEAK', pcx, pcy + pr * 0.02);
+            // Face — dual-nature: EM (starburst) left, Weak (heavy-lid) right
+            const lookAng = Math.PI * 0.5 + sin(t * 1.2) * 0.35;
+            const eS = pr * 0.17;
+            drawStarburstEye(ctx, pcx - pr * 0.25, pcy - pr * 0.08, eS, lookAng, '#cc6600', t);
+            drawBossEye(ctx, { ex: pcx + pr * 0.25, ey: pcy - pr * 0.08, size: eS, lookAng, irisColor: '#2244aa', mood: 5 });
+            const isEmValue = (isEM ? 'smirk' : 'grin');
+            const mMood = st.isCritical ? 'rage' : isEmValue;
+            drawMouth(ctx, pcx, pcy + pr * 0.3, pr * 0.7, mMood, t, '#333');
 
-        _drawPartHitFlash(ctx, core, pcx, pcy, pr);
-        ctx.restore();
+            // Phase label watermark
+            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.trunc(pr * 0.32)}px monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(isEM ? 'EM' : 'WEAK', pcx, pcy + pr * 0.02);
+
+            _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+            ctx.restore();
+        }
+    }
+
+    function drawNonCoreParts() {
+        for (const part of boss.parts) {
+            if (!part.active || part.isCore) continue;
+            const partCol = (part.offsetX || 0) < 0 ? emCol : wkCol;
+            _drawStyledPart(ctx, part, t, partCol, st);
+        }
     }
 }
 
@@ -868,94 +895,108 @@ function drawGluonOverlord(ctx, boss, t) {
     for (let i = 0; i < turrets.length; i += 2) {
         if (i + 1 >= turrets.length) break;
         const a = turrets[i], b = turrets[i + 1];
-        energyTendril(ctx,
-            a.worldX + a.width / 2, a.worldY + a.height / 2,
-            b.worldX + b.width / 2, b.worldY + b.height / 2,
-            t, chargeCols[floor(i / 2) % 4], 2, 8);
+        energyTendril(ctx, {
+            x1: a.worldX + a.width / 2,
+            y1: a.worldY + a.height / 2,
+            x2: b.worldX + b.width / 2,
+            y2: b.worldY + b.height / 2,
+            t,
+            col: chargeCols[floor(i / 2) % 4],
+            width: 2,
+            wiggle: 8
+        });
     }
 
     // === Non-core parts ===
-    for (let i = 0; i < turrets.length; i++) {
-        _drawStyledPart(ctx, turrets[i], t, chargeCols[floor(i / 2) % 4], st);
-    }
-    for (const p of boss.parts) {
-        if (p.active && !p.isCore && p.role !== 'turret') _drawStyledPart(ctx, p, t, '#33ff88', st);
-    }
+    drawActiveTurrets();
 
     // === Massive core ===
-    const core = boss.coreParts[0];
-    if (core && core.active) {
-        const pcx = core.worldX + core.width / 2;
-        const pcy = core.worldY + core.height / 2;
-        const pr = core.width / 2 * st.breathe;
+    drawCoreVisualEffects();
 
-        ctx.save();
-        // Large glow
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = '#22cc66';
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 1.6, 0, TAU);
-        ctx.fill();
+    function drawCoreVisualEffects() {
+        const core = boss.coreParts[0];
+        if (core?.active) {
+            const pcx = core.worldX + core.width / 2;
+            const pcy = core.worldY + core.height / 2;
+            const pr = core.width / 2 * st.breathe;
 
-        // Body
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, 0, TAU);
-        glossyBody(ctx, pcx, pcy, pr, '#22cc66');
-        thickOutline(ctx, '#0a4422', 3.5);
-
-        // Inner mandala — 8-fold spinning pattern
-        ctx.save();
-        ctx.globalAlpha = 0.12;
-        ctx.translate(pcx, pcy);
-        ctx.rotate(t * 0.4);
-        for (let i = 0; i < 8; i++) {
-            const a = TAU / 8 * i;
-            ctx.strokeStyle = chargeCols[i % 4];
-            ctx.lineWidth = 1.5;
+            ctx.save();
+            // Large glow
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = '#22cc66';
             ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(cos(a) * pr * 0.85, sin(a) * pr * 0.85);
-            ctx.stroke();
-            // Decorative arc at end
-            ctx.beginPath();
-            ctx.arc(cos(a) * pr * 0.65, sin(a) * pr * 0.65, pr * 0.12, 0, TAU);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        // Imperious face — three compound eyes in inverted triangle
-        const ceS = pr * 0.14;
-        drawCompoundEye(ctx, pcx - pr * 0.22, pcy - pr * 0.12, ceS, '#ff2244');
-        drawCompoundEye(ctx, pcx + pr * 0.22, pcy - pr * 0.12, ceS, '#2266ff');
-        drawCompoundEye(ctx, pcx, pcy + pr * 0.08, ceS, '#22dd66');
-        // Triangular stern mouth
-        ctx.save();
-        ctx.strokeStyle = '#002200';
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(pcx - pr * 0.2, pcy + pr * 0.28);
-        ctx.lineTo(pcx, pcy + pr * 0.36);
-        ctx.lineTo(pcx + pr * 0.2, pcy + pr * 0.28);
-        ctx.stroke();
-        if (st.isCritical) {
-            ctx.fillStyle = '#220000';
+            ctx.arc(pcx, pcy, pr * 1.6, 0, TAU);
             ctx.fill();
-            ctx.fillStyle = '#fff';
-            for (let i = 0; i < 4; i++) {
-                const tx = pcx - pr * 0.12 + pr * 0.08 * i;
-                ctx.beginPath();
-                ctx.moveTo(tx, pcy + pr * 0.29);
-                ctx.lineTo(tx + pr * 0.02, pcy + pr * 0.33);
-                ctx.lineTo(tx + pr * 0.04, pcy + pr * 0.29);
-                ctx.fill();
-            }
-        }
-        ctx.restore();
 
-        _drawPartHitFlash(ctx, core, pcx, pcy, pr);
-        ctx.restore();
+            // Body
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, 0, TAU);
+            glossyBody(ctx, pcx, pcy, pr, '#22cc66');
+            thickOutline(ctx, '#0a4422', 3.5);
+
+            // Inner mandala — 8-fold spinning pattern
+            ctx.save();
+            ctx.globalAlpha = 0.12;
+            ctx.translate(pcx, pcy);
+            ctx.rotate(t * 0.4);
+            for (let i = 0; i < 8; i++) {
+                const a = TAU / 8 * i;
+                ctx.strokeStyle = chargeCols[i % 4];
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(cos(a) * pr * 0.85, sin(a) * pr * 0.85);
+                ctx.stroke();
+                // Decorative arc at end
+                ctx.beginPath();
+                ctx.arc(cos(a) * pr * 0.65, sin(a) * pr * 0.65, pr * 0.12, 0, TAU);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Imperious face — three compound eyes in inverted triangle
+            const ceS = pr * 0.14;
+            drawCompoundEye(ctx, pcx - pr * 0.22, pcy - pr * 0.12, ceS, '#ff2244');
+            drawCompoundEye(ctx, pcx + pr * 0.22, pcy - pr * 0.12, ceS, '#2266ff');
+            drawCompoundEye(ctx, pcx, pcy + pr * 0.08, ceS, '#22dd66');
+            // Triangular stern mouth
+            ctx.save();
+            ctx.strokeStyle = '#002200';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(pcx - pr * 0.2, pcy + pr * 0.28);
+            ctx.lineTo(pcx, pcy + pr * 0.36);
+            ctx.lineTo(pcx + pr * 0.2, pcy + pr * 0.28);
+            ctx.stroke();
+            if (st.isCritical) {
+                ctx.fillStyle = '#220000';
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < 4; i++) {
+                    const tx = pcx - pr * 0.12 + pr * 0.08 * i;
+                    ctx.beginPath();
+                    ctx.moveTo(tx, pcy + pr * 0.29);
+                    ctx.lineTo(tx + pr * 0.02, pcy + pr * 0.33);
+                    ctx.lineTo(tx + pr * 0.04, pcy + pr * 0.29);
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+
+            _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+            ctx.restore();
+        }
+    }
+
+    function drawActiveTurrets() {
+        for (let i = 0; i < turrets.length; i++) {
+            _drawStyledPart(ctx, turrets[i], t, chargeCols[floor(i / 2) % 4], st);
+        }
+        for (const p of boss.parts) {
+            if (p.active && !p.isCore && p.role !== 'turret') _drawStyledPart(ctx, p, t, '#33ff88', st);
+        }
     }
 }
 
@@ -1005,41 +1046,131 @@ function drawHiggsManifestation(ctx, boss, t) {
     }
 
     // === Floating golden motes ===
-    orbitMotes(ctx, cx, cy, 55, 12, t * 0.5, ['#ffd700', '#ffe066', '#ffcc33'], 3);
+    orbitMotes(ctx, { cx, cy, r: 55, count: 12, t: t * 0.5, cols: ['#ffd700', '#ffe066', '#ffcc33'], moteR: 3 });
 
     // === Non-core parts ===
-    for (const part of boss.parts) {
-        if (!part.active || part.isCore) continue;
-        const col = part.role === 'weakpoint' ? '#ff4444' : '#ffd700';
-        _drawStyledPart(ctx, part, t, col, st);
-    }
+    drawActiveBossParts();
 
     // === Golden core with crown ===
-    const core = boss.coreParts[0];
-    if (core && core.active) {
-        const pcx = core.worldX + core.width / 2;
-        const pcy = core.worldY + core.height / 2;
-        const pr = core.width / 2 * st.breathe;
+    drawBossCore();
 
+    // === Mass well indicator ===
+    drawMassWellIndicator();
+
+    function drawMassWellIndicator() {
+        if (boss._massWellActive) {
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.arc(cx, cy, boss.width * 0.38, 0, TAU);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('MASS WELL', cx, cy - boss.height / 2 - 28);
+            ctx.restore();
+        }
+    }
+
+    function drawBossCore() {
+        const core = boss.coreParts[0];
+        if (core?.active) {
+            const pcx = core.worldX + core.width / 2;
+            const pcy = core.worldY + core.height / 2;
+            const pr = core.width / 2 * st.breathe;
+
+            ctx.save();
+            // Majestic glow
+            ctx.globalAlpha = 0.1;
+            const gG = ctx.createRadialGradient(pcx, pcy, pr * 0.3, pcx, pcy, pr * 1.7);
+            gG.addColorStop(0, '#ffd700');
+            gG.addColorStop(1, 'rgba(255,215,0,0)');
+            ctx.fillStyle = gG;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 1.7, 0, TAU);
+            ctx.fill();
+
+            // Main body
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, 0, TAU);
+            glossyBody(ctx, pcx, pcy, pr, '#ffcc00');
+            thickOutline(ctx, '#996600', 3.5);
+
+            // === Crown — crystalline spikes ===
+            drawCrownSpikes(pcx, pr, pcy);
+
+            // Horizontal crown band
+            drawCrownBand(pcy, pr, pcx);
+
+            // Face — regal diamond-pupil eyes, elegant serene expression
+            drawBossEyes(pr, pcx, pcy);
+            const isLowValue = (st.isLow ? 'grin' : 'serene');
+            const mMood = st.isCritical ? 'rage' : isLowValue;
+            drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.65, mMood, t, '#6B4914');
+
+            // H⁰ inscription
+            drawBossInscription(pr, pcx, pcy);
+        }
+
+        function drawBossInscription(pr, pcx, pcy) {
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('H⁰', pcx, pcy);
+
+            _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+            ctx.restore();
+        }
+
+
+    }
+    function drawBossEyes(pr, pcx, pcy) {
+        const lookAng = Math.PI * 0.5 + sin(t * 0.7) * 0.25;
+        const eS = pr * 0.16;
+        drawDiamondEye(ctx, pcx - pr * 0.22, pcy - pr * 0.02, eS, lookAng, '#8B6914');
+        drawDiamondEye(ctx, pcx + pr * 0.22, pcy - pr * 0.02, eS, lookAng, '#8B6914');
+        // Crown-like lash decorations above each eye
         ctx.save();
-        // Majestic glow
-        ctx.globalAlpha = 0.1;
-        const gG = ctx.createRadialGradient(pcx, pcy, pr * 0.3, pcx, pcy, pr * 1.7);
-        gG.addColorStop(0, '#ffd700');
-        gG.addColorStop(1, 'rgba(255,215,0,0)');
-        ctx.fillStyle = gG;
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 1.2;
+        ctx.globalAlpha = 0.6;
+        for (let side = -1; side <= 1; side += 2) {
+            const ex = pcx + side * pr * 0.22;
+            const eyTop = pcy - pr * 0.02 - eS * 0.7;
+            for (let l = -2; l <= 2; l++) {
+                const lx = ex + l * eS * 0.25;
+                ctx.beginPath();
+                ctx.moveTo(lx, eyTop);
+                ctx.lineTo(lx, eyTop - eS * (0.22 + (l === 0 ? 0.1 : 0)));
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
+    }
+
+    function drawCrownBand(pcy, pr, pcx) {
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        const bandY = pcy - pr * 0.55;
+        ctx.fillStyle = '#ffd700';
         ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 1.7, 0, TAU);
+        ctx.ellipse(pcx, bandY, pr * 0.65, 3, 0, 0, TAU);
         ctx.fill();
+        ctx.strokeStyle = '#cc9900';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.restore();
+    }
 
-        // Main body
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, 0, TAU);
-        glossyBody(ctx, pcx, pcy, pr, '#ffcc00');
-        thickOutline(ctx, '#996600', 3.5);
-
-        // === Crown — crystalline spikes ===
+    function drawCrownSpikes(pcx, pr, pcy) {
         ctx.save();
         const spikes = 7;
         for (let i = 0; i < spikes; i++) {
@@ -1073,74 +1204,13 @@ function drawHiggsManifestation(ctx, boss, t) {
             }
         }
         ctx.restore();
-
-        // Horizontal crown band
-        ctx.save();
-        ctx.globalAlpha = 0.6;
-        const bandY = pcy - pr * 0.55;
-        ctx.fillStyle = '#ffd700';
-        ctx.beginPath();
-        ctx.ellipse(pcx, bandY, pr * 0.65, 3, 0, 0, TAU);
-        ctx.fill();
-        ctx.strokeStyle = '#cc9900';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-        ctx.restore();
-
-        // Face — regal diamond-pupil eyes, elegant serene expression
-        const lookAng = Math.PI * 0.5 + sin(t * 0.7) * 0.25;
-        const eS = pr * 0.16;
-        drawDiamondEye(ctx, pcx - pr * 0.22, pcy - pr * 0.02, eS, lookAng, '#8B6914');
-        drawDiamondEye(ctx, pcx + pr * 0.22, pcy - pr * 0.02, eS, lookAng, '#8B6914');
-        // Crown-like lash decorations above each eye
-        ctx.save();
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 1.2;
-        ctx.globalAlpha = 0.6;
-        for (let side = -1; side <= 1; side += 2) {
-            const ex = pcx + side * pr * 0.22;
-            const eyTop = pcy - pr * 0.02 - eS * 0.7;
-            for (let l = -2; l <= 2; l++) {
-                const lx = ex + l * eS * 0.25;
-                ctx.beginPath();
-                ctx.moveTo(lx, eyTop);
-                ctx.lineTo(lx, eyTop - eS * (0.22 + (l === 0 ? 0.1 : 0)));
-                ctx.stroke();
-            }
-        }
-        ctx.restore();
-        const mMood = st.isCritical ? 'rage' : (st.isLow ? 'grin' : 'serene');
-        drawMouth(ctx, pcx, pcy + pr * 0.32, pr * 0.65, mMood, t, '#6B4914');
-
-        // H⁰ inscription
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('H⁰', pcx, pcy);
-
-        _drawPartHitFlash(ctx, core, pcx, pcy, pr);
-        ctx.restore();
     }
-
-    // === Mass well indicator ===
-    if (boss._massWellActive) {
-        ctx.save();
-        ctx.globalAlpha = 0.35;
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 3;
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.arc(cx, cy, boss.width * 0.38, 0, TAU);
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = '#ffd700';
-        ctx.font = 'bold 10px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('MASS WELL', cx, cy - boss.height / 2 - 28);
-        ctx.restore();
+    function drawActiveBossParts() {
+        for (const part of boss.parts) {
+            if (!part.active || part.isCore) continue;
+            const col = part.role === 'weakpoint' ? '#ff4444' : '#ffd700';
+            _drawStyledPart(ctx, part, t, col, st);
+        }
     }
 }
 
@@ -1172,64 +1242,98 @@ function drawAntimatterSovereign(ctx, boss, t) {
     ctx.restore();
 
     // === Annihilation sparks ===
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 12; i++) {
-        const sy = cy + (i / 11 - 0.5) * boss.height * 0.8;
-        const sx = cx + sin(t * 10 + i * 2.5) * 6;
-        ctx.globalAlpha = 0.35 + 0.35 * sin(t * 14 + i * 3);
-        ctx.fillStyle = i % 2 ? antiCol : matCol;
-        ctx.beginPath();
-        ctx.arc(sx, sy, 2 + sin(t * 7 + i) * 1, 0, TAU);
-        ctx.fill();
-    }
-    ctx.restore();
+    drawAnnihilationSparks();
 
     // === Non-core parts ===
-    for (const part of boss.parts) {
-        if (!part.active || part.isCore) continue;
-        const isLeft = (part.offsetX || 0) < 0;
-        _drawStyledPart(ctx, part, t, isLeft ? matCol : antiCol, st);
-    }
+    drawInactiveParts();
 
     // === Twin cores ===
-    for (const core of boss.coreParts) {
-        if (!core.active) continue;
-        const pcx = core.worldX + core.width / 2;
-        const pcy = core.worldY + core.height / 2;
-        const pr = core.width / 2 * st.breathe;
-        const isMatter = (core.offsetX || 0) < 0;
-        const col = isMatter ? matCol : antiCol;
-        const lightCol = isMatter ? '#aaccff' : '#ffaacc';
-        const label = isMatter ? 'e⁻' : 'e⁺';
+    drawCoreParts();
 
-        ctx.save();
-        // Antipodal glow
-        ctx.globalAlpha = 0.1 + 0.04 * sin(t * 4);
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 1.5, 0, TAU);
-        ctx.fill();
+    // === Damage balance bar ===
+    drawDamageBalanceBar();
 
-        // Body
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, 0, TAU);
-        glossyBody(ctx, pcx, pcy, pr, col);
-        thickOutline(ctx, darken(col, 0.4), 3);
+    function drawDamageBalanceBar() {
+        if (boss._damageBalance !== undefined) {
+            const bal = boss._damageBalance;
+            const barW = 80, barH = 6;
+            const barX = cx - barW / 2;
+            const barY = cy - boss.height / 2 - 36;
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(barX, barY, barW, barH);
+            const mid = barX + barW / 2;
+            const offset = max(-barW / 2, min(barW / 2, bal * 2));
+            ctx.fillStyle = offset > 0 ? matCol : antiCol;
+            ctx.fillRect(mid, barY, offset, barH);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(mid, barY - 1); ctx.lineTo(mid, barY + barH + 1);
+            ctx.stroke();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = '#fff';
+            ctx.font = '8px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('BALANCE', cx, barY - 2);
+            ctx.restore();
+        }
+    }
 
-        // Spinning inner ring (mirror direction)
-        ctx.save();
-        ctx.globalAlpha = 0.1;
-        ctx.strokeStyle = lightCol;
-        ctx.lineWidth = 1;
-        const dir = isMatter ? 1 : -1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 0.55, t * 2 * dir, t * 2 * dir + Math.PI * 1.4);
-        ctx.stroke();
-        ctx.restore();
+    function drawCoreParts() {
+        for (const core of boss.coreParts) {
+            if (!core.active) continue;
+            const pcx = core.worldX + core.width / 2;
+            const pcy = core.worldY + core.height / 2;
+            const pr = core.width / 2 * st.breathe;
+            const isMatter = (core.offsetX || 0) < 0;
+            const col = isMatter ? matCol : antiCol;
+            const lightCol = isMatter ? '#aaccff' : '#ffaacc';
+            const label = isMatter ? 'e⁻' : 'e⁺';
 
-        // Face — matter=wise diamond eyes, antimatter=chaotic wild
+            ctx.save();
+            // Antipodal glow
+            ctx.globalAlpha = 0.1 + 0.04 * sin(t * 4);
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 1.5, 0, TAU);
+            ctx.fill();
+
+            // Body
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, 0, TAU);
+            glossyBody(ctx, pcx, pcy, pr, col);
+            thickOutline(ctx, darken(col, 0.4), 3);
+
+            // Spinning inner ring (mirror direction)
+            ctx.save();
+            ctx.globalAlpha = 0.1;
+            ctx.strokeStyle = lightCol;
+            ctx.lineWidth = 1;
+            const dir = isMatter ? 1 : -1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 0.55, t * 2 * dir, t * 2 * dir + Math.PI * 1.4);
+            ctx.stroke();
+            ctx.restore();
+
+            // Face — matter=wise diamond eyes, antimatter=chaotic wild
+            renderBossFace(isMatter, pr, pcx, pcy, col);
+
+            // Label watermark
+            ctx.globalAlpha = 0.2;
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.trunc(pr * 0.35)}px monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(label, pcx, pcy);
+
+            _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+            ctx.restore();
+        }
+
+
+    }
+    function renderBossFace(isMatter, pr, pcx, pcy, col) {
         const lookDir = isMatter ? 0.3 : -0.3 + Math.PI;
         const lookAng = Math.PI * 0.5 + lookDir + sin(t * 1.5) * 0.2;
         const eS = pr * 0.19;
@@ -1239,45 +1343,31 @@ function drawAntimatterSovereign(ctx, boss, t) {
             drawMouth(ctx, pcx, pcy + pr * 0.3, pr * 0.6, st.isCritical ? 'rage' : 'serene', t, darken(col, 0.5));
         } else {
             // Antimatter: mismatched chaotic eyes
-            drawBossEye(ctx, pcx - pr * 0.24, pcy - pr * 0.08, eS * 1.15, lookAng, '#cc1155', 1);
-            drawBossEye(ctx, pcx + pr * 0.28, pcy - pr * 0.02, eS * 0.85, lookAng, '#ff3388', 4);
+            drawBossEye(ctx, { ex: pcx - pr * 0.24, ey: pcy - pr * 0.08, size: eS * 1.15, lookAng, irisColor: '#cc1155', mood: 1 });
+            drawBossEye(ctx, { ex: pcx + pr * 0.28, ey: pcy - pr * 0.02, size: eS * 0.85, lookAng, irisColor: '#ff3388', mood: 4 });
             drawMouth(ctx, pcx, pcy + pr * 0.3, pr * 0.6, st.isCritical ? 'rage' : 'grin', t, darken(col, 0.5));
         }
-
-        // Label watermark
-        ctx.globalAlpha = 0.2;
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.trunc(pr * 0.35)}px monospace`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(label, pcx, pcy);
-
-        _drawPartHitFlash(ctx, core, pcx, pcy, pr);
-        ctx.restore();
+    }
+    function drawInactiveParts() {
+        for (const part of boss.parts) {
+            if (!part.active || part.isCore) continue;
+            const isLeft = (part.offsetX || 0) < 0;
+            _drawStyledPart(ctx, part, t, isLeft ? matCol : antiCol, st);
+        }
     }
 
-    // === Damage balance bar ===
-    if (boss._damageBalance !== undefined) {
-        const bal = boss._damageBalance;
-        const barW = 80, barH = 6;
-        const barX = cx - barW / 2;
-        const barY = cy - boss.height / 2 - 36;
+    function drawAnnihilationSparks() {
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        ctx.fillRect(barX, barY, barW, barH);
-        const mid = barX + barW / 2;
-        const offset = max(-barW / 2, min(barW / 2, bal * 2));
-        ctx.fillStyle = offset > 0 ? matCol : antiCol;
-        ctx.fillRect(mid, barY, offset, barH);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(mid, barY - 1); ctx.lineTo(mid, barY + barH + 1);
-        ctx.stroke();
-        ctx.globalAlpha = 0.5;
-        ctx.fillStyle = '#fff';
-        ctx.font = '8px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('BALANCE', cx, barY - 2);
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < 12; i++) {
+            const sy = cy + (i / 11 - 0.5) * boss.height * 0.8;
+            const sx = cx + sin(t * 10 + i * 2.5) * 6;
+            ctx.globalAlpha = 0.35 + 0.35 * sin(t * 14 + i * 3);
+            ctx.fillStyle = i % 2 ? antiCol : matCol;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2 + sin(t * 7 + i) * 1, 0, TAU);
+            ctx.fill();
+        }
         ctx.restore();
     }
 }
@@ -1297,172 +1387,197 @@ function drawGrandUnifiedTheory(ctx, boss, t) {
     const af = boss._activeForce || 0;
 
     // === Grand mandala — rotating 4-color quadrants ===
-    ctx.save();
-    ctx.globalAlpha = 0.06;
-    ctx.translate(cx, cy);
-    ctx.rotate(t * 0.15);
-    for (let i = 0; i < 4; i++) {
-        ctx.fillStyle = fCols[i];
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, boss.width * 0.55, TAU / 4 * i, TAU / 4 * (i + 1));
-        ctx.closePath();
-        ctx.fill();
-    }
-    ctx.restore();
+    drawRotatingQuadrants();
 
     // === Force lightning to each quadrant ===
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = 0.18;
-    for (let i = 0; i < 4; i++) {
-        const angle = TAU / 4 * i + TAU / 8 + t * 0.3;
-        const ex = cx + cos(angle) * boss.width * 0.42;
-        const ey = cy + sin(angle) * boss.width * 0.42;
-        energyTendril(ctx, cx, cy, ex, ey, t, fCols[i], i === af ? 3 : 1.5, 10);
-    }
-    ctx.restore();
+    drawEnergyTendrils();
 
     // === Active force ring ===
     haloRing(ctx, cx, cy, boss.width * 0.42, t, fCols[af], 4);
 
     // === Non-core parts ===
-    const turretParts = boss.parts.filter(p => p.role === 'turret' && p.active);
-    for (let i = 0; i < turretParts.length; i++) {
-        _drawStyledPart(ctx, turretParts[i], t, fCols[i % 4], st);
-    }
-    for (const p of boss.parts) {
-        if (!p.active || p.isCore || p.role === 'turret') continue;
-        _drawStyledPart(ctx, p, t, '#ccccff', st);
-    }
+    renderActiveTurretParts();
 
     // === Epic core ===
-    const core = boss.coreParts[0];
-    if (core && core.active) {
-        const pcx = core.worldX + core.width / 2;
-        const pcy = core.worldY + core.height / 2;
-        const pr = core.width / 2 * st.breathe;
+    renderCoreVisuals();
 
+    // === Active force label ===
+    renderActiveForceLabel();
+
+    function renderActiveForceLabel() {
         ctx.save();
-        // Prismatic glow
-        ctx.globalAlpha = 0.12;
-        const pG = ctx.createRadialGradient(pcx, pcy, pr * 0.2, pcx, pcy, pr * 1.8);
-        pG.addColorStop(0, '#ffffff');
-        pG.addColorStop(0.4, fCols[af]);
-        pG.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = pG;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr * 1.8, 0, TAU);
-        ctx.fill();
-
-        // White body
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.arc(pcx, pcy, pr, 0, TAU);
-        glossyBody(ctx, pcx, pcy, pr, '#eeeeff', 0.3);
-
-        // 4-color border segments (active one thicker)
-        for (let i = 0; i < 4; i++) {
-            ctx.strokeStyle = fCols[i];
-            ctx.lineWidth = i === af ? 5 : 2.5;
-            ctx.globalAlpha = i === af ? 0.85 : 0.35;
-            ctx.beginPath();
-            ctx.arc(pcx, pcy, pr, TAU / 4 * i - Math.PI / 4, TAU / 4 * (i + 1) - Math.PI / 4);
-            ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
-
-        // Inner rotating force sigil
-        ctx.save();
-        ctx.translate(pcx, pcy);
-        ctx.rotate(t * 0.8);
-        ctx.globalAlpha = 0.08;
-        for (let i = 0; i < 4; i++) {
-            ctx.strokeStyle = fCols[i];
-            ctx.lineWidth = 1;
-            const a = TAU / 4 * i;
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(cos(a) * pr * 0.7, sin(a) * pr * 0.7);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        // Face — cosmic prismatic eyes
-        ctx.globalAlpha = 1;
-        const lookAng = Math.PI * 0.5 + sin(t * 0.6) * 0.4;
-        const eS = pr * 0.15;
-        drawPrismaticEye(ctx, pcx - pr * 0.22, pcy - pr * 0.02, eS, lookAng, t);
-        drawPrismaticEye(ctx, pcx + pr * 0.22, pcy - pr * 0.02, eS, lookAng, t);
-
-        // THIRD EYE — vertical almond, pulsing with active force color
-        ctx.save();
-        const teY = pcy - pr * 0.32;
-        const teS = eS * 0.8;
-        const teAlpha = 0.6 + 0.3 * sin(t * 3);
-        ctx.globalAlpha = teAlpha;
+        ctx.globalAlpha = 0.65;
         ctx.fillStyle = fCols[af];
-        ctx.beginPath();
-        ctx.arc(pcx, teY, teS * 1.4, 0, TAU);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        // Vertical almond third eye with slit pupil
-        ctx.fillStyle = '#fffff8';
-        ctx.beginPath();
-        ctx.moveTo(pcx, teY - teS * 1.0);
-        ctx.quadraticCurveTo(pcx + teS * 0.7, teY, pcx, teY + teS * 1.0);
-        ctx.quadraticCurveTo(pcx - teS * 0.7, teY, pcx, teY - teS * 1.0);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = fCols[af];
-        ctx.beginPath();
-        ctx.arc(pcx, teY, teS * 0.45, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.ellipse(pcx, teY, teS * 0.07, teS * 0.35, 0, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.globalAlpha = 0.6;
-        ctx.beginPath();
-        ctx.arc(pcx - teS * 0.1, teY - teS * 0.1, teS * 0.1, 0, TAU);
-        ctx.fill();
-        // Radiating beams from third eye
-        ctx.globalAlpha = 0.15;
-        ctx.strokeStyle = fCols[af];
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 6; i++) {
-            const a = TAU / 6 * i + t * 1.5;
-            ctx.beginPath();
-            ctx.moveTo(pcx + cos(a) * teS * 0.5, teY + sin(a) * teS * 0.5);
-            ctx.lineTo(pcx + cos(a) * teS * 1.8, teY + sin(a) * teS * 1.8);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        // Calm cosmic mouth
-        const mMood = st.isCritical ? 'rage' : (st.isLow ? 'grin' : 'serene');
-        drawMouth(ctx, pcx, pcy + pr * 0.28, pr * 0.7, mMood, t, '#333');
-
-        // Force symbol watermark
-        ctx.globalAlpha = 0.12;
-        ctx.fillStyle = fCols[af];
-        ctx.font = `bold ${Math.trunc(pr * 0.4)}px monospace`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(['g', 'γ', 'W', 'G'][af], pcx, pcy + pr * 0.05);
-
-        _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(fNames[af] + ' FORCE', cx, cy - boss.height / 2 - 28);
         ctx.restore();
     }
 
-    // === Active force label ===
-    ctx.save();
-    ctx.globalAlpha = 0.65;
-    ctx.fillStyle = fCols[af];
-    ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(fNames[af] + ' FORCE', cx, cy - boss.height / 2 - 28);
-    ctx.restore();
+    function renderCoreVisuals() {
+        const core = boss.coreParts[0];
+        if (core?.active) {
+            const pcx = core.worldX + core.width / 2;
+            const pcy = core.worldY + core.height / 2;
+            const pr = core.width / 2 * st.breathe;
+
+            ctx.save();
+            // Prismatic glow
+            ctx.globalAlpha = 0.12;
+            const pG = ctx.createRadialGradient(pcx, pcy, pr * 0.2, pcx, pcy, pr * 1.8);
+            pG.addColorStop(0, '#ffffff');
+            pG.addColorStop(0.4, fCols[af]);
+            pG.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = pG;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr * 1.8, 0, TAU);
+            ctx.fill();
+
+            // White body
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(pcx, pcy, pr, 0, TAU);
+            glossyBody(ctx, pcx, pcy, pr, '#eeeeff', 0.3);
+
+            // 4-color border segments (active one thicker)
+            drawSegmentedArc(pcx, pcy, pr);
+            ctx.globalAlpha = 1;
+
+            // Inner rotating force sigil
+            ctx.save();
+            ctx.translate(pcx, pcy);
+            ctx.rotate(t * 0.8);
+            ctx.globalAlpha = 0.08;
+            for (let i = 0; i < 4; i++) {
+                ctx.strokeStyle = fCols[i];
+                ctx.lineWidth = 1;
+                const a = TAU / 4 * i;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(cos(a) * pr * 0.7, sin(a) * pr * 0.7);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            // Face — cosmic prismatic eyes
+            ctx.globalAlpha = 1;
+            const lookAng = Math.PI * 0.5 + sin(t * 0.6) * 0.4;
+            const eS = pr * 0.15;
+            drawPrismaticEye(ctx, pcx - pr * 0.22, pcy - pr * 0.02, eS, lookAng, t);
+            drawPrismaticEye(ctx, pcx + pr * 0.22, pcy - pr * 0.02, eS, lookAng, t);
+
+            // THIRD EYE — vertical almond, pulsing with active force color
+            ctx.save();
+            const teY = pcy - pr * 0.32;
+            const teS = eS * 0.8;
+            const teAlpha = 0.6 + 0.3 * sin(t * 3);
+            ctx.globalAlpha = teAlpha;
+            ctx.fillStyle = fCols[af];
+            ctx.beginPath();
+            ctx.arc(pcx, teY, teS * 1.4, 0, TAU);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            // Vertical almond third eye with slit pupil
+            ctx.fillStyle = '#fffff8';
+            ctx.beginPath();
+            ctx.moveTo(pcx, teY - teS * 1);
+            ctx.quadraticCurveTo(pcx + teS * 0.7, teY, pcx, teY + teS * 1);
+            ctx.quadraticCurveTo(pcx - teS * 0.7, teY, pcx, teY - teS * 1);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = fCols[af];
+            ctx.beginPath();
+            ctx.arc(pcx, teY, teS * 0.45, 0, TAU);
+            ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(pcx, teY, teS * 0.07, teS * 0.35, 0, 0, TAU);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.arc(pcx - teS * 0.1, teY - teS * 0.1, teS * 0.1, 0, TAU);
+            ctx.fill();
+            // Radiating beams from third eye
+            ctx.globalAlpha = 0.15;
+            ctx.strokeStyle = fCols[af];
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 6; i++) {
+                const a = TAU / 6 * i + t * 1.5;
+                ctx.beginPath();
+                ctx.moveTo(pcx + cos(a) * teS * 0.5, teY + sin(a) * teS * 0.5);
+                ctx.lineTo(pcx + cos(a) * teS * 1.8, teY + sin(a) * teS * 1.8);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            const isLowValue = (st.isLow ? 'grin' : 'serene');
+            // Calm cosmic mouth
+            const mMood = st.isCritical ? 'rage' : isLowValue;
+            drawMouth(ctx, pcx, pcy + pr * 0.28, pr * 0.7, mMood, t, '#333');
+
+            // Force symbol watermark
+            ctx.globalAlpha = 0.12;
+            ctx.fillStyle = fCols[af];
+            ctx.font = `bold ${Math.trunc(pr * 0.4)}px monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(['g', 'γ', 'W', 'G'][af], pcx, pcy + pr * 0.05);
+
+            _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+            ctx.restore();
+        }
+
+
+    }
+        function drawSegmentedArc(pcx, pcy, pr) {
+            for (let i = 0; i < 4; i++) {
+                ctx.strokeStyle = fCols[i];
+                ctx.lineWidth = i === af ? 5 : 2.5;
+                ctx.globalAlpha = i === af ? 0.85 : 0.35;
+                ctx.beginPath();
+                ctx.arc(pcx, pcy, pr, TAU / 4 * i - Math.PI / 4, TAU / 4 * (i + 1) - Math.PI / 4);
+                ctx.stroke();
+            }
+        }
+    function renderActiveTurretParts() {
+        const turretParts = boss.parts.filter(p => p.role === 'turret' && p.active);
+        for (let i = 0; i < turretParts.length; i++) {
+            _drawStyledPart(ctx, turretParts[i], t, fCols[i % 4], st);
+        }
+        for (const p of boss.parts) {
+            if (!p.active || p.isCore || p.role === 'turret') continue;
+            _drawStyledPart(ctx, p, t, '#ccccff', st);
+        }
+    }
+
+    function drawEnergyTendrils() {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.18;
+        for (let i = 0; i < 4; i++) {
+            const angle = TAU / 4 * i + TAU / 8 + t * 0.3;
+            const ex = cx + cos(angle) * boss.width * 0.42;
+            const ey = cy + sin(angle) * boss.width * 0.42;
+            energyTendril(ctx, { cx, cy, ex, ey, t, col: fCols[i], width: i === af ? 3 : 1.5, segments: 10 });
+        }
+        ctx.restore();
+    }
+
+    function drawRotatingQuadrants() {
+        ctx.save();
+        ctx.globalAlpha = 0.06;
+        ctx.translate(cx, cy);
+        ctx.rotate(t * 0.15);
+        for (let i = 0; i < 4; i++) {
+            ctx.fillStyle = fCols[i];
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, boss.width * 0.55, TAU / 4 * i, TAU / 4 * (i + 1));
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.restore();
+    }
 }
 
 
@@ -1481,7 +1596,7 @@ function drawCharmQuark(ctx, boss, t) {
     const col = pCols[pi];
 
     haloRing(ctx, cx, cy, boss.width * 0.4, t * 2, col, 5);
-    orbitMotes(ctx, cx, cy, boss.width * 0.3, 8, t * 2, pCols, 3);
+    orbitMotes(ctx, { x: cx, y: cy, r: boss.width * 0.3, count: 8, t: t * 2, cols: pCols, speed: 3 });
 
     for (const part of boss.parts) {
         if (!part.active || part.isCore) continue;
@@ -1489,7 +1604,7 @@ function drawCharmQuark(ctx, boss, t) {
     }
 
     const core = boss.coreParts[0];
-    if (core && core.active) {
+    if (core?.active) {
         const pcx = core.worldX + core.width / 2;
         const pcy = core.worldY + core.height / 2;
         const pr = core.width / 2 * st.breathe;
@@ -1508,8 +1623,8 @@ function drawCharmQuark(ctx, boss, t) {
         // Cheeky face — feline slit-pupil eyes, Cheshire grin
         const eS = pr * 0.2;
         const look = Math.PI * 0.5 + sin(t * 3) * 0.5;
-        drawSlitEye(ctx, pcx - pr * 0.24, pcy - pr * 0.06, eS, look, darken(col, 0.4));
-        drawSlitEye(ctx, pcx + pr * 0.24, pcy - pr * 0.06, eS, look, darken(col, 0.4));
+        drawSlitEye(ctx, { ex: pcx - pr * 0.24, ey: pcy - pr * 0.06, size: eS, lookAng: look, irisColor: darken(col, 0.4) });
+        drawSlitEye(ctx, { ex: pcx + pr * 0.24, ey: pcy - pr * 0.06, size: eS, lookAng: look, irisColor: darken(col, 0.4) });
         // Wide Cheshire grin
         ctx.save();
         ctx.strokeStyle = darken(col, 0.5);
@@ -1576,67 +1691,7 @@ function drawStrangeOscillator(ctx, boss, t) {
         _drawStyledPart(ctx, part, t, col, st);
     }
 
-    const core = boss.coreParts[0];
-    if (core && core.active) {
-        const pcx = core.worldX + core.width / 2;
-        const pcy = core.worldY + core.height / 2;
-        const pr = core.width / 2 * st.breathe;
-
-        ctx.save();
-        ctx.globalAlpha = 1;
-        // Morphing body shape
-        ctx.beginPath();
-        if (si === 0) {
-            ctx.arc(pcx, pcy, pr, 0, TAU);
-        } else if (si === 1) {
-            // Star
-            for (let i = 0; i < 10; i++) {
-                const a = TAU / 10 * i - TAU / 4;
-                const rr = i % 2 === 0 ? pr : pr * 0.6;
-                const px = pcx + cos(a) * rr, py = pcy + sin(a) * rr;
-                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-        } else {
-            // Hexagon
-            for (let i = 0; i < 6; i++) {
-                const a = TAU / 6 * i - TAU / 4;
-                const px = pcx + cos(a) * pr, py = pcy + sin(a) * pr;
-                i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-        }
-        glossyBody(ctx, pcx, pcy, pr, col);
-        thickOutline(ctx, darken(col, 0.4), 3);
-
-        // Unstable face — hypnotic spiral eyes, oscillating wave mouth
-        const eS = pr * 0.18;
-        drawSpiralEye(ctx, pcx - pr * 0.22, pcy - pr * 0.06, eS, col, t);
-        drawSpiralEye(ctx, pcx + pr * 0.22, pcy - pr * 0.06, eS, col, t);
-        // Sine-wave mouth
-        ctx.save();
-        ctx.strokeStyle = darken(col, 0.5);
-        ctx.lineWidth = 1.8;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        const mY = pcy + pr * 0.3;
-        for (let i = 0; i <= 12; i++) {
-            const mx = pcx - pr * 0.25 + pr * 0.5 * (i / 12);
-            const my = mY + sin(i * 1.2 + t * 6) * pr * 0.06;
-            i === 0 ? ctx.moveTo(mx, my) : ctx.lineTo(mx, my);
-        }
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.globalAlpha = 0.15;
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('s', pcx, pcy);
-
-        _drawPartHitFlash(ctx, core, pcx, pcy, pr);
-        ctx.restore();
-    }
+    renderCoreMorph();
 
     // State label
     ctx.save();
@@ -1646,6 +1701,80 @@ function drawStrangeOscillator(ctx, boss, t) {
     ctx.textAlign = 'center';
     ctx.fillText(sLabels[si], cx, cy - boss.height / 2 - 22);
     ctx.restore();
+
+    function renderCoreMorph() {
+        const core = boss.coreParts[0];
+        if (core?.active) {
+            const pcx = core.worldX + core.width / 2;
+            const pcy = core.worldY + core.height / 2;
+            const pr = core.width / 2 * st.breathe;
+
+            ctx.save();
+            ctx.globalAlpha = 1;
+            // Morphing body shape
+            drawShapeBasedOnState(pcx, pcy, pr);
+            glossyBody(ctx, pcx, pcy, pr, col);
+            thickOutline(ctx, darken(col, 0.4), 3);
+
+            // Unstable face — hypnotic spiral eyes, oscillating wave mouth
+            const eS = pr * 0.18;
+            drawSpiralEye(ctx, pcx - pr * 0.22, pcy - pr * 0.06, eS, col, t);
+            drawSpiralEye(ctx, pcx + pr * 0.22, pcy - pr * 0.06, eS, col, t);
+            // Sine-wave mouth
+            ctx.save();
+            ctx.strokeStyle = darken(col, 0.5);
+            ctx.lineWidth = 1.8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            const mY = pcy + pr * 0.3;
+            for (let i = 0; i <= 12; i++) {
+                const mx = pcx - pr * 0.25 + pr * 0.5 * (i / 12);
+                const my = mY + sin(i * 1.2 + t * 6) * pr * 0.06;
+                i === 0 ? ctx.moveTo(mx, my) : ctx.lineTo(mx, my);
+            }
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.globalAlpha = 0.15;
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.trunc(pr * 0.35)}px serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('s', pcx, pcy);
+
+            _drawPartHitFlash(ctx, core, pcx, pcy, pr);
+            ctx.restore();
+        }
+    }
+
+    function drawShapeBasedOnState(pcx, pcy, pr) {
+        ctx.beginPath();
+        if (si === 0) drawCircleShape(pcx, pcy, pr);
+        else if (si === 1) drawStarShape(pcx, pcy, pr);
+        else drawHexagonShape(pcx, pcy, pr);
+    }
+
+    function drawCircleShape(pcx, pcy, pr) {
+        ctx.arc(pcx, pcy, pr, 0, TAU);
+    }
+
+    function drawStarShape(pcx, pcy, pr) {
+        for (let i = 0; i < 10; i++) {
+            const a = TAU / 10 * i - TAU / 4;
+            const rr = i % 2 === 0 ? pr : pr * 0.6;
+            const px = pcx + cos(a) * rr, py = pcy + sin(a) * rr;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+    }
+
+    function drawHexagonShape(pcx, pcy, pr) {
+        for (let i = 0; i < 6; i++) {
+            const a = TAU / 6 * i - TAU / 4;
+            const px = pcx + cos(a) * pr, py = pcy + sin(a) * pr;
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+    }
 }
 
 // ────── MB 15 : TOP RESONANCE ──────
@@ -1701,7 +1830,7 @@ function drawTopResonance(ctx, boss, t) {
 
     // Core
     const core = boss.coreParts[0];
-    if (core && core.active) {
+    if (core?.active) {
         const pcx = core.worldX + core.width / 2;
         const pcy = core.worldY + core.height / 2;
         const pr = core.width / 2 * st.breathe;
@@ -1786,7 +1915,7 @@ function drawBottomDecayer(ctx, boss, t) {
     }
 
     const core = boss.coreParts[0];
-    if (core && core.active) {
+    if (core?.active) {
         const pcx = core.worldX + core.width / 2;
         const pcy = core.worldY + core.height / 2;
         const pr = core.width / 2 * st.breathe;
@@ -1808,9 +1937,9 @@ function drawBottomDecayer(ctx, boss, t) {
         const eS = pr * 0.19;
         const look = Math.PI * 0.5 + sin(t * 5) * 0.3;
         // Left eye bigger and drooping
-        drawBossEye(ctx, pcx - pr * 0.23, pcy - pr * 0.04, eS * 1.15, look, '#336600', 2);
+        drawBossEye(ctx, { ex: pcx - pr * 0.23, ey: pcy - pr * 0.04, size: eS * 1.15, lookAng: look, irisColor: '#336600', mood: 2 });
         // Right eye smaller and twitchy
-        drawBossEye(ctx, pcx + pr * 0.25, pcy - pr * 0.08, eS * 0.8, look + sin(t * 12) * 0.3, '#448800', 2);
+        drawBossEye(ctx, { ex: pcx + pr * 0.25, ey: pcy - pr * 0.08, size: eS * 0.8, lookAng: look + sin(t * 12) * 0.3, irisColor: '#448800', mood: 2 });
         // Crack line through face
         ctx.save();
         ctx.strokeStyle = 'rgba(136,255,85,0.5)';
@@ -1861,11 +1990,10 @@ function _drawStyledPart(ctx, part, t, baseColor, st) {
         ctx.translate(-pcx, -pcy);
     }
 
-    const roleColor = part.isCore ? baseColor :
-        part.role === 'turret' ? lighten(baseColor, 0.25) :
-            part.role === 'shield' ? '#4488ff' :
-                part.role === 'weakpoint' ? '#ff4444' :
-                    darken(baseColor, 0.2);
+    const isWeekPointValue = part.role === 'weakpoint' ? '#ff4444' : darken(baseColor, 0.2);
+    const isShieldValue = part.role === 'shield' ? '#4488ff' : isWeekPointValue
+    const roleValue = part.role === 'turret' ? lighten(baseColor, 0.25) : isShieldValue;
+    const roleColor = part.isCore ? baseColor : roleValue;
 
     // Soft glow
     ctx.globalAlpha = 0.1;
@@ -1888,7 +2016,7 @@ function _drawStyledPart(ctx, part, t, baseColor, st) {
         ctx.fillStyle = '#ffffff';
         ctx.globalAlpha = 0.35 + 0.2 * sin(t * 8);
         ctx.beginPath();
-        ctx.arc(pcx, pcy + pr * 1.0, pr * 0.12, 0, TAU);
+        ctx.arc(pcx, pcy + pr * 1, pr * 0.12, 0, TAU);
         ctx.fill();
     } else if (part.role === 'shield') {
         ctx.globalAlpha = 0.35 + 0.15 * sin(t * 3);

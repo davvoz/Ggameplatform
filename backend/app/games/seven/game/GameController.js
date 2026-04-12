@@ -3,9 +3,8 @@
  * Facade Pattern: Orchestrates all game components
  */
 
-import { GAME_CONSTANTS, NOTIFICATION_TONE } from '../constants.js';
+import {  NOTIFICATION_TONE } from '../constants.js';
 import { MathUtils } from '../utils/MathUtils.js';
-import { GameLogic } from './GameLogic.js';
 import { DiceAnimationController } from '../animation/DiceAnimationController.js';
 import { BetSystem } from '../betting/BetSystem.js';
 
@@ -178,7 +177,7 @@ export class GameController {
     // Processa la scommessa singola usando processBets con array di 1 elemento
     const betResults = BetSystem.processBets([bet], diceA, diceB);
     const result = betResults.results[0];
-    const { winnings, isWinning, multiplier } = result;
+    const { winnings, isWinning } = result;
 
     // Award coins if won (winnings + original bet returned)
     const totalPayout = isWinning ? winnings + bet.amount : 0;
@@ -199,10 +198,7 @@ export class GameController {
     this._state.updateRoundStats(bet.amount, totalPayout);
 
     // Update UI
-    const betName = this._getBetDisplayName(bet.type);
-    const resultMessage = isWinning 
-      ? `${betName} vincente! ${multiplier}x = ${winnings} 🪙`
-      : `${betName} perdente`;
+
 
 
     // Add to history

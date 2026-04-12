@@ -22,7 +22,6 @@ export class Croupier {
      * @param {number}  config.width  - canvas width (fullscreen)
      * @param {number}  config.height - canvas height (fullscreen)
      */
-    #onReactionFinished = null;
     #sheets = null;
 
     constructor(config) {

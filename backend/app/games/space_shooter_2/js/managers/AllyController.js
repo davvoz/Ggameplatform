@@ -140,13 +140,16 @@ class AllyController {
                 );
             } else if (ally.config && ally.config.w4behaviour) {
                 const t = performance.now() * 0.001;
-                drawW4Sprite(ctx, ally.type, cx, cy, ally.width, ally.height, t, {
-                    flavorIdx: ally._flavorIdx || 0,
-                    fieldRadius: ally._fieldRadius || 0,
-                    annihilateTimer: ally._annihilateTimer || 0,
-                    reformTimer: ally._reformTimer || 0,
-                    isEndpoint: ally._isEndpoint !== false,
-                    forceBoosted: !!ally._forceBoostedVisual,
+                drawW4Sprite(ctx, {
+                    type: ally.type, cx, cy, w: ally.width, h: ally.height, t,
+                    state: {
+                        flavorIdx: ally._flavorIdx || 0,
+                        fieldRadius: ally._fieldRadius || 0,
+                        annihilateTimer: ally._annihilateTimer || 0,
+                        reformTimer: ally._reformTimer || 0,
+                        isEndpoint: ally._isEndpoint !== false,
+                        forceBoosted: !!ally._forceBoostedVisual,
+                    },
                 });
             } else {
                 ctx.fillStyle = ally.config.color;

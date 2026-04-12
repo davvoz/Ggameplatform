@@ -85,7 +85,7 @@ class BossPart {
 
         switch (this.shootPattern) {
             case 'aimed': {
-                if (!game.player || !game.player.active) return;
+                if (!game.player?.active) return;
                 const px = game.player.position.x + game.player.width / 2;
                 const py = game.player.position.y + game.player.height / 2;
                 const angle = Math.atan2(py - cy, px - cx);
@@ -109,7 +109,7 @@ class BossPart {
                 break;
             }
             case 'rapid': {
-                if (!game.player || !game.player.active) return;
+                if (!game.player?.active) return;
                 const px = game.player.position.x + game.player.width / 2;
                 const py = game.player.position.y + game.player.height / 2;
                 const angle = Math.atan2(py - cy, px - cx);
@@ -188,8 +188,9 @@ class BossPart {
             ctx.drawImage(sprite, this.worldX - 4, this.worldY - 4, this.width + 8, this.height + 8);
         } else {
             // Fallback colored shape
-            ctx.fillStyle = this.isCore ? '#ff2244' : this.role === 'turret' ? '#ffaa33' :
-                this.role === 'shield' ? '#4488ff' : '#cc6633';
+            const notATurretValue =  this.role === 'shield' ? '#4488ff' : '#cc6633';
+            const notCoreValue = this.role === 'turret' ? '#ffaa33' : notATurretValue;
+            ctx.fillStyle = this.isCore ? '#ff2244' : notCoreValue;
             ctx.beginPath();
             ctx.arc(cx, cy, this.width / 2, 0, Math.PI * 2);
             ctx.fill();

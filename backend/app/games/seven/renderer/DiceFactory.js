@@ -37,7 +37,7 @@ export class DiceFactory {
       color: 0xf5f5f5,
       roughness: 0.25,
       metalness: 0.05,
-      envMapIntensity: 1.0
+      envMapIntensity: 1
     });
   }
 
@@ -46,7 +46,7 @@ export class DiceFactory {
     const dotMaterial = new THREE.MeshStandardMaterial({
       color: 0x0a0c1c,
       roughness: 0.8,
-      metalness: 0.0
+      metalness: 0
     });
 
     const size = GAME_CONSTANTS.DICE_SIZE;

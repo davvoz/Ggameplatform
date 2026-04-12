@@ -3,7 +3,7 @@
  * Single Responsibility: Event management
  */
 
-import { BET_TYPE, BET_MODES } from '../constants.js';
+import {  BET_MODES } from '../constants.js';
 
 export class EventHandler {
   constructor(uiManager, gameController) {
@@ -59,7 +59,7 @@ export class EventHandler {
     });
 
     // Close modals with ESC key
-    window.addEventListener('keydown', (e) => {
+    globalThis.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         betsModal.hidden = true;
         viewBetsModal.hidden = true;
@@ -162,7 +162,7 @@ export class EventHandler {
   }
 
   _attachKeyboardEvents() {
-    window.addEventListener('keydown', (event) => {
+    globalThis.addEventListener('keydown', (event) => {
       if (event.repeat || this._isInputFocused()) {
         return;
       }

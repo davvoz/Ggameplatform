@@ -70,7 +70,7 @@
 
         <!-- Pre-Game Upgrade Shop -->
         <div id="pregame-shop" class="hidden">
-            <div class="shop-card" role="dialog" aria-labelledby="shop-title" aria-modal="true">
+            <dialog class="shop-card" aria-labelledby="shop-title">
                 <div class="shop-header">
                     <h1 id="shop-title">⚡ UPGRADE SHOP ⚡</h1>
                     <p class="shop-subtitle">Power up before launch! Max 3 upgrades</p>
@@ -88,11 +88,11 @@
                 <div class="shop-actions">
                     <button id="shop-start-btn">🚀 LAUNCH MISSION</button>
                 </div>
-            </div>
+            </dialog>
         </div>
 
         <div id="game-over-screen" class="hidden">
-            <div class="go-card" role="dialog" aria-labelledby="go-title" aria-modal="true">
+            <dialog class="go-card" aria-labelledby="go-title">
                 <div class="go-header">
                     <h1 id="go-title" data-text="GAME OVER">GAME OVER</h1>
                 </div>
@@ -122,12 +122,12 @@
                 <div class="go-actions">
                     <button id="restart-btn">RESTART</button>
                 </div>
-            </div>
+            </dialog>
         </div>
 
         <!-- Upgrade Selection Modal -->
         <div id="upgrade-modal" class="hidden">
-            <div class="upgrade-card" role="dialog" aria-labelledby="upgrade-title" aria-modal="true">
+            <dialog class="upgrade-card" aria-labelledby="upgrade-title">
                 <div class="upgrade-header">
                     <div class="upgrade-level-badge" id="upgrade-level-badge">LEVEL 5</div>
                     <h1 id="upgrade-title">CHOOSE YOUR UPGRADE</h1>
@@ -136,7 +136,7 @@
                 <div class="upgrade-options" id="upgrade-options">
                     <!-- Options will be dynamically inserted here -->
                 </div>
-            </div>
+            </dialog>
         </div>
     </div>
 

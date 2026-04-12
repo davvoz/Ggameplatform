@@ -371,6 +371,122 @@ class RainbowRushService:
         updated_session = self.repository.update_session(session_id, update_data)
         return updated_session.to_dict() if updated_session else None
     
+    def _calculate_session_duration(self, session: RainbowRushGameSession) -> int:
+        """
+        Calculate duration in seconds from session timestamps
+        
+        Args:
+            session: Game session
+            
+        Returns:
+            Duration in seconds
+        """
+        if session.started_at and session.ended_at:
+            started = datetime.fromisoformat(session.started_at)
+            ended = datetime.fromisoformat(session.ended_at)
+            return int((ended - started).total_seconds())
+        return 0
+    
+    def _extract_session_stats(self, session: RainbowRushGameSession) -> tuple[int, Dict[str, Any]]:
+        """
+        Extract score and extra data from session stats
+        
+        Args:
+            session: Game session
+            
+        Returns:
+            Tuple of (score, extra_data)
+        """
+        score = 0
+        extra_data = {}
+        
+        try:
+            if not session.current_stats:
+                return score, extra_data
+            
+            stats = json.loads(session.current_stats) if isinstance(session.current_stats, str) else session.current_stats
+            score = stats.get('score', 0)
+            nested_extra = stats.get('extra_data', {})
+            
+            extra_data = {
+                'levels_completed': nested_extra.get('levels_completed', 
+                                   stats.get('levels_completed', 
+                                   stats.get('levelsCompleted', 
+                                   stats.get('level', 0)))),
+                'coins_collected': nested_extra.get('coins_collected',
+                                  stats.get('coins_collected', 
+                                  stats.get('coinsCollected', 
+                                  stats.get('collectibles', 
+                                  stats.get('coins', 0))))),
+                'distance': nested_extra.get('distance', stats.get('distance', 0)),
+                'enemies_defeated': nested_extra.get('enemies_defeated', 
+                                   stats.get('enemies_defeated', 
+                                   stats.get('enemiesDefeated', 0))),
+                'powerups_collected': nested_extra.get('powerups_collected',
+                                     stats.get('powerups_collected', 
+                                     stats.get('powerupsCollected', 0))),
+            }
+            
+            print(f"🎯 [Rainbow Rush] Extracted score from session: {score}")
+            print(f"📊 [Rainbow Rush] Full stats: {stats}")
+            print(f"🎮 [Rainbow Rush] Extra data for quests: {extra_data}")
+        except Exception as e:
+            print(f"⚠️ [Rainbow Rush] Error extracting score: {e}")
+        
+        return score, extra_data
+    
+    def _get_xp_earned(self, user_id: str) -> int:
+        """
+        Get total XP earned from user progress
+        
+        Args:
+            user_id: User identifier
+            
+        Returns:
+            XP earned
+        """
+        xp_earned = 0
+        try:
+            progress = self.repository.get_progress_by_user(user_id)
+            if progress and progress.statistics:
+                stats = json.loads(progress.statistics) if isinstance(progress.statistics, str) else progress.statistics
+                xp_earned = stats.get('session_xp', 0)
+        except Exception:
+            pass
+        return xp_earned
+    
+    def _track_quest_progress(self, session_data: Dict[str, Any], session_id: str) -> None:
+        """
+        Track quest progress for completed session
+        
+        Args:
+            session_data: Session data for quest tracking
+            session_id: Session identifier
+        """
+        try:
+            from app.database import SessionLocal
+            from app.repositories import RepositoryFactory
+            from app.services import ServiceFactory
+            from app.quest_tracker import track_quest_progress_for_session
+            
+            platform_db = SessionLocal()
+            try:
+                coin_repo = RepositoryFactory.create_usercoins_repository(platform_db)
+                transaction_repo = RepositoryFactory.create_cointransaction_repository(platform_db)
+                coin_service = ServiceFactory.create_coin_service(coin_repo, transaction_repo)
+                
+                track_quest_progress_for_session(platform_db, session_data, coin_service)
+                platform_db.commit()
+                print(f"✅ Quest progress tracked for Rainbow Rush session {session_id}")
+            except Exception as e:
+                platform_db.rollback()
+                print(f"⚠️ Failed to track quest progress for session {session_id}: {e}")
+                traceback.print_exc()
+            finally:
+                platform_db.close()
+        except Exception as e:
+            print(f"⚠️ Failed to initialize platform database for quest tracking: {e}")
+    
     def end_game_session(self, session_id: str) -> Dict[str, Any]:
         """
         End an active game session
@@ -383,104 +499,28 @@ class RainbowRushService:
         """
         session = self.repository.end_session(session_id)
         
-        # Track quest progress for RainbowRushGameSession
-        # Note: Generic GameSession records created by runtimeShell.js already track quests
-        # This is additional tracking for Rainbow Rush specific sessions
-        if session:
-            from app.quest_tracker import track_quest_progress_for_session
-            
-            # Calculate session duration
-            if session.started_at and session.ended_at:
-                started = datetime.fromisoformat(session.started_at)
-                ended = datetime.fromisoformat(session.ended_at)
-                duration_seconds = int((ended - started).total_seconds())
-            else:
-                duration_seconds = 0
-            
-            # Extract score from current_stats if available
-            score = 0
-            extra_data = {}
-            try:
-                if session.current_stats:
-                    stats = json.loads(session.current_stats) if isinstance(session.current_stats, str) else session.current_stats
-                    score = stats.get('score', 0)
-                    
-                    # Extract extra data for quest tracking
-                    # Check if extra_data is nested inside stats (from frontend)
-                    nested_extra = stats.get('extra_data', {})
-                    
-                    extra_data = {
-                        'levels_completed': nested_extra.get('levels_completed', 
-                                           stats.get('levels_completed', 
-                                           stats.get('levelsCompleted', 
-                                           stats.get('level', 0)))),
-                        'coins_collected': nested_extra.get('coins_collected',
-                                          stats.get('coins_collected', 
-                                          stats.get('coinsCollected', 
-                                          stats.get('collectibles', 
-                                          stats.get('coins', 0))))),
-                        'distance': nested_extra.get('distance', stats.get('distance', 0)),
-                        'enemies_defeated': nested_extra.get('enemies_defeated', 
-                                           stats.get('enemies_defeated', 
-                                           stats.get('enemiesDefeated', 0))),
-                        'powerups_collected': nested_extra.get('powerups_collected',
-                                             stats.get('powerups_collected', 
-                                             stats.get('powerupsCollected', 0))),
-                    }
-                    print(f"🎯 [Rainbow Rush] Extracted score from session: {score}")
-                    print(f"📊 [Rainbow Rush] Full stats: {stats}")
-                    print(f"🎮 [Rainbow Rush] Extra data for quests: {extra_data}")
-            except Exception as e:
-                print(f"⚠️ [Rainbow Rush] Error extracting score: {e}")
-                pass
-            
-            # Get total XP earned from progress during this session
-            xp_earned = 0
-            try:
-                progress = self.repository.get_progress_by_user(session.user_id)
-                if progress and progress.statistics:
-                    stats = json.loads(progress.statistics) if isinstance(progress.statistics, str) else progress.statistics
-                    xp_earned = stats.get('session_xp', 0)
-            except:
-                pass
-            
-            # Prepare session data for quest tracker
-            session_data = {
-                'user_id': session.user_id,
-                'game_id': 'rainbow-rush',  # Must match quest config game_id
-                'score': score,
-                'duration_seconds': duration_seconds,
-                'xp_earned': xp_earned,
-                'extra_data': extra_data  # Contains levels_completed, coins_collected, etc.
-            }
-            
-            # Get coin service for quest rewards
-            # IMPORTANT: Use platform database for quest tracking, not Rainbow Rush game DB
-            try:
-                from app.database import SessionLocal
-                from app.repositories import RepositoryFactory
-                from app.services import ServiceFactory
-                
-                # Create a platform database session for quest tracking
-                platform_db = SessionLocal()
-                try:
-                    coin_repo = RepositoryFactory.create_usercoins_repository(platform_db)
-                    transaction_repo = RepositoryFactory.create_cointransaction_repository(platform_db)
-                    coin_service = ServiceFactory.create_coin_service(coin_repo, transaction_repo)
-                    
-                    track_quest_progress_for_session(platform_db, session_data, coin_service)
-                    platform_db.commit()
-                    print(f"✅ Quest progress tracked for Rainbow Rush session {session_id} (score: {score}, duration: {duration_seconds}s)")
-                except Exception as e:
-                    platform_db.rollback()
-                    print(f"⚠️ Failed to track quest progress for session {session_id}: {e}")
-                    traceback.print_exc()
-                finally:
-                    platform_db.close()
-            except Exception as e:
-                print(f"⚠️ Failed to initialize platform database for quest tracking: {e}")
+        if not session:
+            return None
         
-        return session.to_dict() if session else None
+        # Calculate session metrics
+        duration_seconds = self._calculate_session_duration(session)
+        score, extra_data = self._extract_session_stats(session)
+        xp_earned = self._get_xp_earned(session.user_id)
+        
+        # Prepare session data for quest tracker
+        session_data = {
+            'user_id': session.user_id,
+            'game_id': 'rainbow-rush',
+            'score': score,
+            'duration_seconds': duration_seconds,
+            'xp_earned': xp_earned,
+            'extra_data': extra_data
+        }
+        
+        # Track quest progress
+        self._track_quest_progress(session_data, session_id)
+        
+        return session.to_dict()
     
     def get_active_session(self, user_id: str) -> Optional[Dict[str, Any]]:
         """

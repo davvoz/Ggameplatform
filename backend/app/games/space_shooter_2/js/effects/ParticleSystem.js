@@ -9,23 +9,25 @@
  */
 
 class Particle {
-    constructor() {
-        // All fields pre-allocated; reset() initialises them
-        this.x = 0; this.y = 0;
-        this.vx = 0; this.vy = 0;
-        this.life = 0; this.maxLife = 1;
-        this.size = 3; this.endSize = 0;
-        this.color = { r: 255, g: 255, b: 255 };
-        this.endColor = null;
-        this.alpha = 1;
-        this.gravity = 0;
-        this.friction = 1;
-        this.rotation = 0;
-        this.rotationSpeed = 0;
-        this.shape = 'circle';
-        this.glow = false;
-        this.active = false;
-    }
+    x = 0;
+    y = 0;
+    vx = 0;
+    vy = 0;
+    life = 0;
+    maxLife = 1;
+    size = 3;
+    endSize = 0;
+    color = { r: 255, g: 255, b: 255 };
+    endColor = null;
+    alpha = 1;
+    gravity = 0;
+    friction = 1;
+    rotation = 0;
+    rotationSpeed = 0;
+    shape = 'circle';
+    glow = false;
+    active = false;
+
 
     reset(x, y, config) {
         this.x = x;
@@ -123,15 +125,16 @@ class ParticleSystem {
         while (i < len) {
             const p = this.particles[i];
             p.update(dt);
-            if (!p.active) {
+            if (p.active) {
+                i++;
+            } else {
                 // Swap with last element and shrink
                 len--;
                 this.particles[i] = this.particles[len];
                 this.particles[len] = p; // keep dead particle for reuse
                 this.particles.length = len;
                 // Don't increment i — need to check the swapped element
-            } else {
-                i++;
+
             }
         }
     }
@@ -172,36 +175,10 @@ class ParticleSystem {
 
             if (p.rotation !== 0 || p.shape === 'spark') {
                 // Only use translate+rotate for particles that need rotation
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.rotation);
-
-                if (p.shape === 'spark') {
-                    ctx.beginPath();
-                    ctx.moveTo(-size, 0);
-                    ctx.lineTo(0, -size * 0.3);
-                    ctx.lineTo(size, 0);
-                    ctx.lineTo(0, size * 0.3);
-                    ctx.closePath();
-                    ctx.fill();
-                } else if (p.shape === 'square') {
-                    ctx.fillRect(-size * 0.5, -size * 0.5, size, size);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, Math.max(0.5, size), 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                ctx.restore();
+                this.drawRotatedParticle(ctx, p, size);
             } else {
                 // No rotation — draw directly without translate (cheaper)
-                if (p.shape === 'square') {
-                    ctx.fillRect(p.x - size * 0.5, p.y - size * 0.5, size, size);
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, Math.max(0.5, size), 0, Math.PI * 2);
-                    ctx.fill();
-                }
+                this.drawParticle(p, ctx, size);
             }
 
             // Reset shadow after glow particle to avoid bleeding into next one
@@ -211,6 +188,40 @@ class ParticleSystem {
         }
 
         ctx.restore();
+    }
+
+    drawRotatedParticle(ctx, p, size) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+
+        if (p.shape === 'spark') {
+            ctx.beginPath();
+            ctx.moveTo(-size, 0);
+            ctx.lineTo(0, -size * 0.3);
+            ctx.lineTo(size, 0);
+            ctx.lineTo(0, size * 0.3);
+            ctx.closePath();
+            ctx.fill();
+        } else if (p.shape === 'square') {
+            ctx.fillRect(-size * 0.5, -size * 0.5, size, size);
+        } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, Math.max(0.5, size), 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.restore();
+    }
+
+    drawParticle(p, ctx, size) {
+        if (p.shape === 'square') {
+            ctx.fillRect(p.x - size * 0.5, p.y - size * 0.5, size, size);
+        } else {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, Math.max(0.5, size), 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     clear() {

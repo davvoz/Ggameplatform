@@ -46,12 +46,12 @@ class Enemy extends GameObject {
     initStats() {
         const s = this._scale || 1;
         const stats = {
-            'enemy1': { health: 1, speed: 75 * s, score: 100, shootInterval: 4.0 },
+            'enemy1': { health: 1, speed: 75 * s, score: 100, shootInterval: 4 },
             'enemy2': { health: 2, speed: 70 * s, score: 200, shootInterval: 3.2 },
             'enemy3': { health: 4, speed: 65 * s, score: 400, shootInterval: 2.2 },
             'enemy4': { health: 2, speed: 95 * s, score: 300, shootInterval: 3.5 },  // Phantom: fast, elusive
             'enemy5': { health: 7, speed: 45 * s, score: 500, shootInterval: 1.8 },  // Sentinel: tanky, slow
-            'enemy6': { health: 1, speed: 120 * s, score: 80, shootInterval: 5.0 },  // Swarm: fragile, fast
+            'enemy6': { health: 1, speed: 120 * s, score: 80, shootInterval: 5 },  // Swarm: fragile, fast
             'boss': { health: 70, speed: 50 * s, score: 5000, shootInterval: 0.5 },
             'boss_hydra': { health: 50, speed: 45 * s, score: 7000, shootInterval: 0.4 },
             'boss_fortress': { health: 70, speed: 35 * s, score: 9000, shootInterval: 0.3 },
@@ -61,7 +61,7 @@ class Enemy extends GameObject {
         // Phantom-specific: cloaking
         if (this.type === 'enemy4') {
             this.cloakTimer = 0;
-            this.cloakCycle = 3.0 + Math.random() * 2; // seconds per cloak cycle
+            this.cloakCycle = 3 + Math.random() * 2; // seconds per cloak cycle
             this.opacity = 1;
             this.phaseSpeed = 1.5 + Math.random() * 0.5;
         }
@@ -107,7 +107,7 @@ class Enemy extends GameObject {
             this.voidPulseTime = 0;
             this.teleporting = false;
             this.teleportFade = 1;
-            this.gravityWells = []; // {x, y, life, strength}
+            this.gravityWells = []; 
         }
         
         const s1 = stats[this.type] || stats['enemy1'];
@@ -176,35 +176,216 @@ class Enemy extends GameObject {
         this.movementTimer += deltaTime;
         
         // Applica pattern di movimento
+        this.updateMovementPattern(game);
+        // Phantom cloaking update
+        this.updateCloaking(deltaTime);
+        // Sentinel shield rotation
+        this.updateShieldAndPulse(deltaTime);
+        // Swarm jitter
+        this.applySwarmJitter(deltaTime);
+
+        // === BOSS SPECIAL MECHANICS ===
+        // Hydra: regeneration (capped at 70% max HP)
+        this.handleHydraRegeneration(deltaTime);
+        // Fortress: shield phases and turret rotation
+        this.handleTurretAndShield(deltaTime);
+        // Void: teleportation + gravity wells
+        this.handleTeleportationAndGravityWells(deltaTime, game);
+        // Applica velocità
+        this.position.x += this.velocity.x * deltaTime;
+        this.position.y += this.velocity.y * deltaTime;
+        // Delay iniziale prima di poter sparare
+        if (!this.canShoot) {
+            this.shootDelayTimer -= deltaTime;
+            if (this.shootDelayTimer <= 0) {
+                this.canShoot = true;
+            }
+        }
+        // Shooting con probabilità basata sul livello
+        this.updateShootingMechanics(game, deltaTime);
+        
+        // Rimuovi se fuori schermo (sotto)
+        if (this.position.y > game.canvas.height + 50) {
+            this.destroy();
+        }
+    }
+
+    handleTeleportationAndGravityWells(deltaTime, game) {
+        if (this.type === 'boss_void') {
+            this.voidPulseTime += deltaTime;
+            this.teleportTimer += deltaTime;
+
+            // Teleport logic
+            this.handleTeleport(deltaTime, game);
+
+            // Update gravity wells - pull player toward them
+            for (let i = this.gravityWells.length - 1; i >= 0; i--) {
+                const well = this.gravityWells[i];
+                well.life -= deltaTime;
+                if (well.life <= 0) {
+                    this.gravityWells.splice(i, 1);
+                    continue;
+                }
+                // Pull player
+                if (game.player?.active) {
+                    const dx = well.x - game.player.position.x;
+                    const dy = well.y - game.player.position.y;
+                    const dist = Math.hypot(dx, dy);
+                    if (dist < 200 && dist > 10) {
+                        const force = (well.strength / dist) * deltaTime;
+                        game.player.position.x += (dx / dist) * force;
+                        game.player.position.y += (dy / dist) * force;
+                    }
+                }
+            }
+        }
+    }
+
+    handleTeleport(deltaTime, game) {
+        if (!this.teleporting && this.teleportTimer >= this.teleportCooldown) {
+            this.teleporting = true;
+            this.teleportFade = 1;
+            this.teleportTimer = 0;
+        }
+        if (this.teleporting) {
+            this.teleportFade -= deltaTime * 3;
+            if (this.teleportFade <= 0) {
+                // Teleport to new position
+                this.position.x = 50 + Math.random() * (game.canvas.width - 150 - 50);
+                this.position.y = 40 + Math.random() * 80;
+                this.startX = this.position.x;
+                this.teleporting = false;
+                this.teleportFade = 0;
+                this.teleportCooldown = 4 + Math.random() * 4;
+
+                // Spawn gravity well at old location
+                if (this.gravityWells.length < 3) {
+                    this.gravityWells.push({
+                        x: game.canvas.width / 2 + (Math.random() - 0.5) * game.canvas.width * 0.6,
+                        y: game.canvas.height * 0.5 + Math.random() * game.canvas.height * 0.3,
+                        life: 4,
+                        strength: 80
+                    });
+                }
+            }
+        } else if (this.teleportFade < 1) {
+            this.teleportFade = Math.min(1, this.teleportFade + deltaTime * 3);
+        }
+    }
+
+    updateShootingMechanics(game, deltaTime) {
+        if (this.canShoot && game.player?.active) {
+            this.shootCooldown -= deltaTime;
+            if (this.shootCooldown <= 0) {
+                // Probabilità di sparo: molto bassa nei primi livelli, cresce gradualmente
+                // Livello 1: 10%, Livello 5: 30%, Livello 10: 55%, poi sale fino a 90%
+                const shootChance = game.level <= 10
+                    ? Math.min(0.55, 0.1 + (game.level - 1) * 0.05)
+                    : Math.min(0.9, 0.55 + (game.level - 10) * 0.05);
+                if (Math.random() < shootChance || this.isBoss()) {
+                    this.shoot(game);
+                }
+                // Intervallo più lungo ai primi livelli (2.5x al liv 1, 1x dal liv 10+)
+                const levelMultiplier = game.level <= 10
+                    ? Math.max(1, 2.5 - (game.level - 1) * 0.17)
+                    : 1;
+                this.shootCooldown = this.shootInterval * levelMultiplier;
+            }
+        }
+    }
+
+    handleTurretAndShield(deltaTime) {
+        if (this.type === 'boss_fortress') {
+            this.turretAngle += deltaTime * 1.5;
+            this.shieldPhaseTimer += deltaTime;
+            if (!this.shieldPhaseActive && this.shieldPhaseTimer >= this.shieldPhaseCooldown) {
+                this.shieldPhaseActive = true;
+                this.shieldPhaseTimer = 0;
+            }
+            if (this.shieldPhaseActive && this.shieldPhaseTimer >= this.shieldPhaseDuration) {
+                this.shieldPhaseActive = false;
+                this.shieldPhaseTimer = 0;
+            }
+        }
+    }
+
+    handleHydraRegeneration(deltaTime) {
+        if (this.type === 'boss_hydra') {
+            this.regenTimer += deltaTime;
+            if (this.regenTimer >= 1.5) {
+                this.regenTimer = 0;
+                const regenCap = this.maxHealth * 0.7;
+                if (this.health < regenCap) {
+                    this.health = Math.min(regenCap, this.health + this.regenRate);
+                }
+            }
+            // Enrage below 30% HP
+            this.enragePhase = (this.health / this.maxHealth) < 0.3;
+            // Track heads independently
+            for (let i = 0; i < 3; i++) {
+                this.headAngles[i] += deltaTime * (1.5 + i * 0.3);
+            }
+        }
+    }
+
+    applySwarmJitter(deltaTime) {
+        if (this.type === 'enemy6') {
+            this.jitterTimer += deltaTime;
+            if (this.jitterTimer > 0.3) {
+                this.jitterTimer = 0;
+                this.jitterDir = -this.jitterDir;
+            }
+            this.jitterX = this.jitterDir * 15 * Math.sin(this.movementTimer * 12);
+            this.position.x += this.jitterX * deltaTime;
+        }
+    }
+
+    updateShieldAndPulse(deltaTime) {
+        if (this.type === 'enemy5') {
+            this.shieldAngle += deltaTime * 2;
+            this.pulseTime += deltaTime;
+        }
+    }
+
+    updateCloaking(deltaTime) {
+        if (this.type === 'enemy4') {
+            this.cloakTimer += deltaTime;
+            const cloakPhase = (this.cloakTimer % this.cloakCycle) / this.cloakCycle;
+            // Smooth cloak: visible -> fade out -> invisible -> fade in
+            if (cloakPhase < 0.4) {
+                this.opacity = 1;
+            } else if (cloakPhase < 0.5) {
+                this.opacity = 1 - (cloakPhase - 0.4) / 0.1;
+            } else if (cloakPhase < 0.8) {
+                this.opacity = 0.08; // Almost invisible
+            } else {
+                this.opacity = (cloakPhase - 0.8) / 0.2;
+            }
+        }
+    }
+
+    updateMovementPattern(game) {
         switch (this.movementPattern) {
             case 'straight':
                 this.velocity.y = this.speed;
                 break;
-                
+
             case 'sine':
                 this.velocity.y = this.speed;
                 this.position.x = this.startX + Math.sin(this.movementTimer * this.frequency) * this.amplitude;
                 break;
-                
-            case 'zigzag':
+
+            case 'zigzag': {
                 this.velocity.y = this.speed;
                 const zigzagPhase = Math.floor(this.movementTimer * this.frequency) % 2;
-                this.velocity.x = zigzagPhase === 0 ? this.speed * 0.5 : -this.speed * 0.5;
+                this.updateZigzagVelocity(zigzagPhase);
                 break;
-                
+            }
             case 'dive':
                 // Si ferma, poi si tuffa verso il player
-                if (this.movementTimer < 1) {
-                    this.velocity.y = this.speed * 0.3;
-                } else {
-                    const player = game.player;
-                    if (player && player.active) {
-                        const dir = player.getCenter().subtract(this.getCenter()).normalize();
-                        this.velocity = dir.multiply(this.speed * 2);
-                    }
-                }
+                this.calculateDiveVelocity(game);
                 break;
-                
+
             case 'phantom':
                 // Erratic phasing movement
                 this.velocity.y = this.speed * 0.7;
@@ -226,196 +407,50 @@ class Enemy extends GameObject {
             case 'boss':
                 // Movimento orizzontale con oscillazione
                 this.velocity.y = this.position.y < 80 ? this.speed : 0;
-                this.position.x = game.canvas.width / 2 - this.width / 2 + 
-                                  Math.sin(this.movementTimer * 0.5) * (game.canvas.width / 3);
+                this.position.x = game.canvas.width / 2 - this.width / 2 +
+                    Math.sin(this.movementTimer * 0.5) * (game.canvas.width / 3);
                 break;
 
             case 'boss_hydra':
                 // Serpentine movement
                 this.velocity.y = this.position.y < 90 ? this.speed : 0;
-                this.position.x = game.canvas.width / 2 - this.width / 2 + 
-                                  Math.sin(this.movementTimer * 0.7) * (game.canvas.width / 4) +
-                                  Math.sin(this.movementTimer * 1.3) * 30;
+                this.position.x = game.canvas.width / 2 - this.width / 2 +
+                    Math.sin(this.movementTimer * 0.7) * (game.canvas.width / 4) +
+                    Math.sin(this.movementTimer * 1.3) * 30;
                 break;
 
             case 'boss_fortress':
                 // Very slow, dominant descent then stays put
                 this.velocity.y = this.position.y < 70 ? this.speed : 0;
-                this.position.x = game.canvas.width / 2 - this.width / 2 + 
-                                  Math.sin(this.movementTimer * 0.3) * (game.canvas.width / 5);
+                this.position.x = game.canvas.width / 2 - this.width / 2 +
+                    Math.sin(this.movementTimer * 0.3) * (game.canvas.width / 5);
                 break;
 
             case 'boss_void':
                 // Drifts smoothly, then teleports
                 if (!this.teleporting) {
                     this.velocity.y = this.position.y < 100 ? this.speed : 0;
-                    this.position.x = game.canvas.width / 2 - this.width / 2 + 
-                                      Math.sin(this.movementTimer * 0.6) * (game.canvas.width / 3.5);
+                    this.position.x = game.canvas.width / 2 - this.width / 2 +
+                        Math.sin(this.movementTimer * 0.6) * (game.canvas.width / 3.5);
                 }
                 break;
         }
+    }
 
-        // Phantom cloaking update
-        if (this.type === 'enemy4') {
-            this.cloakTimer += deltaTime;
-            const cloakPhase = (this.cloakTimer % this.cloakCycle) / this.cloakCycle;
-            // Smooth cloak: visible -> fade out -> invisible -> fade in
-            if (cloakPhase < 0.4) {
-                this.opacity = 1;
-            } else if (cloakPhase < 0.5) {
-                this.opacity = 1 - (cloakPhase - 0.4) / 0.1;
-            } else if (cloakPhase < 0.8) {
-                this.opacity = 0.08; // Almost invisible
-            } else {
-                this.opacity = (cloakPhase - 0.8) / 0.2;
+    calculateDiveVelocity(game) {
+        if (this.movementTimer < 1) {
+            this.velocity.y = this.speed * 0.3;
+        } else {
+            const player = game.player;
+            if (player?.active) {
+                const dir = player.getCenter().subtract(this.getCenter()).normalize();
+                this.velocity = dir.multiply(this.speed * 2);
             }
         }
+    }
 
-        // Sentinel shield rotation
-        if (this.type === 'enemy5') {
-            this.shieldAngle += deltaTime * 2;
-            this.pulseTime += deltaTime;
-        }
-
-        // Swarm jitter
-        if (this.type === 'enemy6') {
-            this.jitterTimer += deltaTime;
-            if (this.jitterTimer > 0.3) {
-                this.jitterTimer = 0;
-                this.jitterDir = -this.jitterDir;
-            }
-            this.jitterX = this.jitterDir * 15 * Math.sin(this.movementTimer * 12);
-            this.position.x += this.jitterX * deltaTime;
-        }
-
-        // === BOSS SPECIAL MECHANICS ===
-
-        // Hydra: regeneration (capped at 70% max HP)
-        if (this.type === 'boss_hydra') {
-            this.regenTimer += deltaTime;
-            if (this.regenTimer >= 1.5) {
-                this.regenTimer = 0;
-                const regenCap = this.maxHealth * 0.7;
-                if (this.health < regenCap) {
-                    this.health = Math.min(regenCap, this.health + this.regenRate);
-                }
-            }
-            // Enrage below 30% HP
-            this.enragePhase = (this.health / this.maxHealth) < 0.3;
-            // Track heads independently
-            for (let i = 0; i < 3; i++) {
-                this.headAngles[i] += deltaTime * (1.5 + i * 0.3);
-            }
-        }
-
-        // Fortress: shield phases and turret rotation
-        if (this.type === 'boss_fortress') {
-            this.turretAngle += deltaTime * 1.5;
-            this.shieldPhaseTimer += deltaTime;
-            if (!this.shieldPhaseActive && this.shieldPhaseTimer >= this.shieldPhaseCooldown) {
-                this.shieldPhaseActive = true;
-                this.shieldPhaseTimer = 0;
-            }
-            if (this.shieldPhaseActive && this.shieldPhaseTimer >= this.shieldPhaseDuration) {
-                this.shieldPhaseActive = false;
-                this.shieldPhaseTimer = 0;
-            }
-        }
-
-        // Void: teleportation + gravity wells
-        if (this.type === 'boss_void') {
-            this.voidPulseTime += deltaTime;
-            this.teleportTimer += deltaTime;
-
-            // Teleport logic
-            if (!this.teleporting && this.teleportTimer >= this.teleportCooldown) {
-                this.teleporting = true;
-                this.teleportFade = 1;
-                this.teleportTimer = 0;
-            }
-            if (this.teleporting) {
-                this.teleportFade -= deltaTime * 3;
-                if (this.teleportFade <= 0) {
-                    // Teleport to new position
-                    this.position.x = 50 + Math.random() * (game.canvas.width - 150 - 50);
-                    this.position.y = 40 + Math.random() * 80;
-                    this.startX = this.position.x;
-                    this.teleporting = false;
-                    this.teleportFade = 0;
-                    this.teleportCooldown = 4 + Math.random() * 4;
-
-                    // Spawn gravity well at old location
-                    if (this.gravityWells.length < 3) {
-                        this.gravityWells.push({
-                            x: game.canvas.width / 2 + (Math.random() - 0.5) * game.canvas.width * 0.6,
-                            y: game.canvas.height * 0.5 + Math.random() * game.canvas.height * 0.3,
-                            life: 4,
-                            strength: 80
-                        });
-                    }
-                }
-            } else if (this.teleportFade < 1) {
-                this.teleportFade = Math.min(1, this.teleportFade + deltaTime * 3);
-            }
-
-            // Update gravity wells - pull player toward them
-            for (let i = this.gravityWells.length - 1; i >= 0; i--) {
-                const well = this.gravityWells[i];
-                well.life -= deltaTime;
-                if (well.life <= 0) {
-                    this.gravityWells.splice(i, 1);
-                    continue;
-                }
-                // Pull player
-                if (game.player && game.player.active) {
-                    const dx = well.x - game.player.position.x;
-                    const dy = well.y - game.player.position.y;
-                    const dist = Math.hypot(dx, dy);
-                    if (dist < 200 && dist > 10) {
-                        const force = (well.strength / dist) * deltaTime;
-                        game.player.position.x += (dx / dist) * force;
-                        game.player.position.y += (dy / dist) * force;
-                    }
-                }
-            }
-        }
-        
-        // Applica velocità
-        this.position.x += this.velocity.x * deltaTime;
-        this.position.y += this.velocity.y * deltaTime;
-        
-        // Delay iniziale prima di poter sparare
-        if (!this.canShoot) {
-            this.shootDelayTimer -= deltaTime;
-            if (this.shootDelayTimer <= 0) {
-                this.canShoot = true;
-            }
-        }
-        
-        // Shooting con probabilità basata sul livello
-        if (this.canShoot && game.player && game.player.active) {
-            this.shootCooldown -= deltaTime;
-            if (this.shootCooldown <= 0) {
-                // Probabilità di sparo: molto bassa nei primi livelli, cresce gradualmente
-                // Livello 1: 10%, Livello 5: 30%, Livello 10: 55%, poi sale fino a 90%
-                const shootChance = game.level <= 10
-                    ? Math.min(0.55, 0.10 + (game.level - 1) * 0.05)
-                    : Math.min(0.90, 0.55 + (game.level - 10) * 0.05);
-                if (Math.random() < shootChance || this.isBoss()) {
-                    this.shoot(game);
-                }
-                // Intervallo più lungo ai primi livelli (2.5x al liv 1, 1x dal liv 10+)
-                const levelMultiplier = game.level <= 10
-                    ? Math.max(1, 2.5 - (game.level - 1) * 0.17)
-                    : 1.0;
-                this.shootCooldown = this.shootInterval * levelMultiplier;
-            }
-        }
-        
-        // Rimuovi se fuori schermo (sotto)
-        if (this.position.y > game.canvas.height + 50) {
-            this.destroy();
-        }
+    updateZigzagVelocity(zigzagPhase) {
+        this.velocity.x = zigzagPhase === 0 ? this.speed * 0.5 : -this.speed * 0.5;
     }
 
     shoot(game) {
@@ -425,104 +460,131 @@ class Enemy extends GameObject {
         
         if (this.type === 'boss') {
             // Boss spara pattern multipli
-            const patterns = ['spread', 'aimed', 'burst'];
-            const pattern = patterns[Math.floor(Math.random() * patterns.length)];
-            
-            switch (pattern) {
-                case 'spread':
-                    for (let i = -2; i <= 2; i++) {
-                        game.spawnBullet(centerX - 4 * s, bottomY, i * 60, 250, 'enemy');
-                    }
-                    break;
-                case 'aimed':
-                    if (game.player && game.player.active) {
-                        const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
-                        game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 300, dir.y * 300, 'enemy');
-                    }
-                    break;
-                case 'burst':
-                    for (let i = 0; i < 8; i++) {
-                        const angle = (i / 8) * Math.PI * 2;
-                        game.spawnBullet(
-                            centerX - 4 * s, bottomY,
-                            Math.cos(angle) * 200,
-                            Math.sin(angle) * 200,
-                            'enemy'
-                        );
-                    }
-                    break;
-            }
+            this.fireBoss(game, centerX, s, bottomY);
         } else if (this.type === 'boss_hydra') {
             // Hydra: each head fires independently
-            const headOffsets = [-40 * s, 0, 40 * s];
-            for (let i = 0; i < 3; i++) {
-                const hx = centerX + headOffsets[i];
-                if (this.enragePhase) {
-                    // Enraged: rapid aimed shots from all heads
-                    if (game.player && game.player.active) {
-                        const dir = game.player.getCenter().subtract(new Vector2(hx, bottomY)).normalize();
-                        game.spawnBullet(hx - 4 * s, bottomY, dir.x * 280, dir.y * 280, 'enemy');
-                    }
-                } else {
-                    // Normal: alternating spread and straight
-                    if (i === 1) {
-                        // Center head: spread
-                        for (let j = -1; j <= 1; j++) {
-                            game.spawnBullet(hx - 4 * s, bottomY, j * 50, 220, 'enemy');
-                        }
-                    } else {
-                        // Side heads: aimed
-                        if (game.player && game.player.active) {
-                            const dir = game.player.getCenter().subtract(new Vector2(hx, bottomY)).normalize();
-                            game.spawnBullet(hx - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 80, 'enemy');
-                        }
-                    }
-                }
-            }
+            this.fireHydra(s, centerX, game, bottomY);
         } else if (this.type === 'boss_fortress') {
             // Fortress: 4 rotating turrets fire outward + aimed center cannon
-            for (let i = 0; i < 4; i++) {
-                const tAngle = this.turretAngle + (i * Math.PI / 2);
-                const tx = centerX + Math.cos(tAngle) * 60 * s;
-                const ty = this.position.y + this.height / 2 + Math.sin(tAngle) * 40 * s;
-                game.spawnBullet(tx - 4 * s, ty, Math.cos(tAngle + Math.PI / 2) * 180, Math.sin(tAngle + Math.PI / 2) * 180 + 80, 'enemy');
-            }
-            // Center cannon aimed at player
-            if (game.player && game.player.active) {
-                const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
-                game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 250, dir.y * 250, 'enemy');
-                // Double shot
-                game.spawnBullet(centerX - 20 * s, bottomY, dir.x * 230, dir.y * 230, 'enemy');
-                game.spawnBullet(centerX + 16 * s, bottomY, dir.x * 230, dir.y * 230, 'enemy');
-            }
+            this.fireFortress(centerX, s, game, bottomY);
         } else if (this.type === 'boss_void') {
             // Void: spiral pattern + homing-like shots
-            const numBullets = 6;
-            const spiralOffset = this.voidPulseTime * 2;
-            for (let i = 0; i < numBullets; i++) {
-                const angle = spiralOffset + (i / numBullets) * Math.PI * 2;
-                game.spawnBullet(
-                    centerX - 4 * s, this.position.y + this.height / 2,
-                    Math.cos(angle) * 170,
-                    Math.sin(angle) * 170 + 50,
-                    'enemy'
-                );
-            }
-        } else {
+            this.fireVoid(game, centerX, s);
+        } else if (Math.random() > 0.7 && game.player?.active) {
             // Nemici normali - solo 30% mira al player, 70% dritto
-            if (Math.random() > 0.7 && game.player && game.player.active) {
-                const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
-                game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 100, 'enemy');
-            } else {
-                game.spawnBullet(centerX - 4 * s, bottomY, 0, 200, 'enemy');
+            const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
+            game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 100, 'enemy');
+        } else {
+            game.spawnBullet(centerX - 4 * s, bottomY, 0, 200, 'enemy');
+        }
+    }
+
+    fireVoid(game, centerX, s) {
+        const numBullets = 6;
+        const spiralOffset = this.voidPulseTime * 2;
+        for (let i = 0; i < numBullets; i++) {
+            const angle = spiralOffset + (i / numBullets) * Math.PI * 2;
+            game.spawnBullet(
+                centerX - 4 * s, this.position.y + this.height / 2,
+                Math.cos(angle) * 170,
+                Math.sin(angle) * 170 + 50,
+                'enemy'
+            );
+        }
+    }
+
+    fireFortress(centerX, s, game, bottomY) {
+        for (let i = 0; i < 4; i++) {
+            const tAngle = this.turretAngle + (i * Math.PI / 2);
+            const tx = centerX + Math.cos(tAngle) * 60 * s;
+            const ty = this.position.y + this.height / 2 + Math.sin(tAngle) * 40 * s;
+            game.spawnBullet(tx - 4 * s, ty, Math.cos(tAngle + Math.PI / 2) * 180, Math.sin(tAngle + Math.PI / 2) * 180 + 80, 'enemy');
+        }
+        // Center cannon aimed at player
+        if (game.player?.active) {
+            const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
+            game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 250, dir.y * 250, 'enemy');
+            // Double shot
+            game.spawnBullet(centerX - 20 * s, bottomY, dir.x * 230, dir.y * 230, 'enemy');
+            game.spawnBullet(centerX + 16 * s, bottomY, dir.x * 230, dir.y * 230, 'enemy');
+        }
+    }
+
+    fireHydra(s, centerX, game, bottomY) {
+        const headOffsets = [-40 * s, 0, 40 * s];
+        for (let i = 0; i < 3; i++) {
+            const hx = centerX + headOffsets[i];
+            if (this.enragePhase) {
+                // Enraged: rapid aimed shots from all heads
+                if (game.player?.active) {
+                    const dir = game.player.getCenter().subtract(new Vector2(hx, bottomY)).normalize();
+                    game.spawnBullet(hx - 4 * s, bottomY, dir.x * 280, dir.y * 280, 'enemy');
+                }
+            } else if (i === 1) {
+                // Center head: spread
+                for (let j = -1; j <= 1; j++) {
+                    game.spawnBullet(hx - 4 * s, bottomY, j * 50, 220, 'enemy');
+                }
+            } else if (game.player?.active) {
+                // Side heads: aimed
+                const dir = game.player.getCenter().subtract(new Vector2(hx, bottomY)).normalize();
+                game.spawnBullet(hx - 4 * s, bottomY, dir.x * 200, Math.abs(dir.y) * 200 + 80, 'enemy');
             }
         }
     }
 
+    fireBoss(game, centerX, s, bottomY) {
+        const patterns = ['spread', 'aimed', 'burst'];
+        const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        switch (pattern) {
+            case 'spread':
+                for (let i = -2; i <= 2; i++) {
+                    game.spawnBullet(centerX - 4 * s, bottomY, i * 60, 250, 'enemy');
+                }
+                break;
+            case 'aimed':
+                if (game.player?.active) {
+                    const dir = game.player.getCenter().subtract(this.getCenter()).normalize();
+                    game.spawnBullet(centerX - 4 * s, bottomY, dir.x * 300, dir.y * 300, 'enemy');
+                }
+                break;
+            case 'burst':
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    game.spawnBullet(
+                        centerX - 4 * s, bottomY,
+                        Math.cos(angle) * 200,
+                        Math.sin(angle) * 200,
+                        'enemy'
+                    );
+                }
+                break;
+        }
+    }
+
     takeDamage(amount, game) {
+        // Check for damage prevention conditions
+        if (this.shouldBlockDamage()) {
+            return false;
+        }
+
+        // Apply special damage modifiers
+        amount = this.applyDamageModifiers(amount);
+
+        this.health -= amount;
+        this.flashTime = 0.1;
+        
+        if (this.health <= 0) {
+            return this.handleDeath(game);
+        }
+        return false;
+    }
+
+    shouldBlockDamage() {
         // Phantom: can't be damaged while cloaked
         if (this.type === 'enemy4' && this.opacity < 0.3) {
-            return false;
+            return true;
         }
 
         // Sentinel: shield absorbs hits
@@ -532,62 +594,64 @@ class Enemy extends GameObject {
             if (this.shieldHits <= 0) {
                 this.shieldActive = false;
             }
-            return false;
+            return true;
         }
 
         // Fortress Boss: shield phase blocks all damage
         if (this.type === 'boss_fortress' && this.shieldPhaseActive) {
             this.flashTime = 0.05;
-            return false;
-        }
-
-        // Void Boss: reduced damage while teleporting
-        if (this.type === 'boss_void' && this.teleporting) {
-            amount *= 0.2;
-        }
-
-        this.health -= amount;
-        
-        // Flash bianco
-        this.flashTime = 0.1;
-        
-        if (this.health <= 0) {
-            this.destroy();
-            game.addScore(this.scoreValue);
-            
-            // Esplosione
-            const explosionSize = this.isBoss() ? 'large' : 'medium';
-            game.spawnExplosion(this.getCenter().x, this.getCenter().y, explosionSize);
-
-            // Boss death: dramatic staggered explosions
-            if (this.isBoss()) {
-                const cx = this.getCenter().x;
-                const cy = this.getCenter().y;
-                const hw = this.width * 0.4;
-                const hh = this.height * 0.4;
-                // Secondary medium explosions at offset positions
-                const offsets = [
-                    { dx: -hw, dy: -hh, delay: 100 },
-                    { dx:  hw, dy:  0,  delay: 220 },
-                    { dx: -hw * 0.5, dy: hh, delay: 350 },
-                    { dx:  hw * 0.7, dy: -hh * 0.8, delay: 480 },
-                ];
-                offsets.forEach(o => {
-                    setTimeout(() => {
-                        game.spawnExplosion(cx + o.dx, cy + o.dy, 'medium');
-                    }, o.delay);
-                });
-            }
-            
-            // Chance di drop power-up
-            if (Math.random() < this.getDropChance()) {
-                const powerUpType = this.getRandomPowerUpType(game.level);
-                game.spawnPowerUp(this.getCenter().x, this.getCenter().y, powerUpType);
-            }
-            
             return true;
         }
+
         return false;
+    }
+
+    applyDamageModifiers(amount) {
+        // Void Boss: reduced damage while teleporting
+        if (this.type === 'boss_void' && this.teleporting) {
+            return amount * 0.2;
+        }
+        return amount;
+    }
+
+    handleDeath(game) {
+        this.destroy();
+        game.addScore(this.scoreValue);
+        
+        // Explosion
+        const explosionSize = this.isBoss() ? 'large' : 'medium';
+        game.spawnExplosion(this.getCenter().x, this.getCenter().y, explosionSize);
+
+        // Boss death: dramatic staggered explosions
+        if (this.isBoss()) {
+            this.spawnBossDeathExplosions(game);
+        }
+        
+        // Chance to drop power-up
+        if (Math.random() < this.getDropChance()) {
+            const powerUpType = this.getRandomPowerUpType(game.level);
+            game.spawnPowerUp(this.getCenter().x, this.getCenter().y, powerUpType);
+        }
+        
+        return true;
+    }
+
+    spawnBossDeathExplosions(game) {
+        const cx = this.getCenter().x;
+        const cy = this.getCenter().y;
+        const hw = this.width * 0.4;
+        const hh = this.height * 0.4;
+        const offsets = [
+            { dx: -hw, dy: -hh, delay: 100 },
+            { dx:  hw, dy:  0,  delay: 220 },
+            { dx: -hw * 0.5, dy: hh, delay: 350 },
+            { dx:  hw * 0.7, dy: -hh * 0.8, delay: 480 },
+        ];
+        offsets.forEach(o => {
+            setTimeout(() => {
+                game.spawnExplosion(cx + o.dx, cy + o.dy, 'medium');
+            }, o.delay);
+        });
     }
     
     getRandomPowerUpType(level) {
@@ -618,13 +682,13 @@ class Enemy extends GameObject {
             case 'enemy1': return 0.15;
             case 'enemy2': return 0.25;
             case 'enemy3': return 0.4;
-            case 'enemy4': return 0.30;
+            case 'enemy4': return 0.3;
             case 'enemy5': return 0.45;
-            case 'enemy6': return 0.10;
-            case 'boss': return 1.0;
-            case 'boss_hydra': return 1.0;
-            case 'boss_fortress': return 1.0;
-            case 'boss_void': return 1.0;
+            case 'enemy6': return 0.1;
+            case 'boss': return 1;
+            case 'boss_hydra': return 1;
+            case 'boss_fortress': return 1;
+            case 'boss_void': return 1;
             default: return 0.15;
         }
     }
@@ -665,25 +729,7 @@ class Enemy extends GameObject {
         ctx.fill();
         
         // Flash effect when hit
-        if (this.flashTime > 0) {
-            ctx.globalCompositeOperation = 'lighter';
-            
-            // Additional hit flash glow
-            const hitGlow = ctx.createRadialGradient(
-                centerX, centerY, 0,
-                centerX, centerY, this.width * 0.7
-            );
-            hitGlow.addColorStop(0, `rgba(255, 255, 255, ${this.flashTime * 5})`);
-            hitGlow.addColorStop(0.5, `rgba(255, 200, 150, ${this.flashTime * 2})`);
-            hitGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
-            
-            ctx.fillStyle = hitGlow;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, this.width * 0.7, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.globalCompositeOperation = 'source-over';
-        }
+        this.renderHitFlash(ctx, centerX, centerY);
         
         // Phantom opacity
         if (this.type === 'enemy4') {
@@ -709,66 +755,13 @@ class Enemy extends GameObject {
         }
 
         // Sentinel shield ring
-        if (this.type === 'enemy5' && this.shieldActive) {
-            ctx.strokeStyle = `rgba(255, 200, 50, ${0.6 + Math.sin(this.pulseTime * 4) * 0.3})`;
-            ctx.lineWidth = 2.5;
-            ctx.setLineDash([8, 4]);
-            ctx.lineDashOffset = -this.shieldAngle * 10;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, this.width * 0.6, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            // Shield orbs
-            for (let i = 0; i < 3; i++) {
-                const orbAngle = this.shieldAngle + (i * Math.PI * 2 / 3);
-                const orbX = centerX + Math.cos(orbAngle) * this.width * 0.55;
-                const orbY = centerY + Math.sin(orbAngle) * this.width * 0.55;
-                ctx.fillStyle = `rgba(255, 220, 80, ${0.7 + Math.sin(this.pulseTime * 6 + i) * 0.3})`;
-                ctx.beginPath();
-                ctx.arc(orbX, orbY, 4, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.renderShield(ctx, centerX, centerY);
 
         // Fortress Boss: shield phase glow
-        if (this.type === 'boss_fortress' && this.shieldPhaseActive) {
-            const shieldGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, this.width * 0.7);
-            shieldGlow.addColorStop(0, 'rgba(255, 220, 80, 0)');
-            shieldGlow.addColorStop(0.7, 'rgba(255, 200, 50, 0.15)');
-            shieldGlow.addColorStop(1, 'rgba(255, 180, 30, 0.35)');
-            ctx.fillStyle = shieldGlow;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, this.width * 0.65, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = `rgba(255, 220, 100, ${0.5 + Math.sin(this.turretAngle * 3) * 0.3})`;
-            ctx.lineWidth = 2;
-            ctx.setLineDash([10, 5]);
-            ctx.lineDashOffset = -this.turretAngle * 20;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, this.width * 0.6, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-        }
+        this.drawFortressShield(ctx, centerX, centerY);
 
         // Hydra Boss: head glow indicators
-        if (this.type === 'boss_hydra') {
-            const s2 = this._scale || 1;
-            const headOffsets = [-40 * s2, 0, 40 * s2];
-            for (let i = 0; i < 3; i++) {
-                const hx = centerX + headOffsets[i];
-                const hy = this.position.y + this.height - 10 * s2;
-                const headGlow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 12 * s2);
-                const intensity = this.enragePhase ? 0.8 : 0.4;
-                headGlow.addColorStop(0, `rgba(100, 255, 80, ${intensity})`);
-                headGlow.addColorStop(1, 'rgba(100, 255, 80, 0)');
-                ctx.fillStyle = headGlow;
-                ctx.beginPath();
-                ctx.arc(hx, hy, 10, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.renderHydraHeadsGlow(centerX, ctx);
         
         if (this.flashTime > 0) {
             this.flashTime -= 0.016;
@@ -817,6 +810,93 @@ class Enemy extends GameObject {
         // Boss health bar
         if (this.isBoss()) {
             this.renderBossHealthBar(ctx);
+        }
+    }
+
+    renderHydraHeadsGlow(centerX, ctx) {
+        if (this.type === 'boss_hydra') {
+            const s2 = this._scale || 1;
+            const headOffsets = [-40 * s2, 0, 40 * s2];
+            for (let i = 0; i < 3; i++) {
+                const hx = centerX + headOffsets[i];
+                const hy = this.position.y + this.height - 10 * s2;
+                const headGlow = ctx.createRadialGradient(hx, hy, 0, hx, hy, 12 * s2);
+                const intensity = this.enragePhase ? 0.8 : 0.4;
+                headGlow.addColorStop(0, `rgba(100, 255, 80, ${intensity})`);
+                headGlow.addColorStop(1, 'rgba(100, 255, 80, 0)');
+                ctx.fillStyle = headGlow;
+                ctx.beginPath();
+                ctx.arc(hx, hy, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    drawFortressShield(ctx, centerX, centerY) {
+        if (this.type === 'boss_fortress' && this.shieldPhaseActive) {
+            const shieldGlow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, this.width * 0.7);
+            shieldGlow.addColorStop(0, 'rgba(255, 220, 80, 0)');
+            shieldGlow.addColorStop(0.7, 'rgba(255, 200, 50, 0.15)');
+            shieldGlow.addColorStop(1, 'rgba(255, 180, 30, 0.35)');
+            ctx.fillStyle = shieldGlow;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, this.width * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = `rgba(255, 220, 100, ${0.5 + Math.sin(this.turretAngle * 3) * 0.3})`;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 5]);
+            ctx.lineDashOffset = -this.turretAngle * 20;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, this.width * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+    }
+
+    renderShield(ctx, centerX, centerY) {
+        if (this.type === 'enemy5' && this.shieldActive) {
+            ctx.strokeStyle = `rgba(255, 200, 50, ${0.6 + Math.sin(this.pulseTime * 4) * 0.3})`;
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([8, 4]);
+            ctx.lineDashOffset = -this.shieldAngle * 10;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, this.width * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Shield orbs
+            for (let i = 0; i < 3; i++) {
+                const orbAngle = this.shieldAngle + (i * Math.PI * 2 / 3);
+                const orbX = centerX + Math.cos(orbAngle) * this.width * 0.55;
+                const orbY = centerY + Math.sin(orbAngle) * this.width * 0.55;
+                ctx.fillStyle = `rgba(255, 220, 80, ${0.7 + Math.sin(this.pulseTime * 6 + i) * 0.3})`;
+                ctx.beginPath();
+                ctx.arc(orbX, orbY, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    renderHitFlash(ctx, centerX, centerY) {
+        if (this.flashTime > 0) {
+            ctx.globalCompositeOperation = 'lighter';
+
+            // Additional hit flash glow
+            const hitGlow = ctx.createRadialGradient(
+                centerX, centerY, 0,
+                centerX, centerY, this.width * 0.7
+            );
+            hitGlow.addColorStop(0, `rgba(255, 255, 255, ${this.flashTime * 5})`);
+            hitGlow.addColorStop(0.5, `rgba(255, 200, 150, ${this.flashTime * 2})`);
+            hitGlow.addColorStop(1, 'rgba(255, 100, 50, 0)');
+
+            ctx.fillStyle = hitGlow;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, this.width * 0.7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalCompositeOperation = 'source-over';
         }
     }
 

@@ -200,13 +200,16 @@ export function renderW4EnemyCard(ctx, enemy, x, y, alpha, _scale, itemT, game, 
     ctx.globalAlpha = alpha;
     const sz = 90;
     const t = itemT;
-    drawW4Sprite(ctx, enemy.type, x, y, sz, sz, t, {
-        flavorIdx: 0,
-        fieldRadius: sz * 0.8,
-        annihilateTimer: 0,
-        reformTimer: 0,
-        isEndpoint: true,
-        forceBoosted: false,
+    drawW4Sprite(ctx, {
+        type: enemy.type, cx: x, cy: y, w: sz, h: sz, t,
+        state: {
+            flavorIdx: 0,
+            fieldRadius: sz * 0.8,
+            annihilateTimer: 0,
+            reformTimer: 0,
+            isEndpoint: true,
+            forceBoosted: false,
+        },
     });
 
     // ── Name ──

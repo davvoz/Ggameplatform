@@ -93,8 +93,8 @@ export class HUD {
         const bx = w - 22;
         const by = h * 0.56;
 
-        const color = playerScore > 7.5 ? '#ff3b30' :
-                      playerScore === 7.5 ? '#f0d050' : '#39ff14';
+        const greenJellow = playerScore === 7.5 ? '#f0d050' : '#39ff14';
+        const color = playerScore > 7.5 ? '#ff3b30' : greenJellow;
 
         ctx.save();
 
@@ -132,9 +132,8 @@ export class HUD {
         const by = 50;
 
         const label = dealerRevealed ? String(dealerScore) : '?';
-        const color = dealerRevealed
-            ? (dealerScore > 7.5 ? '#ff3b30' : '#c0c0c0')
-            : '#666';
+        const redGray = (dealerScore > 7.5 ? '#ff3b30' : '#c0c0c0')
+        const color = dealerRevealed ? redGray : '#666';
 
         // Pixel box
         ctx.fillStyle = 'rgba(0,0,0,0.5)';

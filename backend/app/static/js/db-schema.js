@@ -40,6 +40,17 @@ const FIELD_TYPES = {
 
 // ============ RENDER HELPERS ============
 // Reusable render functions for common patterns
+// Helper function to get medal emoji
+const getMedalEmoji = (rank) => {
+    const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
+    return medals[rank] || '🏅';
+};
+
+// Helper function to get medal with rank text
+const getMedalWithRank = (rank) => {
+    return `${getMedalEmoji(rank)} <strong>${rank}°</strong>`;
+};
+
 const RENDERERS = {
     badge: (color) => (value) => ({
         type: 'badge',
@@ -54,10 +65,15 @@ const RENDERERS = {
             : `<span style="color: ${falseColor}; font-weight: 600;">${falseText}</span>`
     }),
     
-    truncateId: (length = 16) => (value) => ({
-        type: 'html',
-        content: value ? `<code style="font-size: 0.85em;">${value.substring(0, length)}${value.length > length ? '...' : ''}</code>` : '-'
-    }),
+    truncateId: (length = 16) => (value) => {
+        const truncated = value ? value.substring(0, length) : '';
+        const ellipsis = value && value.length > length ? '...' : '';
+        const content = value ? `<code style="font-size: 0.85em;">${truncated}${ellipsis}</code>` : '-';
+        return {
+            type: 'html',
+            content: content
+        };
+    },
     
     coins: (value) => ({
         type: 'html',
@@ -75,8 +91,7 @@ const RENDERERS = {
     }),
     
     rank: (value) => {
-        const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
-        const medal = medals[value] || '🏅';
+        const medal = getMedalEmoji(value);
         return {
             type: 'html',
             content: `${medal} <strong>${value}°</strong>`
@@ -256,11 +271,11 @@ const DB_SCHEMA = {
             password_hash: { ...FIELD_TYPES.STRING, label: 'Password Hash', hidden: true },
             steem_username: { ...FIELD_TYPES.STRING, label: 'Steem Username' },
             is_anonymous: { ...FIELD_TYPES.BOOLEAN, label: 'Anonimo' },
-            cur8_multiplier: { ...FIELD_TYPES.FLOAT, label: 'CUR8 Multiplier', default: 1.0 },
+            cur8_multiplier: { ...FIELD_TYPES.FLOAT, label: 'CUR8 Multiplier', default: 1 },
             votes_cur8_witness: { ...FIELD_TYPES.BOOLEAN, label: 'Vota CUR8 Witness' },
-            delegation_amount: { ...FIELD_TYPES.FLOAT, label: 'Delegation (STEEM)', default: 0.0 },
+            delegation_amount: { ...FIELD_TYPES.FLOAT, label: 'Delegation (STEEM)', default: 0 },
             last_multiplier_check: { ...FIELD_TYPES.DATETIME, label: 'Ultimo Check Multiplier', readonly: true },
-            total_xp_earned: { ...FIELD_TYPES.FLOAT, label: 'XP Totale', default: 0.0 },
+            total_xp_earned: { ...FIELD_TYPES.FLOAT, label: 'XP Totale', default: 0 },
             game_scores: { ...FIELD_TYPES.JSON, label: 'Game Scores' },
             avatar: { ...FIELD_TYPES.STRING, label: 'Avatar' },
             login_streak: { ...FIELD_TYPES.INTEGER, label: 'Login Streak', default: 0 },
@@ -710,7 +725,7 @@ const DB_SCHEMA = {
         
         columnConfig: {
             rank_start: { type: 'custom', render: (v, row) => {
-                const medal = v === 1 ? '🥇' : v === 2 ? '🥈' : v === 3 ? '🥉' : '🏅';
+                const medal = getMedalEmoji(v);
                 const range = row?.rank_end && row.rank_end !== v ? ` - ${row.rank_end}` : '';
                 return { type: 'html', content: `${medal} <strong>${v}${range}</strong>` };
             }},
@@ -1032,7 +1047,7 @@ const DB_SCHEMA = {
             }, searchable: true },
             is_edited:    { type: 'custom', render: RENDERERS.booleanStatus('✏️ Sì', '—') },
             timestamp_ms: { type: 'custom', render: (value) => {
-                if (!value) return '—';
+                if (!value) return { type: 'html', content: '—' };
                 return { type: 'html', content: `<span title="${value}">${new Date(value).toLocaleString('it-IT')}</span>` };
             }},
             created_at:   { type: 'date' }
@@ -1168,7 +1183,7 @@ const DB_SCHEMA = {
                 content: value ? '<span style="color: #22c55e; font-weight: 600;">✅ Sì</span>' : '<span style="color: #ef4444; font-weight: 600;">❌ No</span>'
             })},
             timestamp_ms: { type: 'custom', render: (value) => {
-                if (!value) return '—';
+                if (!value) return { type: 'html', content: '—' };
                 return { type: 'html', content: `<span title="${value}">${new Date(value).toLocaleString('it-IT')}</span>` };
             }},
             created_at:   { type: 'date' }
@@ -1324,9 +1339,9 @@ class SchemaManager {
 }
 
 // Export for use in other modules
-if (typeof window !== 'undefined') {
-    window.DB_SCHEMA = DB_SCHEMA;
-    window.FIELD_TYPES = FIELD_TYPES;
-    window.RENDERERS = RENDERERS;
-    window.SchemaManager = SchemaManager;
+if (typeof globalThis !== 'undefined') {
+    globalThis.DB_SCHEMA = DB_SCHEMA;
+    globalThis.FIELD_TYPES = FIELD_TYPES;
+    globalThis.RENDERERS = RENDERERS;
+    globalThis.SchemaManager = SchemaManager;
 }

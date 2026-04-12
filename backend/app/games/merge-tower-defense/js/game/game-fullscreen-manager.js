@@ -20,7 +20,7 @@ export class FullscreenManager {
         }
 
         const isIOS    = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
-        const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+        const isIPadOS = (navigator.userAgentData?.platform === 'macOS' || navigator.userAgentData?.platform === 'iPad') && navigator.maxTouchPoints > 1;
         const fsSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
 
         if ((isIOS || isIPadOS) && !fsSupported) {

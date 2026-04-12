@@ -8,12 +8,20 @@ export class State {
         this._game = game;
     }
 
-    enter() {}
-    exit() {}
+    enter() {
+        throw new Error('State subclasses must implement enter()');
+    }
+    exit() {
+        throw new Error('State subclasses must implement exit()');
+    }
 
     /** @param {number} dt - delta time in ms */
-    update(dt) {}
+    update(dt) {
+        throw new Error('State subclasses must implement update()');
+    }
 
     /** @param {CanvasRenderingContext2D} ctx */
-    draw(ctx) {}
+    draw(ctx) {
+        throw new Error('State subclasses must implement draw()');
+    }
 }

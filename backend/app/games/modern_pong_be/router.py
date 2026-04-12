@@ -136,10 +136,7 @@ class GameRoom:
             self.simulation.stop()
         if self._sim_task and not self._sim_task.done():
             self._sim_task.cancel()
-            try:
-                await self._sim_task
-            except asyncio.CancelledError:
-                raise
+            await self._sim_task
 
     async def _on_simulation_event(self, event_type: str, data: dict):
         """Relay simulation events to **both** connected clients.
@@ -210,6 +207,137 @@ room_manager = RoomManager()
 
 
 # =============================================================================
+# Message Handlers
+# =============================================================================
+
+async def _handle_create_room(websocket: WebSocket, player_id: str, data: dict) -> GameRoom:
+    username = str(data.get("username", "Player"))[:32]
+    bet = max(0, int(data.get("betAmount", 0)))
+    rounds = min(7, max(1, int(data.get("roundsToWin", 3))))
+    stage_id = str(data.get("stageId", "default"))[:32]
+    obstacles = _sanitize_obstacles(data.get("stageObstacles"))
+
+    room = room_manager.create_room(
+        player_id, username, bet, rounds, stage_id, obstacles,
+    )
+    room.connections[player_id] = websocket
+
+    await websocket.send_json({
+        "type": "roomCreated",
+        "roomCode": room.room_code,
+        "playerId": player_id,
+    })
+    return room
+
+
+async def _handle_join_room(
+    websocket: WebSocket, player_id: str, current_room: Optional[GameRoom], data: dict,
+) -> Optional[GameRoom]:
+    room_code = str(data.get("roomCode", "")).upper()[:4]
+    username = str(data.get("username", "Player"))[:32]
+
+    room = room_manager.get_room(room_code)
+
+    if not room:
+        await websocket.send_json({
+            "type": "error",
+            "code": "ROOM_NOT_FOUND",
+            "message": "Room not found",
+        })
+        return current_room
+
+    if room.is_full:
+        await websocket.send_json({
+            "type": "error",
+            "code": "ROOM_FULL",
+            "message": "Room is full",
+        })
+        return current_room
+
+    room.add_guest(player_id, username)
+    room.connections[player_id] = websocket
+
+    await room.send_to(room.host_id, {
+        "type": "playerJoined",
+        "username": username,
+    })
+
+    await websocket.send_json({
+        "type": "joinedRoom",
+        "roomCode": room.room_code,
+        "playerId": player_id,
+        "opponentName": room.host_name,
+        "betAmount": room.bet_amount,
+        "roundsToWin": room.rounds_to_win,
+        "stageId": room.stage_id,
+    })
+    return room
+
+
+async def _handle_char_selected(player_id: str, current_room: Optional[GameRoom], data: dict):
+    if not current_room:
+        return
+    char_id = str(data.get("characterId", "blaze"))[:16]
+
+    if player_id == current_room.host_id:
+        current_room.host_char = char_id
+    else:
+        current_room.guest_char = char_id
+
+    await current_room.broadcast({
+        "type": "opponentReady",
+    }, exclude=player_id)
+
+    if current_room.host_char and current_room.guest_char:
+        await current_room.send_to(current_room.host_id, {
+            "type": "bothReady",
+            "opponentCharId": current_room.guest_char,
+        })
+        await current_room.send_to(current_room.guest_id, {
+            "type": "bothReady",
+            "opponentCharId": current_room.host_char,
+        })
+        current_room.start_game()
+
+
+async def _handle_rematch(player_id: str, current_room: Optional[GameRoom]):
+    if not current_room:
+        return
+    current_room.rematch_requests.add(player_id)
+    if len(current_room.rematch_requests) >= 2:
+        await current_room.stop_game()
+        current_room.reset_for_rematch()
+        await current_room.broadcast({"type": "rematchAccepted"})
+    else:
+        await current_room.broadcast({
+            "type": "rematchRequested",
+            "playerId": player_id,
+        }, exclude=player_id)
+
+
+async def _handle_leave(player_id: str, current_room: GameRoom):
+    await current_room.stop_game()
+    await current_room.broadcast({
+        "type": "opponentLeft",
+    }, exclude=player_id)
+    current_room.connections.pop(player_id, None)
+    if not current_room.connections:
+        room_manager.remove_room(current_room.room_code)
+
+
+async def _cleanup_player(player_id: str, current_room: Optional[GameRoom]):
+    if not current_room:
+        return
+    await current_room.stop_game()
+    current_room.connections.pop(player_id, None)
+    await current_room.broadcast({
+        "type": "opponentLeft",
+    }, exclude=player_id)
+    if not current_room.connections:
+        room_manager.remove_room(current_room.room_code)
+
+
+# =============================================================================
 # WebSocket Endpoint
 # =============================================================================
 
@@ -225,166 +353,31 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_json()
             msg_type = data.get("type")
 
-            # ----------------------------------------------------------
-            # Create room
-            # ----------------------------------------------------------
             if msg_type == "createRoom":
-                username = str(data.get("username", "Player"))[:32]
-                bet = max(0, int(data.get("betAmount", 0)))
-                rounds = min(7, max(1, int(data.get("roundsToWin", 3))))
-                stage_id = str(data.get("stageId", "default"))[:32]
-                obstacles = _sanitize_obstacles(data.get("stageObstacles"))
-
-                room = room_manager.create_room(
-                    player_id, username, bet, rounds, stage_id, obstacles,
-                )
-                room.connections[player_id] = websocket
-                current_room = room
-
-                await websocket.send_json({
-                    "type": "roomCreated",
-                    "roomCode": room.room_code,
-                    "playerId": player_id,
-                })
-
-            # ----------------------------------------------------------
-            # Join room
-            # ----------------------------------------------------------
+                current_room = await _handle_create_room(websocket, player_id, data)
             elif msg_type == "joinRoom":
-                room_code = str(data.get("roomCode", "")).upper()[:4]
-                username = str(data.get("username", "Player"))[:32]
-
-                room = room_manager.get_room(room_code)
-
-                if not room:
-                    await websocket.send_json({
-                        "type": "error",
-                        "code": "ROOM_NOT_FOUND",
-                        "message": "Room not found",
-                    })
-                    continue
-
-                if room.is_full:
-                    await websocket.send_json({
-                        "type": "error",
-                        "code": "ROOM_FULL",
-                        "message": "Room is full",
-                    })
-                    continue
-
-                room.add_guest(player_id, username)
-                room.connections[player_id] = websocket
-                current_room = room
-
-                await room.send_to(room.host_id, {
-                    "type": "playerJoined",
-                    "username": username,
-                })
-
-                await websocket.send_json({
-                    "type": "joinedRoom",
-                    "roomCode": room.room_code,
-                    "playerId": player_id,
-                    "opponentName": room.host_name,
-                    "betAmount": room.bet_amount,
-                    "roundsToWin": room.rounds_to_win,
-                    "stageId": room.stage_id,
-                })
-
-            # ----------------------------------------------------------
-            # Character selected (from multiCharSelect screen)
-            # ----------------------------------------------------------
+                current_room = await _handle_join_room(websocket, player_id, current_room, data)
             elif msg_type == "charSelected":
-                if current_room:
-                    char_id = str(data.get("characterId", "blaze"))[:16]
-
-                    if player_id == current_room.host_id:
-                        current_room.host_char = char_id
-                    else:
-                        current_room.guest_char = char_id
-
-                    await current_room.broadcast({
-                        "type": "opponentReady",
-                    }, exclude=player_id)
-
-                    # Both selected — send bothReady, then start simulation
-                    if current_room.host_char and current_room.guest_char:
-                        await current_room.send_to(current_room.host_id, {
-                            "type": "bothReady",
-                            "opponentCharId": current_room.guest_char,
-                        })
-                        await current_room.send_to(current_room.guest_id, {
-                            "type": "bothReady",
-                            "opponentCharId": current_room.host_char,
-                        })
-                        current_room.start_game()
-
-            # ----------------------------------------------------------
-            # Ping / pong — RTT measurement
-            # ----------------------------------------------------------
+                await _handle_char_selected(player_id, current_room, data)
             elif msg_type == "ping":
-                await websocket.send_json({
-                    "type": "pong",
-                    "t": data.get("t", 0),
-                })
-
-            # ----------------------------------------------------------
-            # Player input → forwarded to simulation
-            # ----------------------------------------------------------
-            elif msg_type == "input":
-                if current_room and current_room.simulation:
-                    role = current_room.get_role(player_id)
-                    current_room.simulation.apply_input(
-                        role,
-                        data.get("dx", 0),
-                        data.get("dy", 0),
-                    )
-
-            # ----------------------------------------------------------
-            # Rematch request
-            # ----------------------------------------------------------
+                await websocket.send_json({"type": "pong", "t": data.get("t", 0)})
+            elif msg_type == "input" and current_room and current_room.simulation:
+                role = current_room.get_role(player_id)
+                current_room.simulation.apply_input(
+                    role, data.get("dx", 0), data.get("dy", 0),
+                )
             elif msg_type == "rematch":
-                if current_room:
-                    current_room.rematch_requests.add(player_id)
-                    if len(current_room.rematch_requests) >= 2:
-                        await current_room.stop_game()
-                        current_room.reset_for_rematch()
-                        await current_room.broadcast({
-                            "type": "rematchAccepted",
-                        })
-                    else:
-                        await current_room.broadcast({
-                            "type": "rematchRequested",
-                            "playerId": player_id,
-                        }, exclude=player_id)
-
-            # ----------------------------------------------------------
-            # Leave room
-            # ----------------------------------------------------------
-            elif msg_type == "leave":
-                if current_room:
-                    await current_room.stop_game()
-                    await current_room.broadcast({
-                        "type": "opponentLeft",
-                    }, exclude=player_id)
-                    current_room.connections.pop(player_id, None)
-                    if not current_room.connections:
-                        room_manager.remove_room(current_room.room_code)
-                    current_room = None
+                await _handle_rematch(player_id, current_room)
+            elif msg_type == "leave" and current_room:
+                await _handle_leave(player_id, current_room)
+                current_room = None
 
     except WebSocketDisconnect:
         pass
     except Exception:
         logger.exception("WS error for player %s", player_id)
     finally:
-        if current_room:
-            await current_room.stop_game()
-            current_room.connections.pop(player_id, None)
-            await current_room.broadcast({
-                "type": "opponentLeft",
-            }, exclude=player_id)
-            if not current_room.connections:
-                room_manager.remove_room(current_room.room_code)
+        await _cleanup_player(player_id, current_room)
 
 
 # =============================================================================

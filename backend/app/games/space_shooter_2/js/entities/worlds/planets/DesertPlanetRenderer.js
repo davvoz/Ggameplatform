@@ -24,37 +24,53 @@ export class DesertPlanetRenderer extends PlanetRenderer {
         if (oasisCount > 0) {
             const totalH = H * 3;
             const spacing = totalH / oasisCount;
-            for (let i = 0; i < oasisCount; i++) {
-                this._oasisPools.push({
-                    x: 40 + Math.random() * (W - 80),
-                    y: i * spacing + Math.random() * spacing * 0.6,
-                    rx: 18 + Math.random() * 22,
-                    ry: 10 + Math.random() * 14,
-                    rot: Math.random() * 0.5 - 0.25,
-                    alpha: 0.5 + Math.random() * 0.3,
-                    waterHue: 185 + Math.random() * 20,
-                    waterSat: 50 + Math.random() * 20,
-                    waterLight: 32 + Math.random() * 12,
-                    vegHue: 110 + Math.random() * 30,
-                    vegSat: 45 + Math.random() * 20,
-                    vegLight: 28 + Math.random() * 10,
-                    totalH: totalH
-                });
-            }
+            this.createOasisPools(oasisCount, W, spacing, totalH);
             this._oasisPoolSpeed = 22;
         }
 
         // Edge sand formations — wavy dune ridges
+        this.generateEdgeDunes(dcfg, H, W);
+
+        // Sandstorm particles
+        this.generateSandstormParticles(dcfg, W, H);
+
+        this._vigRGB = dcfg ? dcfg.vigCol : '45,30,10';
+    }
+
+    generateSandstormParticles(dcfg, W, H) {
+        this._sandstormParticles = [];
+        if (dcfg?.sandstorm) {
+            const count = dcfg.sandstormCount || 30;
+            for (let i = 0; i < count; i++) {
+                this._sandstormParticles.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    size: 0.4 + Math.random() * 2,
+                    speed: 15 + Math.random() * 25,
+                    drift: 8 + Math.random() * 15,
+                    driftPhase: Math.random() * Math.PI * 2,
+                    alpha: 0.15 + Math.random() * 0.35,
+                    hue: 35 + Math.random() * 15
+                });
+            }
+        }
+    }
+
+    generateEdgeDunes(dcfg, H, W) {
         this._edgeDunes = [];
         const edgeN = dcfg ? dcfg.edgeN : 12;
         const edgeReach = dcfg ? dcfg.edgeReach : [25, 48];
         const edgeHue = dcfg ? dcfg.edgeHue : [30, 45];
         const edgeLit = dcfg ? dcfg.edgeLit : [28, 42];
         const edgeSat = dcfg ? dcfg.edgeSat : [45, 65];
+        this.generateDuneEdge(edgeN, H, W, edgeReach, edgeHue, edgeSat, edgeLit);
+    }
+
+    generateDuneEdge(edgeN, H, W, edgeReach, edgeHue, edgeSat, edgeLit) {
         for (let i = 0; i < edgeN; i++) {
-            const side = Math.random() < 0.6
-                ? (Math.random() < 0.5 ? 'left' : 'right')
-                : (Math.random() < 0.5 ? 'top' : 'bottom');
+            const a = (Math.random() < 0.5 ? 'left' : 'right');
+            const b = (Math.random() < 0.5 ? 'top' : 'bottom');
+            const side = Math.random() < 0.6 ? a : b;
             let x, y;
             switch (side) {
                 case 'left': x = 0; y = Math.random() * H; break;
@@ -79,39 +95,38 @@ export class DesertPlanetRenderer extends PlanetRenderer {
                 hasHighlight: Math.random() < 0.5
             });
         }
+    }
 
-        // Sandstorm particles
-        this._sandstormParticles = [];
-        if (dcfg && dcfg.sandstorm) {
-            const count = dcfg.sandstormCount || 30;
-            for (let i = 0; i < count; i++) {
-                this._sandstormParticles.push({
-                    x: Math.random() * W,
-                    y: Math.random() * H,
-                    size: 0.4 + Math.random() * 2.0,
-                    speed: 15 + Math.random() * 25,
-                    drift: 8 + Math.random() * 15,
-                    driftPhase: Math.random() * Math.PI * 2,
-                    alpha: 0.15 + Math.random() * 0.35,
-                    hue: 35 + Math.random() * 15
-                });
-            }
+    createOasisPools(oasisCount, W, spacing, totalH) {
+        for (let i = 0; i < oasisCount; i++) {
+            this._oasisPools.push({
+                x: 40 + Math.random() * (W - 80),
+                y: i * spacing + Math.random() * spacing * 0.6,
+                rx: 18 + Math.random() * 22,
+                ry: 10 + Math.random() * 14,
+                rot: Math.random() * 0.5 - 0.25,
+                alpha: 0.5 + Math.random() * 0.3,
+                waterHue: 185 + Math.random() * 20,
+                waterSat: 50 + Math.random() * 20,
+                waterLight: 32 + Math.random() * 12,
+                vegHue: 110 + Math.random() * 30,
+                vegSat: 45 + Math.random() * 20,
+                vegLight: 28 + Math.random() * 10,
+                totalH: totalH
+            });
         }
-
-        this._vigRGB = dcfg ? dcfg.vigCol : '45,30,10';
     }
 
     // ── update ────────────────────────────────────
 
     update(dt) {
         // Scroll oasis pools
-        if (this._oasisPools && this._oasisPools.length > 0) {
-            this._oasisPoolScrollY += this._oasisPoolSpeed * dt;
-            if (this._oasisPools[0] && this._oasisPoolScrollY >= this._oasisPools[0].totalH) {
-                this._oasisPoolScrollY -= this._oasisPools[0].totalH;
-            }
-        }
+        this.scrollOasisPools(dt);
         // Update sandstorm particles
+        this.updateSandstormParticles(dt);
+    }
+
+    updateSandstormParticles(dt) {
         if (this._sandstormParticles && this._sandstormParticles.length > 0) {
             const W = this.canvasWidth, H = this.canvasHeight;
             const now = performance.now() * 0.001;
@@ -121,6 +136,15 @@ export class DesertPlanetRenderer extends PlanetRenderer {
                 if (sp.y > H + 5) { sp.y = -5; sp.x = Math.random() * W; }
                 if (sp.x < -10) sp.x = W + 5;
                 if (sp.x > W + 10) sp.x = -5;
+            }
+        }
+    }
+
+    scrollOasisPools(dt) {
+        if (this._oasisPools && this._oasisPools.length > 0) {
+            this._oasisPoolScrollY += this._oasisPoolSpeed * dt;
+            if (this._oasisPools[0] && this._oasisPoolScrollY >= this._oasisPools[0].totalH) {
+                this._oasisPoolScrollY -= this._oasisPools[0].totalH;
             }
         }
     }
@@ -140,83 +164,95 @@ export class DesertPlanetRenderer extends PlanetRenderer {
 
         // Edge sand dune formations — wavy bezier profiles
         if (this._edgeDunes) {
-            for (const ed of this._edgeDunes) {
-                ctx.save();
-
-                if (ed.side === 'left' || ed.side === 'right') {
-                    const dir = ed.side === 'left' ? 1 : -1;
-                    const baseX = ed.side === 'left' ? 0 : W;
-                    const halfH = ed.height * 0.5;
-                    const n = ed.waves.length;
-
-                    // Shadow
-                    ctx.globalAlpha = ed.alpha * 0.25;
-                    ctx.fillStyle = 'rgba(15,8,2,0.5)';
-                    ctx.beginPath();
-                    ctx.moveTo(baseX, ed.y - halfH);
-                    for (let i = 0; i < n; i++) {
-                        const t1 = (i + 0.5) / n, t2 = (i + 1) / n;
-                        const y1 = ed.y - halfH + t1 * ed.height;
-                        const y2 = ed.y - halfH + t2 * ed.height;
-                        const r1 = ed.reach * ed.waves[i].amp * dir + 3 * dir;
-                        ctx.quadraticCurveTo(baseX + r1, y1, baseX + (i % 2 === 0 ? ed.reach * 0.3 : 0) * dir + 3 * dir, y2);
-                    }
-                    ctx.lineTo(baseX, ed.y + halfH);
-                    ctx.closePath(); ctx.fill();
-
-                    // Main body
-                    ctx.globalAlpha = ed.alpha;
-                    ctx.fillStyle = `hsl(${ed.hue},${ed.sat}%,${ed.lightness}%)`;
-                    ctx.beginPath();
-                    ctx.moveTo(baseX, ed.y - halfH);
-                    for (let i = 0; i < n; i++) {
-                        const t1 = (i + 0.5) / n, t2 = (i + 1) / n;
-                        const y1 = ed.y - halfH + t1 * ed.height;
-                        const y2 = ed.y - halfH + t2 * ed.height;
-                        const r1 = ed.reach * ed.waves[i].amp * dir;
-                        ctx.quadraticCurveTo(baseX + r1, y1, baseX + (i % 2 === 0 ? ed.reach * 0.3 : 0) * dir, y2);
-                    }
-                    ctx.lineTo(baseX, ed.y + halfH);
-                    ctx.closePath(); ctx.fill();
-
-                    // Ridge highlight
-                    if (ed.hasHighlight) {
-                        ctx.globalAlpha = ed.alpha * 0.4;
-                        ctx.fillStyle = `hsl(${ed.hue},${ed.sat - 5}%,${Math.min(65, ed.lightness + 12)}%)`;
-                        ctx.beginPath();
-                        ctx.ellipse(baseX + ed.reach * 0.2 * dir, ed.y, ed.reach * 0.2, ed.height * 0.15, 0, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                } else {
-                    // Top/bottom edges
-                    const dir = ed.side === 'top' ? 1 : -1;
-                    const baseY = ed.side === 'top' ? 0 : H;
-                    const halfW = ed.height * 0.5;
-                    const n = ed.waves.length;
-
-                    ctx.globalAlpha = ed.alpha;
-                    ctx.fillStyle = `hsl(${ed.hue},${ed.sat}%,${ed.lightness}%)`;
-                    ctx.beginPath();
-                    ctx.moveTo(ed.x - halfW, baseY);
-                    for (let i = 0; i < n; i++) {
-                        const t1 = (i + 0.5) / n, t2 = (i + 1) / n;
-                        const x1 = ed.x - halfW + t1 * ed.height;
-                        const x2 = ed.x - halfW + t2 * ed.height;
-                        const r1 = ed.reach * ed.waves[i].amp * dir;
-                        ctx.quadraticCurveTo(x1, baseY + r1, x2, baseY + (i % 2 === 0 ? ed.reach * 0.3 : 0) * dir);
-                    }
-                    ctx.lineTo(ed.x + halfW, baseY);
-                    ctx.closePath(); ctx.fill();
-                }
-
-                ctx.restore();
-            }
+            this.renderEdgeDunes(ctx, W, H);
         }
 
         // Sandstorm
         this._renderSandstorm(ctx);
 
         ctx.restore();
+    }
+
+    renderEdgeDunes(ctx, W, H) {
+        for (const ed of this._edgeDunes) {
+            ctx.save();
+
+            if (ed.side === 'left' || ed.side === 'right') {
+                this.renderShadowAndBody(ed, W, ctx);
+            } else {
+                // Top/bottom edges
+                this.renderDuneWaves(ed, H, ctx);
+            }
+
+            ctx.restore();
+        }
+    }
+
+    renderDuneWaves(ed, H, ctx) {
+        const dir = ed.side === 'top' ? 1 : -1;
+        const baseY = ed.side === 'top' ? 0 : H;
+        const halfW = ed.height * 0.5;
+        const n = ed.waves.length;
+
+        ctx.globalAlpha = ed.alpha;
+        ctx.fillStyle = `hsl(${ed.hue},${ed.sat}%,${ed.lightness}%)`;
+        ctx.beginPath();
+        ctx.moveTo(ed.x - halfW, baseY);
+        for (let i = 0; i < n; i++) {
+            const t1 = (i + 0.5) / n, t2 = (i + 1) / n;
+            const x1 = ed.x - halfW + t1 * ed.height;
+            const x2 = ed.x - halfW + t2 * ed.height;
+            const r1 = ed.reach * ed.waves[i].amp * dir;
+            ctx.quadraticCurveTo(x1, baseY + r1, x2, baseY + (i % 2 === 0 ? ed.reach * 0.3 : 0) * dir);
+        }
+        ctx.lineTo(ed.x + halfW, baseY);
+        ctx.closePath(); ctx.fill();
+    }
+
+    renderShadowAndBody(ed, W, ctx) {
+        const dir = ed.side === 'left' ? 1 : -1;
+        const baseX = ed.side === 'left' ? 0 : W;
+        const halfH = ed.height * 0.5;
+        const n = ed.waves.length;
+
+        // Shadow
+        ctx.globalAlpha = ed.alpha * 0.25;
+        ctx.fillStyle = 'rgba(15,8,2,0.5)';
+        ctx.beginPath();
+        ctx.moveTo(baseX, ed.y - halfH);
+        for (let i = 0; i < n; i++) {
+            const t1 = (i + 0.5) / n, t2 = (i + 1) / n;
+            const y1 = ed.y - halfH + t1 * ed.height;
+            const y2 = ed.y - halfH + t2 * ed.height;
+            const r1 = ed.reach * ed.waves[i].amp * dir + 3 * dir;
+            ctx.quadraticCurveTo(baseX + r1, y1, baseX + (i % 2 === 0 ? ed.reach * 0.3 : 0) * dir + 3 * dir, y2);
+        }
+        ctx.lineTo(baseX, ed.y + halfH);
+        ctx.closePath(); ctx.fill();
+
+        // Main body
+        ctx.globalAlpha = ed.alpha;
+        ctx.fillStyle = `hsl(${ed.hue},${ed.sat}%,${ed.lightness}%)`;
+        ctx.beginPath();
+        ctx.moveTo(baseX, ed.y - halfH);
+        for (let i = 0; i < n; i++) {
+            const t1 = (i + 0.5) / n, t2 = (i + 1) / n;
+            const y1 = ed.y - halfH + t1 * ed.height;
+            const y2 = ed.y - halfH + t2 * ed.height;
+            const r1 = ed.reach * ed.waves[i].amp * dir;
+            ctx.quadraticCurveTo(baseX + r1, y1, baseX + (i % 2 === 0 ? ed.reach * 0.3 : 0) * dir, y2);
+        }
+        ctx.lineTo(baseX, ed.y + halfH);
+        ctx.closePath(); ctx.fill();
+
+        // Ridge highlight
+        if (ed.hasHighlight) {
+            ctx.globalAlpha = ed.alpha * 0.4;
+            ctx.fillStyle = `hsl(${ed.hue},${ed.sat - 5}%,${Math.min(65, ed.lightness + 12)}%)`;
+            ctx.beginPath();
+            ctx.ellipse(baseX + ed.reach * 0.2 * dir, ed.y, ed.reach * 0.2, ed.height * 0.15, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     // ── private helpers ───────────────────────────

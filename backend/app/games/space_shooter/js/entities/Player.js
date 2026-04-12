@@ -57,14 +57,7 @@ class Player extends GameObject {
 
     update(deltaTime, game) {
         // Aggiorna cooldown abilità
-        if (this.healCooldown > 0) {
-            this.healCooldown -= deltaTime;
-            if (this.healCooldown < 0) this.healCooldown = 0;
-        }
-        if (this.bombCooldown > 0) {
-            this.bombCooldown -= deltaTime;
-            if (this.bombCooldown < 0) this.bombCooldown = 0;
-        }
+        this.updateCooldowns(deltaTime);
         
         // Input movimento
         const inputDir = game.input.getMovementDirection();
@@ -82,30 +75,13 @@ class Player extends GameObject {
         this.fireCooldown -= deltaTime;
         
         // Raffreddamento arma
-        if (this.heat > 0) {
-            this.heat -= this.heatCooldownRate * deltaTime;
-            if (this.heat < 0) this.heat = 0;
-        }
+        this.coolDownHeat(deltaTime);
         
         // Recovery da surriscaldamento
-        if (this.overheated && this.heat < 30) {
-            this.overheated = false;
-        }
+        this.checkOverheatRecovery();
         
         // Sparo solo se non surriscaldato
-        if (game.input.isFiring() && this.fireCooldown <= 0 && !this.overheated) {
-            this.fire(game);
-            this.fireCooldown = this.fireRate;
-            
-            // Aggiungi calore (più alto con armi potenti)
-            this.heat += this.heatPerShot * (1 + (this.weaponLevel - 1) * 0.3);
-            
-            // Check surriscaldamento
-            if (this.heat >= this.maxHeat) {
-                this.heat = this.maxHeat;
-                this.overheated = true;
-            }
-        }
+        this.handleFiring(game);
         
         // Gestione invincibilità
         if (this.invincible) {
@@ -142,6 +118,46 @@ class Player extends GameObject {
         
         // Thruster animation
         this.thrusterFlicker += deltaTime * 10;
+    }
+
+    handleFiring(game) {
+        if (game.input.isFiring() && this.fireCooldown <= 0 && !this.overheated) {
+            this.fire(game);
+            this.fireCooldown = this.fireRate;
+
+            // Aggiungi calore (più alto con armi potenti)
+            this.heat += this.heatPerShot * (1 + (this.weaponLevel - 1) * 0.3);
+
+            // Check surriscaldamento
+            if (this.heat >= this.maxHeat) {
+                this.heat = this.maxHeat;
+                this.overheated = true;
+            }
+        }
+    }
+
+    checkOverheatRecovery() {
+        if (this.overheated && this.heat < 30) {
+            this.overheated = false;
+        }
+    }
+
+    coolDownHeat(deltaTime) {
+        if (this.heat > 0) {
+            this.heat -= this.heatCooldownRate * deltaTime;
+            if (this.heat < 0) this.heat = 0;
+        }
+    }
+
+    updateCooldowns(deltaTime) {
+        if (this.healCooldown > 0) {
+            this.healCooldown -= deltaTime;
+            if (this.healCooldown < 0) this.healCooldown = 0;
+        }
+        if (this.bombCooldown > 0) {
+            this.bombCooldown -= deltaTime;
+            if (this.bombCooldown < 0) this.bombCooldown = 0;
+        }
     }
 
     fire(game) {
@@ -195,7 +211,7 @@ class Player extends GameObject {
         if (this.invincible) return false;
         
         // Check if barrier can block the damage
-        if (game.upgrades && game.upgrades.tryBlockDamage(amount)) {
+        if (game.upgrades?.tryBlockDamage(amount)) {
             // Barrier absorbed the damage - visual feedback
             game.postProcessing.flash({ r: 0, g: 150, b: 255 }, 0.1);
             return false;
@@ -355,7 +371,7 @@ class Player extends GameObject {
         if (this.healCooldown > 0) return false;
         
         // Percentuale di cura base: 25% + 5% per ogni livello (fino a 70% al livello 9+)
-        const healPercent = Math.min(0.25 + (game.level - 1) * 0.05, 0.70);
+        const healPercent = Math.min(0.25 + (game.level - 1) * 0.05, 0.7);
         const healAmount = Math.ceil(this.maxHealth * healPercent);
         
         // Applica cura
@@ -400,7 +416,7 @@ class Player extends GameObject {
         game.postProcessing.shake(15);
         
         // Percentuale di nemici colpiti: 40% + 6% per livello (fino a 100% al livello 10+)
-        const killPercent = Math.min(0.40 + (game.level - 1) * 0.06, 1.0);
+        const killPercent = Math.min(0.4 + (game.level - 1) * 0.06, 1);
         
         // Danno base: 2, aumenta con il livello
         const baseDamage = 2 + Math.floor(game.level / 3);

@@ -23,7 +23,7 @@ const parentOrigin = getParentOrigin();
 
 // Load user's coin balance
 async function loadUserBalance() {
-    let userId = window.platformConfig?.userId;
+    let userId = globalThis.platformConfig?.userId;
     
     if (!userId && typeof PlatformSDK !== 'undefined' && typeof PlatformSDK.getConfig === 'function') {
         userId = PlatformSDK.getConfig()?.userId;
@@ -49,28 +49,22 @@ async function initSDK() {
     if (typeof PlatformSDK !== 'undefined') {
         try {
             await PlatformSDK.init({
-                onStart: () => {
-
-                },
+                onStart: () => { },
                 onPause: () => {
-
-                    if (window.game && window.game.state === 'playing') {
-                        window.game.togglePause();
+                    if (globalThis.game?.state === 'playing') {
+                        globalThis.game.togglePause();
                     }
                 },
                 onResume: () => {
-
-                    if (window.game && window.game.state === 'paused') {
-                        window.game.togglePause();
+                    if (globalThis.game?.state === 'paused') {
+                        globalThis.game.togglePause();
                     }
                 }
             });
 
         } catch (error) {
-
+            console.error('⚠️ Failed to initialize Platform SDK:', error);
         }
-    } else {
-
     }
 }
 
@@ -100,8 +94,8 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
         try {
             PlatformSDK.gameOver(finalScore, {
                 extra_data: {
-                    level: window.game?.level || 1,
-                    wave: window.game?.waveNumber || 0,
+                    level: globalThis.game?.level || 1,
+                    wave: globalThis.game?.waveNumber || 0,
                     ...extraData
                 }
             });
@@ -116,31 +110,31 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
 
 // Show XP banner (exposed globally for platform)
 function showXPBanner(xpAmount, extraData = null) {
-    if (window.game && typeof window.game.showXPBanner === 'function') {
-        window.game.showXPBanner(xpAmount, extraData);
+    if (globalThis.game && typeof globalThis.game.showXPBanner === 'function') {
+        globalThis.game.showXPBanner(xpAmount, extraData);
     }
 }
 
 // Show stats banner (exposed globally for platform)
 function showStatsBanner(stats) {
-    if (window.game && typeof window.game.showStatsBanner === 'function') {
-        window.game.showStatsBanner(stats);
+    if (globalThis.game && typeof globalThis.game.showStatsBanner === 'function') {
+        globalThis.game.showStatsBanner(stats);
     }
 }
 
 // Show level up notification (exposed globally for platform)
 function showLevelUpNotification(levelUpData) {
-    if (window.game && typeof window.game.showLevelUpNotification === 'function') {
-        window.game.showLevelUpNotification(levelUpData);
+    if (globalThis.game && typeof globalThis.game.showLevelUpNotification === 'function') {
+        globalThis.game.showLevelUpNotification(levelUpData);
     }
 }
 
 // Export functions for Game.js to use
-window.startGameSession = startGameSession;
-window.sendScoreToPlatform = sendScoreToPlatform;
-window.showXPBanner = showXPBanner;
-window.showStatsBanner = showStatsBanner;
-window.showLevelUpNotification = showLevelUpNotification;
+globalThis.startGameSession = startGameSession;
+globalThis.sendScoreToPlatform = sendScoreToPlatform;
+globalThis.showXPBanner = showXPBanner;
+globalThis.showStatsBanner = showStatsBanner;
+globalThis.showLevelUpNotification = showLevelUpNotification;
 
 // ========== CONTINUE SYSTEM ==========
 
@@ -155,11 +149,11 @@ async function handleContinueGame() {
     try {
         // Get userId
         let userId = null;
-        if (window.platformConfig && window.platformConfig.userId) {
-            userId = window.platformConfig.userId;
+        if (globalThis.platformConfig?.userId) {
+            userId = globalThis.platformConfig.userId;
         } else if (typeof PlatformSDK !== 'undefined' && PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
             const config = PlatformSDK.getConfig();
-            if (config && config.userId) {
+            if (config?.userId) {
                 userId = config.userId;
             }
         }
@@ -189,14 +183,14 @@ async function handleContinueGame() {
 
         // Update balance
         platformBalance -= CONTINUE_COST;
-        window.platformBalance = platformBalance;
+        globalThis.platformBalance = platformBalance;
 
         // Reset session for new continue segment
         sessionStarted = false;
 
         // Resume game
-        if (window.game) {
-            window.game.resumeAfterContinue();
+        if (globalThis.game) {
+            globalThis.game.resumeAfterContinue();
         }
 
     } catch (error) {
@@ -204,7 +198,7 @@ async function handleContinueGame() {
     }
 }
 
-window.handleContinueGame = handleContinueGame;
+globalThis.handleContinueGame = handleContinueGame;
 
 // ========== PRE-GAME SHOP SYSTEM ==========
 
@@ -220,11 +214,11 @@ async function handleShopUpgradePurchase(cost) {
 
     try {
         let userId = null;
-        if (window.platformConfig && window.platformConfig.userId) {
-            userId = window.platformConfig.userId;
+        if (globalThis.platformConfig?.userId) {
+            userId = globalThis.platformConfig.userId;
         } else if (typeof PlatformSDK !== 'undefined' && PlatformSDK.getConfig && typeof PlatformSDK.getConfig === 'function') {
             const config = PlatformSDK.getConfig();
-            if (config && config.userId) {
+            if (config?.userId) {
                 userId = config.userId;
             }
         }
@@ -252,7 +246,7 @@ async function handleShopUpgradePurchase(cost) {
         }
 
         platformBalance -= cost;
-        window.platformBalance = platformBalance;
+        globalThis.platformBalance = platformBalance;
         return true;
 
     } catch (error) {
@@ -261,19 +255,20 @@ async function handleShopUpgradePurchase(cost) {
     }
 }
 
-window.handleShopUpgradePurchase = handleShopUpgradePurchase;
+globalThis.handleShopUpgradePurchase = handleShopUpgradePurchase;
 
 // Refresh balance from server (used before showing shop on restart)
 async function refreshPlatformBalance() {
     try {
         platformBalance = await loadUserBalance();
-        window.platformBalance = platformBalance;
+        globalThis.platformBalance = platformBalance;
     } catch (e) {
         // Keep existing balance
+        console.error('Failed to refresh balance:', e);
     }
 }
 
-window.refreshPlatformBalance = refreshPlatformBalance;
+globalThis.refreshPlatformBalance = refreshPlatformBalance;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const canvas = document.getElementById('gameCanvas');
@@ -290,10 +285,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load user balance for continue system
     try {
         platformBalance = await loadUserBalance();
-        window.platformBalance = platformBalance;
+        globalThis.platformBalance = platformBalance;
     } catch (e) {
+        console.error('Failed to load user balance:', e);
         platformBalance = 0;
-        window.platformBalance = 0;
+        globalThis.platformBalance = 0;
     }
     
     // Prevent default touch behaviors (exclude fullscreen button)
@@ -313,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const game = await Game.create(canvas);
     
     // Expose game instance for debugging
-    window.game = game;
+    globalThis.game = game;
     
     // Fullscreen button - use click event (works for both mouse and touch)
     if (fullscreenBtn) {
@@ -334,8 +330,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ===== FULLSCREEN FUNCTIONALITY =====
 function toggleFullscreen() {
     // Prefer Platform SDK if available (works on iOS!)
-    if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
-        window.PlatformSDK.toggleFullscreen();
+    if (globalThis.PlatformSDK && typeof globalThis.PlatformSDK.toggleFullscreen === 'function') {
+        globalThis.PlatformSDK.toggleFullscreen();
         return;
     }
 
@@ -343,8 +339,8 @@ function toggleFullscreen() {
     const elem = document.getElementById('game-container') || document.documentElement;
     
     // iOS/iPadOS detection
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
+    const isIPadOS = navigator.userAgentData?.platform === 'macOS' && navigator.maxTouchPoints > 1;
     const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
     
     if ((isIOS || isIPadOS) && !fullscreenSupported) {
@@ -355,43 +351,57 @@ function toggleFullscreen() {
     
     const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
 
-    if (!fsElement) {
-        // Enter fullscreen
+    if (fsElement) {
+        // Exit fullscreen
+        exitFullscreen();
+       
+    } else {
+         // Enter fullscreen
         const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
         if (requestFs) {
             const promise = requestFs.call(elem);
-            if (promise && promise.then) {
+            if (promise?.then) {
                 promise.then(() => {
-                    document.body.classList.add('game-fullscreen');
-                    setTimeout(() => { try { window.game && window.game.resize(); } catch(e){} }, 100);
-                    updateFullscreenIcon();
+                    enterFullscreenMode();
                 }).catch((err) => {
-
                     // Fallback to iOS method if native fails
                     toggleIOSFullscreen();
                 });
             } else {
                 document.body.classList.add('game-fullscreen');
-                setTimeout(() => { try { window.game && window.game.resize(); } catch(e){} }, 100);
+                setTimeout(() => { try { globalThis.game?.resize(); } catch(e){
+                    console.warn('Error resizing game after fullscreen change:', e);
+                } }, 100);
             }
         } else {
             // Fallback to iOS method
             toggleIOSFullscreen();
         }
-    } else {
-        // Exit fullscreen
+    }
+
+    function enterFullscreenMode() {
+        document.body.classList.add('game-fullscreen');
+        setTimeout(() => {
+            try { globalThis.game?.resize(); } catch (e) {
+                console.warn('Error resizing game after fullscreen change:', e);
+            }
+        }, 100);
+        updateFullscreenIcon();
+    }
+
+    function exitFullscreen() {
         const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
         if (exitFs) {
             const promise = exitFs.call(document);
-            if (promise && promise.then) {
+            if (promise?.then) {
                 promise.then(() => {
                     document.body.classList.remove('game-fullscreen');
-                    setTimeout(() => { try { window.game && window.game.resize(); } catch(e){} }, 100);
+                    setTimeout(() => { try { globalThis.game?.resize(); } catch (e) { console.warn('Error resizing game after fullscreen change:', e); } }, 100);
                     updateFullscreenIcon();
-                }).catch(() => {});
+                }).catch(() => { });
             } else {
                 document.body.classList.remove('game-fullscreen');
-                setTimeout(() => { try { window.game && window.game.resize(); } catch(e){} }, 100);
+                setTimeout(() => { try { globalThis.game?.resize(); } catch (e) { console.warn('Error resizing game after fullscreen change:', e); } }, 100);
             }
         }
     }
@@ -404,26 +414,24 @@ function toggleIOSFullscreen() {
     if (isFullscreen) {
         // Exit fullscreen
         document.documentElement.classList.remove('ios-game-fullscreen');
-        document.body.classList.remove('ios-game-fullscreen');
-        document.body.classList.remove('game-fullscreen');
+        document.body.classList.remove('ios-game-fullscreen', 'game-fullscreen');
         document.body.style.overflow = '';
         const exitBtn = document.getElementById('ios-fs-exit');
         if (exitBtn) exitBtn.remove();
         updateFullscreenIcon();
-        setTimeout(() => { try { window.game && window.game.resize(); } catch(e){} }, 100);
+        setTimeout(() => { try { globalThis.game?.resize(); } catch(e){ console.warn('Error resizing game after fullscreen change:', e); } }, 100);
     } else {
         // Enter fullscreen
         injectIOSFullscreenStyles();
         document.documentElement.classList.add('ios-game-fullscreen');
-        document.body.classList.add('ios-game-fullscreen');
-        document.body.classList.add('game-fullscreen');
+        document.body.classList.add('ios-game-fullscreen', 'game-fullscreen');
         document.body.style.overflow = 'hidden';
         createIOSExitButton();
         updateFullscreenIcon();
         // Scroll to hide address bar on iOS
         setTimeout(() => {
             window.scrollTo(0, 1);
-            try { window.game && window.game.resize(); } catch(e){}
+            try { globalThis.game?.resize(); } catch(e){ console.warn('Error resizing game after fullscreen change:', e); }
         }, 100);
         // Try again after a short delay
         setTimeout(() => {

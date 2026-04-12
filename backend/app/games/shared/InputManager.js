@@ -31,16 +31,16 @@ export class InputManager {
     }
 
     _detectMobile() {
-        return ('ontouchstart' in window) ||
+        return ('ontouchstart' in globalThis) ||
             (navigator.maxTouchPoints > 0) ||
             (navigator.msMaxTouchPoints > 0);
     }
 
     _init() {
-        window.addEventListener('keydown', (e) => this._onKeyDown(e));
-        window.addEventListener('keyup', (e) => this._onKeyUp(e));
+        globalThis.addEventListener('keydown', (e) => this._onKeyDown(e));
+        globalThis.addEventListener('keyup', (e) => this._onKeyUp(e));
         if (this.isMobile) this._initTouchControls();
-        window.addEventListener('contextmenu', (e) => e.preventDefault());
+        globalThis.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
     _initTouchControls() {
@@ -70,7 +70,9 @@ export class InputManager {
     }
 
     /** Override to position extra ability buttons. */
-    _updateExtraLayout(_w, _h) {}
+    _updateExtraLayout(_w, _h) {
+        //
+    }
 
     // ── Coordinate helpers ───────────────────────────────────────
 
@@ -101,8 +103,7 @@ export class InputManager {
     _onTouchStart(e) {
         if (!this._canProcessTouch()) return;
 
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            const t = e.changedTouches[i];
+        for (const t of e.changedTouches) {
             const c = this._getTouchCoords(t);
 
             if (this.joystickTouchId === null && this._isInJoystickZone(c.x, c.y)) {
@@ -129,8 +130,7 @@ export class InputManager {
     _onExtraTouchStart(_e, _touch, _coords) { return false; }
 
     _onTouchMove(e) {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            const t = e.changedTouches[i];
+        for (const t of e.changedTouches) {
             if (t.identifier === this.joystickTouchId) {
                 e.preventDefault();
                 const c = this._getTouchCoords(t);
@@ -140,9 +140,7 @@ export class InputManager {
     }
 
     _onTouchEnd(e) {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            const t = e.changedTouches[i];
-
+        for (const t of e.changedTouches) {
             if (t.identifier === this.joystickTouchId) {
                 this.joystickTouchId = null;
                 this.touch.active = false;
@@ -161,7 +159,9 @@ export class InputManager {
     }
 
     /** Override to handle extra ability button touch ends. */
-    _onExtraTouchEnd(_touch) {}
+    _onExtraTouchEnd(_touch) {
+        // No extra buttons in base class
+    }
 
     // ── Joystick ─────────────────────────────────────────────────
 
@@ -240,5 +240,7 @@ export class InputManager {
     }
 
     /** Override to reset extra ability button state. */
-    _resetExtra() {}
+    _resetExtra() {
+        // No extra buttons in base class
+    }
 }

@@ -15,6 +15,10 @@ export class BettingState extends State {
         this._game.ui.hideAll();
     }
 
-    update(dt) {}
-    draw(ctx) {}
+    update(dt) {
+        // No dynamic elements to update in this state
+    }
+    draw(ctx) {
+        // No custom drawing in this state
+    }
 }

@@ -22,7 +22,7 @@ const LEVEL_DATA = [
     // === LIVELLI 1-3: Intro rapida ===
     { // Livello 1
         enemyPool: [{ type: 'enemy1', weight: 1 }],
-        waveSize: 3, maxEnemies: 8, speedMultiplier: 1.0,
+        waveSize: 3, maxEnemies: 8, speedMultiplier: 1,
         waveInterval: 3.5, formationChance: 0.15,
         patterns: ['straight', 'sine', 'zigzag'],
         formations: ['line', 'v', 'spiral'],
@@ -31,7 +31,7 @@ const LEVEL_DATA = [
     { // Livello 2 - unlock enemy2
         enemyPool: [{ type: 'enemy1', weight: 1 }, { type: 'enemy2', weight: 0.3 }],
         waveSize: 4, maxEnemies: 10, speedMultiplier: 1.05,
-        waveInterval: 3.2, formationChance: 0.20,
+        waveInterval: 3.2, formationChance: 0.2,
         patterns: ['straight', 'sine', 'dive'],
         formations: ['line', 'v', 'arrow', 'wall'],
         phantomCount: 0, sentinelCount: 0, swarmCount: 0
@@ -41,8 +41,8 @@ const LEVEL_DATA = [
             { type: 'enemy1', weight: 1 }, { type: 'enemy2', weight: 0.4 },
             { type: 'enemy6', weight: 0.15 }
         ],
-        waveSize: 4, maxEnemies: 11, speedMultiplier: 1.10,
-        waveInterval: 3.0, formationChance: 0.25,
+        waveSize: 4, maxEnemies: 11, speedMultiplier: 1.1,
+        waveInterval: 3, formationChance: 0.25,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['line', 'v', 'arrow', 'wall'],
         phantomCount: 0, sentinelCount: 0, swarmCount: 4
@@ -55,7 +55,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.15 }, { type: 'enemy6', weight: 0.2 }
         ],
         waveSize: 5, maxEnemies: 12, speedMultiplier: 1.15,
-        waveInterval: 2.8, formationChance: 0.30,
+        waveInterval: 2.8, formationChance: 0.3,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['line', 'v', 'arrow', 'wall', 'diamond'],
         phantomCount: 0, sentinelCount: 0, swarmCount: 5
@@ -65,7 +65,7 @@ const LEVEL_DATA = [
             { type: 'enemy1', weight: 1 }, { type: 'enemy2', weight: 0.6 },
             { type: 'enemy3', weight: 0.25 }, { type: 'enemy6', weight: 0.25 }
         ],
-        waveSize: 5, maxEnemies: 13, speedMultiplier: 1.20,
+        waveSize: 5, maxEnemies: 13, speedMultiplier: 1.2,
         waveInterval: 2.6, formationChance: 0.35,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['line', 'v', 'arrow', 'wall', 'diamond', 'spiral'],
@@ -89,7 +89,7 @@ const LEVEL_DATA = [
             { type: 'enemy1', weight: 1 }, { type: 'enemy2', weight: 0.8 },
             { type: 'enemy3', weight: 0.35 }, { type: 'enemy6', weight: 0.3 }
         ],
-        waveSize: 6, maxEnemies: 15, speedMultiplier: 1.30,
+        waveSize: 6, maxEnemies: 15, speedMultiplier: 1.3,
         waveInterval: 2.3, formationChance: 0.42,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -125,7 +125,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.35 }, { type: 'enemy6', weight: 0.3 },
             { type: 'enemy4', weight: 0.18 }, { type: 'enemy5', weight: 0.08 }
         ],
-        waveSize: 5, maxEnemies: 15, speedMultiplier: 1.30,
+        waveSize: 5, maxEnemies: 15, speedMultiplier: 1.3,
         waveInterval: 2.4, formationChance: 0.42,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -152,7 +152,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.25 }, { type: 'enemy5', weight: 0.14 }
         ],
         waveSize: 6, maxEnemies: 16, speedMultiplier: 1.38,
-        waveInterval: 2.2, formationChance: 0.50,
+        waveInterval: 2.2, formationChance: 0.5,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 2, sentinelCount: 1, swarmCount: 7
@@ -171,23 +171,23 @@ const LEVEL_DATA = [
     },
     { // Livello 14
         enemyPool: [
-            { type: 'enemy1', weight: 0.95 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.95 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.55 }, { type: 'enemy6', weight: 0.4 },
             { type: 'enemy4', weight: 0.32 }, { type: 'enemy5', weight: 0.2 }
         ],
         waveSize: 6, maxEnemies: 18, speedMultiplier: 1.46,
-        waveInterval: 2.0, formationChance: 0.55,
+        waveInterval: 2, formationChance: 0.55,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 2, sentinelCount: 1, swarmCount: 7
     },
     { // Livello 15
         enemyPool: [
-            { type: 'enemy1', weight: 0.9 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.9 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.6 }, { type: 'enemy6', weight: 0.42 },
             { type: 'enemy4', weight: 0.35 }, { type: 'enemy5', weight: 0.24 }
         ],
-        waveSize: 7, maxEnemies: 19, speedMultiplier: 1.50,
+        waveSize: 7, maxEnemies: 19, speedMultiplier: 1.5,
         waveInterval: 1.9, formationChance: 0.58,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -197,7 +197,7 @@ const LEVEL_DATA = [
     // === LIVELLI 16-20: Difficoltà seria ===
     { // Livello 16
         enemyPool: [
-            { type: 'enemy1', weight: 0.75 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.75 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.8 }, { type: 'enemy6', weight: 0.5 },
             { type: 'enemy4', weight: 0.48 }, { type: 'enemy5', weight: 0.32 }
         ],
@@ -209,43 +209,43 @@ const LEVEL_DATA = [
     },
     { // Livello 17
         enemyPool: [
-            { type: 'enemy1', weight: 0.7 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.7 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.8 }, { type: 'enemy6', weight: 0.55 },
             { type: 'enemy4', weight: 0.5 }, { type: 'enemy5', weight: 0.35 }
         ],
-        waveSize: 8, maxEnemies: 22, speedMultiplier: 1.70,
-        waveInterval: 1.60, formationChance: 0.70,
+        waveSize: 8, maxEnemies: 22, speedMultiplier: 1.7,
+        waveInterval: 1.6, formationChance: 0.7,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 3, sentinelCount: 2, swarmCount: 9
     },
     { // Livello 18
         enemyPool: [
-            { type: 'enemy1', weight: 0.8 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.8 }, { type: 'enemy2', weight: 1},
             { type: 'enemy3', weight: 0.65 }, { type: 'enemy6', weight: 0.45 },
             { type: 'enemy4', weight: 0.38 }, { type: 'enemy5', weight: 0.28 }
         ],
         waveSize: 7, maxEnemies: 20, speedMultiplier: 1.58,
-        waveInterval: 1.80, formationChance: 0.62,
+        waveInterval: 1.8, formationChance: 0.62,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 2, sentinelCount: 2, swarmCount: 8
     },
     { // Livello 19
         enemyPool: [
-            { type: 'enemy1', weight: 0.6 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.6 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.55 },
             { type: 'enemy4', weight: 0.55 }, { type: 'enemy5', weight: 0.4 }
         ],
         waveSize: 8, maxEnemies: 23, speedMultiplier: 1.78,
-        waveInterval: 1.50, formationChance: 0.74,
+        waveInterval: 1.5, formationChance: 0.74,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 2, swarmCount: 10
     },
     { // Livello 20
         enemyPool: [
-            { type: 'enemy1', weight: 0.55 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.55 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.55 }, { type: 'enemy5', weight: 0.42 }
         ],
@@ -259,7 +259,7 @@ const LEVEL_DATA = [
     // === LIVELLI 21-30: Sfida vera ===
     { // Livello 21
         enemyPool: [
-            { type: 'enemy1', weight: 0.5 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.5 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.55 }, { type: 'enemy5', weight: 0.44 }
         ],
@@ -271,7 +271,7 @@ const LEVEL_DATA = [
     },
     { // Livello 22
         enemyPool: [
-            { type: 'enemy1', weight: 0.45 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.45 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.55 }, { type: 'enemy5', weight: 0.45 }
         ],
@@ -283,31 +283,31 @@ const LEVEL_DATA = [
     },
     { // Livello 23
         enemyPool: [
-            { type: 'enemy1', weight: 0.4 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.4 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.58 }, { type: 'enemy5', weight: 0.45 }
         ],
-        waveSize: 8, maxEnemies: 25, speedMultiplier: 1.90,
-        waveInterval: 1.35, formationChance: 0.80,
+        waveSize: 8, maxEnemies: 25, speedMultiplier: 1.9,
+        waveInterval: 1.35, formationChance: 0.8,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 11
     },
     { // Livello 24
         enemyPool: [
-            { type: 'enemy1', weight: 0.38 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.38 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.58 }, { type: 'enemy5', weight: 0.46 }
         ],
         waveSize: 8, maxEnemies: 25, speedMultiplier: 1.92,
-        waveInterval: 1.32, formationChance: 0.80,
+        waveInterval: 1.32, formationChance: 0.8,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 11
     },
     { // Livello 25
         enemyPool: [
-            { type: 'enemy1', weight: 0.35 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.35 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.48 }
         ],
@@ -319,7 +319,7 @@ const LEVEL_DATA = [
     },
     { // Livello 26
         enemyPool: [
-            { type: 'enemy1', weight: 0.3 }, { type: 'enemy2', weight: 1.0 },
+            { type: 'enemy1', weight: 0.3 }, { type: 'enemy2', weight: 1 },
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.48 }
         ],
@@ -335,7 +335,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.5 }
         ],
-        waveSize: 8, maxEnemies: 26, speedMultiplier: 2.00,
+        waveSize: 8, maxEnemies: 26, speedMultiplier: 2,
         waveInterval: 1.22, formationChance: 0.82,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -348,7 +348,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.5 }
         ],
         waveSize: 8, maxEnemies: 27, speedMultiplier: 2.02,
-        waveInterval: 1.20, formationChance: 0.84,
+        waveInterval: 1.2, formationChance: 0.84,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -385,7 +385,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.6 },
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.5 }
         ],
-        waveSize: 8, maxEnemies: 28, speedMultiplier: 2.10,
+        waveSize: 8, maxEnemies: 28, speedMultiplier: 2.1,
         waveInterval: 1.12, formationChance: 0.85,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -398,7 +398,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.5 }
         ],
         waveSize: 8, maxEnemies: 28, speedMultiplier: 2.12,
-        waveInterval: 1.10, formationChance: 0.86,
+        waveInterval: 1.1, formationChance: 0.86,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -445,7 +445,7 @@ const LEVEL_DATA = [
             { type: 'enemy6', weight: 0.6 }, { type: 'enemy4', weight: 0.6 },
             { type: 'enemy5', weight: 0.5 }
         ],
-        waveSize: 8, maxEnemies: 29, speedMultiplier: 2.20,
+        waveSize: 8, maxEnemies: 29, speedMultiplier: 2.2,
         waveInterval: 1.02, formationChance: 0.88,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -458,7 +458,7 @@ const LEVEL_DATA = [
             { type: 'enemy5', weight: 0.5 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.22,
-        waveInterval: 1.00, formationChance: 0.88,
+        waveInterval: 1, formationChance: 0.88,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -470,7 +470,7 @@ const LEVEL_DATA = [
             { type: 'enemy5', weight: 0.5 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.24,
-        waveInterval: 1.00, formationChance: 0.88,
+        waveInterval: 1, formationChance: 0.88,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -482,7 +482,7 @@ const LEVEL_DATA = [
             { type: 'enemy5', weight: 0.5 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.26,
-        waveInterval: 1.00, formationChance: 0.90,
+        waveInterval: 1, formationChance: 0.9,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -494,7 +494,7 @@ const LEVEL_DATA = [
             { type: 'enemy5', weight: 0.55 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.28,
-        waveInterval: 1.00, formationChance: 0.90,
+        waveInterval: 1, formationChance: 0.9,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -507,8 +507,8 @@ const LEVEL_DATA = [
             { type: 'enemy6', weight: 0.6 }, { type: 'enemy4', weight: 0.6 },
             { type: 'enemy5', weight: 0.55 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.30,
-        waveInterval: 1.00, formationChance: 0.90,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.3,
+        waveInterval: 1, formationChance: 0.9,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -520,7 +520,7 @@ const LEVEL_DATA = [
             { type: 'enemy5', weight: 0.55 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.32,
-        waveInterval: 0.98, formationChance: 0.90,
+        waveInterval: 0.98, formationChance: 0.9,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -532,7 +532,7 @@ const LEVEL_DATA = [
             { type: 'enemy5', weight: 0.55 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.34,
-        waveInterval: 0.96, formationChance: 0.90,
+        waveInterval: 0.96, formationChance: 0.9,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -566,8 +566,8 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.65 },
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.55 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.40,
-        waveInterval: 0.90, formationChance: 0.92,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.4,
+        waveInterval: 0.9, formationChance: 0.92,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -623,8 +623,8 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.65 },
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.6 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.50,
-        waveInterval: 0.80, formationChance: 0.93,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.5,
+        waveInterval: 0.8, formationChance: 0.93,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -635,7 +635,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.6 }, { type: 'enemy5', weight: 0.6 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.52,
-        waveInterval: 0.80, formationChance: 0.93,
+        waveInterval: 0.8, formationChance: 0.93,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -646,7 +646,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.62 }, { type: 'enemy5', weight: 0.6 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.54,
-        waveInterval: 0.80, formationChance: 0.93,
+        waveInterval: 0.8, formationChance: 0.93,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -657,7 +657,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.62 }, { type: 'enemy5', weight: 0.6 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.56,
-        waveInterval: 0.80, formationChance: 0.94,
+        waveInterval: 0.8, formationChance: 0.94,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -668,7 +668,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.62 }, { type: 'enemy5', weight: 0.6 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.58,
-        waveInterval: 0.80, formationChance: 0.94,
+        waveInterval: 0.8, formationChance: 0.94,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -678,8 +678,8 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.85 }, { type: 'enemy6', weight: 0.7 },
             { type: 'enemy4', weight: 0.65 }, { type: 'enemy5', weight: 0.6 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.60,
-        waveInterval: 0.80, formationChance: 0.94,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.6,
+        waveInterval: 0.8, formationChance: 0.94,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -690,7 +690,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.65 }, { type: 'enemy5', weight: 0.62 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.62,
-        waveInterval: 0.80, formationChance: 0.94,
+        waveInterval: 0.8, formationChance: 0.94,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -701,7 +701,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.65 }, { type: 'enemy5', weight: 0.62 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.64,
-        waveInterval: 0.80, formationChance: 0.94,
+        waveInterval: 0.8, formationChance: 0.94,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -712,7 +712,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.68 }, { type: 'enemy5', weight: 0.65 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.66,
-        waveInterval: 0.80, formationChance: 0.95,
+        waveInterval: 0.8, formationChance: 0.95,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -723,7 +723,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.68 }, { type: 'enemy5', weight: 0.65 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.68,
-        waveInterval: 0.80, formationChance: 0.95,
+        waveInterval: 0.8, formationChance: 0.95,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -735,7 +735,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.8 }, { type: 'enemy6', weight: 0.7 },
             { type: 'enemy4', weight: 0.7 }, { type: 'enemy5', weight: 0.65 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.70,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.7,
         waveInterval: 0.78, formationChance: 0.95,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -790,7 +790,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.8 }, { type: 'enemy6', weight: 0.72 },
             { type: 'enemy4', weight: 0.72 }, { type: 'enemy5', weight: 0.7 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.80,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.8,
         waveInterval: 0.74, formationChance: 0.95,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -824,7 +824,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.74 }, { type: 'enemy5', weight: 0.72 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.86,
-        waveInterval: 0.70, formationChance: 0.96,
+        waveInterval: 0.7, formationChance: 0.96,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -835,7 +835,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.75 }, { type: 'enemy5', weight: 0.72 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 2.88,
-        waveInterval: 0.70, formationChance: 0.96,
+        waveInterval: 0.7, formationChance: 0.96,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -847,7 +847,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.75 }, { type: 'enemy6', weight: 0.75 },
             { type: 'enemy4', weight: 0.75 }, { type: 'enemy5', weight: 0.75 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.90,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 2.9,
         waveInterval: 0.68, formationChance: 0.96,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -902,7 +902,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.75 }, { type: 'enemy6', weight: 0.78 },
             { type: 'enemy4', weight: 0.8 }, { type: 'enemy5', weight: 0.8 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.00,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 3,
         waveInterval: 0.64, formationChance: 0.97,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -936,7 +936,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.82 }, { type: 'enemy5', weight: 0.82 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 3.06,
-        waveInterval: 0.60, formationChance: 0.97,
+        waveInterval: 0.6, formationChance: 0.97,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -947,7 +947,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.85 }, { type: 'enemy5', weight: 0.85 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 3.08,
-        waveInterval: 0.60, formationChance: 0.97,
+        waveInterval: 0.6, formationChance: 0.97,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -959,7 +959,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.7 }, { type: 'enemy6', weight: 0.82 },
             { type: 'enemy4', weight: 0.85 }, { type: 'enemy5', weight: 0.85 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.10,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.1,
         waveInterval: 0.58, formationChance: 0.97,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -1014,7 +1014,7 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.7 }, { type: 'enemy6', weight: 0.85 },
             { type: 'enemy4', weight: 0.9 }, { type: 'enemy5', weight: 0.88 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.20,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.2,
         waveInterval: 0.54, formationChance: 0.98,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -1048,7 +1048,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.92 }, { type: 'enemy5', weight: 0.9 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 3.26,
-        waveInterval: 0.50, formationChance: 0.98,
+        waveInterval: 0.5, formationChance: 0.98,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -1059,7 +1059,7 @@ const LEVEL_DATA = [
             { type: 'enemy4', weight: 0.92 }, { type: 'enemy5', weight: 0.92 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 3.28,
-        waveInterval: 0.50, formationChance: 0.98,
+        waveInterval: 0.5, formationChance: 0.98,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -1071,8 +1071,8 @@ const LEVEL_DATA = [
             { type: 'enemy3', weight: 0.6 }, { type: 'enemy6', weight: 0.9 },
             { type: 'enemy4', weight: 0.92 }, { type: 'enemy5', weight: 0.92 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.30,
-        waveInterval: 0.50, formationChance: 0.98,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.3,
+        waveInterval: 0.5, formationChance: 0.98,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12
@@ -1126,7 +1126,7 @@ const LEVEL_DATA = [
             { type: 'enemy6', weight: 0.92 }, { type: 'enemy4', weight: 0.95 },
             { type: 'enemy5', weight: 0.95 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.40,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.4,
         waveInterval: 0.44, formationChance: 0.98,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
@@ -1145,8 +1145,8 @@ const LEVEL_DATA = [
     },
     { // Livello 98
         enemyPool: [
-            { type: 'enemy6', weight: 0.95 }, { type: 'enemy4', weight: 1.0 },
-            { type: 'enemy5', weight: 1.0 }
+            { type: 'enemy6', weight: 0.95 }, { type: 'enemy4', weight: 1 },
+            { type: 'enemy5', weight: 1 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 3.44,
         waveInterval: 0.42, formationChance: 0.99,
@@ -1156,8 +1156,8 @@ const LEVEL_DATA = [
     },
     { // Livello 99
         enemyPool: [
-            { type: 'enemy6', weight: 0.95 }, { type: 'enemy4', weight: 1.0 },
-            { type: 'enemy5', weight: 1.0 }
+            { type: 'enemy6', weight: 0.95 }, { type: 'enemy4', weight: 1 },
+            { type: 'enemy5', weight: 1 }
         ],
         waveSize: 8, maxEnemies: 30, speedMultiplier: 3.46,
         waveInterval: 0.42, formationChance: 0.99,
@@ -1167,11 +1167,11 @@ const LEVEL_DATA = [
     },
     { // Livello 100
         enemyPool: [
-            { type: 'enemy6', weight: 1.0 }, { type: 'enemy4', weight: 1.0 },
-            { type: 'enemy5', weight: 1.0 }
+            { type: 'enemy6', weight: 1 }, { type: 'enemy4', weight: 1 },
+            { type: 'enemy5', weight: 1 }
         ],
-        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.50,
-        waveInterval: 0.40, formationChance: 1.0,
+        waveSize: 8, maxEnemies: 30, speedMultiplier: 3.5,
+        waveInterval: 0.4, formationChance: 1,
         patterns: ['straight', 'sine', 'zigzag', 'dive'],
         formations: ['v', 'line', 'diamond', 'spiral', 'pincer', 'cross', 'wall', 'arrow'],
         phantomCount: 4, sentinelCount: 3, swarmCount: 12

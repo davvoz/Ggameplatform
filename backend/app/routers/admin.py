@@ -43,6 +43,27 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 USER_NOT_FOUND = "User not found"
+GAME_NOT_FOUND = "Game not found"
+SESSION_NOT_FOUND = "Session not found"
+LEADERBOARD_ENTRY_NOT_FOUND = "Leaderboard entry not found"
+XP_RULE_NOT_FOUND = "XP rule not found"
+QUEST_NOT_FOUND = "Quest not found"
+USER_QUEST_NOT_FOUND = "User quest not found"
+GAME_STATUS_NOT_FOUND = "Game status not found"
+USER_COINS_NOT_FOUND = "User coins not found"
+TRANSACTION_NOT_FOUND = "Transaction not found"
+MILESTONE_NOT_FOUND = "Milestone not found"
+REWARD_NOT_FOUND = "Reward not found"
+ENTRY_NOT_FOUND = "Entry not found"
+WINNER_NOT_FOUND = "Winner not found"
+USER_LOGIN_STREAK_NOT_FOUND = "User login streak not found"
+CONFIGURATION_NOT_FOUND = "Configuration not found"
+CAMPAIGN_NOT_FOUND = "Campaign not found"
+CONFIG_NOT_FOUND = "Config not found"
+SUBSCRIPTION_NOT_FOUND = "Subscription not found"
+MESSAGE_NOT_FOUND = "Message not found"
+PROGRESS_NOT_FOUND = "Progress not found"
+CONNECTION_NOT_FOUND = "Connection not found"
 
 class LoginRequest(BaseModel):
     username: str
@@ -130,6 +151,7 @@ async def admin_login(login_data: LoginRequest, response: Response, db: DbSessio
         key="admin_token",
         value=access_token,
         httponly=True,
+        secure=True,
         max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
         samesite="lax"
     )
@@ -174,7 +196,7 @@ async def get_form_options(db: DbSession):
                 "status_ids": [{"value": s.status_id, "label": f"{s.status_name} ({s.status_code})"} for s in statuses],
                 "session_ids": [{"value": s.session_id, "label": f"{s.session_id} - {s.game_id}"} for s in sessions[:100]],  # Limit for performance
                 "campaign_ids": [{"value": c.campaign_id, "label": f"{c.name} ({c.game_id})"} for c in RepositoryFactory.create_campaign_repository(db).get_all()],
-                "categories": list(set([g.category for g in games if g.category])),
+                "categories": list({g.category for g in games if g.category}),
                 "quest_types": [
                     "play_games",
                     "play_games_weekly", 
@@ -632,7 +654,7 @@ async def get_game(game_id: str, db: DbSession):
         
         game = service.get(game_id)
         if not game:
-            raise HTTPException(status_code=404, detail="Game not found")
+            raise HTTPException(status_code=404, detail=GAME_NOT_FOUND)
         return {"success": True, "data": game}
     except HTTPException:
         raise
@@ -652,7 +674,7 @@ async def update_game(game_id: str, game_data: GameUpdate, db: DbSession):
         
         game = service.update(game_id, update_data)
         if not game:
-            raise HTTPException(status_code=404, detail="Game not found")
+            raise HTTPException(status_code=404, detail=GAME_NOT_FOUND)
         return {"success": True, "data": game}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -671,7 +693,7 @@ async def delete_game(game_id: str, db: DbSession):
         
         success = service.delete(game_id)
         if not success:
-            raise HTTPException(status_code=404, detail="Game not found")
+            raise HTTPException(status_code=404, detail=GAME_NOT_FOUND)
         return {"success": True, "message": "Game deleted successfully"}
     except HTTPException:
         raise
@@ -777,7 +799,7 @@ async def get_session(session_id: str, db: DbSession):
         
         session = service.get(session_id)
         if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
         return {"success": True, "data": session}
     except HTTPException:
         raise
@@ -796,7 +818,7 @@ async def update_session(session_id: str, session_data: GameSessionUpdate, db: D
         
         session = service.update(session_id, update_data)
         if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
         return {"success": True, "data": session}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -815,7 +837,7 @@ async def delete_session(session_id: str, db: DbSession):
         
         success = service.delete(session_id)
         if not success:
-            raise HTTPException(status_code=404, detail="Session not found")
+            raise HTTPException(status_code=404, detail=SESSION_NOT_FOUND)
         return {"success": True, "message": "Session deleted successfully"}
     except HTTPException:
         raise
@@ -849,7 +871,7 @@ async def get_leaderboard_entry(entry_id: str, db: DbSession):
         
         entry = service.get(entry_id)
         if not entry:
-            raise HTTPException(status_code=404, detail="Leaderboard entry not found")
+            raise HTTPException(status_code=404, detail=LEADERBOARD_ENTRY_NOT_FOUND)
         return {"success": True, "data": entry}
     except HTTPException:
         raise
@@ -868,7 +890,7 @@ async def update_leaderboard_entry(entry_id: str, entry_data: LeaderboardUpdate,
         
         entry = service.update(entry_id, update_data)
         if not entry:
-            raise HTTPException(status_code=404, detail="Leaderboard entry not found")
+            raise HTTPException(status_code=404, detail=LEADERBOARD_ENTRY_NOT_FOUND)
         return {"success": True, "data": entry}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -887,7 +909,7 @@ async def delete_leaderboard_entry(entry_id: str, db: DbSession):
         
         success = service.delete(entry_id)
         if not success:
-            raise HTTPException(status_code=404, detail="Leaderboard entry not found")
+            raise HTTPException(status_code=404, detail=LEADERBOARD_ENTRY_NOT_FOUND)
         return {"success": True, "message": "Leaderboard entry deleted successfully"}
     except HTTPException:
         raise
@@ -921,7 +943,7 @@ async def get_xp_rule(rule_id: str, db: DbSession):
         
         rule = service.get(rule_id)
         if not rule:
-            raise HTTPException(status_code=404, detail="XP rule not found")
+            raise HTTPException(status_code=404, detail=XP_RULE_NOT_FOUND)
         return {"success": True, "data": rule}
     except HTTPException:
         raise
@@ -940,7 +962,7 @@ async def update_xp_rule(rule_id: str, rule_data: XPRuleUpdate, db: DbSession):
         
         rule = service.update(rule_id, update_data)
         if not rule:
-            raise HTTPException(status_code=404, detail="XP rule not found")
+            raise HTTPException(status_code=404, detail=XP_RULE_NOT_FOUND)
         return {"success": True, "data": rule}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -959,7 +981,7 @@ async def delete_xp_rule(rule_id: str, db: DbSession):
         
         success = service.delete(rule_id)
         if not success:
-            raise HTTPException(status_code=404, detail="XP rule not found")
+            raise HTTPException(status_code=404, detail=XP_RULE_NOT_FOUND)
         return {"success": True, "message": "XP rule deleted successfully"}
     except HTTPException:
         raise
@@ -993,7 +1015,7 @@ async def get_quest(quest_id: int, db: DbSession):
         
         quest = service.get(quest_id)
         if not quest:
-            raise HTTPException(status_code=404, detail="Quest not found")
+            raise HTTPException(status_code=404, detail=QUEST_NOT_FOUND)
         return {"success": True, "data": quest}
     except HTTPException:
         raise
@@ -1012,7 +1034,7 @@ async def update_quest(quest_id: int, quest_data: QuestUpdate, db: DbSession):
         
         quest = service.update(quest_id, update_data)
         if not quest:
-            raise HTTPException(status_code=404, detail="Quest not found")
+            raise HTTPException(status_code=404, detail=QUEST_NOT_FOUND)
         return {"success": True, "data": quest}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1031,7 +1053,7 @@ async def delete_quest(quest_id: int, db: DbSession):
         
         success = service.delete(quest_id)
         if not success:
-            raise HTTPException(status_code=404, detail="Quest not found")
+            raise HTTPException(status_code=404, detail=QUEST_NOT_FOUND)
         return {"success": True, "message": "Quest deleted successfully"}
     except HTTPException:
         raise
@@ -1065,7 +1087,7 @@ async def get_user_quest(user_quest_id: int, db: DbSession):
         
         user_quest = service.get(user_quest_id)
         if not user_quest:
-            raise HTTPException(status_code=404, detail="User quest not found")
+            raise HTTPException(status_code=404, detail=USER_QUEST_NOT_FOUND)
         return {"success": True, "data": user_quest}
     except HTTPException:
         raise
@@ -1084,7 +1106,7 @@ async def update_user_quest(user_quest_id: int, user_quest_data: UserQuestUpdate
         
         user_quest = service.update(user_quest_id, update_data)
         if not user_quest:
-            raise HTTPException(status_code=404, detail="User quest not found")
+            raise HTTPException(status_code=404, detail=USER_QUEST_NOT_FOUND)
         return {"success": True, "data": user_quest}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1103,7 +1125,7 @@ async def delete_user_quest(user_quest_id: int, db: DbSession):
         
         success = service.delete(user_quest_id)
         if not success:
-            raise HTTPException(status_code=404, detail="User quest not found")
+            raise HTTPException(status_code=404, detail=USER_QUEST_NOT_FOUND)
         return {"success": True, "message": "User quest deleted successfully"}
     except HTTPException:
         raise
@@ -1137,7 +1159,7 @@ async def get_game_status(status_id: int, db: DbSession):
         
         status = service.get(status_id)
         if not status:
-            raise HTTPException(status_code=404, detail="Game status not found")
+            raise HTTPException(status_code=404, detail=GAME_STATUS_NOT_FOUND)
         return {"success": True, "data": status}
     except HTTPException:
         raise
@@ -1156,7 +1178,7 @@ async def update_game_status(status_id: int, status_data: GameStatusUpdate, db: 
         
         status = service.update(status_id, update_data)
         if not status:
-            raise HTTPException(status_code=404, detail="Game status not found")
+            raise HTTPException(status_code=404, detail=GAME_STATUS_NOT_FOUND)
         return {"success": True, "data": status}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1175,7 +1197,7 @@ async def delete_game_status(status_id: int, db: DbSession):
         
         success = service.delete(status_id)
         if not success:
-            raise HTTPException(status_code=404, detail="Game status not found")
+            raise HTTPException(status_code=404, detail=GAME_STATUS_NOT_FOUND)
         return {"success": True, "message": "Game status deleted successfully"}
     except HTTPException:
         raise
@@ -1203,7 +1225,7 @@ async def get_user_coins(user_id: str, db: DbSession):
         repo = RepositoryFactory.create_usercoins_repository(db)
         coins = repo.get_by_id(user_id)
         if not coins:
-            raise HTTPException(status_code=404, detail="User coins not found")
+            raise HTTPException(status_code=404, detail=USER_COINS_NOT_FOUND)
         return {"success": True, "data": coins.to_dict()}
     except HTTPException:
         raise
@@ -1218,7 +1240,7 @@ async def update_user_coins(user_id: str, coins_data: UserCoinsUpdate, db: DbSes
         repo = RepositoryFactory.create_usercoins_repository(db)
         coins = repo.get_by_id(user_id)
         if not coins:
-            raise HTTPException(status_code=404, detail="User coins not found")
+            raise HTTPException(status_code=404, detail=USER_COINS_NOT_FOUND)
         
         update_data = {k: v for k, v in coins_data.dict().items() if v is not None}
         for key, value in update_data.items():
@@ -1243,7 +1265,7 @@ async def delete_user_coins(user_id: str, db: DbSession):
         repo = RepositoryFactory.create_usercoins_repository(db)
         coins = repo.get_by_id(user_id)
         if not coins:
-            raise HTTPException(status_code=404, detail="User coins not found")
+            raise HTTPException(status_code=404, detail=USER_COINS_NOT_FOUND)
         
         db.delete(coins)
         db.commit()
@@ -1264,7 +1286,7 @@ async def get_coin_transaction(transaction_id: str, db: DbSession):
         repo = RepositoryFactory.create_cointransaction_repository(db)
         transaction = repo.get_by_id(transaction_id)
         if not transaction:
-            raise HTTPException(status_code=404, detail="Transaction not found")
+            raise HTTPException(status_code=404, detail=TRANSACTION_NOT_FOUND)
         return {"success": True, "data": transaction.to_dict()}
     except HTTPException:
         raise
@@ -1279,7 +1301,7 @@ async def update_coin_transaction(transaction_id: str, tx_data: CoinTransactionU
         repo = RepositoryFactory.create_cointransaction_repository(db)
         transaction = repo.get_by_id(transaction_id)
         if not transaction:
-            raise HTTPException(status_code=404, detail="Transaction not found")
+            raise HTTPException(status_code=404, detail=TRANSACTION_NOT_FOUND)
         
         if tx_data.description is not None:
             transaction.description = tx_data.description
@@ -1301,7 +1323,7 @@ async def delete_coin_transaction(transaction_id: str, db: DbSession):
         repo = RepositoryFactory.create_cointransaction_repository(db)
         transaction = repo.get_by_id(transaction_id)
         if not transaction:
-            raise HTTPException(status_code=404, detail="Transaction not found")
+            raise HTTPException(status_code=404, detail=TRANSACTION_NOT_FOUND)
         
         db.delete(transaction)
         db.commit()
@@ -1369,7 +1391,7 @@ async def get_level_milestone(level: int, db: DbSession):
         from app.models import LevelMilestone
         milestone = db.query(LevelMilestone).filter(LevelMilestone.level == level).first()
         if not milestone:
-            raise HTTPException(status_code=404, detail="Milestone not found")
+            raise HTTPException(status_code=404, detail=MILESTONE_NOT_FOUND)
         return {"success": True, "data": milestone.to_dict()}
     except HTTPException:
         raise
@@ -1384,7 +1406,7 @@ async def update_level_milestone(level: int, milestone_data: dict, db: DbSession
         from app.models import LevelMilestone
         milestone = db.query(LevelMilestone).filter(LevelMilestone.level == level).first()
         if not milestone:
-            raise HTTPException(status_code=404, detail="Milestone not found")
+            raise HTTPException(status_code=404, detail=MILESTONE_NOT_FOUND)
         
         # Update fields
         if 'title' in milestone_data:
@@ -1417,7 +1439,7 @@ async def delete_level_milestone(level: int, db: DbSession):
         from app.models import LevelMilestone
         milestone = db.query(LevelMilestone).filter(LevelMilestone.level == level).first()
         if not milestone:
-            raise HTTPException(status_code=404, detail="Milestone not found")
+            raise HTTPException(status_code=404, detail=MILESTONE_NOT_FOUND)
         
         db.delete(milestone)
         db.commit()
@@ -1482,7 +1504,7 @@ async def get_level_reward(reward_id: str, db: DbSession):
         from app.models import LevelReward
         reward = db.query(LevelReward).filter(LevelReward.reward_id == reward_id).first()
         if not reward:
-            raise HTTPException(status_code=404, detail="Reward not found")
+            raise HTTPException(status_code=404, detail=REWARD_NOT_FOUND)
         return {"success": True, "data": reward.to_dict()}
     except HTTPException:
         raise
@@ -1497,7 +1519,7 @@ async def update_level_reward(reward_id: str, reward_data: dict, db: DbSession):
         from app.models import LevelReward
         reward = db.query(LevelReward).filter(LevelReward.reward_id == reward_id).first()
         if not reward:
-            raise HTTPException(status_code=404, detail="Reward not found")
+            raise HTTPException(status_code=404, detail=REWARD_NOT_FOUND)
         
         # Update fields
         if 'level' in reward_data:
@@ -1530,7 +1552,7 @@ async def delete_level_reward(reward_id: str, db: DbSession):
         from app.models import LevelReward
         reward = db.query(LevelReward).filter(LevelReward.reward_id == reward_id).first()
         if not reward:
-            raise HTTPException(status_code=404, detail="Reward not found")
+            raise HTTPException(status_code=404, detail=REWARD_NOT_FOUND)
         
         db.delete(reward)
         db.commit()
@@ -1565,7 +1587,7 @@ async def get_weekly_leaderboard_entry(entry_id: str, db: DbSession):
         from app.models import WeeklyLeaderboard
         entry = db.query(WeeklyLeaderboard).filter(WeeklyLeaderboard.entry_id == entry_id).first()
         if not entry:
-            raise HTTPException(status_code=404, detail="Entry not found")
+            raise HTTPException(status_code=404, detail=ENTRY_NOT_FOUND)
         return {"success": True, "data": entry.to_dict()}
     except HTTPException:
         raise
@@ -1580,7 +1602,7 @@ async def update_weekly_leaderboard_entry(entry_id: str, entry_data: dict, db: D
         from app.models import WeeklyLeaderboard
         entry = db.query(WeeklyLeaderboard).filter(WeeklyLeaderboard.entry_id == entry_id).first()
         if not entry:
-            raise HTTPException(status_code=404, detail="Entry not found")
+            raise HTTPException(status_code=404, detail=ENTRY_NOT_FOUND)
         
         if 'score' in entry_data:
             entry.score = entry_data['score']
@@ -1602,7 +1624,7 @@ async def delete_weekly_leaderboard_entry(entry_id: str, db: DbSession):
         from app.models import WeeklyLeaderboard
         entry = db.query(WeeklyLeaderboard).filter(WeeklyLeaderboard.entry_id == entry_id).first()
         if not entry:
-            raise HTTPException(status_code=404, detail="Entry not found")
+            raise HTTPException(status_code=404, detail=ENTRY_NOT_FOUND)
         
         db.delete(entry)
         db.commit()
@@ -1668,7 +1690,7 @@ async def get_leaderboard_reward(reward_id: int, db: DbSession):
         from app.models import LeaderboardReward
         reward = db.query(LeaderboardReward).filter(LeaderboardReward.reward_id == reward_id).first()
         if not reward:
-            raise HTTPException(status_code=404, detail="Reward not found")
+            raise HTTPException(status_code=404, detail=REWARD_NOT_FOUND)
         return {"success": True, "data": reward.to_dict()}
     except HTTPException:
         raise
@@ -1683,7 +1705,7 @@ async def update_leaderboard_reward(reward_id: str, reward_data: dict, db: DbSes
         from app.models import LeaderboardReward
         reward = db.query(LeaderboardReward).filter(LeaderboardReward.reward_id == reward_id).first()
         if not reward:
-            raise HTTPException(status_code=404, detail="Reward not found")
+            raise HTTPException(status_code=404, detail=REWARD_NOT_FOUND)
         
         if 'rank_start' in reward_data:
             reward.rank_start = reward_data['rank_start']
@@ -1719,7 +1741,7 @@ async def delete_leaderboard_reward(reward_id: str, db: DbSession):
         from app.models import LeaderboardReward
         reward = db.query(LeaderboardReward).filter(LeaderboardReward.reward_id == reward_id).first()
         if not reward:
-            raise HTTPException(status_code=404, detail="Reward not found")
+            raise HTTPException(status_code=404, detail=REWARD_NOT_FOUND)
         
         db.delete(reward)
         db.commit()
@@ -1751,7 +1773,7 @@ async def get_weekly_winner(winner_id: int, db: DbSession):
         from app.models import WeeklyWinner
         winner = db.query(WeeklyWinner).filter(WeeklyWinner.winner_id == winner_id).first()
         if not winner:
-            raise HTTPException(status_code=404, detail="Winner not found")
+            raise HTTPException(status_code=404, detail=WINNER_NOT_FOUND)
         return {"success": True, "data": winner.to_dict()}
     except HTTPException:
         raise
@@ -1766,7 +1788,7 @@ async def update_weekly_winner(winner_id: str, winner_data: dict, db: DbSession)
         from app.models import WeeklyWinner
         winner = db.query(WeeklyWinner).filter(WeeklyWinner.winner_id == winner_id).first()
         if not winner:
-            raise HTTPException(status_code=404, detail="Winner not found")
+            raise HTTPException(status_code=404, detail=WINNER_NOT_FOUND)
         
         if 'reward_sent' in winner_data:
             winner.reward_sent = winner_data['reward_sent']
@@ -1791,7 +1813,7 @@ async def delete_weekly_winner(winner_id: str, db: DbSession):
         from app.models import WeeklyWinner
         winner = db.query(WeeklyWinner).filter(WeeklyWinner.winner_id == winner_id).first()
         if not winner:
-            raise HTTPException(status_code=404, detail="Winner not found")
+            raise HTTPException(status_code=404, detail=WINNER_NOT_FOUND)
         
         db.delete(winner)
         db.commit()
@@ -1823,7 +1845,7 @@ async def get_user_login_streak(user_id: str, db: DbSession):
         from app.models import UserLoginStreak
         streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
         if not streak:
-            raise HTTPException(status_code=404, detail="User login streak not found")
+            raise HTTPException(status_code=404, detail=USER_LOGIN_STREAK_NOT_FOUND)
         return {"success": True, "data": streak.to_dict()}
     except HTTPException:
         raise
@@ -1838,7 +1860,7 @@ async def update_user_login_streak(user_id: str, streak_data: dict, db: DbSessio
         from app.models import UserLoginStreak
         streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
         if not streak:
-            raise HTTPException(status_code=404, detail="User login streak not found")
+            raise HTTPException(status_code=404, detail=USER_LOGIN_STREAK_NOT_FOUND)
         
         if 'current_day' in streak_data:
             streak.current_day = streak_data['current_day']
@@ -1866,7 +1888,7 @@ async def delete_user_login_streak(user_id: str, db: DbSession):
         from app.models import UserLoginStreak
         streak = db.query(UserLoginStreak).filter(UserLoginStreak.user_id == user_id).first()
         if not streak:
-            raise HTTPException(status_code=404, detail="User login streak not found")
+            raise HTTPException(status_code=404, detail=USER_LOGIN_STREAK_NOT_FOUND)
         
         db.delete(streak)
         db.commit()
@@ -1898,7 +1920,7 @@ async def get_daily_login_reward_config(day: int, db: DbSession):
         from app.models import DailyLoginRewardConfig
         config = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == day).first()
         if not config:
-            raise HTTPException(status_code=404, detail="Configuration not found")
+            raise HTTPException(status_code=404, detail=CONFIGURATION_NOT_FOUND)
         return {"success": True, "data": config.to_dict()}
     except HTTPException:
         raise
@@ -1913,7 +1935,7 @@ async def update_daily_login_reward_config(day: int, config_data: dict, db: DbSe
         from app.models import DailyLoginRewardConfig
         config = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == day).first()
         if not config:
-            raise HTTPException(status_code=404, detail="Configuration not found")
+            raise HTTPException(status_code=404, detail=CONFIGURATION_NOT_FOUND)
         
         if 'coins_reward' in config_data:
             config.coins_reward = config_data['coins_reward']
@@ -1974,7 +1996,7 @@ async def delete_daily_login_reward_config(day: int, db: DbSession):
         from app.models import DailyLoginRewardConfig
         config = db.query(DailyLoginRewardConfig).filter(DailyLoginRewardConfig.day == day).first()
         if not config:
-            raise HTTPException(status_code=404, detail="Configuration not found")
+            raise HTTPException(status_code=404, detail=CONFIGURATION_NOT_FOUND)
         
         db.delete(config)
         db.commit()
@@ -2012,7 +2034,7 @@ async def get_campaign(campaign_id: int, db: DbSession):
         
         campaign = service.get(campaign_id)
         if not campaign:
-            raise HTTPException(status_code=404, detail="Campaign not found")
+            raise HTTPException(status_code=404, detail=CAMPAIGN_NOT_FOUND)
         return {"success": True, "data": campaign}
     except HTTPException:
         raise
@@ -2031,7 +2053,7 @@ async def update_campaign(campaign_id: int, campaign_data: CampaignUpdate, db: D
         
         campaign = service.update(campaign_id, update_data)
         if not campaign:
-            raise HTTPException(status_code=404, detail="Campaign not found")
+            raise HTTPException(status_code=404, detail=CAMPAIGN_NOT_FOUND)
         return {"success": True, "data": campaign}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -2050,7 +2072,7 @@ async def delete_campaign(campaign_id: int, db: DbSession):
         
         success = service.delete(campaign_id)
         if not success:
-            raise HTTPException(status_code=404, detail="Campaign not found")
+            raise HTTPException(status_code=404, detail=CAMPAIGN_NOT_FOUND)
         return {"success": True, "message": "Campaign deleted successfully"}
     except HTTPException:
         raise
@@ -2094,7 +2116,7 @@ async def get_platform_config(key: str, db: DbSession):
     try:
         config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
         if not config:
-            raise HTTPException(status_code=404, detail="Config not found")
+            raise HTTPException(status_code=404, detail=CONFIG_NOT_FOUND)
         return {"success": True, "data": config.to_dict()}
     except HTTPException:
         raise
@@ -2109,7 +2131,7 @@ async def update_platform_config(key: str, request: Request, db: DbSession):
         data = await request.json()
         config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
         if not config:
-            raise HTTPException(status_code=404, detail="Config not found")
+            raise HTTPException(status_code=404, detail=CONFIG_NOT_FOUND)
         
         if "value" in data:
             config.value = data["value"]
@@ -2132,7 +2154,7 @@ async def delete_platform_config(key: str, db: DbSession):
     try:
         config = db.query(PlatformConfig).filter(PlatformConfig.key == key).first()
         if not config:
-            raise HTTPException(status_code=404, detail="Config not found")
+            raise HTTPException(status_code=404, detail=CONFIG_NOT_FOUND)
         
         db.delete(config)
         db.commit()
@@ -2181,7 +2203,7 @@ async def get_push_subscription(subscription_id: int, db: DbSession):
     try:
         sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
         if not sub:
-            raise HTTPException(status_code=404, detail="Subscription not found")
+            raise HTTPException(status_code=404, detail=SUBSCRIPTION_NOT_FOUND)
         return {"success": True, "data": sub.to_dict()}
     except HTTPException:
         raise
@@ -2196,7 +2218,7 @@ async def update_push_subscription(subscription_id: int, request: Request, db: D
         data = await request.json()
         sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
         if not sub:
-            raise HTTPException(status_code=404, detail="Subscription not found")
+            raise HTTPException(status_code=404, detail=SUBSCRIPTION_NOT_FOUND)
         
         for field in ["user_id", "endpoint", "p256dh_key", "auth_key", "user_agent", "is_active"]:
             if field in data:
@@ -2218,7 +2240,7 @@ async def delete_push_subscription(subscription_id: int, db: DbSession):
     try:
         sub = db.query(PushSubscription).filter(PushSubscription.subscription_id == subscription_id).first()
         if not sub:
-            raise HTTPException(status_code=404, detail="Subscription not found")
+            raise HTTPException(status_code=404, detail=SUBSCRIPTION_NOT_FOUND)
         
         db.delete(sub)
         db.commit()
@@ -2238,7 +2260,7 @@ async def delete_community_message(message_id: int, db: DbSession):
     try:
         msg = db.query(CommunityMessage).filter(CommunityMessage.id == message_id).first()
         if not msg:
-            raise HTTPException(status_code=404, detail="Message not found")
+            raise HTTPException(status_code=404, detail=MESSAGE_NOT_FOUND)
 
         chat_message_id = msg.message_id
         db.delete(msg)
@@ -2295,7 +2317,7 @@ async def get_game_progress(progress_id: int, db: DbSession):
     try:
         progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
         if not progress:
-            raise HTTPException(status_code=404, detail="Progress not found")
+            raise HTTPException(status_code=404, detail=PROGRESS_NOT_FOUND)
         return {"success": True, "data": progress.to_dict()}
     except HTTPException:
         raise
@@ -2310,7 +2332,7 @@ async def update_game_progress(progress_id: int, request: Request, db: DbSession
         data = await request.json()
         progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
         if not progress:
-            raise HTTPException(status_code=404, detail="Progress not found")
+            raise HTTPException(status_code=404, detail=PROGRESS_NOT_FOUND)
         
         for field in ["user_id", "game_id", "progress_data"]:
             if field in data:
@@ -2332,7 +2354,7 @@ async def delete_game_progress(progress_id: int, db: DbSession):
     try:
         progress = db.query(GameProgress).filter(GameProgress.id == progress_id).first()
         if not progress:
-            raise HTTPException(status_code=404, detail="Progress not found")
+            raise HTTPException(status_code=404, detail=PROGRESS_NOT_FOUND)
         
         db.delete(progress)
         db.commit()
@@ -2382,7 +2404,7 @@ async def get_user_connection(connection_id: int, db: DbSession):
     try:
         conn = db.query(UserConnection).filter(UserConnection.id == connection_id).first()
         if not conn:
-            raise HTTPException(status_code=404, detail="Connection not found")
+            raise HTTPException(status_code=404, detail=CONNECTION_NOT_FOUND)
         return {"success": True, "data": conn.to_dict()}
     except HTTPException:
         raise
@@ -2397,7 +2419,7 @@ async def update_user_connection(connection_id: int, request: Request, db: DbSes
         data = await request.json()
         conn = db.query(UserConnection).filter(UserConnection.id == connection_id).first()
         if not conn:
-            raise HTTPException(status_code=404, detail="Connection not found")
+            raise HTTPException(status_code=404, detail=CONNECTION_NOT_FOUND)
         
         from datetime import datetime, timezone
         for field in ["requester_id", "receiver_id", "status"]:
@@ -2421,7 +2443,7 @@ async def delete_user_connection(connection_id: int, db: DbSession):
     try:
         conn = db.query(UserConnection).filter(UserConnection.id == connection_id).first()
         if not conn:
-            raise HTTPException(status_code=404, detail="Connection not found")
+            raise HTTPException(status_code=404, detail=CONNECTION_NOT_FOUND)
         
         db.delete(conn)
         db.commit()
@@ -2474,7 +2496,7 @@ async def get_private_message_admin(message_id: int, db: DbSession):
     try:
         msg = db.query(PrivateMessage).filter(PrivateMessage.id == message_id).first()
         if not msg:
-            raise HTTPException(status_code=404, detail="Message not found")
+            raise HTTPException(status_code=404, detail=MESSAGE_NOT_FOUND)
         return {"success": True, "data": msg.to_dict()}
     except HTTPException:
         raise
@@ -2489,7 +2511,7 @@ async def update_private_message_admin(message_id: int, request: Request, db: Db
         data = await request.json()
         msg = db.query(PrivateMessage).filter(PrivateMessage.id == message_id).first()
         if not msg:
-            raise HTTPException(status_code=404, detail="Message not found")
+            raise HTTPException(status_code=404, detail=MESSAGE_NOT_FOUND)
         
         for field in ["sender_id", "receiver_id", "text", "is_read"]:
             if field in data:
@@ -2511,7 +2533,7 @@ async def delete_private_message_admin(message_id: int, db: DbSession):
     try:
         msg = db.query(PrivateMessage).filter(PrivateMessage.id == message_id).first()
         if not msg:
-            raise HTTPException(status_code=404, detail="Message not found")
+            raise HTTPException(status_code=404, detail=MESSAGE_NOT_FOUND)
         
         db.delete(msg)
         db.commit()

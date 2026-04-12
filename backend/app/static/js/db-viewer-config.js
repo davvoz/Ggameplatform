@@ -10,7 +10,7 @@
  */
 
 // Bridge to new schema system - SchemaManager provides utility methods
-const schemaManager = typeof SchemaManager !== 'undefined' ? new SchemaManager() : null;
+const schemaManager =  typeof SchemaManager === 'undefined' ? new SchemaManager() : null;
 
 // Shared render helpers to reduce duplication (SonarQube)
 const Renders = {
@@ -22,7 +22,18 @@ const Renders = {
         type: 'html',
         content: value ? '<span style="color: #28a745;">✓ Sì</span>' : '<span style="color: #dc3545;">✗ No</span>'
     }),
-    medal: (value) => value === 1 ? '🥇' : value === 2 ? '🥈' : value === 3 ? '🥉' : '🏅',
+    medal: (value) => {
+        switch (value) {
+            case 1:
+                return '🥇';
+            case 2:
+                return '🥈';
+            case 3:
+                return '🥉';
+            default:
+                return '🏅';
+        }
+    },
     steemReward: (value) => ({
         type: 'html',
         content: `<strong style="color: #3b82f6; font-size: 1.1em;">${value} STEEM</strong>`
@@ -335,7 +346,7 @@ const TABLE_DEFINITIONS = {
                 render: (value) => ({
                     type: 'text',
                     text: value ? Utils.formatDate(value) : 'In corso',
-                    style: !value ? 'color: #ff9800; font-weight: 500;' : ''
+                    style: value ? '' : 'color: #ff9800; font-weight: 500;'
                 })
             },
             {
@@ -1044,9 +1055,10 @@ const TABLE_DEFINITIONS = {
                 label: 'Rank Inizio', 
                 type: 'number',
                 render: (value, row) => {
+                    const rankRange = row.rank_end && row.rank_end !== value ? ` - ${row.rank_end}` : '';
                     return {
                         type: 'html',
-                        content: `${Renders.medal(value)} <strong>${value}${row.rank_end && row.rank_end !== value ? ` - ${row.rank_end}` : ''}</strong>`
+                        content: `${Renders.medal(value)} <strong>${value}${rankRange}</strong>`
                     };
                 }
             },

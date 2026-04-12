@@ -23,8 +23,8 @@ const DIFFICULTIES = {
   medium: {
     simulations: 200,
     bonusWeight: 0.75,
-    rarityWeight: 1.0,
-    zeroPenalty: 1.0,
+    rarityWeight: 1,
+    zeroPenalty: 1,
     riskBias: 0,
     mistakeChance: 0.05,
     holdGreed: 30
@@ -78,17 +78,7 @@ function generateAllMasks(dice) {
   
   // Maschere per ogni valore presente
   for (let face = 1; face <= 6; face++) {
-    if (counts[face] > 0) {
-      // Tieni tutti i dadi con questo valore
-      masks.add(JSON.stringify(dice.map(v => v === face)));
-      
-      // Tieni i dadi con questo valore + altri valori comuni
-      for (let face2 = 1; face2 <= 6; face2++) {
-        if (face2 !== face && counts[face2] > 0) {
-          masks.add(JSON.stringify(dice.map(v => v === face || v === face2)));
-        }
-      }
-    }
+    generateValueMasks(face);
   }
   
   // Maschere per scale parziali
@@ -125,6 +115,20 @@ function generateAllMasks(dice) {
   }
   
   return Array.from(masks).map(m => JSON.parse(m));
+
+  function generateValueMasks(face) {
+    if (counts[face] > 0) {
+      // Tieni tutti i dadi con questo valore
+      masks.add(JSON.stringify(dice.map(v => v === face)));
+
+      // Tieni i dadi con questo valore + altri valori comuni
+      for (let face2 = 1; face2 <= 6; face2++) {
+        if (face2 !== face && counts[face2] > 0) {
+          masks.add(JSON.stringify(dice.map(v => v === face || v === face2)));
+        }
+      }
+    }
+  }
 }
 
 function getUpperCategories() {
@@ -181,7 +185,6 @@ function evaluateKeepMask(mask, dice, scoreState, rollsLeft, config) {
 // Calcola il miglior punteggio possibile per i dadi attuali
 function getBestScoreForDice(dice, scoreState, config) {
   let best = 0;
-  let bestCat = null;
   
   for (const cat of CATEGORIES) {
     if (scoreState.used[cat]) continue;
@@ -191,11 +194,122 @@ function getBestScoreForDice(dice, scoreState, config) {
     
     if (adjustedScore > best) {
       best = adjustedScore;
-      bestCat = cat;
     }
   }
   
   return best;
+}
+
+// Calcola penalità per 0 punti in base alla categoria
+function calculateZeroPenalty(category, isUpper, zeroPenalty) {
+  let penalty = 0;
+  if (category === "Yatzi") penalty = 8;
+  else if (category === "Scala lunga") penalty = 6;
+  else if (category === "Scala corta") penalty = 4;
+  else if (category === "Full") penalty = 3;
+  else if (category === "Poker") penalty = 2;
+  else if (!isUpper) penalty = 1;
+  return penalty * zeroPenalty;
+}
+
+// Aggiusta il punteggio per categorie rare
+function applyRarityBonus(category, rawScore, config) {
+  let bonus = 0;
+  if (category === "Yatzi" && rawScore === 50) {
+    bonus += 15 * config.rarityWeight;
+  } else if (category === "Scala lunga" && rawScore === 40) {
+    bonus += 10 * config.rarityWeight;
+  } else if (category === "Full" && rawScore === 25) {
+    bonus += 5 * config.rarityWeight;
+  }
+  return bonus;
+}
+
+function getCategoryPotentialLoss(category) {
+  if (category === "Yatzi") return 50;
+  if (category === "Scala lunga") return 40;
+  if (category === "Scala corta") return 30;
+  if (category === "Full") return 25;
+  if (category === "Poker") return 20;
+  if (category === "Tris") return 15;
+  if (category === "Chance") return 20;
+  return UPPER_EXPECTED[category] || 10;
+}
+
+function calculateCategoryScore(cat, dice, scoreState, config) {
+  const rawScore = scoreCategory(cat, dice);
+  let adjustedScore = adjustScoreForStrategy(cat, rawScore, dice, scoreState, config);
+
+  if (cat === "Chance") {
+    const sum = dice.reduce((a, b) => a + b, 0);
+    adjustedScore += (sum - 20) * 0.12;
+  }
+
+  if (config.mistakeChance && Math.random() < config.mistakeChance * 0.35) {
+    adjustedScore -= 5;
+  }
+  
+  return adjustedScore;
+}
+
+function findBestCategoryByScore(dice, scoreState, config) {
+  let bestCat = null;
+  let bestScore = -Infinity;
+  
+  for (const cat of CATEGORIES) {
+    if (scoreState.used[cat]) continue;
+    
+    const adjustedScore = calculateCategoryScore(cat, dice, scoreState, config);
+    
+    if (adjustedScore > bestScore) {
+      bestScore = adjustedScore;
+      bestCat = cat;
+    }
+  }
+  
+  return bestCat;
+}
+
+function findBestCategoryByMinLoss(scoreState) {
+  let bestCat = null;
+  let minLoss = Infinity;
+  
+  for (const cat of CATEGORIES) {
+    if (scoreState.used[cat]) continue;
+    const potentialLoss = getCategoryPotentialLoss(cat);
+    if (potentialLoss < minLoss) {
+      minLoss = potentialLoss;
+      bestCat = cat;
+    }
+  }
+  
+  return bestCat;
+}
+
+function findBestCategoryWithFallback(dice, scoreState, config) {
+  let bestCat = findBestCategoryByScore(dice, scoreState, config);
+  
+  if (!bestCat) {
+    bestCat = findBestCategoryByMinLoss(scoreState);
+  }
+  
+  return bestCat;
+}
+
+// Calcola bonus per il target 63
+function calculateBonusAdjustment(category, rawScore, currentUpper, config) {
+  let bonus = 0;
+  if (currentUpper + rawScore >= BONUS_TARGET && currentUpper < BONUS_TARGET) {
+    bonus += BONUS_VALUE * 0.5 * config.bonusWeight;
+  } else if (config.riskBias > 0) {
+    const remaining = upperRemaining({ used: Object.keys(CATEGORIES).reduce((acc, c) => ({ ...acc, [c]: true }), {}) });
+    const expectedRemaining = expectedUpperFromRemaining(remaining.filter(c => c !== category));
+    const projectedTotal = currentUpper + rawScore + expectedRemaining;
+    if (projectedTotal >= BONUS_TARGET - 6) {
+      bonus += BONUS_VALUE * 0.15 * config.bonusWeight;
+    }
+  }
+  return bonus;
 }
 
 // Aggiusta il punteggio in base alla strategia
@@ -203,86 +317,28 @@ function adjustScoreForStrategy(category, rawScore, dice, scoreState, config) {
   let score = rawScore;
   const upperCats = getUpperCategories();
   const isUpper = upperCats.includes(category);
-  const rarityWeight = config.rarityWeight || 1;
-  const bonusWeight = config.bonusWeight || 1;
-  const zeroPenalty = config.zeroPenalty || 1;
-  
-  // Calcola stato bonus
   const currentUpper = currentUpperSum(scoreState);
-  const remaining = upperRemaining(scoreState);
-  const expectedRemaining = expectedUpperFromRemaining(remaining.filter(c => c !== category));
-  const riskBias = config.riskBias || 0;
-  const mistakeChance = config.mistakeChance || 0;
   
   if (isUpper) {
-    // Bonus per stare in linea con il target 63
-    const expectedForThis = UPPER_EXPECTED[category];
-    const projectedTotal = currentUpper + rawScore + expectedRemaining;
-    
-    if (rawScore >= expectedForThis) {
-      // Sopra la media: bonus proporzionale
-      score += (rawScore - expectedForThis) * (0.5 + 0.2 * riskBias);
-    } else if (rawScore < expectedForThis) {
-      // Sotto la media: penalità se rischia il bonus
-      if (projectedTotal < BONUS_TARGET) {
-        score -= (expectedForThis - rawScore) * (0.8 + 0.3 * (1 - riskBias));
-      } else {
-        // Leggera penalità se siamo ancora in corsa per il bonus
-        score -= (expectedForThis - rawScore) * 0.2;
-      }
-    }
-    
-    // Bonus se questa mossa ci fa raggiungere il bonus
-    if (currentUpper + rawScore >= BONUS_TARGET && currentUpper < BONUS_TARGET) {
-      score += BONUS_VALUE * 0.5 * bonusWeight;  // Anticipa parte del bonus
-    } else if (riskBias > 0 && projectedTotal >= BONUS_TARGET - 6) {
-      // Se siamo vicini al bonus, incoraggia la scelta
-      score += BONUS_VALUE * 0.15 * bonusWeight;
-    }
+    score += calculateBonusAdjustment(category, rawScore, currentUpper, config);
   }
   
-  // Bonus per combinazioni rare e preziose
-  if (category === "Yatzi" && rawScore === 50) {
-    score += 15 * rarityWeight;  // Yatzi è prezioso, non sacrificarlo
-    if (config.chaseYahtzee && remaining.length <= 4) {
-      // Aggiungi un po' di appetito nel finale partita
-      score += 5;
-    }
-  }
+  score += applyRarityBonus(category, rawScore, config);
   
-  if (category === "Scala lunga" && rawScore === 40) {
-    score += 10 * rarityWeight;
-  }
-  
-  if (category === "Full" && rawScore === 25) {
-    score += 5 * rarityWeight;
-  }
-  
-  // Penalità per sacrificare categorie importanti con 0
   if (rawScore === 0) {
-    let penalty = 0;
-    if (category === "Yatzi") penalty = 8;
-    else if (category === "Scala lunga") penalty = 6;
-    else if (category === "Scala corta") penalty = 4;
-    else if (category === "Full") penalty = 3;
-    else if (category === "Poker") penalty = 2;
-    else if (!isUpper) penalty = 1;
-    score -= penalty * zeroPenalty;
+    score -= calculateZeroPenalty(category, isUpper, config.zeroPenalty || 1);
   }
   
-  // Chance è una categoria di fallback, penalizzala leggermente
   if (category === "Chance") {
     score -= 3;
   }
 
-  // Rischio controllato: somma alta incoraggia la scelta se siamo aggressivi
-  if (riskBias !== 0) {
+  if (config.riskBias !== 0) {
     const sum = dice.reduce((a, b) => a + b, 0);
-    score += (sum - 18) * 0.05 * riskBias;
+    score += (sum - 18) * 0.05 * config.riskBias;
   }
 
-  // Margine di errore deliberato per livelli facili
-  if (mistakeChance && Math.random() < mistakeChance) {
+  if (config.mistakeChance && Math.random() < config.mistakeChance) {
     score -= 3 + Math.random() * 4;
   }
   
@@ -338,60 +394,7 @@ export function aiDecideKeep(dice, scoreState, rollIndex, difficulty = "medium")
 
 export function aiChooseCategory(dice, scoreState, difficulty = "medium") {
   const config = getConfig(difficulty);
-  let bestCat = null;
-  let bestScore = -Infinity;
-  
-  const upperCats = getUpperCategories();
-  const currentUpper = currentUpperSum(scoreState);
-  const remaining = upperRemaining(scoreState);
-  
-  for (const cat of CATEGORIES) {
-    if (scoreState.used[cat]) continue;
-    
-    const rawScore = scoreCategory(cat, dice);
-    let adjustedScore = adjustScoreForStrategy(cat, rawScore, dice, scoreState, config);
-
-    // Chance: leggero boost se abbiamo somma alta
-    if (cat === "Chance") {
-      const sum = dice.reduce((a, b) => a + b, 0);
-      adjustedScore += (sum - 20) * 0.12;
-    }
-
-    // Margine di errore per la difficoltà easy
-    if (config.mistakeChance && Math.random() < config.mistakeChance * 0.35) {
-      adjustedScore -= 5;
-    }
-    
-    if (adjustedScore > bestScore) {
-      bestScore = adjustedScore;
-      bestCat = cat;
-    }
-  }
-  
-  // Fallback: scegli la categoria con minor danno
-  if (!bestCat) {
-    let minLoss = Infinity;
-    for (const cat of CATEGORIES) {
-      if (scoreState.used[cat]) continue;
-      
-      // Calcola quanto "perdiamo" sacrificando questa categoria
-      let potentialLoss = 0;
-      if (cat === "Yatzi") potentialLoss = 50;
-      else if (cat === "Scala lunga") potentialLoss = 40;
-      else if (cat === "Scala corta") potentialLoss = 30;
-      else if (cat === "Full") potentialLoss = 25;
-      else if (cat === "Poker") potentialLoss = 20;
-      else if (cat === "Tris") potentialLoss = 15;
-      else if (cat === "Chance") potentialLoss = 20;
-      else potentialLoss = UPPER_EXPECTED[cat] || 10;
-      
-      if (potentialLoss < minLoss) {
-        minLoss = potentialLoss;
-        bestCat = cat;
-      }
-    }
-  }
-  
+  const bestCat = findBestCategoryWithFallback(dice, scoreState, config);
   const finalScore = scoreCategory(bestCat, dice);
   return { category: bestCat, score: finalScore };
 }

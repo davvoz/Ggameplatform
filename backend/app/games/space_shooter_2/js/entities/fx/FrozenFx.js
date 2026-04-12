@@ -8,23 +8,23 @@ import { drawBlob, drawPolygon, generateShape, pickColor } from './RenderHelpers
 
 // ── Color palettes ─────────────────────────────
 const ICE_SHEET_PALETTE = [
-    { weight: 0.40, hue: [200, 10], sat: [55, 20], light: [38, 8, 10] },
-    { weight: 0.30, hue: [210, 12], sat: [60, 20], light: [30, 6, 8]  },
+    { weight: 0.4, hue: [200, 10], sat: [55, 20], light: [38, 8, 10] },
+    { weight: 0.3, hue: [210, 12], sat: [60, 20], light: [30, 6, 8]  },
     { weight: 0.18, hue: [195, 10], sat: [35, 20], light: [52, 8, 10] },
     { weight: 0.12, hue: [180, 12], sat: [50, 20], light: [35, 6, 8]  }
 ];
 
 const SNOW_PALETTE = [
-    { weight: 0.50, hue: [205, 10], sat: [15, 15], light: [68, 10, 8] },
-    { weight: 0.30, hue: [210, 10], sat: [30, 15], light: [58, 8, 8]  },
-    { weight: 0.20, hue: [225, 15], sat: [20, 15], light: [62, 8, 8]  }
+    { weight: 0.5, hue: [205, 10], sat: [15, 15], light: [68, 10, 8] },
+    { weight: 0.3, hue: [210, 10], sat: [30, 15], light: [58, 8, 8]  },
+    { weight: 0.2, hue: [225, 15], sat: [20, 15], light: [62, 8, 8]  }
 ];
 
 const CRYSTAL_PALETTE = [
     { weight: 0.35, hue: [190, 15], sat: [65, 20], light: [42, 8, 10] },
     { weight: 0.25, hue: [215, 15], sat: [60, 20], light: [38, 8, 10] },
-    { weight: 0.20, hue: [260, 25], sat: [55, 20], light: [40, 8, 8]  },
-    { weight: 0.20, hue: [175, 12], sat: [60, 20], light: [40, 8, 8]  }
+    { weight: 0.2, hue: [260, 25], sat: [55, 20], light: [40, 8, 8]  },
+    { weight: 0.2, hue: [175, 12], sat: [60, 20], light: [40, 8, 8]  }
 ];
 
 // ── Frozen FX ──────────────────────────────────
@@ -32,7 +32,7 @@ export class FrozenFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const fc = this.config;
-        const d = fc ? fc.dist : [0.30, 0.55, 0.72, 0.88];
+        const d = fc ? fc.dist : [0.3, 0.55, 0.72, 0.88];
         const roll = Math.random();
 
         if (roll < d[0])      this._initIceSheet(W, H, initial, fc);
@@ -132,7 +132,7 @@ export class FrozenFx extends BaseFxStrategy {
             this.sparkles.push({
                 ox: (Math.random() - 0.5) * this.size * 1.2,
                 oy: (Math.random() - 0.5) * this.size * this.elongation * 1.2,
-                r: 0.5 + Math.random() * 1.0,
+                r: 0.5 + Math.random() * 1,
                 phase: Math.random() * Math.PI * 2
             });
         }
@@ -289,7 +289,7 @@ export class FrozenFx extends BaseFxStrategy {
             ctx.beginPath();
             ctx.moveTo(-R * 0.15, -R * 0.08);
             ctx.lineTo(R * 0.05, R * 0.1);
-            ctx.lineTo(R * 0.2, R * 0.0);
+            ctx.lineTo(R * 0.2, R * 0);
             ctx.stroke();
         }
         ctx.restore();

@@ -14,7 +14,7 @@ export const Easing = {
     easeOutCubic: t => (--t) * t * t + 1,
     easeInOutCubic: t => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1,
 
-    easeOutBack: t => { const s = 1.70158; return (t -= 1) * t * ((s + 1) * t + s) + 1; },
+    easeOutBack: t => { const s = 1.70158; t -= 1; return t * t * ((s + 1) * t + s) + 1; },
 
     easeInElastic: t => {
         if (t === 0 || t === 1) return t;
@@ -27,9 +27,16 @@ export const Easing = {
 
     easeOutBounce: t => {
         if (t < 1 / 2.75) return 7.5625 * t * t;
-        if (t < 2 / 2.75) return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
-        if (t < 2.5 / 2.75) return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
-        return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+        if (t < 2 / 2.75) {
+            t -= 1.5 / 2.75;
+            return 7.5625 * t * t + 0.75;
+        }
+        if (t < 2.5 / 2.75) {
+            t -= 2.25 / 2.75;
+            return 7.5625 * t * t + 0.9375;
+        }
+        t -= 2.625 / 2.75;
+        return 7.5625 * t * t + 0.984375;
     }
 };
 
@@ -110,9 +117,9 @@ export class TweenManager {
 
     killTweensOf(target) {
         let write = 0;
-        for (let i = 0; i < this._tweens.length; i++) {
-            if (this._tweens[i].target !== target) {
-                this._tweens[write++] = this._tweens[i];
+        for (const tween of this._tweens) {
+            if (tween.target !== target) {
+                this._tweens[write++] = tween;
             }
         }
         this._tweens.length = write;

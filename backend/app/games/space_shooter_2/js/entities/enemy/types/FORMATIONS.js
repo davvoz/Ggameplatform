@@ -84,7 +84,6 @@ const FORMATIONS = {
 
     /** Arrow pointing down */
     arrow: (enemies, canvasWidth) => {
-        const count = enemies.length;
         return enemies.map((e, i) => {
             if (i === 0) { e.x = 0.5; }
             else {

@@ -33,15 +33,17 @@ export class Renderer {
             try {
                 Object.defineProperty(this.#ctx, 'shadowBlur', {
                     get() { return 0; },
-                    set() {},
+                    set() { },
                     configurable: true,
                 });
                 Object.defineProperty(this.#ctx, 'shadowColor', {
                     get() { return 'transparent'; },
-                    set() {},
+                    set() { },
                     configurable: true,
                 });
-            } catch (_) { /* fallback: shadows remain active */ }
+            } catch (error) { /* fallback: shadows remain active */
+                console.error('[Renderer] Failed to disable mobile shadows:', error);
+            }
         }
 
         this.resize();

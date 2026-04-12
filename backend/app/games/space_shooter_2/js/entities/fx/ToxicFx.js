@@ -9,25 +9,25 @@ import { drawBlob, pickColor, generateShape } from './RenderHelpers.js';
 
 // ── Color palettes (murky swamp tones) ─────────
 const SLUDGE_PALETTE = [
-    { weight: 0.40, hue: [80, 20],  sat: [35, 18], light: [12, 7, 3] },
+    { weight: 0.4, hue: [80, 20],  sat: [35, 18], light: [12, 7, 3] },
     { weight: 0.35, hue: [65, 25],  sat: [28, 15], light: [10, 6, 2] },
     { weight: 0.25, hue: [45, 20],  sat: [25, 12], light: [9, 5, 2] }
 ];
 
 const ACID_PALETTE = [
-    { weight: 0.50, hue: [95, 25],  sat: [55, 25], light: [30, 12, 4] },
-    { weight: 0.50, hue: [110, 20], sat: [45, 20], light: [25, 10, 4] }
+    { weight: 0.5, hue: [95, 25],  sat: [55, 25], light: [30, 12, 4] },
+    { weight: 0.5, hue: [110, 20], sat: [45, 20], light: [25, 10, 4] }
 ];
 
 const FUMES_PALETTE = [
-    { weight: 0.40, hue: [80, 35],  sat: [12, 10], light: [20, 10, 3] },
+    { weight: 0.4, hue: [80, 35],  sat: [12, 10], light: [20, 10, 3] },
     { weight: 0.35, hue: [55, 30],  sat: [10, 8],  light: [16, 8, 3] },
     { weight: 0.25, hue: [100, 25], sat: [8, 8],   light: [14, 6, 2] }
 ];
 
 const MOSS_PALETTE = [
     { weight: 0.45, hue: [90, 25],  sat: [30, 18], light: [16, 8, 3] },
-    { weight: 0.30, hue: [70, 20],  sat: [25, 14], light: [13, 6, 2] },
+    { weight: 0.3, hue: [70, 20],  sat: [25, 14], light: [13, 6, 2] },
     { weight: 0.25, hue: [110, 20], sat: [22, 12], light: [11, 5, 2] }
 ];
 
@@ -36,7 +36,7 @@ export class ToxicFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const tc = this.config;
-        const d = tc ? tc.dist : [0.28, 0.50, 0.72, 0.88];
+        const d = tc ? tc.dist : [0.28, 0.5, 0.72, 0.88];
         const roll = Math.random();
 
         if (roll < d[0])      this._initSludge(W, H, initial);
@@ -156,7 +156,7 @@ export class ToxicFx extends BaseFxStrategy {
             this.bubbles.push({
                 ox: (Math.random() - 0.5) * this.size * 1.4,
                 phase: Math.random() * Math.PI * 2,
-                speed: 1.0 + Math.random() * 2,
+                speed: 1 + Math.random() * 2,
                 r: 1.2 + Math.random() * 2.5
             });
         }
@@ -199,7 +199,7 @@ export class ToxicFx extends BaseFxStrategy {
         // Spore glow
         this.hasSpores = Math.random() < 0.4;
         this.sporePhase = Math.random() * Math.PI * 2;
-        this.sporeSpeed = 1.0 + Math.random() * 1.5;
+        this.sporeSpeed = 1+ Math.random() * 1.5;
     }
 
     // ── Update ──
@@ -262,19 +262,19 @@ export class ToxicFx extends BaseFxStrategy {
         // 1) Shadow blob
         ctx.globalAlpha = this.alpha * 0.3;
         ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        drawBlob(ctx, this.shadowOx, this.shadowOy, R * 0.95, 1.0 + wobble, this.shape, this.elongY);
+        drawBlob(ctx, this.shadowOx, this.shadowOy, R * 0.95, 1+ wobble, this.shape, this.elongY);
         ctx.fill();
 
         // 2) Dark undercoat (slightly larger, darker)
         ctx.globalAlpha = this.alpha * 0.55;
         ctx.fillStyle = `hsl(${this.hue},${this.sat + 5}%,${Math.max(3, this.light - 6)}%)`;
-        drawBlob(ctx, 0, 0, R * 1.06, 1.0 - wobble * 0.5, this.shape, this.elongY);
+        drawBlob(ctx, 0, 0, R * 1.06, 1- wobble * 0.5, this.shape, this.elongY);
         ctx.fill();
 
         // 3) Main body
         ctx.globalAlpha = this.alpha;
         ctx.fillStyle = `hsl(${this.hue},${this.sat}%,${this.light}%)`;
-        drawBlob(ctx, 0, 0, R, 1.0 + wobble, this.shape, this.elongY);
+        drawBlob(ctx, 0, 0, R, 1+ wobble, this.shape, this.elongY);
         ctx.fill();
 
         // 4) Depth gradient (darker bottom)
@@ -283,7 +283,7 @@ export class ToxicFx extends BaseFxStrategy {
         dg.addColorStop(0, 'rgba(0,0,0,0)');
         dg.addColorStop(1, `hsla(${this.hue},${this.sat}%,${Math.max(2, this.light - 10)}%,0.55)`);
         ctx.fillStyle = dg;
-        drawBlob(ctx, 0, 0, R * 0.98, 1.0 + wobble, this.shape, this.elongY);
+        drawBlob(ctx, 0, 0, R * 0.98, 1+ wobble, this.shape, this.elongY);
         ctx.fill();
 
         // 5) Top-left specular highlight
@@ -311,12 +311,12 @@ export class ToxicFx extends BaseFxStrategy {
             // Sub-blob dark
             ctx.globalAlpha = this.alpha * 0.5;
             ctx.fillStyle = `hsl(${this.hue},${this.sat + 3}%,${Math.max(3, this.light - 4)}%)`;
-            drawBlob(ctx, bx, by, br * 1.05, 1.0, sb.shape, 0.8);
+            drawBlob(ctx, bx, by, br * 1.05, 1, sb.shape, 0.8);
             ctx.fill();
             // Sub-blob body
             ctx.globalAlpha = this.alpha * 0.75;
             ctx.fillStyle = `hsl(${this.hue},${this.sat}%,${this.light + 2}%)`;
-            drawBlob(ctx, bx, by, br, 1.0, sb.shape, 0.8);
+            drawBlob(ctx, bx, by, br, 1, sb.shape, 0.8);
             ctx.fill();
             // Sub-blob highlight
             ctx.globalAlpha = this.alpha * 0.18;
@@ -380,14 +380,14 @@ export class ToxicFx extends BaseFxStrategy {
         bg.addColorStop(0.8, `hsla(${this.hue},${this.sat + 5}%,${this.light - 3}%,0.08)`);
         bg.addColorStop(1, `hsla(${this.hue},${this.sat}%,${this.light - 8}%,0.04)`);
         ctx.fillStyle = bg;
-        drawBlob(ctx, 0, 0, R, 1.0, this.blobShape, this.squash);
+        drawBlob(ctx, 0, 0, R, 1, this.blobShape, this.squash);
         ctx.fill();
 
         // 3) Membrane rim (semi-thick organic stroke)
         ctx.globalAlpha = alpha * 0.5 * popAlpha;
         ctx.strokeStyle = `hsl(${this.hue},${this.sat + 5}%,${this.light + 3}%)`;
-        ctx.lineWidth = 1.0 + R * 0.04;
-        drawBlob(ctx, 0, 0, R, 1.0, this.blobShape, this.squash);
+        ctx.lineWidth = 1+ R * 0.04;
+        drawBlob(ctx, 0, 0, R, 1, this.blobShape, this.squash);
         ctx.stroke();
 
         // 4) Bottom membrane thickening (surface tension)
@@ -517,7 +517,7 @@ export class ToxicFx extends BaseFxStrategy {
         // 2) Shadow
         ctx.globalAlpha = this.alpha * 0.3;
         ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        drawBlob(ctx, 2, 2, R * 1.15, 1.0, this.blobShape, this.elongY);
+        drawBlob(ctx, 2, 2, R * 1.15, 1, this.blobShape, this.elongY);
         ctx.fill();
 
         // 3) Main pool body (blobby shape instead of perfect ellipse)
@@ -527,7 +527,7 @@ export class ToxicFx extends BaseFxStrategy {
         pg.addColorStop(0.5, `hsla(${this.hue},${this.sat}%,${this.light}%,0.55)`);
         pg.addColorStop(1, `hsla(${this.hue},${this.sat - 5}%,${Math.max(4, this.light - 8)}%,0.35)`);
         ctx.fillStyle = pg;
-        drawBlob(ctx, 0, 0, R * 1.15, 1.0, this.blobShape, this.elongY);
+        drawBlob(ctx, 0, 0, R * 1.15, 1, this.blobShape, this.elongY);
         ctx.fill();
 
         // 4) Murky depth overlay
@@ -536,7 +536,7 @@ export class ToxicFx extends BaseFxStrategy {
         mg.addColorStop(0, 'rgba(0,0,0,0)');
         mg.addColorStop(1, `hsla(${this.hue - 10},${this.sat + 5}%,${Math.max(3, this.light - 12)}%,0.5)`);
         ctx.fillStyle = mg;
-        drawBlob(ctx, 0, 0, R * 1.1, 1.0, this.blobShape, this.elongY);
+        drawBlob(ctx, 0, 0, R * 1.1, 1, this.blobShape, this.elongY);
         ctx.fill();
 
         // 5) Caustic highlight (shifting bright spot)
@@ -601,19 +601,19 @@ export class ToxicFx extends BaseFxStrategy {
         // 1) Shadow
         ctx.globalAlpha = this.alpha * 0.3;
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
-        drawBlob(ctx, this.shadowOx, this.shadowOy, R * 0.92, 1.0, this.shape, this.elongY);
+        drawBlob(ctx, this.shadowOx, this.shadowOy, R * 0.92, 1, this.shape, this.elongY);
         ctx.fill();
 
         // 2) Dark undercoat
         ctx.globalAlpha = this.alpha * 0.5;
         ctx.fillStyle = `hsl(${this.hue},${this.sat + 4}%,${Math.max(3, this.light - 5)}%)`;
-        drawBlob(ctx, 0, 0, R * 1.05, 1.0, this.shape, this.elongY);
+        drawBlob(ctx, 0, 0, R * 1.05, 1, this.shape, this.elongY);
         ctx.fill();
 
         // 3) Main body
         ctx.globalAlpha = this.alpha;
         ctx.fillStyle = `hsl(${this.hue},${this.sat}%,${this.light}%)`;
-        drawBlob(ctx, 0, 0, R, 1.0, this.shape, this.elongY);
+        drawBlob(ctx, 0, 0, R, 1, this.shape, this.elongY);
         ctx.fill();
 
         // 4) Depth gradient (bottom darker)
@@ -622,7 +622,7 @@ export class ToxicFx extends BaseFxStrategy {
         dg.addColorStop(0, 'rgba(0,0,0,0)');
         dg.addColorStop(1, `hsla(${this.hue},${this.sat}%,${Math.max(2, this.light - 8)}%,0.5)`);
         ctx.fillStyle = dg;
-        drawBlob(ctx, 0, 0, R * 0.97, 1.0, this.shape, this.elongY);
+        drawBlob(ctx, 0, 0, R * 0.97, 1, this.shape, this.elongY);
         ctx.fill();
 
         // 5) Highlight
@@ -640,12 +640,12 @@ export class ToxicFx extends BaseFxStrategy {
             // Clump dark
             ctx.globalAlpha = this.alpha * 0.45;
             ctx.fillStyle = `hsl(${this.hue + 5},${this.sat + 3}%,${Math.max(3, this.light - 3)}%)`;
-            drawBlob(ctx, cx, cy, cr * 1.04, 1.0, c.shape, c.elongY);
+            drawBlob(ctx, cx, cy, cr * 1.04, 1, c.shape, c.elongY);
             ctx.fill();
             // Clump body
             ctx.globalAlpha = this.alpha * 0.7;
             ctx.fillStyle = `hsl(${this.hue + 5},${this.sat + 2}%,${this.light + 2}%)`;
-            drawBlob(ctx, cx, cy, cr, 1.0, c.shape, c.elongY);
+            drawBlob(ctx, cx, cy, cr, 1, c.shape, c.elongY);
             ctx.fill();
             // Clump highlight
             ctx.globalAlpha = this.alpha * 0.15;

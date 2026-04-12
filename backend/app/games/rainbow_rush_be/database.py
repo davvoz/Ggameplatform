@@ -41,7 +41,7 @@ def get_rainbow_rush_db_session():
     try:
         yield session
         session.commit()
-    except Exception as e:
+    except Exception :
         session.rollback()
         raise
     finally:

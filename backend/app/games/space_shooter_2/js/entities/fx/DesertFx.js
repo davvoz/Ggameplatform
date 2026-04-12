@@ -26,14 +26,14 @@ import { drawBlob, drawPolygon, generateShape, pickColor, roundRect } from './Re
 // sandMass — warm sand tones, depth-influenced lightness
 const SAND_MASS_PALETTE = [
     { weight: 0.45, hue: [35, 10],  sat: [40, 18], light: [22, 6, 8] },
-    { weight: 0.30, hue: [28, 10],  sat: [38, 15], light: [20, 5, 7] },
+    { weight: 0.3, hue: [28, 10],  sat: [38, 15], light: [20, 5, 7] },
     { weight: 0.25, hue: [42, 10],  sat: [35, 18], light: [18, 5, 6] }
 ];
 
 // rock — darker, brown/grey desert stone
 const ROCK_PALETTE = [
     { weight: 0.45, hue: [22, 15], sat: [22, 18], light: [24, 14] },
-    { weight: 0.30, hue: [28, 20], sat: [10, 14], light: [28, 16] },
+    { weight: 0.3, hue: [28, 20], sat: [10, 14], light: [28, 16] },
     { weight: 0.25, hue: [18, 15], sat: [14, 12], light: [20, 10] }
 ];
 
@@ -107,7 +107,7 @@ export class DesertFx extends BaseFxStrategy {
         // Size tier — exactly like jungle rock
         const tier = Math.random();
         if (tier < 0.25)      { this.size = 14 + Math.random() * 12; this.rockVariant = 'boulder'; }
-        else if (tier < 0.60) { this.size = 7 + Math.random() * 8;  this.rockVariant = 'medium';  }
+        else if (tier < 0.6) { this.size = 7 + Math.random() * 8;  this.rockVariant = 'medium';  }
         else                  { this.size = 3 + Math.random() * 5;  this.rockVariant = 'pebble';  }
         // Fixed speed — no depth variation (like jungle rock)
         this.speed = 20 + Math.random() * 18;
@@ -120,8 +120,9 @@ export class DesertFx extends BaseFxStrategy {
     }
 
     _genPebbles() {
+        const isNotBoulderValue = this.rockVariant === 'medium' ? Math.floor(Math.random() * 2) : 0;
         const count = this.rockVariant === 'boulder' ? 2 + Math.floor(Math.random() * 3)
-            : this.rockVariant === 'medium' ? Math.floor(Math.random() * 2) : 0;
+            : isNotBoulderValue;
         this.pebbleOffsets = [];
         for (let p = 0; p < count; p++) {
             this.pebbleOffsets.push({

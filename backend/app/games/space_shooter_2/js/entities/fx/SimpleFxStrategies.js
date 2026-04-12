@@ -424,7 +424,7 @@ export class DefaultFx extends BaseFxStrategy {
     _update() { /* static */ }
 
     _render(ctx) {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#f0c5c5';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();

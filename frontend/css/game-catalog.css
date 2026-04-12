@@ -625,7 +625,7 @@
     letter-spacing: 1px;
     white-space: nowrap;
     text-transform: uppercase;
-    background: linear-gradient(135deg, var(--campaign-color, #ff6b00), color-mix(in srgb, var(--campaign-color, #ff6b00) 70%, #000000));
+    background:var(--background);
     padding: 3px 8px;
     border-radius: 4px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);

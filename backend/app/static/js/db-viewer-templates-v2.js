@@ -11,7 +11,7 @@
 
 class TemplateEngine {
     // ============ STAT CARDS ============
-    
+
     static renderStatCard(stat, value) {
         return `
             <div class="stat-card" style="border-left: 4px solid ${this.getStatColor(stat)};">
@@ -20,10 +20,10 @@ class TemplateEngine {
             </div>
         `;
     }
-    
+
     static getStatColor(stat) {
         // Try to get color from schema
-        const tableKey = Object.keys(DB_SCHEMA).find(k => 
+        const tableKey = Object.keys(DB_SCHEMA).find(k =>
             DB_SCHEMA[k].dataKey === stat.key.replace('total_', '') ||
             k === stat.key.replace('total_', '')
         );
@@ -31,7 +31,7 @@ class TemplateEngine {
     }
 
     // ============ TAB BUTTONS ============
-    
+
     static renderTabButton(tableKey, tableDef, isActive = false) {
         return `
             <button class="tab-btn ${isActive ? 'active' : ''}" 
@@ -44,7 +44,7 @@ class TemplateEngine {
     }
 
     // ============ TABLE CONTAINER ============
-    
+
     static renderTableContainer(tableKey, tableDef) {
         const columns = SchemaManager.getTableColumns(tableKey);
         return `
@@ -76,7 +76,7 @@ class TemplateEngine {
     }
 
     // ============ TABLE CELL RENDERING ============
-    
+
     static renderTableCell(column, value, item, index) {
         const cell = document.createElement('td');
 
@@ -105,12 +105,12 @@ class TemplateEngine {
                 cell.textContent = value ?? '-';
                 break;
 
-            case 'number':
+            case 'number': {
                 const numValue = Number.Number.parseFloat(value);
-                cell.textContent = Number.isNaN(numValue) ? '-' : 
-                    (column.decimals !== undefined ? numValue.toFixed(column.decimals) : numValue);
+                const finalConditionValue = column.decimals ? numValue.toFixed(column.decimals) : numValue;
+                cell.textContent = Number.isNaN(numValue) ? '-' : finalConditionValue;
                 break;
-
+            }
             case 'date':
             case 'datetime':
                 cell.textContent = Utils.formatDate(value);
@@ -120,20 +120,20 @@ class TemplateEngine {
                 cell.textContent = Utils.formatDuration(value);
                 break;
 
-            case 'badge':
+            case 'badge': {
                 const badge = document.createElement('span');
                 badge.className = 'badge';
                 badge.textContent = value ?? '-';
                 cell.appendChild(badge);
                 break;
-
-            case 'boolean':
+            }
+            case 'boolean': {
                 const span = document.createElement('span');
                 span.textContent = value ? (column.trueText || '✓') : (column.falseText || '✗');
                 span.style.cssText = `color: ${value ? (column.trueColor || '#28a745') : (column.falseColor || '#dc3545')}; font-weight: bold;`;
                 cell.appendChild(span);
                 break;
-
+            }
             case 'json-preview':
                 this.renderJSONPreview(cell, value, column.maxLength || 50);
                 break;
@@ -156,32 +156,32 @@ class TemplateEngine {
 
         return cell;
     }
-    
+
     static applyRenderedContent(cell, rendered) {
         if (!rendered) {
             cell.textContent = '-';
             return;
         }
-        
+
         switch (rendered.type) {
             case 'text':
                 cell.textContent = rendered.text ?? '-';
                 if (rendered.style) cell.style.cssText = rendered.style;
                 break;
-                
-            case 'badge':
+
+            case 'badge':{
                 const badge = document.createElement('span');
                 badge.className = 'badge';
                 badge.textContent = rendered.text ?? '-';
                 badge.style.cssText = `background: ${rendered.color || '#6c757d'}; color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 0.875rem;`;
                 cell.appendChild(badge);
                 break;
-                
+            }
             case 'html':
                 cell.innerHTML = rendered.content || rendered.html || '-';
                 break;
-                
-            case 'image':
+
+            case 'image':{
                 const img = document.createElement('img');
                 img.src = rendered.src || '';
                 if (rendered.style) img.style.cssText = rendered.style;
@@ -189,16 +189,16 @@ class TemplateEngine {
                 img.onerror = () => { img.src = 'https://via.placeholder.com/60x45?text=Error'; };
                 cell.appendChild(img);
                 break;
-                
+            }
             default:
                 cell.textContent = rendered.text || rendered.content || '-';
         }
     }
-    
+
     static renderImageCell(cell, value, item) {
         const img = document.createElement('img');
         let src = 'https://via.placeholder.com/60x45?text=No+Image';
-        
+
         if (value) {
             if (value.startsWith('http')) {
                 src = value;
@@ -206,21 +206,21 @@ class TemplateEngine {
                 src = `/games/${item.game_id}/${value}`;
             }
         }
-        
+
         img.src = src;
         img.style.cssText = 'width:60px;height:45px;object-fit:cover;border-radius:4px;border:1px solid #333';
         img.alt = 'Thumbnail';
         img.onerror = () => { img.src = 'https://via.placeholder.com/60x45?text=Error'; };
         cell.appendChild(img);
     }
-    
+
     static renderJSONPreview(cell, value, maxLength) {
         if (value === undefined || value === null) {
             cell.textContent = '-';
             cell.style.color = '#999';
             return;
         }
-        
+
         try {
             const jsonStr = typeof value === 'string' ? value : JSON.stringify(value);
             const preview = jsonStr.substring(0, maxLength);
@@ -228,11 +228,12 @@ class TemplateEngine {
             cell.title = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
             cell.style.cursor = 'help';
         } catch (e) {
+            console.error('Error parsing JSON for preview:', e);
             cell.textContent = String(value || '-');
             cell.style.color = '#999';
         }
     }
-    
+
     static renderRank(cell, value, index) {
         const rank = value ?? (index + 1);
         const medals = { 1: '🥇', 2: '🥈', 3: '🥉' };
@@ -240,10 +241,10 @@ class TemplateEngine {
         cell.innerHTML = medal ? `${medal} ${rank}` : `🏅 ${rank}`;
         cell.style.fontWeight = 'bold';
     }
-    
+
     static renderActions(cell, item, column) {
         cell.className = 'actions-cell';
-        
+
         const btnView = document.createElement('button');
         btnView.textContent = 'View';
         btnView.className = 'btn-small btn-view';
@@ -252,30 +253,30 @@ class TemplateEngine {
                 app.showDetails(app.currentView, item);
             }
         };
-        
+
         const btnEdit = document.createElement('button');
         btnEdit.textContent = 'Edit';
         btnEdit.className = 'btn-small btn-edit';
         btnEdit.onclick = () => {
-            const tableKey = typeof app !== 'undefined' ? app.currentView : '';
+            const tableKey = app ? app.currentView : '';
             showEditModal(tableKey, item);
         };
-        
+
         const btnDelete = document.createElement('button');
         btnDelete.textContent = 'Delete';
         btnDelete.className = 'btn-small btn-delete';
         btnDelete.onclick = () => {
-            const tableKey = typeof app !== 'undefined' ? app.currentView : '';
+            const tableKey = app ? app.currentView : '';
             showDeleteModal(tableKey, item);
         };
-        
+
         cell.appendChild(btnView);
         cell.appendChild(btnEdit);
         cell.appendChild(btnDelete);
     }
 
     // ============ DETAIL MODAL - DYNAMIC FROM SCHEMA ============
-    
+
     static renderDetailModal(title, content) {
         return `
             <div class="modal-header">
@@ -285,7 +286,7 @@ class TemplateEngine {
             <div class="modal-body" id="modalBody">${content}</div>
         `;
     }
-    
+
     /**
      * Dynamically render details from schema definition
      * No more per-table methods needed!
@@ -295,23 +296,23 @@ class TemplateEngine {
         if (!schema) {
             return this.renderJSONDetails(item);
         }
-        
+
         const fields = schema.fields;
         const primaryKey = schema.primaryKey;
         const color = schema.color || '#6c757d';
-        
+
         // Group fields by category
         const mainFields = [];
         const detailFields = [];
         const jsonFields = [];
         const timestampFields = [];
-        
+
         Object.entries(fields).forEach(([key, def]) => {
             if (def.hidden) return;
-            
+
             const value = item[key];
             const fieldData = { key, def, value };
-            
+
             if (def.type === 'JSON') {
                 jsonFields.push(fieldData);
             } else if (key.includes('created_at') || key.includes('updated_at') || def.autoSet) {
@@ -322,12 +323,12 @@ class TemplateEngine {
                 detailFields.push(fieldData);
             }
         });
-        
+
         let html = `<div class="detail-view" style="--accent-color: ${color};">`;
-        
+
         // Header section with primary key
         html += this.renderDetailHeader(schema, item, primaryKey, color);
-        
+
         // Main fields grid
         if (mainFields.length > 0) {
             html += `<div class="detail-section">
@@ -336,7 +337,7 @@ class TemplateEngine {
                 </div>
             </div>`;
         }
-        
+
         // Detail fields grid
         if (detailFields.length > 0) {
             html += `<div class="detail-section">
@@ -346,7 +347,7 @@ class TemplateEngine {
                 </div>
             </div>`;
         }
-        
+
         // JSON fields
         if (jsonFields.length > 0) {
             html += `<div class="detail-section">
@@ -354,7 +355,7 @@ class TemplateEngine {
                 ${jsonFields.map(f => this.renderJSONField(f, color)).join('')}
             </div>`;
         }
-        
+
         // Timestamps
         if (timestampFields.length > 0) {
             html += `<div class="detail-section timestamp-section">
@@ -363,15 +364,15 @@ class TemplateEngine {
                 </div>
             </div>`;
         }
-        
+
         html += '</div>';
         return html;
     }
-    
+
     static renderDetailHeader(schema, item, primaryKey, color) {
         const pkValue = item[primaryKey];
         const displayValue = this.getDisplayValue(schema, item);
-        
+
         return `
             <div class="detail-header" style="border-left: 4px solid ${color}; background: linear-gradient(135deg, ${color}15 0%, transparent 100%);">
                 <div class="detail-icon">${schema.icon}</div>
@@ -382,7 +383,7 @@ class TemplateEngine {
             </div>
         `;
     }
-    
+
     static getDisplayValue(schema, item) {
         // Try common display fields
         const displayFields = ['title', 'name', 'username', 'status_name', 'rule_name'];
@@ -391,16 +392,16 @@ class TemplateEngine {
         }
         return item[schema.primaryKey] || 'Record';
     }
-    
+
     static isImportantField(key, def) {
         const importantPatterns = ['title', 'name', 'username', 'score', 'xp', 'reward', 'type', 'status', 'is_active', 'balance'];
         return importantPatterns.some(p => key.toLowerCase().includes(p)) || def.required;
     }
-    
+
     static renderDetailField(fieldData, color) {
         const { key, def, value } = fieldData;
         const formattedValue = this.formatFieldValue(value, def);
-        
+
         return `
             <div class="detail-field">
                 <label class="field-label">${def.label || key}</label>
@@ -408,62 +409,71 @@ class TemplateEngine {
             </div>
         `;
     }
-    
+
     static formatFieldValue(value, def) {
-        if (value === null || value === undefined) return '<span class="empty-value">-</span>';
-        
+        if (value === null || value === undefined) 
+            return '<span class="empty-value">-</span>';
+
         switch (def.type) {
             case 'BOOLEAN':
-                return value 
+                return value
                     ? '<span class="status-badge success">✓ Sì</span>'
                     : '<span class="status-badge danger">✗ No</span>';
-                    
+
             case 'INTEGER':
             case 'FLOAT':
-                const numVal = Number.parseFloat(value);
-                if (def.label?.toLowerCase().includes('xp')) {
-                    return `<span class="value-highlight success">⭐ ${numVal.toFixed(def.type === 'FLOAT' ? 2 : 0)}</span>`;
-                }
-                if (def.label?.toLowerCase().includes('coin') || def.label?.toLowerCase().includes('balance')) {
-                    return `<span class="value-highlight gold">🪙 ${numVal}</span>`;
-                }
-                if (def.label?.toLowerCase().includes('steem')) {
-                    return `<span class="value-highlight primary">${numVal} STEEM</span>`;
-                }
-                return `<span class="value-number">${numVal.toFixed(def.type === 'FLOAT' ? 2 : 0)}</span>`;
-                
+                return this.formatNumericValue(value, def);
+
             case 'DATETIME':
             case 'DATE':
                 return Utils.formatDate(value) || '-';
-                
+
             case 'STRING':
                 if (def.fk) {
                     return `<code class="fk-value">${Utils.escapeHtml(String(value))}</code>`;
                 }
                 return Utils.escapeHtml(String(value));
-                
+
             default:
                 return Utils.escapeHtml(String(value));
         }
     }
-    
+
+    static formatNumericValue(value, def) {
+        const numVal = Number.parseFloat(value);
+        const labelLower = def.label?.toLowerCase() || '';
+        const decimals = def.type === 'FLOAT' ? 2 : 0;
+
+        if (labelLower.includes('xp')) {
+            return `<span class="value-highlight success">⭐ ${numVal.toFixed(decimals)}</span>`;
+        }
+        if (labelLower.includes('coin') || labelLower.includes('balance')) {
+            return `<span class="value-highlight gold">🪙 ${numVal}</span>`;
+        }
+        if (labelLower.includes('steem')) {
+            return `<span class="value-highlight primary">${numVal} STEEM</span>`;
+        }
+        return `<span class="value-number">${numVal.toFixed(decimals)}</span>`;
+    }
+
     static renderJSONField(fieldData, color) {
         const { key, def, value } = fieldData;
-        
+
         let jsonStr = '-';
         let isEmpty = true;
-        
+
         if (value !== null && value !== undefined) {
             try {
                 const parsed = typeof value === 'string' ? JSON.parse(value) : value;
                 jsonStr = JSON.stringify(parsed, null, 2);
                 isEmpty = Object.keys(parsed).length === 0 || (Array.isArray(parsed) && parsed.length === 0);
             } catch (e) {
+                console.error('Error parsing JSON for field:', key, e);
                 jsonStr = String(value);
                 isEmpty = !value;
             }
         }
-        
+
         if (isEmpty) {
             return `
                 <div class="json-field empty">
@@ -472,7 +482,7 @@ class TemplateEngine {
                 </div>
             `;
         }
-        
+
         return `
             <div class="json-field">
                 <label class="field-label">${def.label || key}</label>
@@ -480,11 +490,11 @@ class TemplateEngine {
             </div>
         `;
     }
-    
+
     static renderTimestampField(fieldData) {
         const { key, def, value } = fieldData;
         const icon = key.includes('created') ? '📅' : '🔄';
-        
+
         return `
             <div class="timestamp-field">
                 <span class="timestamp-icon">${icon}</span>
@@ -496,7 +506,7 @@ class TemplateEngine {
 
     // ============ LEGACY SUPPORT - SPECIFIC DETAIL RENDERERS ============
     // These are kept for backward compatibility but now delegate to renderDetails
-    
+
     static renderQuestDetails(quest) {
         return this.renderDetails('quests', quest);
     }
@@ -534,7 +544,7 @@ class TemplateEngine {
     }
 
     // ============ ER DIAGRAM ============
-    
+
     static renderERDiagramTable(table, showTypes = true) {
         const tableConfig = table.config;
         const pos = { x: table.x, y: table.y };
@@ -549,19 +559,20 @@ class TemplateEngine {
                       style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.1))"/>
                 <rect width="${width}" height="${headerHeight}" fill="${tableConfig.erDiagram.color}" rx="8"/>
                 <rect width="${width}" height="8" y="${headerHeight - 8}" fill="${tableConfig.erDiagram.color}"/>
-                <text x="${width/2}" y="${headerHeight/2 + 5}" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">
+                <text x="${width / 2}" y="${headerHeight / 2 + 5}" text-anchor="middle" fill="#fff" font-weight="bold" font-size="16">
                     ${tableConfig.icon || ''} ${tableConfig.name}
                 </text>
                 ${tableConfig.fields.map((field, i) => {
-                    const y = headerHeight + (i * rowHeight);
-                    const bg = i % 2 === 1 ? `<rect x="0" y="${y}" width="${width}" height="${rowHeight}" fill="#f9f9f9"/>` : '';
-                    const icon = field.pk ? '🔑 ' : (field.fk ? '🔗 ' : '');
-                    return `
+            const y = headerHeight + (i * rowHeight);
+            const bg = i % 2 === 1 ? `<rect x="0" y="${y}" width="${width}" height="${rowHeight}" fill="#f9f9f9"/>` : '';
+            const iconForFk = field.fk ? '🔗 ' : '';
+            const icon = field.pk ? '🔑 ' : iconForFk;
+            return `
                         ${bg}
-                        <text x="10" y="${y + rowHeight/2 + 4}" font-size="12" fill="#333">${icon}${field.name}</text>
-                        ${showTypes ? `<text x="${width - 10}" y="${y + rowHeight/2 + 4}" text-anchor="end" font-size="10" fill="#999">${field.type}</text>` : ''}
+                        <text x="10" y="${y + rowHeight / 2 + 4}" font-size="12" fill="#333">${icon}${field.name}</text>
+                        ${showTypes ? `<text x="${width - 10}" y="${y + rowHeight / 2 + 4}" text-anchor="end" font-size="10" fill="#999">${field.type}</text>` : ''}
                     `;
-                }).join('')}
+        }).join('')}
             </g>
         `;
     }
@@ -579,11 +590,11 @@ class TemplateEngine {
         const fromX = from.x + 250;
         const fromFieldIndex = fromConfig.fields.findIndex(f => f.name === fromField);
         const fromY = from.y + 40 + (fromFieldIndex * 22) + 11;
-        
+
         const toX = to.x;
         const toFieldIndex = toConfig.fields.findIndex(f => f.name === toField);
         const toY = to.y + 40 + (toFieldIndex * 22) + 11;
-        
+
         const midX = (fromX + toX) / 2;
 
         return `<path d="M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}" 
@@ -591,7 +602,7 @@ class TemplateEngine {
     }
 
     // ============ UTILITY RENDERS ============
-    
+
     static renderEmptyState(message = 'Nessun record nel database') {
         return `
             <div class="empty-icon">📋</div>
@@ -635,7 +646,7 @@ class Utils {
         if (!dateString) return '-';
         const date = new Date(dateString);
         if (Number.isNaN(date.getTime())) return dateString;
-        return date.toLocaleString(CONFIG?.DATE_FORMAT?.locale || 'it-IT', 
+        return date.toLocaleString(CONFIG?.DATE_FORMAT?.locale || 'it-IT',
             CONFIG?.DATE_FORMAT?.options || {
                 year: 'numeric',
                 month: '2-digit',
@@ -651,7 +662,7 @@ class Utils {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-        
+
         if (hours > 0) return `${hours}h ${minutes}m`;
         if (minutes > 0) return `${minutes}m ${secs}s`;
         return `${secs}s`;
@@ -705,9 +716,9 @@ class Utils {
         a.click();
         URL.revokeObjectURL(url);
     }
-    
+
     static generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, function(c) {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replaceAll(/[xy]/g, function (c) {
             const r = Math.trunc(Math.random() * 16);
             const v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
@@ -716,7 +727,7 @@ class Utils {
 }
 
 // Export for global use
-if (typeof window !== 'undefined') {
-    window.TemplateEngine = TemplateEngine;
-    window.Utils = Utils;
+if (typeof globalThis !== 'undefined') {
+    globalThis.TemplateEngine = TemplateEngine;
+    globalThis.Utils = Utils;
 }

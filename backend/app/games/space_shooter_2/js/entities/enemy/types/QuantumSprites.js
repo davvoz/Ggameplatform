@@ -21,7 +21,7 @@ const TAU = Math.PI * 2;
 
 function glossyGrad(ctx, cx, cy, r, baseColor, lightColor) {
     const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.05,
-                                       cx, cy, r);
+        cx, cy, r);
     g.addColorStop(0, lightColor || '#ffffff');
     g.addColorStop(0.25, baseColor);
     g.addColorStop(1, darken(baseColor, 0.4));
@@ -97,7 +97,8 @@ function drawVoidEye(ctx, ex, ey, size, t, color) {
 }
 
 /** Slit eye — predatory narrow slit with menacing glow and sharp edges */
-function drawSlitEye(ctx, ex, ey, w, h, t, color, vertical) {
+function drawSlitEye(ctx, options) {
+    const { ex, ey, w, h, t, color, vertical } = options;//
     ctx.save();
     // Outer menacing glow socket — larger, more intense
     const socketG = ctx.createRadialGradient(ex, ey, 0, ex, ey, w * 1.6);
@@ -307,7 +308,8 @@ function drawNeonOutline(ctx, cx, cy, r, color, alpha, width) {
 //  with spring-like gluon connections, menacing face on main body
 // ═══════════════════════════════════════════════
 
-function drawQuarkTriplet(ctx, cx, cy, w, h, t, state) {
+function drawQuarkTriplet(ctx, options) {
+    const { cx, cy, w, t, state } = options;
     const r = w * 0.42;
     const quarkR = r * 0.32;
     const quarkColors = ['#ff3355', '#33ff77', '#3366ff'];
@@ -413,7 +415,8 @@ function drawQuarkTriplet(ctx, cx, cy, w, h, t, state) {
 //  wispy body with ghostly face, phase-shifting aura
 // ═══════════════════════════════════════════════
 
-function drawNeutrinoGhost(ctx, cx, cy, w, h, t, state) {
+function drawNeutrinoGhost(ctx, options) {
+    const { cx, cy, w, t, state } = options;
     const r = w * 0.46;
     const flavor = state.flavorIdx || 0;
     const flavorColors = ['#aa88ff', '#88ddff', '#ffaa55'];
@@ -423,7 +426,7 @@ function drawNeutrinoGhost(ctx, cx, cy, w, h, t, state) {
     ctx.save();
     for (let ring = 0; ring < 4; ring++) {
         const offset = ring * TAU * 0.25 + t * 0.8;
-        const blobR = r * (1.0 + ring * 0.15);
+        const blobR = r * (1 + ring * 0.15);
         const bx = cx + Math.sin(offset) * r * 0.08;
         const by = cy + Math.cos(offset * 1.3) * r * 0.08;
         ctx.globalAlpha = 0.06 - ring * 0.012;
@@ -461,7 +464,7 @@ function drawNeutrinoGhost(ctx, cx, cy, w, h, t, state) {
     ctx.save();
     ctx.globalAlpha = 0.55;
     const bodyGrad = ctx.createRadialGradient(cx - r * 0.15, cy - r * 0.2, r * 0.05,
-                                               cx, cy, r * 0.7);
+        cx, cy, r * 0.7);
     bodyGrad.addColorStop(0, lighten(baseColor, 0.5));
     bodyGrad.addColorStop(0.5, baseColor);
     bodyGrad.addColorStop(1, darken(baseColor, 0.5));
@@ -534,7 +537,8 @@ function drawNeutrinoGhost(ctx, cx, cy, w, h, t, state) {
 //  lightning bolts, photon ring, determined face
 // ═══════════════════════════════════════════════
 
-function drawBosonCarrier(ctx, cx, cy, w, h, t, state) {
+function drawBosonCarrier(ctx, options) {
+    const { cx, cy, w, t } = options;
     const r = w * 0.44;
 
     // Radiating force waves (concentric expanding rings)
@@ -560,14 +564,12 @@ function drawBosonCarrier(ctx, cx, cy, w, h, t, state) {
     for (let i = 0; i < 4; i++) {
         const angle = TAU / 4 * i + t * 0.6;
         ctx.beginPath();
-        let px = cx, py = cy;
         for (let seg = 0; seg < 5; seg++) {
             const dist = r * (0.4 + seg * 0.2);
             const jitter = (Math.random() - 0.5) * 6;
             const nx = cx + Math.cos(angle) * dist + Math.sin(angle + 1.57) * jitter;
             const ny = cy + Math.sin(angle) * dist + Math.cos(angle + 1.57) * jitter;
             ctx.lineTo(nx, ny);
-            px = nx; py = ny;
         }
         ctx.stroke();
     }
@@ -611,8 +613,8 @@ function drawBosonCarrier(ctx, cx, cy, w, h, t, state) {
 
     // Fierce slit eyes — larger, predatory, aggressive
     const eyeSpread = r * 0.2;
-    drawSlitEye(ctx, cx - eyeSpread, cy - r * 0.06, r * 0.13, r * 0.08, t, '#ffcc00', true);
-    drawSlitEye(ctx, cx + eyeSpread, cy - r * 0.06, r * 0.13, r * 0.08, t, '#ffcc00', true);
+    drawSlitEye(ctx, { ex: cx - eyeSpread, ey: cy - r * 0.06, w: r * 0.13, h: r * 0.08, t, color: '#ffcc00', vertical: true });
+    drawSlitEye(ctx, { ex: cx + eyeSpread, ey: cy - r * 0.06, w: r * 0.13, h: r * 0.08, t, color: '#ffcc00', vertical: true });
 
     // Aggressive V-brow — angular dark ridges
     ctx.save();
@@ -671,9 +673,9 @@ function drawBosonCarrier(ctx, cx, cy, w, h, t, state) {
 //  concentric mass rings, heavy presence, regal face
 // ═══════════════════════════════════════════════
 
-function drawHiggsField(ctx, cx, cy, w, h, t, state) {
+function drawHiggsField(ctx, options) {
+    const { cx, cy, w, t } = options;
     const r = w * 0.48;
-    const fieldR = state.fieldRadius || r * 1.5;
 
     // Outer mass field distortion rings
     ctx.save();
@@ -837,7 +839,8 @@ function drawHiggsField(ctx, cx, cy, w, h, t, state) {
 //  split design, sparkly annihilation boundary, manic face
 // ═══════════════════════════════════════════════
 
-function drawPositronMirror(ctx, cx, cy, w, h, t, state) {
+function drawPositronMirror(ctx, options) {
+    const { cx, cy, w, t } = options;
     const r = w * 0.44;
     const splitAngle = t * 0.4;
 
@@ -891,9 +894,9 @@ function drawPositronMirror(ctx, cx, cy, w, h, t, state) {
     ctx.shadowBlur = 6;
     ctx.beginPath();
     ctx.moveTo(cx + Math.cos(splitAngle + Math.PI / 2) * r * 0.55,
-               cy + Math.sin(splitAngle + Math.PI / 2) * r * 0.55);
+        cy + Math.sin(splitAngle + Math.PI / 2) * r * 0.55);
     ctx.lineTo(cx + Math.cos(splitAngle - Math.PI / 2) * r * 0.55,
-               cy + Math.sin(splitAngle - Math.PI / 2) * r * 0.55);
+        cy + Math.sin(splitAngle - Math.PI / 2) * r * 0.55);
     ctx.stroke();
     ctx.restore();
 
@@ -908,7 +911,8 @@ function drawPositronMirror(ctx, cx, cy, w, h, t, state) {
 
     // Split-personality eyes — larger, asymmetric, deeply unsettling
     // Left (matter side): cold predatory slit — bigger
-    drawSlitEye(ctx, cx - r * 0.18, cy - r * 0.08, r * 0.12, r * 0.07, t, '#66aaff', true);
+    drawSlitEye(ctx, { ex: cx - r * 0.18, ey: cy - r * 0.08, w: r * 0.12, h: r * 0.07, t, color: '#66aaff', vertical: true });
+
     // Right (antimatter side): wide abyssal void — bigger
     drawVoidEye(ctx, cx + r * 0.18, cy - r * 0.08, r * 0.13, t, '#ff4488');
 
@@ -983,7 +987,8 @@ function drawPositronMirror(ctx, cx, cy, w, h, t, state) {
 //  spring connections, chain expression, sentinel-like
 // ═══════════════════════════════════════════════
 
-function drawGluonChain(ctx, cx, cy, w, h, t, state) {
+function drawGluonChain(ctx, options) {
+    const { cx, cy, w, t, state } = options;
     const r = w * 0.4;
     const isEndpoint = state.isEndpoint !== false;
     const chainColors = ['#33ff77', '#77ffaa', '#aaffcc'];
@@ -1102,13 +1107,14 @@ function drawGluonChain(ctx, cx, cy, w, h, t, state) {
  * @param {number} t — time (seconds)
  * @param {object} state — live state for animation
  */
-export function drawW4Sprite(ctx, type, cx, cy, w, h, t, state) {
+export function drawW4Sprite(ctx, options) {
+    const { type, cx, cy, w, h, t, state } = options;
     switch (type) {
-        case 'quark_triplet':   drawQuarkTriplet(ctx, cx, cy, w, h, t, state); break;
-        case 'neutrino_ghost':  drawNeutrinoGhost(ctx, cx, cy, w, h, t, state); break;
-        case 'boson_carrier':   drawBosonCarrier(ctx, cx, cy, w, h, t, state); break;
-        case 'higgs_field':     drawHiggsField(ctx, cx, cy, w, h, t, state); break;
-        case 'positron_mirror': drawPositronMirror(ctx, cx, cy, w, h, t, state); break;
-        case 'gluon_chain':     drawGluonChain(ctx, cx, cy, w, h, t, state); break;
+        case 'quark_triplet': drawQuarkTriplet(ctx, { cx, cy, w, h, t, state }); break;
+        case 'neutrino_ghost': drawNeutrinoGhost(ctx, { cx, cy, w, h, t, state }); break;
+        case 'boson_carrier': drawBosonCarrier(ctx, { cx, cy, w, h, t, state }); break;
+        case 'higgs_field': drawHiggsField(ctx, { cx, cy, w, h, t, state }); break;
+        case 'positron_mirror': drawPositronMirror(ctx, { cx, cy, w, h, t, state }); break;
+        case 'gluon_chain': drawGluonChain(ctx, { cx, cy, w, h, t, state }); break;
     }
 }

@@ -87,7 +87,9 @@ export class Game {
                 if (e.data.type === 'showLevelUpModal' && e.data.payload) {
                     Game.#showLevelUpModal(e.data.payload);
                 }
-            } catch (_) {}
+            } catch (error) {
+                console.warn('Received malformed message:', error);
+            }
         });
     }
 
@@ -378,7 +380,8 @@ export class Game {
 
             await this.#platform.sendScore(0, { rounds_played: 0, chips: this.#chips });
             await this.#loadUserCoins();
-        } catch (_) {
+        } catch (error) {
+            console.warn('Platform initialization failed:', error);
             // Fallback to offline mode — keep local chips
         }
     }
@@ -386,10 +389,10 @@ export class Game {
     async #loadUserCoins() {
         // Wait for platformConfig.userId (max 3 s)
         const deadline = Date.now() + 3000;
-        while (!window.platformConfig?.userId && Date.now() < deadline) {
+        while (!globalThis.platformConfig?.userId && Date.now() < deadline) {
             await new Promise(r => setTimeout(r, 100));
         }
-        if (!window.platformConfig?.userId) return;
+        if (!globalThis.platformConfig?.userId) return;
 
         const balance = await this.#platform.getUserBalance();
         if (balance !== null && balance !== undefined && typeof balance === 'number') {

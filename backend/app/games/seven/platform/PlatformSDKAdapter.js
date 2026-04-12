@@ -5,7 +5,7 @@
 
 export class PlatformSDKAdapter {
   constructor() {
-    this._sdk = window.PlatformSDK;
+    this._sdk = globalThis.PlatformSDK;
     this._userId = null;
     this._config = null;
     this._sessionId = null;
@@ -35,7 +35,7 @@ export class PlatformSDKAdapter {
     try {
       await this._sdk.sendScore(score, { extra_data: extraData });
     } catch (error) {
-      // Silent fail - non-blocking
+      console.error('[PlatformSDKAdapter] Error sending score:', error);
     }
   }
 
@@ -62,7 +62,7 @@ export class PlatformSDKAdapter {
     try {
       await this._sdk.gameOver(score, { extra_data: extraData });
     } catch (error) {
-      // Silent fail - non-blocking
+      console.error('[PlatformSDKAdapter] Error sending gameOver:', error);
     }
   }
 
@@ -74,7 +74,7 @@ export class PlatformSDKAdapter {
     try {
       await this._sdk.resetSession();
     } catch (error) {
-      // Silent fail - non-blocking
+      console.error('[PlatformSDKAdapter] Error resetting session:', error);
     }
   }
 
@@ -89,28 +89,28 @@ export class PlatformSDKAdapter {
     this._sdk.on('config', (config) => {
 
       this._config = config;
-      if (config && config.userId) {
+      if (config?.userId) {
         this._userId = config.userId;
 
       } else {
-
+        console.error('[PlatformSDKAdapter] No userId found in config');
       }
     });
 
     await this._sdk.init(callbacks);
-    
+
     // Multiple fallback checks for userId
     if (!this._userId) {
-      // Check window.platformConfig
-      if (window.platformConfig && window.platformConfig.userId) {
-        this._userId = window.platformConfig.userId;
-        this._config = window.platformConfig;
+      // Check globalThis.platformConfig
+      if (globalThis.platformConfig?.userId) {
+        this._userId = globalThis.platformConfig.userId;
+        this._config = globalThis.platformConfig;
 
       }
       // Check if SDK has getConfig method
       else if (this._sdk.getConfig && typeof this._sdk.getConfig === 'function') {
         const config = this._sdk.getConfig();
-        if (config && config.userId) {
+        if (config?.userId) {
           this._userId = config.userId;
           this._config = config;
 
@@ -122,22 +122,20 @@ export class PlatformSDKAdapter {
         if (storedUserId) {
           this._userId = storedUserId;
 
-        } else {
-
         }
       }
     }
   }
-  
+
   _ensureUserId() {
     if (this._userId) return this._userId;
-    
+
     // Try multiple sources
-    if (window.platformConfig?.userId) {
-      this._userId = window.platformConfig.userId;
+    if (globalThis.platformConfig?.userId) {
+      this._userId = globalThis.platformConfig.userId;
       return this._userId;
     }
-    
+
     if (this._sdk?.getConfig) {
       const config = this._sdk.getConfig();
       if (config?.userId) {
@@ -145,13 +143,13 @@ export class PlatformSDKAdapter {
         return this._userId;
       }
     }
-    
+
     const stored = localStorage.getItem('platformUserId');
     if (stored) {
       this._userId = stored;
       return this._userId;
     }
-    
+
     return null;
   }
 
@@ -162,22 +160,22 @@ export class PlatformSDKAdapter {
         console.error('[PlatformSDKAdapter] No userId available');
         return null;
       }
-      
 
-      
+
+
       // Call platform coin API with actual user ID
       const response = await fetch(`/api/coins/${userId}/balance`, {
         credentials: 'include'
       });
-      
 
-      
+
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('[PlatformSDKAdapter] Failed to get balance:', response.status, errorText);
         return null;
       }
-      
+
       const data = await response.json();
 
       return data.balance;
@@ -194,7 +192,7 @@ export class PlatformSDKAdapter {
         console.error('[PlatformSDKAdapter] No userId available for spending');
         return false;
       }
-      
+
       const response = await fetch(`/api/coins/${userId}/spend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -206,13 +204,8 @@ export class PlatformSDKAdapter {
           description
         })
       });
-      
-      if (!response.ok) {
 
-        return false;
-      }
-      
-      return true;
+      return response.ok;
     } catch (error) {
       console.error('Failed to spend coins:', error);
       return false;
@@ -226,7 +219,7 @@ export class PlatformSDKAdapter {
         console.error('[PlatformSDKAdapter] No userId available for awarding');
         return false;
       }
-      
+
       const payload = {
         amount: Number.parseInt(amount),
         transaction_type: 'game_win',
@@ -235,21 +228,20 @@ export class PlatformSDKAdapter {
       };
 
 
-      
+
       const response = await fetch(`/api/coins/${userId}/award`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Failed to award coins:', response.status, errorText);
         return false;
       }
-      
-      const result = await response.json();
+
 
       return true;
     } catch (error) {
@@ -327,10 +319,8 @@ export class PlatformSDKAdapter {
 
       const result = await response.json();
 
-      
-      const sessionId = this._sessionId;
       this._sessionId = null;
-      
+
       return result.session;
     } catch (error) {
       console.error('[PlatformSDKAdapter] Exception ending session:', error);
@@ -345,7 +335,7 @@ export class PlatformSDKAdapter {
 
     try {
 
-      
+
       // Send message to RuntimeShell to show XP banner
       window.parent.postMessage({
         type: 'showXPBanner',

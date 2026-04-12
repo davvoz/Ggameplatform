@@ -23,50 +23,50 @@ class ImageUploadService {
   async compressImage(file, maxWidthHeight = 1920) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.src = e.target.result;
-        
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          
-          // Ridimensiona se l'immagine è troppo grande
-          if (width > maxWidthHeight || height > maxWidthHeight) {
-            if (width > height) {
-              height *= maxWidthHeight / width;
-              width = maxWidthHeight;
-            } else {
-              width *= maxWidthHeight / height;
-              height = maxWidthHeight;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Determina il tipo MIME dall'originale
-          const mimeType = file.type || 'image/jpeg';
-          
-          // Usa la qualità massima per PNG, altrimenti qualità 90% per JPEG
-          const quality = mimeType === 'image/png' ? 1 : 0.9;
-          
-          canvas.toBlob(
-            blob => resolve(blob),
-            mimeType,
-            quality
-          );
-        };
-        
-        img.onerror = () => reject(new Error('Error loading image for compression'));
-      };
+      reader.onload = (e) => this.handleImageLoad(e, file, maxWidthHeight, resolve, reject);
       reader.onerror = () => reject(new Error('Error reading image file'));
       reader.readAsDataURL(file);
     });
+  }
+
+  handleImageLoad(e, file, maxWidthHeight, resolve, reject) {
+    const img = new Image();
+    img.src = e.target.result;
+    img.onload = () => this.processImageCompression(img, file, maxWidthHeight, resolve);
+    img.onerror = () => reject(new Error('Error loading image for compression'));
+  }
+
+  processImageCompression(img, file, maxWidthHeight, resolve) {
+    const canvas = document.createElement('canvas');
+    let { width, height } = this.calculateDimensions(img.width, img.height, maxWidthHeight);
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    const mimeType = file.type || 'image/jpeg';
+    const quality = mimeType === 'image/png' ? 1 : 0.9;
+    
+    canvas.toBlob(
+      blob => resolve(blob),
+      mimeType,
+      quality
+    );
+  }
+
+  calculateDimensions(width, height, maxWidthHeight) {
+    if (width > maxWidthHeight || height > maxWidthHeight) {
+      if (width > height) {
+        height *= maxWidthHeight / width;
+        width = maxWidthHeight;
+      } else {
+        width *= maxWidthHeight / height;
+        height = maxWidthHeight;
+      }
+    }
+    return { width, height };
   }
 
   /**

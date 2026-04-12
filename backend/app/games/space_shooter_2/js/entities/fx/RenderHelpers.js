@@ -127,7 +127,9 @@ export function pickColor(palette, near = 0) {
         }
     }
     // Fallback to last
-    const last = palette[palette.length - 1];
+
+    const last = palette.at(-1);
+
     return {
         hue: last.hue[0] + Math.random() * last.hue[1],
         sat: last.sat[0] + Math.random() * last.sat[1],

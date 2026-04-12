@@ -5,7 +5,6 @@
 
 import { GAME_CONSTANTS } from '../constants.js';
 import { DiceFactory } from './DiceFactory.js';
-import { OrbitControls } from './OrbitControls.js';
 import { PhysicsEngine } from '../physics/PhysicsEngine.js';
 
 export class DiceRenderer {

@@ -13,6 +13,10 @@ import uuid
 from .models import RainbowRushProgress, RainbowRushLevelCompletion, RainbowRushGameSession
 
 
+class RepositoryError(RuntimeError):
+    """Custom exception for Rainbow Rush repository errors"""
+
+
 class RainbowRushRepository:
     """
     Repository for Rainbow Rush game data
@@ -70,7 +74,7 @@ class RainbowRushRepository:
             return progress
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Error getting/creating progress: {str(e)}")
+            raise RepositoryError(f"Error getting/creating progress: {str(e)}") from e
     
     def update_progress(self, progress_id: str, data: Dict[str, Any]) -> Optional[RainbowRushProgress]:
         """
@@ -116,7 +120,7 @@ class RainbowRushRepository:
             return progress
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Error updating progress: {str(e)}")
+            raise RepositoryError(f"Error updating progress: {str(e)}") from e
     
     def get_progress_by_user(self, user_id: str) -> Optional[RainbowRushProgress]:
         """Get progress by user ID with optimized query"""
@@ -126,7 +130,7 @@ class RainbowRushRepository:
                 RainbowRushProgress.user_id == user_id
             ).first()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching progress: {str(e)}")
+            raise RepositoryError(f"Error fetching progress: {str(e)}") from e
     
     # ==================== LEVEL COMPLETION METHODS ====================
     
@@ -166,7 +170,7 @@ class RainbowRushRepository:
             return completion
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Error creating level completion: {str(e)}")
+            raise RepositoryError(f"Error creating level completion: {str(e)}") from e
     
     def get_level_completions(self, user_id: str, level_id: Optional[int] = None) -> List[RainbowRushLevelCompletion]:
         """
@@ -189,7 +193,7 @@ class RainbowRushRepository:
             
             return query.order_by(RainbowRushLevelCompletion.completed_at.desc()).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching level completions: {str(e)}")
+            raise RepositoryError(f"Error fetching level completions: {str(e)}") from e
     
     def get_best_completion(self, user_id: str, level_id: int) -> Optional[RainbowRushLevelCompletion]:
         """Get best completion for specific level (highest stars, then best time)"""
@@ -202,7 +206,7 @@ class RainbowRushRepository:
                 RainbowRushLevelCompletion.completion_time.asc()
             ).first()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching best completion: {str(e)}")
+            raise RepositoryError(f"Error fetching best completion: {str(e)}") from e
     
     # ==================== SESSION METHODS ====================
     
@@ -240,7 +244,7 @@ class RainbowRushRepository:
             return session
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Error creating session: {str(e)}")
+            raise RepositoryError(f"Error creating session: {str(e)}") from e
     
     def update_session(self, session_id: str, data: Dict[str, Any]) -> Optional[RainbowRushGameSession]:
         """
@@ -277,7 +281,7 @@ class RainbowRushRepository:
             return session
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Error updating session: {str(e)}")
+            raise RepositoryError(f"Error updating session: {str(e)}") from e
     
     def get_session(self, session_id: str) -> Optional[RainbowRushGameSession]:
         """Get session by ID"""
@@ -286,7 +290,7 @@ class RainbowRushRepository:
                 RainbowRushGameSession.session_id == session_id
             ).first()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching session: {str(e)}")
+            raise RepositoryError(f"Error fetching session: {str(e)}") from e
     
     def get_active_session(self, user_id: str) -> Optional[RainbowRushGameSession]:
         """Get active session for user"""
@@ -296,7 +300,7 @@ class RainbowRushRepository:
                 RainbowRushGameSession.is_active == 1
             ).first()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching active session: {str(e)}")
+            raise RepositoryError(f"Error fetching active session: {str(e)}") from e
     
     def end_session(self, session_id: str) -> Optional[RainbowRushGameSession]:
         """End an active session"""
@@ -311,4 +315,4 @@ class RainbowRushRepository:
             return session
         except SQLAlchemyError as e:
             self.db.rollback()
-            raise Exception(f"Error ending session: {str(e)}")
+            raise RepositoryError(f"Error ending session: {str(e)}") from e

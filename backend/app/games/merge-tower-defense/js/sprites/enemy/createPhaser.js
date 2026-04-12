@@ -259,7 +259,7 @@ export function phaser() {
 
     // FLY - same as walk for flying enemies
     const fly = new AnimationClip('fly', 0.5, true);
-    fly.tracks = JSON.parse(JSON.stringify(walk.tracks));
+    fly.tracks = structuredClone(walk.tracks);
     sprite.addAnimation(fly);
 
     // ATTACK - phase strike with energy surge

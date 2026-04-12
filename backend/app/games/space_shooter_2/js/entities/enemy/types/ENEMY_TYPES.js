@@ -82,7 +82,7 @@ const ENEMY_TYPES = {
     // Common W3 — boxy data cube, tanky, shield-links with nearby cubes
     data_cube: {
         width: 54, height: 54, health: 5, speed: 40, score: 280,
-        color: '#8844ff', shootRate: 2, dropChance: 0.20,
+        color: '#8844ff', shootRate: 2, dropChance: 0.2,
         w3behaviour: 'shielder' // links shield with nearby cubes, takes less dmg when linked
     },
     // Simulation exclusive — fragmented polygon, bursts into fast fragments on low HP
@@ -130,7 +130,7 @@ const ENEMY_TYPES = {
     // W4 — links two enemies with a force line, buffing both; break the carrier to break the link
     boson_carrier: {
         width: 50, height: 50, health: 4, speed: 55, score: 320,
-        color: '#ffee33', shootRate: 2.5, dropChance: 0.20,
+        color: '#ffee33', shootRate: 2.5, dropChance: 0.2,
         w4behaviour: 'forcelink' // connects 2 nearest enemies with a force line, +50% damage resist while linked
     },
     // W4 — creates a slowing field that grows over time; must kill before field covers screen

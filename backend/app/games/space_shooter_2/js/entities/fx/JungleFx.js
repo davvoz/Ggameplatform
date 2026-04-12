@@ -8,14 +8,14 @@ import { drawBlob, drawPolygon, generateShape, pickColor } from './RenderHelpers
 
 // ── Color palettes ─────────────────────────────
 const CANOPY_PALETTE = [
-    { weight: 0.50, hue: [115, 25], sat: [45, 25], light: [18, 6, 8] },
-    { weight: 0.28, hue: [90, 20],  sat: [45, 25], light: [20, 5, 7] },
+    { weight: 0.5, hue: [115, 25], sat: [45, 25], light: [18, 6, 8] },
+    { weight: 0.28, hue: [90, 20], sat: [45, 25], light: [20, 5, 7] },
     { weight: 0.22, hue: [145, 20], sat: [45, 25], light: [16, 5, 6] }
 ];
 
 const ROCK_PALETTES = [
     { weight: 0.45, hue: [25, 15], sat: [20, 18], light: [24, 14] },
-    { weight: 0.30, hue: [30, 20], sat: [8, 12],  light: [28, 16] },
+    { weight: 0.3, hue: [30, 20], sat: [8, 12], light: [28, 16] },
     { weight: 0.25, hue: [20, 25], sat: [12, 10], light: [18, 10] }
 ];
 
@@ -26,7 +26,7 @@ const RIVER_PALETTES = [
 
 const SWAMP_PALETTES = [
     { weight: 0.5, hue: [155, 25], sat: [18, 15], light: [12, 8] },
-    { weight: 0.5, hue: [85, 30],  sat: [14, 14], light: [10, 7] }
+    { weight: 0.5, hue: [85, 30], sat: [14, 14], light: [10, 7] }
 ];
 
 // ── Jungle FX (terrain composite) ──────────────
@@ -34,14 +34,14 @@ export class JungleFx extends BaseFxStrategy {
     _init(initial) {
         const W = this.canvasWidth, H = this.canvasHeight;
         const jc = this.config;
-        const d = jc ? jc.dist : [0.48, 0.66, 0.80, 1.0];
+        const d = jc ? jc.dist : [0.48, 0.66, 0.8, 1];
         const roll = Math.random();
 
-        if (roll < d[0])      this._initCanopy(W, H, initial, jc);
+        if (roll < d[0]) this._initCanopy(W, H, initial, jc);
         else if (roll < d[1]) this._initRock(W, H, initial);
         else if (roll < d[2]) this._initDirt(W, H, initial);
         else if (roll < d[3]) this._initRiver(W, H, initial, jc);
-        else                  this._initSwamp(W, H, initial);
+        else this._initSwamp(W, H, initial);
     }
 
     // ── Sub-type initialisers ──
@@ -70,9 +70,9 @@ export class JungleFx extends BaseFxStrategy {
         this.y = initial ? Math.random() * H : -30 - Math.random() * 20;
         // Size tier
         const tier = Math.random();
-        if (tier < 0.25)      { this.size = 14 + Math.random() * 12; this.rockVariant = 'boulder'; }
-        else if (tier < 0.60) { this.size = 7 + Math.random() * 8;  this.rockVariant = 'medium';  }
-        else                  { this.size = 3 + Math.random() * 5;  this.rockVariant = 'pebble';  }
+        if (tier < 0.25) { this.size = 14 + Math.random() * 12; this.rockVariant = 'boulder'; }
+        else if (tier < 0.6) { this.size = 7 + Math.random() * 8; this.rockVariant = 'medium'; }
+        else { this.size = 3 + Math.random() * 5; this.rockVariant = 'pebble'; }
         this.speed = 20 + Math.random() * 18;
         this.alpha = 0.6 + Math.random() * 0.35;
         this.rot = Math.random() * Math.PI * 2;
@@ -83,8 +83,9 @@ export class JungleFx extends BaseFxStrategy {
     }
 
     _genPebbles() {
+        const isNotBoulderValue = this.rockVariant === 'medium' ? Math.floor(Math.random() * 2) : 0;
         const count = this.rockVariant === 'boulder' ? 2 + Math.floor(Math.random() * 3)
-            : this.rockVariant === 'medium' ? Math.floor(Math.random() * 2) : 0;
+            : isNotBoulderValue;
         this.pebbleOffsets = [];
         for (let p = 0; p < count; p++) {
             this.pebbleOffsets.push({
@@ -174,10 +175,10 @@ export class JungleFx extends BaseFxStrategy {
     _render(ctx) {
         switch (this.subType) {
             case 'canopy': this._renderCanopy(ctx); break;
-            case 'rock':   this._renderRock(ctx);   break;
-            case 'dirt':   this._renderDirt(ctx);   break;
-            case 'river':  this._renderRiver(ctx);  break;
-            case 'swamp':  this._renderSwamp(ctx);  break;
+            case 'rock': this._renderRock(ctx); break;
+            case 'dirt': this._renderDirt(ctx); break;
+            case 'river': this._renderRiver(ctx); break;
+            case 'swamp': this._renderSwamp(ctx); break;
         }
     }
 
@@ -186,7 +187,6 @@ export class JungleFx extends BaseFxStrategy {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.rot);
         const R = this.size;
-        const draw = (ox, oy, sc) => { drawBlob(ctx, ox, oy, R, sc, this.shape); ctx.fill(); };
 
         // Shadow
         ctx.globalAlpha = this.alpha * 0.4;
@@ -379,5 +379,5 @@ export class JungleFx extends BaseFxStrategy {
         ctx.restore();
     }
 
-    
+
 }

@@ -4,7 +4,6 @@
  */
 
 import { NOTIFICATION_TONE } from '../constants.js';
-import { MathUtils } from '../utils/MathUtils.js';
 
 export class UIManager {
   constructor() {
@@ -212,7 +211,6 @@ export class UIManager {
     const currentBet = this.getBetAmount();
     const min = Number.parseInt(this.elements.betAmountInput.min, 10);
     const max = Number.parseInt(this.elements.betAmountInput.max, 10);
-    const step = Number.parseInt(this.elements.betAmountInput.step || 1, 10);
 
     // Disable decrease if at minimum
     this.elements.decreaseBet.disabled = currentBet <= min;

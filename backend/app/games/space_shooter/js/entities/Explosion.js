@@ -33,9 +33,11 @@ class Explosion extends GameObject {
         const TAU = Math.PI * 2;
         const isLarge = this.size === 'large';
         const isMedium = this.size === 'medium';
+        const mediumValueFire = isMedium ? 5 : 3;
+        const mediumValueSize = isMedium ? 12 : 8;
 
         // Fire blobs - big, overlapping, slow-moving outward to create fireball mass
-        const fireCount = isLarge ? 8 : isMedium ? 5 : 3;
+        const fireCount = isLarge ? 8 : mediumValueFire;
         for (let i = 0; i < fireCount; i++) {
             const a = (i / fireCount) * TAU + Math.random() * 0.8;
             const sp = 30 + Math.random() * 60;
@@ -43,15 +45,16 @@ class Explosion extends GameObject {
                 x: this.centerX + (Math.random() - 0.5) * 8,
                 y: this.centerY + (Math.random() - 0.5) * 8,
                 vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
-                size: (isLarge ? 18 : isMedium ? 12 : 8) + Math.random() * 6,
+                size: (isLarge ? 18 : mediumValueSize) + Math.random() * 6,
                 life: 1, decay: 1.6 + Math.random() * 0.4,
                 type: 'fire',
                 hue: 15 + Math.random() * 35
             });
         }
+        const mediumValueSparks = isMedium ? 7 : 4;
 
         // Hot sparks - fast debris with gravity
-        const sparkCount = isLarge ? 12 : isMedium ? 7 : 4;
+        const sparkCount = isLarge ? 12 : mediumValueSparks;
         for (let i = 0; i < sparkCount; i++) {
             const a = (i / sparkCount) * TAU + Math.random() * 0.5;
             const sp = 200 + Math.random() * 300;
@@ -64,8 +67,9 @@ class Explosion extends GameObject {
             });
         }
 
+        const mediumValueSmoke = isMedium ? 3 : 2;
         // Smoke - appears after fireball fades
-        const smokeCount = isLarge ? 4 : isMedium ? 3 : 2;
+        const smokeCount = isLarge ? 4 : mediumValueSmoke;
         for (let i = 0; i < smokeCount; i++) {
             const a = Math.random() * TAU;
             const sp = 8 + Math.random() * 15;

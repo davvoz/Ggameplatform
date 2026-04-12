@@ -41,8 +41,8 @@ export class InputManager {
 
     setupEventListeners() {
         // Keyboard events
-        window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-        window.addEventListener('keyup', (e) => this.handleKeyUp(e));
+        globalThis.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        globalThis.addEventListener('keyup', (e) => this.handleKeyUp(e));
 
         // Mouse events su entrambi i canvas
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
@@ -66,41 +66,7 @@ export class InputManager {
         const key = event.key.toLowerCase();
         
         if (!this.keys.has(key)) {
-            this.keys.add(key);
-            
-            // Turbo activation with 'D' key
-            if (key === 'd') {
-                event.preventDefault();
-                this.notifyListeners('turbo');
-            }
-            
-            // Flight activation with 'A' key
-            if (key === 'a') {
-                event.preventDefault();
-                this.notifyListeners('flight');
-            }
-            
-            // Arrow Up / W - Jump AND flight control
-            if (key === 'arrowup' || key === 'w') {
-                event.preventDefault();
-                
-                // Trigger jump
-                if (!this.jumpPressed) {
-                    this.jumpPressed = true;
-                    this.jumpPressTime = performance.now();
-                    this.triggerJump();
-                }
-            }
-            
-            // Jump with Space
-            if (key === ' ') {
-                event.preventDefault();
-                if (!this.jumpPressed) {
-                    this.jumpPressed = true;
-                    this.jumpPressTime = performance.now();
-                    this.triggerJump();
-                }
-            }
+            this.handleKeyPress(key, event);
         }
         
         // Continuous flight control with arrow keys (check every frame)
@@ -112,6 +78,44 @@ export class InputManager {
         if (key === 'arrowdown' || key === 's') {
             event.preventDefault();
             this.notifyListeners('flightDown');
+        }
+    }
+
+    handleKeyPress(key, event) {
+        this.keys.add(key);
+
+        // Turbo activation with 'D' key
+        if (key === 'd') {
+            event.preventDefault();
+            this.notifyListeners('turbo');
+        }
+
+        // Flight activation with 'A' key
+        if (key === 'a') {
+            event.preventDefault();
+            this.notifyListeners('flight');
+        }
+
+        // Arrow Up / W - Jump AND flight control
+        if (key === 'arrowup' || key === 'w') {
+            event.preventDefault();
+
+            // Trigger jump
+            if (!this.jumpPressed) {
+                this.jumpPressed = true;
+                this.jumpPressTime = performance.now();
+                this.triggerJump();
+            }
+        }
+
+        // Jump with Space
+        if (key === ' ') {
+            event.preventDefault();
+            if (!this.jumpPressed) {
+                this.jumpPressed = true;
+                this.jumpPressTime = performance.now();
+                this.triggerJump();
+            }
         }
     }
 

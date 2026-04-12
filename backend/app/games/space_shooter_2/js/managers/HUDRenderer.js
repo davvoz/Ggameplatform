@@ -1,5 +1,5 @@
 import { getLevelData } from '../LevelDataFacade.js';
-import { title, ui, mono } from '../FontConfig.js';
+import {  ui, mono } from '../FontConfig.js';
 
 class HUDRenderer {
     constructor(game) {

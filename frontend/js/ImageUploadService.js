@@ -2,11 +2,11 @@
  * Service for handling image uploads using imridd API
  */
 import eventEmitter from './utils/EventEmitter.js';
+import { config } from './config.js';
 
 class ImageUploadService {
   MAX_FILE_SIZE_MB = 15;
   UPLOAD_TIMEOUT_MS = 60000; // 60 secondi di timeout
-  API_ENDPOINT = 'https://develop-imridd.eu.pythonanywhere.com/api/steem/free_upload_image';
 
 
   /**
@@ -22,45 +22,50 @@ class ImageUploadService {
    */
   async compressImage(file, maxWidthHeight = 1920) {
     return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.src = e.target.result;
         
-        // Ridimensiona se l'immagine è troppo grande
-        if (width > maxWidthHeight || height > maxWidthHeight) {
-          if (width > height) {
-            height *= maxWidthHeight / width;
-            width = maxWidthHeight;
-          } else {
-            width *= maxWidthHeight / height;
-            height = maxWidthHeight;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Ridimensiona se l'immagine è troppo grande
+          if (width > maxWidthHeight || height > maxWidthHeight) {
+            if (width > height) {
+              height *= maxWidthHeight / width;
+              width = maxWidthHeight;
+            } else {
+              width *= maxWidthHeight / height;
+              height = maxWidthHeight;
+            }
           }
-        }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Determina il tipo MIME dall'originale
+          const mimeType = file.type || 'image/jpeg';
+          
+          // Usa la qualità massima per PNG, altrimenti qualità 90% per JPEG
+          const quality = mimeType === 'image/png' ? 1 : 0.9;
+          
+          canvas.toBlob(
+            blob => resolve(blob),
+            mimeType,
+            quality
+          );
+        };
         
-        canvas.width = width;
-        canvas.height = height;
-        
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Determina il tipo MIME dall'originale
-        const mimeType = file.type || 'image/jpeg';
-        
-        // Usa la qualità massima per PNG, altrimenti qualità 90% per JPEG
-        const quality = mimeType === 'image/png' ? 1 : 0.9;
-        
-        canvas.toBlob(
-          blob => resolve(blob),
-          mimeType,
-          quality
-        );
+        img.onerror = () => reject(new Error('Error loading image for compression'));
       };
-      
-      img.onerror = () => reject(new Error('Error loading image for compression'));
+      reader.onerror = () => reject(new Error('Error reading image file'));
+      reader.readAsDataURL(file);
     });
   }
 
@@ -119,7 +124,7 @@ class ImageUploadService {
       
       // Esegui la richiesta con timeout
       const response = await this.fetchWithTimeout(
-        this.API_ENDPOINT, 
+        `${config.API_URL}/api/steem/upload_image`, 
         {
           method: 'POST',
           headers: {

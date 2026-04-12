@@ -128,7 +128,7 @@ class ParticleSystem {
         this.particles = [];
         this.emitters = [];
         this.maxParticles = 500;
-        this.particleMultiplier = 1.0;
+        this.particleMultiplier = 1;
         this.glowEnabled = true;
         this.trailEnabled = true;
     }
@@ -143,8 +143,8 @@ class ParticleSystem {
         for (let i = 0; i < actualCount; i++) {
             const particle = new Particle(x, y, {
                 ...config,
-                vx: config.vx !== undefined ? config.vx : (Math.random() - 0.5) * (config.spread || 100),
-                vy: config.vy !== undefined ? config.vy : (Math.random() - 0.5) * (config.spread || 100),
+                vx: config.vx ?? (Math.random() - 0.5) * (config.spread || 100),
+                vy: config.vy ?? (Math.random() - 0.5) * (config.spread || 100),
                 // Applica impostazioni performance
                 glow: config.glow && this.glowEnabled,
                 trail: config.trail && this.trailEnabled,

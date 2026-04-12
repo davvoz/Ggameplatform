@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js';
+import GameObject from '../../../shared/GameObject.js';
 
 /**
  * PowerUp - Collectible items dropped by enemies

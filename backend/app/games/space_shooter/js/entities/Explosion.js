@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js';
+import GameObject from '../../../shared/GameObject.js';
 /**
  * Explosion - Organic fireball with debris and smoke
  */

@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js';
+import GameObject from '../../../shared/GameObject.js';
 import Vector2 from '../../../shared/Vector2.js';
 /**
  * Enemy - Classe base per i nemici

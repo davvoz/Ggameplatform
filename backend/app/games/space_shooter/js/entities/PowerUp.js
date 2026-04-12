@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js';
+import GameObject from '../../../shared/GameObject.js';
 /**
  * PowerUp - Potenziamenti raccoglibili con effetti avanzati
  */

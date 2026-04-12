@@ -1103,7 +1103,7 @@ class AssetManager {
         };
 
         // Expansion: fireball grows then fades
-        const expand = frame < 3 ? 0.5 + frame * 0.2 : 1.0 - (frame - 3) * 0.12;
+        const expand = frame < 3 ? 0.5 + frame * 0.2 : 1 - (frame - 3) * 0.12;
         const baseAlpha = Math.max(0, 1 - progress * 0.85);
 
         if (baseAlpha < 0.03) return canvas;

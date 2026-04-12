@@ -1,4 +1,4 @@
-import GameObject from '../GameObject.js';
+import GameObject from '../../../../shared/GameObject.js';
 import { ENEMY_TYPES } from "./types/ENEMY_TYPES.js";
 import { MOVEMENT } from "./types/MOVEMENT.js";
 import { drawW4Sprite } from './types/QuantumSprites.js';

@@ -15,9 +15,12 @@ from app.models import User, Leaderboard, Game, GameStatus
 from app.telegram_notifier import send_telegram_success
 import os
 import json
+import httpx
 
 
 router = APIRouter(prefix="/api/steem", tags=["Steem"])
+
+IMRIDD_UPLOAD_URL = "https://imridd.eu.pythonanywhere.com/api/steem/free_upload_image"
 
 
 # Pydantic schemas
@@ -69,6 +72,29 @@ def get_steem_post_service() -> SteemPostService:
 DbSession = Annotated[Session, Depends(get_db)]
 CoinServiceDep = Annotated[CoinService, Depends(get_coin_service)]
 SteemPostServiceDep = Annotated[SteemPostService, Depends(get_steem_post_service)]
+
+
+class ImageUploadRequest(BaseModel):
+    image_base64: str
+
+
+@router.post("/upload_image")
+async def upload_image(request: ImageUploadRequest):
+    """Proxy image upload to imridd API to avoid CORS issues"""
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                IMRIDD_UPLOAD_URL,
+                json={"image_base64": request.image_base64}
+            )
+            response.raise_for_status()
+            return response.json()
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Image upload timeout")
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=f"Upload failed: {e.response.text}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 def get_user_statistics(db: Session, user_id: str) -> Dict[str, Any]:

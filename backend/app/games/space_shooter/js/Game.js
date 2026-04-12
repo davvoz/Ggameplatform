@@ -8,7 +8,7 @@ import Player from './entities/Player.js';
 import { UpgradeManager } from './entities/Upgrades.js';
 import { getLevelData } from './LevelData.obf.js';
 import Bullet from './entities/Bullet.js';
-import {EnemyFactory} from './entities/Enemy.js';
+import { EnemyFactory } from './entities/Enemy.js';
 import Explosion from './entities/Explosion.js';
 import PowerUp from './entities/PowerUp.js';
 /**
@@ -107,7 +107,7 @@ class Game {
 
         // Performance mode: 'high', 'medium', 'low'
         this.performanceMode = this.loadPerformanceMode();
-        this.explosionScale = 1.0;
+        this.explosionScale = 1;
 
         // FPS Monitor
         this.fpsHistory = [];
@@ -183,7 +183,7 @@ class Game {
         const containerHeight = container.clientHeight;
 
         // Rileva se è mobile
-        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const isMobile = ('ontouchstart' in globalThis) || (navigator.maxTouchPoints > 0);
 
         let width, height;
 
@@ -211,7 +211,7 @@ class Game {
         }
 
         // Aggiorna layout dei controlli touch
-        if (this.input && this.input.isMobile) {
+        if (this.input?.isMobile) {
             this.input.updateLayout(width, height);
         }
     }
@@ -367,7 +367,7 @@ class Game {
         });
 
         // ESC key for pause
-        window.addEventListener('keydown', (e) => {
+        globalThis.addEventListener('keydown', (e) => {
             if (e.code === 'Escape') {
                 if (this.state === 'playing') {
                     this.pauseGame();
@@ -386,18 +386,18 @@ class Game {
      */
     setupWindowListeners() {
         // Register with PlatformSDK for XP banner events
-        if (window.PlatformSDK) {
-            window.PlatformSDK.on('showXPBanner', (payload) => {
+        if (globalThis.PlatformSDK) {
+            globalThis.PlatformSDK.on('showXPBanner', (payload) => {
 
-                if (payload && payload.xp_earned !== undefined) {
+                if (payload?.xp_earned !== undefined) {
                     this.showXPBanner(payload.xp_earned, payload);
                 }
             });
         }
 
         // Listen for messages from platform (e.g., XP banner and level-up requests) - fallback
-        window.addEventListener('message', (event) => {
-            if (!event.data || !event.data.type) return;
+        globalThis.addEventListener('message', (event) => {
+            if (!event.data?.type) return;
             // Validate protocol version
             if (event.data.protocolVersion !== '1.0.0') return;
             // Validate and store origin from first valid message
@@ -730,7 +730,7 @@ class Game {
      * Update shop UI: balance, options, counter
      */
     updateShopUI() {
-        const balance = window.platformBalance || 0;
+        const balance = globalThis.platformBalance || 0;
         const canAfford = balance >= this.SHOP_UPGRADE_COST;
         const slotsLeft = this.MAX_SHOP_UPGRADES - this.shopUpgradesPurchased;
 
@@ -761,7 +761,7 @@ class Game {
 
             options.forEach((option, index) => {
                 const optionEl = document.createElement('div');
-                optionEl.className = `upgrade-option shop-option ${option.rarity} ${(!canAfford) ? 'shop-disabled' : ''}`;
+                optionEl.className = `upgrade-option shop-option ${option.rarity} ${(canAfford) ? '' : 'shop-disabled'}`;
                 optionEl.style.animationDelay = `${index * 0.1}s`;
                 optionEl.innerHTML = `
                     <div class="upgrade-icon">${option.icon}</div>
@@ -801,12 +801,12 @@ class Game {
     async purchasePregameUpgrade(option) {
         if (this.shopUpgradesPurchased >= this.MAX_SHOP_UPGRADES) return;
 
-        const balance = window.platformBalance || 0;
+        const balance = globalThis.platformBalance || 0;
         if (balance < this.SHOP_UPGRADE_COST) return;
 
         // Spend coins via main.js handler
-        if (window.handleShopUpgradePurchase) {
-            const success = await window.handleShopUpgradePurchase(this.SHOP_UPGRADE_COST);
+        if (globalThis.handleShopUpgradePurchase) {
+            const success = await globalThis.handleShopUpgradePurchase(this.SHOP_UPGRADE_COST);
             if (!success) return;
         }
 
@@ -837,8 +837,8 @@ class Game {
         this.state = 'playing';
 
         // Notify platform
-        if (typeof window.startGameSession === 'function') {
-            window.startGameSession();
+        if (typeof globalThis.startGameSession === 'function') {
+            globalThis.startGameSession();
         }
     }
 
@@ -892,8 +892,8 @@ class Game {
         this.sound.stopBackgroundMusic();
 
         // Reload balance before showing shop
-        if (window.refreshPlatformBalance) {
-            window.refreshPlatformBalance().then(() => {
+        if (globalThis.refreshPlatformBalance) {
+            globalThis.refreshPlatformBalance().then(() => {
                 this.showPregameShop();
             });
         } else {
@@ -905,8 +905,8 @@ class Game {
      * Handle continue button click - delegates to main.js
      */
     handleContinue() {
-        if (window.handleContinueGame) {
-            window.handleContinueGame();
+        if (globalThis.handleContinueGame) {
+            globalThis.handleContinueGame();
         }
     }
 
@@ -967,8 +967,8 @@ class Game {
 
         // Riavvia la sessione per il continue
         this.hasContinued = true;
-        if (typeof window.startGameSession === 'function') {
-            window.startGameSession();
+        if (typeof globalThis.startGameSession === 'function') {
+            globalThis.startGameSession();
         }
 
         // Show upgrade selection before resuming gameplay
@@ -1026,8 +1026,8 @@ class Game {
         // Invia lo score TOTALE accumulato alla piattaforma (per la leaderboard)
         // ma passa il delta come xp_score (per calcolare XP solo sui punti nuovi)
         const deltaScore = this.score - this.lastSentScore;
-        if (typeof window.sendScoreToPlatform === 'function') {
-            window.sendScoreToPlatform(this.score, {
+        if (typeof globalThis.sendScoreToPlatform === 'function') {
+            globalThis.sendScoreToPlatform(this.score, {
                 level: this.level,
                 wave: this.waveNumber,
                 continued: this.hasContinued,
@@ -1047,12 +1047,12 @@ class Game {
         if (!this.continueSection) return;
 
         // Refresh balance from server before showing
-        if (window.refreshPlatformBalance) {
-            await window.refreshPlatformBalance();
+        if (globalThis.refreshPlatformBalance) {
+            await globalThis.refreshPlatformBalance();
         }
 
         // Load user balance
-        const platformBalance = window.platformBalance || 0;
+        const platformBalance = globalThis.platformBalance || 0;
         const canAfford = platformBalance >= this.CONTINUE_COST;
 
         this.continueSection.style.display = 'flex';
@@ -1150,14 +1150,14 @@ class Game {
         if (this.celebrating) {
             this.updateCelebration(deltaTime);
             // Durante la celebrazione aggiorna solo il player e le particelle
-            if (this.player && this.player.active) {
+            if (this.player?.active) {
                 this.player.update(deltaTime, this);
             }
             return;
         }
 
         // Update player
-        if (this.player && this.player.active) {
+        if (this.player?.active) {
             this.player.update(deltaTime, this);
 
             // Gestione abilità
@@ -1230,7 +1230,7 @@ class Game {
     }
 
     checkCollisions() {
-        if (!this.player || !this.player.active) return;
+        if (!this.player?.active) return;
 
         // Player bullets vs enemies
         this.bullets.filter(b => b.owner === 'player').forEach(bullet => {
@@ -1276,7 +1276,6 @@ class Game {
                 // Danno basato sul tipo di nemico e livello
                 let collisionDamage = 1;
                 switch (enemy.type) {
-                    case 'enemy1': collisionDamage = 1; break;
                     case 'enemy2': collisionDamage = 2; break;
                     case 'enemy3': collisionDamage = 2; break;
                     case 'boss': collisionDamage = 3; break;
@@ -1389,7 +1388,7 @@ class Game {
             this.addScore(1000 * this.level);
 
             // Bonus salute a fine livello
-            if (this.player && this.player.active) {
+            if (this.player?.active) {
                 this.player.heal(1);
             }
 
@@ -1482,13 +1481,14 @@ class Game {
 
         // Create celebration particles at player position
         if (this.player) {
+            const isMissile = upgrade.type === 'missile';
+            const objColor = isMissile ? '#ff6600' : '#00ffaa';
             this.particles.emit(
                 this.player.position.x + this.player.width / 2,
                 this.player.position.y + this.player.height / 2,
                 20,
                 {
-                    color: upgrade.type === 'barrier' ? '#00aaff' :
-                        upgrade.type === 'missile' ? '#ff6600' : '#00ffaa',
+                    color: upgrade.type === 'barrier' ? '#00aaff' : objColor,
                     speed: 150,
                     life: 1,
                     size: 5
@@ -1621,7 +1621,9 @@ class Game {
         this.particles.emitExplosion(x, y, size);
 
         // Screen effects
-        const shakeIntensity = (size === 'large' ? 15 : size === 'medium' ? 8 : 4) * s;
+        const isMedium = size === 'medium';
+        const isMediumNumber = isMedium ? 8 : 4;
+        const shakeIntensity = (size === 'large' ? 15 : isMediumNumber) * s;
         this.postProcessing.shake(shakeIntensity, 0.2);
 
         this.sound.playExplosion();
@@ -1684,7 +1686,7 @@ class Game {
         this.enemies.forEach(e => e.render(ctx, this.assets));
 
         // Rendering con zoom durante la celebrazione
-        if (this.celebrating && this.player && this.player.active) {
+        if (this.celebrating && this.player?.active) {
             ctx.save();
             const playerCenterX = this.player.position.x + this.player.width / 2;
             const playerCenterY = this.player.position.y + this.player.height / 2;
@@ -1699,7 +1701,7 @@ class Game {
 
             // Renderizza testo celebrazione
             this.renderCelebration(ctx);
-        } else if (this.player && this.player.active) {
+        } else if (this.player?.active) {
             this.player.render(ctx, this.assets);
         }
 
@@ -1771,10 +1773,9 @@ class Game {
             }
             ctx.globalCompositeOperation = 'source-over';
         }
-
+        const isMajor = progress < 0.3 ? 1.5 - (progress - 0.2) / 0.1 * 0.5 : 1;
         // Testo principale con animazione
-        const textScale = progress < 0.2 ? progress / 0.2 * 1.5 :
-            progress < 0.3 ? 1.5 - (progress - 0.2) / 0.1 * 0.5 : 1;
+        const textScale = progress < 0.2 ? progress / 0.2 * 1.5 : isMajor;
         const textAlpha = Math.min(1, progress * 4);
 
         ctx.textAlign = 'center';
@@ -1848,20 +1849,44 @@ class Game {
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Linee di glitch/interferenza
-        if (progress > 0.2) {
-            ctx.globalCompositeOperation = 'lighter';
-            const glitchIntensity = Math.sin(this.time * 30) * 0.5 + 0.5;
-
-            for (let i = 0; i < 10; i++) {
-                const y = Math.random() * this.canvas.height;
-                const height = (2 + Math.random() * 4) * s;
-                ctx.fillStyle = `rgba(255, 0, 0, ${glitchIntensity * 0.3 * (1 - progress)})`;
-                ctx.fillRect(0, y, this.canvas.width, height);
-            }
-            ctx.globalCompositeOperation = 'source-over';
-        }
+        this.renderGlitchEffect(progress, ctx, s);
 
         // Testo GAME OVER con effetto drammatico
+        this.renderGameOverText(progress, ctx, s, centerX, centerY);
+
+        // Particelle di debris che cadono
+        this.renderDebrisParticles(progress, ctx, centerX, s, centerY);
+
+        ctx.restore();
+    }
+
+    renderDebrisParticles(progress, ctx, centerX, s, centerY) {
+        if (progress > 0.1) {
+            const debrisAlpha = Math.min(1, (progress - 0.1) * 3) * (1 - progress * 0.5);
+            ctx.shadowBlur = 0;
+
+            for (let i = 0; i < 30; i++) {
+                const seed = i * 1234.5678;
+                const debrisX = centerX + Math.sin(seed) * 150 * s + Math.sin(this.time * 2 + i) * 20 * s;
+                const debrisY = centerY - 100 * s + (this.gameOverTimer * 100 * s * (0.5 + Math.sin(seed * 2) * 0.5)) % (this.canvas.height + 100);
+                const debrisSize = (2 + Math.sin(seed * 3) * 2) * s;
+                const rotation = this.time * (2 + Math.sin(seed) * 3);
+
+                ctx.save();
+                ctx.translate(debrisX, debrisY);
+                ctx.rotate(rotation);
+
+                // Colore debris (arancione/rosso)
+                const hue = Math.sin(seed) > 0 ? '255, 100, 0' : '255, 50, 50';
+                ctx.fillStyle = `rgba(${hue}, ${debrisAlpha * 0.8})`;
+                ctx.fillRect(-debrisSize, -debrisSize / 2, debrisSize * 2, debrisSize);
+
+                ctx.restore();
+            }
+        }
+    }
+
+    renderGameOverText(progress, ctx, s, centerX, centerY) {
         if (progress > 0.4) {
             const textProgress = (progress - 0.4) / 0.6;
             const textScale = textProgress < 0.3 ?
@@ -1908,33 +1933,21 @@ class Game {
                 }
             }
         }
+    }
 
-        // Particelle di debris che cadono
-        if (progress > 0.1) {
-            const debrisAlpha = Math.min(1, (progress - 0.1) * 3) * (1 - progress * 0.5);
-            ctx.shadowBlur = 0;
+    renderGlitchEffect(progress, ctx, s) {
+        if (progress > 0.2) {
+            ctx.globalCompositeOperation = 'lighter';
+            const glitchIntensity = Math.sin(this.time * 30) * 0.5 + 0.5;
 
-            for (let i = 0; i < 30; i++) {
-                const seed = i * 1234.5678;
-                const debrisX = centerX + Math.sin(seed) * 150 * s + Math.sin(this.time * 2 + i) * 20 * s;
-                const debrisY = centerY - 100 * s + (this.gameOverTimer * 100 * s * (0.5 + Math.sin(seed * 2) * 0.5)) % (this.canvas.height + 100);
-                const debrisSize = (2 + Math.sin(seed * 3) * 2) * s;
-                const rotation = this.time * (2 + Math.sin(seed) * 3);
-
-                ctx.save();
-                ctx.translate(debrisX, debrisY);
-                ctx.rotate(rotation);
-
-                // Colore debris (arancione/rosso)
-                const hue = Math.sin(seed) > 0 ? '255, 100, 0' : '255, 50, 50';
-                ctx.fillStyle = `rgba(${hue}, ${debrisAlpha * 0.8})`;
-                ctx.fillRect(-debrisSize, -debrisSize / 2, debrisSize * 2, debrisSize);
-
-                ctx.restore();
+            for (let i = 0; i < 10; i++) {
+                const y = Math.random() * this.canvas.height;
+                const height = (2 + Math.random() * 4) * s;
+                ctx.fillStyle = `rgba(255, 0, 0, ${glitchIntensity * 0.3 * (1 - progress)})`;
+                ctx.fillRect(0, y, this.canvas.width, height);
             }
+            ctx.globalCompositeOperation = 'source-over';
         }
-
-        ctx.restore();
     }
 
     renderScorePopups(ctx) {
@@ -2278,20 +2291,35 @@ class Game {
         const baseY = this.canvas.height - padding - buttonSize;
 
         // Heal ability (Q)
-        this.renderAbilityIcon(ctx, padding, baseY, buttonSize,
-            '💚', 'Q', '#00ff88',
-            this.player.healCooldown, this.player.healMaxCooldown);
+        this.renderAbilityIcon(ctx, {
+            x: padding,
+            y: baseY,
+            size: buttonSize,
+            icon: '💚',
+            key: 'Q',
+            color: '#00ff88',
+            cooldown: this.player.healCooldown,
+            maxCooldown: this.player.healMaxCooldown
+        });
 
         // Bomb ability (E)
-        this.renderAbilityIcon(ctx, padding + buttonSize + gap, baseY, buttonSize,
-            '💥', 'E', '#ff8844',
-            this.player.bombCooldown, this.player.bombMaxCooldown);
+        this.renderAbilityIcon(ctx, {
+            x: padding + buttonSize + gap,
+            y: baseY,
+            size: buttonSize,
+            icon: '💥',
+            key: 'E',
+            color: '#ff8844',
+            cooldown: this.player.bombCooldown,
+            maxCooldown: this.player.bombMaxCooldown
+        });
     }
 
     /**
      * Renderizza singola icona abilità
      */
-    renderAbilityIcon(ctx, x, y, size, icon, key, color, cooldown, maxCooldown) {
+    renderAbilityIcon(ctx, options) {
+        const { x, y, size, icon, key, color, cooldown, maxCooldown } = options;
         const cooldownPercent = cooldown / maxCooldown;
         const isReady = cooldown <= 0;
         const s = this.gameScale || 1;
@@ -2308,7 +2336,14 @@ class Game {
         ctx.stroke();
 
         // Cooldown overlay (si riempie dal basso)
-        if (!isReady) {
+        if (isReady) {
+            // Icona
+            ctx.font = `${Math.round(24 * s)}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icon, x + size / 2, y + size / 2 - 4 * s);
+        } else {
+
             ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
             ctx.fillRect(x + 2, y + 2 + (size - 4) * (1 - cooldownPercent),
                 size - 4, (size - 4) * cooldownPercent);
@@ -2319,12 +2354,6 @@ class Game {
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#ffffff';
             ctx.fillText(Math.ceil(cooldown).toString(), x + size / 2, y + size / 2);
-        } else {
-            // Icona
-            ctx.font = `${Math.round(24 * s)}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(icon, x + size / 2, y + size / 2 - 4 * s);
         }
 
         // Key hint
@@ -2543,72 +2572,84 @@ class Game {
         switch (mode) {
             case 'high':
                 // Tutti gli effetti attivi - Massima qualità
-                if (this.postProcessing) {
-                    this.postProcessing.bloomEnabled = true;
-                    this.postProcessing.vignetteEnabled = true;
-                    this.postProcessing.scanLinesEnabled = true;
-                    this.postProcessing.scanLinesOpacity = 0.08;
-                    this.postProcessing.vignetteIntensity = 0.5;
-                    this.postProcessing.crtEnabled = true;
-                    this.postProcessing.createVignetteGradient();
-                }
-                if (this.particles) {
-                    this.particles.maxParticles = 800;
-                    this.particles.particleMultiplier = 1.5;
-                    this.particles.glowEnabled = true;
-                    this.particles.trailEnabled = true;
-                }
-                if (this.starField) {
-                    this.starField.setQuality('high');
-                }
-                // Esplosioni più grandi
-                this.explosionScale = 1.5;
+                this.enableHighPerformanceSettings();
                 break;
 
             case 'medium':
                 // Effetti bilanciati
-                if (this.postProcessing) {
-                    this.postProcessing.bloomEnabled = true;
-                    this.postProcessing.vignetteEnabled = true;
-                    this.postProcessing.scanLinesEnabled = false;
-                    this.postProcessing.vignetteIntensity = 0.3;
-                    this.postProcessing.crtEnabled = false;
-                    this.postProcessing.createVignetteGradient();
-                }
-                if (this.particles) {
-                    this.particles.maxParticles = 300;
-                    this.particles.particleMultiplier = 0.6;
-                    this.particles.glowEnabled = true;
-                    this.particles.trailEnabled = false;
-                }
-                if (this.starField) {
-                    this.starField.setQuality('medium');
-                }
-                this.explosionScale = 1.0;
+                this.enableMediumPerformanceSettings();
                 break;
 
             case 'low':
                 // Minimo effetti per massima performance
-                if (this.postProcessing) {
-                    this.postProcessing.bloomEnabled = false;
-                    this.postProcessing.vignetteEnabled = false;
-                    this.postProcessing.scanLinesEnabled = false;
-                    this.postProcessing.crtEnabled = false;
-                }
-                if (this.particles) {
-                    this.particles.maxParticles = 80;
-                    this.particles.particleMultiplier = 0.15;
-                    this.particles.glowEnabled = false;
-                    this.particles.trailEnabled = false;
-                }
-                if (this.starField) {
-                    this.starField.setQuality('low');
-                }
+                this.applyLowPerformanceSettings();
                 this.explosionScale = 0.7;
                 break;
         }
 
 
+    }
+
+    applyLowPerformanceSettings() {
+        if (this.postProcessing) {
+            this.postProcessing.bloomEnabled = false;
+            this.postProcessing.vignetteEnabled = false;
+            this.postProcessing.scanLinesEnabled = false;
+            this.postProcessing.crtEnabled = false;
+        }
+        if (this.particles) {
+            this.particles.maxParticles = 80;
+            this.particles.particleMultiplier = 0.15;
+            this.particles.glowEnabled = false;
+            this.particles.trailEnabled = false;
+        }
+        if (this.starField) {
+            this.starField.setQuality('low');
+        }
+    }
+
+    enableMediumPerformanceSettings() {
+        if (this.postProcessing) {
+            this.postProcessing.bloomEnabled = true;
+            this.postProcessing.vignetteEnabled = true;
+            this.postProcessing.scanLinesEnabled = false;
+            this.postProcessing.vignetteIntensity = 0.3;
+            this.postProcessing.crtEnabled = false;
+            this.postProcessing.createVignetteGradient();
+        }
+        if (this.particles) {
+            this.particles.maxParticles = 300;
+            this.particles.particleMultiplier = 0.6;
+            this.particles.glowEnabled = true;
+            this.particles.trailEnabled = false;
+        }
+        if (this.starField) {
+            this.starField.setQuality('medium');
+        }
+        this.explosionScale = 1;
+    }
+
+    enableHighPerformanceSettings() {
+        if (this.postProcessing) {
+            this.postProcessing.bloomEnabled = true;
+            this.postProcessing.vignetteEnabled = true;
+            this.postProcessing.scanLinesEnabled = true;
+            this.postProcessing.scanLinesOpacity = 0.08;
+            this.postProcessing.vignetteIntensity = 0.5;
+            this.postProcessing.crtEnabled = true;
+            this.postProcessing.createVignetteGradient();
+        }
+        if (this.particles) {
+            this.particles.maxParticles = 800;
+            this.particles.particleMultiplier = 1.5;
+            this.particles.glowEnabled = true;
+            this.particles.trailEnabled = true;
+        }
+        if (this.starField) {
+            this.starField.setQuality('high');
+        }
+        // Esplosioni più grandi
+        this.explosionScale = 1.5;
     }
 
     /**

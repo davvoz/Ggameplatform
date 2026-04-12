@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js';
+import GameObject from '../../../shared/GameObject.js';
 
 /**
  * SHIP_DATA - 5 ships with distinct characteristics

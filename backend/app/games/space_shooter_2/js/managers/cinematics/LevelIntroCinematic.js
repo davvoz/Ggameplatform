@@ -4,7 +4,6 @@
  * Boss-level detection is data-driven (checks LevelData.boss field).
  */
 import CinematicScene from './CinematicScene.js';
-import { easeOut } from './CinematicUtils.js';
 import { getLevelData } from '../../LevelDataFacade.js';
 import { title } from '../../FontConfig.js';
 

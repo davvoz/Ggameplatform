@@ -164,12 +164,24 @@ class InputManager extends BaseInputManager {
         this._renderFireButton(ctx);
 
         if (player) {
-            this._renderAbilityButton(ctx, this.healButtonPos, '💚', 'Q',
-                player.healCooldown, player.healMaxCooldown,
-                '#00ff88', this.healButtonPressed);
-            this._renderAbilityButton(ctx, this.bombButtonPos, '💥', 'E',
-                player.bombCooldown, player.bombMaxCooldown,
-                '#ff8844', this.bombButtonPressed);
+            this._renderAbilityButton(ctx, {
+                pos: this.healButtonPos,
+                icon: '💚',
+                key: 'Q',
+                cooldown: player.healCooldown,
+                maxCooldown: player.healMaxCooldown,
+                color: '#00ff88',
+                pressed: this.healButtonPressed
+            });
+            this._renderAbilityButton(ctx, {
+                pos: this.bombButtonPos,
+                icon: '💥',
+                key: 'E',
+                cooldown: player.bombCooldown,
+                maxCooldown: player.bombMaxCooldown,
+                color: '#ff8844',
+                pressed: this.bombButtonPressed
+            });
         }
         ctx.restore();
     }
@@ -263,7 +275,8 @@ class InputManager extends BaseInputManager {
         ctx.shadowBlur = 0;
     }
 
-    _renderAbilityButton(ctx, btnPos, icon, key, cooldown, maxCooldown, color, pressed) {
+    _renderAbilityButton(ctx, config) {
+        const { pos: btnPos, icon, key, cooldown, maxCooldown, color, pressed } = config;
         const x = btnPos.x;
         const y = btnPos.y;
         const size = btnPos.size;
@@ -283,7 +296,13 @@ class InputManager extends BaseInputManager {
         ctx.fill();
         ctx.stroke();
 
-        if (!isReady) {
+        if (isReady) {
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(icon, x + size / 2, y + size / 2 - 2);
+        } else {
+
             ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
             const cooldownHeight = s * cooldownPercent;
             ctx.fillRect(x + offsetX + 2, y + offsetY + 2 + (s - 4 - cooldownHeight),
@@ -294,11 +313,7 @@ class InputManager extends BaseInputManager {
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#ffffff';
             ctx.fillText(Math.ceil(cooldown).toString(), x + size / 2, y + size / 2);
-        } else {
-            ctx.font = '24px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(icon, x + size / 2, y + size / 2 - 2);
+
         }
 
         ctx.font = '9px Orbitron, Arial';

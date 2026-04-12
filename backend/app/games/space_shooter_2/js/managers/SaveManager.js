@@ -67,7 +67,9 @@ class SaveManager {
         // localStorage (instant, always works)
         try {
             localStorage.setItem(LS_KEY, JSON.stringify(data));
-        } catch (_) { /* quota exceeded – ignore */ }
+        } catch (e) { /* quota exceeded – ignore */
+            console.warn('[SaveManager] localStorage save failed:', e);
+        }
 
         // PlatformSDK (async, may fail)
         if (typeof PlatformSDK !== 'undefined' && PlatformSDK.saveProgress) {
@@ -100,7 +102,9 @@ class SaveManager {
                 if (progress?.save_data?.v === SAVE_VERSION) {
                     sdkData = progress.save_data;
                 }
-            } catch (_) { /* ignore */ }
+            } catch (e) { /* ignore */
+                console.warn('[SaveManager] SDK load failed:', e);
+            }
         }
 
         // Try localStorage
@@ -110,7 +114,9 @@ class SaveManager {
                 const parsed = JSON.parse(raw);
                 if (parsed?.v === SAVE_VERSION) lsData = parsed;
             }
-        } catch (_) { /* corrupt – ignore */ }
+        } catch (e) { /* corrupt – ignore */
+            console.warn('[SaveManager] localStorage load failed:', e);
+        }
 
         // Pick the most recent
         if (sdkData && lsData) {
@@ -130,14 +136,16 @@ class SaveManager {
 
     async deleteSave(showIndicator = false) {
         this._cachedSave = null;
-        try { localStorage.removeItem(LS_KEY); } catch (_) {}
+        try { localStorage.removeItem(LS_KEY); } catch (e) { console.warn('[SaveManager] localStorage delete failed:', e); }
 
         if (typeof PlatformSDK !== 'undefined' && PlatformSDK.saveProgress) {
             try {
                 const existing = await PlatformSDK.loadProgress().catch(() => ({})) || {};
                 delete existing.save_data;
                 await PlatformSDK.saveProgress(existing);
-            } catch (_) {}
+            } catch (e) {
+                console.warn('[SaveManager] SDK delete failed:', e);
+            }
         }
 
         if (showIndicator) this._showDeleteIndicator();

@@ -67,11 +67,11 @@ class CollisionManager {
                 const enemy = nearby[i];
                 if (!enemy.active) continue;
                 if (enemy._isAlly) continue; // Don't shoot allies
-                if (bullet._hitIds && bullet._hitIds.has(enemy)) continue;
+                if (bullet._hitIds?.has(enemy)) continue;
                 if (bullet.collidesWithCircle(enemy)) {
                     let dmg = bullet.damage * dmgMult;
                     // Predatore: bonus damage vs stealth enemies
-                    if (stealthDmgBonus > 0 && enemy.config && enemy.config.stealth) {
+                    if (stealthDmgBonus > 0 && enemy.config?.stealth) {
                         dmg *= (1 + stealthDmgBonus);
                     }
                     const isCrit = Math.random() < (critChance + critAoeBonusChance);
@@ -118,7 +118,7 @@ class CollisionManager {
                             }
                         }
                         // Neural Hijack: chance to convert instead of kill
-                        if (hijackChance > 0 && !enemy._isAlly && !enemy.config.spawner && Math.random() < hijackChance && perks.alliedEnemies.length < hijackMaxAllies) {
+                        if (hijackChance > 0 && !enemy._isAlly && !enemy.config?.spawner && Math.random() < hijackChance && perks.alliedEnemies.length < hijackMaxAllies) {
                             enemy.active = true;
                             enemy.health = Math.ceil(enemy.maxHealth * 0.5);
                             enemy._isAlly = true;
@@ -162,7 +162,7 @@ class CollisionManager {
                 }
             }
 
-            if (entities.boss && entities.boss.active && !entities.boss.entering && bullet.active) {
+            if (entities.boss?.active && !entities.boss.entering && bullet.active) {
                 const bCX = bullet.position.x + bullet.width / 2;
                 const bCY = bullet.position.y + bullet.height / 2;
                 const hitIdx = (entities.boss instanceof MultiBoss) ? entities.boss.getHitPart(bCX, bCY) : -1;
@@ -206,7 +206,7 @@ class CollisionManager {
                 }
             }
 
-            if (entities.miniBoss && entities.miniBoss.active && !entities.miniBoss.entering && bullet.active) {
+            if (entities.miniBoss?.active && !entities.miniBoss.entering && bullet.active) {
                 const bCX = bullet.position.x + bullet.width / 2;
                 const bCY = bullet.position.y + bullet.height / 2;
                 const hitIdx = entities.miniBoss.getHitPart(bCX, bCY);
@@ -243,7 +243,7 @@ class CollisionManager {
             }
         }
 
-        if (entities.player && entities.player.active) {
+        if (entities.player?.active) {
             // Pre-compute player AABB for fast reject
             const player = entities.player;
             const pcx = player.position.x + player.width / 2;
@@ -360,7 +360,7 @@ class CollisionManager {
                 }
             }
 
-            if (entities.boss && entities.boss.active && !entities.boss.entering && entities.boss.collidesWithCircle(player)) {
+            if (entities.boss?.active && !entities.boss.entering && entities.boss.collidesWithCircle(player)) {
                 if (Math.random() >= phaseChance) {
                     const died = player.takeDamage(2, g);
                     if (died) this.onPlayerDeath();
@@ -375,7 +375,7 @@ class CollisionManager {
                 }
             }
 
-            if (entities.miniBoss && entities.miniBoss.active && !entities.miniBoss.entering && entities.miniBoss.collidesWithCircle(player)) {
+            if (entities.miniBoss?.active && !entities.miniBoss.entering && entities.miniBoss.collidesWithCircle(player)) {
                 if (Math.random() >= phaseChance) {
                     const died = player.takeDamage(1, g);
                     if (died) this.onPlayerDeath();
@@ -436,8 +436,8 @@ class CollisionManager {
 
         // Send score to platform — use delta (xp_score) so XP is only for new points
         const deltaScore = g.scoreManager.score - g.lastSentScore;
-        if (window.sendScoreToPlatform) {
-            window.sendScoreToPlatform(g.scoreManager.score, {
+        if (globalThis.sendScoreToPlatform) {
+            globalThis.sendScoreToPlatform(g.scoreManager.score, {
                 level: g.levelManager.currentLevel,
                 levelsCompleted: g.levelManager.currentLevel - (g.sessionStartLevel || 1),
                 enemiesKilled: g.scoreManager.totalEnemiesKilled,

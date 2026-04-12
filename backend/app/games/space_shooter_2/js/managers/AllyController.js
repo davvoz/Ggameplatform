@@ -12,11 +12,11 @@ class AllyController {
 
         // ── Orbit parameters ──
         this.orbitRadius   = 90;   // px around player center
-        this.orbitSpeed    = 1.0;  // rad/s base rotation
+        this.orbitSpeed    = 1;  // rad/s base rotation
         this.orbitAngle    = 0;    // current base angle (advances each frame)
 
         // ── Combat parameters ──
-        this.shootCooldown  = 1.0;  // seconds between shots
+        this.shootCooldown  = 1;  // seconds between shots
         this.detectionRange = 350;  // px scan radius
         this.bulletSpeed    = 300;  // px/s
     }
@@ -28,7 +28,7 @@ class AllyController {
         const g      = this.game;
         const player = g.entityManager.player;
         const perks  = g.perkSystem;
-        if (!player || !player.active) return;
+        if (!player?.active) return;
         if (!perks.alliedEnemies || perks.alliedEnemies.length === 0) return;
 
         // Purge dead allies (iterate backwards)
@@ -106,7 +106,7 @@ class AllyController {
 
             const cx = ally.position.x + ally.width  / 2;
             const cy = ally.position.y + ally.height / 2;
-            const facing = ally._facing !== undefined ? ally._facing : -Math.PI / 2;
+            const facing = ally._facing === undefined ? -Math.PI / 2 : ally._facing;
 
             ctx.save();
 
@@ -138,7 +138,7 @@ class AllyController {
                     ally.position.x - pad, ally.position.y - pad,
                     ally.width + pad * 2, ally.height + pad * 2
                 );
-            } else if (ally.config && ally.config.w4behaviour) {
+            } else if (ally.config?.w4behaviour) {
                 const t = performance.now() * 0.001;
                 drawW4Sprite(ctx, {
                     type: ally.type, cx, cy, w: ally.width, h: ally.height, t,

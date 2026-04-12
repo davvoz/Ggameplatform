@@ -31,7 +31,7 @@ import SaveManager from './managers/SaveManager.js';
 // Height adapts to the device's aspect ratio.
 // ctx.scale() maps logical → physical pixels each frame.
 // Mobile gets a tighter view (bigger sprites relative to screen).
-const _isMobileDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+const _isMobileDevice = ('ontouchstart' in globalThis) || (navigator.maxTouchPoints > 0);
 const REFERENCE_WIDTH = _isMobileDevice ? 310 : 410;
 
 class Game {
@@ -190,7 +190,7 @@ class Game {
         this.gameTime += deltaTime;
 
         if (this.backgroundFacade) {
-            if (this.player && this.player.active) {
+            if (this.player?.active) {
                 this.backgroundFacade.setPlayerInfo(
                     this.player.position.x + this.player.width / 2,
                     this.player.position.y + this.player.height / 2
@@ -229,18 +229,15 @@ class Game {
 
         if (this.state === 'playing') {
             // DEBUG: skip level immediately to test transition
-            if (window.DEBUG_SKIP_LEVEL) {
-                window.DEBUG_SKIP_LEVEL = false;
+            if (globalThis.DEBUG_SKIP_LEVEL) {
+                globalThis.DEBUG_SKIP_LEVEL = false;
                 this.levelManager.onLevelComplete();
                 return;
             }
             this.updatePlaying(deltaTime);
         }
 
-        if (this.state === 'playing' && this.input.isPausePressed()) {
-            this.input.clearPauseKey();
-            this.togglePause();
-        } else if (this.state === 'paused' && this.input.isPausePressed()) {
+        if ((this.state === 'playing' || this.state === 'paused') && this.input.isPausePressed()) {
             this.input.clearPauseKey();
             this.togglePause();
         }
@@ -249,7 +246,7 @@ class Game {
     updatePlaying(deltaTime) {
         const em = this.entityManager;
 
-        if (em.player && em.player.active) {
+        if (em.player?.active) {
             em.player.update(deltaTime, this);
 
             this.particles.emitCustom(
@@ -312,7 +309,7 @@ class Game {
             enemy.update(enemyDt, this);
         }
 
-        if (em.boss && em.boss.active) {
+        if (em.boss?.active) {
             const wasEntering = checkBossEnter && em.boss.entering;
             em.boss.update(enemyDt, this);
             if (wasEntering && !em.boss.entering) {
@@ -321,7 +318,7 @@ class Game {
             }
         }
 
-        if (em.miniBoss && em.miniBoss.active) {
+        if (em.miniBoss?.active) {
             em.miniBoss.update(enemyDt, this);
         }
 
@@ -368,7 +365,7 @@ class Game {
 
     _updateQuantumFieldEffects(deltaTime, em) {
         const player = em.player;
-        if (!player || !player.active) return;
+        if (!player?.active) return;
 
         // Reset per-frame quantum flags BEFORE early-return,
         // so effects don't persist when all zones expire.
@@ -400,8 +397,6 @@ class Game {
 
         let inSafe = false;
         let inDanger = false;
-        let inInfo = false;
-        let inDistortion = false;
 
         // Check player vs zones
         for (const z of zones) {
@@ -430,12 +425,8 @@ class Game {
                 }
             }
             else if (z.type === 'info') {
-                inInfo = true;
                 // Damage boost — player bullets deal ×2 while inside
                 player._quantumBoosted = true;
-            }
-            else if (z.type === 'distortion') {
-                inDistortion = true;
             }
         }
 
@@ -524,7 +515,7 @@ class Game {
         const em = this.entityManager;
 
         // Player thruster particles (no input, no firing)
-        if (em.player && em.player.active) {
+        if (em.player?.active) {
             this.particles.emitCustom(
                 em.player.position.x + em.player.width / 2 + (Math.random() - 0.5) * 8,
                 em.player.position.y + em.player.height,
@@ -591,11 +582,11 @@ class Game {
                 if (!enemy._isAlly) enemy.render(ctx, this.assets);
             }
 
-            if (em.boss && em.boss.active) em.boss.render(ctx, this.assets);
+            if (em.boss?.active) em.boss.render(ctx, this.assets);
 
-            if (em.miniBoss && em.miniBoss.active) em.miniBoss.render(ctx, this.assets);
+            if (em.miniBoss?.active) em.miniBoss.render(ctx, this.assets);
 
-            if (em.boss && em.boss.entering) {
+            if (em.boss?.entering) {
                 this.hudRenderer.renderBossWarningOverlay(ctx, w, h);
             }
 
@@ -608,7 +599,7 @@ class Game {
 
             em.renderHomingMissiles(ctx);
 
-            if (em.player && em.player.active) em.player.render(ctx, this.assets, this.perkSystem);
+            if (em.player?.active) em.player.render(ctx, this.assets, this.perkSystem);
 
             this.perkEffectsManager.renderDrones(ctx);
             this.perkEffectsManager.renderFireTrail(ctx);
@@ -679,14 +670,14 @@ class Game {
         this._resetSystems();
 
         // Set starting level based on selected world (each world = 30 levels)
-       // window.DEBUG_START_LEVEL = 115; // TODO: TEMP TEST — remove after testing
-        //piazziamo il numero giusto di perks in base al window.DEBUG_START_LEVEL, così se si inizia da un mondo avanzato si hanno già i perks sbloccati nei mondi precedenti
+        // globalThis.DEBUG_START_LEVEL = 115; // : TEMP TEST — remove after testing
+        //piazziamo il numero giusto di perks in base al globalThis.DEBUG_START_LEVEL, così se si inizia da un mondo avanzato si hanno già i perks sbloccati nei mondi precedenti
         //for (let i = 0; i < 25; i++) {
-          //  this.perkSystem.grantPerk();
-       // }
+        //  this.perkSystem.grantPerk();
+        // }
 
-        if (window.DEBUG_START_LEVEL && window.DEBUG_START_LEVEL > 1) {
-            this.levelManager.currentLevel = window.DEBUG_START_LEVEL;
+        if (globalThis.DEBUG_START_LEVEL && globalThis.DEBUG_START_LEVEL > 1) {
+            this.levelManager.currentLevel = globalThis.DEBUG_START_LEVEL;
         } else if (startWorld > 1) {
             this.levelManager.currentLevel = (startWorld - 1) * 30 + 1;
         }
@@ -701,8 +692,8 @@ class Game {
             ultimateId
         );
 
-        if (window.startGameSession) {
-            window.startGameSession();
+        if (globalThis.startGameSession) {
+            globalThis.startGameSession();
         }
 
         this.sound.resume();
@@ -714,7 +705,7 @@ class Game {
         if (this.backgroundFacade) this.backgroundFacade.setLevel(startLvl);
 
         // DEBUG: skip straight to World 2 transition cinematic
-        if (window.DEBUG_START_LEVEL === 31) {
+        if (globalThis.DEBUG_START_LEVEL === 31) {
             this.cinematicManager.beginWorldTransition(null, 2);
         } else {
             this.cinematicManager.beginLevelIntro();
@@ -728,12 +719,12 @@ class Game {
             popup?.classList.remove('hidden');
             this.sound.pauseMusic();
             this.uiManager.hideHudButtons();
-            window.dispatchEvent(new Event('game-paused'));
+            globalThis.dispatchEvent(new Event('game-paused'));
         } else if (this.state === 'paused') {
             this.state = 'playing';
             document.getElementById('settings-popup')?.classList.add('hidden');
             document.getElementById('ship-detail-popup')?.classList.add('hidden');
-            if (window.audioViz) window.audioViz.stop();
+            if (globalThis.audioViz) globalThis.audioViz.stop();
             this.sound.resumeMusic();
             this.uiManager.showHudButtons();
         }
@@ -795,7 +786,7 @@ class Game {
     resumeAfterContinue() {
         // Hide game-over screen
         document.getElementById('game-over-screen')?.classList.add('hidden');
-        if (window.audioViz) window.audioViz.stop();
+        if (globalThis.audioViz) globalThis.audioViz.stop();
 
         // Preserve evolved stats
         const oldPlayer = this.entityManager.player;
@@ -845,8 +836,8 @@ class Game {
         this.uiManager.showHudButtons();
 
         // Restart game session so platform tracks the continue segment
-        if (typeof window.startGameSession === 'function') {
-            window.startGameSession();
+        if (typeof globalThis.startGameSession === 'function') {
+            globalThis.startGameSession();
         }
     }
 
@@ -941,8 +932,8 @@ class Game {
     }
 
     setupWindowListeners() {
-        window.addEventListener('message', (event) => {
-            if (!event.data || !event.data.type) return;
+        globalThis.addEventListener('message', (event) => {
+            if (!event.data?.type) return;
             // Validate protocol version
             if (event.data.protocolVersion !== '1.0.0') return;
             // Validate and store origin from first valid message
@@ -993,12 +984,16 @@ class Game {
         try {
             const saved = localStorage.getItem('spaceShooter2Performance');
             if (saved && ['high', 'medium', 'low'].includes(saved)) return saved;
-        } catch (e) { /* ignore */ }
+        } catch (e) { /* ignore */
+            console.warn('Error loading performance mode from localStorage:', e);
+        }
         return 'high';
     }
 
     _savePerformanceMode(mode) {
-        try { localStorage.setItem('spaceShooter2Performance', mode); } catch (e) { /* ignore */ }
+        try { localStorage.setItem('spaceShooter2Performance', mode); } catch (e) { /* ignore */
+            console.warn('Error saving performance mode to localStorage:', e);
+        }
     }
 
     setPerformanceMode(mode) {
@@ -1045,7 +1040,8 @@ class Game {
         }
 
         // Explosion scale — keep consistent across modes (no shrinking)
-        this.explosionScale = mode === 'high' ? 1.5 : mode === 'medium' ? 1.2 : 1.0;
+        const a = mode === 'medium' ? 1.2 : 1;
+        this.explosionScale = mode === 'high' ? 1.5 : a;
 
         // Update UI buttons
         document.querySelectorAll('.perf-btn').forEach(btn => {
@@ -1113,36 +1109,35 @@ class Game {
      */
     loadSavedGame(saveData) {
         if (!saveData) return false;
-        const g = this;
 
         // Reset everything (same as startGame)
-        g._resetSystems();
+        this._resetSystems();
 
         // Restore config
-        g.difficulty = g._difficultyConfig[saveData.difficultyId] || g._difficultyConfig.boring;
-        g.selectedShipId = saveData.shipId;
-        g.selectedUltimateId = saveData.ultimateId;
-        g.hasContinued = saveData.hasContinued || false;
-        g.gameTime = saveData.gameTime || 0;
+        this.difficulty = this._difficultyConfig[saveData.difficultyId] || this._difficultyConfig.boring;
+        this.selectedShipId = saveData.shipId;
+        this.selectedUltimateId = saveData.ultimateId;
+        this.hasContinued = saveData.hasContinued || false;
+        this.gameTime = saveData.gameTime || 0;
 
         // Restore score
-        g.scoreManager.score = saveData.score || 0;
-        g.scoreManager.totalPoints = saveData.totalPoints || 0;
-        g.scoreManager.totalEnemiesKilled = saveData.totalEnemiesKilled || 0;
+        this.scoreManager.score = saveData.score || 0;
+        this.scoreManager.totalPoints = saveData.totalPoints || 0;
+        this.scoreManager.totalEnemiesKilled = saveData.totalEnemiesKilled || 0;
 
         // Mark restored score as already sent so XP delta is correct
-        g.lastSentScore = g.scoreManager.score;
+        this.lastSentScore = this.scoreManager.score;
 
         // Restore level
-        g.levelManager.currentLevel = saveData.level;
-        g.levelManager.currentWorld = g.levelManager.getCurrentWorld();
-        g.levelManager.levelStartTime = performance.now();
-        g.sessionStartLevel = saveData.level;
+        this.levelManager.currentLevel = saveData.level;
+        this.levelManager.currentWorld = this.levelManager.getCurrentWorld();
+        this.levelManager.levelStartTime = performance.now();
+        this.sessionStartLevel = saveData.level;
 
         // Create player with saved stats
         const player = new Player(
-            g.logicalWidth / 2 - 32,
-            g.logicalHeight - 100,
+            this.logicalWidth / 2 - 32,
+            this.logicalHeight - 100,
             saveData.shipId,
             saveData.ultimateId
         );
@@ -1150,26 +1145,26 @@ class Game {
         player.recalculateStats();
         player.health = player.maxHealth;
         player.weaponLevel = saveData.weaponLevel || 1;
-        g.entityManager.player = player;
+        this.entityManager.player = player;
 
         // Restore perks
         if (saveData.perks) {
             for (const [perkId, stacks] of Object.entries(saveData.perks)) {
                 for (let i = 0; i < stacks; i++) {
-                    g.perkSystem.activatePerk(perkId);
+                    this.perkSystem.activatePerk(perkId);
                 }
             }
         }
-        g.perkEffectsManager.applyPerkModifiersToPlayer();
+        this.perkEffectsManager.applyPerkModifiersToPlayer();
 
         // Background & audio
-        if (g.backgroundFacade) g.backgroundFacade.setLevel(saveData.level);
-        g.sound.resume();
-        if (g.sound.musicBuffers?.length > 0) g.sound.playGameMusic();
-        if (window.startGameSession) window.startGameSession();
+        if (this.backgroundFacade) this.backgroundFacade.setLevel(saveData.level);
+        this.sound.resume();
+        if (this.sound.musicBuffers?.length > 0) this.sound.playGameMusic();
+        if (globalThis.startGameSession) globalThis.startGameSession();
 
         // Start level intro cinematic
-        g.cinematicManager.beginLevelIntro();
+        this.cinematicManager.beginLevelIntro();
         return true;
     }
 }

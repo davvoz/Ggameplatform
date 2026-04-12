@@ -42,7 +42,7 @@ export default class AudioVisualizer {
     start(screenElement) {
         if (this.running) this.stop();
 
-        if (this.canvas.parentNode) this.canvas.parentNode.removeChild(this.canvas);
+        if (this.canvas.parentNode) this.canvas.remove();
         screenElement.insertBefore(this.canvas, screenElement.firstChild);
 
         this._resize();
@@ -71,7 +71,7 @@ export default class AudioVisualizer {
             this._resizeHandler = null;
         }
         if (this.canvas.parentNode) {
-            this.canvas.parentNode.removeChild(this.canvas);
+            this.canvas.remove();
         }
     }
 
@@ -112,9 +112,9 @@ export default class AudioVisualizer {
         this.nebulae = [];
         // 3 nebula clouds at fixed positions with slow drift
         const presets = [
-            { rx: 0.25, ry: 0.35, hue: 220, radius: 0.30 },  // blue
-            { rx: 0.70, ry: 0.55, hue: 270, radius: 0.28 },  // purple
-            { rx: 0.50, ry: 0.75, hue: 200, radius: 0.22 },  // cyan-blue
+            { rx: 0.25, ry: 0.35, hue: 220, radius: 0.3 },  // blue
+            { rx: 0.7, ry: 0.55, hue: 270, radius: 0.28 },  // purple
+            { rx: 0.5, ry: 0.75, hue: 200, radius: 0.22 },  // cyan-blue
         ];
         for (const p of presets) {
             this.nebulae.push({
@@ -136,7 +136,7 @@ export default class AudioVisualizer {
             this.warpLines.push({
                 angle,
                 length: 0.15 + Math.random() * 0.25,  // fraction of screen diagonal
-                width: 0.5 + Math.random() * 1.0,
+                width: 0.5 + Math.random() * 1,
                 alpha: 0.06 + Math.random() * 0.08
             });
         }

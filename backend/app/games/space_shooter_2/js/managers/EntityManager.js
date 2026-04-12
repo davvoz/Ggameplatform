@@ -96,7 +96,7 @@ class EntityManager {
     }
 
     checkBossAsTarget(boss, m, currentClosestDist) {
-        if (!boss || !boss.active || boss.entering) return;
+        if (!boss?.active || boss.entering) return;
 
         const dx = boss.position.x + boss.width / 2 - m.x;
         const dy = boss.position.y + boss.height / 2 - m.y;
@@ -152,7 +152,7 @@ class EntityManager {
     }
 
     checkBossCollisions(m, g) {
-        if (!this.boss || !this.boss.active || this.boss.entering || !m.active) return;
+        if (!this.boss?.active || this.boss.entering || !m.active) return;
 
         let missileHit = false;
         if (this.boss instanceof MultiBoss) {
@@ -173,7 +173,7 @@ class EntityManager {
     }
 
     checkMiniBossCollisions(m, g) {
-        if (!this.miniBoss || !this.miniBoss.active || this.miniBoss.entering || !m.active) return;
+        if (!this.miniBoss?.active || this.miniBoss.entering || !m.active) return;
 
         const hitIdx = this.miniBoss.getHitPart(m.x, m.y);
         if (hitIdx >= 0) {

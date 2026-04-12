@@ -29,7 +29,7 @@ class SpatialGrid {
         this.rows = Math.ceil(height / this.cellSize) + 1;
         const total = this.cols * this.rows;
         // Pre-allocate arrays only if size changed
-        if (!this.cells || this.cells.length !== total) {
+        if (!this.cells?.length || this.cells.length !== total) {
             this.cells = new Array(total);
             for (let i = 0; i < total; i++) this.cells[i] = [];
         }

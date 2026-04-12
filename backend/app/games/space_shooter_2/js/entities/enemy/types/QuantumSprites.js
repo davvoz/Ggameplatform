@@ -1096,17 +1096,7 @@ function drawGluonChain(ctx, options) {
 //  PUBLIC DISPATCHER
 // ═══════════════════════════════════════════════
 
-/**
- * Draw a World 4 enemy sprite.
- * @param {CanvasRenderingContext2D} ctx
- * @param {string} type — enemy type key
- * @param {number} cx — center x
- * @param {number} cy — center y
- * @param {number} w — bounding width
- * @param {number} h — bounding height
- * @param {number} t — time (seconds)
- * @param {object} state — live state for animation
- */
+
 export function drawW4Sprite(ctx, options) {
     const { type, cx, cy, w, h, t, state } = options;
     switch (type) {

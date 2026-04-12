@@ -142,10 +142,9 @@ export function renderBossPartsAtPosition(ctx, assets, def, centerX, centerY, sc
             } else {
                 const partCX = px + pw / 2;
                 const partCY = py + ph / 2;
-                ctx.fillStyle = p.role === 'core' ? '#ff2244'
-                    : p.role === 'turret' ? '#ffaa33'
-                    : p.role === 'shield' ? '#4488ff'
-                    : '#cc6633';
+                const b = p.role === 'shield' ? '#4488ff': '#cc6633'
+                const a = p.role === 'turret' ? '#ffaa33' : b;
+                ctx.fillStyle = p.role === 'core' ? '#ff2244': a;
                 ctx.beginPath();
                 ctx.arc(partCX, partCY, pw / 2, 0, Math.PI * 2);
                 ctx.fill();

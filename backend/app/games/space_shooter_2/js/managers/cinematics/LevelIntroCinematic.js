@@ -199,8 +199,8 @@ export default class LevelIntroCinematic extends CinematicScene {
                 ctx.shadowBlur = 0;
                 const bSize = 20;
                 const pad = w * 0.12;
-                const top = h * 0.30;
-                const bottom = h * 0.60;
+                const top = h * 0.3;
+                const bottom = h * 0.6;
                 ctx.beginPath(); ctx.moveTo(pad, top + bSize); ctx.lineTo(pad, top); ctx.lineTo(pad + bSize, top); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(w - pad, top + bSize); ctx.lineTo(w - pad, top); ctx.lineTo(w - pad - bSize, top); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(pad, bottom - bSize); ctx.lineTo(pad, bottom); ctx.lineTo(pad + bSize, bottom); ctx.stroke();

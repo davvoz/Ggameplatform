@@ -113,7 +113,7 @@ const SHOP_CATALOG = {
         category: 'tactical',
         description: 'Integrated systems provide small boost to all stats.',
         baseCost: 500,
-        costScale: 2.0,
+        costScale: 2,
         maxLevel: 3,
         stats: { hp: 1, speed: 1, resist: 1, fireRate: 1 }
     },

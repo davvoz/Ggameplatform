@@ -45,7 +45,7 @@ export default class DeathCinematic extends CinematicScene {
                 rotSpeed: (Math.random() - 0.5) * 12,
                 size: Math.random() * 6 + 2,
                 life: 1,
-                maxLife: Math.random() * 2.0 + 1.0,
+                maxLife: Math.random() * 2 + 1,
                 hue: Math.floor(Math.random() * 40)
             });
         }
@@ -59,7 +59,7 @@ export default class DeathCinematic extends CinematicScene {
             let ccx = this.deathX, ccy = this.deathY;
             const segCount = Math.floor(Math.random() * 4) + 3;
             for (let s = 0; s < segCount; s++) {
-                const segLen   = Math.random() * 50 + 30;
+                const segLen = Math.random() * 50 + 30;
                 const deviation = (Math.random() - 0.5) * 0.6;
                 const nx = ccx + Math.cos(baseAngle + deviation) * segLen;
                 const ny = ccy + Math.sin(baseAngle + deviation) * segLen;
@@ -122,7 +122,7 @@ export default class DeathCinematic extends CinematicScene {
         }
         this.embers = this.embers.filter(e => e.life > 0);
 
-        if (t > 0.8 && t < 5.0 && Math.random() < 0.35) {
+        if (t > 0.8 && t < 5 && Math.random() < 0.35) {
             this.embers.push({
                 x: Math.random() * w,
                 y: h + 10,
@@ -148,20 +148,20 @@ export default class DeathCinematic extends CinematicScene {
 
     /* ── render ──────────────────────────────────────── */
     onRender(ctx, w, h) {
-        const g   = this.game;
-        const t   = this.timer;
+        const g = this.game;
+        const t = this.timer;
         const dur = this.duration;
-        const dx  = this.deathX;
-        const dy  = this.deathY;
+        const dx = this.deathX;
+        const dy = this.deathY;
 
         /* dark radial overlay */
-        const darkProgress = Math.min(1, t / 2.0);
-        const darkAlpha    = darkProgress * 0.65;
+        const darkProgress = Math.min(1, t / 2);
+        const darkAlpha = darkProgress * 0.65;
         if (darkAlpha > 0.01) {
             const grad = ctx.createRadialGradient(dx, dy, 10, dx, dy, w * 0.9);
-            grad.addColorStop(0,   `rgba(40,0,0,${(darkAlpha * 0.3).toFixed(3)})`);
+            grad.addColorStop(0, `rgba(40,0,0,${(darkAlpha * 0.3).toFixed(3)})`);
             grad.addColorStop(0.5, `rgba(20,0,0,${(darkAlpha * 0.6).toFixed(3)})`);
-            grad.addColorStop(1,   `rgba(0,0,0,${darkAlpha.toFixed(3)})`);
+            grad.addColorStop(1, `rgba(0,0,0,${darkAlpha.toFixed(3)})`);
             ctx.fillStyle = grad;
             ctx.fillRect(0, 0, w, h);
         }
@@ -171,13 +171,13 @@ export default class DeathCinematic extends CinematicScene {
         for (const ring of this.rings) {
             if (ring.alpha <= 0.01 || ring.radius <= 0) continue;
             ctx.strokeStyle = `hsla(${ring.hue},100%,50%,${(ring.alpha * 0.4).toFixed(3)})`;
-            ctx.lineWidth   = 8;
+            ctx.lineWidth = 8;
             ctx.shadowColor = `hsla(${ring.hue},100%,60%,0.6)`;
-            ctx.shadowBlur  = 20;
+            ctx.shadowBlur = 20;
             ctx.beginPath(); ctx.arc(dx, dy, ring.radius, 0, Math.PI * 2); ctx.stroke();
             ctx.strokeStyle = `hsla(${ring.hue},90%,65%,${ring.alpha.toFixed(3)})`;
-            ctx.lineWidth   = 3;
-            ctx.shadowBlur  = 15;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
             ctx.beginPath(); ctx.arc(dx, dy, ring.radius, 0, Math.PI * 2); ctx.stroke();
         }
         ctx.restore();
@@ -189,24 +189,23 @@ export default class DeathCinematic extends CinematicScene {
             ctx.save();
             ctx.translate(d.x, d.y);
             ctx.rotate(d.rot);
-            ctx.fillStyle   = `hsl(${d.hue},90%,55%)`;
+            ctx.fillStyle = `hsl(${d.hue},90%,55%)`;
             ctx.shadowColor = `hsl(${d.hue},100%,70%)`;
-            ctx.shadowBlur  = 6;
+            ctx.shadowBlur = 6;
             ctx.fillRect(-d.size / 2, -d.size / 2, d.size, d.size * 0.6);
             ctx.restore();
         }
         ctx.restore();
-
+        const a = t > 4.5 ? Math.max(0, (5.2 - t) / 0.7) : 1;
         /* cracks */
         if (t > 0.2 && t < 5.2) {
-            const crackAlpha = t < 1.0 ? (t - 0.2) / 0.8
-                             : t > 4.5 ? Math.max(0, (5.2 - t) / 0.7)
-                             : 1;
+            const crackAlpha = t < 1 ? (t - 0.2) / 0.8
+                : a;
             ctx.save();
             ctx.strokeStyle = `rgba(255,80,40,${(crackAlpha * 0.7).toFixed(3)})`;
-            ctx.lineWidth   = 2;
+            ctx.lineWidth = 2;
             ctx.shadowColor = 'rgba(255,60,20,0.8)';
-            ctx.shadowBlur  = 8;
+            ctx.shadowBlur = 8;
 
             for (const crack of this.cracks) {
                 const revealedSegs = Math.min(
@@ -234,9 +233,9 @@ export default class DeathCinematic extends CinematicScene {
         for (const e of this.embers) {
             const flick = 0.5 + 0.5 * Math.sin(e.flicker);
             ctx.globalAlpha = Math.min(e.life, 1) * flick;
-            ctx.fillStyle   = `hsl(${e.hue},100%,60%)`;
+            ctx.fillStyle = `hsl(${e.hue},100%,60%)`;
             ctx.shadowColor = `hsl(${e.hue},100%,80%)`;
-            ctx.shadowBlur  = 8;
+            ctx.shadowBlur = 8;
             ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill();
         }
         ctx.restore();
@@ -244,7 +243,7 @@ export default class DeathCinematic extends CinematicScene {
         /* static / noise */
         if (t > 0.3 && t < 5.8) {
             const staticAlpha = Math.min(0.12, (t - 0.3) * 0.06) *
-                                (t > 5.0 ? Math.max(0, (5.8 - t) / 0.8) : 1);
+                (t > 5 ? Math.max(0, (5.8 - t) / 0.8) : 1);
             ctx.save();
             ctx.globalAlpha = staticAlpha;
             for (let y = 0; y < h; y += 3) {
@@ -267,32 +266,32 @@ export default class DeathCinematic extends CinematicScene {
         /* "GAME OVER" glitch text */
         if (t > 1.8) {
             const textBaseStr = 'GAME OVER';
-            const textAppear  = Math.min(1, (t - 1.8) / 0.5);
-            const textFade    = t > 5.0 ? Math.max(0, 1 - (t - 5.0) / (dur - 5.0)) : 1;
-            const eased       = 1 - Math.pow(1 - textAppear, 4);
+            const textAppear = Math.min(1, (t - 1.8) / 0.5);
+            const textFade = t > 5 ? Math.max(0, 1 - (t - 5) / (dur - 5)) : 1;
+            const eased = 1 - Math.pow(1 - textAppear, 4);
 
             ctx.save();
-            ctx.textAlign    = 'center';
+            ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            const titleY    = h * 0.42;
-            const fontSize  = Math.min(52, w * 0.12);
-            const glitchInt = Math.max(0, 1 - (t - 1.8) / 1.0);
+            const titleY = h * 0.42;
+            const fontSize = Math.min(52, w * 0.12);
+            const glitchInt = Math.max(0, 1 - (t - 1.8) / 1);
 
             let displayText = '';
-            for (let i = 0; i < textBaseStr.length; i++) {
+            for (const char of textBaseStr) {
                 if (glitchInt > 0 && Math.random() < glitchInt * 0.7) {
                     displayText += this.glitchChars[
                         Math.floor(Math.random() * this.glitchChars.length)
                     ];
                 } else {
-                    displayText += textBaseStr[i];
+                    displayText += char;
                 }
             }
 
             const glitchOX = glitchInt > 0.1 ? (Math.random() - 0.5) * 12 * glitchInt : 0;
-            const glitchOY = glitchInt > 0.2 ? (Math.random() - 0.5) * 6  * glitchInt : 0;
-            const slamScale = t < 2.1 ? 1.3 + (1 - eased) * 0.8 : 1.0;
+            const glitchOY = glitchInt > 0.2 ? (Math.random() - 0.5) * 6 * glitchInt : 0;
+            const slamScale = t < 2.1 ? 1.3 + (1 - eased) * 0.8 : 1;
 
             ctx.translate(w / 2 + glitchOX, titleY + glitchOY);
             ctx.scale(slamScale, slamScale);
@@ -304,36 +303,36 @@ export default class DeathCinematic extends CinematicScene {
             if (glitchInt > 0.05) {
                 const caOff = glitchInt * 4;
                 ctx.globalAlpha = eased * textFade * 0.3;
-                ctx.fillStyle   = '#ff0000';
+                ctx.fillStyle = '#ff0000';
                 ctx.fillText(displayText, w / 2 - caOff, titleY);
-                ctx.fillStyle   = '#0066ff';
+                ctx.fillStyle = '#0066ff';
                 ctx.fillText(displayText, w / 2 + caOff, titleY);
             }
 
             ctx.globalAlpha = eased * textFade;
             ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-            ctx.lineWidth   = 5;
+            ctx.lineWidth = 5;
             ctx.strokeText(displayText, w / 2, titleY);
 
             ctx.shadowColor = 'rgba(255,30,0,0.9)';
-            ctx.shadowBlur  = 30 * textFade;
-            ctx.fillStyle   = '#ff3333';
+            ctx.shadowBlur = 30 * textFade;
+            ctx.fillStyle = '#ff3333';
             ctx.fillText(displayText, w / 2, titleY);
 
-            ctx.shadowBlur  = 0;
+            ctx.shadowBlur = 0;
             ctx.globalAlpha = eased * textFade * 0.3;
-            ctx.fillStyle   = '#ffffff';
+            ctx.fillStyle = '#ffffff';
             ctx.fillText(displayText, w / 2, titleY);
 
             /* underline */
             if (eased > 0.5 && t < 5.2) {
-                const lineW     = w * 0.35 * Math.min(1, (eased - 0.5) * 2);
+                const lineW = w * 0.35 * Math.min(1, (eased - 0.5) * 2);
                 const lineAlpha = textFade * (eased - 0.5) * 2;
                 ctx.globalAlpha = Math.min(1, lineAlpha) * 0.6;
                 ctx.strokeStyle = '#ff4444';
-                ctx.lineWidth   = 2;
+                ctx.lineWidth = 2;
                 ctx.shadowColor = 'rgba(255,60,30,0.8)';
-                ctx.shadowBlur  = 10;
+                ctx.shadowBlur = 10;
                 ctx.beginPath();
                 ctx.moveTo(w / 2 - lineW / 2, titleY + fontSize * 0.55);
                 ctx.lineTo(w / 2 + lineW / 2, titleY + fontSize * 0.55);
@@ -348,16 +347,16 @@ export default class DeathCinematic extends CinematicScene {
                 const subEased = 1 - Math.pow(1 - subProg, 3);
 
                 ctx.save();
-                ctx.textAlign    = 'center';
+                ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
-                const subY  = h * 0.54;
+                const subY = h * 0.54;
                 const subFS = Math.min(16, w * 0.038);
-                ctx.font        = ui(subFS, 600);
+                ctx.font = ui(subFS, 600);
                 ctx.globalAlpha = subEased * subFade;
-                ctx.fillStyle   = '#aa6666';
+                ctx.fillStyle = '#aa6666';
                 ctx.shadowColor = 'rgba(255,50,50,0.4)';
-                ctx.shadowBlur  = 8;
+                ctx.shadowBlur = 8;
 
                 const ld = getLevelData(g.levelManager.currentLevel);
                 ctx.fillText(
@@ -365,11 +364,11 @@ export default class DeathCinematic extends CinematicScene {
                     w / 2, subY
                 );
 
-                if (t > 3.0) {
-                    const scoreProg  = Math.min(1, (t - 3.0) / 0.4);
+                if (t > 3) {
+                    const scoreProg = Math.min(1, (t - 3) / 0.4);
                     const scoreEased = 1 - Math.pow(1 - scoreProg, 2);
-                    ctx.globalAlpha  = scoreEased * subFade;
-                    ctx.fillStyle    = '#888888';
+                    ctx.globalAlpha = scoreEased * subFade;
+                    ctx.fillStyle = '#888888';
                     ctx.font = ui(Math.min(13, w * 0.03));
                     ctx.fillText(
                         `SCORE: ${g.scoreManager.score.toLocaleString()}`,
@@ -384,21 +383,21 @@ export default class DeathCinematic extends CinematicScene {
         if (t > 0.5 && t < 5.5) {
             const frameProg = Math.min(1, (t - 0.5) / 0.5);
             const frameFade = t > 4.8 ? Math.max(0, (5.5 - t) / 0.7) : 1;
-            const pulse     = 0.5 + 0.5 * Math.sin(t * 4);
+            const pulse = 0.5 + 0.5 * Math.sin(t * 4);
             const frameAlpha = frameProg * frameFade * pulse * 0.25;
 
             ctx.save();
             ctx.strokeStyle = `rgba(255,30,0,${frameAlpha.toFixed(3)})`;
-            ctx.lineWidth   = 4;
+            ctx.lineWidth = 4;
             ctx.shadowColor = 'rgba(255,0,0,0.6)';
-            ctx.shadowBlur  = 20;
+            ctx.shadowBlur = 20;
             ctx.strokeRect(6, 6, w - 12, h - 12);
             ctx.restore();
         }
 
         /* final fade to black */
-        if (t > 5.0) {
-            const blackAlpha = Math.min(1, (t - 5.0) / (dur - 5.0));
+        if (t > 5) {
+            const blackAlpha = Math.min(1, (t - 5) / (dur - 5));
             ctx.fillStyle = `rgba(0,0,0,${blackAlpha.toFixed(3)})`;
             ctx.fillRect(0, 0, w, h);
         }

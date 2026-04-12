@@ -52,7 +52,7 @@ export default class CinematicManager {
             worldNum,
             onFinish: () => { if (onComplete) onComplete(); },
             skippable: true,
-            skipDelay: 2.0
+            skipDelay: 2
         });
         g.state = 'cinematic';
         g.uiManager.hideHudButtons();
@@ -148,7 +148,7 @@ export default class CinematicManager {
         this._opening.begin({
             worldNum: tw,
             skippable: true,
-            skipDelay: 2.0,
+            skipDelay: 2,
             onFinish: () => {
                 if (onComplete) {
                     g.state = 'menu';

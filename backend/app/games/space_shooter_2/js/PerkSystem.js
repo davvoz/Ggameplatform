@@ -652,7 +652,7 @@ class PerkSystem {
         this._activePerkCache = null;
 
         // If the perk granted flat stats, compute the inverse so the caller can undo
-        if (perk && perk.stats) {
+        if (perk?.stats) {
             const inverse = {};
             for (const [k, v] of Object.entries(perk.stats)) {
                 inverse[k] = -v * stacks;
@@ -678,37 +678,46 @@ class PerkSystem {
     // ══════════════════════════════════
 
     //  Damage
-    getDamageMultiplier()  { return this.hasPerk('glass_cannon') ? 2.0 : 1.0; }
+    getDamageMultiplier()  { return this.hasPerk('glass_cannon') ? 2 : 1; }
     getCritChance()        { return this.hasPerk('critical_strike') ? 0.15 + (this.getStacks('critical_strike') - 1) * 0.12 : 0; }
     getCritMultiplier()    { return 2.5; }
     getPierceCount()       { return this.getStacks('piercing_rounds'); }
 
     //  Defense
     getPhaseChance()       { return this.hasPerk('phase_dodge') ? 0.12 + (this.getStacks('phase_dodge') - 1) * 0.08 : 0; }
-    getDamageConverterRate() { return this.hasPerk('damage_converter') ? 0.20 + (this.getStacks('damage_converter') - 1) * 0.10 : 0; }
+    getDamageConverterRate() { return this.hasPerk('damage_converter') ? 0 + (this.getStacks('damage_converter') - 1) * 0.1 : 0; }
     getAutoShieldCooldown() { return this.hasPerk('auto_shield') ? 12 - (this.getStacks('auto_shield') - 1) * 3 : Infinity; }
     getResistanceModifier() { return this.hasPerk('glass_cannon') ? -0.25 : 0; }
-    getSpeedMultiplier()    { let m = 1; if (this.hasPerk('fortress_mode')) m -= 0.15 * this.getStacks('fortress_mode'); return Math.max(0.4, m); }
+    getSpeedMultiplier()    { 
+        let m = 1; 
+        if (this.hasPerk('fortress_mode')) 
+            m -= 0.15 * this.getStacks('fortress_mode'); 
+        return Math.max(0.4, m); }
 
     //  Utility
     getDropRateBonus()     { return this.hasPerk('lucky_drops') ? 0.25 + (this.getStacks('lucky_drops') - 1) * 0.15 : 0; }
-    getPointMultiplier()   { return this.hasPerk('point_multiplier') ? 1 + 0.20 + (this.getStacks('point_multiplier') - 1) * 0.15 : 1; }
-    getComboDecayMultiplier() { return this.hasPerk('combo_master') ? Math.max(0.2, 1 - 0.40 - (this.getStacks('combo_master') - 1) * 0.20) : 1; }
+    getPointMultiplier()   { return this.hasPerk('point_multiplier') ? 1 + 0.2 + (this.getStacks('point_multiplier') - 1) * 0.15 : 1; }
+    getComboDecayMultiplier() { return this.hasPerk('combo_master') ? Math.max(0.2, 1 - 0.4 - (this.getStacks('combo_master') - 1) * 0.2) : 1; }
     getComboPointsBonus()  { return this.hasPerk('combo_master') ? 0.15 : 0; }
-    getUltChargeMultiplier() { return this.hasPerk('ultimate_engine') ? 1 + 0.35 + (this.getStacks('ultimate_engine') - 1) * 0.20 : 1; }
-    getHeatDissipationMult() { return this.hasPerk('cool_exhaust') ? 1 + 0.50 + (this.getStacks('cool_exhaust') - 1) * 0.25 : 1; }
-    getHeatPerShotMult()   { return this.hasPerk('double_barrel') ? 1.30 : 1; }
+    getUltChargeMultiplier() { return this.hasPerk('ultimate_engine') ? 1 + 0.35 + (this.getStacks('ultimate_engine') - 1) * 0.2 : 1; }
+    getHeatDissipationMult() { return this.hasPerk('cool_exhaust') ? 1 + 0.5 + (this.getStacks('cool_exhaust') - 1) * 0.25 : 1; }
+    getHeatPerShotMult()   { return this.hasPerk('double_barrel') ? 1.3 : 1; }
     getMagnetRange()       { return this.hasPerk('magnet_field') ? 150 + (this.getStacks('magnet_field') - 1) * 80 : 0; }
     getVampireKillThreshold() { return this.hasPerk('vampire_rounds') ? Math.max(2, 8 - (this.getStacks('vampire_rounds') - 1) * 2) : Infinity; }
     getChainTargets()      { return this.getStacks('chain_lightning'); }
     getDroneCount()        { return this.getStacks('orbital_drone'); }
 
     // ── World 2 Perk Getters ──
-    getNeuralHijackChance()  { return this.hasPerk('neural_hijack') ? 0.25 + (this.getStacks('neural_hijack') - 1) * 0.10 : 0; }
+    getNeuralHijackChance()  { return this.hasPerk('neural_hijack') ? 0.25 + (this.getStacks('neural_hijack') - 1) * 0.1 : 0; }
     getNeuralHijackMaxAllies(){ return this.hasPerk('neural_hijack') ? 3 + this.getStacks('neural_hijack') : 0; }
-    getStealthDamageBonus(){ return this.hasPerk('predatore') ? 0.50 + (this.getStacks('predatore') - 1) * 0.25 : 0; }
-    getRevealRange()       { return this.hasPerk('esploratore') ? 220 + (this.getStacks('esploratore') - 1) * 40 : (this.hasPerk('predatore') ? 180 : 0); }
-    getExplorerMagnetBonus() { return this.hasPerk('esploratore') ? 0.30 + (this.getStacks('esploratore') - 1) * 0.20 : 0; }
+    getStealthDamageBonus(){ return this.hasPerk('predatore') ? 0.5 + (this.getStacks('predatore') - 1) * 0.25 : 0; }
+    getRevealRange() {
+        if (this.hasPerk('esploratore')) {
+            return 220 + (this.getStacks('esploratore') - 1) * 40;
+        }
+        return this.hasPerk('predatore') ? 180 : 0;
+    }
+    getExplorerMagnetBonus() { return this.hasPerk('esploratore') ? 0.3 + (this.getStacks('esploratore') - 1) * 0 : 0; }
     getCritAoeRange()      { return this.hasPerk('colpo_critico') ? 80 + (this.getStacks('colpo_critico') - 1) * 20 : 0; }
     getCritAoeBonusChance(){ return this.hasPerk('colpo_critico') ? 0.05 * this.getStacks('colpo_critico') : 0; }
     getFireTrailDmg()      { return this.hasPerk('scia_infuocata') ? 2 + (this.getStacks('scia_infuocata') - 1) : 0; }

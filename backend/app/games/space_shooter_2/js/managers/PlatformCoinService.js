@@ -10,12 +10,10 @@
  * but scoped to the coin features only, keeping it lightweight & reusable.
  */
 class PlatformCoinService {
-    constructor() {
-        /** @type {number|null} */
-        this._balance = null;
-        /** @type {string|null} */
-        this._userId = null;
-    }
+    /** @type {number|null} */
+    _balance = null;
+    /** @type {string|null} */
+    _userId = null;
 
     // ──────────────────────── Init ────────────────────────
 
@@ -23,9 +21,9 @@ class PlatformCoinService {
     _ensureUserId() {
         if (this._userId) return this._userId;
 
-        // 1. window.platformConfig (set by PlatformSDK on config event)
-        if (window.platformConfig?.userId) {
-            this._userId = window.platformConfig.userId;
+        // 1. globalThis.platformConfig (set by PlatformSDK on config event)
+        if (globalThis.platformConfig?.userId) {
+            this._userId = globalThis.platformConfig.userId;
             return this._userId;
         }
 

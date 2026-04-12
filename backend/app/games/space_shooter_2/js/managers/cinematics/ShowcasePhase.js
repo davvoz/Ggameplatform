@@ -17,7 +17,7 @@ const HEADER_ANIMS = {
     /** Smooth sine pulse (fleet, miniboss) */
     pulse: (t, freq) => 0.8 + 0.2 * Math.sin(t * (freq ?? 2.5)),
     /** Hard on-off flash (boss) */
-    flash: (t, freq) => Math.sin(t * (freq ?? 4)) > 0 ? 1.0 : 0.75,
+    flash: (t, freq) => Math.sin(t * (freq ?? 4)) > 0 ? 1 : 0.75,
 };
 
 // ─── Item slide-in presets ────────────────────────────
@@ -70,7 +70,7 @@ export default class ShowcasePhase {
         this.enterDuration = config.enterDuration  ?? 0.3;
         this.exitFromEnd   = config.exitFromEnd    ?? 0.5;
         this.exitDuration  = config.exitDuration   ?? 0.5;
-        this.headerY       = config.headerY        ?? 0.10;
+        this.headerY       = config.headerY        ?? 0.1;
         this.itemYOffset   = config.itemYOffset    ?? -10;
         this.scaleItems    = config.scaleItems     || false;
         this.scanLine      = config.scanLine       || false;

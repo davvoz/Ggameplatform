@@ -2,24 +2,22 @@
  * SoundManager - Procedural audio synthesis + WAV music
  */
 class SoundManager {
-    constructor() {
-        this.ctx = null;
-        this.musicEnabled = true;
-        this.sfxEnabled = true;
-        this.musicVolume = 0.3;
-        this.sfxVolume = 0.4;
-        this.currentTrack = 0;
-        this.musicSource = null;
-        this.musicGain = null;
-        this.musicBuffers = [];
-        this.initialized = false;
-        this.analyser = null;
-        this.analyserData = null;
-    }
+    ctx = null;
+    musicEnabled = true;
+    sfxEnabled = true;
+    musicVolume = 0.3;
+    sfxVolume = 0.4;
+    currentTrack = 0;
+    musicSource = null;
+    musicGain = null;
+    musicBuffers = [];
+    initialized = false;
+    analyser = null;
+    analyserData = null;
 
     async init() {
         try {
-            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
             this.musicGain = this.ctx.createGain();
             this.musicGain.gain.value = this.musicVolume;
 
@@ -46,7 +44,7 @@ class SoundManager {
                         this.musicBuffers.push(audioBuffer);
                     }
                 } catch (e) {
-                    // Track not available
+                    console.warn(`Failed to load music track ${track}:`, e);
                 }
             }
         } catch (e) {
@@ -55,7 +53,7 @@ class SoundManager {
     }
 
     resume() {
-        if (this.ctx && this.ctx.state === 'suspended') {
+        if (this.ctx?.state === 'suspended') {
             this.ctx.resume();
         }
     }
@@ -78,10 +76,9 @@ class SoundManager {
     }
 
     _fadeOutAndSwitch(trackIndex) {
-        const fadeDuration = 1.0; // seconds
+        const fadeDuration = 1; // seconds
         const now = this.ctx.currentTime;
         const oldSource = this.musicSource;
-        const oldGain = this.musicGain;
 
         // Create a dedicated gain node for the old track to fade it out independently
         const fadeGain = this.ctx.createGain();
@@ -90,13 +87,19 @@ class SoundManager {
         fadeGain.connect(this.ctx.destination);
 
         // Disconnect old source from main gain node and connect to fade gain
-        try { oldSource.disconnect(); } catch (e) {}
+        try { oldSource.disconnect(); } catch (e) {
+            console.warn('Error disconnecting old music source:', e);
+        }
         oldSource.connect(fadeGain);
 
         // Stop old source after fade completes
         setTimeout(() => {
-            try { oldSource.stop(); } catch (e) {}
-            try { fadeGain.disconnect(); } catch (e) {}
+            try { oldSource.stop(); } catch (e) {
+                console.warn('Error stopping old music source:', e);
+            }
+            try { fadeGain.disconnect(); } catch (e) {
+                console.warn('Error disconnecting fade gain:', e);
+            }
         }, fadeDuration * 1000 + 50);
 
         // Clear reference and start new track immediately (fades cross naturally)
@@ -124,12 +127,16 @@ class SoundManager {
                 const src = this.musicSource;
                 this.musicSource = null;
                 setTimeout(() => {
-                    try { src.stop(); } catch (e) {}
+                    try { src.stop(); } catch (e) {
+                        console.warn('Error stopping music source:', e);
+                    }
                     // Restore gain for next playback
                     this.musicGain.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
                 }, fadeDuration * 1000 + 50);
             } else {
-                try { this.musicSource.stop(); } catch (e) {}
+                try { this.musicSource.stop(); } catch (e) {
+                    console.warn('Error stopping music source:', e);
+                }
                 this.musicSource = null;
             }
         }
@@ -198,10 +205,10 @@ class SoundManager {
 
     toggleMusic() {
         this.musicEnabled = !this.musicEnabled;
-        if (!this.musicEnabled) {
-            this.stopMusic();
-        } else {
+        if (this.musicEnabled) {
             this.playMusic(this.currentTrack);
+        } else {
+            this.stopMusic();
         }
         return this.musicEnabled;
     }
@@ -227,7 +234,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(this.ctx.currentTime);
             osc.stop(this.ctx.currentTime + duration);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing synth:', e);
+        }
     }
 
     _playNoise(duration, volume = 0.1) {
@@ -247,7 +256,9 @@ class SoundManager {
             source.connect(gain);
             gain.connect(this.ctx.destination);
             source.start(this.ctx.currentTime);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing noise:', e);
+        }
     }
 
     playShoot() {
@@ -265,7 +276,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.1);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing shoot sound:', e);
+        }
     }
 
     playEnemyShoot() {
@@ -283,7 +296,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.12);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing enemy shoot sound:', e);
+        }
     }
 
     playExplosion() {
@@ -310,7 +325,9 @@ class SoundManager {
             filter.connect(gain);
             gain.connect(this.ctx.destination);
             noise.start(t);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing explosion sound:', e);
+        }
     }
 
     playExplosionBig() {
@@ -349,7 +366,9 @@ class SoundManager {
             subGain.connect(this.ctx.destination);
             sub.start(t);
             sub.stop(t + 0.5);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing big explosion sound:', e);
+        }
     }
 
     playHit() {
@@ -367,7 +386,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.15);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing hit sound:', e);
+        }
     }
 
     playPowerUp() {
@@ -386,7 +407,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.3);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing power-up sound:', e);
+        }
     }
 
     playDamage() {
@@ -423,7 +446,9 @@ class SoundManager {
             nFilter.connect(nGain);
             nGain.connect(this.ctx.destination);
             nSrc.start(t);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing damage sound:', e);
+        }
     }
 
     playShieldHit() {
@@ -454,7 +479,9 @@ class SoundManager {
             gain2.connect(this.ctx.destination);
             osc2.start(t);
             osc2.stop(t + 0.12);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing shield hit sound:', e);
+        }
     }
 
     playUltimate() {
@@ -481,7 +508,9 @@ class SoundManager {
             setTimeout(() => {
                 this.playExplosionBig();
             }, 200);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing ultimate sound:', e);
+        }
     }
 
     playLevelComplete() {
@@ -502,7 +531,9 @@ class SoundManager {
                 osc.start(t + i * 0.12);
                 osc.stop(t + i * 0.12 + 0.4);
             });
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing level complete sound:', e);
+        }
     }
 
     playShopBuy() {
@@ -520,7 +551,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.2);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing shop buy sound:', e);
+        }
     }
 
     playShopError() {
@@ -541,7 +574,9 @@ class SoundManager {
                 osc.start(st);
                 osc.stop(st + 0.15);
             });
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing shop error sound:', e);
+        }
     }
 
     playGameOver() {
@@ -562,7 +597,9 @@ class SoundManager {
                 osc.start(startTime);
                 osc.stop(startTime + 0.3);
             });
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing game over sound:', e);
+        }
     }
 
     playMenuClick() {
@@ -580,7 +617,9 @@ class SoundManager {
             gain.connect(this.ctx.destination);
             osc.start(t);
             osc.stop(t + 0.06);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing menu click sound:', e);
+        }
     }
 
     /** Pre-game cinematic sound — epic intro for showcasing ships/bosses */
@@ -619,7 +658,9 @@ class SoundManager {
                 this._playNoise(0.3, 0.3);
                 this._playSynth(50, 0.4, 'sine', 0.25);
             }, 1500);
-        } catch(e) {}
+        } catch (e) {
+            console.warn('Error playing cinematic intro sound:', e);
+        }
     }
 
     /** Cinematic ship whoosh — quick flyby sound */
@@ -638,7 +679,9 @@ class SoundManager {
             g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
             osc.connect(g); g.connect(this.ctx.destination);
             osc.start(t); osc.stop(t + 0.35);
-        } catch(e) {}
+        } catch (e) {
+            console.warn('Error playing cinematic whoosh sound:', e);
+        }
     }
 
     /** Cinematic boss reveal — heavy thud + alarm tone */
@@ -653,7 +696,9 @@ class SoundManager {
                 this._playSynth(600, 0.12, 'square', 0.1);
                 setTimeout(() => this._playSynth(400, 0.12, 'square', 0.1), 100);
             }, 200);
-        } catch(e) {}
+        } catch (e) {
+            console.warn('Error playing cinematic boss reveal sound:', e);
+        }
     }
 
     /** Epic boss warning alarm — deep rising drone + staccato alarm pings */
@@ -666,7 +711,7 @@ class SoundManager {
                 const gain = this.ctx.createGain();
                 osc.type = 'sawtooth';
                 osc.frequency.setValueAtTime(50, t);
-                osc.frequency.linearRampToValueAtTime(180, t + 2.0);
+                osc.frequency.linearRampToValueAtTime(180, t + 2);
                 gain.gain.setValueAtTime(0.15 * this.sfxVolume, t);
                 gain.gain.linearRampToValueAtTime(0.25 * this.sfxVolume, t + 1.5);
                 gain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
@@ -674,7 +719,9 @@ class SoundManager {
                 gain.connect(this.ctx.destination);
                 osc.start(t);
                 osc.stop(t + 2.5);
-            } catch (e) {}
+            } catch (e) {
+                console.warn('Error playing boss warning sound:', e);
+            }
         }
         // Alarm pings — 4 pairs of descending tones
         for (let i = 0; i < 4; i++) {
@@ -704,7 +751,7 @@ class SoundManager {
             warpOsc.type = 'sawtooth';
             warpOsc.frequency.setValueAtTime(30, t);
             warpOsc.frequency.exponentialRampToValueAtTime(250, t + 0.6);
-            warpOsc.frequency.exponentialRampToValueAtTime(60, t + 1.0);
+            warpOsc.frequency.exponentialRampToValueAtTime(60, t + 1);
             warpGain.gain.setValueAtTime(0.001, t);
             warpGain.gain.linearRampToValueAtTime(0.18 * this.sfxVolume, t + 0.15);
             warpGain.gain.linearRampToValueAtTime(0.22 * this.sfxVolume, t + 0.5);
@@ -753,14 +800,14 @@ class SoundManager {
             });
 
             // ── 3. Title reveal chord (0.9s) — rich major chord ──
-            const chordNotes = [261.6, 329.6, 392.0, 523.3]; // C4, E4, G4, C5
+            const chordNotes = [261.6, 329.6, 392, 523.3]; // C4, E4, G4, C5
             chordNotes.forEach((freq) => {
                 const cOsc = this.ctx.createOscillator();
                 const cGain = this.ctx.createGain();
                 cOsc.type = 'triangle';
                 cOsc.frequency.setValueAtTime(freq, t + 0.9);
                 cGain.gain.setValueAtTime(0.001, t + 0.85);
-                cGain.gain.linearRampToValueAtTime(0.08 * this.sfxVolume, t + 1.0);
+                cGain.gain.linearRampToValueAtTime(0.08 * this.sfxVolume, t + 1);
                 cGain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
                 cOsc.connect(cGain);
                 cGain.connect(this.ctx.destination);
@@ -774,14 +821,16 @@ class SoundManager {
             thudOsc.type = 'sine';
             thudOsc.frequency.setValueAtTime(50, t + 1.05);
             thudOsc.frequency.exponentialRampToValueAtTime(25, t + 1.5);
-            thudGain.gain.setValueAtTime(0.001, t + 1.0);
+            thudGain.gain.setValueAtTime(0.001, t + 1);
             thudGain.gain.linearRampToValueAtTime(0.2 * this.sfxVolume, t + 1.1);
             thudGain.gain.exponentialRampToValueAtTime(0.001, t + 1.6);
             thudOsc.connect(thudGain);
             thudGain.connect(this.ctx.destination);
-            thudOsc.start(t + 1.0);
+            thudOsc.start(t + 1);
             thudOsc.stop(t + 1.7);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing level intro sound:', e);
+        }
     }
 
     /** Level outro — victory whoosh, score tally ping, transition sweep */
@@ -803,7 +852,7 @@ class SoundManager {
                 sOsc.connect(sGain);
                 sGain.connect(this.ctx.destination);
                 sOsc.start(t + i * 0.06);
-                sOsc.stop(t + 2.0);
+                sOsc.stop(t + 2);
             });
 
             // ── 2. Shimmer/sparkle noise (0.1s) — filtered noise burst ──
@@ -858,7 +907,9 @@ class SoundManager {
                 rOsc.start(t + 1.35);
                 rOsc.stop(t + 2.6);
             });
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Error playing victory sound:', e);
+        }
     }
 }
 

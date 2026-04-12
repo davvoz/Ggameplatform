@@ -1,5 +1,5 @@
 import { getLevelData } from '../LevelDataFacade.js';
-import {  ui, mono } from '../FontConfig.js';
+import { ui, mono } from '../FontConfig.js';
 
 class HUDRenderer {
     constructor(game) {
@@ -36,7 +36,8 @@ class HUDRenderer {
         ctx.fillStyle = 'rgba(0,0,0,0.5)';
         ctx.fillRect(hpBarX, hpBarY, hpBarW, hpBarH);
         const hpRatio = player.health / player.maxHealth;
-        ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffaa00' : '#ff4444';
+        const lowRatio = hpRatio > 0.25 ? '#ffaa00' : '#ff4444';
+        ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : lowRatio;
         ctx.fillRect(hpBarX, hpBarY, hpBarW * hpRatio, hpBarH);
         ctx.strokeStyle = '#ffffff44';
         ctx.lineWidth = 1;
@@ -146,7 +147,6 @@ class HUDRenderer {
             g.state !== 'levelIntro' && g.state !== 'levelOutro' &&
             g.state !== 'deathCinematic') return;
 
-        const w = g.canvas.width;
         const h = g.canvas.height;
         const boxW = 90;
         const boxH = 50;
@@ -203,7 +203,7 @@ class HUDRenderer {
         const t = boss.enterTime;
 
         if (phase === 0) {
-            const progress = t / 2.0;
+            const progress = t / 2;
 
             ctx.save();
             ctx.globalAlpha = 0.4 + 0.15 * Math.sin(t * 6);
@@ -282,7 +282,7 @@ class HUDRenderer {
         }
 
         if (phase === 1) {
-            const fade = 1 - Math.min(1, (t - 2.0) / 1.5);
+            const fade = 1 - Math.min(1, (t - 2) / 1.5);
             ctx.save();
             ctx.globalAlpha = fade * 0.25;
             ctx.fillStyle = '#000';
@@ -300,7 +300,7 @@ class HUDRenderer {
         }
 
         if (phase === 2) {
-            const deployP = Math.min(1, (t - 3.5) / 1.0);
+            const deployP = Math.min(1, (t - 3.5) / 1);
             if (deployP > 0.8) {
                 const flashAlpha = (deployP - 0.8) / 0.2;
                 ctx.save();
@@ -359,13 +359,24 @@ class HUDRenderer {
     }
 
     // Banner methods moved to Game.js (DOM-based)
-    showXPBanner() {}
-    showStatsBanner() {}
-    showLevelUpNotification() {}
-    updateBanners() {}
-    renderBanners() {}
+    showXPBanner() {
+        // Implemented in Game.js using DOM for better animation & styling
+    }
+    showStatsBanner() {
+        // Implemented in Game.js using DOM for better animation & styling
+    }
+    showLevelUpNotification() {
+        // Implemented in Game.js using DOM for better animation & styling
+    }
+    updateBanners() {
+        // Implemented in Game.js using DOM for better animation & styling
+    }
+    renderBanners() {
+        // Implemented in Game.js using DOM for better animation & styling
+    }
 
     reset() {
+        // No persistent state in HUDRenderer, but method provided for consistency
     }
 }
 

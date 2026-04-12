@@ -25,11 +25,11 @@ import { PERK_CATALOG } from '../../PerkSystem.js';
 import { title, ui, mono } from '../../FontConfig.js';
 
 // ─── Timing constants ─────────────────────────────────
-const TITLE_END      = 4.8;   // title phase visual end
+const TITLE_END = 4.8;   // title phase visual end
 const WORLD_TITLE_DUR = 4.5;  // world name presentation duration (after game title, W1 only)
-const CROSSFADE      = 0.3;   // overlap between phases
-const PERKS_DUR      = 5.5;   // perk showcase duration
-const FADE_DUR       = 1.0;   // final fade-to-black
+const CROSSFADE = 0.3;   // overlap between phases
+const PERKS_DUR = 5.5;   // perk showcase duration
+const FADE_DUR = 1;   // final fade-to-black
 
 export default class OpeningCinematic extends CinematicScene {
 
@@ -42,27 +42,27 @@ export default class OpeningCinematic extends CinematicScene {
         this.worldNum = options.worldNum || 1;
         const worldCfg = getWorldConfig(this.worldNum);
 
-        const bosses     = worldCfg.bossIds.map(id => ({ ...BOSS_DEFS[id], id }));
+        const bosses = worldCfg.bossIds.map(id => ({ ...BOSS_DEFS[id], id }));
         const miniBosses = worldCfg.miniBossIds.map(id => ({ ...MINIBOSS_DEFS[id], id }));
-        this.bgStars     = createBgStars(50, w, h);
+        this.bgStars = createBgStars(50, w, h);
 
         // Store world theme for rendering
-        this.worldCfg    = worldCfg;
-        this.themeColor  = worldCfg.themeColor || '#4488ff';
+        this.worldCfg = worldCfg;
+        this.themeColor = worldCfg.themeColor || '#4488ff';
 
         // ── Build data-driven showcase phases ──
         // Unified order: SS2 title → Ships → World title → [Enemies (W4)] → Mini-Bosses → Bosses → Perks
         const T = ITEM_SHOWCASE_TIME;
-        const ships      = Object.values(SHIP_DATA);
+        const ships = Object.values(SHIP_DATA);
         const shipsStart = TITLE_END - CROSSFADE;
 
         // World title starts after ships
         this.worldTitleStart = shipsStart + ships.length * T - CROSSFADE;
-        this.worldTitleEnd   = this.worldTitleStart + WORLD_TITLE_DUR;
+        this.worldTitleEnd = this.worldTitleStart + WORLD_TITLE_DUR;
 
         // W4 regular enemies to showcase (only for World 4)
         const w4EnemyTypes = ['quark_triplet', 'neutrino_ghost', 'boson_carrier',
-                              'higgs_field', 'positron_mirror', 'gluon_chain'];
+            'higgs_field', 'positron_mirror', 'gluon_chain'];
         const w4Enemies = this.worldNum === 4
             ? w4EnemyTypes.map(type => ({
                 type,
@@ -75,7 +75,7 @@ export default class OpeningCinematic extends CinematicScene {
         // Regular enemies (if any) start after world title
         const enemiesStart = this.worldTitleEnd - CROSSFADE;
         // Mini-bosses start after enemies (or after world title if no enemies)
-        const mbStart   = w4Enemies.length > 0
+        const mbStart = w4Enemies.length > 0
             ? enemiesStart + w4Enemies.length * T
             : this.worldTitleEnd - CROSSFADE;
         const bossStart = mbStart + miniBosses.length * T;
@@ -85,63 +85,72 @@ export default class OpeningCinematic extends CinematicScene {
 
         this.showcasePhases = [
             new ShowcasePhase({
-                header:        { text: '▸ FLEET ROSTER ◂', color: '#aaccee',
-                                 shadowColor: 'rgba(100,180,255,0.6)', shadowBlur: 12,
-                                 animFreq: 2, letterSpacing: '4px', enterDuration: 0.4 },
-                items:         ships,
-                cardRenderer:  renderShipCard,
-                startTime:     shipsStart,
-                slideStyle:    'leftToRight',
+                header: {
+                    text: '▸ FLEET ROSTER ◂', color: '#aaccee',
+                    shadowColor: 'rgba(100,180,255,0.6)', shadowBlur: 12,
+                    animFreq: 2, letterSpacing: '4px', enterDuration: 0.4
+                },
+                items: ships,
+                cardRenderer: renderShipCard,
+                startTime: shipsStart,
+                slideStyle: 'leftToRight',
                 enterDuration: 0.35,
-                headerY:       0.12,
-                itemYOffset:   -15,
-                onPhaseStart:  (g) => g.sound?.playCinematicWhoosh?.(),
+                headerY: 0.12,
+                itemYOffset: -15,
+                onPhaseStart: (g) => g.sound?.playCinematicWhoosh?.(),
             }),
             // W4 regular enemy showcase (only present for World 4)
             ...(w4Enemies.length > 0 ? [new ShowcasePhase({
-                header:        { text: '⚛ QUANTUM HOSTILES ⚛', color: '#ff44ff',
-                                 shadowColor: '#cc22cc', shadowBlur: 16,
-                                 animFreq: 3, animStyle: 'pulse' },
-                items:         w4Enemies,
-                cardRenderer:  renderW4EnemyCard,
-                startTime:     enemiesStart,
-                slideStyle:    'alternating',
+                header: {
+                    text: '⚛ QUANTUM HOSTILES ⚛', color: '#ff44ff',
+                    shadowColor: '#cc22cc', shadowBlur: 16,
+                    animFreq: 3, animStyle: 'pulse'
+                },
+                items: w4Enemies,
+                cardRenderer: renderW4EnemyCard,
+                startTime: enemiesStart,
+                slideStyle: 'alternating',
                 enterDuration: 0.35,
-                headerY:       0.12,
-                itemYOffset:   -10,
-                onPhaseStart:  (g) => g.sound?.playCinematicWhoosh?.(),
+                headerY: 0.12,
+                itemYOffset: -10,
+                onPhaseStart: (g) => g.sound?.playCinematicWhoosh?.(),
             })] : []),
             new ShowcasePhase({
-                header:        { text: '⚠ MINI-BOSSES ⚠', color: enemyHeaderColor,
-                                 shadowColor: enemyShadowColor },
-                items:         miniBosses,
-                cardRenderer:  renderMiniBossCard,
-                startTime:     mbStart,
-                headerY:       0.12,
-                itemYOffset:   -10,
-                onPhaseStart:  (g) => g.sound?.playCinematicBossReveal?.(),
+                header: {
+                    text: '⚠ MINI-BOSSES ⚠', color: enemyHeaderColor,
+                    shadowColor: enemyShadowColor
+                },
+                items: miniBosses,
+                cardRenderer: renderMiniBossCard,
+                startTime: mbStart,
+                headerY: 0.12,
+                itemYOffset: -10,
+                onPhaseStart: (g) => g.sound?.playCinematicBossReveal?.(),
             }),
             new ShowcasePhase({
-                header:        { text: '☠ BOSS TARGETS ☠', color: '#ff3322',
-                                 shadowColor: '#ff2200', maxFontSize: 22,
-                                 fontSizeRatio: 0.05, shadowBlur: 25, animStyle: 'flash' },
-                items:         bosses,
-                cardRenderer:  renderBossCard,
-                startTime:     bossStart,
-                slideStyle:    'center',
-                scaleItems:    true,
-                scanLine:      true,
-                exitFromEnd:   0.2,
-                exitDuration:  0.4,
-                headerY:       0.10,
-                itemYOffset:   -5,
-                onPhaseStart:  (g) => g.sound?.playCinematicBossReveal?.(),
-                onItemReveal:  (g, i) => { if (i > 0) g.sound?.playCinematicWhoosh?.(); },
+                header: {
+                    text: '☠ BOSS TARGETS ☠', color: '#ff3322',
+                    shadowColor: '#ff2200', maxFontSize: 22,
+                    fontSizeRatio: 0.05, shadowBlur: 25, animStyle: 'flash'
+                },
+                items: bosses,
+                cardRenderer: renderBossCard,
+                startTime: bossStart,
+                slideStyle: 'center',
+                scaleItems: true,
+                scanLine: true,
+                exitFromEnd: 0.2,
+                exitDuration: 0.4,
+                headerY: 0.1,
+                itemYOffset: -5,
+                onPhaseStart: (g) => g.sound?.playCinematicBossReveal?.(),
+                onItemReveal: (g, i) => { if (i > 0) g.sound?.playCinematicWhoosh?.(); },
             }),
         ];
+        //prefer .at()
+        this.perksStart = this.showcasePhases.at(-1).endTime;
 
-        this.perksStart = this.showcasePhases[this.showcasePhases.length - 1].endTime;
-        this.duration   = this.perksStart + PERKS_DUR + FADE_DUR;
+        this.duration = this.perksStart + PERKS_DUR + FADE_DUR;
 
         // Skip section boundaries:
         //   Section 1: SS2 title + ships  →  skip jumps to worldTitleStart
@@ -307,7 +316,7 @@ export default class OpeningCinematic extends CinematicScene {
             const w1y = cy - 15 + (1 - w1enter) * (-h * 0.4);
             const w1alpha = w1enter * holdAlpha;
 
-            if (t > 0.35 && t < 1.0) {
+            if (t > 0.35 && t < 1) {
                 const ringT = (t - 0.35) / 0.65;
                 ctx.globalAlpha = (1 - ringT) * 0.25 * holdAlpha;
                 ctx.strokeStyle = '#4488ff';
@@ -370,7 +379,7 @@ export default class OpeningCinematic extends CinematicScene {
         if (t > 1.6) {
             const w3t = Math.min(1, (t - 1.6) / 0.5);
             const w3enter = easeOut(w3t);
-            const w3scale = 3.0 - 2.0 * w3enter;
+            const w3scale = 3 - 2 * w3enter;
             const w3alpha = w3enter * holdAlpha;
 
             if ((t - 1.6) < 0.15) {
@@ -433,9 +442,9 @@ export default class OpeningCinematic extends CinematicScene {
 
         // Parse theme color for glow effects
         const hexToRgb = (hex) => {
-            const r = Number.parseInt(hex.slice(1,3), 16);
-            const g = Number.parseInt(hex.slice(3,5), 16);
-            const b = Number.parseInt(hex.slice(5,7), 16);
+            const r = Number.parseInt(hex.slice(1, 3), 16);
+            const g = Number.parseInt(hex.slice(3, 5), 16);
+            const b = Number.parseInt(hex.slice(5, 7), 16);
             return { r, g, b };
         };
         const rgb = hexToRgb(themeColor);
@@ -656,15 +665,15 @@ export default class OpeningCinematic extends CinematicScene {
 
             let perkAlpha = 0.15;
             let glowAmount = 0;
-            let iconScale = 1.0;
+            let iconScale = 1;
 
             if (tST >= 0) {
                 const fp = Math.min(1, tST / lightUpDuration);
-                const flash = fp < 0.3 ? easeOut(fp / 0.3) : 1.0;
-                const settle = fp < 0.3 ? 1.0 : 1 - (fp - 0.3) / 0.7 * 0.4;
+                const flash = fp < 0.3 ? easeOut(fp / 0.3) : 1;
+                const settle = fp < 0.3 ? 1 : 1 - (fp - 0.3) / 0.7 * 0.4;
                 perkAlpha = 0.15 + 0.85 * flash * settle;
                 glowAmount = fp < 0.4 ? (1 - fp / 0.4) : 0;
-                iconScale = 1.0 + glowAmount * 0.4;
+                iconScale = 1 + glowAmount * 0.4;
             }
 
             ctx.save();

@@ -16,13 +16,13 @@ async function initSDK() {
             await PlatformSDK.init({
                 onStart: () => {},
                 onPause: () => {
-                    if (window.game && window.game.state === 'playing') {
-                        window.game.togglePause();
+                    if (globalThis.game?.state === 'playing') {
+                        globalThis.game.togglePause();
                     }
                 },
                 onResume: () => {
-                    if (window.game && window.game.state === 'paused') {
-                        window.game.togglePause();
+                    if (globalThis.game?.state === 'paused') {
+                        globalThis.game.togglePause();
                     }
                 }
             });
@@ -37,8 +37,8 @@ function startGameSession() {
     sessionStarted = true;
     if (typeof PlatformSDK !== 'undefined') {
         try {
-            const targetOrigin = document.referrer ? new URL(document.referrer).origin : window.location.origin;
-            window.parent.postMessage({
+            const targetOrigin = document.referrer ? new URL(document.referrer).origin : globalThis.location.origin;
+            globalThis.parent.postMessage({
                 type: 'gameStarted',
                 payload: {},
                 timestamp: Date.now(),
@@ -55,7 +55,7 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
         try {
             PlatformSDK.gameOver(finalScore, {
                 extra_data: {
-                    level: window.game?.currentLevel || 1,
+                    level: globalThis.game?.currentLevel || 1,
                     ...extraData
                 }
             });
@@ -67,28 +67,28 @@ function sendScoreToPlatform(finalScore, extraData = {}) {
 }
 
 function showXPBanner(xpAmount, extraData = null) {
-    if (window.game && typeof window.game.showXPBanner === 'function') {
-        window.game.showXPBanner(xpAmount, extraData);
+    if (globalThis.game && typeof globalThis.game.showXPBanner === 'function') {
+        globalThis.game.showXPBanner(xpAmount, extraData);
     }
 }
 
 function showStatsBanner(stats) {
-    if (window.game && typeof window.game.showStatsBanner === 'function') {
-        window.game.showStatsBanner(stats);
+    if (globalThis.game && typeof globalThis.game.showStatsBanner === 'function') {
+        globalThis.game.showStatsBanner(stats);
     }
 }
 
 function showLevelUpNotification(levelUpData) {
-    if (window.game && typeof window.game.showLevelUpNotification === 'function') {
-        window.game.showLevelUpNotification(levelUpData);
+    if (globalThis.game && typeof globalThis.game.showLevelUpNotification === 'function') {
+        globalThis.game.showLevelUpNotification(levelUpData);
     }
 }
 
-window.startGameSession = startGameSession;
-window.sendScoreToPlatform = sendScoreToPlatform;
-window.showXPBanner = showXPBanner;
-window.showStatsBanner = showStatsBanner;
-window.showLevelUpNotification = showLevelUpNotification;
+globalThis.startGameSession = startGameSession;
+globalThis.sendScoreToPlatform = sendScoreToPlatform;
+globalThis.showXPBanner = showXPBanner;
+globalThis.showStatsBanner = showStatsBanner;
+globalThis.showLevelUpNotification = showLevelUpNotification;
 
 // ========== DOMContentLoaded ==========
 
@@ -112,11 +112,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Create game
     const game = await Game.create(canvas);
-    window.game = game;
+    globalThis.game = game;
 
     // Audio-reactive visualizer for popup screens
     const audioViz = new AudioVisualizer(game.sound);
-    window.audioViz = audioViz;
+    globalThis.audioViz = audioViz;
 
     /**
      * Show a UI screen with audio-reactive background.
@@ -141,20 +141,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!el) return;
         el.classList.add('hidden');
         // Stop viz if canvas is inside this screen
-        if (audioViz.canvas && audioViz.canvas.parentNode === el) {
+        if (audioViz.canvas?.parentNode === el) {
             audioViz.stop();
         }
     }
 
     // Auto-pause on tab switch
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden && game.state === 'playing') {
-            game.togglePause();
+        if (document.hidden && globalThis.game?.state === 'playing') {
+            globalThis.game.togglePause();
         }
     });
 
     // Sync toggle states whenever game pauses
-    window.addEventListener('game-paused', () => {
+    globalThis.addEventListener('game-paused', () => {
         syncToggleStates();
     });
 
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof PlatformSDK !== 'undefined' && PlatformSDK.loadProgress) {
             try {
                 const data = await PlatformSDK.loadProgress();
-                if (data && data.worlds_unlocked) {
+                if (data?.worlds_unlocked) {
                     unlockedWorlds = data.worlds_unlocked;
                 }
             } catch (e) {
@@ -185,20 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.classList.toggle('locked', isLocked);
             const icon = card.querySelector('.diff-icon');
             const lockLabel = card.querySelector('.world-lock-label');
-            if (isLocked) {
-                if (icon) icon.textContent = '▣';
-                if (lockLabel) lockLabel.style.display = '';
-                card.classList.remove('selected');
-            } else {
-                // Restore original icon
-                if (icon) {
-                    if (worldNum === 1) icon.textContent = '◆';
-                    else if (worldNum === 2) icon.textContent = '◇';
-                    else if (worldNum === 3) icon.textContent = '⬡';
-                    else if (worldNum === 4) icon.textContent = '⚛';
-                }
-                if (lockLabel) lockLabel.style.display = 'none';
-            }
+            updateCardAppearance(isLocked, icon, lockLabel, card, worldNum);
         });
         // Ensure a valid world is selected
         const anySelected = document.querySelector('.world-card.selected:not(.locked)');
@@ -218,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Save progress when a world is completed
-    window.saveWorldProgress = function(worldCompleted) {
+    globalThis.saveWorldProgress = function(worldCompleted) {
         const newUnlock = Math.max(unlockedWorlds, worldCompleted + 1);
         if (newUnlock > unlockedWorlds) {
             unlockedWorlds = newUnlock;
@@ -550,17 +537,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateFullscreenIcon();
 });
 
+function updateCardAppearance(isLocked, icon, lockLabel, card, worldNum) {
+    if (isLocked) {
+        setLockedIcon(icon, lockLabel);
+        card.classList.remove('selected');
+    } else {
+        // Restore original icon
+        updateIconForWorld(icon, worldNum, lockLabel);
+    }
+}
+
+function setLockedIcon(icon, lockLabel) {
+    if (icon) icon.textContent = '▣';
+    if (lockLabel) lockLabel.style.display = '';
+}
+
+function updateIconForWorld(icon, worldNum, lockLabel) {
+    if (icon) {
+        if (worldNum === 1) icon.textContent = '◆';
+        else if (worldNum === 2) icon.textContent = '◇';
+        else if (worldNum === 3) icon.textContent = '⬡';
+        else if (worldNum === 4) icon.textContent = '⚛';
+    }
+    if (lockLabel) lockLabel.style.display = 'none';
+}
+
 // ===== FULLSCREEN =====
 
 function toggleFullscreen() {
-    if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
-        window.PlatformSDK.toggleFullscreen();
+    if (globalThis.PlatformSDK && typeof globalThis.PlatformSDK.toggleFullscreen === 'function') {
+        globalThis.PlatformSDK.toggleFullscreen();
         return;
     }
 
     const elem = document.getElementById('game-container') || document.documentElement;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
+    const isIPadOS = /Mac|iPad/.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
     const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
 
     if ((isIOS || isIPadOS) && !fullscreenSupported) {
@@ -570,38 +582,62 @@ function toggleFullscreen() {
 
     const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
 
-    if (!fsElement) {
-        const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
-        if (requestFs) {
-            const p = requestFs.call(elem);
-            if (p && p.then) {
-                p.then(() => {
-                    document.body.classList.add('game-fullscreen');
-                    setTimeout(() => { try { window.game?.resize(); } catch(e){} }, 100);
-                    updateFullscreenIcon();
-                }).catch(() => toggleIOSFullscreen());
-            } else {
-                document.body.classList.add('game-fullscreen');
-                setTimeout(() => { try { window.game?.resize(); } catch(e){} }, 100);
-            }
+    if (fsElement) {
+        exitFullscreenHandler();
+    } else {
+        requestFullscreen(elem);
+    }
+}
+
+function exitFullscreenHandler() {
+    const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (exitFs) {
+        const p = exitFs.call(document);
+        if (p?.then) {
+            p.then(() => {
+                document.body.classList.remove('game-fullscreen');
+                setTimeout(() => {
+                    try { globalThis.game?.resize(); } catch (e) {
+                        console.warn('Resize failed after exiting fullscreen:', e);
+                    }
+                }, 100);
+                updateFullscreenIcon();
+            }).catch(() => { });
         } else {
-            toggleIOSFullscreen();
+            document.body.classList.remove('game-fullscreen');
+            setTimeout(() => {
+                try { globalThis.game?.resize(); } catch (e) {
+                    console.warn('Resize failed after exiting fullscreen:', e);
+                }
+            }, 100);
+        }
+    }
+}
+
+function requestFullscreen(elem) {
+    const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
+    if (requestFs) {
+        const p = requestFs.call(elem);
+        if (p?.then) {
+            p.then(() => {
+                document.body.classList.add('game-fullscreen');
+                setTimeout(() => {
+                    try { globalThis.game?.resize(); } catch (e) {
+                        console.warn('Resize failed after entering fullscreen:', e);
+                    }
+                }, 100);
+                updateFullscreenIcon();
+            }).catch(() => toggleIOSFullscreen());
+        } else {
+            document.body.classList.add('game-fullscreen');
+            setTimeout(() => {
+                try { globalThis.game?.resize(); } catch (e) {
+                    console.warn('Resize failed after entering fullscreen:', e);
+                }
+            }, 100);
         }
     } else {
-        const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-        if (exitFs) {
-            const p = exitFs.call(document);
-            if (p && p.then) {
-                p.then(() => {
-                    document.body.classList.remove('game-fullscreen');
-                    setTimeout(() => { try { window.game?.resize(); } catch(e){} }, 100);
-                    updateFullscreenIcon();
-                }).catch(() => {});
-            } else {
-                document.body.classList.remove('game-fullscreen');
-                setTimeout(() => { try { window.game?.resize(); } catch(e){} }, 100);
-            }
-        }
+        toggleIOSFullscreen();
     }
 }
 
@@ -614,7 +650,9 @@ function toggleIOSFullscreen() {
         const exitBtn = document.getElementById('ios-fs-exit');
         if (exitBtn) exitBtn.remove();
         updateFullscreenIcon();
-        setTimeout(() => { try { window.game?.resize(); } catch(e){} }, 100);
+        setTimeout(() => { try { globalThis.game?.resize(); } catch(e){
+            console.warn('Resize failed after exiting iOS fullscreen:', e);
+        } }, 100);
     } else {
         injectIOSFullscreenStyles();
         document.documentElement.classList.add('ios-game-fullscreen');
@@ -622,7 +660,9 @@ function toggleIOSFullscreen() {
         document.body.style.overflow = 'hidden';
         createIOSExitButton();
         updateFullscreenIcon();
-        setTimeout(() => { window.scrollTo(0, 1); try { window.game?.resize(); } catch(e){} }, 100);
+        setTimeout(() => { window.scrollTo(0, 1); try { globalThis.game?.resize(); } catch(e){
+            console.warn('Resize failed after entering iOS fullscreen:', e);
+        } }, 100);
         setTimeout(() => { window.scrollTo(0, 1); }, 300);
     }
 }

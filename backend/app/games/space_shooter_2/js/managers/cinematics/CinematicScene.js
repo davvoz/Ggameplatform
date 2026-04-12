@@ -39,7 +39,9 @@ export default class CinematicScene {
     }
 
     /** Override in subclass to initialise state. */
-    setup(/* options */) {}
+    setup(/* options */) {
+        // Default duration is 3 seconds, override in subclass or via options
+    }
 
     // ── Skip handling ─────────────────────────────────
 

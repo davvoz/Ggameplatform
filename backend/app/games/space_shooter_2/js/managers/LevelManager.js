@@ -85,7 +85,7 @@ class LevelManager {
         if (this.currentLevel > getTotalLevels()) {
             // Final world completed — save progress
             const completedWorld = Math.ceil(prevLevel / LEVELS_PER_WORLD);
-            if (window.saveWorldProgress) window.saveWorldProgress(completedWorld);
+            if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(completedWorld);
             // Clear checkpoint save (game completed!)
             g.saveManager.deleteSave();
             g.state = 'victory';
@@ -121,7 +121,7 @@ class LevelManager {
         if (prevLevel % LEVELS_PER_WORLD === 0 && this.currentLevel === prevLevel + 1) {
             // World completed — save progress
             const completedWorld = prevLevel / LEVELS_PER_WORLD;
-            if (window.saveWorldProgress) window.saveWorldProgress(completedWorld);
+            if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(completedWorld);
             g.perkSystem.reset();
         }
 

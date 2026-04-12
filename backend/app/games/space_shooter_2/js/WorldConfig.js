@@ -13,7 +13,7 @@
 
 export const LEVELS_PER_WORLD = 30;
 export const BOSS_INTERVAL = 5;       // boss every N levels within a world
-export const ITEM_SHOWCASE_TIME = 3.0; // seconds per entity in cinematics
+export const ITEM_SHOWCASE_TIME = 3; // seconds per entity in cinematics
 
 const WORLDS = [
     {
@@ -88,7 +88,7 @@ export function isBossLevel(level) {
 /** Planet index within a world that has planets (-1 if none). */
 export function getPlanetIndex(level) {
     const wc = getWorldConfig(getWorldForLevel(level));
-    if (!wc || !wc.planets) return -1;
+    if (!wc?.planets) return -1;
     const levelsPerPlanet = LEVELS_PER_WORLD / wc.planets.length;
     return Math.floor((getWorldLevel(level) - 1) / levelsPerPlanet);
 }
@@ -96,7 +96,7 @@ export function getPlanetIndex(level) {
 /** Planet name for the given level (null if world has no planets). */
 export function getPlanetName(level) {
     const wc = getWorldConfig(getWorldForLevel(level));
-    if (!wc || !wc.planets) return null;
+    if (!wc?.planets) return null;
     const idx = getPlanetIndex(level);
     return idx >= 0 ? wc.planets[idx] : null;
 }

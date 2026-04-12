@@ -11,7 +11,7 @@ class UIManager {
      */
     _revealScreen(screen) {
         screen.classList.remove('hidden');
-        if (window.audioViz) window.audioViz.start(screen);
+        if (globalThis.audioViz) globalThis.audioViz.start(screen);
     }
 
     /**
@@ -22,8 +22,8 @@ class UIManager {
             oldScreen.style.transition = 'none';
             oldScreen.classList.add('hidden');
             oldScreen.style.transition = '';
-            if (window.audioViz && window.audioViz.canvas.parentNode === oldScreen) {
-                window.audioViz.stop();
+            if (globalThis.audioViz && globalThis.audioViz.canvas.parentNode === oldScreen) {
+                globalThis.audioViz.stop();
             }
         }
 
@@ -31,7 +31,7 @@ class UIManager {
         newScreen.classList.remove('hidden');
         newScreen.style.transition = '';
 
-        if (window.audioViz) window.audioViz.start(newScreen);
+        if (globalThis.audioViz) globalThis.audioViz.start(newScreen);
     }
 
     // ══════════════════════════════════════════════
@@ -125,7 +125,7 @@ class UIManager {
         const screen = document.getElementById('level-complete-screen');
         if (screen) {
             screen.classList.add('hidden');
-            if (window.audioViz && window.audioViz.canvas.parentNode === screen) window.audioViz.stop();
+            if (globalThis.audioViz?.canvas.parentNode === screen) globalThis.audioViz.stop();
         }
     }
 
@@ -280,7 +280,7 @@ class UIManager {
         if (!wrapper) return;
 
         const coinService = this.game.coinService;
-        if (!coinService || !coinService.isAvailable()) {
+        if (!coinService?.isAvailable()) {
             wrapper.classList.add('hidden');
             return;
         }
@@ -379,7 +379,8 @@ class UIManager {
         // Group by category
         const groups = {};
         for (const p of allPerks) {
-            (groups[p.category] = groups[p.category] || []).push(p);
+            groups[p.category] = groups[p.category] || [];
+            groups[p.category].push(p);
         }
 
         for (const [cat, perks] of Object.entries(groups)) {
@@ -457,7 +458,7 @@ class UIManager {
         const screen = document.getElementById('perk-select-screen');
         if (screen) {
             screen.classList.add('hidden');
-            if (window.audioViz && window.audioViz.canvas.parentNode === screen) window.audioViz.stop();
+            if (globalThis.audioViz?.canvas.parentNode === screen) globalThis.audioViz.stop();
         }
     }
 
@@ -504,7 +505,7 @@ class UIManager {
         if (!section) return;
 
         const coinService = this.game.coinService;
-        if (!coinService || !coinService.isAvailable()) {
+        if (!coinService?.isAvailable()) {
             section.classList.add('hidden');
             return;
         }
@@ -587,7 +588,7 @@ class UIManager {
 
         // Hide game-over, show swap screen
         document.getElementById('game-over-screen')?.classList.add('hidden');
-        if (window.audioViz) window.audioViz.stop();
+        if (globalThis.audioViz) globalThis.audioViz.stop();
         this._revealScreen(screen);
     }
 
@@ -643,7 +644,8 @@ class UIManager {
 
         const groups = {};
         for (const p of allPerks) {
-            (groups[p.category] = groups[p.category] || []).push(p);
+            groups[p.category] = groups[p.category] || [];
+            groups[p.category].push(p);
         }
 
         for (const [cat, perks] of Object.entries(groups)) {
@@ -702,26 +704,46 @@ class UIManager {
         const removeCount = this._swapRemoveIds.size;
         const addCount = this._swapAddIds.length;
 
+        this.updateSwapHint(removeCount, addCount);
+
+        this.updateReplaceCounter(addCount, removeCount);
+
+        this.toggleCatalogVisibility(removeCount);
+
+        this.updateConfirmButtonState(removeCount, addCount);
+
+        this.updateCatalogCardStates(addCount, removeCount);
+    }
+
+    updateSwapHint(removeCount, addCount) {
         const hint = document.getElementById('perk-swap-hint');
         if (hint) {
             if (removeCount === 0) hint.textContent = 'Tap perks to mark for removal (max 3)';
             else if (addCount < removeCount) hint.textContent = `Now pick ${removeCount - addCount} replacement${removeCount - addCount > 1 ? 's' : ''} from the catalog`;
             else hint.textContent = 'Ready! Confirm to continue with new build';
         }
+    }
 
+    updateReplaceCounter(addCount, removeCount) {
         const counter = document.getElementById('perk-swap-replace-count');
         if (counter) counter.textContent = `${addCount} / ${removeCount}`;
+    }
 
+    toggleCatalogVisibility(removeCount) {
         const catalogSection = document.getElementById('swap-catalog-section');
         const divider = document.getElementById('swap-divider');
         if (catalogSection) catalogSection.style.display = removeCount > 0 ? '' : 'none';
         if (divider) divider.style.display = removeCount > 0 ? '' : 'none';
+    }
 
+    updateConfirmButtonState(removeCount, addCount) {
         const confirmBtn = document.getElementById('perk-swap-confirm');
         if (confirmBtn) {
             confirmBtn.disabled = !(removeCount > 0 && addCount === removeCount);
         }
+    }
 
+    updateCatalogCardStates(addCount, removeCount) {
         const catalogEl = document.getElementById('perk-swap-catalog');
         if (catalogEl) {
             for (const card of catalogEl.querySelectorAll('.perk-card--mini')) {
@@ -784,8 +806,8 @@ class UIManager {
         document.getElementById('vic-score').textContent = g.scoreManager.score.toLocaleString();
         document.getElementById('vic-enemies').textContent = g.scoreManager.totalEnemiesKilled;
 
-        if (window.sendScoreToPlatform) {
-            window.sendScoreToPlatform(g.scoreManager.score, {
+        if (globalThis.sendScoreToPlatform) {
+            globalThis.sendScoreToPlatform(g.scoreManager.score, {
                 level: g.levelManager.currentLevel,
                 levelsCompleted: g.levelManager.currentLevel - (g.sessionStartLevel || 1),
                 enemiesKilled: g.scoreManager.totalEnemiesKilled,
@@ -828,24 +850,75 @@ class UIManager {
         document.getElementById('detail-ship-name').textContent = ship.name;
         document.getElementById('detail-ship-desc').textContent = ship.description;
 
-        const previewCanvas = document.getElementById('ship-detail-preview');
-        if (previewCanvas) {
-            const pCtx = previewCanvas.getContext('2d');
-            pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-            const sprite = g.assets.getSprite?.(`ship_${player.shipId}`);
-            if (sprite) {
-                const size = 72;
-                const x = (previewCanvas.width - size) / 2;
-                const y = (previewCanvas.height - size) / 2;
-                pCtx.drawImage(sprite, x, y, size, size);
-            } else {
-                pCtx.fillStyle = ship.color;
-                pCtx.beginPath();
-                pCtx.arc(previewCanvas.width / 2, previewCanvas.height / 2, 30, 0, Math.PI * 2);
-                pCtx.fill();
-            }
-        }
+        this.renderShipPreview(g, player, ship);
 
+        this.renderStatBars(base, bonus);
+
+        this.updateWeaponInfo(player, g);
+
+        this.updateUltimateInfo(player);
+
+        this.updatePerkDisplay(g);
+    }
+
+    updatePerkDisplay(g) {
+        const perksSection = document.getElementById('detail-perks-section');
+        const perksList = document.getElementById('detail-perks-list');
+        const activePerks = g.perkSystem.getActivePerks();
+        if (activePerks.length > 0 && perksSection && perksList) {
+            perksSection.style.display = '';
+            perksList.innerHTML = '';
+            for (const perk of activePerks) {
+                const row = document.createElement('div');
+                row.className = 'detail-perk-row';
+                row.innerHTML = `
+                    <div class="detail-perk-icon-wrap" style="border-color:${perk.rarityData.color}; background:${perk.rarityData.color}15">
+                        ${perk.icon}
+                    </div>
+                    <div class="detail-perk-info">
+                        <div class="detail-perk-name" style="color:${perk.rarityData.color}">${perk.name}</div>
+                        <div class="detail-perk-desc">${perk.description}</div>
+                    </div>
+                    ${perk.stacks > 1 ? `<span class="detail-perk-stacks">×${perk.stacks}</span>` : ''}
+                `;
+                perksList.appendChild(row);
+            }
+        } else if (perksSection) {
+            perksSection.style.display = 'none';
+        }
+    }
+
+    updateUltimateInfo(player) {
+        const ultEl = document.getElementById('detail-ultimate-info');
+        if (ultEl && player.ultimateData) {
+            const ud = player.ultimateData;
+            const charge = Math.floor(player.ultimateCharge);
+            ultEl.innerHTML = `
+                <span class="detail-ult-icon">${ud.icon}</span>
+                <div class="detail-ult-text">
+                    <div class="detail-ult-name">${ud.name}</div>
+                    <div class="detail-ult-desc">${ud.description} • Charge: ${charge}%</div>
+                </div>
+            `;
+        }
+    }
+
+    updateWeaponInfo(player, g) {
+        const weaponEl = document.getElementById('detail-weapon-info');
+        if (weaponEl) {
+            const wl = player.weaponLevel || 1;
+            const weaponNames = ['Single Shot', 'Dual Cannon', 'Triple Spread', 'Quad Barrage', 'Nova Storm'];
+            weaponEl.innerHTML = `
+                <span class="detail-weapon-icon">🔫</span>
+                <div class="detail-weapon-text">
+                    <div class="detail-weapon-name">${weaponNames[wl - 1] || 'Unknown'}</div>
+                    <div class="detail-weapon-desc">Level ${wl} / 5${g.perkSystem.hasDoubleBarrel() ? ' • Double Barrel active' : ''}</div>
+                </div>
+            `;
+        }
+    }
+
+    renderStatBars(base, bonus) {
         const buildStatBars = (containerId, stats, bonusMap) => {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -871,56 +944,25 @@ class UIManager {
 
         buildStatBars('detail-base-stats', base, null);
         buildStatBars('detail-effective-stats', base, bonus);
+    }
 
-        const weaponEl = document.getElementById('detail-weapon-info');
-        if (weaponEl) {
-            const wl = player.weaponLevel || 1;
-            const weaponNames = ['Single Shot', 'Dual Cannon', 'Triple Spread', 'Quad Barrage', 'Nova Storm'];
-            weaponEl.innerHTML = `
-                <span class="detail-weapon-icon">🔫</span>
-                <div class="detail-weapon-text">
-                    <div class="detail-weapon-name">${weaponNames[wl - 1] || 'Unknown'}</div>
-                    <div class="detail-weapon-desc">Level ${wl} / 5${g.perkSystem.hasDoubleBarrel() ? ' • Double Barrel active' : ''}</div>
-                </div>
-            `;
-        }
-
-        const ultEl = document.getElementById('detail-ultimate-info');
-        if (ultEl && player.ultimateData) {
-            const ud = player.ultimateData;
-            const charge = Math.floor(player.ultimateCharge);
-            ultEl.innerHTML = `
-                <span class="detail-ult-icon">${ud.icon}</span>
-                <div class="detail-ult-text">
-                    <div class="detail-ult-name">${ud.name}</div>
-                    <div class="detail-ult-desc">${ud.description} • Charge: ${charge}%</div>
-                </div>
-            `;
-        }
-
-        const perksSection = document.getElementById('detail-perks-section');
-        const perksList = document.getElementById('detail-perks-list');
-        const activePerks = g.perkSystem.getActivePerks();
-        if (activePerks.length > 0 && perksSection && perksList) {
-            perksSection.style.display = '';
-            perksList.innerHTML = '';
-            for (const perk of activePerks) {
-                const row = document.createElement('div');
-                row.className = 'detail-perk-row';
-                row.innerHTML = `
-                    <div class="detail-perk-icon-wrap" style="border-color:${perk.rarityData.color}; background:${perk.rarityData.color}15">
-                        ${perk.icon}
-                    </div>
-                    <div class="detail-perk-info">
-                        <div class="detail-perk-name" style="color:${perk.rarityData.color}">${perk.name}</div>
-                        <div class="detail-perk-desc">${perk.description}</div>
-                    </div>
-                    ${perk.stacks > 1 ? `<span class="detail-perk-stacks">×${perk.stacks}</span>` : ''}
-                `;
-                perksList.appendChild(row);
+    renderShipPreview(g, player, ship) {
+        const previewCanvas = document.getElementById('ship-detail-preview');
+        if (previewCanvas) {
+            const pCtx = previewCanvas.getContext('2d');
+            pCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            const sprite = g.assets.getSprite?.(`ship_${player.shipId}`);
+            if (sprite) {
+                const size = 72;
+                const x = (previewCanvas.width - size) / 2;
+                const y = (previewCanvas.height - size) / 2;
+                pCtx.drawImage(sprite, x, y, size, size);
+            } else {
+                pCtx.fillStyle = ship.color;
+                pCtx.beginPath();
+                pCtx.arc(previewCanvas.width / 2, previewCanvas.height / 2, 30, 0, Math.PI * 2);
+                pCtx.fill();
             }
-        } else if (perksSection) {
-            perksSection.style.display = 'none';
         }
     }
 

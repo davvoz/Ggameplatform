@@ -239,16 +239,20 @@ class SteemPostModal {
             return;
         }
 
-   
+        try {
             this.setButtonLoading(publishBtn, 'Processing...');
 
             const postData = await this.generatePostContent(user.user_id, userMessage);
             const result = await this.publishToSteem(hasKeychain, steemUsername, postingKey, postData, user.user_id, publishBtn);
 
             this.clearPostingKeyInput(postingKeyInput);
-            
+
             // Pass the publish method to confirmAndFinalize
             await this.confirmAndFinalize(result, hasKeychain ? 'keychain' : 'posting_key');
+        } catch (error) {
+            alert(`Publication failed: ${error.message}`);
+            this.resetPublishButton(publishBtn);
+        }
 
       
     }

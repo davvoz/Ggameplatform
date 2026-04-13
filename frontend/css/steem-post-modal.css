@@ -49,6 +49,7 @@
         transform: translateY(-30px);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -110,6 +111,7 @@
     padding: 24px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    height: 100%;
 }
 
 .post-creator-section h3 {
@@ -126,7 +128,7 @@
 
 .user-message-input {
     width: 100%;
-    min-height: 120px;
+    height: 350px;
     padding: 16px;
     background: rgba(0, 0, 0, 0.3);
     border: 2px solid rgba(255, 255, 255, 0.1);
@@ -232,7 +234,9 @@
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .spinner-small {
@@ -523,6 +527,7 @@
         max-width: 100%;
         max-height: 100vh;
         border-radius: 0;
+        height: 100%;
     }
 
     .steem-post-modal-header {
@@ -618,6 +623,7 @@
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

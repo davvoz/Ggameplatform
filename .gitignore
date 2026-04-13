@@ -317,3 +317,7 @@ backend/scripts/initialize_platform_from_backup_ignore.py
 backend/scripts/register_modern_pong.old
 backend/scripts/register_altitude.old
 backend/app/games/merge-tower-defense/fix-trailing-zeros.mjs
+generate_sonarqube_report.ps1
+sonarqube_report.txt
+.github/agents/OOPArchitechture.agent.md
+sonarqube_report.txt

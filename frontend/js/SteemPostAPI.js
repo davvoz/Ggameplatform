@@ -339,7 +339,7 @@ class SteemPostAPI {
      * Check if Steem Keychain is available
      */
     isKeychainAvailable() {
-        return globalThis.steem_keychain !== 'undefined';
+        return typeof globalThis.steem_keychain === 'object' && globalThis.steem_keychain !== null;
     }
 }
 

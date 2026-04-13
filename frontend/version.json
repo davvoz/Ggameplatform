@@ -1,8 +1,17 @@
 {
-  "version": "5.0.12",
-  "timestamp": "2026-04-12T22:21:45.725Z",
-  "buildNumber": 525,
+  "version": "5.0.13",
+  "timestamp": "2026-04-13T19:58:39.531Z",
+  "buildNumber": 526,
   "changelog": [
+    {
+      "version": "5.0.13",
+      "date": "2026-04-13",
+      "type": "patch",
+      "changes": [
+        "fix: [setteemmezzo] bug ereditarieta [CROSS] fix post on mobile",
+        "🔖 Bump version to 5.0.12 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.12",
       "date": "2026-04-12",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[GAMES] Sonar",
         "🔖 Bump version to 5.0.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.3",
-      "date": "2026-04-10",
-      "type": "patch",
-      "changes": [
-        "fix:[GAMES] Sonar",
-        "🔖 Bump version to 5.0.2 [skip-version]"
       ]
     }
   ]

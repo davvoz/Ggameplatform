@@ -22,9 +22,50 @@ class PerkEffectsManager {
     updatePerkEffects(deltaTime) {
         const g = this.game;
         const player = g.entityManager.player;
-        if (!player || !player.active) return;
+        if (!player?.active)
+            return;
         const perks = g.perkSystem;
 
+        this.updateAutoShield(perks, deltaTime, player, g);
+
+        if (perks.hasThorns()) {
+            perks.thornsAngle += deltaTime * 0.8;
+            perks.thornsTime += deltaTime;
+        }
+
+        this.updateDrones(perks, deltaTime, player, g);
+
+        this.activateEmergencyProtocol(perks, player, g);
+
+        this.updateTimeScale(deltaTime, g, player);
+
+        // ─── World 2 Perk Effects ───
+
+        // Neural Hijack: orbital allies (delegated to AllyController)
+        this.allyController.update(deltaTime);
+
+        // Scia Infuocata (Fire Trail) — only drop segments while moving
+        this.updateFireTrailSegments(perks, player, deltaTime, g);
+
+        // Sovraccarico: overheat pulse instead of jam
+        this.handleOverheatRecovery(perks, deltaTime, player, g);
+
+        // Esploratore: reveal stealth enemies
+        this.revealStealthEnemies(perks, player, g);
+
+        // ─── World 3 Perk Effects ───
+
+        // Glitch Dash: invulnerability + speed after taking damage
+        this.applyGlitchDashEffect(perks, deltaTime, player, g);
+
+        // Entropy Shield: kill counter → auto shield
+        this.activateEntropyShield(perks, player, g);
+
+        // Virus Inject: tick damage on infected enemies
+        this.applyVirusInfection(perks, g, deltaTime);
+    }
+
+    updateAutoShield(perks, deltaTime, player, g) {
         if (perks.hasPerk('auto_shield')) {
             perks.autoShieldTimer -= deltaTime;
             if (perks.autoShieldTimer <= 0) {
@@ -42,134 +83,113 @@ class PerkEffectsManager {
                 }
             }
         }
+    }
 
-        if (perks.hasThorns()) {
-            perks.thornsAngle += deltaTime * 0.8;
-            perks.thornsTime += deltaTime;
-        }
-
-        const droneCount = perks.getDroneCount();
-        if (droneCount > 0) {
-            perks.droneAngle += deltaTime * 2.5;
-            const pcx = player.position.x + player.width / 2;
-            const pcy = player.position.y + player.height / 2;
-            const orbitR = 60;
-
-            for (let i = 0; i < droneCount; i++) {
-                const angle = perks.droneAngle + (i * Math.PI * 2 / droneCount);
-                const dx = pcx + Math.cos(angle) * orbitR;
-                const dy = pcy + Math.sin(angle) * orbitR;
-
-                if (!perks.droneFireTimers[i]) perks.droneFireTimers[i] = 0;
-                perks.droneFireTimers[i] -= deltaTime;
-                if (perks.droneFireTimers[i] <= 0) {
-                    perks.droneFireTimers[i] = 2.5; // slower fire rate for missiles
-                    // Find nearest enemy at any range
-                    let nearest = null;
-                    let nearDist = Infinity;
-                    for (const e of g.entityManager.enemies) {
-                        if (!e.active || e._isAlly) continue;
-                        const ex = e.position.x + e.width / 2;
-                        const ey = e.position.y + e.height / 2;
-                        const d = Math.hypot(ex - dx, ey - dy);
-                        if (d < nearDist) { nearDist = d; nearest = e; }
-                    }
-                    if (g.entityManager.miniBoss && g.entityManager.miniBoss.active) {
-                        const mx = g.entityManager.miniBoss.position.x + g.entityManager.miniBoss.width / 2;
-                        const my = g.entityManager.miniBoss.position.y + g.entityManager.miniBoss.height / 2;
-                        const d = Math.hypot(mx - dx, my - dy);
-                        if (d < nearDist) { nearDist = d; nearest = g.entityManager.miniBoss; }
-                    }
-                    if (g.entityManager.boss && g.entityManager.boss.active) {
-                        const bx = g.entityManager.boss.position.x + g.entityManager.boss.width / 2;
-                        const by = g.entityManager.boss.position.y + g.entityManager.boss.height / 2;
-                        const d = Math.hypot(bx - dx, by - dy);
-                        if (d < nearDist) { nearDist = d; nearest = g.entityManager.boss; }
-                    }
-                    if (nearest) {
-                        const tx = nearest.position.x + nearest.width / 2;
-                        const ty = nearest.position.y + nearest.height / 2;
-                        const a = Math.atan2(ty - dy, tx - dx);
-                        g.entityManager.spawnHomingMissile(dx, dy, a);
-                    }
-                }
-            }
-        }
-
-        if (perks.hasEmergencyProtocol() && player.health <= 1 && !player.invincible) {
-            perks.emergencyUsedThisLevel = true;
-            player.invincible = true;
-            player.invincibleTime = 3;
-            player.blinkTimer = 0;
-            this._emergencySlowTimer = 3;
-            g.timeScale = 0.4;
-            g.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.3);
-            g.postProcessing.shake(10, 0.5);
-            g.particles.emit(
-                player.position.x + player.width / 2,
-                player.position.y + player.height / 2,
-                'explosion', 20
-            );
-        }
-
-        if (this._emergencySlowTimer > 0) {
-            this._emergencySlowTimer -= deltaTime;
-            if (this._emergencySlowTimer <= 0) {
-                this._emergencySlowTimer = 0;
-                if (g.timeScale < 1 && !(player.ultimateActive && player.ultimateId === 'time_warp')) {
-                    g.timeScale = 1;
-                }
-            }
-        }
-
-        // ─── World 2 Perk Effects ───
-
-        // Neural Hijack: orbital allies (delegated to AllyController)
-        this.allyController.update(deltaTime);
-
-        // Scia Infuocata (Fire Trail) — only drop segments while moving
-        if (perks.getFireTrailDmg() <= 0) {
-            // Perk removed — drain any leftover segments so they don't linger
-            if (perks.fireTrailSegments.length > 0) perks.fireTrailSegments.length = 0;
-        } else {
-            const px = player.position.x + player.width / 2;
-            const py = player.position.y + player.height;
-            perks.fireTrailTimer -= deltaTime;
-            if (perks.fireTrailTimer <= 0) {
-                perks.fireTrailTimer = 0.15; // drop a trail segment every 150ms
-                // Skip if player hasn't moved enough since last segment
-                const segs = perks.fireTrailSegments;
-                const last = segs.length > 0 ? segs[segs.length - 1] : null;
-                const moved = !last || (Math.abs(px - last.x) > 4 || Math.abs(py - last.y) > 4);
-                if (moved) {
-                    segs.push({ x: px, y: py, timer: perks.getFireTrailDuration() });
-                }
-            }
-            const dmgPerSec = perks.getFireTrailDmg();
-            const trailDrift = 50; // px/s — segments drift down like the world scrolls
-            for (let i = perks.fireTrailSegments.length - 1; i >= 0; i--) {
-                const seg = perks.fireTrailSegments[i];
-                seg.timer -= deltaTime;
-                seg.y += trailDrift * deltaTime; // drift downward with world
-                if (seg.timer <= 0 || seg.y > g.canvas.height + 30) {
-                    perks.fireTrailSegments.splice(i, 1);
+    applyVirusInfection(perks, g, deltaTime) {
+        if (perks.hasPerk('virus_inject')) {
+            for (const e of g.entityManager.enemies) {
+                if (!e.active || !e._virusInfected) continue;
+                e._virusTimer += deltaTime;
+                if (e._virusTimer >= e._virusDuration) {
+                    e._virusInfected = false;
                     continue;
                 }
-                // Damage enemies touching this trail segment
-                for (const e of g.entityManager.enemies) {
-                    if (!e.active || e._isAlly) continue;
-                    const ex = e.position.x + e.width / 2;
-                    const ey = e.position.y + e.height / 2;
-                    const d = Math.hypot(ex - seg.x, ey - seg.y);
-                    if (d < 28) {
-                        const killed = e.takeDamage(dmgPerSec * deltaTime, g);
-                        if (killed) g.scoreManager.onEnemyKilled(e);
-                    }
+                // 1 damage per second
+                e._virusTickAccum = (e._virusTickAccum || 0) + deltaTime;
+                this.spreadVirusEffect(e, g);
+            }
+        }
+    }
+
+    spreadVirusEffect(e, g) {
+        if (e._virusTickAccum >= 1) {
+            e._virusTickAccum -= 1;
+            const killed = e.takeDamage(1, g);
+            if (killed) {
+                g.scoreManager.onEnemyKilled(e);
+                // Spread on tick-kill too
+                const cands = this.getNearbyEnemies(e, g);
+                cands.sort((a, b) => a.d - b.d);
+                for (let s = 0; s < Math.min(2, cands.length); s++) {
+                    const t = cands[s].e;
+                    t._virusInfected = true;
+                    t._virusDuration = e._virusDuration;
+                    t._virusTimer = 0;
+                    g.particles.emitCustom(
+                        t.position.x + t.width / 2, t.position.y + t.height / 2,
+                        {
+                            count: 4, speed: 25, life: 0.3, size: 2,
+                            color: { r: 180, g: 0, b: 255 }, gravity: 0, fadeOut: true, shrink: true
+                        }, 4
+                    );
                 }
             }
         }
+    }
 
-        // Sovraccarico: overheat pulse instead of jam
+    getNearbyEnemies(e, g) {
+        const eCX = e.position.x + e.width / 2;
+        const eCY = e.position.y + e.height / 2;
+        const cands = [];
+        for (const e2 of g.entityManager.enemies) {
+            if (!e2.active || e2 === e || e2._isAlly || e2._virusInfected) continue;
+            const dx = (e2.position.x + e2.width / 2) - eCX;
+            const dy = (e2.position.y + e2.height / 2) - eCY;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 150) cands.push({ e: e2, d: dist });
+        }
+        return cands;
+    }
+
+    activateEntropyShield(perks, player, g) {
+        if (perks.getEntropyShieldKills() < Infinity) {
+            if (perks.entropyShieldKills >= perks.getEntropyShieldKills()) {
+                perks.entropyShieldKills = 0;
+                if (!player.shieldActive) {
+                    player.shieldActive = true;
+                    player.shieldTime = 4;
+                    g.particles.emit(
+                        player.position.x + player.width / 2,
+                        player.position.y + player.height / 2,
+                        'shield', 8
+                    );
+                    g.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.12);
+                }
+            }
+        }
+    }
+
+    applyGlitchDashEffect(perks, deltaTime, player, g) {
+        if (perks.glitchDashTimer > 0) {
+            perks.glitchDashTimer -= deltaTime;
+            const boost = perks.getGlitchDashSpeedBoost();
+            player.speed = player.baseSpeed * (g.perkSystem.getSpeedMultiplier() + boost);
+            if (perks.glitchDashTimer <= 0) {
+                perks.glitchDashTimer = 0;
+                player.invincible = false;
+                this.applyPerkModifiersToPlayer();
+            }
+        }
+    }
+
+    revealStealthEnemies(perks, player, g) {
+        if (perks.getRevealRange() > 0) {
+            const revealRange = perks.getRevealRange();
+            const pcx = player.position.x + player.width / 2;
+            const pcy = player.position.y + player.height / 2;
+            for (const e of g.entityManager.enemies) {
+                if (!e.active || !e.config?.stealth) continue;
+                const ex = e.position.x + e.width / 2;
+                const ey = e.position.y + e.height / 2;
+                const d = Math.hypot(ex - pcx, ey - pcy);
+                if (d < revealRange) {
+                    e.alpha = Math.max(e.alpha, 0.6);
+                }
+            }
+        }
+    }
+
+    handleOverheatRecovery(perks, deltaTime, player, g) {
         if (perks.hasSovraccarico()) {
             if (perks.sovraccaricoCooldown > 0) perks.sovraccaricoCooldown -= deltaTime;
             if (player.overheated && perks.sovraccaricoCooldown <= 0) {
@@ -186,99 +206,113 @@ class PerkEffectsManager {
                 g.postProcessing.shake(5, 0.3);
             }
         }
+    }
 
-        // Esploratore: reveal stealth enemies
-        if (perks.getRevealRange() > 0) {
-            const revealRange = perks.getRevealRange();
-            const pcx = player.position.x + player.width / 2;
-            const pcy = player.position.y + player.height / 2;
+    updateFireTrailSegments(perks, player, deltaTime, g) {
+        if (perks.getFireTrailDmg() <= 0) {
+            // Perk removed — drain any leftover segments so they don't linger
+            if (perks.fireTrailSegments.length > 0) perks.fireTrailSegments.length = 0;
+        } else {
+            const px = player.position.x + player.width / 2;
+            const py = player.position.y + player.height;
+            perks.fireTrailTimer -= deltaTime;
+            if (perks.fireTrailTimer <= 0) {
+                this.addFireTrailSegment(perks, px, py);
+            }
+            this.updateFireTrailSegmentsAndDamage(perks, deltaTime, g);
+        }
+    }
+
+    updateFireTrailSegmentsAndDamage(perks, deltaTime, g) {
+        const dmgPerSec = perks.getFireTrailDmg();
+        const trailDrift = 50; // px/s — segments drift down like the world scrolls
+        for (let i = perks.fireTrailSegments.length - 1; i >= 0; i--) {
+            const seg = perks.fireTrailSegments[i];
+            seg.timer -= deltaTime;
+            seg.y += trailDrift * deltaTime; // drift downward with world
+            if (seg.timer <= 0 || seg.y > g.canvas.height + 30) {
+                perks.fireTrailSegments.splice(i, 1);
+                continue;
+            }
+            // Damage enemies touching this trail segment
             for (const e of g.entityManager.enemies) {
-                if (!e.active || !e.config?.stealth) continue;
+                if (!e.active || e._isAlly) continue;
                 const ex = e.position.x + e.width / 2;
                 const ey = e.position.y + e.height / 2;
-                const d = Math.hypot(ex - pcx, ey - pcy);
-                if (d < revealRange) {
-                    e.alpha = Math.max(e.alpha, 0.6); // force reveal
-                }
-            }
-        }
-
-        // ─── World 3 Perk Effects ───
-
-        // Glitch Dash: invulnerability + speed after taking damage
-        if (perks.glitchDashTimer > 0) {
-            perks.glitchDashTimer -= deltaTime;
-            const boost = perks.getGlitchDashSpeedBoost();
-            player.speed = player.baseSpeed * (g.perkSystem.getSpeedMultiplier() + boost);
-            if (perks.glitchDashTimer <= 0) {
-                perks.glitchDashTimer = 0;
-                player.invincible = false;
-                this.applyPerkModifiersToPlayer(); // restore normal speed
-            }
-        }
-
-        // Entropy Shield: kill counter → auto shield
-        if (perks.getEntropyShieldKills() < Infinity) {
-            if (perks.entropyShieldKills >= perks.getEntropyShieldKills()) {
-                perks.entropyShieldKills = 0;
-                if (!player.shieldActive) {
-                    player.shieldActive = true;
-                    player.shieldTime = 4;
-                    g.particles.emit(
-                        player.position.x + player.width / 2,
-                        player.position.y + player.height / 2,
-                        'shield', 8
-                    );
-                    g.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.12);
-                }
-            }
-        }
-
-        // Virus Inject: tick damage on infected enemies
-        if (perks.hasPerk('virus_inject')) {
-            for (const e of g.entityManager.enemies) {
-                if (!e.active || !e._virusInfected) continue;
-                e._virusTimer += deltaTime;
-                if (e._virusTimer >= e._virusDuration) {
-                    e._virusInfected = false;
-                    continue;
-                }
-                // 1 damage per second
-                e._virusTickAccum = (e._virusTickAccum || 0) + deltaTime;
-                if (e._virusTickAccum >= 1) {
-                    e._virusTickAccum -= 1;
-                    const killed = e.takeDamage(1, g);
-                    if (killed) {
-                        g.scoreManager.onEnemyKilled(e);
-                        // Spread on tick-kill too
-                        const eCX = e.position.x + e.width / 2;
-                        const eCY = e.position.y + e.height / 2;
-                        const cands = [];
-                        for (const e2 of g.entityManager.enemies) {
-                            if (!e2.active || e2 === e || e2._isAlly || e2._virusInfected) continue;
-                            const dx = (e2.position.x + e2.width / 2) - eCX;
-                            const dy = (e2.position.y + e2.height / 2) - eCY;
-                            const dist = Math.hypot(dx, dy);
-                            if (dist < 150) cands.push({ e: e2, d: dist });
-                        }
-                        cands.sort((a, b) => a.d - b.d);
-                        for (let s = 0; s < Math.min(2, cands.length); s++) {
-                            const t = cands[s].e;
-                            t._virusInfected = true;
-                            t._virusDuration = e._virusDuration;
-                            t._virusTimer = 0;
-                            g.particles.emitCustom(
-                                t.position.x + t.width / 2, t.position.y + t.height / 2,
-                                { count: 4, speed: 25, life: 0.3, size: 2,
-                                  color: { r: 180, g: 0, b: 255 }, gravity: 0, fadeOut: true, shrink: true }, 4
-                            );
-                        }
-                    }
+                const d = Math.hypot(ex - seg.x, ey - seg.y);
+                if (d < 28) {
+                    const killed = e.takeDamage(dmgPerSec * deltaTime, g);
+                    if (killed) g.scoreManager.onEnemyKilled(e);
                 }
             }
         }
     }
 
+    addFireTrailSegment(perks, px, py) {
+        perks.fireTrailTimer = 0.15; // drop a trail segment every 150ms
+
+
+        // Skip if player hasn't moved enough since last segment
+        const segs = perks.fireTrailSegments;
+        const last = segs.length > 0 ? segs[segs.length - 1] : null;
+        const moved = !last || (Math.abs(px - last.x) > 4 || Math.abs(py - last.y) > 4);
+        if (moved) {
+            segs.push({ x: px, y: py, timer: perks.getFireTrailDuration() });
+        }
+    }
+
+    updateTimeScale(deltaTime, g, player) {
+        if (this._emergencySlowTimer > 0) {
+            this._emergencySlowTimer -= deltaTime;
+            if (this._emergencySlowTimer <= 0) {
+                this._emergencySlowTimer = 0;
+                if (g.timeScale < 1 && !(player.ultimateActive && player.ultimateId === 'time_warp')) {
+                    g.timeScale = 1;
+                }
+            }
+        }
+    }
+
+    activateEmergencyProtocol(perks, player, g) {
+        if (perks.hasEmergencyProtocol() && player.health <= 1 && !player.invincible) {
+            perks.emergencyUsedThisLevel = true;
+            player.invincible = true;
+            player.invincibleTime = 3;
+            player.blinkTimer = 0;
+            this._emergencySlowTimer = 3;
+            g.timeScale = 0.4;
+            g.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.3);
+            g.postProcessing.shake(10, 0.5);
+            g.particles.emit(
+                player.position.x + player.width / 2,
+                player.position.y + player.height / 2,
+                'explosion', 20
+            );
+        }
+    }
+
+    updateDrones(perks, deltaTime, player, g) {
+        const droneCount = perks.getDroneCount();
+        if (droneCount > 0) {
+            perks.droneAngle += deltaTime * 2.5;
+            const pcx = player.position.x + player.width / 2;
+            const pcy = player.position.y + player.height / 2;
+            const orbitR = 60;
+
+            for (let i = 0; i < droneCount; i++) {
+                const angle = perks.droneAngle + (i * Math.PI * 2 / droneCount);
+                const dx = pcx + Math.cos(angle) * orbitR;
+                const dy = pcy + Math.sin(angle) * orbitR;
+
+                if (!perks.droneFireTimers[i]) perks.droneFireTimers[i] = 0;
+                perks.droneFireTimers[i] -= deltaTime;
+                this.spawnHomingMissileIfEnemyExists(perks, i, g, dx, dy);
+            }
+        }
+    }
+
+
+    
     applyChainLightning(fromX, fromY, targets, damage) {
         const g = this.game;
         let cx = fromX, cy = fromY;
@@ -312,6 +346,37 @@ class PerkEffectsManager {
 
     applyExplosiveAoE(cx, cy, radius, damage) {
         const g = this.game;
+        this.applyDamageToEnemiesInRadius(g, cx, cy, radius, damage);
+        this.handleBossDamage(g, cx, cy, radius, damage);
+        this.applyDamageToMiniBoss(g, cx, cy, radius, damage);
+        g.entityManager.explosions.push(new Explosion(cx, cy, 0.8));
+        g.particles.emit(cx, cy, 'explosion', 6);
+    }
+
+    applyDamageToMiniBoss(g, cx, cy, radius, damage) {
+        if (g.entityManager.miniBoss?.active) {
+            const bx = g.entityManager.miniBoss.position.x + g.entityManager.miniBoss.width / 2;
+            const by = g.entityManager.miniBoss.position.y + g.entityManager.miniBoss.height / 2;
+            const d = Math.hypot(bx - cx, by - cy);
+            if (d <= radius) {
+                g.entityManager.miniBoss.takeDamage(damage, g);
+            }
+        }
+    }
+
+    handleBossDamage(g, cx, cy, radius, damage) {
+        if (g.entityManager.boss?.active) {
+            const bx = g.entityManager.boss.position.x + g.entityManager.boss.width / 2;
+            const by = g.entityManager.boss.position.y + g.entityManager.boss.height / 2;
+            const d = Math.hypot(bx - cx, by - cy);
+            if (d <= radius) {
+                const killed = g.entityManager.boss.takeDamage(damage, g);
+                if (killed) g.scoreManager.onBossKilled();
+            }
+        }
+    }
+
+    applyDamageToEnemiesInRadius(g, cx, cy, radius, damage) {
         for (const e of g.entityManager.enemies) {
             if (!e.active || e._isAlly) continue;
             const ex = e.position.x + e.width / 2;
@@ -322,32 +387,13 @@ class PerkEffectsManager {
                 if (killed) g.scoreManager.onEnemyKilled(e);
             }
         }
-        if (g.entityManager.boss && g.entityManager.boss.active) {
-            const bx = g.entityManager.boss.position.x + g.entityManager.boss.width / 2;
-            const by = g.entityManager.boss.position.y + g.entityManager.boss.height / 2;
-            const d = Math.hypot(bx - cx, by - cy);
-            if (d <= radius) {
-                const killed = g.entityManager.boss.takeDamage(damage, g);
-                if (killed) g.scoreManager.onBossKilled();
-            }
-        }
-        if (g.entityManager.miniBoss && g.entityManager.miniBoss.active) {
-            const bx = g.entityManager.miniBoss.position.x + g.entityManager.miniBoss.width / 2;
-            const by = g.entityManager.miniBoss.position.y + g.entityManager.miniBoss.height / 2;
-            const d = Math.hypot(bx - cx, by - cy);
-            if (d <= radius) {
-                g.entityManager.miniBoss.takeDamage(damage, g);
-            }
-        }
-        g.entityManager.explosions.push(new Explosion(cx, cy, 0.8));
-        g.particles.emit(cx, cy, 'explosion', 6);
     }
 
     renderDrones(ctx) {
         const g = this.game;
         const droneCount = g.perkSystem.getDroneCount();
         const player = g.entityManager.player;
-        if (droneCount <= 0 || !player || !player.active) return;
+        if (droneCount <= 0 || !player?.active) return;
         const pcx = player.position.x + player.width / 2;
         const pcy = player.position.y + player.height / 2;
         const orbitR = 60;

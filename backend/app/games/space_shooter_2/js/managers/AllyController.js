@@ -44,9 +44,13 @@ class AllyController {
         if (count === 0) return;
 
         // Advance orbit
+        this.updateAlliesOrbit(deltaTime, player, count, allies);
+    }
+
+    updateAlliesOrbit(deltaTime, player, count, allies) {
         this.orbitAngle += this.orbitSpeed * deltaTime;
 
-        const playerCx = player.position.x + player.width  / 2;
+        const playerCx = player.position.x + player.width / 2;
         const playerCy = player.position.y + player.height / 2;
 
         for (let i = 0; i < count; i++) {
@@ -54,8 +58,8 @@ class AllyController {
 
             // ── Orbital position ──
             const slotAngle = this.orbitAngle + (i * Math.PI * 2 / count);
-            const targetX   = playerCx + Math.cos(slotAngle) * this.orbitRadius - ally.width  / 2;
-            const targetY   = playerCy + Math.sin(slotAngle) * this.orbitRadius - ally.height / 2;
+            const targetX = playerCx + Math.cos(slotAngle) * this.orbitRadius - ally.width / 2;
+            const targetY = playerCy + Math.sin(slotAngle) * this.orbitRadius - ally.height / 2;
 
             // Smooth exponential lerp toward target slot
             const lerp = 1 - Math.pow(0.005, deltaTime);
@@ -68,9 +72,9 @@ class AllyController {
             // Compute desired facing angle
             let desiredFacing = -Math.PI / 2; // default: face upward
             if (nearest) {
-                const ax = ally.position.x + ally.width  / 2;
+                const ax = ally.position.x + ally.width / 2;
                 const ay = ally.position.y + ally.height / 2;
-                const tx = nearest.position.x + nearest.width  / 2;
+                const tx = nearest.position.x + nearest.width / 2;
                 const ty = nearest.position.y + nearest.height / 2;
                 desiredFacing = Math.atan2(ty - ay, tx - ax);
             }

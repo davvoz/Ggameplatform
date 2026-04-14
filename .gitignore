@@ -321,3 +321,5 @@ generate_sonarqube_report.ps1
 sonarqube_report.txt
 .github/agents/OOPArchitechture.agent.md
 sonarqube_report.txt
+sonarqube_report.txt
+sonarqube_report1.txt

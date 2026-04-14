@@ -9,7 +9,12 @@ class HUDRenderer {
 
     renderHUD(ctx) {
         const g = this.game;
-        if (!g.entityManager.player || g.state === 'gameover' || g.state === 'deathCinematic' || g.state === 'levelIntro' || g.state === 'levelOutro') return;
+        if (!g.entityManager.player ||
+            g.state === 'gameover' ||
+            g.state === 'deathCinematic' ||
+            g.state === 'levelIntro' ||
+            g.state === 'levelOutro')
+            return;
 
         const player = g.entityManager.player;
         const w = g.logicalWidth;
@@ -48,6 +53,18 @@ class HUDRenderer {
         ctx.textAlign = 'center';
         ctx.fillText(`${player.health}/${player.maxHealth}`, hpBarX + hpBarW / 2, hpBarY + 9);
 
+        this.renderWeaponLevelIndicators(hpBarY, hpBarH, ctx, fs, player, hpBarX);
+
+        this.renderComboMessage(g, ctx, fs, w);
+
+        this.renderUltimateBar(player, w, g, ctx, fs);
+
+        this.renderActivePerks(g, ctx, fs);
+
+        ctx.restore();
+    }
+
+    renderWeaponLevelIndicators(hpBarY, hpBarH, ctx, fs, player, hpBarX) {
         const wpnY = hpBarY + hpBarH + 12;
         ctx.font = ui(8 * fs);
         ctx.textAlign = 'right';
@@ -64,7 +81,9 @@ class HUDRenderer {
             ctx.fillText('★', starX, wpnY + 2);
         }
         ctx.shadowBlur = 0;
+    }
 
+    renderComboMessage(g, ctx, fs, w) {
         if (g.scoreManager.combo > 1) {
             ctx.textAlign = 'center';
             ctx.font = ui((16 + Math.min(g.scoreManager.combo, 10)) * fs, 'bold');
@@ -74,7 +93,9 @@ class HUDRenderer {
             ctx.fillText(`${g.scoreManager.combo}x COMBO!`, w / 2, 60);
             ctx.shadowBlur = 0;
         }
+    }
 
+    renderUltimateBar(player, w, g, ctx, fs) {
         if (player.ultimateData) {
             const ultBarW = 120;
             const ultBarH = 8;
@@ -105,7 +126,9 @@ class HUDRenderer {
             }
             ctx.fillText(ultLabel, w / 2, ultBarY - 3);
         }
+    }
 
+    renderActivePerks(g, ctx, fs) {
         const activePerks = g.perkSystem.getActivePerks();
         if (activePerks.length > 0) {
             const perkSize = 20;
@@ -131,8 +154,6 @@ class HUDRenderer {
                 perkY += perkSize + perkGap;
             }
         }
-
-        ctx.restore();
     }
 
     /**
@@ -203,6 +224,48 @@ class HUDRenderer {
         const phase = boss.enterPhase;
         const t = boss.enterTime;
 
+        this.fase0(phase, t, ctx, w, h, fs, boss);
+
+        this.fase1(phase, t, ctx, w, h);
+
+        this.fase2(phase, t, ctx, boss, w, h);
+    }
+
+    fase2(phase, t, ctx, boss, w, h) {
+        if (phase === 2) {
+            const deployP = Math.min(1, (t - 3.5) / 1);
+            if (deployP > 0.8) {
+                const flashAlpha = (deployP - 0.8) / 0.2;
+                ctx.save();
+                ctx.globalAlpha = flashAlpha * 0.2;
+                ctx.fillStyle = boss.def.color;
+                ctx.fillRect(0, 0, w, h);
+                ctx.restore();
+            }
+        }
+    }
+
+    fase1(phase, t, ctx, w, h) {
+        if (phase === 1) {
+            const fade = 1 - Math.min(1, (t - 2) / 1.5);
+            ctx.save();
+            ctx.globalAlpha = fade * 0.25;
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, w, h);
+            ctx.restore();
+
+            ctx.save();
+            ctx.globalAlpha = fade * 0.15;
+            const vig2 = ctx.createRadialGradient(w / 2, h / 2, h * 0.3, w / 2, h / 2, h * 0.8);
+            vig2.addColorStop(0, 'rgba(0,0,0,0)');
+            vig2.addColorStop(1, 'rgba(200,0,0,1)');
+            ctx.fillStyle = vig2;
+            ctx.fillRect(0, 0, w, h);
+            ctx.restore();
+        }
+    }
+
+    fase0(phase, t, ctx, w, h, fs, boss) {
         if (phase === 0) {
             const progress = t / 2;
 
@@ -280,36 +343,6 @@ class HUDRenderer {
             }
 
             ctx.restore();
-        }
-
-        if (phase === 1) {
-            const fade = 1 - Math.min(1, (t - 2) / 1.5);
-            ctx.save();
-            ctx.globalAlpha = fade * 0.25;
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, w, h);
-            ctx.restore();
-
-            ctx.save();
-            ctx.globalAlpha = fade * 0.15;
-            const vig2 = ctx.createRadialGradient(w / 2, h / 2, h * 0.3, w / 2, h / 2, h * 0.8);
-            vig2.addColorStop(0, 'rgba(0,0,0,0)');
-            vig2.addColorStop(1, 'rgba(200,0,0,1)');
-            ctx.fillStyle = vig2;
-            ctx.fillRect(0, 0, w, h);
-            ctx.restore();
-        }
-
-        if (phase === 2) {
-            const deployP = Math.min(1, (t - 3.5) / 1);
-            if (deployP > 0.8) {
-                const flashAlpha = (deployP - 0.8) / 0.2;
-                ctx.save();
-                ctx.globalAlpha = flashAlpha * 0.2;
-                ctx.fillStyle = boss.def.color;
-                ctx.fillRect(0, 0, w, h);
-                ctx.restore();
-            }
         }
     }
 

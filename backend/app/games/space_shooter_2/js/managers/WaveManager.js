@@ -15,22 +15,37 @@ class WaveManager {
         const g = this.game;
         const entities = g.entityManager;
         const levelData = getLevelData(g.levelManager.currentLevel);
-        if (!levelData) return;
+        if (!levelData)
+             return;
 
-        if (this.miniBossNotification) {
-            this.miniBossNotification.timer -= deltaTime;
-            if (this.miniBossNotification.timer <= 0) this.miniBossNotification = null;
+        this.updateMiniBossNotification(deltaTime);
+
+        if (this.handleBossActive(entities, g)) return;
+        if (this.handleMiniBossActive(entities, g, levelData)) return;
+        if (this.handlePendingBoss(deltaTime)) return;
+
+        const enemiesAlive = entities.enemies.filter(e => e.active && !e._isAlly).length;
+
+        if (this.waveCleared) {
+            this.handleWaveCleared(deltaTime, entities, levelData, enemiesAlive);
+        } else if (enemiesAlive === 0) {
+            this.handleWaveClearCompletion(levelData);
         }
+    }
 
+    handleBossActive(entities, g) {
         if (entities.bossActive) {
             if (entities.boss && !entities.boss.active) {
                 entities.bossActive = false;
                 entities.boss = null;
                 g.levelManager.onLevelComplete();
             }
-            return;
+            return true;
         }
+        return false;
+    }
 
+    handleMiniBossActive(entities, g, levelData) {
         if (entities.miniBossActive) {
             if (entities.miniBoss && !entities.miniBoss.active) {
                 g.scoreManager.onMiniBossKilled();
@@ -45,61 +60,73 @@ class WaveManager {
                     g.levelManager.onLevelComplete();
                 }
             }
-            return;
+            return true;
         }
+        return false;
+    }
 
+    handlePendingBoss(deltaTime) {
         if (this._pendingBoss) {
             this.waveDelay -= deltaTime;
             if (this.waveDelay <= 0) {
                 this.spawnBoss(this._pendingBoss);
                 this._pendingBoss = null;
             }
-            return;
+            return true;
         }
+        return false;
+    }
 
-        const enemiesAlive = entities.enemies.filter(e => e.active && !e._isAlly).length;
-
-        if (this.waveCleared) {
-            this.waveDelay -= deltaTime;
-            if (this.waveDelay <= 0) {
-                if (this.currentWaveIndex < levelData.waves.length) {
-                    this.spawnWave(levelData.waves[this.currentWaveIndex], levelData.speedMult);
-                    this.currentWaveIndex++;
-                    this.waveCleared = false;
-                } else if (enemiesAlive === 0) {
-                    // Miniboss alternation: cycle through available types per world
-                    const lvl = g.levelManager.currentLevel;
-                    let miniBossType;
-                    if (levelData.miniboss) {
-                        miniBossType = levelData.miniboss;
-                    } else if (lvl > 90) {
-                        // World 4: cycle through types 13-16
-                        miniBossType = 13 + (((lvl - 91) % 4));
-                    } else if (lvl > 60) {
-                        // World 3: cycle through types 9-12
-                        miniBossType = 9 + (((lvl - 61) % 4));
-                    } else if (lvl > 30) {
-                        // World 2: cycle through types 5-8
-                        miniBossType = 5 + (((lvl - 31) % 4));
-                    } else {
-                        // World 1: cycle through types 1-4
-                        miniBossType = ((lvl - 1) % 4) + 1;
-                    }
-                    this.spawnMiniBoss(miniBossType);
-                }
+    handleWaveCleared(deltaTime, entities, levelData, enemiesAlive) {
+        this.waveDelay -= deltaTime;
+        if (this.waveDelay <= 0) {
+            if (this.currentWaveIndex < levelData.waves.length) {
+                this.spawnWave(levelData.waves[this.currentWaveIndex], levelData.speedMult);
+                this.currentWaveIndex++;
+                this.waveCleared = false;
+            } else if (enemiesAlive === 0) {
+                const miniBossType = this.determineMiniBossType(levelData);
+                this.spawnMiniBoss(miniBossType);
             }
+        }
+    }
+
+    handleWaveClearCompletion(levelData) {
+        this.waveCleared = true;
+        const nextWave = levelData.waves[this.currentWaveIndex];
+        this.waveDelay = nextWave ? nextWave.delay : 1;
+
+        if (this.currentWaveIndex >= levelData.waves.length) {
+            this.waveDelay = 1.5;
+            this.waveCleared = true;
+            this.currentWaveIndex = levelData.waves.length;
+        }
+    }
+
+    determineMiniBossType(levelData) {
+        const lvl = this.game.levelManager.currentLevel;
+        
+        if (levelData.miniboss) {
+            return levelData.miniboss;
+        } else if (lvl > 90) {
+            // World 4: cycle through types 13-16
+            return 13 + (((lvl - 91) % 4));
+        } else if (lvl > 60) {
+            // World 3: cycle through types 9-12
+            return 9 + (((lvl - 61) % 4));
+        } else if (lvl > 30) {
+            // World 2: cycle through types 5-8
+            return 5 + (((lvl - 31) % 4));
         } else {
-            if (enemiesAlive === 0) {
-                this.waveCleared = true;
-                const nextWave = levelData.waves[this.currentWaveIndex];
-                this.waveDelay = nextWave ? nextWave.delay : 1;
+            // World 1: cycle through types 1-4
+            return ((lvl - 1) % 4) + 1;
+        }
+    }
 
-                if (this.currentWaveIndex >= levelData.waves.length) {
-                    this.waveDelay = 1.5;
-                    this.waveCleared = true;
-                    this.currentWaveIndex = levelData.waves.length;
-                }
-            }
+    updateMiniBossNotification(deltaTime) {
+        if (this.miniBossNotification) {
+            this.miniBossNotification.timer -= deltaTime;
+            if (this.miniBossNotification.timer <= 0) this.miniBossNotification = null;
         }
     }
 
@@ -118,7 +145,7 @@ class WaveManager {
         g.sound.playBossWarning();
         // W4 bosses (19-24): stronger entrance
         const isW4 = bossLevel >= 19 && bossLevel <= 24;
-        g.postProcessing.shake(isW4 ? 5 : 3, isW4 ? 2.5 : 2.0);
+        g.postProcessing.shake(isW4 ? 5 : 3, isW4 ? 2.5 : 2);
         if (isW4) {
             // Mark boss for warp-in animation
             entities.boss._warpInTimer = 0;
@@ -134,9 +161,9 @@ class WaveManager {
         entities.miniBoss = EnemyFactory.createMiniBoss(x, -120, miniBossType, g.logicalWidth, g.difficulty, g.levelManager.currentLevel);
         this.miniBossNotification = {
             text: `★ ${entities.miniBoss.name.toUpperCase()} ★`,
-            timer: 2.0,
+            timer: 2,
             color: entities.miniBoss.def.color,
-            maxTimer: 2.0
+            maxTimer: 2
         };
         // W4 mini-bosses (13-16): warp-in effect
         const isW4Mini = miniBossType >= 13 && miniBossType <= 16;

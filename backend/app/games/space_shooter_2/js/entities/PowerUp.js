@@ -24,10 +24,10 @@ const POWERUP_TYPES = {
     ultimate: { icon: '💎', color: { r: 180, g: 100, b: 255 }, label: 'ULT+' },
     // ─── World 2 Power-ups ───
     drone_companion: { icon: '🤖', color: { r: 100, g: 220, b: 255 }, label: 'Drone' },
-    bullet_time:     { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' },
+    bullet_time: { icon: '⏱️', color: { r: 200, g: 180, b: 255 }, label: 'Slowdown' },
     // ─── World 3 Power-ups ───
-    glitch_clone:    { icon: '👥', color: { r: 0, g: 220, b: 200 }, label: 'Clones' },
-    data_drain:      { icon: '🌀', color: { r: 120, g: 50, b: 240 }, label: 'Drain' }
+    glitch_clone: { icon: '👥', color: { r: 0, g: 220, b: 200 }, label: 'Clones' },
+    data_drain: { icon: '🌀', color: { r: 120, g: 50, b: 240 }, label: 'Drain' }
 };
 
 class PowerUp extends GameObject {
@@ -60,7 +60,7 @@ class PowerUp extends GameObject {
         this.position.x += Math.sin(this.floatPhase) * 15 * deltaTime;
 
         // Magnet to player if close
-        if (game.player && game.player.active) {
+        if (game.player?.active) {
             const center = this.getCenter();
             const playerCenter = game.player.getCenter();
             const dist = center.distance(playerCenter);
@@ -92,7 +92,7 @@ class PowerUp extends GameObject {
         const colStr = `rgb(${col.r},${col.g},${col.b})`;
 
         const isHigh = _perfMode === 'high';
-        const isLow  = _perfMode === 'low';
+        const isLow = _perfMode === 'low';
 
         // ─── LOW MODE: flat circle + icon, no effects ───
         if (isLow) {
@@ -135,8 +135,8 @@ class PowerUp extends GameObject {
         const bodyGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.3, 0, cx, cy, r);
         bodyGrad.addColorStop(0, C_WHITE);
         bodyGrad.addColorStop(0.3, `rgba(${col.r},${col.g},${col.b},1)`);
-        bodyGrad.addColorStop(0.9, `rgba(${Math.floor(col.r*0.5)},${Math.floor(col.g*0.5)},${Math.floor(col.b*0.5)},1)`);
-        bodyGrad.addColorStop(1, `rgba(${Math.floor(col.r*0.3)},${Math.floor(col.g*0.3)},${Math.floor(col.b*0.3)},1)`);
+        bodyGrad.addColorStop(0.9, `rgba(${Math.floor(col.r * 0.5)},${Math.floor(col.g * 0.5)},${Math.floor(col.b * 0.5)},1)`);
+        bodyGrad.addColorStop(1, `rgba(${Math.floor(col.r * 0.3)},${Math.floor(col.g * 0.3)},${Math.floor(col.b * 0.3)},1)`);
         ctx.fillStyle = bodyGrad;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -189,213 +189,257 @@ class PowerUp extends GameObject {
         switch (this.type) {
             case 'health': {
                 // Plus/cross shape
-                const s = size * 0.7;
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.roundRect(cx - s * 0.2, cy - s, s * 0.4, s * 2, 1);
-                ctx.fill();
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.roundRect(cx - s, cy - s * 0.2, s * 2, s * 0.4, 1);
-                ctx.fill();
-                ctx.stroke();
+                this.drawHealthIcon(size, ctx, cx, cy);
                 break;
             }
             case 'shield': {
                 // Shield shape
-                const s = size * 0.8;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy - s);
-                ctx.lineTo(cx + s * 0.8, cy - s * 0.5);
-                ctx.lineTo(cx + s * 0.7, cy + s * 0.3);
-                ctx.lineTo(cx, cy + s);
-                ctx.lineTo(cx - s * 0.7, cy + s * 0.3);
-                ctx.lineTo(cx - s * 0.8, cy - s * 0.5);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+                this.drawShieldIcon(size, ctx, cx, cy);
                 break;
             }
             case 'weapon': {
                 // Lightning bolt
-                const s = size * 0.8;
-                ctx.beginPath();
-                ctx.moveTo(cx + s * 0.1, cy - s);
-                ctx.lineTo(cx - s * 0.4, cy + s * 0.1);
-                ctx.lineTo(cx - s * 0.05, cy + s * 0.05);
-                ctx.lineTo(cx - s * 0.1, cy + s);
-                ctx.lineTo(cx + s * 0.4, cy - s * 0.1);
-                ctx.lineTo(cx + s * 0.05, cy - s * 0.05);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+                this.drawLightningBolt(size, ctx, cx, cy);
                 break;
             }
             case 'speed': {
                 // Forward arrows
-                const s = size * 0.6;
-                for (let i = 0; i < 2; i++) {
-                    const ox = i * s * 0.5 - s * 0.25;
-                    ctx.beginPath();
-                    ctx.moveTo(cx + ox, cy - s * 0.6);
-                    ctx.lineTo(cx + ox + s * 0.5, cy);
-                    ctx.lineTo(cx + ox, cy + s * 0.6);
-                    ctx.lineTo(cx + ox + s * 0.15, cy);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                }
+                this.drawForwardArrows(size, ctx, cx, cy);
                 break;
             }
             case 'rapid': {
                 // Triple vertical bars
-                const s = size * 0.5;
-                for (let i = -1; i <= 1; i++) {
-                    ctx.beginPath();
-                    ctx.roundRect(cx + i * s * 0.6 - s * 0.15, cy - s, s * 0.3, s * 2, 1);
-                    ctx.fill();
-                    ctx.stroke();
-                }
+                this.drawTripleBars(size, ctx, cx, cy);
                 break;
             }
             case 'points': {
                 // Star
                 const s = size * 0.8;
-                ctx.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    const outerAngle = -Math.PI / 2 + i * Math.PI * 2 / 5;
-                    const innerAngle = outerAngle + Math.PI / 5;
-                    ctx.lineTo(cx + Math.cos(outerAngle) * s, cy + Math.sin(outerAngle) * s);
-                    ctx.lineTo(cx + Math.cos(innerAngle) * s * 0.4, cy + Math.sin(innerAngle) * s * 0.4);
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+                this.drawStarShape(ctx, cx, s, cy);
                 break;
             }
             case 'ultimate': {
                 // Diamond
-                const s = size * 0.8;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy - s);
-                ctx.lineTo(cx + s * 0.65, cy);
-                ctx.lineTo(cx, cy + s);
-                ctx.lineTo(cx - s * 0.65, cy);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                // Inner shine
-                ctx.globalAlpha = 0.3;
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.moveTo(cx, cy - s * 0.6);
-                ctx.lineTo(cx + s * 0.2, cy);
-                ctx.lineTo(cx, cy + s * 0.2);
-                ctx.lineTo(cx - s * 0.2, cy);
-                ctx.closePath();
-                ctx.fill();
+                this.drawDiamondIcon(size, ctx, cx, cy);
                 break;
             }
             // ─── World 2 Power-up Icons ───
             case 'drone_companion': {
                 // Small satellite/drone shape
-                const s = size * 0.7;
-                // Body square
-                ctx.beginPath();
-                ctx.roundRect(cx - s * 0.35, cy - s * 0.35, s * 0.7, s * 0.7, 2);
-                ctx.fill();
-                ctx.stroke();
-                // Solar panels
-                ctx.beginPath();
-                ctx.roundRect(cx - s, cy - s * 0.15, s * 0.5, s * 0.3, 1);
-                ctx.fill();
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.roundRect(cx + s * 0.5, cy - s * 0.15, s * 0.5, s * 0.3, 1);
-                ctx.fill();
-                ctx.stroke();
-                // Eye
-                ctx.fillStyle = '#66ddff';
-                ctx.beginPath();
-                ctx.arc(cx, cy, s * 0.15, 0, Math.PI * 2);
-                ctx.fill();
+                this.drawDroneShape(size, ctx, cx, cy);
                 break;
             }
             case 'bullet_time': {
                 // Clock/stopwatch shape
-                const s = size * 0.7;
-                ctx.beginPath();
-                ctx.arc(cx, cy, s, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                // Clock hands
-                ctx.strokeStyle = 'rgba(100,80,200,0.8)';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx, cy - s * 0.65);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + s * 0.45, cy + s * 0.1);
-                ctx.stroke();
-                // Ticks
-                for (let i = 0; i < 12; i++) {
-                    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
-                    ctx.fillStyle = '#fff';
-                    ctx.beginPath();
-                    ctx.arc(cx + Math.cos(a) * s * 0.82, cy + Math.sin(a) * s * 0.82, 0.8, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+                this.drawClockIcon(size, ctx, cx, cy);
                 break;
             }
             // ─── World 3 Power-up Icons ───
             case 'glitch_clone': {
                 // Two overlapping silhouette shapes (clone pair)
-                const s = size * 0.65;
-                // Back clone (offset, semi-transparent)
-                ctx.globalAlpha = 0.4;
-                ctx.beginPath();
-                ctx.moveTo(cx + s * 0.3, cy - s * 0.8);
-                ctx.lineTo(cx + s * 0.7, cy - s * 0.2);
-                ctx.lineTo(cx + s * 0.5, cy + s * 0.8);
-                ctx.lineTo(cx + s * 0.1, cy + s * 0.8);
-                ctx.lineTo(cx - s * 0.1, cy - s * 0.2);
-                ctx.closePath();
-                ctx.fill(); ctx.stroke();
-                ctx.globalAlpha = 1;
-                // Front clone
-                ctx.beginPath();
-                ctx.moveTo(cx - s * 0.3, cy - s * 0.8);
-                ctx.lineTo(cx + s * 0.3, cy - s * 0.3);
-                ctx.lineTo(cx + s * 0.15, cy + s * 0.8);
-                ctx.lineTo(cx - s * 0.35, cy + s * 0.8);
-                ctx.lineTo(cx - s * 0.6, cy - s * 0.2);
-                ctx.closePath();
-                ctx.fill(); ctx.stroke();
+                this.drawCloneShape(size, ctx, cx, cy);
                 break;
             }
             case 'data_drain': {
                 // Spiral vortex/drain icon
-                const s = size * 0.7;
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                for (let a = 0; a < Math.PI * 3; a += 0.15) {
-                    const sr = s * 0.15 + a * s * 0.2;
-                    if (sr > s) break;
-                    const px = cx + sr * Math.cos(a), py = cy + sr * Math.sin(a);
-                    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-                // Center dot
-                ctx.fillStyle = '#fff';
-                ctx.beginPath(); ctx.arc(cx, cy, s * 0.15, 0, Math.PI * 2); ctx.fill();
+                this.drawSpiralVortex(size, ctx, cx, cy);
                 break;
             }
 
         }
         ctx.restore();
+    }
+
+    drawHealthIcon(size, ctx, cx, cy) {
+        const s = size * 0.7;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.roundRect(cx - s * 0.2, cy - s, s * 0.4, s * 2, 1);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.roundRect(cx - s, cy - s * 0.2, s * 2, s * 0.4, 1);
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    drawShieldIcon(size, ctx, cx, cy) {
+        const s = size * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - s);
+        ctx.lineTo(cx + s * 0.8, cy - s * 0.5);
+        ctx.lineTo(cx + s * 0.7, cy + s * 0.3);
+        ctx.lineTo(cx, cy + s);
+        ctx.lineTo(cx - s * 0.7, cy + s * 0.3);
+        ctx.lineTo(cx - s * 0.8, cy - s * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    drawLightningBolt(size, ctx, cx, cy) {
+        const s = size * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.1, cy - s);
+        ctx.lineTo(cx - s * 0.4, cy + s * 0.1);
+        ctx.lineTo(cx - s * 0.05, cy + s * 0.05);
+        ctx.lineTo(cx - s * 0.1, cy + s);
+        ctx.lineTo(cx + s * 0.4, cy - s * 0.1);
+        ctx.lineTo(cx + s * 0.05, cy - s * 0.05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    drawCloneShape(size, ctx, cx, cy) {
+        const s = size * 0.65;
+        // Back clone (offset, semi-transparent)
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.moveTo(cx + s * 0.3, cy - s * 0.8);
+        ctx.lineTo(cx + s * 0.7, cy - s * 0.2);
+        ctx.lineTo(cx + s * 0.5, cy + s * 0.8);
+        ctx.lineTo(cx + s * 0.1, cy + s * 0.8);
+        ctx.lineTo(cx - s * 0.1, cy - s * 0.2);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+        ctx.globalAlpha = 1;
+        // Front clone
+        ctx.beginPath();
+        ctx.moveTo(cx - s * 0.3, cy - s * 0.8);
+        ctx.lineTo(cx + s * 0.3, cy - s * 0.3);
+        ctx.lineTo(cx + s * 0.15, cy + s * 0.8);
+        ctx.lineTo(cx - s * 0.35, cy + s * 0.8);
+        ctx.lineTo(cx - s * 0.6, cy - s * 0.2);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+    }
+
+    drawDroneShape(size, ctx, cx, cy) {
+        const s = size * 0.7;
+        // Body square
+        ctx.beginPath();
+        ctx.roundRect(cx - s * 0.35, cy - s * 0.35, s * 0.7, s * 0.7, 2);
+        ctx.fill();
+        ctx.stroke();
+        // Solar panels
+        ctx.beginPath();
+        ctx.roundRect(cx - s, cy - s * 0.15, s * 0.5, s * 0.3, 1);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.roundRect(cx + s * 0.5, cy - s * 0.15, s * 0.5, s * 0.3, 1);
+        ctx.fill();
+        ctx.stroke();
+        // Eye
+        ctx.fillStyle = '#66ddff';
+        ctx.beginPath();
+        ctx.arc(cx, cy, s * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    drawDiamondIcon(size, ctx, cx, cy) {
+        const s = size * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - s);
+        ctx.lineTo(cx + s * 0.65, cy);
+        ctx.lineTo(cx, cy + s);
+        ctx.lineTo(cx - s * 0.65, cy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Inner shine
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - s * 0.6);
+        ctx.lineTo(cx + s * 0.2, cy);
+        ctx.lineTo(cx, cy + s * 0.2);
+        ctx.lineTo(cx - s * 0.2, cy);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    drawSpiralVortex(size, ctx, cx, cy) {
+        const s = size * 0.7;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let a = 0; a < Math.PI * 3; a += 0.15) {
+            const sr = s * 0.15 + a * s * 0.2;
+            if (sr > s) break;
+            const px = cx + sr * Math.cos(a), py = cy + sr * Math.sin(a);
+            if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        // Center dot
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(cx, cy, s * 0.15, 0, Math.PI * 2); ctx.fill();
+    }
+
+    drawClockIcon(size, ctx, cx, cy) {
+        const s = size * 0.7;
+        ctx.beginPath();
+        ctx.arc(cx, cy, s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Clock hands
+        ctx.strokeStyle = 'rgba(100,80,200,0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx, cy - s * 0.65);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + s * 0.45, cy + s * 0.1);
+        ctx.stroke();
+        // Ticks
+        for (let i = 0; i < 12; i++) {
+            const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(cx + Math.cos(a) * s * 0.82, cy + Math.sin(a) * s * 0.82, 0.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawForwardArrows(size, ctx, cx, cy) {
+        const s = size * 0.6;
+        for (let i = 0; i < 2; i++) {
+            const ox = i * s * 0.5 - s * 0.25;
+            ctx.beginPath();
+            ctx.moveTo(cx + ox, cy - s * 0.6);
+            ctx.lineTo(cx + ox + s * 0.5, cy);
+            ctx.lineTo(cx + ox, cy + s * 0.6);
+            ctx.lineTo(cx + ox + s * 0.15, cy);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    drawTripleBars(size, ctx, cx, cy) {
+        const s = size * 0.5;
+        for (let i = -1; i <= 1; i++) {
+            ctx.beginPath();
+            ctx.roundRect(cx + i * s * 0.6 - s * 0.15, cy - s, s * 0.3, s * 2, 1);
+            ctx.fill();
+            ctx.stroke();
+        }
+    }
+
+    drawStarShape(ctx, cx, s, cy) {
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const outerAngle = -Math.PI / 2 + i * Math.PI * 2 / 5;
+            const innerAngle = outerAngle + Math.PI / 5;
+            ctx.lineTo(cx + Math.cos(outerAngle) * s, cy + Math.sin(outerAngle) * s);
+            ctx.lineTo(cx + Math.cos(innerAngle) * s * 0.4, cy + Math.sin(innerAngle) * s * 0.4);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
     }
 
     apply(player, game) {

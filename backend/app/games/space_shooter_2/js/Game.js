@@ -374,80 +374,18 @@ class Game {
         const zones = this.backgroundFacade.getActiveZones();
         if (!zones || zones.length === 0) {
             // No active zones — ensure lingering effects are cleared
-            if (!player.rapidFire) player.fireRate = player.baseFireRate;
-            if (!player.speedBoost) {
-                player.speed = player.baseSpeed * (this.perkSystem ? this.perkSystem.getSpeedMultiplier() : 1);
-            }
-            this._quantumDmgTimer = 0;
-            // Clear enemy quantum flags
-            for (const enemy of em.enemies) {
-                enemy._quantumWeak = false;
-                enemy._quantumBoosted = false;
-                enemy._quantumFrozen = false;
-            }
-            return;
+            return this.resetPlayerStats(player, em);
         }
 
-        const px = player.position.x + player.width / 2;
-        const py = player.position.y + player.height / 2;
-
-        // Accumulator for quantum state timers
-        if (!this._quantumDmgTimer) this._quantumDmgTimer = 0;
-        this._quantumDmgTimer += deltaTime;
-
-        let inSafe = false;
-        let inDanger = false;
-
-        // Check player vs zones
-        for (const z of zones) {
-            const dist = Math.hypot(px - z.x, py - z.y);
-            if (dist > z.radius) continue;
-
-            if (z.type === 'safe') {
-                inSafe = true;
-                // Attack speed ×2 while inside
-                if (!player.rapidFire) {
-                    player.fireRate = player.baseFireRate * 0.5;
-                }
-            }
-            else if (z.type === 'danger') {
-                inDanger = true;
-                // Chip damage every 2 seconds
-                if (this._quantumDmgTimer >= 2) {
-                    player.takeDamage(1, this);
-                    this._quantumDmgTimer = 0;
-                    this.particles.emit(px, py, 'hit', 4);
-                    this.postProcessing.flash({ r: 180, g: 30, b: 30 }, 0.1);
-                }
-                // Slow player
-                if (!player.speedBoost) {
-                    player.speed = player.baseSpeed * 0.6;
-                }
-            }
-            else if (z.type === 'info') {
-                // Damage boost — player bullets deal ×2 while inside
-                player._quantumBoosted = true;
-            }
-        }
-
-        // Reset fire rate if not in safe zone
-        if (!inSafe && !player.rapidFire) {
-            player.fireRate = player.baseFireRate;
-        }
-
-        // Reset speed if not in danger zone
-        if (!inDanger && !player.speedBoost) {
-            player.speed = player.baseSpeed * (this.perkSystem ? this.perkSystem.getSpeedMultiplier() : 1);
-        }
-
-        // Reset damage timer if not actively in danger
-        if (!inDanger) {
-            this._quantumDmgTimer = 0;
-        }
+        this.updatePlayerStatus(player, deltaTime, zones);
 
         // Enemy effects from zones:
         // Enemies in 'info' zones → weakened (take 50% more damage) — visual indicator
         // Enemies in 'danger' zones → boosted (move 30% faster)
+        this.applyQuantumEffects(em, zones);
+    }
+
+    applyQuantumEffects(em, zones) {
         for (const enemy of em.enemies) {
             const ex = enemy.position.x + enemy.width / 2;
             const ey = enemy.position.y + enemy.height / 2;
@@ -467,9 +405,94 @@ class Game {
                 }
                 else if (z.type === 'distortion') {
                     enemy._quantumFrozen = true;
-                    enemy._quantumWeak = true; // also take ×1.5 damage
+                    enemy._quantumWeak = true;
                 }
             }
+        }
+    }
+
+    updatePlayerStatus(player, deltaTime, zones) {
+        let { inSafe, inDanger } = this.checkPlayerZoneStatus(player, deltaTime, zones);
+
+        // Reset fire rate if not in safe zone
+        if (!inSafe && !player.rapidFire) {
+            player.fireRate = player.baseFireRate;
+        }
+
+        // Reset speed if not in danger zone
+        if (!inDanger && !player.speedBoost) {
+            player.speed = player.baseSpeed * (this.perkSystem ? this.perkSystem.getSpeedMultiplier() : 1);
+        }
+
+        // Reset damage timer if not actively in danger
+        if (!inDanger) {
+            this._quantumDmgTimer = 0;
+        }
+    }
+
+    checkPlayerZoneStatus(player, deltaTime, zones) {
+        const px = player.position.x + player.width / 2;
+        const py = player.position.y + player.height / 2;
+
+        // Accumulator for quantum state timers
+        if (!this._quantumDmgTimer) this._quantumDmgTimer = 0;
+        this._quantumDmgTimer += deltaTime;
+
+        let inSafe = false;
+        let inDanger = false;
+
+        // Check player vs zones
+        return this.evaluatePlayerZone(zones, px, py, inSafe, player, inDanger);
+    }
+
+    evaluatePlayerZone(zones, px, py, inSafe, player, inDanger) {
+        for (const z of zones) {
+            const dist = Math.hypot(px - z.x, py - z.y);
+            if (dist > z.radius) continue;
+
+            switch (z.type) {
+                case 'safe':
+                    inSafe = true;
+                    if (!player.rapidFire) {
+                        player.fireRate = player.baseFireRate * 0.5;
+                    }
+                    break;
+
+                case 'danger':
+                    inDanger = true;
+                    if (this._quantumDmgTimer >= 2) {
+                        player.takeDamage(1, this);
+                        this._quantumDmgTimer = 0;
+                        this.particles.emit(px, py, 'hit', 4);
+                        this.postProcessing.flash({ r: 180, g: 30, b: 30 }, 0.1);
+                    }
+                    if (!player.speedBoost) {
+                        player.speed = player.baseSpeed * 0.6;
+                    }
+                    break;
+
+                case 'info':
+                    player._quantumBoosted = true;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        return { inSafe, inDanger };
+    }
+
+    resetPlayerStats(player, em) {
+        if (!player.rapidFire) player.fireRate = player.baseFireRate;
+        if (!player.speedBoost) {
+            player.speed = player.baseSpeed * (this.perkSystem ? this.perkSystem.getSpeedMultiplier() : 1);
+        }
+        this._quantumDmgTimer = 0;
+        // Clear enemy quantum flags
+        for (const enemy of em.enemies) {
+            enemy._quantumWeak = false;
+            enemy._quantumBoosted = false;
+            enemy._quantumFrozen = false;
         }
     }
 
@@ -554,93 +577,13 @@ class Game {
             return;
         }
 
-        if (this.backgroundFacade) this.backgroundFacade.render(ctx, this.gameTime);
+        if (this.backgroundFacade)
+            this.backgroundFacade.render(ctx, this.gameTime);
 
-        const _outroZoomActive = this.state === 'levelOutro' && this.cinematicManager.levelOutro;
-        if (_outroZoomActive) {
-            const oz = this.cinematicManager.levelOutro;
-            const p = oz.zoomProgress || 0;
-            const offsetX = (w / 2 - oz.pcx) * p;
-            const offsetY = (h / 2 - oz.pcy) * p;
-            const apparentX = oz.pcx + offsetX;
-            const apparentY = oz.pcy + offsetY;
-            ctx.save();
-            ctx.translate(apparentX, apparentY);
-            ctx.scale(oz.zoom, oz.zoom);
-            ctx.translate(-apparentX, -apparentY);
-            ctx.translate(offsetX, offsetY);
-        }
-
-        if (this.state === 'playing' || this.state === 'paused' ||
-            this.state === 'levelComplete' || this.state === 'gameover' ||
-            this.state === 'levelIntro' || this.state === 'levelOutro' ||
-            this.state === 'deathCinematic' || this.state === 'worldTransition') {
-
-            for (const pu of em.powerUps) pu.render(ctx);
-
-            for (const enemy of em.enemies) {
-                if (!enemy._isAlly) enemy.render(ctx, this.assets);
-            }
-
-            if (em.boss?.active) em.boss.render(ctx, this.assets);
-
-            if (em.miniBoss?.active) em.miniBoss.render(ctx, this.assets);
-
-            if (em.boss?.entering) {
-                this.hudRenderer.renderBossWarningOverlay(ctx, w, h);
-            }
-
-            if (this.waveManager.miniBossNotification) {
-                this.hudRenderer.renderMiniBossNotification(ctx, w, h);
-            }
-
-            // Render all bullets through their own render() (consistent visuals)
-            for (const bullet of em.bullets) bullet.render(ctx);
-
-            em.renderHomingMissiles(ctx);
-
-            if (em.player?.active) em.player.render(ctx, this.assets, this.perkSystem);
-
-            this.perkEffectsManager.renderDrones(ctx);
-            this.perkEffectsManager.renderFireTrail(ctx);
-            this.perkEffectsManager.renderAllies(ctx);
-
-            for (const exp of em.explosions) exp.render(ctx);
-
-            this.particles.render(ctx);
-
-            // World 4: distortion zone lens warp (after all entities, before HUD)
-            if (this.backgroundFacade && this.currentLevel >= 91 && this.currentLevel <= 120) {
-                this._renderDistortionZones(ctx);
-            }
-
-            this.hudRenderer.renderHUD(ctx);
-        }
-
-        if (_outroZoomActive) {
-            ctx.restore();
-        }
+        this.renderGameEntities(w, h, ctx, em);
 
         // Cinematics (in logical space)
-        if (this.state === 'cinematic' && this.cinematicManager.cinematic) {
-            this.cinematicManager.renderCinematic(ctx, w, h);
-        }
-
-        if (this.state === 'levelIntro' && this.cinematicManager.levelIntro) {
-            this.cinematicManager.renderLevelIntro(ctx, w, h);
-        }
-
-        if (this.state === 'levelOutro' && this.cinematicManager.levelOutro) {
-            this.cinematicManager.renderLevelOutro(ctx, w, h);
-        }
-
-        if (this.state === 'deathCinematic' && this.cinematicManager._deathCine) {
-            this.cinematicManager.renderDeathCinematic(ctx, w, h);
-        }
-
-        if (this.state === 'worldTransition' && this.cinematicManager._worldTransition) {
-            this.cinematicManager.renderWorldTransition(ctx, w, h);
-        }
+        this.renderCinematics(ctx, w, h);
 
         // Banners (in logical space)
         this.hudRenderer.renderBanners(ctx);
@@ -660,6 +603,133 @@ class Game {
 
         // FPS monitor (physical coords – fixed screen position)
         this.hudRenderer.renderFPSMonitor(ctx);
+    }
+
+    renderGameEntities(w, h, ctx, em) {
+        this._applyOutroZoom(ctx, w, h);
+
+        if (this._shouldRenderGameplay()) {
+            this._renderGameplayEntities(ctx, em, w, h);
+        }
+
+        this._restoreOutroZoom();
+    }
+
+    _applyOutroZoom(ctx, w, h) {
+        const isOutroActive = this.state === 'levelOutro' && this.cinematicManager.levelOutro;
+        if (!isOutroActive) return;
+
+        const outro = this.cinematicManager.levelOutro;
+        const progress = outro.zoomProgress || 0;
+        const offsetX = (w / 2 - outro.pcx) * progress;
+        const offsetY = (h / 2 - outro.pcy) * progress;
+        const apparentX = outro.pcx + offsetX;
+        const apparentY = outro.pcy + offsetY;
+
+        ctx.save();
+        ctx.translate(apparentX, apparentY);
+        ctx.scale(outro.zoom, outro.zoom);
+        ctx.translate(-apparentX, -apparentY);
+        ctx.translate(offsetX, offsetY);
+
+        this._outroZoomActive = true;
+    }
+
+    _shouldRenderGameplay() {
+        const validStates = ['playing', 'paused', 'levelComplete', 'gameover',
+                            'levelIntro', 'levelOutro', 'deathCinematic', 'worldTransition'];
+        return validStates.includes(this.state);
+    }
+
+    _renderGameplayEntities(ctx, em, w, h) {
+        em.powerUps.forEach(pu => pu.render(ctx));
+        this._renderEnemies(ctx, em);
+        this._renderBosses(ctx, em, w, h);
+        this._renderBullets(ctx, em);
+        this._renderPlayer(ctx, em);
+        this._renderEffects(ctx, em, w, h);
+        this.hudRenderer.renderHUD(ctx);
+    }
+
+    _renderEnemies(ctx, em) {
+        em.enemies.forEach(enemy => {
+            if (!enemy._isAlly) enemy.render(ctx, this.assets);
+        });
+    }
+
+    _renderBosses(ctx, em, w, h) {
+        if (em.boss?.active) {
+            em.boss.render(ctx, this.assets);
+        }
+
+        if (em.miniBoss?.active) {
+            em.miniBoss.render(ctx, this.assets);
+        }
+
+        if (em.boss?.entering) {
+            this.hudRenderer.renderBossWarningOverlay(ctx, w, h);
+        }
+
+        if (this.waveManager.miniBossNotification) {
+            this.hudRenderer.renderMiniBossNotification(ctx, w, h);
+        }
+    }
+
+    _renderBullets(ctx, em) {
+        em.bullets.forEach(bullet => bullet.render(ctx));
+        em.renderHomingMissiles(ctx);
+    }
+
+    _renderPlayer(ctx, em) {
+        if (em.player?.active) {
+            em.player.render(ctx, this.assets, this.perkSystem);
+        }
+    }
+
+    _renderEffects(ctx, em, w, h) {
+        this.perkEffectsManager.renderDrones(ctx);
+        this.perkEffectsManager.renderFireTrail(ctx);
+        this.perkEffectsManager.renderAllies(ctx);
+
+        em.explosions.forEach(exp => exp.render(ctx));
+        this.particles.render(ctx);
+
+        if (this.backgroundFacade && this._isQuantumWorld()) {
+            this._renderDistortionZones(ctx);
+        }
+    }
+
+    _isQuantumWorld() {
+        return this.currentLevel >= 91 && this.currentLevel <= 120;
+    }
+
+    _restoreOutroZoom() {
+        if (this._outroZoomActive) {
+            this.ctx.restore();
+            this._outroZoomActive = false;
+        }
+    }
+
+    renderCinematics(ctx, w, h) {
+        if (this.state === 'cinematic' && this.cinematicManager.cinematic) {
+            this.cinematicManager.renderCinematic(ctx, w, h);
+        }
+
+        if (this.state === 'levelIntro' && this.cinematicManager.levelIntro) {
+            this.cinematicManager.renderLevelIntro(ctx, w, h);
+        }
+
+        if (this.state === 'levelOutro' && this.cinematicManager.levelOutro) {
+            this.cinematicManager.renderLevelOutro(ctx, w, h);
+        }
+
+        if (this.state === 'deathCinematic' && this.cinematicManager._deathCine) {
+            this.cinematicManager.renderDeathCinematic(ctx, w, h);
+        }
+
+        if (this.state === 'worldTransition' && this.cinematicManager._worldTransition) {
+            this.cinematicManager.renderWorldTransition(ctx, w, h);
+        }
     }
 
     startGame(shipId, ultimateId, difficultyId, startWorld = 1) {

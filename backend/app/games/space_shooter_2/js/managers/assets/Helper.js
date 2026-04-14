@@ -115,6 +115,62 @@ function drawEnemyEye(ctx, cx, cy, radius, tint) {
     ctx.restore();
 }
 
+function drawBossEyes(ctx, cx, cy, radius, tint) {
+    ctx.save();
+    ctx.shadowColor = tint;
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(cx - radius * 0.5, cy, radius, 0, Math.PI * 2);
+    ctx.arc(cx + radius * 0.5, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = tint;
+    ctx.beginPath();
+    ctx.arc(cx - radius * 0.5, cy, radius * 0.6, 0, Math.PI * 2);
+    ctx.arc(cx + radius * 0.5, cy, radius * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(cx - radius * 0.5, cy, radius * 0.3, 0, Math.PI * 2);
+    ctx.arc(cx + radius * 0.5, cy, radius * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath();
+    ctx.arc(cx - radius * 0.75, cy - radius * 0.25, radius * 0.2, 0, Math.PI * 2);
+    ctx.arc(cx + radius * 0.25, cy - radius * 0.25, radius * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+}
+
+function drawPentagon(ctx, cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+        const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
+function drawStarShape(ctx, cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+        const angle = (Math.PI * 2 / 10) * i - Math.PI / 2;
+        const radius = i % 2 === 0 ? r : r * 0.4;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
+
 // Helper: make a canvas of given size
 function _mkCanvas(w, h) {
     const cv = document.createElement('canvas');
@@ -122,4 +178,4 @@ function _mkCanvas(w, h) {
     return cv;
 }
 
-export { outlineAndFill, drawHighlight, drawCockpit, drawEngineNozzle, _drawPartEye, drawEnemyEye, _mkCanvas };
+export { outlineAndFill, drawHighlight, drawCockpit, drawEngineNozzle, _drawPartEye, drawEnemyEye, drawBossEyes, drawPentagon, drawStarShape, _mkCanvas };

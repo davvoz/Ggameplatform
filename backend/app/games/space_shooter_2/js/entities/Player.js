@@ -202,6 +202,82 @@ class Player extends GameObject {
 
     update(deltaTime, game) {
         // Ultimate timer
+        this.updateUltimateState(deltaTime, game);
+
+        // Time-based ultimate cooldown: 30 seconds base, affected by Ultimate Engine perk
+        // Charge accumulates always EXCEPT during Invincibility ultimate (frozen while active)
+        this.updateUltimateCharge(game, deltaTime);
+
+        // Shield timer
+        this.updateShieldTimer(deltaTime);
+
+        // Input movement
+        this.handleMovementInput(game, deltaTime);
+
+        // Fire cooldown & heat (cool_exhaust perk speeds dissipation)
+        this.updateHeatAndCooldown(deltaTime, game);
+
+        // Auto-fire / manual fire
+        this.handleFireInput(game);
+
+        // Ultimate activation
+        this.activateUltimateIfReady(game);
+
+        // Invincibility
+        this.updateInvincibilityState(deltaTime);
+
+        // Speed boost
+        this.updateSpeedBoost(deltaTime, game);
+
+        // Rapid fire
+        this.updateRapidFireState(deltaTime);
+
+        // ─── World 2 Power-up Timers ───
+
+        // Drone companion
+        this.updateDroneBehavior(deltaTime, game);
+
+        // ─── World 3 Power-up Timers ───
+
+        // Glitch Clone — 2 holographic clones orbit and fire
+        this.updateGlitchClone(deltaTime, game);
+
+        // Data Drain — AoE damage field around player
+        this.updateDataDrain(deltaTime, game);
+
+        this.thrusterFlicker += deltaTime * 10;
+    }
+
+    handleMovementInput(game, deltaTime) {
+        const inputDir = game.input.getMovementDirection();
+        this.velocity = inputDir.multiply(this.speed);
+
+        // Apply movement
+        this.position.x += this.velocity.x * deltaTime;
+        this.position.y += this.velocity.y * deltaTime;
+
+        // Clamp to screen (logical coordinates)
+        this.position.x = Math.max(0, Math.min(game.logicalWidth - this.width, this.position.x));
+        this.position.y = Math.max(0, Math.min(game.logicalHeight - this.height, this.position.y));
+    }
+
+    updateShieldTimer(deltaTime) {
+        if (this.shieldActive) {
+            this.shieldTime -= deltaTime;
+            if (this.shieldTime <= 0) {
+                this.shieldActive = false;
+            }
+        }
+    }
+
+    updateUltimateCharge(game, deltaTime) {
+        if (this.ultimateCharge < 100 && !(this._invincibilityUlt && this.ultimateActive)) {
+            const chargeRate = (100 / 30) * (game.perkSystem ? game.perkSystem.getUltChargeMultiplier() : 1);
+            this.ultimateCharge = Math.min(100, this.ultimateCharge + chargeRate * deltaTime);
+        }
+    }
+
+    updateUltimateState(deltaTime, game) {
         if (this.ultimateActive) {
             this.ultimateTimer -= deltaTime;
 
@@ -219,134 +295,9 @@ class Player extends GameObject {
                 this.endUltimate(game);
             }
         }
+    }
 
-        // Time-based ultimate cooldown: 30 seconds base, affected by Ultimate Engine perk
-        // Charge accumulates always EXCEPT during Invincibility ultimate (frozen while active)
-        if (this.ultimateCharge < 100 && !(this._invincibilityUlt && this.ultimateActive)) {
-            const chargeRate = (100 / 30) * (game.perkSystem ? game.perkSystem.getUltChargeMultiplier() : 1);
-            this.ultimateCharge = Math.min(100, this.ultimateCharge + chargeRate * deltaTime);
-        }
-
-        // Shield timer
-        if (this.shieldActive) {
-            this.shieldTime -= deltaTime;
-            if (this.shieldTime <= 0) {
-                this.shieldActive = false;
-            }
-        }
-
-        // Input movement
-        const inputDir = game.input.getMovementDirection();
-        this.velocity = inputDir.multiply(this.speed);
-
-        // Apply movement
-        this.position.x += this.velocity.x * deltaTime;
-        this.position.y += this.velocity.y * deltaTime;
-
-        // Clamp to screen (logical coordinates)
-        this.position.x = Math.max(0, Math.min(game.logicalWidth - this.width, this.position.x));
-        this.position.y = Math.max(0, Math.min(game.logicalHeight - this.height, this.position.y));
-
-        // Fire cooldown & heat (cool_exhaust perk speeds dissipation)
-        this.fireCooldown -= deltaTime;
-        if (this.heat > 0) {
-            const heatMult = game.perkSystem ? game.perkSystem.getHeatDissipationMult() : 1;
-            this.heat -= this.heatCooldownRate * heatMult * deltaTime;
-            if (this.heat < 0) this.heat = 0;
-        }
-        if (this.overheated && this.heat < 30) {
-            this.overheated = false;
-        }
-
-        // Auto-fire / manual fire
-        if (game.input.isFiring() && this.fireCooldown <= 0 && !this.overheated) {
-            this.fire(game);
-            this.fireCooldown = this.fireRate;
-            const heatShotMult = game.perkSystem ? game.perkSystem.getHeatPerShotMult() : 1;
-            this.heat += this.heatPerShot * (1 + (this.weaponLevel - 1) * 0.3) * heatShotMult;
-            if (this.heat >= this.maxHeat) {
-                this.heat = this.maxHeat;
-                this.overheated = true;
-            }
-        }
-
-        // Ultimate activation
-        if (game.input.isUltimatePressed() && this.ultimateCharge >= 100 && !this.ultimateActive) {
-            this.activateUltimate(game);
-        }
-
-        // Invincibility
-        if (this.invincible) {
-            this.invincibleTime -= deltaTime;
-            this.blinkTimer += deltaTime;
-            if (this.invincibleTime <= 0) {
-                this.invincible = false;
-                this.alpha = 1;
-            } else {
-                this.alpha = Math.sin(this.blinkTimer * 20) > 0 ? 1 : 0.3;
-            }
-        }
-
-        // Speed boost
-        if (this.speedBoost) {
-            this.speedBoostTime -= deltaTime;
-            if (this.speedBoostTime <= 0) {
-                this.speedBoost = false;
-                this.speed = this.baseSpeed * (game.perkSystem ? game.perkSystem.getSpeedMultiplier() : 1);
-            }
-        }
-
-        // Rapid fire
-        if (this.rapidFire) {
-            this.rapidFireTime -= deltaTime;
-            if (this.rapidFireTime <= 0) {
-                this.rapidFire = false;
-                this.fireRate = this.baseFireRate;
-            }
-        }
-
-        // ─── World 2 Power-up Timers ───
-
-        // Drone companion
-        if (this.droneActive) {
-            this.droneTime -= deltaTime;
-            this.droneAngle += deltaTime * 2.5;
-            this.droneFireTimer -= deltaTime;
-            // Drone auto-fires
-            if (this.droneFireTimer <= 0) {
-                this.droneFireTimer = 0.5;
-                const dAngle = this.droneAngle;
-                const cx = this.position.x + this.width / 2 + Math.cos(dAngle) * 35;
-                const cy = this.position.y + this.height / 2 + Math.sin(dAngle) * 35;
-                game.spawnBullet(cx, cy, 0, -500, 'player');
-            }
-            if (this.droneTime <= 0) {
-                this.droneActive = false;
-            }
-        }
-
-        // ─── World 3 Power-up Timers ───
-
-        // Glitch Clone — 2 holographic clones orbit and fire
-        if (this.glitchCloneActive) {
-            this.glitchCloneTime -= deltaTime;
-            this.glitchCloneAngle += deltaTime * 2;
-            this.glitchCloneFireTimer -= deltaTime;
-            if (this.glitchCloneFireTimer <= 0) {
-                this.glitchCloneFireTimer = 0.45;
-                for (let i = 0; i < 2; i++) {
-                    const a = this.glitchCloneAngle + i * Math.PI;
-                    const cx = this.position.x + this.width / 2 + Math.cos(a) * 40;
-                    const cy = this.position.y + this.height / 2 + Math.sin(a) * 40;
-                    game.spawnBullet(cx, cy, 0, -480, 'player');
-                }
-            }
-            if (this.glitchCloneTime <= 0) {
-                this.glitchCloneActive = false;
-            }
-        }
-
-        // Data Drain — AoE damage field around player
+    updateDataDrain(deltaTime, game) {
         if (this.dataDrainActive) {
             this.dataDrainTime -= deltaTime;
             const pcx = this.position.x + this.width / 2;
@@ -367,18 +318,137 @@ class Player extends GameObject {
                 this.dataDrainActive = false;
             }
         }
+    }
 
-        this.thrusterFlicker += deltaTime * 10;
+    updateGlitchClone(deltaTime, game) {
+        if (this.glitchCloneActive) {
+            this.glitchCloneTime -= deltaTime;
+            this.glitchCloneAngle += deltaTime * 2;
+            this.glitchCloneFireTimer -= deltaTime;
+            if (this.glitchCloneFireTimer <= 0) {
+                this.glitchCloneFireTimer = 0.45;
+                for (let i = 0; i < 2; i++) {
+                    const a = this.glitchCloneAngle + i * Math.PI;
+                    const cx = this.position.x + this.width / 2 + Math.cos(a) * 40;
+                    const cy = this.position.y + this.height / 2 + Math.sin(a) * 40;
+                    game.spawnBullet(cx, cy, 0, -480, 'player');
+                }
+            }
+            if (this.glitchCloneTime <= 0) {
+                this.glitchCloneActive = false;
+            }
+        }
+    }
+
+    updateDroneBehavior(deltaTime, game) {
+        if (this.droneActive) {
+            this.droneTime -= deltaTime;
+            this.droneAngle += deltaTime * 2.5;
+            this.droneFireTimer -= deltaTime;
+            // Drone auto-fires
+            if (this.droneFireTimer <= 0) {
+                this.droneFireTimer = 0.5;
+                const dAngle = this.droneAngle;
+                const cx = this.position.x + this.width / 2 + Math.cos(dAngle) * 35;
+                const cy = this.position.y + this.height / 2 + Math.sin(dAngle) * 35;
+                game.spawnBullet(cx, cy, 0, -500, 'player');
+            }
+            if (this.droneTime <= 0) {
+                this.droneActive = false;
+            }
+        }
+    }
+
+    updateRapidFireState(deltaTime) {
+        if (this.rapidFire) {
+            this.rapidFireTime -= deltaTime;
+            if (this.rapidFireTime <= 0) {
+                this.rapidFire = false;
+                this.fireRate = this.baseFireRate;
+            }
+        }
+    }
+
+    updateSpeedBoost(deltaTime, game) {
+        if (this.speedBoost) {
+            this.speedBoostTime -= deltaTime;
+            if (this.speedBoostTime <= 0) {
+                this.speedBoost = false;
+                this.speed = this.baseSpeed * (game.perkSystem ? game.perkSystem.getSpeedMultiplier() : 1);
+            }
+        }
+    }
+
+    updateInvincibilityState(deltaTime) {
+        if (this.invincible) {
+            this.invincibleTime -= deltaTime;
+            this.blinkTimer += deltaTime;
+            if (this.invincibleTime <= 0) {
+                this.invincible = false;
+                this.alpha = 1;
+            } else {
+                this.alpha = Math.sin(this.blinkTimer * 20) > 0 ? 1 : 0.3;
+            }
+        }
+    }
+
+    activateUltimateIfReady(game) {
+        if (game.input.isUltimatePressed() && this.ultimateCharge >= 100 && !this.ultimateActive) {
+            this.activateUltimate(game);
+        }
+    }
+
+    handleFireInput(game) {
+        if (game.input.isFiring() && this.fireCooldown <= 0 && !this.overheated) {
+            this.fire(game);
+            this.fireCooldown = this.fireRate;
+            const heatShotMult = game.perkSystem ? game.perkSystem.getHeatPerShotMult() : 1;
+            this.heat += this.heatPerShot * (1 + (this.weaponLevel - 1) * 0.3) * heatShotMult;
+            if (this.heat >= this.maxHeat) {
+                this.heat = this.maxHeat;
+                this.overheated = true;
+            }
+        }
+    }
+
+    updateHeatAndCooldown(deltaTime, game) {
+        this.fireCooldown -= deltaTime;
+        if (this.heat > 0) {
+            const heatMult = game.perkSystem ? game.perkSystem.getHeatDissipationMult() : 1;
+            this.heat -= this.heatCooldownRate * heatMult * deltaTime;
+            if (this.heat < 0) this.heat = 0;
+        }
+        if (this.overheated && this.heat < 30) {
+            this.overheated = false;
+        }
     }
 
     fire(game) {
         const bulletSpeed = -500;
         const centerX = this.position.x + this.width / 2;
         const topY = this.position.y;
-        const doubleBarrel = game.perkSystem && game.perkSystem.hasDoubleBarrel();
+        const doubleBarrel = game.perkSystem?.hasDoubleBarrel();
 
         game.sound.playShoot();
 
+        this.spawnBulletsBasedOnWeaponLevel(game, centerX, topY, bulletSpeed, doubleBarrel);
+
+        // ── Packet Burst: every Nth shot fires 3 extra projectiles ──
+        if (game.perkSystem) {
+            const burstInterval = game.perkSystem.getPacketBurstInterval();
+            if (burstInterval > 0) {
+                game.perkSystem.packetBurstCounter++;
+                if (game.perkSystem.packetBurstCounter >= burstInterval) {
+                    game.perkSystem.packetBurstCounter = 0;
+                    game.spawnBullet(centerX - 14, topY + 4, -60, bulletSpeed * 0.95, 'player');
+                    game.spawnBullet(centerX, topY - 2, 0, bulletSpeed * 1.1, 'player');
+                    game.spawnBullet(centerX + 14, topY + 4, 60, bulletSpeed * 0.95, 'player');
+                }
+            }
+        }
+    }
+
+    spawnBulletsBasedOnWeaponLevel(game, centerX, topY, bulletSpeed, doubleBarrel) {
         switch (this.weaponLevel) {
             case 1:
                 game.spawnBullet(centerX - 6, topY, 0, bulletSpeed, 'player');
@@ -421,20 +491,6 @@ class Player extends GameObject {
                 }
                 break;
         }
-
-        // ── Packet Burst: every Nth shot fires 3 extra projectiles ──
-        if (game.perkSystem) {
-            const burstInterval = game.perkSystem.getPacketBurstInterval();
-            if (burstInterval > 0) {
-                game.perkSystem.packetBurstCounter++;
-                if (game.perkSystem.packetBurstCounter >= burstInterval) {
-                    game.perkSystem.packetBurstCounter = 0;
-                    game.spawnBullet(centerX - 14, topY + 4, -60, bulletSpeed * 0.95, 'player');
-                    game.spawnBullet(centerX, topY - 2, 0, bulletSpeed * 1.1, 'player');
-                    game.spawnBullet(centerX + 14, topY + 4, 60, bulletSpeed * 0.95, 'player');
-                }
-            }
-        }
     }
 
     takeDamage(amount, game) {
@@ -476,7 +532,7 @@ class Player extends GameObject {
         }
 
         // ── Emergency Protocol: prevent death, grant 3s invincibility + slow-mo ──
-        if (this.health <= 1 && game.perkSystem && game.perkSystem.hasEmergencyProtocol()) {
+        if (this.health <= 1 && game.perkSystem?.hasEmergencyProtocol()) {
             if (this.health <= 0) this.health = 1; // prevent lethal blow
             game.perkSystem.emergencyUsedThisLevel = true;
             this.invincible = true;
@@ -535,12 +591,12 @@ class Player extends GameObject {
                     }
                 }
                 // Damage mini-boss
-                if (game.miniBoss && game.miniBoss.active && !game.miniBoss.entering) {
+                if (game.miniBoss?.active && !game.miniBoss.entering) {
                     game.miniBoss.takeDamage(10, game);
                     game.particles.emit(game.miniBoss.position.x + game.miniBoss.width / 2, game.miniBoss.position.y + game.miniBoss.height / 2, 'explosion', 15);
                 }
                 // Damage boss
-                if (game.boss && game.boss.active && !game.boss.entering) {
+                if (game.boss?.active && !game.boss.entering) {
                     game.boss.takeDamage(10, game);
                     game.particles.emit(game.boss.position.x + game.boss.width / 2, game.boss.position.y + game.boss.height / 2, 'explosion', 15);
                 }
@@ -569,7 +625,7 @@ class Player extends GameObject {
                 for (let i = 0; i < 16; i++) {
                     const angle = -Math.PI / 2 + (i - 7.5) * 0.12;
                     setTimeout(() => {
-                        if (game.player && game.player.active) {
+                        if (game.player?.active) {
                             game.spawnHomingMissile(
                                 this.position.x + this.width / 2,
                                 this.position.y,
@@ -627,44 +683,49 @@ class Player extends GameObject {
         ctx.globalCompositeOperation = 'lighter';
         const shipColor = this.shipData.color;
 
-        for (let i = 0; i < flameCount; i++) {
-            const offsetX = flameCount <= 2
-                ? (i === 0 ? -12 : 12)
-                : (i - (flameCount - 1) / 2) * 16;
-            const fx = cx + offsetX;
-            const fy = by + 2;
-            const fh = flameSize * flicker;
-            const fw = 6 + i % 2 * 2;
-
-            // Outer flame
-            ctx.globalAlpha = 0.4 * flicker;
-            const outerGrad = ctx.createLinearGradient(fx, fy, fx, fy + fh);
-            outerGrad.addColorStop(0, shipColor);
-            outerGrad.addColorStop(0.5, 'rgba(255,200,50,0.6)');
-            outerGrad.addColorStop(1, 'rgba(255,100,0,0)');
-            ctx.fillStyle = outerGrad;
-            ctx.beginPath();
-            ctx.moveTo(fx - fw, fy);
-            ctx.bezierCurveTo(fx - fw * 0.8, fy + fh * 0.4, fx - 1, fy + fh * 0.7, fx, fy + fh);
-            ctx.bezierCurveTo(fx + 1, fy + fh * 0.7, fx + fw * 0.8, fy + fh * 0.4, fx + fw, fy);
-            ctx.closePath();
-            ctx.fill();
-
-            // Inner white core
-            ctx.globalAlpha = 0.6 * flicker;
-            const coreGrad = ctx.createLinearGradient(fx, fy, fx, fy + fh * 0.6);
-            coreGrad.addColorStop(0, '#fff');
-            coreGrad.addColorStop(1, 'rgba(255,255,200,0)');
-            ctx.fillStyle = coreGrad;
-            ctx.beginPath();
-            ctx.moveTo(fx - fw * 0.4, fy);
-            ctx.quadraticCurveTo(fx, fy + fh * 0.5, fx + fw * 0.4, fy);
-            ctx.closePath();
-            ctx.fill();
-        }
-        ctx.restore();
+        this.renderEngineFlames(flameCount, cx, by, flameSize, flicker, ctx, shipColor);
 
         // ── SHIP SPRITE ──
+        this.renderShipSprite(assets, ctx);
+
+        // ── PERK DEVICE OVERLAYS ──
+        // Concentric-ring layout: symmetric hardpoints around the ship
+        this.renderPerkOverlays(perkSystem, assets, cx, cy, ctx);
+
+        // ── WEAPON LEVEL indicator (small dots near nose) ──
+        this.renderWeaponLevelIndicators(ctx, cx);
+
+        // ── DRONE COMPANION VISUAL ──
+        this.renderDrone(ctx, cx, cy);
+
+        // ── GLITCH CLONE VISUAL ──
+        this.renderGlitchClone(ctx, cx, cy);
+
+        // ── DATA DRAIN VISUAL ──
+        this.renderDataDrainEffect(ctx, cx, cy);
+
+        // ── SHIELD VISUAL ──
+        this.renderShieldVisuals(ctx, cx, cy);
+
+        // ── INVINCIBILITY ULTIMATE VISUAL ──
+        this.renderShieldDomeEffect(ctx, cx, cy);
+
+        // ── NOVA BLAST SHOCKWAVE VISUAL ──
+        this.renderNovaBlastEffect(ctx, flameCount, cx, cy);
+
+        // ── BULLET REFLECT VISUAL ──
+        this.renderBulletReflectEffect(ctx, cx, cy);
+
+        // ── THORNS VISUAL ──
+        this.renderThornEffect(perkSystem, ctx, cx, cy);
+
+        // ── HEAT BAR (visible when heat > 40%) ──
+        this.renderHeatBar(cx, ctx);
+
+        ctx.restore();
+    }
+
+    renderShipSprite(assets, ctx) {
         const sprite = assets.getSprite(`ship_${this.shipId}`);
         const spriteSize = this.width + 24; // 88px render from 128px canvas
         const spriteX = this.position.x - 12;
@@ -672,233 +733,311 @@ class Player extends GameObject {
         if (sprite) {
             ctx.drawImage(sprite, spriteX, spriteY, spriteSize, spriteSize);
         }
+    }
 
-        // ── PERK DEVICE OVERLAYS ──
-        // Concentric-ring layout: symmetric hardpoints around the ship
-        if (perkSystem) {
-            const devSlots = {
-                // ═══ SPINE (center axis, top to bottom) ═══
-                piercing_rounds:    { dx:   0, dy:-26, c:'o' },   // nose tip
-                thorns:             { dx:   0, dy: -4, c:'d' },   // cockpit hull
-                orbital_drone:      { dx:   0, dy: 12, c:'u' },   // belly
-                ultimate_engine:    { dx:   0, dy: 26, c:'u' },   // tail
-
-                // ═══ INNER RING (±12, hull-mounted) ═══
-                critical_strike:    { dx:  12, dy:-14, c:'o' },   // R fwd inner
-                explosive_rounds:   { dx: -12, dy:-14, c:'o' },   // L fwd inner
-                auto_shield:        { dx:  12, dy:  4, c:'d' },   // R mid inner
-                phase_dodge:        { dx: -12, dy:  4, c:'d' },   // L mid inner
-                combo_master:       { dx:  12, dy: 18, c:'u' },   // R aft inner
-                cool_exhaust:       { dx: -12, dy: 18, c:'u' },   // L aft inner
-
-                // ═══ OUTER RING (±26, wing hardpoints) ═══
-                double_barrel:      { dx:  26, dy:-18, c:'o' },   // R fwd wing
-                glass_cannon:       { dx: -26, dy:-18, c:'o' },   // L fwd wing
-                chain_lightning:    { dx:  26, dy: -6, c:'o' },   // R mid-fwd wing
-                vampire_rounds:     { dx: -26, dy: -6, c:'o' },   // L mid-fwd wing
-                emergency_protocol: { dx:  26, dy:  6, c:'d' },   // R mid wing
-                damage_converter:   { dx: -26, dy:  6, c:'d' },   // L mid wing
-                fortress_mode:      { dx:  26, dy: 16, c:'d' },   // R aft wing
-                magnet_field:       { dx: -26, dy: 16, c:'u' },   // L aft wing
-                lucky_drops:        { dx:  26, dy: 26, c:'u' },   // R tail wing
-                point_multiplier:   { dx: -26, dy: 26, c:'u' },   // L tail wing
-
-                // ═══ WORLD 2 — MID RING (±18, between inner & outer) ═══
-                neural_hijack:      { dx:  18, dy:-20, c:'o' },   // R fwd mid
-                predatore:          { dx: -18, dy:-20, c:'o' },   // L fwd mid
-                colpo_critico:      { dx:  18, dy: -8, c:'o' },   // R mid mid
-                scia_infuocata:     { dx: -18, dy: -8, c:'d' },   // L mid mid
-                esploratore:        { dx:  18, dy: 10, c:'u' },   // R aft mid
-                sovraccarico:       { dx: -18, dy: 10, c:'u' },   // L aft mid
-
-                // ═══ WORLD 3 — FAR RING (±32, outermost hardpoints) ═══
-                packet_burst:       { dx:  32, dy:-12, c:'o' },   // R fwd far
-                virus_inject:       { dx: -32, dy:-12, c:'o' },   // L fwd far
-                glitch_dash:        { dx:  32, dy:  2, c:'d' },   // R mid far
-                entropy_shield:     { dx: -32, dy:  2, c:'d' },   // L mid far
-                data_leech:         { dx:  32, dy: 16, c:'u' },   // R aft far
-            };
-
-            // Category glow colors: offensive=red, defensive=blue, utility=green
-            const glowTint = { o: '#ff5030', d: '#3388ff', u: '#33dd77' };
-
-            const activePerks = perkSystem.getActivePerks();
-            const t = Date.now() * 0.002;
-
-            // Draw outer ring first (behind inner), then inner, then spine
-            const sorted = activePerks
-                .filter(p => devSlots[p.id])
-                .sort((a, b) => {
-                    const sa = devSlots[a.id], sb = devSlots[b.id];
-                    return (sb.dx * sb.dx + sb.dy * sb.dy)
-                         - (sa.dx * sa.dx + sa.dy * sa.dy);
-                });
-
-            for (const { id, stacks } of sorted) {
-                const slot = devSlots[id];
-                const spriteKey = `perk_${id}_${Math.min(stacks, 3)}`;
-                const devSprite = assets.getSprite(spriteKey);
-                if (!devSprite) continue;
-
-                const float = Math.sin(t + slot.dx * 0.07 + slot.dy * 0.05) * 0.8;
-                const devCx = cx + slot.dx;
-                const devCy = cy + slot.dy + float;
-
-                // Category-colored glow halo
-                ctx.save();
-                ctx.shadowColor = glowTint[slot.c] || '#fff';
-                ctx.shadowBlur = 6;
-                ctx.globalAlpha = 0.9;
-                ctx.drawImage(devSprite,
-                    devCx - devSprite.width / 2,
-                    devCy - devSprite.height / 2);
-                ctx.restore();
-            }
+    renderHeatBar(cx, ctx) {
+        if (this.heat > 40) {
+            const barW = 40;
+            const barH = 4;
+            const barX = cx - barW / 2;
+            const barY = this.position.y - 12;
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barW, barH, 2);
+            ctx.fill();
+            ctx.stroke();
+            const heatPct = this.heat / this.maxHeat;
+            const heatGrad = ctx.createLinearGradient(barX, barY, barX + barW * heatPct, barY);
+            heatGrad.addColorStop(0, this.overheated ? '#ff2222' : '#ffaa00');
+            heatGrad.addColorStop(1, this.overheated ? '#ff4444' : '#ff6600');
+            ctx.fillStyle = heatGrad;
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barW * heatPct, barH, 2);
+            ctx.fill();
         }
+    }
 
-        // ── WEAPON LEVEL indicator (small dots near nose) ──
-        if (this.weaponLevel > 1) {
+    renderThornEffect(perkSystem, ctx, cx, cy) {
+        if (perkSystem?.hasThorns()) {
             ctx.save();
-            ctx.globalAlpha = 0.8;
-            const dotCount = this.weaponLevel - 1;
-            const dotSpacing = 6;
-            const startX = cx - (dotCount - 1) * dotSpacing / 2;
-            const dotY = this.position.y - 4;
-            for (let i = 0; i < dotCount; i++) {
-                ctx.fillStyle = '#ffdd44';
-                ctx.shadowColor = '#ffdd44';
-                ctx.shadowBlur = 4;
+            const thornCount = 10;
+            const baseR = 38;
+            const spikeLen = 16;
+            const rotBase = perkSystem.thornsAngle;
+            const tTime = perkSystem.thornsTime;
+            const pulse = 0.6 + 0.3 * Math.sin(tTime * 4);
+
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            for (let i = 0; i < thornCount; i++) {
+                const angle = rotBase + (i / thornCount) * Math.PI * 2;
+                const wobble = Math.sin(tTime * 6 + i * 1.2) * 3;
+                const innerR = baseR + wobble;
+                const outerR = innerR + spikeLen;
+
+                const ix = cx + Math.cos(angle) * innerR;
+                const iy = cy + Math.sin(angle) * innerR;
+                const ox = cx + Math.cos(angle) * outerR;
+                const oy = cy + Math.sin(angle) * outerR;
+
+                // Spike line
+                ctx.globalAlpha = pulse * 0.7;
+                ctx.strokeStyle = '#aadd55';
+                ctx.shadowColor = '#88ff33';
+                ctx.shadowBlur = 8;
                 ctx.beginPath();
-                ctx.arc(startX + i * dotSpacing, dotY, 2, 0, Math.PI * 2);
+                ctx.moveTo(ix, iy);
+                ctx.lineTo(ox, oy);
+                ctx.stroke();
+
+                // Bright tip
+                ctx.globalAlpha = pulse;
+                ctx.fillStyle = '#eeffaa';
+                ctx.beginPath();
+                ctx.arc(ox, oy, 1.8, 0, Math.PI * 2);
                 ctx.fill();
             }
-            ctx.restore();
-        }
 
-        // ── DRONE COMPANION VISUAL ──
-        if (this.droneActive) {
-            ctx.save();
-            const drCx = cx + Math.cos(this.droneAngle) * 35;
-            const drCy = cy + Math.sin(this.droneAngle) * 35;
-            // Drone body
-            const droneGrad = ctx.createRadialGradient(drCx, drCy, 0, drCx, drCy, 8);
-            droneGrad.addColorStop(0, '#aaeeff');
-            droneGrad.addColorStop(0.5, '#44aadd');
-            droneGrad.addColorStop(1, '#115577');
-            ctx.fillStyle = droneGrad;
-            ctx.beginPath();
-            ctx.arc(drCx, drCy, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#111';
+            // Base ring glow
+            ctx.globalAlpha = pulse * 0.25;
+            ctx.strokeStyle = '#88cc44';
+            ctx.shadowColor = '#66ff22';
+            ctx.shadowBlur = 10;
             ctx.lineWidth = 1.5;
-            ctx.stroke();
-            // Drone eye
-            ctx.fillStyle = '#66ffff';
             ctx.beginPath();
-            ctx.arc(drCx, drCy, 3, 0, Math.PI * 2);
-            ctx.fill();
-            // Energy trail
-            ctx.globalAlpha = 0.3;
-            ctx.strokeStyle = '#66ddff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            const trailAngle = this.droneAngle - 0.4;
-            ctx.moveTo(cx + Math.cos(trailAngle) * 35, cy + Math.sin(trailAngle) * 35);
-            ctx.lineTo(drCx, drCy);
+            ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
             ctx.stroke();
+
             ctx.restore();
         }
+    }
 
-        // ── GLITCH CLONE VISUAL ──
-        if (this.glitchCloneActive) {
+    renderBulletReflectEffect(ctx, cx, cy) {
+        if (this._bulletReflectActive && this.ultimateActive && this.ultimateId === 'quantum_shift') {
             ctx.save();
             const now = Date.now();
-            for (let i = 0; i < 2; i++) {
-                const cloneAngle = this.glitchCloneAngle + i * Math.PI;
-                const clX = cx + Math.cos(cloneAngle) * 40;
-                const clY = cy + Math.sin(cloneAngle) * 40;
-                const flicker = 0.35 + 0.15 * Math.sin(now * 0.008 + i * 3);
-                ctx.globalAlpha = flicker;
-                // Holographic tinted ship silhouette
-                const cloneGrad = ctx.createRadialGradient(clX, clY, 0, clX, clY, 14);
-                cloneGrad.addColorStop(0, 'rgba(0,220,200,0.6)');
-                cloneGrad.addColorStop(1, 'rgba(0,220,200,0)');
-                ctx.fillStyle = cloneGrad;
-                ctx.beginPath(); ctx.arc(clX, clY, 14, 0, Math.PI * 2); ctx.fill();
-                // Clone body (small triangle ship)
-                ctx.fillStyle = 'rgba(0,255,220,0.5)';
-                ctx.strokeStyle = 'rgba(0,255,220,0.7)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(clX, clY - 10);
-                ctx.lineTo(clX + 7, clY + 6);
-                ctx.lineTo(clX - 7, clY + 6);
-                ctx.closePath();
-                ctx.fill(); ctx.stroke();
-                // Scanline effect
-                ctx.strokeStyle = 'rgba(0,255,220,0.2)';
-                ctx.lineWidth = 1;
-                for (let s = -8; s <= 8; s += 4) {
-                    ctx.beginPath();
-                    ctx.moveTo(clX - 6, clY + s);
-                    ctx.lineTo(clX + 6, clY + s);
-                    ctx.stroke();
-                }
-            }
-            ctx.restore();
-        }
+            const pulse = 0.5 + 0.3 * Math.sin(now * 0.007);
+            const reflectR = 48 + 4 * Math.sin(now * 0.005);
 
-        // ── DATA DRAIN VISUAL ──
-        if (this.dataDrainActive) {
-            ctx.save();
-            const now = Date.now();
-            const pulse = 0.4 + 0.2 * Math.sin(now * 0.006);
-            const drainR = 100;
-            // Outer pulsing ring
-            ctx.globalAlpha = pulse * 0.6;
-            ctx.strokeStyle = '#7832f0';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#9955ff';
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            ctx.arc(cx, cy, drainR, 0, Math.PI * 2);
-            ctx.stroke();
-            // Inner gradient field
-            const dg = ctx.createRadialGradient(cx, cy, 10, cx, cy, drainR);
-            dg.addColorStop(0, 'rgba(120,50,240,0.08)');
-            dg.addColorStop(0.6, 'rgba(120,50,240,0.04)');
-            dg.addColorStop(1, 'rgba(120,50,240,0)');
+            // Cyan energy field
+            const fieldGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, reflectR);
+            fieldGrad.addColorStop(0, 'rgba(0,220,255,0.05)');
+            fieldGrad.addColorStop(0.6, 'rgba(0,180,255,0.08)');
+            fieldGrad.addColorStop(1, 'rgba(0,150,255,0.15)');
             ctx.globalAlpha = pulse;
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = dg;
-            ctx.beginPath(); ctx.arc(cx, cy, drainR, 0, Math.PI * 2); ctx.fill();
-            // Rotating drain arcs
-            ctx.lineWidth = 1.5;
-            for (let i = 0; i < 4; i++) {
-                const a = (i * Math.PI / 2) + now * 0.003;
-                ctx.globalAlpha = pulse * 0.5;
-                ctx.strokeStyle = '#aa66ff';
+            ctx.fillStyle = fieldGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Outer cyan ring
+            ctx.strokeStyle = '#00ddff';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#00ccff';
+            ctx.shadowBlur = 12;
+            ctx.globalAlpha = pulse * 0.9;
+            ctx.beginPath();
+            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Counter-rotating arc pairs
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+                // Clockwise arcs
+                const a1 = (i * Math.PI * 2 / 3) + now * 0.005;
+                ctx.globalAlpha = pulse * 0.7;
+                ctx.strokeStyle = '#66eeff';
                 ctx.beginPath();
-                ctx.arc(cx, cy, drainR * 0.7, a, a + Math.PI * 0.3);
+                ctx.arc(cx, cy, reflectR - 3, a1, a1 + Math.PI * 0.3);
+                ctx.stroke();
+                // Counter-clockwise arcs
+                const a2 = (i * Math.PI * 2 / 3) - now * 0.003;
+                ctx.globalAlpha = pulse * 0.5;
+                ctx.strokeStyle = '#00aadd';
+                ctx.beginPath();
+                ctx.arc(cx, cy, reflectR + 4, a2, a2 + Math.PI * 0.25);
                 ctx.stroke();
             }
-            // Spiraling particles converging inward
+
+            // Reflect arrow indicators
             ctx.shadowBlur = 0;
-            for (let i = 0; i < 6; i++) {
-                const angle = (i / 6) * Math.PI * 2 + now * 0.004;
-                const dist = drainR * (0.3 + 0.5 * ((now * 0.001 + i * 0.3) % 1));
-                const px = cx + Math.cos(angle) * dist;
-                const py = cy + Math.sin(angle) * dist;
-                ctx.globalAlpha = pulse * 0.8;
-                ctx.fillStyle = '#cc88ff';
+            const arrowCount = 6;
+            for (let i = 0; i < arrowCount; i++) {
+                const angle = (i / arrowCount) * Math.PI * 2 + now * 0.002;
+                const ar = reflectR - 8;
+                const ax = cx + Math.cos(angle) * ar;
+                const ay = cy + Math.sin(angle) * ar;
+                ctx.globalAlpha = pulse * 0.6;
+                ctx.fillStyle = '#00ffff';
                 ctx.beginPath();
-                ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+                // Small arrow pointing outward (reflected)
+                const aLen = 5;
+                ctx.moveTo(ax + Math.cos(angle) * aLen, ay + Math.sin(angle) * aLen);
+                ctx.lineTo(ax + Math.cos(angle + 2.5) * 3, ay + Math.sin(angle + 2.5) * 3);
+                ctx.lineTo(ax + Math.cos(angle - 2.5) * 3, ay + Math.sin(angle - 2.5) * 3);
+                ctx.closePath();
                 ctx.fill();
             }
+
+            // Timer warning: blink in last 1.5s
+            if (this.ultimateTimer <= 1.5) {
+                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
+                ctx.globalAlpha = blink * 0.4;
+                ctx.strokeStyle = '#ff4400';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, reflectR + 6, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
             ctx.restore();
         }
+    }
 
-        // ── SHIELD VISUAL ──
+    renderNovaBlastEffect(ctx, flameCount, cx, cy) {
+        if (this.ultimateActive && this.ultimateId === 'nova_blast' && this._novaTime > 0) {
+            ctx.save();
+            const t = this._novaTime;
+            const duration = 1.2;
+            const progress = Math.min(t / duration, 1);
+
+            // Multiple expanding rings
+            this.renderEnergyRings(t, duration, flameCount, ctx, cx, cy);
+
+            // Central flash (bright white → orange fade)
+            this.renderFlashEffect(progress, ctx, cx, cy);
+
+            ctx.restore();
+        }
+    }
+
+    renderFlashEffect(progress, ctx, cx, cy) {
+        if (progress < 0.3) {
+            const flashAlpha = (1 - progress / 0.3) * 0.8;
+            const flashR = 30 + progress * 200;
+            const flashGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flashR);
+            flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
+            flashGrad.addColorStop(0.4, `rgba(255,200,50,${flashAlpha * 0.5})`);
+            flashGrad.addColorStop(1, 'rgba(255,100,0,0)');
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = flashGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, flashR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderEnergyRings(t, duration, flameCount, ctx, cx, cy) {
+        for (let ring = 0; ring < 3; ring++) {
+            const ringDelay = ring * 0.15;
+            const ringProgress = Math.max(0, Math.min((t - ringDelay) / (duration - ringDelay), 1));
+            if (ringProgress <= 0) continue;
+
+            const maxRadius = 400 + ring * 80;
+            const radius = ringProgress * maxRadius;
+            const alpha = (1 - ringProgress) * (0.7 - ring * 0.15);
+
+            // Ring glow
+            const xa = (i - (flameCount - 1) / 2) * 16;
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = ring === 0 ? '#ff6600' : xa;
+            ctx.lineWidth = (8 - ring * 2) * (1 - ringProgress * 0.5);
+            ctx.shadowColor = '#ff8800';
+            ctx.shadowBlur = 20 - ring * 5;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner fill for first ring
+            if (ring === 0 && ringProgress < 0.5) {
+                const fillGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                fillGrad.addColorStop(0, 'rgba(255,200,50,0.3)');
+                fillGrad.addColorStop(0.7, 'rgba(255,100,0,0.1)');
+                fillGrad.addColorStop(1, 'rgba(255,60,0,0)');
+                ctx.globalAlpha = alpha * 0.5;
+                ctx.fillStyle = fillGrad;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    renderShieldDomeEffect(ctx, cx, cy) {
+        if (this._invincibilityUlt && this.ultimateActive && this.ultimateId === 'shield_dome') {
+            ctx.save();
+            const now = Date.now();
+            const pulse = 0.6 + 0.3 * Math.sin(now * 0.008);
+            const auraPulse = 0.8 + 0.2 * Math.sin(now * 0.006);
+            const auraR = 50 + 8 * auraPulse;
+
+            // Golden radial glow
+            const goldGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, auraR);
+            goldGrad.addColorStop(0, 'rgba(255,215,0,0.25)');
+            goldGrad.addColorStop(0.5, 'rgba(255,180,0,0.10)');
+            goldGrad.addColorStop(1, 'rgba(255,150,0,0)');
+            ctx.globalAlpha = pulse;
+            ctx.fillStyle = goldGrad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Outer golden ring
+            ctx.globalAlpha = pulse * 0.9;
+            ctx.strokeStyle = C_GOLD;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#ffaa00';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Spinning golden arcs
+            ctx.shadowBlur = 10;
+            ctx.lineWidth = 2.5;
+            for (let i = 0; i < 4; i++) {
+                const aStart = (i * Math.PI / 2) + now * 0.004;
+                const aEnd = aStart + Math.PI * 0.3;
+                ctx.globalAlpha = pulse * 0.8;
+                ctx.strokeStyle = '#ffe066';
+                ctx.beginPath();
+                ctx.arc(cx, cy, auraR - 4, aStart, aEnd);
+                ctx.stroke();
+            }
+
+            // Rising golden particles
+            ctx.shadowBlur = 0;
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2 + now * 0.002;
+                const dist = 30 + 15 * Math.sin(now * 0.005 + i * 0.8);
+                const px = cx + Math.cos(angle) * dist;
+                const py = cy + Math.sin(angle) * dist - 5 * Math.sin(now * 0.003 + i);
+                ctx.globalAlpha = pulse * 0.7;
+                ctx.fillStyle = C_GOLD;
+                ctx.beginPath();
+                ctx.arc(px, py, 1.5 + Math.sin(now * 0.01 + i) * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Timer warning: blink in last 2s
+            if (this.ultimateTimer <= 2) {
+                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
+                ctx.globalAlpha = blink * 0.4;
+                ctx.strokeStyle = '#ff4400';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, auraR + 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    }
+
+    renderShieldVisuals(ctx, cx, cy) {
         if (this.shieldActive) {
             ctx.save();
             const now = Date.now();
@@ -973,297 +1112,277 @@ class Player extends GameObject {
 
             ctx.restore();
         }
+    }
 
-        // ── INVINCIBILITY ULTIMATE VISUAL ──
-        if (this._invincibilityUlt && this.ultimateActive && this.ultimateId === 'shield_dome') {
+    renderDataDrainEffect(ctx, cx, cy) {
+        if (this.dataDrainActive) {
             ctx.save();
             const now = Date.now();
-            const pulse = 0.6 + 0.3 * Math.sin(now * 0.008);
-            const auraPulse = 0.8 + 0.2 * Math.sin(now * 0.006);
-            const auraR = 50 + 8 * auraPulse;
-
-            // Golden radial glow
-            const goldGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, auraR);
-            goldGrad.addColorStop(0, 'rgba(255,215,0,0.25)');
-            goldGrad.addColorStop(0.5, 'rgba(255,180,0,0.10)');
-            goldGrad.addColorStop(1, 'rgba(255,150,0,0)');
-            ctx.globalAlpha = pulse;
-            ctx.fillStyle = goldGrad;
+            const pulse = 0.4 + 0.2 * Math.sin(now * 0.006);
+            const drainR = 100;
+            // Outer pulsing ring
+            ctx.globalAlpha = pulse * 0.6;
+            ctx.strokeStyle = '#7832f0';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#9955ff';
+            ctx.shadowBlur = 12;
             ctx.beginPath();
-            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Outer golden ring
-            ctx.globalAlpha = pulse * 0.9;
-            ctx.strokeStyle = C_GOLD;
-            ctx.lineWidth = 3;
-            ctx.shadowColor = '#ffaa00';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+            ctx.arc(cx, cy, drainR, 0, Math.PI * 2);
             ctx.stroke();
-
-            // Spinning golden arcs
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 2.5;
+            // Inner gradient field
+            const dg = ctx.createRadialGradient(cx, cy, 10, cx, cy, drainR);
+            dg.addColorStop(0, 'rgba(120,50,240,0.08)');
+            dg.addColorStop(0.6, 'rgba(120,50,240,0.04)');
+            dg.addColorStop(1, 'rgba(120,50,240,0)');
+            ctx.globalAlpha = pulse;
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = dg;
+            ctx.beginPath(); ctx.arc(cx, cy, drainR, 0, Math.PI * 2); ctx.fill();
+            // Rotating drain arcs
+            ctx.lineWidth = 1.5;
             for (let i = 0; i < 4; i++) {
-                const aStart = (i * Math.PI / 2) + now * 0.004;
-                const aEnd = aStart + Math.PI * 0.3;
-                ctx.globalAlpha = pulse * 0.8;
-                ctx.strokeStyle = '#ffe066';
+                const a = (i * Math.PI / 2) + now * 0.003;
+                ctx.globalAlpha = pulse * 0.5;
+                ctx.strokeStyle = '#aa66ff';
                 ctx.beginPath();
-                ctx.arc(cx, cy, auraR - 4, aStart, aEnd);
+                ctx.arc(cx, cy, drainR * 0.7, a, a + Math.PI * 0.3);
                 ctx.stroke();
             }
-
-            // Rising golden particles
+            // Spiraling particles converging inward
             ctx.shadowBlur = 0;
-            for (let i = 0; i < 8; i++) {
-                const angle = (i / 8) * Math.PI * 2 + now * 0.002;
-                const dist = 30 + 15 * Math.sin(now * 0.005 + i * 0.8);
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2 + now * 0.004;
+                const dist = drainR * (0.3 + 0.5 * ((now * 0.001 + i * 0.3) % 1));
                 const px = cx + Math.cos(angle) * dist;
-                const py = cy + Math.sin(angle) * dist - 5 * Math.sin(now * 0.003 + i);
-                ctx.globalAlpha = pulse * 0.7;
-                ctx.fillStyle = C_GOLD;
+                const py = cy + Math.sin(angle) * dist;
+                ctx.globalAlpha = pulse * 0.8;
+                ctx.fillStyle = '#cc88ff';
                 ctx.beginPath();
-                ctx.arc(px, py, 1.5 + Math.sin(now * 0.01 + i) * 0.5, 0, Math.PI * 2);
+                ctx.arc(px, py, 1.5, 0, Math.PI * 2);
                 ctx.fill();
             }
-
-            // Timer warning: blink in last 2s
-            if (this.ultimateTimer <= 2) {
-                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
-                ctx.globalAlpha = blink * 0.4;
-                ctx.strokeStyle = '#ff4400';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(cx, cy, auraR + 5, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
             ctx.restore();
         }
+    }
 
-        // ── NOVA BLAST SHOCKWAVE VISUAL ──
-        if (this.ultimateActive && this.ultimateId === 'nova_blast' && this._novaTime > 0) {
+    renderGlitchClone(ctx, cx, cy) {
+        if (this.glitchCloneActive) {
             ctx.save();
-            const t = this._novaTime;
-            const duration = 1.2;
-            const progress = Math.min(t / duration, 1);
-
-            // Multiple expanding rings
-            for (let ring = 0; ring < 3; ring++) {
-                const ringDelay = ring * 0.15;
-                const ringProgress = Math.max(0, Math.min((t - ringDelay) / (duration - ringDelay), 1));
-                if (ringProgress <= 0) continue;
-
-                const maxRadius = 400 + ring * 80;
-                const radius = ringProgress * maxRadius;
-                const alpha = (1 - ringProgress) * (0.7 - ring * 0.15);
-
-                // Ring glow
-                ctx.globalAlpha = alpha;
-                ctx.strokeStyle = ring === 0 ? '#ff6600' : ring === 1 ? '#ff4400' : '#ff2200';
-                ctx.lineWidth = (8 - ring * 2) * (1 - ringProgress * 0.5);
-                ctx.shadowColor = '#ff8800';
-                ctx.shadowBlur = 20 - ring * 5;
+            const now = Date.now();
+            for (let i = 0; i < 2; i++) {
+                const cloneAngle = this.glitchCloneAngle + i * Math.PI;
+                const clX = cx + Math.cos(cloneAngle) * 40;
+                const clY = cy + Math.sin(cloneAngle) * 40;
+                const flicker = 0.35 + 0.15 * Math.sin(now * 0.008 + i * 3);
+                ctx.globalAlpha = flicker;
+                // Holographic tinted ship silhouette
+                const cloneGrad = ctx.createRadialGradient(clX, clY, 0, clX, clY, 14);
+                cloneGrad.addColorStop(0, 'rgba(0,220,200,0.6)');
+                cloneGrad.addColorStop(1, 'rgba(0,220,200,0)');
+                ctx.fillStyle = cloneGrad;
+                ctx.beginPath(); ctx.arc(clX, clY, 14, 0, Math.PI * 2); ctx.fill();
+                // Clone body (small triangle ship)
+                ctx.fillStyle = 'rgba(0,255,220,0.5)';
+                ctx.strokeStyle = 'rgba(0,255,220,0.7)';
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Inner fill for first ring
-                if (ring === 0 && ringProgress < 0.5) {
-                    const fillGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                    fillGrad.addColorStop(0, 'rgba(255,200,50,0.3)');
-                    fillGrad.addColorStop(0.7, 'rgba(255,100,0,0.1)');
-                    fillGrad.addColorStop(1, 'rgba(255,60,0,0)');
-                    ctx.globalAlpha = alpha * 0.5;
-                    ctx.fillStyle = fillGrad;
+                ctx.moveTo(clX, clY - 10);
+                ctx.lineTo(clX + 7, clY + 6);
+                ctx.lineTo(clX - 7, clY + 6);
+                ctx.closePath();
+                ctx.fill(); ctx.stroke();
+                // Scanline effect
+                ctx.strokeStyle = 'rgba(0,255,220,0.2)';
+                ctx.lineWidth = 1;
+                for (let s = -8; s <= 8; s += 4) {
                     ctx.beginPath();
-                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.moveTo(clX - 6, clY + s);
+                    ctx.lineTo(clX + 6, clY + s);
+                    ctx.stroke();
                 }
             }
-
-            // Central flash (bright white → orange fade)
-            if (progress < 0.3) {
-                const flashAlpha = (1 - progress / 0.3) * 0.8;
-                const flashR = 30 + progress * 200;
-                const flashGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flashR);
-                flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
-                flashGrad.addColorStop(0.4, `rgba(255,200,50,${flashAlpha * 0.5})`);
-                flashGrad.addColorStop(1, 'rgba(255,100,0,0)');
-                ctx.globalAlpha = 1;
-                ctx.fillStyle = flashGrad;
-                ctx.beginPath();
-                ctx.arc(cx, cy, flashR, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
             ctx.restore();
         }
+    }
 
-        // ── BULLET REFLECT VISUAL ──
-        if (this._bulletReflectActive && this.ultimateActive && this.ultimateId === 'quantum_shift') {
+    renderDrone(ctx, cx, cy) {
+        if (this.droneActive) {
             ctx.save();
-            const now = Date.now();
-            const t = this._bulletReflectTime || 0;
-            const pulse = 0.5 + 0.3 * Math.sin(now * 0.007);
-            const reflectR = 48 + 4 * Math.sin(now * 0.005);
-
-            // Cyan energy field
-            const fieldGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, reflectR);
-            fieldGrad.addColorStop(0, 'rgba(0,220,255,0.05)');
-            fieldGrad.addColorStop(0.6, 'rgba(0,180,255,0.08)');
-            fieldGrad.addColorStop(1, 'rgba(0,150,255,0.15)');
-            ctx.globalAlpha = pulse;
-            ctx.fillStyle = fieldGrad;
+            const drCx = cx + Math.cos(this.droneAngle) * 35;
+            const drCy = cy + Math.sin(this.droneAngle) * 35;
+            // Drone body
+            const droneGrad = ctx.createRadialGradient(drCx, drCy, 0, drCx, drCy, 8);
+            droneGrad.addColorStop(0, '#aaeeff');
+            droneGrad.addColorStop(0.5, '#44aadd');
+            droneGrad.addColorStop(1, '#115577');
+            ctx.fillStyle = droneGrad;
             ctx.beginPath();
-            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
+            ctx.arc(drCx, drCy, 8, 0, Math.PI * 2);
             ctx.fill();
-
-            // Outer cyan ring
-            ctx.strokeStyle = '#00ddff';
-            ctx.lineWidth = 2.5;
-            ctx.shadowColor = '#00ccff';
-            ctx.shadowBlur = 12;
-            ctx.globalAlpha = pulse * 0.9;
-            ctx.beginPath();
-            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Counter-rotating arc pairs
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 3; i++) {
-                // Clockwise arcs
-                const a1 = (i * Math.PI * 2 / 3) + now * 0.005;
-                ctx.globalAlpha = pulse * 0.7;
-                ctx.strokeStyle = '#66eeff';
-                ctx.beginPath();
-                ctx.arc(cx, cy, reflectR - 3, a1, a1 + Math.PI * 0.3);
-                ctx.stroke();
-                // Counter-clockwise arcs
-                const a2 = (i * Math.PI * 2 / 3) - now * 0.003;
-                ctx.globalAlpha = pulse * 0.5;
-                ctx.strokeStyle = '#00aadd';
-                ctx.beginPath();
-                ctx.arc(cx, cy, reflectR + 4, a2, a2 + Math.PI * 0.25);
-                ctx.stroke();
-            }
-
-            // Reflect arrow indicators
-            ctx.shadowBlur = 0;
-            const arrowCount = 6;
-            for (let i = 0; i < arrowCount; i++) {
-                const angle = (i / arrowCount) * Math.PI * 2 + now * 0.002;
-                const ar = reflectR - 8;
-                const ax = cx + Math.cos(angle) * ar;
-                const ay = cy + Math.sin(angle) * ar;
-                const inAngle = angle + Math.PI; // pointing inward then reversing
-                ctx.globalAlpha = pulse * 0.6;
-                ctx.fillStyle = '#00ffff';
-                ctx.beginPath();
-                // Small arrow pointing outward (reflected)
-                const aLen = 5;
-                ctx.moveTo(ax + Math.cos(angle) * aLen, ay + Math.sin(angle) * aLen);
-                ctx.lineTo(ax + Math.cos(angle + 2.5) * 3, ay + Math.sin(angle + 2.5) * 3);
-                ctx.lineTo(ax + Math.cos(angle - 2.5) * 3, ay + Math.sin(angle - 2.5) * 3);
-                ctx.closePath();
-                ctx.fill();
-            }
-
-            // Timer warning: blink in last 1.5s
-            if (this.ultimateTimer <= 1.5) {
-                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
-                ctx.globalAlpha = blink * 0.4;
-                ctx.strokeStyle = '#ff4400';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(cx, cy, reflectR + 6, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-
-        // ── THORNS VISUAL ──
-        if (perkSystem && perkSystem.hasThorns()) {
-            ctx.save();
-            const thornCount = 10;
-            const baseR = 38;
-            const spikeLen = 16;
-            const rotBase = perkSystem.thornsAngle;
-            const tTime = perkSystem.thornsTime;
-            const pulse = 0.6 + 0.3 * Math.sin(tTime * 4);
-
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-
-            for (let i = 0; i < thornCount; i++) {
-                const angle = rotBase + (i / thornCount) * Math.PI * 2;
-                const wobble = Math.sin(tTime * 6 + i * 1.2) * 3;
-                const innerR = baseR + wobble;
-                const outerR = innerR + spikeLen;
-
-                const ix = cx + Math.cos(angle) * innerR;
-                const iy = cy + Math.sin(angle) * innerR;
-                const ox = cx + Math.cos(angle) * outerR;
-                const oy = cy + Math.sin(angle) * outerR;
-
-                // Spike line
-                ctx.globalAlpha = pulse * 0.7;
-                ctx.strokeStyle = '#aadd55';
-                ctx.shadowColor = '#88ff33';
-                ctx.shadowBlur = 8;
-                ctx.beginPath();
-                ctx.moveTo(ix, iy);
-                ctx.lineTo(ox, oy);
-                ctx.stroke();
-
-                // Bright tip
-                ctx.globalAlpha = pulse;
-                ctx.fillStyle = '#eeffaa';
-                ctx.beginPath();
-                ctx.arc(ox, oy, 1.8, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Base ring glow
-            ctx.globalAlpha = pulse * 0.25;
-            ctx.strokeStyle = '#88cc44';
-            ctx.shadowColor = '#66ff22';
-            ctx.shadowBlur = 10;
+            ctx.strokeStyle = '#111';
             ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
             ctx.stroke();
-
+            // Drone eye
+            ctx.fillStyle = '#66ffff';
+            ctx.beginPath();
+            ctx.arc(drCx, drCy, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Energy trail
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = '#66ddff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const trailAngle = this.droneAngle - 0.4;
+            ctx.moveTo(cx + Math.cos(trailAngle) * 35, cy + Math.sin(trailAngle) * 35);
+            ctx.lineTo(drCx, drCy);
+            ctx.stroke();
             ctx.restore();
         }
+    }
 
-        // ── HEAT BAR (visible when heat > 40%) ──
-        if (this.heat > 40) {
-            const barW = 40;
-            const barH = 4;
-            const barX = cx - barW / 2;
-            const barY = this.position.y - 12;
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.lineWidth = 1;
+    renderWeaponLevelIndicators(ctx, cx) {
+        if (this.weaponLevel > 1) {
+            ctx.save();
+            ctx.globalAlpha = 0.8;
+            const dotCount = this.weaponLevel - 1;
+            const dotSpacing = 6;
+            const startX = cx - (dotCount - 1) * dotSpacing / 2;
+            const dotY = this.position.y - 4;
+            for (let i = 0; i < dotCount; i++) {
+                ctx.fillStyle = '#ffdd44';
+                ctx.shadowColor = '#ffdd44';
+                ctx.shadowBlur = 4;
+                ctx.beginPath();
+                ctx.arc(startX + i * dotSpacing, dotY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    }
+
+    renderPerkOverlays(perkSystem, assets, cx, cy, ctx) {
+        if (perkSystem) {
+            const devSlots = {
+                // ═══ SPINE (center axis, top to bottom) ═══
+                piercing_rounds: { dx: 0, dy: -26, c: 'o' }, // nose tip
+                thorns: { dx: 0, dy: -4, c: 'd' }, // cockpit hull
+                orbital_drone: { dx: 0, dy: 12, c: 'u' }, // belly
+                ultimate_engine: { dx: 0, dy: 26, c: 'u' }, // tail
+
+
+                // ═══ INNER RING (±12, hull-mounted) ═══
+                critical_strike: { dx: 12, dy: -14, c: 'o' }, // R fwd inner
+                explosive_rounds: { dx: -12, dy: -14, c: 'o' }, // L fwd inner
+                auto_shield: { dx: 12, dy: 4, c: 'd' }, // R mid inner
+                phase_dodge: { dx: -12, dy: 4, c: 'd' }, // L mid inner
+                combo_master: { dx: 12, dy: 18, c: 'u' }, // R aft inner
+                cool_exhaust: { dx: -12, dy: 18, c: 'u' }, // L aft inner
+
+
+                // ═══ OUTER RING (±26, wing hardpoints) ═══
+                double_barrel: { dx: 26, dy: -18, c: 'o' }, // R fwd wing
+                glass_cannon: { dx: -26, dy: -18, c: 'o' }, // L fwd wing
+                chain_lightning: { dx: 26, dy: -6, c: 'o' }, // R mid-fwd wing
+                vampire_rounds: { dx: -26, dy: -6, c: 'o' }, // L mid-fwd wing
+                emergency_protocol: { dx: 26, dy: 6, c: 'd' }, // R mid wing
+                damage_converter: { dx: -26, dy: 6, c: 'd' }, // L mid wing
+                fortress_mode: { dx: 26, dy: 16, c: 'd' }, // R aft wing
+                magnet_field: { dx: -26, dy: 16, c: 'u' }, // L aft wing
+                lucky_drops: { dx: 26, dy: 26, c: 'u' }, // R tail wing
+                point_multiplier: { dx: -26, dy: 26, c: 'u' }, // L tail wing
+
+
+                // ═══ WORLD 2 — MID RING (±18, between inner & outer) ═══
+                neural_hijack: { dx: 18, dy: -20, c: 'o' }, // R fwd mid
+                predatore: { dx: -18, dy: -20, c: 'o' }, // L fwd mid
+                colpo_critico: { dx: 18, dy: -8, c: 'o' }, // R mid mid
+                scia_infuocata: { dx: -18, dy: -8, c: 'd' }, // L mid mid
+                esploratore: { dx: 18, dy: 10, c: 'u' }, // R aft mid
+                sovraccarico: { dx: -18, dy: 10, c: 'u' }, // L aft mid
+
+
+                // ═══ WORLD 3 — FAR RING (±32, outermost hardpoints) ═══
+                packet_burst: { dx: 32, dy: -12, c: 'o' }, // R fwd far
+                virus_inject: { dx: -32, dy: -12, c: 'o' }, // L fwd far
+                glitch_dash: { dx: 32, dy: 2, c: 'd' }, // R mid far
+                entropy_shield: { dx: -32, dy: 2, c: 'd' }, // L mid far
+                data_leech: { dx: 32, dy: 16, c: 'u' }, // R aft far
+            };
+
+            // Category glow colors: offensive=red, defensive=blue, utility=green
+            const glowTint = { o: '#ff5030', d: '#3388ff', u: '#33dd77' };
+
+            const activePerks = perkSystem.getActivePerks();
+            const t = Date.now() * 0.002;
+
+            // Draw outer ring first (behind inner), then inner, then spine
+            const sorted = activePerks
+                .filter(p => devSlots[p.id])
+                .sort((a, b) => {
+                    const sa = devSlots[a.id], sb = devSlots[b.id];
+                    return (sb.dx * sb.dx + sb.dy * sb.dy)
+                        - (sa.dx * sa.dx + sa.dy * sa.dy);
+                });
+
+            for (const { id, stacks } of sorted) {
+                const slot = devSlots[id];
+                const spriteKey = `perk_${id}_${Math.min(stacks, 3)}`;
+                const devSprite = assets.getSprite(spriteKey);
+                if (!devSprite) continue;
+
+                const float = Math.sin(t + slot.dx * 0.07 + slot.dy * 0.05) * 0.8;
+                const devCx = cx + slot.dx;
+                const devCy = cy + slot.dy + float;
+
+                // Category-colored glow halo
+                ctx.save();
+                ctx.shadowColor = glowTint[slot.c] || '#fff';
+                ctx.shadowBlur = 6;
+                ctx.globalAlpha = 0.9;
+                ctx.drawImage(devSprite,
+                    devCx - devSprite.width / 2,
+                    devCy - devSprite.height / 2);
+                ctx.restore();
+            }
+        }
+    }
+
+    renderEngineFlames(flameCount, cx, by, flameSize, flicker, ctx, shipColor) {
+        for (let i = 0; i < flameCount; i++) {
+            const a = (i === 0 ? -12 : 12);
+            const b = (i - (flameCount - 1) / 2) * 16;
+            const offsetX = flameCount <= 2 ? a : b;
+            const fx = cx + offsetX;
+            const fy = by + 2;
+            const fh = flameSize * flicker;
+            const fw = 6 + i % 2 * 2;
+
+            // Outer flame
+            ctx.globalAlpha = 0.4 * flicker;
+            const outerGrad = ctx.createLinearGradient(fx, fy, fx, fy + fh);
+            outerGrad.addColorStop(0, shipColor);
+            outerGrad.addColorStop(0.5, 'rgba(255,200,50,0.6)');
+            outerGrad.addColorStop(1, 'rgba(255,100,0,0)');
+            ctx.fillStyle = outerGrad;
             ctx.beginPath();
-            ctx.roundRect(barX, barY, barW, barH, 2);
+            ctx.moveTo(fx - fw, fy);
+            ctx.bezierCurveTo(fx - fw * 0.8, fy + fh * 0.4, fx - 1, fy + fh * 0.7, fx, fy + fh);
+            ctx.bezierCurveTo(fx + 1, fy + fh * 0.7, fx + fw * 0.8, fy + fh * 0.4, fx + fw, fy);
+            ctx.closePath();
             ctx.fill();
-            ctx.stroke();
-            const heatPct = this.heat / this.maxHeat;
-            const heatGrad = ctx.createLinearGradient(barX, barY, barX + barW * heatPct, barY);
-            heatGrad.addColorStop(0, this.overheated ? '#ff2222' : '#ffaa00');
-            heatGrad.addColorStop(1, this.overheated ? '#ff4444' : '#ff6600');
-            ctx.fillStyle = heatGrad;
+
+            // Inner white core
+            ctx.globalAlpha = 0.6 * flicker;
+            const coreGrad = ctx.createLinearGradient(fx, fy, fx, fy + fh * 0.6);
+            coreGrad.addColorStop(0, '#fff');
+            coreGrad.addColorStop(1, 'rgba(255,255,200,0)');
+            ctx.fillStyle = coreGrad;
             ctx.beginPath();
-            ctx.roundRect(barX, barY, barW * heatPct, barH, 2);
+            ctx.moveTo(fx - fw * 0.4, fy);
+            ctx.quadraticCurveTo(fx, fy + fh * 0.5, fx + fw * 0.4, fy);
+            ctx.closePath();
             ctx.fill();
         }
-
         ctx.restore();
     }
 }

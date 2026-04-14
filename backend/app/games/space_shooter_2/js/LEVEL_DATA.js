@@ -12,7 +12,7 @@ const LEVEL_DATA = [
     {
         name: 'First Contact',
         description: 'Scout patrol detected. Engage!',
-        speedMult: 1.0,
+        speedMult: 1,
         boss: null,
         waves: [
             makeWave([e('scout', 0.5), e('scout', 0.3), e('scout', 0.7)], 1),
@@ -24,7 +24,7 @@ const LEVEL_DATA = [
     {
         name: 'Skirmish',
         description: 'Enemy fighters join the fray.',
-        speedMult: 1.0,
+        speedMult: 1,
         boss: null,
         waves: [
             makeWave([e('scout', 0.3), e('scout', 0.5), e('scout', 0.7), e('fighter', 0.5)], 1),
@@ -62,7 +62,7 @@ const LEVEL_DATA = [
     {
         name: 'Crimson Vanguard',
         description: 'WARNING: Capital ship approaching!',
-        speedMult: 1.0,
+        speedMult: 1,
         boss: 1,
         waves: [
             makeWave([e('scout', 0.3), e('scout', 0.7)], 1),
@@ -837,7 +837,7 @@ const LEVEL_DATA = [
     {
         name: 'Boot Sequence',
         description: 'The simulation initialises. Something is already wrong.',
-        speedMult: 1.0,
+        speedMult: 1,
         boss: null,
         waves: [
             makeWave([e('glitch_drone', 0.3, 'glitch_blink'), e('glitch_drone', 0.5, 'glitch_blink'), e('glitch_drone', 0.7, 'glitch_blink')], 1),
@@ -1253,7 +1253,7 @@ const LEVEL_DATA = [
     {
         name: 'Quark Entry',
         description: 'You breach the quantum boundary. Triplet quarks materialise.',
-        speedMult: 1.0,
+        speedMult: 1,
         boss: null,
         miniboss: 13,
         waves: [

@@ -1,8 +1,17 @@
 {
-  "version": "5.0.15",
-  "timestamp": "2026-04-14T22:58:51.248Z",
-  "buildNumber": 528,
+  "version": "5.0.16",
+  "timestamp": "2026-04-14T23:18:16.790Z",
+  "buildNumber": 529,
   "changelog": [
+    {
+      "version": "5.0.16",
+      "date": "2026-04-14",
+      "type": "patch",
+      "changes": [
+        "fix : sonar",
+        "🔖 Bump version to 5.0.15 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.15",
       "date": "2026-04-14",
@@ -82,16 +91,6 @@
       "changes": [
         "fif: [FE] Sonar",
         "🔖 Bump version to 5.0.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.6",
-      "date": "2026-04-11",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[MTD][RR] Sonar",
-        "🔖 Bump version to 5.0.5 [skip-version]"
       ]
     }
   ]

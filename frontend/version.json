@@ -1,8 +1,17 @@
 {
-  "version": "5.0.13",
-  "timestamp": "2026-04-13T19:58:39.531Z",
-  "buildNumber": 526,
+  "version": "5.0.14",
+  "timestamp": "2026-04-14T12:04:38.284Z",
+  "buildNumber": 527,
   "changelog": [
+    {
+      "version": "5.0.14",
+      "date": "2026-04-14",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] Sonar",
+        "🔖 Bump version to 5.0.13 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.13",
       "date": "2026-04-13",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[MTD] Total refractor",
         "🔖 Bump version to 5.0.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.4",
-      "date": "2026-04-10",
-      "type": "patch",
-      "changes": [
-        "fix:[GAMES] Sonar",
-        "🔖 Bump version to 5.0.3 [skip-version]"
       ]
     }
   ]

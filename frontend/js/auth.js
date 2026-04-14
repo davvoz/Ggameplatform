@@ -470,27 +470,57 @@ class AuthManager {
         if (response.ok) {
             const levelInfo = await response.json();
             // Use a small swatch showing the level color instead of coloring the whole container
-            levelBadgeContainer.innerHTML = `
-                        <div class="level-badge-container">
-                            <span class="level-color-swatch"><span class="level-badge-icon">${levelInfo.badge}</span></span>
-                            <div class="level-badge-info">
-                                <div class="level-badge-title">
-                                    <span class="level-badge-number">Lv${levelInfo.current_level}</span>
-                                    <span class="level-badge-separator">·</span>
-                                    <span>${levelInfo.title}</span>
-                                </div>
-                                <div class="level-badge-progress-container">
-                                    <div class="level-badge-progress-bar">
-                                        <div class="level-badge-progress-fill"></div>
-                                    </div>
-                                    <span class="level-badge-progress-text">${(() => {
-                    const { xpInLevel, xpRequiredForNext } = calculateXpData(levelInfo);
-                    return `${Math.round(xpInLevel)} / ${Math.round(xpRequiredForNext)} XP`;
-                })()}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+            levelBadgeContainer.innerHTML = '';
+            
+            const container = document.createElement('div');
+            container.className = 'level-badge-container';
+            
+            const swatch = document.createElement('span');
+            swatch.className = 'level-color-swatch';
+            const icon = document.createElement('span');
+            icon.className = 'level-badge-icon';
+            icon.textContent = levelInfo.badge;
+            swatch.appendChild(icon);
+            
+            const info = document.createElement('div');
+            info.className = 'level-badge-info';
+            
+            const title = document.createElement('div');
+            title.className = 'level-badge-title';
+            const levelNum = document.createElement('span');
+            levelNum.className = 'level-badge-number';
+            levelNum.textContent = `Lv${levelInfo.current_level}`;
+            const separator = document.createElement('span');
+            separator.className = 'level-badge-separator';
+            separator.textContent = '·';
+            const levelTitle = document.createElement('span');
+            levelTitle.textContent = levelInfo.title;
+            title.appendChild(levelNum);
+            title.appendChild(separator);
+            title.appendChild(levelTitle);
+            
+            const progressContainer = document.createElement('div');
+            progressContainer.className = 'level-badge-progress-container';
+            const progressBar = document.createElement('div');
+            progressBar.className = 'level-badge-progress-bar';
+            const progressFill = document.createElement('div');
+            progressFill.className = 'level-badge-progress-fill';
+            progressBar.appendChild(progressFill);
+            
+            const { xpInLevel, xpRequiredForNext } = calculateXpData(levelInfo);
+            const progressText = document.createElement('span');
+            progressText.className = 'level-badge-progress-text';
+            progressText.textContent = `${Math.round(xpInLevel)} / ${Math.round(xpRequiredForNext)} XP`;
+            
+            progressContainer.appendChild(progressBar);
+            progressContainer.appendChild(progressText);
+            
+            info.appendChild(title);
+            info.appendChild(progressContainer);
+            
+            container.appendChild(swatch);
+            container.appendChild(info);
+            levelBadgeContainer.appendChild(container);
 
             // Apply CSS variables safely so invalid/undefined values don't leak into styles
             const created = levelBadgeContainer.querySelector('.level-badge-container');

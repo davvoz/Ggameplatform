@@ -111,7 +111,9 @@ async function fetchBalance() {
             const d = await r.json();
             animateBalance(d.balance);
         }
-    } catch (_) { }
+    } catch (error) {
+        console.error('Error fetching balance:', error);
+    }
 }
 
 // ─── Balance animation ─────────────────────────────────────────────

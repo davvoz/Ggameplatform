@@ -240,24 +240,45 @@ async function renderStatusManagementPanel(containerId) {
     statuses.forEach(status => {
         const statusItem = document.createElement('div');
         statusItem.className = 'status-item';
-        statusItem.innerHTML = `
-            <div class="status-info">
-                <span class="status-icon">${getStatusIcon(status.status_code)}</span>
-                <span class="status-name">${status.status_name}</span>
-                <code>${status.status_code}</code>
-                <span class="badge ${status.is_active ? 'badge-success' : 'badge-secondary'}">
-                    ${status.is_active ? 'Attivo' : 'Inattivo'}
-                </span>
-            </div>
-            <div class="status-actions">
-                <button onclick="editStatus(${status.status_id})" class="btn btn-sm btn-warning">
-                    ✏️ Modifica
-                </button>
-                <button onclick="deleteStatus(${status.status_id})" class="btn btn-sm btn-danger">
-                    🗑️ Elimina
-                </button>
-            </div>
-        `;
+        const statusInfo = document.createElement('div');
+        statusInfo.className = 'status-info';
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'status-icon';
+        iconSpan.textContent = getStatusIcon(status.status_code);
+        statusInfo.appendChild(iconSpan);
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'status-name';
+        nameSpan.textContent = status.status_name;
+        statusInfo.appendChild(nameSpan);
+        
+        const codeElement = document.createElement('code');
+        codeElement.textContent = status.status_code;
+        statusInfo.appendChild(codeElement);
+        
+        const badge = document.createElement('span');
+        badge.className = `badge ${status.is_active ? 'badge-success' : 'badge-secondary'}`;
+        badge.textContent = status.is_active ? 'Attivo' : 'Inattivo';
+        statusInfo.appendChild(badge);
+        
+        const statusActions = document.createElement('div');
+        statusActions.className = 'status-actions';
+        
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-sm btn-warning';
+        editBtn.textContent = '✏️ Modifica';
+        editBtn.onclick = () => editStatus(status.status_id);
+        statusActions.appendChild(editBtn);
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-sm btn-danger';
+        deleteBtn.textContent = '🗑️ Elimina';
+        deleteBtn.onclick = () => deleteStatus(status.status_id);
+        statusActions.appendChild(deleteBtn);
+        
+        statusItem.appendChild(statusInfo);
+        statusItem.appendChild(statusActions);
         
         statusList.appendChild(statusItem);
     });

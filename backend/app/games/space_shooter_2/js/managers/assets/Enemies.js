@@ -1,4 +1,5 @@
-import { outlineAndFill, drawHighlight, drawEnemyEye, _drawPartEye } from './Helper.js';
+import { C_WHITE } from '../../entities/LevelsThemes.js';
+import { outlineAndFill, drawHighlight, drawEnemyEye } from './Helper.js';
 // ================================================================
 //  ENEMIES  (each drawn large with outlines and glowing eyes)
 // ================================================================
@@ -749,7 +750,7 @@ function createEnemySprite(cfg) {
             ctx.fill();
             // Big cute ghost eyes
             // White sclera
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.beginPath(); ctx.ellipse(cx - r * 0.2, cy - r * 0.2, r * 0.16, r * 0.2, 0, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(cx + r * 0.2, cy - r * 0.2, r * 0.16, r * 0.2, 0, 0, Math.PI * 2); ctx.fill();
             // Pupils
@@ -757,7 +758,7 @@ function createEnemySprite(cfg) {
             ctx.beginPath(); ctx.arc(cx - r * 0.18, cy - r * 0.15, r * 0.08, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(cx + r * 0.22, cy - r * 0.15, r * 0.08, 0, Math.PI * 2); ctx.fill();
             // Eye shine dots
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.beginPath(); ctx.arc(cx - r * 0.22, cy - r * 0.22, r * 0.04, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(cx + r * 0.18, cy - r * 0.22, r * 0.04, 0, Math.PI * 2); ctx.fill();
             // Small "o" mouth

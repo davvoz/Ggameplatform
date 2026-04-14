@@ -1,19 +1,23 @@
-import Enemy from  './enemy/TheEnemy.js';
+import Enemy from './enemy/TheEnemy.js';
 import BossPart from './enemy/BossPart.js';
-import { MOVEMENT } from "./enemy/types/MOVEMENT.js";
 import { FORMATIONS } from "./enemy/types/FORMATIONS.js";
-import { MINIBOSS_DEFS } from "./enemy/types/MINIBOSS_DEFS.js";
 import { BOSS_DEFS } from "./enemy/types/BOSS_DEFS.js";
+import { MINIBOSS_DEFS } from "./enemy/types/MINIBOSS_DEFS.js";
 import MultiBoss from './enemy/MultiBoss.js';
+export { BOSS_DEFS } from "./enemy/types/BOSS_DEFS.js";
+export { MINIBOSS_DEFS } from "./enemy/types/MINIBOSS_DEFS.js";
+export { MOVEMENT } from "./enemy/types/MOVEMENT.js";
+export { FORMATIONS } from "./enemy/types/FORMATIONS.js";
+
 
 
 /**
  * EnemyFactory - Creates enemies and bosses
  */
 class EnemyFactory {
-    static create(type, x, y, pattern, canvasWidth, speedMultiplier = 1, difficultyConfig = null, level = 1) {
-        const enemy = new Enemy(x, y, type, pattern, canvasWidth, difficultyConfig, level);
-        enemy.speed *= speedMultiplier;
+    static create(options) {
+        const enemy = new Enemy(options.x, options.y, options.type, options.pattern, options.canvasWidth, options.difficultyConfig, options.level);
+        enemy.speed *= options.speedMultiplier;
         return enemy;
     }
 
@@ -51,8 +55,7 @@ class EnemyFactory {
             const x = def.x * canvasWidth;
             const y = -80 - Math.random() * 40;
             const enemy = EnemyFactory.create(
-                def.type, x, y, def.pattern,
-                canvasWidth, speedMult, difficultyConfig, level
+                { ...def, x, y, canvasWidth, speedMultiplier: speedMult, difficultyConfig, level }
             );
             result.push(enemy);
         }
@@ -60,5 +63,5 @@ class EnemyFactory {
     }
 }
 
-export { Enemy, MultiBoss, BossPart, EnemyFactory,  MOVEMENT, FORMATIONS, BOSS_DEFS, MINIBOSS_DEFS };
+export { Enemy, MultiBoss, BossPart, EnemyFactory };
 export default Enemy;

@@ -1,3 +1,4 @@
+import { C_WHITE, C_GOLD } from '../entities/LevelsThemes.js';
 import { InputManager as BaseInputManager } from '../../../shared/InputManager.js';
 import { ui } from '../FontConfig.js';
 
@@ -87,7 +88,7 @@ class InputManager extends BaseInputManager {
 
         // Joystick base
         ctx.globalAlpha = 0.25;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath();
         ctx.arc(this.joystickPos.x, this.joystickPos.y, this.joystickBaseRadius, 0, Math.PI * 2);
         ctx.fill();
@@ -154,7 +155,7 @@ class InputManager extends BaseInputManager {
 
         if (ultCharge > 0 && ultCharge < 100) {
             ctx.globalAlpha = 0.6;
-            ctx.strokeStyle = '#ffd700';
+            ctx.strokeStyle = C_GOLD;
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.arc(ultCx, ultCy, ultR, -Math.PI / 2, -Math.PI / 2 + (ultCharge / 100) * Math.PI * 2);

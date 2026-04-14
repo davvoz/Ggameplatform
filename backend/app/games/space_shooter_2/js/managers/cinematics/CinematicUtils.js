@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE } from '../../entities/LevelsThemes.js';
 /**
  * CinematicUtils — Shared rendering helpers for cinematic scenes.
  *
@@ -142,7 +143,7 @@ export function renderBossPartsAtPosition(ctx, assets, def, centerX, centerY, sc
             } else {
                 const partCX = px + pw / 2;
                 const partCY = py + ph / 2;
-                const b = p.role === 'shield' ? '#4488ff': '#cc6633'
+                const b = p.role === 'shield' ? C_MEDIUM_BLUE: '#cc6633'
                 const a = p.role === 'turret' ? '#ffaa33' : b;
                 ctx.fillStyle = p.role === 'core' ? '#ff2244': a;
                 ctx.beginPath();

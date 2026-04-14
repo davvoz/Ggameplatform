@@ -24,10 +24,10 @@ const FX_LAYER_ORDER = {
 };
 
 function _sector(intensity) {
-    if (intensity <= 0.20) return 1;
-    if (intensity <= 0.40) return 2;
-    if (intensity <= 0.60) return 3;
-    if (intensity <= 0.80) return 4;
+    if (intensity <= 0.2) return 1;
+    if (intensity <= 0.4) return 2;
+    if (intensity <= 0.6) return 3;
+    if (intensity <= 0.8) return 4;
     if (intensity <= 0.92) return 5;
     return 6;
 }
@@ -59,7 +59,7 @@ export class SimulationWorldRenderer extends WorldRenderer {
     // ── lifecycle ──────────────────────────────────
 
     build(theme) {
-        const gc = (theme && theme.glitchConfig) || {};
+        const gc = (theme?.glitchConfig) || {};
         this.intensity = gc.intensity || 0;
         this.gridHue = gc.gridHue || 180;
         this.sector = _sector(this.intensity);

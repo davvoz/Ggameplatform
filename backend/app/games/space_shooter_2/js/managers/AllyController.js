@@ -1,3 +1,4 @@
+import { C_WHITE } from '../entities/LevelsThemes.js';
 /**
  * AllyController — Manages orbital formation, rotation, and shooting
  * for Neural Hijack converted enemies.
@@ -161,7 +162,7 @@ class AllyController {
                 ctx.save();
                 ctx.globalAlpha = ally.hitFlash * 0.6;
                 ctx.globalCompositeOperation = 'lighter';
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = C_WHITE;
                 ctx.beginPath();
                 ctx.arc(cx, cy, ally.width * 0.5, 0, Math.PI * 2);
                 ctx.fill();

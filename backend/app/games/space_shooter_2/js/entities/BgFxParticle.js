@@ -14,6 +14,15 @@
 //    2. Register it below
 // ═══════════════════════════════════════════════
 
+// ── FX type constants ──
+import {
+    FX_ASTEROIDS, FX_SPORES, FX_EMBERS, FX_ICE, FX_SHIMMER,
+    FX_SPARKS, FX_MINES, FX_SCANLINES, FX_VORTEX, FX_LIGHTNING,
+    FX_FIRE, FX_BLACKHOLE,
+    FX_JUNGLE, FX_VOLCANIC, FX_FROZEN, FX_DESERT, FX_MECHANICAL, FX_TOXIC,
+    FX_GLITCH, FX_QUANTUM
+} from './LevelsThemes.js';
+
 // ── Simple (space) FX ──
 import {
     AsteroidsFx, SporesFx, EmbersFx, IceFx, ShimmerFx,
@@ -37,29 +46,29 @@ import { QuantumFx }     from './fx/QuantumFx.js';
  */
 const FX_REGISTRY = {
     // space effects
-    asteroids : AsteroidsFx,
-    spores    : SporesFx,
-    embers    : EmbersFx,
-    ice       : IceFx,
-    shimmer   : ShimmerFx,
-    sparks    : SparksFx,
-    mines     : MinesFx,
-    scanlines : ScanlinesFx,
-    vortex    : VortexFx,
-    lightning : LightningFx,
-    fire      : FireFx,
-    blackhole : BlackholeFx,
+    [FX_ASTEROIDS] : AsteroidsFx,
+    [FX_SPORES]    : SporesFx,
+    [FX_EMBERS]    : EmbersFx,
+    [FX_ICE]       : IceFx,
+    [FX_SHIMMER]   : ShimmerFx,
+    [FX_SPARKS]    : SparksFx,
+    [FX_MINES]     : MinesFx,
+    [FX_SCANLINES] : ScanlinesFx,
+    [FX_VORTEX]    : VortexFx,
+    [FX_LIGHTNING] : LightningFx,
+    [FX_FIRE]      : FireFx,
+    [FX_BLACKHOLE] : BlackholeFx,
     // terrain effects
-    jungle     : JungleFx,
-    volcanic   : VolcanicFx,
-    frozen     : FrozenFx,
-    desert     : DesertFx,
-    mechanical : MechanicalFx,
-    toxic      : ToxicFx,
+    [FX_JUNGLE]     : JungleFx,
+    [FX_VOLCANIC]   : VolcanicFx,
+    [FX_FROZEN]     : FrozenFx,
+    [FX_DESERT]     : DesertFx,
+    [FX_MECHANICAL] : MechanicalFx,
+    [FX_TOXIC]      : ToxicFx,
     // simulation effects
-    glitch     : GlitchFx,
+    [FX_GLITCH]     : GlitchFx,
     // quantum effects
-    quantum    : QuantumFx
+    [FX_QUANTUM]    : QuantumFx
 };
 
 /**

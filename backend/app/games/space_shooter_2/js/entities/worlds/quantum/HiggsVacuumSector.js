@@ -39,7 +39,8 @@ export class HiggsVacuumSector extends QuantumSectorRenderer {
                 w.x = (0.1 + Math.random() * 0.8) * W;
             }
             w.pulsePhase += w.pulseSpeed * dt;
-            if (!w.isActive) {
+            const disactive = !w.isActive;
+            if (disactive) {
                 w.activeTimer -= dt;
                 if (w.activeTimer < 1.5 && w.activeTimer > 0) {
                     w.depth = 0.5 + 0.5 * Math.sin(w.activeTimer * 8);
@@ -59,5 +60,7 @@ export class HiggsVacuumSector extends QuantumSectorRenderer {
         }
     }
 
-    renderBg(ctx) {}
+    renderBg(ctx) {
+        //nothing to do here — the parent class renders the quantum distortion background
+    }
 }

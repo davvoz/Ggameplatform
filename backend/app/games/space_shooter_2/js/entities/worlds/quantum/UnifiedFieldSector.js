@@ -50,7 +50,8 @@ export class UnifiedFieldSector extends QuantumSectorRenderer {
                 v.x = (0.1 + Math.random() * 0.8) * W;
             }
             v.pulsePhase += dt * 2;
-            if (!v.active) {
+            const notActive = !v.active;
+            if (notActive) {
                 v.timer -= dt;
                 if (v.timer <= 0) {
                     v.active = true;

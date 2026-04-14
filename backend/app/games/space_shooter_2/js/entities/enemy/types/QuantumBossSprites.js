@@ -1,3 +1,4 @@
+import { C_WHITE, C_GOLD, C_PERIWINKLE, C_MEDIUM_BLUE } from '../../LevelsThemes.js';
 /**
  * QuantumBossSprites v2 — Spectacular procedural boss art for World 4.
  *
@@ -45,7 +46,7 @@ function glossyBody(ctx, cx, cy, r, base, edgeDark = 0.55) {
     // Specular spot
     ctx.save();
     ctx.globalAlpha = 0.55;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.ellipse(cx - r * 0.22, cy - r * 0.28, r * 0.18, r * 0.12, -0.4, 0, TAU);
     ctx.fill();
@@ -67,7 +68,7 @@ function drawBossEye(ctx, options) {
     const s = size;
     ctx.save();
     // Sclera
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.ellipse(ex, ey, s * 1, s * 0.78 * lidOpen, 0, 0, TAU);
     ctx.fill();
@@ -91,7 +92,7 @@ function drawBossEye(ctx, options) {
     ctx.arc(px, py, s * 0.22, 0, TAU);
     ctx.fill();
     // Pupil highlight
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.arc(px - s * 0.1, py - s * 0.1, s * 0.11, 0, TAU);
     ctx.fill();
@@ -134,7 +135,7 @@ function drawSlitEye(ctx, options) {
     const { ex, ey, size, lookAng, irisColor } = options;
     const s = size;
     ctx.save();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.ellipse(ex, ey, s * 1, s * 0.68, 0, 0, TAU);
     ctx.fill();
@@ -260,7 +261,7 @@ function drawDiamondEye(ctx, ex, ey, size, lookAng, irisColor) {
 function drawSpiralEye(ctx, ex, ey, size, col, t) {
     const s = size;
     ctx.save();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.arc(ex, ey, s * 0.9, 0, TAU);
     ctx.fill();
@@ -298,7 +299,7 @@ function drawSpiralEye(ctx, ex, ey, size, col, t) {
 function drawReticleEye(ctx, ex, ey, size, lookAng, irisColor) {
     const s = size;
     ctx.save();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.arc(ex, ey, s * 0.9, 0, TAU);
     ctx.fill();
@@ -388,7 +389,7 @@ function drawPrismaticEye(ctx, ex, ey, size, lookAng, t) {
 function drawStarburstEye(ctx, ex, ey, size, lookAng, irisColor, t) {
     const s = size;
     ctx.save();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.beginPath();
     ctx.ellipse(ex, ey, s * 1, s * 0.75, 0, 0, TAU);
     ctx.fill();
@@ -520,7 +521,7 @@ function drawMouth(ctx, cx, cy, w, mood, t, color) {
         // Teeth
         for (let i = 0; i < 3; i++) {
             const tx = cx - w * 0.2 + w * 0.2 * i;
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.fillRect(tx, cy - w * 0.05, w * 0.1, w * 0.12);
             ctx.strokeRect(tx, cy - w * 0.05, w * 0.1, w * 0.12);
         }
@@ -533,7 +534,7 @@ function drawMouth(ctx, cx, cy, w, mood, t, color) {
         ctx.strokeStyle = color || '#440000';
         ctx.stroke();
         // Top teeth
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         for (let i = 0; i < 5; i++) {
             const tx = cx - w * 0.3 + w * 0.15 * i;
             ctx.beginPath();
@@ -808,7 +809,7 @@ function drawElectroweakUnifier(ctx, boss, t) {
             // Yin-yang dividing S-curve
             ctx.save();
             ctx.globalAlpha = 0.7;
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = C_WHITE;
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(pcx, pcy - pr);
@@ -1016,7 +1017,7 @@ function drawHiggsManifestation(ctx, boss, t) {
     for (let ring = 0; ring < 7; ring++) {
         const r = 25 + ring * 16 + sin(t * 0.8 + ring * 0.7) * 3;
         ctx.globalAlpha = 0.04 + 0.02 * (6 - ring) / 6;
-        ctx.strokeStyle = '#ffd700';
+        ctx.strokeStyle = C_GOLD;
         ctx.lineWidth = 1.5 + (6 - ring) * 0.25;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, TAU);
@@ -1030,7 +1031,7 @@ function drawHiggsManifestation(ctx, boss, t) {
         ctx.globalAlpha = 0.14;
         for (let i = 0; i < 20; i++) {
             const angle = TAU / 20 * i + t * 0.2;
-            ctx.strokeStyle = i % 2 === 0 ? '#ffd700' : '#ffeeaa';
+            ctx.strokeStyle = i % 2 === 0 ? C_GOLD : '#ffeeaa';
             ctx.lineWidth = 1;
             ctx.beginPath();
             for (let s = 0; s < 10; s++) {
@@ -1046,7 +1047,7 @@ function drawHiggsManifestation(ctx, boss, t) {
     }
 
     // === Floating golden motes ===
-    orbitMotes(ctx, { cx, cy, r: 55, count: 12, t: t * 0.5, cols: ['#ffd700', '#ffe066', '#ffcc33'], moteR: 3 });
+    orbitMotes(ctx, { cx, cy, r: 55, count: 12, t: t * 0.5, cols: [C_GOLD, '#ffe066', '#ffcc33'], moteR: 3 });
 
     // === Non-core parts ===
     drawActiveBossParts();
@@ -1061,16 +1062,16 @@ function drawHiggsManifestation(ctx, boss, t) {
         if (boss._massWellActive) {
             ctx.save();
             ctx.globalAlpha = 0.35;
-            ctx.strokeStyle = '#ffd700';
+            ctx.strokeStyle = C_GOLD;
             ctx.lineWidth = 3;
-            ctx.shadowColor = '#ffd700';
+            ctx.shadowColor = C_GOLD;
             ctx.shadowBlur = 12;
             ctx.beginPath();
             ctx.arc(cx, cy, boss.width * 0.38, 0, TAU);
             ctx.stroke();
             ctx.shadowBlur = 0;
             ctx.globalAlpha = 0.7;
-            ctx.fillStyle = '#ffd700';
+            ctx.fillStyle = C_GOLD;
             ctx.font = 'bold 10px monospace';
             ctx.textAlign = 'center';
             ctx.fillText('MASS WELL', cx, cy - boss.height / 2 - 28);
@@ -1089,7 +1090,7 @@ function drawHiggsManifestation(ctx, boss, t) {
             // Majestic glow
             ctx.globalAlpha = 0.1;
             const gG = ctx.createRadialGradient(pcx, pcy, pr * 0.3, pcx, pcy, pr * 1.7);
-            gG.addColorStop(0, '#ffd700');
+            gG.addColorStop(0, C_GOLD);
             gG.addColorStop(1, 'rgba(255,215,0,0)');
             ctx.fillStyle = gG;
             ctx.beginPath();
@@ -1139,7 +1140,7 @@ function drawHiggsManifestation(ctx, boss, t) {
         drawDiamondEye(ctx, pcx + pr * 0.22, pcy - pr * 0.02, eS, lookAng, '#8B6914');
         // Crown-like lash decorations above each eye
         ctx.save();
-        ctx.strokeStyle = '#ffd700';
+        ctx.strokeStyle = C_GOLD;
         ctx.lineWidth = 1.2;
         ctx.globalAlpha = 0.6;
         for (let side = -1; side <= 1; side += 2) {
@@ -1160,7 +1161,7 @@ function drawHiggsManifestation(ctx, boss, t) {
         ctx.save();
         ctx.globalAlpha = 0.6;
         const bandY = pcy - pr * 0.55;
-        ctx.fillStyle = '#ffd700';
+        ctx.fillStyle = C_GOLD;
         ctx.beginPath();
         ctx.ellipse(pcx, bandY, pr * 0.65, 3, 0, 0, TAU);
         ctx.fill();
@@ -1184,8 +1185,8 @@ function drawHiggsManifestation(ctx, boss, t) {
                 const tipY = by + sin(a) * spikeLen;
                 // Spike body (gradient)
                 const sG = ctx.createLinearGradient(bx, by, tipX, tipY);
-                sG.addColorStop(0, '#ffd700');
-                sG.addColorStop(1, '#ffffff');
+                sG.addColorStop(0, C_GOLD);
+                sG.addColorStop(1, C_WHITE);
                 ctx.fillStyle = sG;
                 ctx.beginPath();
                 ctx.moveTo(bx - cos(a + Math.PI / 2) * 4, by - sin(a + Math.PI / 2) * 4);
@@ -1208,7 +1209,7 @@ function drawHiggsManifestation(ctx, boss, t) {
     function drawActiveBossParts() {
         for (const part of boss.parts) {
             if (!part.active || part.isCore) continue;
-            const col = part.role === 'weakpoint' ? '#ff4444' : '#ffd700';
+            const col = part.role === 'weakpoint' ? '#ff4444' : C_GOLD;
             _drawStyledPart(ctx, part, t, col, st);
         }
     }
@@ -1229,7 +1230,7 @@ function drawAntimatterSovereign(ctx, boss, t) {
     // === Annihilation boundary — crackling energy column ===
     ctx.save();
     ctx.globalAlpha = 0.5;
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = C_WHITE;
     ctx.lineWidth = 2.5;
     ctx.shadowColor = '#ff88cc';
     ctx.shadowBlur = 12;
@@ -1266,7 +1267,7 @@ function drawAntimatterSovereign(ctx, boss, t) {
             const offset = max(-barW / 2, min(barW / 2, bal * 2));
             ctx.fillStyle = offset > 0 ? matCol : antiCol;
             ctx.fillRect(mid, barY, offset, barH);
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = C_WHITE;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(mid, barY - 1); ctx.lineTo(mid, barY + barH + 1);
@@ -1425,7 +1426,7 @@ function drawGrandUnifiedTheory(ctx, boss, t) {
             // Prismatic glow
             ctx.globalAlpha = 0.12;
             const pG = ctx.createRadialGradient(pcx, pcy, pr * 0.2, pcx, pcy, pr * 1.8);
-            pG.addColorStop(0, '#ffffff');
+            pG.addColorStop(0, C_WHITE);
             pG.addColorStop(0.4, fCols[af]);
             pG.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = pG;
@@ -1546,7 +1547,7 @@ function drawGrandUnifiedTheory(ctx, boss, t) {
         }
         for (const p of boss.parts) {
             if (!p.active || p.isCore || p.role === 'turret') continue;
-            _drawStyledPart(ctx, p, t, '#ccccff', st);
+            _drawStyledPart(ctx, p, t, C_PERIWINKLE, st);
         }
     }
 
@@ -1808,14 +1809,14 @@ function drawTopResonance(ctx, boss, t) {
         ctx.translate(-pcx, -pcy);
         ctx.beginPath();
         ctx.ellipse(pcx, pcy, pr, pr * 0.35, 0, 0, TAU);
-        glossyBody(ctx, pcx, pcy, pr * 0.6, '#4488ff');
+        glossyBody(ctx, pcx, pcy, pr * 0.6, C_MEDIUM_BLUE);
         ctx.strokeStyle = '#2266cc';
         ctx.lineWidth = 2;
         ctx.stroke();
         // Shimmer
         ctx.globalAlpha = 0.3 + 0.2 * sin(t * 5);
         ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath();
         ctx.ellipse(pcx, pcy - pr * 0.1, pr * 0.5, pr * 0.12, 0, 0, TAU);
         ctx.fill();
@@ -1991,7 +1992,7 @@ function _drawStyledPart(ctx, part, t, baseColor, st) {
     }
 
     const isWeekPointValue = part.role === 'weakpoint' ? '#ff4444' : darken(baseColor, 0.2);
-    const isShieldValue = part.role === 'shield' ? '#4488ff' : isWeekPointValue
+    const isShieldValue = part.role === 'shield' ? C_MEDIUM_BLUE : isWeekPointValue
     const roleValue = part.role === 'turret' ? lighten(baseColor, 0.25) : isShieldValue;
     const roleColor = part.isCore ? baseColor : roleValue;
 
@@ -2013,7 +2014,7 @@ function _drawStyledPart(ctx, part, t, baseColor, st) {
         ctx.fillRect(pcx - pr * 0.14, pcy + pr * 0.45, pr * 0.28, pr * 0.65);
         ctx.fillRect(pcx - pr * 0.2, pcy + pr * 0.95, pr * 0.4, pr * 0.15);
         // Muzzle glow
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.globalAlpha = 0.35 + 0.2 * sin(t * 8);
         ctx.beginPath();
         ctx.arc(pcx, pcy + pr * 1, pr * 0.12, 0, TAU);
@@ -2047,7 +2048,7 @@ function _drawPartHitFlash(ctx, part, pcx, pcy, pr) {
         ctx.save();
         ctx.globalAlpha = part.hitFlash * 0.55;
         ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath(); ctx.arc(pcx, pcy, pr, 0, TAU); ctx.fill();
         ctx.restore();
     }

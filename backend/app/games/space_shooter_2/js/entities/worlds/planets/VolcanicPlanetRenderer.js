@@ -43,7 +43,7 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
                 cx = Math.max(-maxWander, Math.min(maxWander, cx));
                 points.push({ x: cx, y: (i + 1) * segH });
             }
-            const totalCanyonH = points[points.length - 1].y;
+            const totalCanyonH = points.at(-1).y;
             const lc = Math.random();
             const hue = lc < 0.5 ? 15 + Math.random() * 20 : 5 + Math.random() * 12;
             const sat = 75 + Math.random() * 20;
@@ -57,8 +57,8 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
         const baseCount = vcfg ? vcfg.edgeN : 12;
         const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
         const eR = vcfg ? vcfg.edgeReach : [25, 45];
-        const eH = vcfg && vcfg.edgeHue ? vcfg.edgeHue : [15, 30];
-        const eL = vcfg && vcfg.edgeLit ? vcfg.edgeLit : [12, 20];
+        const eH = vcfg?.edgeHue ? vcfg.edgeHue : [15, 30];
+        const eL = vcfg?.edgeLit ? vcfg.edgeLit : [12, 20];
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
@@ -99,7 +99,6 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
     }
 
     renderOverlay(ctx, time) {
-        const W = this.canvasWidth, H = this.canvasHeight;
         ctx.save();
 
         // Heat/lava vignette
@@ -202,7 +201,7 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
                 // Dark rock wall
                 ctx.globalAlpha = 0.5;
                 ctx.strokeStyle = 'hsl(20, 10%, 6%)';
-                ctx.lineWidth = w * 2.0;
+                ctx.lineWidth = w * 2;
                 trace(0); ctx.stroke();
                 // Inner dark shadow
                 ctx.globalAlpha = 0.7;

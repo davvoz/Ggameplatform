@@ -63,7 +63,7 @@ export class PlanetRenderer {
             if (r < 0.35) {
                 side = 'left'; x = -5;
                 y = (i / (count * 0.35)) * H + (Math.random() - 0.5) * H * 0.1;
-            } else if (r < 0.70) {
+            } else if (r < 0.7) {
                 side = 'right'; x = W + 5;
                 y = ((i - count * 0.35) / (count * 0.35)) * H + (Math.random() - 0.5) * H * 0.1;
             } else if (r < 0.85) {
@@ -130,7 +130,7 @@ export class PlanetRenderer {
             cx = Math.max(-maxWander, Math.min(maxWander, cx));
             points.push({ x: cx, y: (i + 1) * segH });
         }
-        const totalH = points[points.length - 1].y;
+        const totalH = points.at(-1).y;
         return { baseX, width, points, totalH };
     }
 }

@@ -21,9 +21,9 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
                 chars: [],
                 changeTimer: 0
             };
-            for (let i = 0; i < col.length; i++) {
+            new Array(col.length).fill(0).forEach(() => {
                 col.chars.push(String.fromCodePoint(0x30A0 + Math.floor(Math.random() * 96)));
-            }
+            });
             this.codeColumns.push(col);
         }
 

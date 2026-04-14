@@ -1,3 +1,4 @@
+import { C_WHITE } from '../../entities/LevelsThemes.js';
 // ===== HELPER: cartoon outline path =====
 function outlineAndFill(ctx, fillColor, outlineColor = '#111', lineWidth = 3) {
     ctx.fillStyle = fillColor;
@@ -23,7 +24,7 @@ function drawHighlight(ctx, x, y, w, h, alpha = 0.25) {
 // ===== HELPER: cockpit bubble =====
 function drawCockpit(ctx, cx, cy, rx, ry, tint = '#88ddff') {
     const cg = ctx.createRadialGradient(cx - rx * 0.3, cy - ry * 0.3, 0, cx, cy, Math.max(rx, ry));
-    cg.addColorStop(0, '#ffffff');
+    cg.addColorStop(0, C_WHITE);
     cg.addColorStop(0.3, tint);
     cg.addColorStop(0.7, '#2255aa');
     cg.addColorStop(1, '#112244');

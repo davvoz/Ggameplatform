@@ -1,3 +1,4 @@
+import { C_WHITE } from './LevelsThemes.js';
 import GameObject from '../../../shared/GameObject.js';
 
 /**
@@ -132,7 +133,7 @@ class PowerUp extends GameObject {
 
         // Background filled circle with cartoon outline
         const bodyGrad = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.3, 0, cx, cy, r);
-        bodyGrad.addColorStop(0, '#ffffff');
+        bodyGrad.addColorStop(0, C_WHITE);
         bodyGrad.addColorStop(0.3, `rgba(${col.r},${col.g},${col.b},1)`);
         bodyGrad.addColorStop(0.9, `rgba(${Math.floor(col.r*0.5)},${Math.floor(col.g*0.5)},${Math.floor(col.b*0.5)},1)`);
         bodyGrad.addColorStop(1, `rgba(${Math.floor(col.r*0.3)},${Math.floor(col.g*0.3)},${Math.floor(col.b*0.3)},1)`);

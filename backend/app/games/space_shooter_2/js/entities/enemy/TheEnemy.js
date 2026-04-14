@@ -1,3 +1,4 @@
+import { C_WHITE, C_MEDIUM_BLUE, C_GOLD, C_VIVID_PURPLE } from '../LevelsThemes.js';
 import GameObject from '../../../../shared/GameObject.js';
 import { ENEMY_TYPES } from "./types/ENEMY_TYPES.js";
 import { MOVEMENT } from "./types/MOVEMENT.js";
@@ -590,7 +591,7 @@ class Enemy extends GameObject {
         }
         ctx.globalAlpha = progress * progress * 0.4;
         ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath();
         ctx.arc(cx, cy, r * (0.1 + progress * 0.5), 0, Math.PI * 2);
         ctx.fill();
@@ -620,7 +621,7 @@ class Enemy extends GameObject {
             const py = cy + Math.sin(angle) * dist;
             const size = 2 + progress * 3;
             ctx.globalAlpha = progress * 0.5;
-            ctx.fillStyle = i % 3 === 0 ? '#ffffff' : col;
+            ctx.fillStyle = i % 3 === 0 ? C_WHITE : col;
             ctx.beginPath();
             ctx.arc(px, py, size, 0, Math.PI * 2);
             ctx.fill();
@@ -674,7 +675,7 @@ class Enemy extends GameObject {
             for (let i = 0; i < 8; i++) {
                 const sparkA = Math.sin(t * 12 + i * 4) * crackW * 0.6;
                 const sparkY = cy + (i / 7 - 0.5) * crackH * 0.8;
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = C_WHITE;
                 ctx.beginPath();
                 ctx.arc(cx + sparkA, sparkY, 1.5 + Math.sin(t * 15 + i) * 0.8, 0, Math.PI * 2);
                 ctx.fill();
@@ -838,7 +839,7 @@ class Enemy extends GameObject {
             ctx.save();
             ctx.globalAlpha = this.hitFlash * 0.6;
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.beginPath();
             ctx.arc(cx, cy, this.width * 0.5, 0, Math.PI * 2);
             ctx.fill();
@@ -957,7 +958,7 @@ class Enemy extends GameObject {
         if (w3b === 'mirror') {
             ctx.save();
             ctx.globalAlpha = 0.15;
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = C_WHITE;
             ctx.lineWidth = 1;
             ctx.setLineDash([2, 6]);
             ctx.beginPath();
@@ -1014,7 +1015,7 @@ class Enemy extends GameObject {
             }
             // Dashed line connecting real and ghost
             ctx.globalAlpha = 0.1;
-            ctx.strokeStyle = '#ffffff';
+            ctx.strokeStyle = C_WHITE;
             ctx.lineWidth = 0.5;
             ctx.setLineDash([3, 5]);
             ctx.beginPath();
@@ -1044,7 +1045,7 @@ class Enemy extends GameObject {
             ctx.save();
             ctx.globalAlpha = this._justTunneled / 10;
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#4488ff';
+            ctx.fillStyle = C_MEDIUM_BLUE;
             ctx.beginPath();
             ctx.arc(cx, cy, this.width * 0.8, 0, Math.PI * 2);
             ctx.fill();
@@ -1084,7 +1085,7 @@ class Enemy extends GameObject {
             ctx.save();
             ctx.globalAlpha = 0.08 + 0.04 * Math.sin(Date.now() * 0.004);
             const fieldGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, this._fieldRadius);
-            fieldGrad.addColorStop(0, '#ffd700');
+            fieldGrad.addColorStop(0, C_GOLD);
             fieldGrad.addColorStop(0.7, 'rgba(255,215,0,0.05)');
             fieldGrad.addColorStop(1, 'rgba(0,0,0,0)');
             ctx.fillStyle = fieldGrad;
@@ -1092,7 +1093,7 @@ class Enemy extends GameObject {
             ctx.arc(cx, cy, this._fieldRadius, 0, Math.PI * 2);
             ctx.fill();
             // Concentric rings
-            ctx.strokeStyle = '#ffd700';
+            ctx.strokeStyle = C_GOLD;
             ctx.lineWidth = 0.5;
             ctx.globalAlpha = 0.12;
             for (let r = 30; r < this._fieldRadius; r += 25) {
@@ -1306,7 +1307,7 @@ class Enemy extends GameObject {
             ctx.save();
             const fp = 0.35 + 0.2 * Math.sin(Date.now() * 0.012);
             ctx.globalAlpha = fp;
-            ctx.strokeStyle = '#cc44ff';
+            ctx.strokeStyle = C_VIVID_PURPLE;
             ctx.lineWidth = 2;
             // Distorted ring
             ctx.beginPath();

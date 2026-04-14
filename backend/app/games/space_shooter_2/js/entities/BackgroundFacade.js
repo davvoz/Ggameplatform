@@ -85,7 +85,7 @@ export class BackgroundFacade {
      * type: 'safe' | 'danger' | 'info'
      */
     getActiveZones() {
-        if (this._activeWorld && this._activeWorld.activeZones) {
+        if (this._activeWorld?.activeZones) {
             return this._activeWorld.activeZones;
         }
         return [];
@@ -118,7 +118,7 @@ export class BackgroundFacade {
             this._activeWorld.renderFx(ctx, this.fxParticles, time);
 
             // Overlay (vignettes, edges, snow, sandstorm, etc.)
-            const t = time !== undefined ? time : performance.now() * 0.001;
+            const t =  time === undefined ? performance.now() * 0.001 : time;
             this._activeWorld.renderOverlay(ctx, t);
 
             // Post-FX (black hole glow, etc.)
@@ -164,7 +164,7 @@ export class BackgroundFacade {
                      || theme.mechanicalConfig || theme.toxicConfig
                      || theme.quantumConfig || null;
             let fxCount;
-            if (cfg && cfg.fxN) {
+            if (cfg?.fxN) {
                 fxCount = cfg.fxN;
             } else {
                 fxCount = this.quality === 'high' ? 18 : 10;

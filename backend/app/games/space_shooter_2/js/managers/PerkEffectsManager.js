@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE, C_WHITE } from '../entities/LevelsThemes.js';
 import Explosion from '../entities/Explosion.js';
 import AllyController from './AllyController.js';
 
@@ -360,7 +361,7 @@ class PerkEffectsManager {
             ctx.fillStyle = '#88bbff';
             // Skip expensive shadowBlur on low/medium
             if (g.performanceMode === 'high') {
-                ctx.shadowColor = '#4488ff';
+                ctx.shadowColor = C_MEDIUM_BLUE;
                 ctx.shadowBlur = 8;
             }
             ctx.beginPath();
@@ -375,7 +376,7 @@ class PerkEffectsManager {
             ctx.lineTo(dx, dy);
             ctx.stroke();
 
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.beginPath();
             ctx.arc(dx, dy, 2, 0, Math.PI * 2);
             ctx.fill();

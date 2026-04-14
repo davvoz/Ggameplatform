@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE, C_WHITE } from '../LevelsThemes.js';
 // ═══════════════════════════════════════════════
 //  Quantum FX strategy — World 4: Quantum Realm
 //
@@ -23,7 +24,7 @@ const QUANTUM_FIELD_PALETTE = [
     { weight: 0.2, hue: [40, 30], sat: [60, 20], light: [16, 6, 5] }    // Gold boson
 ];
 
-const PARTICLE_TRAIL_COLORS = ['#4488ff', '#ff4488', '#44ff88', '#ffdd44', '#aa66ff', '#ff8844'];
+const PARTICLE_TRAIL_COLORS = [C_MEDIUM_BLUE, '#ff4488', '#44ff88', '#ffdd44', '#aa66ff', '#ff8844'];
 
 const FEYNMAN_STYLES = ['straight', 'wavy', 'dashed'];
 
@@ -337,7 +338,7 @@ export class QuantumFx extends BaseFxStrategy {
         // Center flash
         if (progress < 0.15) {
             ctx.globalAlpha = this.alpha * 0.6;
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.beginPath();
             ctx.arc(this.x, this.y, 3 * (1 - progress / 0.15), 0, Math.PI * 2);
             ctx.fill();
@@ -376,7 +377,7 @@ export class QuantumFx extends BaseFxStrategy {
         ctx.fill();
         // Highlight
         ctx.globalAlpha = this.alpha * 0.3 * shimmer;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath();
         ctx.arc(this.x - r * 0.3, this.y - r * 0.3, r * 0.15, 0, Math.PI * 2);
         ctx.fill();

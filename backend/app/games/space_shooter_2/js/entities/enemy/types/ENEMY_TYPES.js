@@ -1,3 +1,4 @@
+import { C_PERIWINKLE, C_GOLD } from '../../LevelsThemes.js';
 /**
  * Enemy types configuration
  */
@@ -108,7 +109,7 @@ const ENEMY_TYPES = {
     // Simulation exclusive — mirror ghost, copies player movement inversely
     mirror_ghost: {
         width: 48, height: 48, health: 2, speed: 85, score: 190,
-        color: '#ccccff', shootRate: 1.8, dropChance: 0.13,
+        color: C_PERIWINKLE, shootRate: 1.8, dropChance: 0.13,
         splits: true,
         w3behaviour: 'mirror' // mirrors player X position (opposite side of screen)
     },
@@ -136,7 +137,7 @@ const ENEMY_TYPES = {
     // W4 — creates a slowing field that grows over time; must kill before field covers screen
     higgs_field: {
         width: 56, height: 56, health: 5, speed: 30, score: 350,
-        color: '#ffd700', shootRate: 3, dropChance: 0.22,
+        color: C_GOLD, shootRate: 3, dropChance: 0.22,
         w4behaviour: 'massfield' // expanding aura that slows player bullets and player movement
     },
     // W4 — antimatter mirror twin: spawns alongside another enemy, must kill both within 2s or they reform

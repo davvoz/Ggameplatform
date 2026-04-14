@@ -1,3 +1,4 @@
+import { C_WHITE, C_PERIWINKLE } from '../LevelsThemes.js';
 import { BOSS_DEFS, MINIBOSS_DEFS } from '../Enemy.js';
 import BossPart from './BossPart.js';
 import Enemy from './TheEnemy.js';
@@ -573,7 +574,7 @@ class MultiBoss {
             this.centerX, this.centerY, 10,
             this.centerX, this.centerY, auraSize
         );
-        entryAura.addColorStop(0, '#ffffff');
+        entryAura.addColorStop(0, C_WHITE);
         entryAura.addColorStop(0.3, this.def.color);
         entryAura.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = entryAura;
@@ -711,14 +712,14 @@ class MultiBoss {
         if (this._reflectActive) {
             ctx.save();
             ctx.globalAlpha = 0.3;
-            ctx.strokeStyle = '#ccccff';
+            ctx.strokeStyle = C_PERIWINKLE;
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.arc(this.centerX, this.centerY, 90, 0, Math.PI * 2);
             ctx.stroke();
             ctx.font = mono(8);
-            ctx.fillStyle = '#ccccff';
+            ctx.fillStyle = C_PERIWINKLE;
             ctx.globalAlpha = 0.8;
             ctx.textAlign = 'center';
             ctx.setLineDash([]);
@@ -795,7 +796,7 @@ class MultiBoss {
                 const px = cx + Math.cos(a) * dist;
                 const py = cy + Math.sin(a) * dist * 0.5;
                 ctx.globalAlpha = 0.3 * (1 - distFactor) * riftOpen;
-                ctx.fillStyle = i % 3 === 0 ? '#ffffff' : col;
+                ctx.fillStyle = i % 3 === 0 ? C_WHITE : col;
                 ctx.beginPath();
                 ctx.arc(px, py, 1.5 + Math.sin(t * 8 + i) * 0.8, 0, TAU);
                 ctx.fill();

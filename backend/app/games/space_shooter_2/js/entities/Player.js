@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE, C_GOLD } from './LevelsThemes.js';
 import GameObject from '../../../shared/GameObject.js';
 
 /**
@@ -15,7 +16,7 @@ import GameObject from '../../../shared/GameObject.js';
         id: 'vanguard',
         name: 'Vanguard',
         description: 'Balanced all-rounder. No glaring weaknesses, no outstanding strengths.',
-        color: '#4488ff',
+        color: C_MEDIUM_BLUE,
         stats: { hp: 5, speed: 5, resist: 5, fireRate: 5 }
     },
     interceptor: {
@@ -65,7 +66,7 @@ import GameObject from '../../../shared/GameObject.js';
         name: 'Invincibility',
         icon: '◆',
         description: 'Become invincible for 6 seconds. Charge freezes during effect.',
-        color: '#ffd700',
+        color: C_GOLD,
         chargeNeeded: 100
     },
     time_warp: {
@@ -994,7 +995,7 @@ class Player extends GameObject {
 
             // Outer golden ring
             ctx.globalAlpha = pulse * 0.9;
-            ctx.strokeStyle = '#ffd700';
+            ctx.strokeStyle = C_GOLD;
             ctx.lineWidth = 3;
             ctx.shadowColor = '#ffaa00';
             ctx.shadowBlur = 15;
@@ -1023,7 +1024,7 @@ class Player extends GameObject {
                 const px = cx + Math.cos(angle) * dist;
                 const py = cy + Math.sin(angle) * dist - 5 * Math.sin(now * 0.003 + i);
                 ctx.globalAlpha = pulse * 0.7;
-                ctx.fillStyle = '#ffd700';
+                ctx.fillStyle = C_GOLD;
                 ctx.beginPath();
                 ctx.arc(px, py, 1.5 + Math.sin(now * 0.01 + i) * 0.5, 0, Math.PI * 2);
                 ctx.fill();

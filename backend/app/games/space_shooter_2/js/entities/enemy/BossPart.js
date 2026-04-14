@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE, C_WHITE } from '../LevelsThemes.js';
 
 // ============================================================
 //  MULTI-PART BOSS SYSTEM
@@ -188,7 +189,7 @@ class BossPart {
             ctx.drawImage(sprite, this.worldX - 4, this.worldY - 4, this.width + 8, this.height + 8);
         } else {
             // Fallback colored shape
-            const notATurretValue =  this.role === 'shield' ? '#4488ff' : '#cc6633';
+            const notATurretValue =  this.role === 'shield' ? C_MEDIUM_BLUE : '#cc6633';
             const notCoreValue = this.role === 'turret' ? '#ffaa33' : notATurretValue;
             ctx.fillStyle = this.isCore ? '#ff2244' : notCoreValue;
             ctx.beginPath();
@@ -203,7 +204,7 @@ class BossPart {
         if (this.hitFlash > 0) {
             ctx.globalAlpha = this.hitFlash * 0.5;
             ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.beginPath();
             ctx.arc(cx, cy, this.width / 2, 0, Math.PI * 2);
             ctx.fill();

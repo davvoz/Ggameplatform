@@ -44,7 +44,7 @@ export class JunglePlanetRenderer extends PlanetRenderer {
                 cx = Math.max(-maxWander, Math.min(maxWander, cx));
                 points.push({ x: cx, y: (i + 1) * segH });
             }
-            const totalRiverH = points[points.length - 1].y;
+            const totalRiverH = points.at(-1).y;
             const wc = Math.random();
             const hue = wc < 0.5 ? 190 + Math.random() * 15 : 175 + Math.random() * 15;
             const sat = 28 + Math.random() * 15;
@@ -58,8 +58,8 @@ export class JunglePlanetRenderer extends PlanetRenderer {
         const baseCount = jcfg ? jcfg.edgeN : 14;
         const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
         const eR = jcfg ? jcfg.edgeReach : [25, 45];
-        const eH = jcfg && jcfg.edgeHue ? jcfg.edgeHue : [108, 138];
-        const eL = jcfg && jcfg.edgeLit ? jcfg.edgeLit : [14, 22];
+        const eH = jcfg?.edgeHue ? jcfg.edgeHue : [108, 138];
+        const eL = jcfg?.edgeLit ? jcfg.edgeLit : [14, 22];
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];

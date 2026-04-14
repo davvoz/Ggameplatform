@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE } from './entities/LevelsThemes.js';
 /**
  * WorldConfig — Central registry for world metadata.
  *
@@ -21,7 +22,7 @@ const WORLDS = [
         name: 'Deep Space',
         subtitle: 'INTO THE VOID',
         icon: '◆',
-        themeColor: '#4488ff',
+        themeColor: C_MEDIUM_BLUE,
         bossIds: [1, 2, 3, 4, 5, 6],
         miniBossIds: [1, 2, 3, 4],
         planets: null

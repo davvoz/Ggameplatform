@@ -1,3 +1,4 @@
+import { C_WHITE, C_GOLD } from '../../entities/LevelsThemes.js';
 /**
  * LevelOutroCinematic — "LEVEL CLEAR!" celebration with zoom effect.
  *
@@ -113,7 +114,7 @@ export default class LevelOutroCinematic extends CinematicScene {
 
             const fontSize = Math.min(36, w * 0.085);
             ctx.font = title(fontSize, 'bold');
-            ctx.shadowColor = '#ffd700';
+            ctx.shadowColor = C_GOLD;
             ctx.shadowBlur  = 25;
             ctx.globalAlpha = textAlpha;
             ctx.strokeStyle = 'rgba(0,0,0,0.5)';
@@ -152,8 +153,8 @@ export default class LevelOutroCinematic extends CinematicScene {
                 const sy    = cy + Math.sin(angle) * dist;
                 const sz    = 2.5 + Math.sin(g.gameTime * 6 + i * 3) * 1.5;
                 ctx.globalAlpha = starAlpha * 0.85;
-                ctx.fillStyle   = '#ffffff';
-                ctx.shadowColor = '#ffd700';
+                ctx.fillStyle   = C_WHITE;
+                ctx.shadowColor = C_GOLD;
                 ctx.shadowBlur  = 6;
                 ctx.beginPath();
                 ctx.arc(sx, sy, sz, 0, Math.PI * 2);

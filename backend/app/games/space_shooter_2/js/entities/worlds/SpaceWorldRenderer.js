@@ -8,6 +8,7 @@
 import { WorldRenderer } from './WorldRenderer.js';
 import { Star } from './space/Star.js';
 import { Nebula } from './space/Nebula.js';
+import { FX_BLACKHOLE } from '../LevelsThemes.js';
 
 export class SpaceWorldRenderer extends WorldRenderer {
     constructor(canvasWidth, canvasHeight, quality) {
@@ -62,8 +63,7 @@ export class SpaceWorldRenderer extends WorldRenderer {
     // FX: default unsorted (inherited from WorldRenderer)
 
     renderPostFx(ctx, theme) {
-        // Black hole center glow
-        if (theme && theme.fx === 'blackhole') {
+        if (theme?.fx === FX_BLACKHOLE) {
             ctx.save();
             const cx = this.canvasWidth / 2, cy = this.canvasHeight / 2;
             const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 40);

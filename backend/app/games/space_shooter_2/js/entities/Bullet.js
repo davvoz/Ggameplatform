@@ -1,3 +1,4 @@
+import { C_WHITE, C_CREAM_YELLOW } from './LevelsThemes.js';
 import GameObject from '../../../shared/GameObject.js';
 
 /**
@@ -39,14 +40,14 @@ class Bullet extends GameObject {
 
         if (owner === 'player') {
             this.color = { r: 80, g: 200, b: 255 };
-            this.coreColor = '#ffffff';
+            this.coreColor = C_WHITE;
             this.midColor = '#66ccff';
             this.outerColor = '#2288dd';
             this.boltLength = 14;
             this.boltWidth = 5;
         } else {
             this.color = { r: 255, g: 70, b: 70 };
-            this.coreColor = '#ffffff';
+            this.coreColor = C_WHITE;
             this.midColor = '#ff6644';
             this.outerColor = '#cc2200';
             this.boltLength = 10;
@@ -131,7 +132,7 @@ class Bullet extends GameObject {
 
         // Quantum-boosted bullets: golden-electric palette + bigger bolt
         if (this._quantumBoosted && this.owner === 'player') {
-            this.coreColor = '#ffffcc';
+            this.coreColor = C_CREAM_YELLOW;
             this.midColor = '#ffdd44';
             this.outerColor = '#cc8800';
             this.color = { r: 255, g: 200, b: 60 };

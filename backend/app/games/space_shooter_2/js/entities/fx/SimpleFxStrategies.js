@@ -1,3 +1,4 @@
+import { C_WHITE } from '../LevelsThemes.js';
 // ═══════════════════════════════════════════════
 //  Simple (space) FX strategies
 //  asteroids · spores · embers · ice · shimmer
@@ -159,7 +160,7 @@ export class ShimmerFx extends BaseFxStrategy {
     }
 
     _render(ctx) {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
@@ -243,7 +244,7 @@ export class ScanlinesFx extends BaseFxStrategy {
     }
 
     _render(ctx, W) {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.fillRect(0, this.y, W, this.size);
     }
 }

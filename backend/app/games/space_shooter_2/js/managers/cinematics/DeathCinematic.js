@@ -1,3 +1,4 @@
+import { C_WHITE } from '../../entities/LevelsThemes.js';
 /**
  * DeathCinematic — explosion rings, debris, cracks, embers, glitch "GAME OVER".
  *
@@ -321,7 +322,7 @@ export default class DeathCinematic extends CinematicScene {
 
             ctx.shadowBlur = 0;
             ctx.globalAlpha = eased * textFade * 0.3;
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = C_WHITE;
             ctx.fillText(displayText, w / 2, titleY);
 
             /* underline */

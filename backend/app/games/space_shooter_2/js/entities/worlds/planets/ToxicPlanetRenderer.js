@@ -45,7 +45,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
                 cx = Math.max(-W * 0.2, Math.min(W * 0.2, cx));
                 points.push({ x: cx, y: (i + 1) * segH });
             }
-            const totalRiverH = points[points.length - 1].y;
+            const totalRiverH = points.at(-1).y;
             const hue = 90 + Math.random() * 30;
             const sat = 55 + Math.random() * 25;
             const light = 22 + Math.random() * 12;
@@ -126,9 +126,9 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         const baseCount = tcfg ? tcfg.edgeN : 12;
         const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
         const eR = tcfg ? tcfg.edgeReach : [25, 45];
-        const eH = tcfg && tcfg.edgeHue ? tcfg.edgeHue : [80, 120];
-        const eL = tcfg && tcfg.edgeLit ? tcfg.edgeLit : [12, 22];
-        const eS = tcfg && tcfg.edgeSat ? tcfg.edgeSat : [30, 55];
+        const eH = tcfg?.edgeHue ? tcfg.edgeHue : [80, 120];
+        const eL = tcfg?.edgeLit ? tcfg.edgeLit : [12, 22];
+        const eS = tcfg?.edgeSat ? tcfg.edgeSat : [30, 55];
         const positions = this._distributeEdgeElements(count, W, H);
         for (let i = 0; i < count; i++) {
             const pos = positions[i];
@@ -180,7 +180,7 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         // ─── Acid rain + toxic spore particles ───
         this._acidRainDrops = [];
         this._toxicSpores = [];
-        if (tcfg && tcfg.acidRain) {
+        if (tcfg?.acidRain) {
             const rainCount = this.quality === 'high'
                 ? (tcfg.acidRainCount || 30)
                 : Math.max(10, Math.round((tcfg.acidRainCount || 30) * 0.45));
@@ -477,7 +477,6 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         if (!this._toxicPools || this._toxicPools.length === 0) return;
         const H = this.canvasHeight;
         const scrollY = this._toxicPoolScrollY || 0;
-        const now = typeof time === 'number' ? time : performance.now() * 0.001;
         ctx.save();
         for (const pb of this._poolBubbles) {
             if (pb.poolIdx >= this._toxicPools.length) continue;

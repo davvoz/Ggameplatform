@@ -1,3 +1,4 @@
+import { C_MEDIUM_BLUE, C_SLATE } from '../../entities/LevelsThemes.js';
 
 import { outlineAndFill } from './Helper.js';
 
@@ -120,7 +121,7 @@ import { outlineAndFill } from './Helper.js';
         outlineAndFill(ctx, '#556677', '#111', 2);
         // Coil sphere
         ctx.beginPath(); ctx.arc(cx, cy, r*0.45, 0, Math.PI*2);
-        outlineAndFill(ctx, '#4488ff', '#111', 1.5);
+        outlineAndFill(ctx, C_MEDIUM_BLUE, '#111', 1.5);
         // Lightning bolts
         ctx.strokeStyle='#88ddff'; ctx.lineWidth=1.5;
         ctx.beginPath(); ctx.moveTo(cx,cy-r*0.4); ctx.lineTo(cx-r*0.4,cy-r*0.8);
@@ -154,7 +155,7 @@ import { outlineAndFill } from './Helper.js';
         for (const sx of [-1,1]) {
             ctx.beginPath();
             ctx.roundRect(cx+sx*r*0.3-r*0.2, cy-r, r*0.4, r*2, 3);
-            outlineAndFill(ctx, '#667788', '#111', 2);
+            outlineAndFill(ctx, C_SLATE, '#111', 2);
             // Barrel bore
             ctx.fillStyle='#222';
             ctx.beginPath(); ctx.arc(cx+sx*r*0.3, cy-r*0.8, r*0.15, 0, Math.PI*2); ctx.fill();
@@ -209,7 +210,7 @@ import { outlineAndFill } from './Helper.js';
         ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
         ctx.setLineDash([]);
         // Inner ghost circle
-        ctx.globalAlpha=0.3; ctx.fillStyle='#4488ff';
+        ctx.globalAlpha=0.3; ctx.fillStyle=C_MEDIUM_BLUE;
         ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.fill();
         ctx.globalAlpha=1;
         // Dashes

@@ -1,3 +1,4 @@
+import { C_PERIWINKLE, C_HOT_PINK, C_GOLD, C_VIVID_PURPLE, C_WHITE } from '../../LevelsThemes.js';
 // ============================================================
 //  BOSS DEFINITIONS — 6 unique boss configurations
 // ============================================================
@@ -652,7 +653,7 @@ const BOSS_DEFS = {
         score: 9000,
         speed: 42,
         movePattern: 'erratic',
-        color: '#ccccff',
+        color: C_PERIWINKLE,
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 85, height: 85, health: 260,
@@ -874,7 +875,7 @@ const BOSS_DEFS = {
         score: 8000,
         speed: 32,
         movePattern: 'weave',
-        color: '#ff3366',
+        color: C_HOT_PINK,
         w4ability: 'quarkConfinement',
         parts: [
             // Three quark cores — must all die within 5s or surviving ones regenerate
@@ -1040,7 +1041,7 @@ const BOSS_DEFS = {
         score: 12000,
         speed: 22,
         movePattern: 'slowSweep',
-        color: '#ffd700',
+        color: C_GOLD,
         w4ability: 'massWell',
         parts: [
             {
@@ -1088,7 +1089,7 @@ const BOSS_DEFS = {
         score: 13000,
         speed: 34,
         movePattern: 'erratic',
-        color: '#cc44ff',
+        color: C_VIVID_PURPLE,
         w4ability: 'antimatterMirror',
         parts: [
             // Matter core (left)
@@ -1143,7 +1144,7 @@ const BOSS_DEFS = {
         score: 16000,
         speed: 36,
         movePattern: 'erratic',
-        color: '#ffffff',
+        color: C_WHITE,
         w4ability: 'grandUnification',
         parts: [
             {

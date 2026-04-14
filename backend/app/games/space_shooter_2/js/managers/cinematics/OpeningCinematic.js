@@ -1,3 +1,4 @@
+import { C_WHITE, C_MEDIUM_BLUE } from '../../entities/LevelsThemes.js';
 /**
  * OpeningCinematic — World-aware title sequence.
  *
@@ -48,7 +49,7 @@ export default class OpeningCinematic extends CinematicScene {
 
         // Store world theme for rendering
         this.worldCfg = worldCfg;
-        this.themeColor = worldCfg.themeColor || '#4488ff';
+        this.themeColor = worldCfg.themeColor || C_MEDIUM_BLUE;
 
         // ── Build data-driven showcase phases ──
         // Unified order: SS2 title → Ships → World title → [Enemies (W4)] → Mini-Bosses → Bosses → Perks
@@ -319,7 +320,7 @@ export default class OpeningCinematic extends CinematicScene {
             if (t > 0.35 && t < 1) {
                 const ringT = (t - 0.35) / 0.65;
                 ctx.globalAlpha = (1 - ringT) * 0.25 * holdAlpha;
-                ctx.strokeStyle = '#4488ff';
+                ctx.strokeStyle = C_MEDIUM_BLUE;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.arc(baseX + spaceW / 2, cy - 15, ringT * w * 0.35, 0, Math.PI * 2);
@@ -341,7 +342,7 @@ export default class OpeningCinematic extends CinematicScene {
                     ctx.fillText('SPACE', baseX + spaceW / 2, w1y + abr);
                 }
                 ctx.globalAlpha = w1alpha;
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = C_WHITE;
                 ctx.fillText('SPACE', baseX + spaceW / 2, w1y);
             }
         }
@@ -370,7 +371,7 @@ export default class OpeningCinematic extends CinematicScene {
                     ctx.fillText('SHOOTER', w2x + gx + abr, cy - 15 + gy);
                 }
                 ctx.globalAlpha = w2alpha;
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = C_WHITE;
                 ctx.fillText('SHOOTER', w2x + gx, cy - 15 + gy);
             }
         }
@@ -385,7 +386,7 @@ export default class OpeningCinematic extends CinematicScene {
             if ((t - 1.6) < 0.15) {
                 const flashA = (1 - (t - 1.6) / 0.15) * 0.5;
                 ctx.globalAlpha = flashA;
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = C_WHITE;
                 ctx.fillRect(0, 0, w, h);
             }
 
@@ -393,7 +394,7 @@ export default class OpeningCinematic extends CinematicScene {
                 const burstT = ((t - 1.6) - 0.1) / 0.6;
                 const lineW2 = w * easeOut(burstT);
                 ctx.globalAlpha = (1 - burstT) * 0.6 * holdAlpha;
-                ctx.fillStyle = '#4488ff';
+                ctx.fillStyle = C_MEDIUM_BLUE;
                 ctx.fillRect(cx - lineW2 / 2, cy - 16, lineW2, 3);
             }
 
@@ -406,7 +407,7 @@ export default class OpeningCinematic extends CinematicScene {
                 ctx.shadowColor = 'rgba(68,136,255,0.9)';
                 ctx.shadowBlur = 40 * w3alpha;
                 ctx.globalAlpha = w3alpha;
-                ctx.fillStyle = '#4488ff';
+                ctx.fillStyle = C_MEDIUM_BLUE;
                 ctx.fillText('2', 0, 0);
                 ctx.restore();
             }
@@ -522,7 +523,7 @@ export default class OpeningCinematic extends CinematicScene {
                 ctx.globalAlpha = nameAlpha;
                 ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.9)`;
                 ctx.shadowBlur = 35 * nameAlpha;
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = C_WHITE;
                 ctx.fillText(nameText, cx, nameY);
             }
         }
@@ -641,7 +642,7 @@ export default class OpeningCinematic extends CinematicScene {
         ctx.font = title(txtSize, 'bold');
         ctx.shadowColor = this.worldNum === 1 ? 'rgba(255,255,255,0.5)' : `rgba(68,255,136,0.6)`;
         ctx.shadowBlur = 12;
-        ctx.fillStyle = this.worldNum === 1 ? '#ffffff' : this.themeColor;
+        ctx.fillStyle = this.worldNum === 1 ? C_WHITE : this.themeColor;
         const perkTitle = this.worldNum === 1 ? 'UPGRADE YOUR SHIP' : 'NEW PERKS UNLOCKED';
         ctx.fillText(perkTitle, cx, titleY);
         ctx.shadowBlur = 0;
@@ -684,7 +685,7 @@ export default class OpeningCinematic extends CinematicScene {
                 ctx.globalAlpha = alpha * glowAmount * 0.5;
                 const glowR = 22;
                 const glowGrd = ctx.createRadialGradient(ix, iy, 0, ix, iy, glowR);
-                glowGrd.addColorStop(0, '#ffffff');
+                glowGrd.addColorStop(0, C_WHITE);
                 glowGrd.addColorStop(0.4, '#bbbbbb');
                 glowGrd.addColorStop(1, 'transparent');
                 ctx.fillStyle = glowGrd;
@@ -696,9 +697,9 @@ export default class OpeningCinematic extends CinematicScene {
 
             const iSize = Math.min(22, w * 0.048) * iconScale;
             ctx.font = mono(iSize, 400);
-            ctx.fillStyle = tST >= 0 ? '#ffffff' : '#333333';
+            ctx.fillStyle = tST >= 0 ? C_WHITE : '#333333';
             if (tST >= 0 && glowAmount > 0.1) {
-                ctx.shadowColor = '#ffffff';
+                ctx.shadowColor = C_WHITE;
                 ctx.shadowBlur = 12 * glowAmount;
             }
             ctx.fillText(perk.icon, ix, iy);

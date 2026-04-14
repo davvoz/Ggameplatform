@@ -11,6 +11,10 @@
  *   3. Add LevelsThemes entries with the matching fx key
  */
 import { WorldRenderer } from './WorldRenderer.js';
+import {
+    FX_JUNGLE, FX_VOLCANIC, FX_FROZEN,
+    FX_DESERT, FX_MECHANICAL, FX_TOXIC
+} from '../LevelsThemes.js';
 import { JunglePlanetRenderer } from './planets/JunglePlanetRenderer.js';
 import { VolcanicPlanetRenderer } from './planets/VolcanicPlanetRenderer.js';
 import { FrozenPlanetRenderer } from './planets/FrozenPlanetRenderer.js';
@@ -27,12 +31,12 @@ export class PlanetWorldRenderer extends WorldRenderer {
          * Add new planet types here.
          */
         this.planetRenderers = {
-            jungle:     new JunglePlanetRenderer(canvasWidth, canvasHeight, quality),
-            volcanic:   new VolcanicPlanetRenderer(canvasWidth, canvasHeight, quality),
-            frozen:     new FrozenPlanetRenderer(canvasWidth, canvasHeight, quality),
-            desert:     new DesertPlanetRenderer(canvasWidth, canvasHeight, quality),
-            mechanical: new MechanicalPlanetRenderer(canvasWidth, canvasHeight, quality),
-            toxic:      new ToxicPlanetRenderer(canvasWidth, canvasHeight, quality),
+            [FX_JUNGLE]:     new JunglePlanetRenderer(canvasWidth, canvasHeight, quality),
+            [FX_VOLCANIC]:   new VolcanicPlanetRenderer(canvasWidth, canvasHeight, quality),
+            [FX_FROZEN]:     new FrozenPlanetRenderer(canvasWidth, canvasHeight, quality),
+            [FX_DESERT]:     new DesertPlanetRenderer(canvasWidth, canvasHeight, quality),
+            [FX_MECHANICAL]: new MechanicalPlanetRenderer(canvasWidth, canvasHeight, quality),
+            [FX_TOXIC]:      new ToxicPlanetRenderer(canvasWidth, canvasHeight, quality),
         };
 
         /** Currently active planet renderer (null if none matched). */
@@ -63,7 +67,7 @@ export class PlanetWorldRenderer extends WorldRenderer {
     }
 
     renderFx(ctx, fxParticles, time) {
-        if (this._activePlanet && this._activePlanet.fxLayerOrder) {
+        if (this._activePlanet?.fxLayerOrder) {
             this._renderFxSorted(ctx, fxParticles, this._activePlanet.fxLayerOrder);
         } else {
             super.renderFx(ctx, fxParticles, time);

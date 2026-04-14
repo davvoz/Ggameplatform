@@ -1,3 +1,4 @@
+import { C_SLATE } from './entities/LevelsThemes.js';
 /**
  * PerkSystem - Roguelike tactical perk/build system
  *
@@ -8,7 +9,7 @@
 
 // ─── Rarity tiers with selection weights ───
 const PERK_RARITY = {
-    common:    { label: 'Common',    color: '#aabbcc', glow: '#8899aa', border: '#667788', weight: 50 },
+    common:    { label: 'Common',    color: '#aabbcc', glow: '#8899aa', border: C_SLATE, weight: 50 },
     rare:      { label: 'Rare',      color: '#4499ff', glow: '#2266dd', border: '#3377ee', weight: 28 },
     epic:      { label: 'Epic',      color: '#bb55ff', glow: '#8822dd', border: '#9933ee', weight: 14 },
     legendary: { label: 'Legendary', color: '#ffaa00', glow: '#ff8800', border: '#ffbb33', weight: 5  }

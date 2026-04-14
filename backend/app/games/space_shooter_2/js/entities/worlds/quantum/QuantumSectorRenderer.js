@@ -2,7 +2,7 @@
 // Centralized definition: add/remove/tweak zone types here only.
 // weight = relative spawn chance, timerRange = [min, max] seconds.
 const ZONE_TYPES = [
-    { type: 'safe',       weight: 3, timerRange: [2.0, 3.0], intensity: 0.7  },
+    { type: 'safe',       weight: 3, timerRange: [2, 3], intensity: 0.7  },
     { type: 'danger',     weight: 3, timerRange: [1.5, 2.5], intensity: 0.7  },
     { type: 'info',       weight: 2, timerRange: [2.5, 3.5], intensity: 0.6  },
    // { type: 'distortion', weight: 1, timerRange: [1.5, 3.0], intensity: 0.6  },
@@ -16,7 +16,7 @@ for (const z of ZONE_TYPES) for (let i = 0; i < z.weight; i++) _ZONE_POOL.push(z
 // progression 0.0 (lvl 91) → 1.0 (lvl 120)
 // Early levels: zones rarer & weaker. Late levels: frequent & strong.
 const COOLDOWN_MULT_RANGE = [2.5, 0.7];   // early ×2.5 slower, late ×0.7 faster
-const INTENSITY_MULT_RANGE = [0.5, 1.0];   // early 50%, late 100%
+const INTENSITY_MULT_RANGE = [0.5, 1];   // early 50%, late 100%
 const TIMER_MULT_RANGE = [0.7, 1.2];       // early shorter zones, late longer
 
 function _lerp(a, b, t) { return a + (b - a) * t; }

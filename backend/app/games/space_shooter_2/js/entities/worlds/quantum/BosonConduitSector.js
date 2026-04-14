@@ -46,7 +46,8 @@ export class BosonConduitSector extends QuantumSectorRenderer {
                 s.y = -50;
                 s.x = Math.random() * this.canvasWidth;
             }
-            if (!s.flashing) {
+            const notFlashing = !s.flashing;
+            if (notFlashing) {
                 s.flashTimer -= dt;
                 if (s.flashTimer <= 0) {
                     s.flashing = true;
@@ -63,5 +64,7 @@ export class BosonConduitSector extends QuantumSectorRenderer {
         }
     }
 
-    renderBg(ctx) {}
+    renderBg(ctx) {
+        //nothing to do here — the parent class renders the quantum distortion background
+    }
 }

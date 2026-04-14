@@ -1,3 +1,4 @@
+import { C_WHITE, C_CREAM_YELLOW, C_GOLD, C_MEDIUM_BLUE } from '../../LevelsThemes.js';
 /**
  * QuantumSprites — Rich procedural cartoon sprites for World 4 enemies.
  *
@@ -22,7 +23,7 @@ const TAU = Math.PI * 2;
 function glossyGrad(ctx, cx, cy, r, baseColor, lightColor) {
     const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.05,
         cx, cy, r);
-    g.addColorStop(0, lightColor || '#ffffff');
+    g.addColorStop(0, lightColor || C_WHITE);
     g.addColorStop(0.25, baseColor);
     g.addColorStop(1, darken(baseColor, 0.4));
     return g;
@@ -277,7 +278,7 @@ function drawCrackedMouth(ctx, cx, cy, w, t, color) {
     // Sharp fang highlights
     ctx.shadowBlur = 0;
     ctx.globalAlpha = 0.7;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     for (let i = 1; i < segments; i += 2) {
         const frac = i / segments;
         const px = cx - mouthW + frac * mouthW * 2;
@@ -582,7 +583,7 @@ function drawBosonCarrier(ctx, options) {
         const px = cx + Math.cos(angle) * r * 0.7;
         const py = cy + Math.sin(angle) * r * 0.7;
         ctx.globalAlpha = 0.6;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.beginPath();
         ctx.arc(px, py, 2, 0, TAU);
         ctx.fill();
@@ -605,7 +606,7 @@ function drawBosonCarrier(ctx, options) {
     ctx.save();
     ctx.globalAlpha = 0.25 + 0.1 * Math.sin(t * 5);
     ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = '#ffffcc';
+    ctx.fillStyle = C_CREAM_YELLOW;
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.3, 0, TAU);
     ctx.fill();
@@ -682,7 +683,7 @@ function drawHiggsField(ctx, options) {
     ctx.globalAlpha = 0.06;
     for (let ring = 0; ring < 5; ring++) {
         const ringR = r * 0.7 + ring * r * 0.25 + Math.sin(t * 1.5 + ring) * 3;
-        ctx.strokeStyle = '#ffd700';
+        ctx.strokeStyle = C_GOLD;
         ctx.lineWidth = 1 + (4 - ring) * 0.4;
         ctx.beginPath();
         ctx.arc(cx, cy, ringR, 0, TAU);
@@ -694,7 +695,7 @@ function drawHiggsField(ctx, options) {
     ctx.save();
     ctx.globalAlpha = 0.1;
     const potGrad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r * 1.8);
-    potGrad.addColorStop(0, '#ffd700');
+    potGrad.addColorStop(0, C_GOLD);
     potGrad.addColorStop(0.3, 'rgba(255,215,0,0.02)');
     potGrad.addColorStop(0.5, 'rgba(255,215,0,0.08)');
     potGrad.addColorStop(0.7, 'rgba(255,215,0,0.02)');
@@ -719,7 +720,7 @@ function drawHiggsField(ctx, options) {
         ctx.fill();
         // Connecting line to center
         ctx.globalAlpha = 0.08;
-        ctx.strokeStyle = '#ffd700';
+        ctx.strokeStyle = C_GOLD;
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         ctx.moveTo(cx, cy);
@@ -730,7 +731,7 @@ function drawHiggsField(ctx, options) {
 
     // Main body — large golden sphere with crown-like rim
     ctx.save();
-    ctx.fillStyle = glossyGrad(ctx, cx, cy, r * 0.5, '#ffc800', '#ffffcc');
+    ctx.fillStyle = glossyGrad(ctx, cx, cy, r * 0.5, '#ffc800', C_CREAM_YELLOW);
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.5, 0, TAU);
     ctx.fill();
@@ -741,7 +742,7 @@ function drawHiggsField(ctx, options) {
 
     // Crown bumps (regal look)
     ctx.save();
-    ctx.fillStyle = '#ffd700';
+    ctx.fillStyle = C_GOLD;
     for (let i = 0; i < 5; i++) {
         const angle = -Math.PI + TAU / 5 * i - TAU * 0.1;
         const bx = cx + Math.cos(angle) * r * 0.48;
@@ -780,8 +781,8 @@ function drawHiggsField(ctx, options) {
         ctx.lineTo(exi, eyeY2 + r * 0.05);
         ctx.closePath(); ctx.fill();
         // Glowing golden iris — intense, pulsing
-        ctx.fillStyle = '#ffd700';
-        ctx.shadowColor = '#ffd700';
+        ctx.fillStyle = C_GOLD;
+        ctx.shadowColor = C_GOLD;
         ctx.shadowBlur = 6;
         ctx.globalAlpha = 0.8 + 0.2 * Math.sin(t * 4 + side);
         ctx.beginPath();
@@ -815,7 +816,7 @@ function drawHiggsField(ctx, options) {
     ctx.strokeStyle = '#8B6914';
     ctx.lineWidth = 2;
     ctx.globalAlpha = 0.75;
-    ctx.shadowColor = '#ffd700';
+    ctx.shadowColor = C_GOLD;
     ctx.shadowBlur = 3;
     ctx.beginPath();
     ctx.moveTo(cx - r * 0.12, cy + r * 0.12);
@@ -826,7 +827,7 @@ function drawHiggsField(ctx, options) {
     // "H" label
     ctx.save();
     ctx.globalAlpha = 0.2;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.font = `bold ${Math.floor(r * 0.2)}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -854,7 +855,7 @@ function drawPositronMirror(ctx, options) {
         const sparkSize = 1.5 + Math.sin(t * 10 + i * 2) * 1;
         const jitterX = Math.sin(t * 8 + i * 3) * 3;
         const jitterY = Math.cos(t * 7 + i * 2) * 3;
-        ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#ff88cc';
+        ctx.fillStyle = i % 2 === 0 ? C_WHITE : '#ff88cc';
         ctx.beginPath();
         ctx.arc(sx + jitterX, sy + jitterY, sparkSize, 0, TAU);
         ctx.fill();
@@ -867,7 +868,7 @@ function drawPositronMirror(ctx, options) {
     ctx.arc(cx, cy, r * 0.55, splitAngle - Math.PI / 2, splitAngle + Math.PI / 2);
     ctx.closePath();
     ctx.clip();
-    ctx.fillStyle = glossyGrad(ctx, cx - r * 0.15, cy, r * 0.55, '#4488ff', '#aaccff');
+    ctx.fillStyle = glossyGrad(ctx, cx - r * 0.15, cy, r * 0.55, C_MEDIUM_BLUE, '#aaccff');
     ctx.beginPath();
     ctx.arc(cx, cy, r * 0.55, 0, TAU);
     ctx.fill();
@@ -888,9 +889,9 @@ function drawPositronMirror(ctx, options) {
     // Dividing line (annihilation boundary)
     ctx.save();
     ctx.globalAlpha = 0.7;
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = C_WHITE;
     ctx.lineWidth = 2;
-    ctx.shadowColor = '#ffffff';
+    ctx.shadowColor = C_WHITE;
     ctx.shadowBlur = 6;
     ctx.beginPath();
     ctx.moveTo(cx + Math.cos(splitAngle + Math.PI / 2) * r * 0.55,
@@ -958,7 +959,7 @@ function drawPositronMirror(ctx, options) {
     ctx.fill();
     // Razor fangs
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = C_WHITE;
     ctx.globalAlpha = 0.85;
     const teeth = [[-0.1, 0.09], [-0.03, 0.06], [0.04, 0.1], [0.1, 0.06]];
     for (const [tx, ty] of teeth) {

@@ -1,3 +1,4 @@
+import { C_WHITE, C_GOLD } from '../entities/LevelsThemes.js';
 import { getLevelData } from '../LevelDataFacade.js';
 import { ui, mono } from '../FontConfig.js';
 
@@ -18,7 +19,7 @@ class HUDRenderer {
         ctx.fillStyle = 'rgba(0,0,0,0.4)';
         ctx.fillRect(0, 0, w, 36);
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.font = ui(14 * fs, 'bold');
         ctx.textAlign = 'left';
         ctx.fillText(`SCORE: ${g.scoreManager.score.toLocaleString()}`, 10, 24);
@@ -84,7 +85,7 @@ class HUDRenderer {
             ctx.fillStyle = 'rgba(0,0,0,0.5)';
             ctx.fillRect(ultBarX, ultBarY, ultBarW, ultBarH);
 
-            const ultColor = charge >= 1 ? '#ffd700' : '#8866cc';
+            const ultColor = charge >= 1 ? C_GOLD : '#8866cc';
             ctx.fillStyle = ultColor;
             ctx.fillRect(ultBarX, ultBarY, ultBarW * charge, ultBarH);
             ctx.strokeStyle = '#ffffff33';

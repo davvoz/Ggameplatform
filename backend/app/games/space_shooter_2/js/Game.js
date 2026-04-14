@@ -670,9 +670,9 @@ class Game {
         this._resetSystems();
 
         // Set starting level based on selected world (each world = 30 levels)
-        // globalThis.DEBUG_START_LEVEL = 115; // : TEMP TEST — remove after testing
+        //globalThis.DEBUG_START_LEVEL = 105; // : TEMP TEST — remove after testing
         //piazziamo il numero giusto di perks in base al globalThis.DEBUG_START_LEVEL, così se si inizia da un mondo avanzato si hanno già i perks sbloccati nei mondi precedenti
-        //for (let i = 0; i < 25; i++) {
+        // for (let i = 0; i < 25; i++) {
         //  this.perkSystem.grantPerk();
         // }
 
@@ -1169,5 +1169,5 @@ class Game {
     }
 }
 
-export { DIFFICULTY_CONFIG };
+
 export default Game;

@@ -1,3 +1,4 @@
+import { C_PERIWINKLE } from '../../LevelsThemes.js';
 // ============================================================
 //  MINI-BOSS DEFINITIONS — 4 unique mini-boss types
 //  Smaller, fewer parts, no epic entrance. Cycle through levels.
@@ -314,7 +315,7 @@ const MINIBOSS_DEFS = {
         score: 540,
         speed: 48,
         movePattern: 'chase',
-        color: '#ccccff',
+        color: C_PERIWINKLE,
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 55, height: 55, health: 40,

@@ -80,5 +80,7 @@ export class QuarkLatticeSector extends QuantumSectorRenderer {
         }
     }
 
-    renderBg(ctx) {}
+    renderBg(ctx) {
+        //nothing to do here — the parent class renders the quantum distortion background
+    }
 }

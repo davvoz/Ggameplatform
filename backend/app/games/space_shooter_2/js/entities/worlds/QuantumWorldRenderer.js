@@ -1,3 +1,4 @@
+import { C_WHITE } from '../LevelsThemes.js';
 /**
  * QuantumWorldRenderer — World 4 (Levels 91-120)
  *
@@ -24,10 +25,10 @@ const FX_LAYER_ORDER = {
 };
 
 function _sector(energy) {
-    if (energy <= 0.20) return 1;
-    if (energy <= 0.40) return 2;
-    if (energy <= 0.60) return 3;
-    if (energy <= 0.80) return 4;
+    if (energy <= 0.2) return 1;
+    if (energy <= 0.4) return 2;
+    if (energy <= 0.6) return 3;
+    if (energy <= 0.8) return 4;
     if (energy <= 0.92) return 5;
     return 6;
 }
@@ -51,7 +52,7 @@ export class QuantumWorldRenderer extends WorldRenderer {
         this._sectorRenderer = null;
 
         // Active background state (exposed for gameplay interaction)
-        this.activeZones = [];   // { x, y, radius, type, intensity, timer }
+        this.activeZones = [];
 
         // Player position (for gameplay zone interaction)
         this.playerX = 0;
@@ -67,7 +68,7 @@ export class QuantumWorldRenderer extends WorldRenderer {
     // ── lifecycle ──────────────────────────────────
 
     build(theme, level) {
-        const qc = (theme && theme.quantumConfig) || {};
+        const qc = (theme?.quantumConfig) || {};
         this.energy = qc.energy || 0;
         this.fieldHue = qc.fieldHue || 240;
         this.sector = _sector(this.energy);
@@ -106,6 +107,7 @@ export class QuantumWorldRenderer extends WorldRenderer {
     }
 
     renderPostFx(ctx) {
+        //keeping this empty to disable default post-FX rendering (e.g. planet glows) since Quantum World doesn't use it
     }
 
     // ════════════════════════════════════════════════
@@ -188,7 +190,7 @@ export class QuantumWorldRenderer extends WorldRenderer {
 
         // Center icon
         ctx.globalAlpha = a0 * 0.7;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = C_WHITE;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.font = 'bold 11px monospace';
@@ -207,30 +209,68 @@ export class QuantumWorldRenderer extends WorldRenderer {
     // ── Standard zone rendering (safe/danger/distortion) ──
     _renderStandardZone(ctx, z, t, fade) {
         const pulse = 0.5 + 0.5 * Math.sin(t * 4);
-        const col = z.type === 'safe' ? '255,200,60' :
-            z.type === 'danger' ? '255,60,60' : '200,80,255';
-        const solidCol = z.type === 'safe' ? '#ffc83c' :
-            z.type === 'danger' ? '#ff3c3c' : '#c850ff';
+        const a = z.type === 'danger' ? '255,60,60' : '200,80,255';
+        const col = z.type === 'safe' ? '255,200,60' : a;
+        const b = z.type === 'danger' ? '#ff3c3c' : '#c850ff';
+        const solidCol = z.type === 'safe' ? '#ffc83c' : b;
 
         // Filled zone area
-        ctx.globalAlpha = z.intensity * fade * 0.18;
-        ctx.fillStyle = `rgba(${col},0.3)`;
-        ctx.beginPath();
-        if (z.type === 'distortion') {
-            for (let a = 0; a < Math.PI * 2; a += 0.15) {
-                const warp = 1 + 0.08 * Math.sin(a * 7 + t * 3) + 0.05 * Math.cos(a * 3 - t * 5);
-                const r = z.radius * warp;
-                const px = z.x + Math.cos(a) * r;
-                const py = z.y + Math.sin(a) * r;
-                a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-            }
-            ctx.closePath();
-        } else {
-            ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
-        }
-        ctx.fill();
+        this.renderZoneFill(ctx, z, fade, col, t);
 
         // Solid animated border
+        this.renderAnimatedBorder(ctx, z, fade, pulse, solidCol, t);
+
+        // Zone label
+        const { fontSize, effects, subSize } = this.renderQuantumWorldEffects(z, ctx, fade, solidCol);
+
+        // Timer bar
+        this.renderTimerBar(z, fontSize, effects, subSize, ctx, fade, solidCol);
+    }
+
+
+    renderTimerBar(z, fontSize, effects, subSize, ctx, fade, solidCol) {
+        const barW = z.radius * 0.8;
+        const barX = z.x - barW / 2;
+        const barY = z.y + fontSize * 0.5 + effects.length * (subSize + 2) + 6;
+        const timerRatio = Math.min(1, z.timer / 4);
+
+        ctx.globalAlpha = z.intensity * fade * 0.3;
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(barX, barY, barW, 3);
+        ctx.globalAlpha = z.intensity * fade * 0.6;
+        ctx.fillStyle = solidCol;
+        ctx.fillRect(barX, barY, barW * timerRatio, 3);
+    }
+
+    renderQuantumWorldEffects(z, ctx, fade, solidCol) {
+        const fontSize = Math.max(10, Math.floor(z.radius * 0.18));
+        const subSize = Math.max(8, Math.floor(z.radius * 0.13));
+        let label, effects;
+        if (z.type === 'safe') {
+            label = '⚔ RAPID FIRE'; effects = ['ATK SPEED ×2'];
+        } else if (z.type === 'danger') {
+            label = '⚠ DANGER'; effects = ['▼ SPD −40%', '☠ DMG/2s'];
+        } else {
+            label = '⌬ DISTORTION'; effects = ['FOE FREEZE', '☆ DMG ×1.5'];
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = z.intensity * fade * 0.85;
+        ctx.fillStyle = C_WHITE;
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.fillText(label, z.x, z.y - subSize * 0.8);
+
+        ctx.globalAlpha = z.intensity * fade * 0.6;
+        ctx.fillStyle = solidCol;
+        ctx.font = `${subSize}px monospace`;
+        for (let i = 0; i < effects.length; i++) {
+            ctx.fillText(effects[i], z.x, z.y + fontSize * 0.5 + i * (subSize + 2));
+        }
+        return { fontSize, effects, subSize };
+    }
+
+    renderAnimatedBorder(ctx, z, fade, pulse, solidCol, t) {
         ctx.globalAlpha = z.intensity * fade * (0.5 + pulse * 0.25);
         ctx.strokeStyle = solidCol;
         ctx.lineWidth = 2.5;
@@ -256,45 +296,24 @@ export class QuantumWorldRenderer extends WorldRenderer {
             ctx.stroke();
             ctx.setLineDash([]);
         }
-
-        // Zone label
-        const fontSize = Math.max(10, Math.floor(z.radius * 0.18));
-        const subSize = Math.max(8, Math.floor(z.radius * 0.13));
-        let label, effects;
-        if (z.type === 'safe') {
-            label = '⚔ RAPID FIRE';  effects = ['ATK SPEED ×2'];
-        } else if (z.type === 'danger') {
-            label = '⚠ DANGER';  effects = ['▼ SPD −40%', '☠ DMG/2s'];
-        } else {
-            label = '⌬ DISTORTION';  effects = ['FOE FREEZE', '☆ DMG ×1.5'];
-        }
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.globalAlpha = z.intensity * fade * 0.85;
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${fontSize}px monospace`;
-        ctx.fillText(label, z.x, z.y - subSize * 0.8);
-
-        ctx.globalAlpha = z.intensity * fade * 0.6;
-        ctx.fillStyle = solidCol;
-        ctx.font = `${subSize}px monospace`;
-        for (let i = 0; i < effects.length; i++) {
-            ctx.fillText(effects[i], z.x, z.y + fontSize * 0.5 + i * (subSize + 2));
-        }
-
-        // Timer bar
-        const barW = z.radius * 0.8;
-        const barX = z.x - barW / 2;
-        const barY = z.y + fontSize * 0.5 + effects.length * (subSize + 2) + 6;
-        const timerRatio = Math.min(1, z.timer / 4);
-
-        ctx.globalAlpha = z.intensity * fade * 0.3;
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-        ctx.fillRect(barX, barY, barW, 3);
-        ctx.globalAlpha = z.intensity * fade * 0.6;
-        ctx.fillStyle = solidCol;
-        ctx.fillRect(barX, barY, barW * timerRatio, 3);
     }
 
+    renderZoneFill(ctx, z, fade, col, t) {
+        ctx.globalAlpha = z.intensity * fade * 0.18;
+        ctx.fillStyle = `rgba(${col},0.3)`;
+        ctx.beginPath();
+        if (z.type === 'distortion') {
+            for (let a = 0; a < Math.PI * 2; a += 0.15) {
+                const warp = 1 + 0.08 * Math.sin(a * 7 + t * 3) + 0.05 * Math.cos(a * 3 - t * 5);
+                const r = z.radius * warp;
+                const px = z.x + Math.cos(a) * r;
+                const py = z.y + Math.sin(a) * r;
+                a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+        } else {
+            ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+        }
+        ctx.fill();
+    }
 }

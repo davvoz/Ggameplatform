@@ -5,7 +5,7 @@ export class Nebula {
         this.y = -200 - Math.random() * 300;
         this.radius = 80 + Math.random() * 150;
         this.speed = 5 + Math.random() * 8;
-        const colors = (theme && theme.nebula) ? theme.nebula : Nebula.DEFAULT_COLORS;
+        const colors = theme?.nebula ? theme.nebula : Nebula.DEFAULT_COLORS;
         this.color = colors[Math.floor(Math.random() * colors.length)];
         this.alpha = 0.03 + Math.random() * 0.04;
     }

@@ -42,7 +42,8 @@ export class AntimatterRiftSector extends QuantumSectorRenderer {
                 p.cy = -20;
                 p.cx = Math.random() * W;
             }
-            if (!p.annihilating) {
+            const notAnnihilating = !p.annihilating;
+            if (notAnnihilating) {
                 p.annihilateTimer -= dt;
                 if (p.annihilateTimer <= 0) {
                     p.annihilating = true;
@@ -61,5 +62,7 @@ export class AntimatterRiftSector extends QuantumSectorRenderer {
         }
     }
 
-    renderBg(ctx) {}
+    renderBg(ctx) {
+        //nothing to do here — the parent class renders the quantum distortion background
+    }
 }

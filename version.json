@@ -1,8 +1,17 @@
 {
-  "version": "5.0.14",
-  "timestamp": "2026-04-14T12:04:38.284Z",
-  "buildNumber": 527,
+  "version": "5.0.15",
+  "timestamp": "2026-04-14T22:58:51.248Z",
+  "buildNumber": 528,
   "changelog": [
+    {
+      "version": "5.0.15",
+      "date": "2026-04-14",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] Total refractor",
+        "🔖 Bump version to 5.0.14 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.14",
       "date": "2026-04-14",
@@ -83,15 +92,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[MTD][RR] Sonar",
         "🔖 Bump version to 5.0.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.5",
-      "date": "2026-04-11",
-      "type": "patch",
-      "changes": [
-        "fix:[MTD] Total refractor",
-        "🔖 Bump version to 5.0.4 [skip-version]"
       ]
     }
   ]

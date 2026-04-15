@@ -1,7 +1,7 @@
 ﻿================================================================================
                     SONARQUBE ANALYSIS REPORT - Ggameplatform
                     Progetto: davvoz_Ggameplatform
-                    Data Report: 15 aprile 2026 (ore 16:46)
+                    Data Report: 15 aprile 2026 (ore 17:16)
 ================================================================================
 
 1. PANORAMICA GENERALE
@@ -10,13 +10,13 @@
   Quality Gate Status:    OK (PASSED)
   Quality Gate Usato:     gamesgate (custom, default)
 
-  Linee Totali:           282.911
-  Linee di Codice (ncloc):215.884
-  File:                   785
+  Linee Totali:           278.493
+  Linee di Codice (ncloc):212.056
+  File:                   769
   Funzioni:               11.692
   Classi:                 886
   Statements:             110.789
-  Percentuale Commenti:   12.6%
+  Percentuale Commenti:   12.7%
 
 2. RATINGS
 ================================================================================
@@ -35,7 +35,6 @@
   New Reliability Rating                    <= A      A               OK
   New Security Rating                       <= A      A               OK
   New Maintainability Rating                <= A      A               OK
-  New Coverage on New Code                  >= 80%    %               OK
   New Duplicated Lines Density              <= 3%     1.9%            OK
   New Security Hotspots Reviewed            = 100%    100.0%          OK
 
@@ -46,10 +45,10 @@
 
   Bugs:                   0
   Vulnerabilities:        0
-  Code Smells:            1.053
+  Code Smells:            1.035
   Security Hotspots:      0 (aperti)
 
-  Technical Debt:         7.855 minuti (~131 ore / ~16 giorni lavorativi)
+  Technical Debt:         7.769 minuti (~129 ore / ~16 giorni lavorativi)
   Technical Debt Ratio:   0.1%
   Effort per Rating A:    0 (gia' al livello A)
 
@@ -59,16 +58,16 @@
 5. COMPLESSITA'
 ================================================================================
 
-  Cyclomatic Complexity:  32.097
+  Cyclomatic Complexity:  32.081
   Cognitive Complexity:   24.547
 
 6. DUPLICAZIONI
 ================================================================================
 
-  Duplicated Lines:       5.180
+  Duplicated Lines:       5.136
   Duplicated Lines (%):   1.8%
-  Duplicated Blocks:      243
-  Duplicated Files:       82
+  Duplicated Blocks:      241
+  Duplicated Files:       80
 
   TOP 10 FILE PIU' DUPLICATI:
   ---------------------------
@@ -87,20 +86,19 @@
 7. ISSUES (CODE SMELLS) - ANALISI DETTAGLIATA
 ================================================================================
 
-  Totale Issues Aperte:   1.053
+  Totale Issues Aperte:   1.035
 
-  PER SEVERITA' (campione 1053 issues analizzate):
+  PER SEVERITA' (campione 1035 issues analizzate):
   ------------------------------------------------
-  MINOR:       483  (45,9%)
-  MAJOR:       444  (42,2%)
-  CRITICAL:    126  (12%)
+  MINOR:       483  (46,7%)
+  MAJOR:       426  (41,2%)
+  CRITICAL:    126  (12,2%)
 
   PER CATEGORIA CLEAN CODE:
   --------------------------
-  INTENTIONAL   (Intenzionalita'):   465  (44,2%)
-  CONSISTENT    (Coerenza):   458  (43,5%)
-  ADAPTABLE     (Adattabilita'):   125  (11,9%)
-  RESPONSIBLE   (Responsabilita'):     5  (0,5%)
+  INTENTIONAL   (Intenzionalita'):   464  (44,8%)
+  CONSISTENT    (Coerenza):   446  (43,1%)
+  ADAPTABLE     (Adattabilita'):   125  (12,1%)
 
   TOP 25 REGOLE PIU' VIOLATE:
   ----------------------------
@@ -111,7 +109,7 @@
    4. python:S3457           86     Python-specific issue
    5. javascript:S7764       83     Prefer globalThis over window
    6. python:S8415           63     Python-specific issue
-   7. css:S7924              52     Text contrast insufficient
+   7. css:S7924              40     Text contrast insufficient
    8. python:S112            34     Broad exception handling
    9. javascript:S1854       26     Unused assignments
   10. javascript:S3358       23     Ternary operators should not be nested
@@ -128,7 +126,7 @@
   21. javascript:S3863       10     JS-specific issue
   22. javascript:S6836        6     JS-specific issue
   23. javascript:S4165        6     JS-specific issue
-  24. python:S1172            5     Python-specific issue
+  24. python:S5754            5     Python-specific issue
   25. javascript:S107         5     Too many function parameters
 
   TOP 25 FILE CON PIU' ISSUES:
@@ -157,13 +155,13 @@
   21.   18   backend/app/games/survivor-arena/css/styles.css
   22.   18   backend/app/games/blocky-road/js/themes.js
   23.   17   backend/app/games/survivor-arena/js/weapons.js
-  24.   14   backend/app/games/blocky-road/index.html
-  25.   13   backend/app/routers/quests.py
+  24.   13   backend/app/routers/quests.py
+  25.   13   backend/app/routers/private_messages.py
 
   PER AUTORE:
   -----------
-  ginopaoli80sete@gmail.com      727 issues (69%)
-  ing.casaert@gmail.com          326 issues (31%)
+  ginopaoli80sete@gmail.com      710 issues (69%)
+  ing.casaert@gmail.com          325 issues (31%)
 
   PERIODO ISSUES (campione):
   --------------------------
@@ -173,14 +171,14 @@
 8. SECURITY HOTSPOTS
 ================================================================================
 
-  Totale Hotspots:         42 (tutti REVIEWED e marcati SAFE)
+  Totale Hotspots:         30 (tutti REVIEWED e marcati SAFE)
   Hotspots Aperti:          0
 
   CATEGORIE DI HOTSPOT:
   ----------------------
   Categoria               Count   Descrizione
-  others                  16      HTML external resources, CI/CD configs, vari
   weak-cryptography       16      Uso di generatori pseudo-random
+  others                   4      HTML external resources, CI/CD configs, vari
   dos                      4      Regex vulnerabili a backtracking (ReDoS)
   permission               4      Docker: copia ricorsiva e utenti root
   encrypt-data             2      Trasporto dati
@@ -200,13 +198,6 @@
   routers/steem_posts.py                                 weak-cryptography   342, 676
   main.py                                                encrypt-data        140, 150
   .github/workflows/deploy.yml                           others              22, 28, 28, 68
-  games/blocky-road/index.html                           others              11, 1266, 1267
-  games/modern_pong/index.html                           others              9
-  games/prediction-market/index.html                     others              11
-  games/setteemezzo/index.html                           others              9
-  games/seven/index.html                                 others              11, 14
-  games/sky-tower/index.html                             others              12, 21, 72
-  games/space_shooter_2/index.html                       others              12
 
   Tutti gli hotspots sono stati revisionati e marcati come SAFE.
 
@@ -241,15 +232,15 @@
   + Zero vulnerabilita'
   + Rating A in Maintainability, Reliability e Security
   + Quality Gate: PASSED
-  + Tutti i Security Hotspots revisionati (42/42 = 100%)
+  + Tutti i Security Hotspots revisionati (30/30 = 100%)
   + Technical Debt Ratio: 0.1%
   + Duplicazione codice: 1.8%
-  + Code smells ridotti del 85.1% dal picco iniziale (7.071 -> 1.053)
+  + Code smells ridotti del 85.4% dal picco iniziale (7.071 -> 1.035)
 
   AREE DI ATTENZIONE:
-  - 1.053 Code Smells aperti
-  - Technical Debt ~131 ore
-  - 126 issues CRITICAL da valutare (12% del campione)
+  - 1.035 Code Smells aperti
+  - Technical Debt ~129 ore
+  - 126 issues CRITICAL da valutare (12.2% del campione)
   - sprite-system.js con 71 issues
   - game.js con 68 issues
   - enemies.js con 62 issues
@@ -267,9 +258,9 @@
 12. STORICO ANALISI
 ================================================================================
 
-  Totale analisi eseguite: 12
+  Totale analisi eseguite: 14
   Prima analisi:           19 mar 2026 18:14
-  Ultima analisi:          15 apr 2026 07:55
+  Ultima analisi:          15 apr 2026 17:12
 
   DATA ANALISI                    NOTE
   ----------------------------    ----------------------------------------
@@ -285,6 +276,8 @@
   15 apr 2026 07:55               -
   15 apr 2026 07:55               -
   15 apr 2026 07:55               -
+  15 apr 2026 17:11               -
+  15 apr 2026 17:12               -
 
 13. STORICO METRICHE - EVOLUZIONE NEL TEMPO
 ================================================================================
@@ -304,6 +297,8 @@
   15 apr 2026       ERROR
   15 apr 2026       ERROR
   15 apr 2026       ERROR
+  15 apr 2026       OK
+  15 apr 2026       OK
 
   BUGS:
   -----
@@ -317,6 +312,8 @@
   12 apr 2026       0             +0
   13 apr 2026       0             +0
   14 apr 2026       0             +0
+  15 apr 2026       0             +0
+  15 apr 2026       0             +0
   15 apr 2026       0             +0
   15 apr 2026       0             +0
   15 apr 2026       0             +0
@@ -336,6 +333,8 @@
   15 apr 2026       7             +7
   15 apr 2026       7             +0
   15 apr 2026       7             +0
+  15 apr 2026       0             -7
+  15 apr 2026       0             +0
 
   CODE SMELLS:
   ------------
@@ -352,8 +351,10 @@
   15 apr 2026       1053          -57
   15 apr 2026       1053          +0
   15 apr 2026       1053          +0
+  15 apr 2026       1035          -18
+  15 apr 2026       1035          +0
 
-  Riduzione dal picco: 7.071 -> 1.053 = -85.1%
+  Riduzione dal picco: 7.071 -> 1.035 = -85.4%
 
   TECHNICAL DEBT (sqale_index in minuti):
   ----------------------------------------
@@ -370,8 +371,10 @@
   15 apr 2026       7.855     131h     -18h
   15 apr 2026       7.855     131h     +0h
   15 apr 2026       7.855     131h     +0h
+  15 apr 2026       7.769     129h     -2h
+  15 apr 2026       7.769     129h     +0h
 
-  Riduzione totale: 562h -> 131h = -76.7%
+  Riduzione totale: 562h -> 129h = -77%
 
   SECURITY RATING (1=A, 5=E):
   ---------------------------
@@ -388,6 +391,8 @@
   15 apr 2026       2.0       B
   15 apr 2026       2.0       B
   15 apr 2026       2.0       B
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
 
   RELIABILITY RATING (1=A, 4=D):
   ------------------------------
@@ -401,6 +406,8 @@
   12 apr 2026       1.0       A
   13 apr 2026       1.0       A
   14 apr 2026       1.0       A
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
   15 apr 2026       1.0       A
   15 apr 2026       1.0       A
   15 apr 2026       1.0       A
@@ -420,6 +427,8 @@
   15 apr 2026       1.0       A
   15 apr 2026       1.0       A
   15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
 
   SECURITY HOTSPOTS:
   ------------------
@@ -433,6 +442,8 @@
   12 apr 2026       0             +0
   13 apr 2026       0             +0
   14 apr 2026       0             +0
+  15 apr 2026       0             +0
+  15 apr 2026       0             +0
   15 apr 2026       0             +0
   15 apr 2026       0             +0
   15 apr 2026       0             +0
@@ -452,6 +463,8 @@
   15 apr 2026       215884        +795
   15 apr 2026       215884        +0
   15 apr 2026       215884        +0
+  15 apr 2026       212056        -3828
+  15 apr 2026       212056        +0
 
   FILE:
   -----
@@ -468,6 +481,8 @@
   15 apr 2026       785           +8
   15 apr 2026       785           +0
   15 apr 2026       785           +0
+  15 apr 2026       769           -16
+  15 apr 2026       769           +0
 
   DUPLICATED LINES DENSITY (%):
   ------------------------------
@@ -481,6 +496,8 @@
   12 apr 2026       1.9%
   13 apr 2026       1.9%
   14 apr 2026       1.9%
+  15 apr 2026       1.8%
+  15 apr 2026       1.8%
   15 apr 2026       1.8%
   15 apr 2026       1.8%
   15 apr 2026       1.8%
@@ -500,6 +517,8 @@
   15 apr 2026       24547         -358
   15 apr 2026       24547         +0
   15 apr 2026       24547         +0
+  15 apr 2026       24547         +0
+  15 apr 2026       24547         +0
 
   CYCLOMATIC COMPLEXITY:
   ----------------------
@@ -516,6 +535,8 @@
   15 apr 2026       32097         +229
   15 apr 2026       32097         +0
   15 apr 2026       32097         +0
+  15 apr 2026       32081         -16
+  15 apr 2026       32081         +0
 
 APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
 ================================================================================
@@ -523,7 +544,7 @@ APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
   COME E' STATO GENERATO QUESTO REPORT
   ======================================
 
-  Questo report e' stato generato automaticamente il 15 aprile 2026 (ore 16:46)
+  Questo report e' stato generato automaticamente il 15 aprile 2026 (ore 17:16)
   tramite lo script generate_sonarqube_report.ps1, interrogando le API REST
   di SonarCloud.
 
@@ -540,16 +561,16 @@ APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
   API UTILIZZATE:
     1. GET /api/qualitygates/project_status    -> Stato Quality Gate
     2. GET /api/measures/component              -> Metriche correnti
-    3. GET /api/issues/search                   -> Issues aperte (1053 su 1053)
-    4. GET /api/hotspots/search                 -> Security Hotspots (42)
+    3. GET /api/issues/search                   -> Issues aperte (1035 su 1035)
+    4. GET /api/hotspots/search                 -> Security Hotspots (30)
     5. GET /api/measures/component_tree          -> File duplicati (top 15)
     6. GET /api/project_pull_requests/list       -> Pull Requests (3)
     7. GET /api/qualitygates/list                -> Configurazione Quality Gates
-    8. GET /api/project_analyses/search           -> Storico analisi (12)
+    8. GET /api/project_analyses/search           -> Storico analisi (14)
     9. GET /api/measures/search_history           -> Evoluzione metriche nel tempo
 
   LIMITAZIONI:
-    - Le issues estratte sono un campione di 1053 su 1053 totali
+    - Le issues estratte sono un campione di 1035 su 1035 totali
     - Il campo "coverage" non e' disponibile (nessun report di test caricato)
     - I dati storici partono dalla prima analisi SonarCloud
 
@@ -559,5 +580,5 @@ APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
 
 ================================================================================
                          FINE REPORT
-              Generato il 15 aprile 2026 (ore 16:46)
+              Generato il 15 aprile 2026 (ore 17:16)
 ================================================================================

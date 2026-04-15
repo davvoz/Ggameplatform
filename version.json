@@ -1,8 +1,17 @@
 {
-  "version": "5.0.17",
-  "timestamp": "2026-04-15T05:55:29.292Z",
-  "buildNumber": 530,
+  "version": "5.0.18",
+  "timestamp": "2026-04-15T15:11:58.229Z",
+  "buildNumber": 531,
   "changelog": [
+    {
+      "version": "5.0.18",
+      "date": "2026-04-15",
+      "type": "patch",
+      "changes": [
+        "fix : trigger sonar analisi",
+        "🔖 Bump version to 5.0.17 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.17",
       "date": "2026-04-15",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[GAMES] Sonar",
         "🔖 Bump version to 5.0.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.8",
-      "date": "2026-04-11",
-      "type": "patch",
-      "changes": [
-        "fix:[FRONTEND] Sonar",
-        "🔖 Bump version to 5.0.7 [skip-version]"
       ]
     }
   ]

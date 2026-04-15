@@ -1,8 +1,17 @@
 {
-  "version": "5.0.16",
-  "timestamp": "2026-04-14T23:18:16.790Z",
-  "buildNumber": 529,
+  "version": "5.0.17",
+  "timestamp": "2026-04-15T05:55:29.292Z",
+  "buildNumber": 530,
   "changelog": [
+    {
+      "version": "5.0.17",
+      "date": "2026-04-15",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] Ultimate bug",
+        "🔖 Bump version to 5.0.16 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.16",
       "date": "2026-04-14",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[FRONTEND] Sonar",
         "🔖 Bump version to 5.0.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.7",
-      "date": "2026-04-11",
-      "type": "patch",
-      "changes": [
-        "fif: [FE] Sonar",
-        "🔖 Bump version to 5.0.6 [skip-version]"
       ]
     }
   ]

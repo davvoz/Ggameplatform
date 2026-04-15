@@ -941,9 +941,9 @@ class Player extends GameObject {
             const alpha = (1 - ringProgress) * (0.7 - ring * 0.15);
 
             // Ring glow
-            const xa = (i - (flameCount - 1) / 2) * 16;
             ctx.globalAlpha = alpha;
-            ctx.strokeStyle = ring === 0 ? '#ff6600' : xa;
+            const a = ring === 1 ? '#ff8800' : '#ffaa00';
+            ctx.strokeStyle = ring === 0 ? '#ff6600' : a;
             ctx.lineWidth = (8 - ring * 2) * (1 - ringProgress * 0.5);
             ctx.shadowColor = '#ff8800';
             ctx.shadowBlur = 20 - ring * 5;

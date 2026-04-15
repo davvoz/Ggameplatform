@@ -1,7 +1,7 @@
 ﻿================================================================================
                     SONARQUBE ANALYSIS REPORT - Ggameplatform
                     Progetto: davvoz_Ggameplatform
-                    Data Report: 14 aprile 2026 (ore 14:11)
+                    Data Report: 15 aprile 2026 (ore 16:46)
 ================================================================================
 
 1. PANORAMICA GENERALE
@@ -10,12 +10,12 @@
   Quality Gate Status:    OK (PASSED)
   Quality Gate Usato:     gamesgate (custom, default)
 
-  Linee Totali:           281.512
-  Linee di Codice (ncloc):215.089
-  File:                   777
-  Funzioni:               11.399
+  Linee Totali:           282.911
+  Linee di Codice (ncloc):215.884
+  File:                   785
+  Funzioni:               11.692
   Classi:                 886
-  Statements:             110.499
+  Statements:             110.789
   Percentuale Commenti:   12.6%
 
 2. RATINGS
@@ -35,7 +35,8 @@
   New Reliability Rating                    <= A      A               OK
   New Security Rating                       <= A      A               OK
   New Maintainability Rating                <= A      A               OK
-  New Duplicated Lines Density              <= 3%     2.1%            OK
+  New Coverage on New Code                  >= 80%    %               OK
+  New Duplicated Lines Density              <= 3%     1.9%            OK
   New Security Hotspots Reviewed            = 100%    100.0%          OK
 
   Tutte le condizioni del Quality Gate sono soddisfatte.
@@ -45,10 +46,10 @@
 
   Bugs:                   0
   Vulnerabilities:        0
-  Code Smells:            1.110
+  Code Smells:            1.053
   Security Hotspots:      0 (aperti)
 
-  Technical Debt:         8.929 minuti (~149 ore / ~19 giorni lavorativi)
+  Technical Debt:         7.855 minuti (~131 ore / ~16 giorni lavorativi)
   Technical Debt Ratio:   0.1%
   Effort per Rating A:    0 (gia' al livello A)
 
@@ -58,16 +59,16 @@
 5. COMPLESSITA'
 ================================================================================
 
-  Cyclomatic Complexity:  31.868
-  Cognitive Complexity:   24.905
+  Cyclomatic Complexity:  32.097
+  Cognitive Complexity:   24.547
 
 6. DUPLICAZIONI
 ================================================================================
 
-  Duplicated Lines:       5.278
-  Duplicated Lines (%):   1.9%
-  Duplicated Blocks:      249
-  Duplicated Files:       84
+  Duplicated Lines:       5.180
+  Duplicated Lines (%):   1.8%
+  Duplicated Blocks:      243
+  Duplicated Files:       82
 
   TOP 10 FILE PIU' DUPLICATI:
   ---------------------------
@@ -86,49 +87,49 @@
 7. ISSUES (CODE SMELLS) - ANALISI DETTAGLIATA
 ================================================================================
 
-  Totale Issues Aperte:   1.110
+  Totale Issues Aperte:   1.053
 
-  PER SEVERITA' (campione 1000 issues analizzate):
+  PER SEVERITA' (campione 1053 issues analizzate):
   ------------------------------------------------
-  MINOR:       447  (44,7%)
-  MAJOR:       413  (41,3%)
-  CRITICAL:    140  (14%)
+  MINOR:       483  (45,9%)
+  MAJOR:       444  (42,2%)
+  CRITICAL:    126  (12%)
 
   PER CATEGORIA CLEAN CODE:
   --------------------------
-  INTENTIONAL   (Intenzionalita'):   435  (43,5%)
-  CONSISTENT    (Coerenza):   419  (41,9%)
-  ADAPTABLE     (Adattabilita'):   142  (14,2%)
-  RESPONSIBLE   (Responsabilita'):     4  (0,4%)
+  INTENTIONAL   (Intenzionalita'):   465  (44,2%)
+  CONSISTENT    (Coerenza):   458  (43,5%)
+  ADAPTABLE     (Adattabilita'):   125  (11,9%)
+  RESPONSIBLE   (Responsabilita'):     5  (0,5%)
 
   TOP 25 REGOLE PIU' VIOLATE:
   ----------------------------
   #   Regola                Count   Descrizione
    1. javascript:S7748      248     Unnecessary use of optional chaining
-   2. javascript:S3776      115     Cognitive complexity too high
-   3. javascript:S6582      108     Prefer optional chaining
-   4. python:S3457           81     Python-specific issue
-   5. javascript:S7764       66     Prefer globalThis over window
-   6. css:S7924              50     Text contrast insufficient
-   7. python:S8415           43     Python-specific issue
-   8. javascript:S3358       31     Ternary operators should not be nested
-   9. javascript:S1854       24     Unused assignments
-  10. python:S112            23     Broad exception handling
-  11. javascript:S1481       20     Unused variables
-  12. javascript:S2486       19     Empty catch blocks
-  13. javascript:S7735       14     JS-specific issue
-  14. python:S1481           13     Python-specific issue
-  15. python:S3776           12     Python-specific issue
-  16. javascript:S7778       12     JS-specific issue
-  17. javascript:S7755       11     JS-specific issue
-  18. javascript:S7741       11     JS-specific issue
-  19. javascript:S3863       10     JS-specific issue
-  20. python:S1192            9     String literals duplicated
-  21. javascript:S107         5     Too many function parameters
-  22. javascript:S1874        5     JS-specific issue
-  23. javascript:S7762        5     JS-specific issue
-  24. css:S4666               5     CSS-specific issue
-  25. python:S1172            4     Python-specific issue
+   2. javascript:S6582      100     Prefer optional chaining
+   3. javascript:S3776       95     Cognitive complexity too high
+   4. python:S3457           86     Python-specific issue
+   5. javascript:S7764       83     Prefer globalThis over window
+   6. python:S8415           63     Python-specific issue
+   7. css:S7924              52     Text contrast insufficient
+   8. python:S112            34     Broad exception handling
+   9. javascript:S1854       26     Unused assignments
+  10. javascript:S3358       23     Ternary operators should not be nested
+  11. javascript:S1481       21     Unused variables
+  12. javascript:S2486       18     Empty catch blocks
+  13. javascript:S7735       15     JS-specific issue
+  14. python:S3776           14     Python-specific issue
+  15. python:S117            14     Python-specific issue
+  16. python:S1481           14     Python-specific issue
+  17. javascript:S7778       12     JS-specific issue
+  18. javascript:S7755       11     JS-specific issue
+  19. javascript:S7741       11     JS-specific issue
+  20. python:S1192           10     String literals duplicated
+  21. javascript:S3863       10     JS-specific issue
+  22. javascript:S6836        6     JS-specific issue
+  23. javascript:S4165        6     JS-specific issue
+  24. python:S1172            5     Python-specific issue
+  25. javascript:S107         5     Too many function parameters
 
   TOP 25 FILE CON PIU' ISSUES:
   ----------------------------
@@ -136,38 +137,38 @@
    1.   71   backend/app/games/survivor-arena/js/sprite-system.js
    2.   68   backend/app/games/survivor-arena/js/game.js
    3.   62   backend/app/games/survivor-arena/js/enemies.js
-   4.   48   backend/app/steem_post_service.py
-   5.   47   backend/app/games/survivor-arena/js/config.js
-   6.   46   backend/app/games/blocky-road/js/models.js
+   4.   53   backend/app/games/blocky-road/js/models.js
+   5.   48   backend/app/steem_post_service.py
+   6.   47   backend/app/games/survivor-arena/js/config.js
    7.   41   backend/app/games/survivor-arena/js/main.js
    8.   38   backend/app/games/sky-tower/game.js
-   9.   34   backend/app/games/blocky-road/js/terrain.js
-  10.   28   backend/app/games/blocky-road/js/game.js
-  11.   27   backend/app/games/blocky-road/js/obstacles.js
-  12.   24   backend/app/repositories.py
-  13.   23   backend/app/games/blackjack/main.js
-  14.   21   backend/app/games/yatzi_3d_by_luciogiolli/main.js
-  15.   20   backend/app/games/prediction-market/main.js
-  16.   19   backend/app/games/space_shooter_2/css/style.css
-  17.   18   backend/app/games/blocky-road/js/themes.js
-  18.   18   backend/app/games/survivor-arena/js/characters.js
-  19.   18   backend/app/games/survivor-arena/css/styles.css
-  20.   17   backend/app/games/survivor-arena/js/weapons.js
-  21.   15   backend/app/games/space_shooter_2/js/entities/Player.js
-  22.   14   backend/app/routers/users.py
-  23.   13   backend/app/routers/private_messages.py
-  24.   11   backend/app/games/blocky-road/index.html
-  25.   10   backend/app/games/rainbow_rush_be/scripts/diagnose_luciojolly.py
+   9.   37   backend/app/games/blocky-road/js/game.js
+  10.   35   backend/app/games/blocky-road/js/obstacles.js
+  11.   35   backend/app/repositories.py
+  12.   34   backend/app/games/blocky-road/js/terrain.js
+  13.   22   backend/app/games/blackjack/main.js
+  14.   22   backend/app/routers/users.py
+  15.   21   backend/app/games/yatzi_3d_by_luciogiolli/main.js
+  16.   20   backend/app/games/blocky-road/js/player.js
+  17.   20   backend/app/games/prediction-market/main.js
+  18.   19   backend/app/games/space_shooter_2/css/style.css
+  19.   18   backend/app/routers/games.py
+  20.   18   backend/app/games/survivor-arena/js/characters.js
+  21.   18   backend/app/games/survivor-arena/css/styles.css
+  22.   18   backend/app/games/blocky-road/js/themes.js
+  23.   17   backend/app/games/survivor-arena/js/weapons.js
+  24.   14   backend/app/games/blocky-road/index.html
+  25.   13   backend/app/routers/quests.py
 
   PER AUTORE:
   -----------
-  ginopaoli80sete@gmail.com      677 issues (68%)
-  ing.casaert@gmail.com          323 issues (32%)
+  ginopaoli80sete@gmail.com      727 issues (69%)
+  ing.casaert@gmail.com          326 issues (31%)
 
   PERIODO ISSUES (campione):
   --------------------------
-  Prima issue:  29 nov 2025
-  Ultima issue: 14 apr 2026
+  Prima issue:  08 nov 2025
+  Ultima issue: 12 apr 2026
 
 8. SECURITY HOTSPOTS
 ================================================================================
@@ -242,33 +243,33 @@
   + Quality Gate: PASSED
   + Tutti i Security Hotspots revisionati (42/42 = 100%)
   + Technical Debt Ratio: 0.1%
-  + Duplicazione codice: 1.9%
-  + Code smells ridotti del 84.3% dal picco iniziale (7.071 -> 1.110)
+  + Duplicazione codice: 1.8%
+  + Code smells ridotti del 85.1% dal picco iniziale (7.071 -> 1.053)
 
   AREE DI ATTENZIONE:
-  - 1.110 Code Smells aperti
-  - Technical Debt ~149 ore
-  - 140 issues CRITICAL da valutare (14% del campione)
+  - 1.053 Code Smells aperti
+  - Technical Debt ~131 ore
+  - 126 issues CRITICAL da valutare (12% del campione)
   - sprite-system.js con 71 issues
   - game.js con 68 issues
   - enemies.js con 62 issues
+  - models.js con 53 issues
   - steem_post_service.py con 48 issues
-  - config.js con 47 issues
-  - Cognitive Complexity elevata (115 violazioni S3776)
+  - Cognitive Complexity elevata (95 violazioni S3776)
 
   RACCOMANDAZIONI:
   1. Refactoring backend/app/games/survivor-arena/js/sprite-system.js (71 issues)
   2. Refactoring backend/app/games/survivor-arena/js/game.js (68 issues)
   3. Refactoring backend/app/games/survivor-arena/js/enemies.js (62 issues)
-  4. Ridurre complessita' cognitiva (115 violazioni S3776)
+  4. Ridurre complessita' cognitiva (95 violazioni S3776)
   5. Risolvere regola javascript:S7748 (248 violazioni)
 
 12. STORICO ANALISI
 ================================================================================
 
-  Totale analisi eseguite: 11
+  Totale analisi eseguite: 12
   Prima analisi:           19 mar 2026 18:14
-  Ultima analisi:          14 apr 2026 14:04
+  Ultima analisi:          15 apr 2026 07:55
 
   DATA ANALISI                    NOTE
   ----------------------------    ----------------------------------------
@@ -276,13 +277,14 @@
   22 mar 2026 15:10               -
   29 mar 2026 01:03               -
   06 apr 2026 18:57               -
-  08 apr 2026 02:29               -
   10 apr 2026 16:40               -
   11 apr 2026 13:13               -
   12 apr 2026 12:09               -
   13 apr 2026 21:58               -
   14 apr 2026 14:04               -
-  14 apr 2026 14:04               -
+  15 apr 2026 07:55               -
+  15 apr 2026 07:55               -
+  15 apr 2026 07:55               -
 
 13. STORICO METRICHE - EVOLUZIONE NEL TEMPO
 ================================================================================
@@ -294,13 +296,14 @@
   22 mar 2026       OK
   29 mar 2026       OK
   06 apr 2026       ERROR
-  08 apr 2026       ERROR
   10 apr 2026       ERROR
   11 apr 2026       OK
   12 apr 2026       OK
   13 apr 2026       OK
   14 apr 2026       OK
-  14 apr 2026       OK
+  15 apr 2026       ERROR
+  15 apr 2026       ERROR
+  15 apr 2026       ERROR
 
   BUGS:
   -----
@@ -309,13 +312,14 @@
   22 mar 2026       33            -1
   29 mar 2026       0             -33
   06 apr 2026       3             +3
-  08 apr 2026       3             +0
   10 apr 2026       2             -1
   11 apr 2026       0             -2
   12 apr 2026       0             +0
   13 apr 2026       0             +0
   14 apr 2026       0             +0
-  14 apr 2026       0             +0
+  15 apr 2026       0             +0
+  15 apr 2026       0             +0
+  15 apr 2026       0             +0
 
   VULNERABILITIES:
   ----------------
@@ -324,13 +328,14 @@
   22 mar 2026       6             -42
   29 mar 2026       0             -6
   06 apr 2026       0             +0
-  08 apr 2026       0             +0
   10 apr 2026       0             +0
   11 apr 2026       0             +0
   12 apr 2026       0             +0
   13 apr 2026       0             +0
   14 apr 2026       0             +0
-  14 apr 2026       0             +0
+  15 apr 2026       7             +7
+  15 apr 2026       7             +0
+  15 apr 2026       7             +0
 
   CODE SMELLS:
   ------------
@@ -339,15 +344,16 @@
   22 mar 2026       6502          -569
   29 mar 2026       4667          -1835
   06 apr 2026       5881          +1214
-  08 apr 2026       5870          -11
-  10 apr 2026       5825          -45
+  10 apr 2026       5825          -56
   11 apr 2026       4377          -1448
   12 apr 2026       2203          -2174
   13 apr 2026       1259          -944
   14 apr 2026       1110          -149
-  14 apr 2026       1110          +0
+  15 apr 2026       1053          -57
+  15 apr 2026       1053          +0
+  15 apr 2026       1053          +0
 
-  Riduzione dal picco: 7.071 -> 1.110 = -84.3%
+  Riduzione dal picco: 7.071 -> 1.053 = -85.1%
 
   TECHNICAL DEBT (sqale_index in minuti):
   ----------------------------------------
@@ -356,15 +362,16 @@
   22 mar 2026       33.675    561h     -1h
   29 mar 2026       32.155    536h     -25h
   06 apr 2026       35.816    597h     +61h
-  08 apr 2026       35.874    598h     +1h
-  10 apr 2026       35.586    593h     -5h
+  10 apr 2026       35.586    593h     -4h
   11 apr 2026       31.881    531h     -62h
   12 apr 2026       17.561    293h     -238h
   13 apr 2026       9.287     155h     -138h
   14 apr 2026       8.929     149h     -6h
-  14 apr 2026       8.929     149h     +0h
+  15 apr 2026       7.855     131h     -18h
+  15 apr 2026       7.855     131h     +0h
+  15 apr 2026       7.855     131h     +0h
 
-  Riduzione totale: 562h -> 149h = -73.5%
+  Riduzione totale: 562h -> 131h = -76.7%
 
   SECURITY RATING (1=A, 5=E):
   ---------------------------
@@ -373,13 +380,14 @@
   22 mar 2026       5.0       E
   29 mar 2026       1.0       A
   06 apr 2026       1.0       A
-  08 apr 2026       1.0       A
   10 apr 2026       1.0       A
   11 apr 2026       1.0       A
   12 apr 2026       1.0       A
   13 apr 2026       1.0       A
   14 apr 2026       1.0       A
-  14 apr 2026       1.0       A
+  15 apr 2026       2.0       B
+  15 apr 2026       2.0       B
+  15 apr 2026       2.0       B
 
   RELIABILITY RATING (1=A, 4=D):
   ------------------------------
@@ -388,13 +396,14 @@
   22 mar 2026       4.0       D
   29 mar 2026       1.0       A
   06 apr 2026       3.0       C
-  08 apr 2026       3.0       C
   10 apr 2026       3.0       C
   11 apr 2026       1.0       A
   12 apr 2026       1.0       A
   13 apr 2026       1.0       A
   14 apr 2026       1.0       A
-  14 apr 2026       1.0       A
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
 
   MAINTAINABILITY RATING:
   -----------------------
@@ -403,13 +412,14 @@
   22 mar 2026       1.0       A
   29 mar 2026       1.0       A
   06 apr 2026       1.0       A
-  08 apr 2026       1.0       A
   10 apr 2026       1.0       A
   11 apr 2026       1.0       A
   12 apr 2026       1.0       A
   13 apr 2026       1.0       A
   14 apr 2026       1.0       A
-  14 apr 2026       1.0       A
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
+  15 apr 2026       1.0       A
 
   SECURITY HOTSPOTS:
   ------------------
@@ -418,13 +428,14 @@
   22 mar 2026       25            -2269
   29 mar 2026       0             -25
   06 apr 2026       11            +11
-  08 apr 2026       11            +0
   10 apr 2026       11            +0
   11 apr 2026       0             -11
   12 apr 2026       0             +0
   13 apr 2026       0             +0
   14 apr 2026       0             +0
-  14 apr 2026       0             +0
+  15 apr 2026       0             +0
+  15 apr 2026       0             +0
+  15 apr 2026       0             +0
 
   LINEE DI CODICE (ncloc):
   ------------------------
@@ -433,13 +444,14 @@
   22 mar 2026       177835        -17521
   29 mar 2026       192969        +15134
   06 apr 2026       213351        +20382
-  08 apr 2026       213621        +270
-  10 apr 2026       214191        +570
+  10 apr 2026       214191        +840
   11 apr 2026       212570        -1621
   12 apr 2026       214147        +1577
   13 apr 2026       214934        +787
   14 apr 2026       215089        +155
-  14 apr 2026       215089        +0
+  15 apr 2026       215884        +795
+  15 apr 2026       215884        +0
+  15 apr 2026       215884        +0
 
   FILE:
   -----
@@ -448,13 +460,14 @@
   22 mar 2026       599           -148
   29 mar 2026       603           +4
   06 apr 2026       705           +102
-  08 apr 2026       707           +2
-  10 apr 2026       764           +57
+  10 apr 2026       764           +59
   11 apr 2026       771           +7
   12 apr 2026       769           -2
   13 apr 2026       769           +0
   14 apr 2026       777           +8
-  14 apr 2026       777           +0
+  15 apr 2026       785           +8
+  15 apr 2026       785           +0
+  15 apr 2026       785           +0
 
   DUPLICATED LINES DENSITY (%):
   ------------------------------
@@ -463,13 +476,14 @@
   22 mar 2026       2.2%
   29 mar 2026       2.2%
   06 apr 2026       2.7%
-  08 apr 2026       2.7%
   10 apr 2026       2.7%
   11 apr 2026       2.0%
   12 apr 2026       1.9%
   13 apr 2026       1.9%
   14 apr 2026       1.9%
-  14 apr 2026       1.9%
+  15 apr 2026       1.8%
+  15 apr 2026       1.8%
+  15 apr 2026       1.8%
 
   COGNITIVE COMPLEXITY:
   ---------------------
@@ -478,13 +492,14 @@
   22 mar 2026       21885         -2441
   29 mar 2026       24449         +2564
   06 apr 2026       26934         +2485
-  08 apr 2026       26998         +64
-  10 apr 2026       26924         -74
+  10 apr 2026       26924         -10
   11 apr 2026       26410         -514
   12 apr 2026       25598         -812
   13 apr 2026       24925         -673
   14 apr 2026       24905         -20
-  14 apr 2026       24905         +0
+  15 apr 2026       24547         -358
+  15 apr 2026       24547         +0
+  15 apr 2026       24547         +0
 
   CYCLOMATIC COMPLEXITY:
   ----------------------
@@ -493,13 +508,14 @@
   22 mar 2026       25960         -1419
   29 mar 2026       28069         +2109
   06 apr 2026       31718         +3649
-  08 apr 2026       31791         +73
-  10 apr 2026       31908         +117
+  10 apr 2026       31908         +190
   11 apr 2026       31825         -83
   12 apr 2026       31747         -78
   13 apr 2026       31880         +133
   14 apr 2026       31868         -12
-  14 apr 2026       31868         +0
+  15 apr 2026       32097         +229
+  15 apr 2026       32097         +0
+  15 apr 2026       32097         +0
 
 APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
 ================================================================================
@@ -507,7 +523,7 @@ APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
   COME E' STATO GENERATO QUESTO REPORT
   ======================================
 
-  Questo report e' stato generato automaticamente il 14 aprile 2026 (ore 14:11)
+  Questo report e' stato generato automaticamente il 15 aprile 2026 (ore 16:46)
   tramite lo script generate_sonarqube_report.ps1, interrogando le API REST
   di SonarCloud.
 
@@ -524,16 +540,16 @@ APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
   API UTILIZZATE:
     1. GET /api/qualitygates/project_status    -> Stato Quality Gate
     2. GET /api/measures/component              -> Metriche correnti
-    3. GET /api/issues/search                   -> Issues aperte (1000 su 1110)
+    3. GET /api/issues/search                   -> Issues aperte (1053 su 1053)
     4. GET /api/hotspots/search                 -> Security Hotspots (42)
     5. GET /api/measures/component_tree          -> File duplicati (top 15)
     6. GET /api/project_pull_requests/list       -> Pull Requests (3)
     7. GET /api/qualitygates/list                -> Configurazione Quality Gates
-    8. GET /api/project_analyses/search           -> Storico analisi (11)
+    8. GET /api/project_analyses/search           -> Storico analisi (12)
     9. GET /api/measures/search_history           -> Evoluzione metriche nel tempo
 
   LIMITAZIONI:
-    - Le issues estratte sono un campione di 1000 su 1110 totali
+    - Le issues estratte sono un campione di 1053 su 1053 totali
     - Il campo "coverage" non e' disponibile (nessun report di test caricato)
     - I dati storici partono dalla prima analisi SonarCloud
 
@@ -543,5 +559,5 @@ APPENDICE: METODOLOGIA E STRUMENTI UTILIZZATI
 
 ================================================================================
                          FINE REPORT
-              Generato il 14 aprile 2026 (ore 14:11)
+              Generato il 15 aprile 2026 (ore 16:46)
 ================================================================================

@@ -311,6 +311,25 @@ class PerkEffectsManager {
         }
     }
 
+    spawnHomingMissileIfEnemyExists(perks, droneIndex, g, dx, dy) {
+        if (perks.droneFireTimers[droneIndex] > 0) return;
+        const enemies = g.entityManager.enemies;
+        let nearest = null;
+        let nearDist = Infinity;
+        for (const e of enemies) {
+            if (!e.active || e._isAlly) continue;
+            const ex = e.position.x + e.width / 2;
+            const ey = e.position.y + e.height / 2;
+            const d = Math.hypot(ex - dx, ey - dy);
+            if (d < nearDist) { nearDist = d; nearest = e; }
+        }
+        if (!nearest) return;
+        perks.droneFireTimers[droneIndex] = 0.5;
+        const ex = nearest.position.x + nearest.width / 2;
+        const ey = nearest.position.y + nearest.height / 2;
+        const angle = Math.atan2(ey - dy, ex - dx);
+        g.entityManager.spawnHomingMissile(dx, dy, angle);
+    }
 
     
     applyChainLightning(fromX, fromY, targets, damage) {

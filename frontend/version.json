@@ -1,8 +1,17 @@
 {
-  "version": "5.0.19",
-  "timestamp": "2026-04-15T16:05:05.864Z",
-  "buildNumber": 532,
+  "version": "5.1.0",
+  "timestamp": "2026-04-17T08:52:48.391Z",
+  "buildNumber": 533,
   "changelog": [
+    {
+      "version": "5.1.0",
+      "date": "2026-04-17",
+      "type": "minor",
+      "changes": [
+        "feat: [SS2]add homing missile spawning logic in PerkEffectsManager",
+        "🔖 Bump version to 5.0.19 [skip-version]"
+      ]
+    },
     {
       "version": "5.0.19",
       "date": "2026-04-15",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[GAMES] Sonar",
         "🔖 Bump version to 5.0.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.10",
-      "date": "2026-04-12",
-      "type": "patch",
-      "changes": [
-        "fix:image upload steempost.py , [SS SS2] Sonar",
-        "🔖 Bump version to 5.0.9 [skip-version]"
       ]
     }
   ]

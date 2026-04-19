@@ -413,3 +413,7 @@ backend/app/games/space_shooter_2/assets/spritesheets/generate_boss21.py
 backend/app/games/space_shooter_2/assets/spritesheets/generate_boss20.py
 backend/app/games/space_shooter_2/assets/spritesheets/generate_boss19.py
 backend/app/games/space_shooter_2/assets/spritesheets/generate_boson_carrier.py
+sonarqube_report.txt
+reports/editions/edition-2026-04-20-0055.json
+CHANGELOG_v5.1.1.md
+sonarqube_report.txt

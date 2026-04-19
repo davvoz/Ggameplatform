@@ -1,141 +1,73 @@
-import { //importa tutte le funzioni di utilità per i boss del mondo 4
-    generateQuarkCoreSprites,
-    createGluonSprite,
-    createBoss19ArmSprite,
-    createBossCoreSprites,
-    generateBoss20EMEffect,
-    generateBoss20WeakTurret,
-    createBoss20Shield,
-    createBossArmCanvas,
-    generateBossCrownSprite,
-    createGravitationalLens,
-    drawHiggsFieldNode,
-    drawShieldIndicator,
-    drawBossArmWithEffects,
-    createBossAura,
-    createBossChargeOrb,
-    createBossArm,
-    generateMatterBossSprites,
-    generateAntimatterBossBody,
-    generateBoss23TurretMiddle,
-    generateBoss23TurretA,
-    generateBoss23Shield,
-    generateBoss23ArmGraphics,
-    generateBoss24CoreSprite,
-    generateBoss24GravitySprite,
-    generateBoss24EMSprite,
-    generateWeakTurretSprite,
-    generateBoss24GluonSprite,
-    generateBoss24InnerSprite,
-    generateBoss24ShieldSpriteLarge,
-    generateBoss24ShieldSprite,
-    generateBoss24WeakpointSprite,
-    generateBoss24ArmSprite,
-} from './utilities/world4_utils.js';
+import SpritesheetLoader from '../SpritesheetLoader.js';
 
-import { C_GOLD } from "../../../entities/LevelsThemes.js";
+// ═══════════════════════════════════════════════
+//  WORLD 4 BOSSES — registry + loader
+// ═══════════════════════════════════════════════
+const WORLD4_BOSSES = [
+    { id: 19, url: 'assets/spritesheets/boss19.png', frames: {
+        boss19_core_r: { x: 0,   y: 0, w: 60,  h: 68 },
+        boss19_core_g: { x: 60,  y: 0, w: 60,  h: 68 },
+        boss19_core_b: { x: 120, y: 0, w: 60,  h: 68 },
+        boss19_gluon:  { x: 180, y: 0, w: 30,  h: 68 },
+        boss19_arm:    { x: 210, y: 0, w: 50,  h: 68 }
+    }},
+    { id: 20, url: 'assets/spritesheets/boss20.png', frames: {
+        boss20_core:   { x: 0,   y: 0, w: 100, h: 100 },
+        boss20_em:     { x: 100, y: 0, w: 42,  h: 100 },
+        boss20_weak:   { x: 142, y: 0, w: 44,  h: 100 },
+        boss20_shield: { x: 186, y: 0, w: 122, h: 100 },
+        boss20_arm:    { x: 308, y: 0, w: 54,  h: 100 }
+    }},
+    { id: 21, url: 'assets/spritesheets/boss21.png', frames: {
+        boss21_core:   { x: 0,   y: 0, w: 105, h: 105 },
+        boss21_charge: { x: 105, y: 0, w: 34,  h: 105 },
+        boss21_arm:    { x: 139, y: 0, w: 56,  h: 105 }
+    }},
+    { id: 22, url: 'assets/spritesheets/boss22.png', frames: {
+        boss22_core:   { x: 0,   y: 0, w: 110, h: 110 },
+        boss22_well:   { x: 110, y: 0, w: 46,  h: 110 },
+        boss22_weak:   { x: 156, y: 0, w: 38,  h: 110 },
+        boss22_shield: { x: 194, y: 0, w: 132, h: 110 },
+        boss22_arm:    { x: 326, y: 0, w: 60,  h: 110 }
+    }},
+    { id: 23, url: 'assets/spritesheets/boss23.png', frames: {
+        boss23_matter:   { x: 0,   y: 0, w: 75,  h: 78 },
+        boss23_anti:     { x: 75,  y: 0, w: 75,  h: 78 },
+        boss23_turret_m: { x: 150, y: 0, w: 40,  h: 78 },
+        boss23_turret_a: { x: 190, y: 0, w: 40,  h: 78 },
+        boss23_shield:   { x: 230, y: 0, w: 142, h: 78 },
+        boss23_arm:      { x: 372, y: 0, w: 58,  h: 78 }
+    }},
+    { id: 24, url: 'assets/spritesheets/boss24.png', frames: {
+        boss24_core:      { x: 0,   y: 0, w: 120, h: 120 },
+        boss24_gravity:   { x: 120, y: 0, w: 44,  h: 120 },
+        boss24_em:        { x: 164, y: 0, w: 44,  h: 120 },
+        boss24_weak:      { x: 208, y: 0, w: 44,  h: 120 },
+        boss24_strong:    { x: 252, y: 0, w: 44,  h: 120 },
+        boss24_inner:     { x: 296, y: 0, w: 36,  h: 120 },
+        boss24_shield:    { x: 332, y: 0, w: 152, h: 120 },
+        boss24_shield2:   { x: 484, y: 0, w: 48,  h: 120 },
+        boss24_weakpoint: { x: 532, y: 0, w: 40,  h: 120 },
+        boss24_arm:       { x: 572, y: 0, w: 64,  h: 120 }
+    }}
+];
 
-// ═══════════════════════════════════════════════════════════════
-//  WORLD 4 — QUANTUM REALM  (Bosses 19-24)
-//  Aesthetic: elegant quantum-physics motifs — wave export functions,
-//  probability clouds, chromodynamic color, Feynman-diagram lines,
-//  concentric orbital shells, iridescent gradients.
-// ═══════════════════════════════════════════════════════════════
-
-// ── BOSS 19: Proton Crusher — 3 quark cores (R/G/B) + gluon orbiters ──
-export function _genBoss19Sprites(sprites) {
-    // Helper to draw a single quark-core face with unique expression per color
-    generateQuarkCoreSprites(sprites);
-    // Gluon turret — small swirling energy knot
-    createGluonSprite(sprites);
-    // Arm — curved containment wing with Feynman-diagram lines
-    createBoss19ArmSprite(sprites);
+async function loadBoss(sprites, boss) {
+    try {
+        const loaded = await SpritesheetLoader.loadFrames(boss.url, boss.frames);
+        Object.assign(sprites, loaded);
+    } catch {
+        console.warn(`Boss${boss.id} spritesheet failed to load`);
+    }
 }
 
-
-// ── BOSS 20: Electroweak Unifier — EM/Weak phase duality ──
-export function _genBoss20Sprites(sprites) {
-    const { accent, dark } = createBossCoreSprites(sprites);
-    // EM turret — crackling lightning node
-    generateBoss20EMEffect(sprites);
-    // Weak turret — soft glowing neutrino-like orb
-    generateBoss20WeakTurret(sprites);
-    // Shield — phase-transition barrier
-    createBoss20Shield(accent, sprites);
-    // Arm — force-carrier column with photon/W-boson wiggles
-    createBossArmCanvas(dark, accent, sprites);
+async function generateWorld4BossSprites(sprites) {
+    for (const boss of WORLD4_BOSSES) {
+        await loadBoss(sprites, boss);
+    }
 }
 
-// ── BOSS 21: Gluon Overlord — massive strong-force entity ──
-export function _genBoss21Sprites(sprites) {
-    const color = '#33ff88', accent = '#88ffbb', dark = '#117744';
-    // Core (85x85 → 105x105) — Majestic chromodynamic face
-    createBossAura(color, dark, sprites);
-    // Charge turret — color-charge orbs
-    createBossChargeOrb(accent, color, dark, sprites);
-    // Arm — strong-force flux tube
-    createBossArm(dark, sprites);
-}
-
-
-// ── BOSS 22: Higgs Manifestation — golden, massive, gravity-well boss ──
-export function _genBoss22Sprites(sprites) {
-    const color = C_GOLD, accent = '#ffee88', dark = '#886600';
-    // Core (90x90 → 110x110) — Regal Higgs face with golden crown-like structure
-    generateBossCrownSprite(color, dark, sprites);
-    // Mass well turret — gravity distortion node
-    createGravitationalLens(color, accent, sprites);
-    // Weakpoint — exposed Higgs field node
-    drawHiggsFieldNode(accent, color, dark, sprites);
-    // Shield — massive gold barrier
-    drawShieldIndicator(dark, accent, color, sprites);
-    // Arm — massive pillar with gravitational distortion bands
-    drawBossArmWithEffects(dark, color, sprites);
-}
-
-
-
-// ── BOSS 23: Antimatter Sovereign — duality boss, matter vs antimatter ──
-export function _genBoss23Sprites(sprites) {
-    // Matter core (left) — warm, structured, ordered face
-    generateMatterBossSprites(sprites);
-    // Antimatter core (right) — chaotic, inverted, distorted face
-    generateAntimatterBossBody(sprites);
-    // Matter turret — orderly angular
-    generateBoss23TurretMiddle(sprites);
-    // Antimatter turret — chaotic spiky
-    generateBoss23TurretA(sprites);
-    // Shield — matter/antimatter barrier
-    generateBoss23Shield(sprites);
-    // Arm — matter/antimatter hybrid column
-    generateBoss23ArmGraphics(sprites);
-}
-
-
-
-// ── BOSS 24: Grand Unified Theory — the ultimate W4 boss ──
-export function _genBoss24Sprites(sprites) {
-    // Core (100x100 → 120x120) — Majestic unified-field entity with 4-force mandala face
-    generateBoss24CoreSprite(sprites);
-    // Gravity turret — dark mass node
-    generateBoss24GravitySprite(sprites);
-    // EM turret — electric spark node
-    generateBoss24EMSprite(sprites);
-    // Weak turret — soft purple decay node
-    generateWeakTurretSprite(sprites);
-    // Strong turret — green flux tube node
-    generateBoss24GluonSprite(sprites);
-    // Inner orbit turret
-    generateBoss24InnerSprite(sprites);
-    // Shield large — prismatic barrier
-    generateBoss24ShieldSpriteLarge(sprites);
-    // Shield small — mini force node
-    generateBoss24ShieldSprite(sprites);
-    // Weakpoint — unified field crack
-    generateBoss24WeakpointSprite(sprites);
-    // Arm — universal force pillar with all 4 force bands
-    generateBoss24ArmSprite(sprites);
-}
+export { generateWorld4BossSprites };
 
 
 

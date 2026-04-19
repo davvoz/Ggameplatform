@@ -117,38 +117,38 @@ const ENEMY_TYPES = {
     // ═══════ WORLD 4 ENEMIES — Quantum Realm (Standard Model) ═══════
     // Common W4 — three linked quarks (RGB color charge), must kill all 3 quickly or they reform
     quark_triplet: {
-        width: 40, height: 40, health: 2, speed: 65, score: 280,
+        width: 52, height: 52, health: 2, speed: 65, score: 280,
         color: '#ff3355', shootRate: 2.2, dropChance: 0.16,
         w4behaviour: 'triplet' // 3 linked enemies — if one survives 3s after kin die, all reform
     },
     // Common W4 — oscillates between 3 "flavors", only vulnerable in one color state
     neutrino_ghost: {
-        width: 44, height: 44, health: 3, speed: 100, score: 260,
+        width: 56, height: 56, health: 3, speed: 100, score: 260,
         color: '#aa88ff', shootRate: 1.5, dropChance: 0.14,
         stealth: true,
         w4behaviour: 'oscillator' // cycles 3 flavors every 2s, only 1 flavor is vulnerable
     },
     // W4 — links two enemies with a force line, buffing both; break the carrier to break the link
     boson_carrier: {
-        width: 50, height: 50, health: 4, speed: 55, score: 320,
+        width: 62, height: 62, health: 4, speed: 55, score: 320,
         color: '#ffee33', shootRate: 2.5, dropChance: 0.2,
         w4behaviour: 'forcelink' // connects 2 nearest enemies with a force line, +50% damage resist while linked
     },
     // W4 — creates a slowing field that grows over time; must kill before field covers screen
     higgs_field: {
-        width: 56, height: 56, health: 5, speed: 30, score: 350,
-        color: C_GOLD, shootRate: 3, dropChance: 0.22,
+        width: 68, height: 68, health: 5, speed: 30, score: 350,
+        color: '#a050ff', shootRate: 3, dropChance: 0.22,
         w4behaviour: 'massfield' // expanding aura that slows player bullets and player movement
     },
     // W4 — antimatter mirror twin: spawns alongside another enemy, must kill both within 2s or they reform
     positron_mirror: {
-        width: 46, height: 46, health: 2, speed: 80, score: 240,
+        width: 58, height: 58, health: 2, speed: 80, score: 240,
         color: '#ff4488', shootRate: 1.8, dropChance: 0.15,
         w4behaviour: 'antimatter' // paired with a 'particle' twin, both must die within 2s
     },
     // W4 — chain of linked gluon segments: can only damage the ends, not middle segments
     gluon_chain: {
-        width: 38, height: 38, health: 2, speed: 50, score: 300,
+        width: 50, height: 50, health: 2, speed: 50, score: 300,
         color: '#33ff77', shootRate: 2, dropChance: 0.18,
         w4behaviour: 'chain' // only endpoints take damage — middle links are shielded
     }

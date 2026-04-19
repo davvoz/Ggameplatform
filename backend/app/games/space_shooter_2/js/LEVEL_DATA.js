@@ -407,7 +407,7 @@ const LEVEL_DATA = [
         boss: null,
         miniboss: 5, // L31: Vine Sentinel
         waves: [
-            makeWave([e('scout', 0.3), e('scout', 0.5), e('scout', 0.7), e('jungle_vine', 0.5)], 1),
+            makeWave([e('scout', 0.3), e('nest', 0.5), e('scout', 0.7), e('jungle_vine', 0.5)], 1),
             makeWave([e('jungle_vine', 0.3, 'sine'), e('jungle_vine', 0.7, 'sine'), e('fighter', 0.5)], 1.5),
             makeWave([e('stalker', 0.4, 'zigzag'), e('stalker', 0.6, 'zigzag'), e('scout', 0.2), e('scout', 0.8)], 1.5, 'pincer'),
         ]

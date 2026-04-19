@@ -5,7 +5,6 @@ import { C_MEDIUM_BLUE } from '../../entities/LevelsThemes.js';
  * All functions are pure (no side-effects, no game-state mutation).
  */
 import { ui } from '../../FontConfig.js';
-import { drawW4Boss, drawW4MiniBoss } from '../../entities/enemy/types/QuantumBossSprites.js';
 
 // ─── Easing ───────────────────────────────────────────
 export function easeOut(x) {
@@ -59,47 +58,8 @@ export function renderBgStars(ctx, stars) {
  * Render every part of a boss/mini-boss definition at a given position.
  * Draw order: arm → shield → turret → weakpoint → core.
  */
-export function renderBossPartsAtPosition(ctx, assets, def, centerX, centerY, scale, spread, time) {
-    // ── W4 Quantum Realm: use spectacular procedural sprites ──
-    const isW4Boss = def.id >= 19 && def.id <= 24;
-    const isW4Mini = !!def.w4miniboss;
-    if (isW4Boss || isW4Mini) {
-        const w = (def.totalWidth  || 160) * scale;
-        const h = (def.totalHeight || 140) * scale;
-        const synthParts = def.parts.map(p => {
-            const ox = (p.offsetX || 0) * scale * spread;
-            const oy = (p.offsetY || 0) * scale * spread;
-            const pw = p.width * scale;
-            const ph = p.height * scale;
-            return {
-                ...p,
-                width:    pw,
-                height:   ph,
-                active:   true,
-                isCore:   p.role === 'core',
-                hitFlash: 0,
-                rotation: (p.rotationSpeed || 0) * time,
-                worldX:   centerX + ox - pw / 2,
-                worldY:   centerY + oy - ph / 2,
-            };
-        });
-        const synth = {
-            bossId:    def.id,
-            centerX,
-            centerY,
-            width:     w,
-            height:    h,
-            health:    def.baseHP || 100,
-            maxHealth: def.baseHP || 100,
-            parts:     synthParts,
-            coreParts: synthParts.filter(p => p.isCore),
-        };
-        const handled = isW4Boss
-            ? drawW4Boss(ctx, synth, time)
-            : drawW4MiniBoss(ctx, synth, time);
-        if (handled) return;
-    }
-
+export function renderBossPartsAtPosition(ctx, options) {
+    const { assets, def, centerX, centerY, scale, spread, time } = options;
     const order = ['arm', 'shield', 'turret', 'weakpoint', 'core'];
     for (const role of order) {
         for (const p of def.parts) {

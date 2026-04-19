@@ -346,7 +346,6 @@ const MINIBOSS_DEFS = {
         speed: 52,
         movePattern: 'weave',
         color: '#ff5588',
-        w4miniboss: 'charmPhase',
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 55, height: 55, health: 45,
@@ -379,7 +378,6 @@ const MINIBOSS_DEFS = {
         speed: 38,
         movePattern: 'zigzag',
         color: '#55ddff',
-        w4miniboss: 'strangeOscillation',
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 58, height: 58, health: 48,
@@ -409,7 +407,6 @@ const MINIBOSS_DEFS = {
         speed: 20,
         movePattern: 'slowSweep',
         color: '#ffcc33',
-        w4miniboss: 'resonanceShield',
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 50, height: 50, health: 55,
@@ -448,7 +445,6 @@ const MINIBOSS_DEFS = {
         speed: 42,
         movePattern: 'chase',
         color: '#88ff55',
-        w4miniboss: 'decay',
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 55, height: 55, health: 42,

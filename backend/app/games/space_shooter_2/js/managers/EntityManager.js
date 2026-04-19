@@ -49,7 +49,7 @@ class EntityManager {
             life: 3,
             active: true,
             target: null,
-            damage: 3,
+            damage: 2,
             trail: []
         });
     }
@@ -143,7 +143,8 @@ class EntityManager {
         for (const enemy of this.enemies) {
             if (!enemy.active || enemy._isAlly) continue;
             if (this.isInsideRect(m.x, m.y, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
-                enemy.takeDamage(m.damage, g);
+                const killed = enemy.takeDamage(m.damage, g);
+                if (killed) g.waveManager.onEnemyKilled(enemy);
                 m.active = false;
                 this.createMissileExplosion(m, g);
                 break;

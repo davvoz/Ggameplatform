@@ -92,6 +92,7 @@ export default class OpeningCinematic extends CinematicScene {
                     animFreq: 2, letterSpacing: '4px', enterDuration: 0.4
                 },
                 items: ships,
+                itemKey: 'ship',
                 cardRenderer: renderShipCard,
                 startTime: shipsStart,
                 slideStyle: 'leftToRight',
@@ -108,6 +109,7 @@ export default class OpeningCinematic extends CinematicScene {
                     animFreq: 3, animStyle: 'pulse'
                 },
                 items: w4Enemies,
+                itemKey: 'enemy',
                 cardRenderer: renderW4EnemyCard,
                 startTime: enemiesStart,
                 slideStyle: 'alternating',
@@ -122,6 +124,7 @@ export default class OpeningCinematic extends CinematicScene {
                     shadowColor: enemyShadowColor
                 },
                 items: miniBosses,
+                itemKey: 'mb',
                 cardRenderer: renderMiniBossCard,
                 startTime: mbStart,
                 headerY: 0.12,
@@ -135,6 +138,7 @@ export default class OpeningCinematic extends CinematicScene {
                     fontSizeRatio: 0.05, shadowBlur: 25, animStyle: 'flash'
                 },
                 items: bosses,
+                itemKey: 'boss',
                 cardRenderer: renderBossCard,
                 startTime: bossStart,
                 slideStyle: 'center',
@@ -311,72 +315,43 @@ export default class OpeningCinematic extends CinematicScene {
         const baseX = cx - totalW / 2;
 
         // Word 1 — "SPACE"
-        if (t > 0) {
-            const w1t = Math.min(1, t / 0.4);
-            const w1enter = easeOut(w1t);
-            const w1y = cy - 15 + (1 - w1enter) * (-h * 0.4);
-            const w1alpha = w1enter * holdAlpha;
+        this.renderTitleAnimation({ t, cy, h, holdAlpha, ctx, baseX, spaceW, w, titleFont, shooterW, cx, twoW });
 
-            if (t > 0.35 && t < 1) {
-                const ringT = (t - 0.35) / 0.65;
-                ctx.globalAlpha = (1 - ringT) * 0.25 * holdAlpha;
-                ctx.strokeStyle = C_MEDIUM_BLUE;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(baseX + spaceW / 2, cy - 15, ringT * w * 0.35, 0, Math.PI * 2);
-                ctx.stroke();
-            }
+        ctx.restore();
+    }
 
-            if (w1alpha > 0.01) {
-                ctx.font = titleFont;
-                ctx.shadowColor = 'rgba(0,150,255,0.9)';
-                ctx.shadowBlur = 35 * w1alpha;
-                ctx.globalAlpha = w1alpha;
-
-                if (t < 0.6) {
-                    const abr = (1 - t / 0.6) * 6;
-                    ctx.globalAlpha = w1alpha * 0.3;
-                    ctx.fillStyle = '#ff4444';
-                    ctx.fillText('SPACE', baseX + spaceW / 2, w1y - abr);
-                    ctx.fillStyle = '#4444ff';
-                    ctx.fillText('SPACE', baseX + spaceW / 2, w1y + abr);
-                }
-                ctx.globalAlpha = w1alpha;
-                ctx.fillStyle = C_WHITE;
-                ctx.fillText('SPACE', baseX + spaceW / 2, w1y);
-            }
-        }
+    renderTitleAnimation(options) {
+        // Word 1 — "SPACE"
+        this.renderSpaceTitle(options);
 
         // Word 2 — "SHOOTER"
-        if (t > 0.8) {
-            const w2t = Math.min(1, (t - 0.8) / 0.45);
-            const w2enter = easeOut(w2t);
-            const w2x = baseX + spaceW + shooterW / 2 + (1 - w2enter) * (w * 0.5);
-            const w2alpha = w2enter * holdAlpha;
-
-            if (w2alpha > 0.01) {
-                ctx.font = titleFont;
-                ctx.shadowColor = 'rgba(0,150,255,0.9)';
-                ctx.shadowBlur = 35 * w2alpha;
-                const glitchActive = (t - 0.8) < 0.35;
-                const gx = glitchActive ? (Math.random() - 0.5) * 6 : 0;
-                const gy = glitchActive ? (Math.random() - 0.5) * 3 : 0;
-
-                if ((t - 0.8) < 0.5) {
-                    const abr = (1 - (t - 0.8) / 0.5) * 5;
-                    ctx.globalAlpha = w2alpha * 0.25;
-                    ctx.fillStyle = '#ff4444';
-                    ctx.fillText('SHOOTER', w2x + gx - abr, cy - 15 + gy);
-                    ctx.fillStyle = '#4444ff';
-                    ctx.fillText('SHOOTER', w2x + gx + abr, cy - 15 + gy);
-                }
-                ctx.globalAlpha = w2alpha;
-                ctx.fillStyle = C_WHITE;
-                ctx.fillText('SHOOTER', w2x + gx, cy - 15 + gy);
-            }
-        }
+        this.renderShooterTitle(options);
 
         // Word 3 — "2"
+        this.renderInformaticTitle(options);
+
+        // Subtitle
+        this.renderSubtitle(options);
+    }
+
+    renderSubtitle(options) {
+        const { t, holdAlpha, ctx, w, cx, cy } = options;
+        if (t > 2.4) {
+            const subAlpha = easeOut((t - 2.4) / 0.6) * holdAlpha;
+            ctx.globalAlpha = subAlpha * 0.8;
+            ctx.shadowColor = 'rgba(68,136,255,0.3)';
+            ctx.shadowBlur = 10;
+            const subSize = Math.min(16, w * 0.038);
+            ctx.font = ui(subSize);
+            ctx.fillStyle = '#8899bb';
+            ctx.letterSpacing = '3px';
+            ctx.fillText('TACTICAL EVOLUTION', cx, cy + 35);
+            ctx.letterSpacing = '0px';
+        }
+    }
+
+    renderInformaticTitle(options) {
+        const { t, holdAlpha, ctx, w, h, cx, cy, baseX, spaceW, shooterW, twoW, titleFont } = options;
         if (t > 1.6) {
             const w3t = Math.min(1, (t - 1.6) / 0.5);
             const w3enter = easeOut(w3t);
@@ -412,22 +387,76 @@ export default class OpeningCinematic extends CinematicScene {
                 ctx.restore();
             }
         }
+    }
 
-        // Subtitle
-        if (t > 2.4) {
-            const subAlpha = easeOut((t - 2.4) / 0.6) * holdAlpha;
-            ctx.globalAlpha = subAlpha * 0.8;
-            ctx.shadowColor = 'rgba(68,136,255,0.3)';
-            ctx.shadowBlur = 10;
-            const subSize = Math.min(16, w * 0.038);
-            ctx.font = ui(subSize);
-            ctx.fillStyle = '#8899bb';
-            ctx.letterSpacing = '3px';
-            ctx.fillText('TACTICAL EVOLUTION', cx, cy + 35);
-            ctx.letterSpacing = '0px';
+    renderShooterTitle(options) {
+        const { t, baseX, spaceW, shooterW, w, holdAlpha, ctx, titleFont, cy } = options;
+        if (t > 0.8) {
+            const w2t = Math.min(1, (t - 0.8) / 0.45);
+            const w2enter = easeOut(w2t);
+            const w2x = baseX + spaceW + shooterW / 2 + (1 - w2enter) * (w * 0.5);
+            const w2alpha = w2enter * holdAlpha;
+
+            if (w2alpha > 0.01) {
+                ctx.font = titleFont;
+                ctx.shadowColor = 'rgba(0,150,255,0.9)';
+                ctx.shadowBlur = 35 * w2alpha;
+                const glitchActive = (t - 0.8) < 0.35;
+                const gx = glitchActive ? (Math.random() - 0.5) * 6 : 0;
+                const gy = glitchActive ? (Math.random() - 0.5) * 3 : 0;
+
+                if ((t - 0.8) < 0.5) {
+                    const abr = (1 - (t - 0.8) / 0.5) * 5;
+                    ctx.globalAlpha = w2alpha * 0.25;
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillText('SHOOTER', w2x + gx - abr, cy - 15 + gy);
+                    ctx.fillStyle = '#4444ff';
+                    ctx.fillText('SHOOTER', w2x + gx + abr, cy - 15 + gy);
+                }
+                ctx.globalAlpha = w2alpha;
+                ctx.fillStyle = C_WHITE;
+                ctx.fillText('SHOOTER', w2x + gx, cy - 15 + gy);
+            }
         }
+    }
 
-        ctx.restore();
+    renderSpaceTitle(options) {
+        const { t, cy, h, holdAlpha, ctx, baseX, spaceW, w, titleFont } = options;
+        if (t > 0) {
+            const w1t = Math.min(1, t / 0.4);
+            const w1enter = easeOut(w1t);
+            const w1y = cy - 15 + (1 - w1enter) * (-h * 0.4);
+            const w1alpha = w1enter * holdAlpha;
+
+            if (t > 0.35 && t < 1) {
+                const ringT = (t - 0.35) / 0.65;
+                ctx.globalAlpha = (1 - ringT) * 0.25 * holdAlpha;
+                ctx.strokeStyle = C_MEDIUM_BLUE;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(baseX + spaceW / 2, cy - 15, ringT * w * 0.35, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            if (w1alpha > 0.01) {
+                ctx.font = titleFont;
+                ctx.shadowColor = 'rgba(0,150,255,0.9)';
+                ctx.shadowBlur = 35 * w1alpha;
+                ctx.globalAlpha = w1alpha;
+
+                if (t < 0.6) {
+                    const abr = (1 - t / 0.6) * 6;
+                    ctx.globalAlpha = w1alpha * 0.3;
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillText('SPACE', baseX + spaceW / 2, w1y - abr);
+                    ctx.fillStyle = '#4444ff';
+                    ctx.fillText('SPACE', baseX + spaceW / 2, w1y + abr);
+                }
+                ctx.globalAlpha = w1alpha;
+                ctx.fillStyle = C_WHITE;
+                ctx.fillText('SPACE', baseX + spaceW / 2, w1y);
+            }
+        }
     }
 
     // ───────────────────────────────────────────────────
@@ -455,33 +484,97 @@ export default class OpeningCinematic extends CinematicScene {
         ctx.textBaseline = 'middle';
 
         // ── "WORLD N" label ──
-        if (t > 0) {
-            const w1t = Math.min(1, t / 0.5);
-            const w1enter = easeOut(w1t);
-            const labelY = cy - 50 + (1 - w1enter) * (-h * 0.3);
-            const w1alpha = w1enter * holdAlpha;
+        this.renderCinematicTitle({ t, cy, h, holdAlpha, w, ctx, rgb, themeColor, cx, cfg });
 
-            if (w1alpha > 0.01) {
-                const labelSize = Math.min(18, w * 0.045);
-                ctx.font = mono(labelSize, 'bold');
-                ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.8)`;
-                ctx.shadowBlur = 20 * w1alpha;
-                ctx.globalAlpha = w1alpha * 0.7;
-                ctx.fillStyle = themeColor;
-                ctx.fillText(`WORLD ${this.worldNum}`, cx, labelY);
+        ctx.restore();
+    }
 
-                // Decorative line under label
-                const lineW = 60 * w1enter;
-                ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${w1alpha * 0.5})`;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(cx - lineW, labelY + 12);
-                ctx.lineTo(cx + lineW, labelY + 12);
-                ctx.stroke();
-            }
-        }
+    renderCinematicTitle(options) {
+        const { t, cy, h, holdAlpha, w, ctx, rgb, themeColor, cx, cfg } = options;
+        this.renderWorldLabel({ t, cy, h, holdAlpha, w, ctx, rgb, themeColor, cx });
 
         // ── World name (large, with glow) ──
+        this.renderWorldName({ t, holdAlpha, cy, ctx, themeColor, cx, w, cfg, rgb });
+
+        // ── Decorative flash + energy burst ──
+        this.renderEnergyBurst({ t, holdAlpha, cy, ctx, themeColor, w, h, cx, rgb });
+
+        // ── Subtitle (planet/theme info) ──
+        this.displayPlanetInfo({ t, holdAlpha, ctx, rgb, w, themeColor, cfg, cx, cy });
+    }
+
+    displayPlanetInfo(options) {
+        const { t, holdAlpha, ctx, rgb, w, themeColor, cfg, cx, cy } = options;
+        if (t > 2.2) {
+            const subAlpha = easeOut((t - 2.2) / 0.6) * holdAlpha;
+            ctx.globalAlpha = subAlpha * 0.7;
+            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.3)`;
+            ctx.shadowBlur = 10;
+            const subSize = Math.min(14, w * 0.035);
+            ctx.font = ui(subSize);
+            ctx.fillStyle = themeColor;
+            ctx.letterSpacing = '3px';
+            const subtitle = cfg.subtitle || cfg.name.toUpperCase();
+            ctx.fillText(subtitle, cx, cy + 80);
+            ctx.letterSpacing = '0px';
+
+            // Planet list teaser for worlds with planets
+            if (cfg.planets && t > 2.8) {
+                const plAlpha = easeOut((t - 2.8) / 0.5) * holdAlpha;
+                ctx.globalAlpha = plAlpha * 0.4;
+                const plSize = Math.min(10, w * 0.025);
+                ctx.font = mono(plSize, 400);
+                ctx.fillStyle = '#aabbcc';
+                ctx.fillText(`${cfg.planets.length} PLANETS TO EXPLORE`, cx, cy + 100);
+            }
+        }
+    }
+
+    renderEnergyBurst(options) {
+        const { t, holdAlpha, cy, ctx, themeColor, w, h, cx, rgb } = options;
+        if (t > 1.4) {
+            const w3t = Math.min(1, (t - 1.4) / 0.5);
+            const w3enter = easeOut(w3t);
+            const w3alpha = w3enter * holdAlpha;
+            const burstY = cy + 40;
+
+            // Flash on entry
+            if ((t - 1.4) < 0.12) {
+                const flashA = (1 - (t - 1.4) / 0.12) * 0.35;
+                ctx.globalAlpha = flashA;
+                ctx.fillStyle = themeColor;
+                ctx.fillRect(0, 0, w, h);
+            }
+
+            // Horizontal energy burst
+            if ((t - 1.4) > 0.08 && (t - 1.4) < 0.7) {
+                const burstT = ((t - 1.4) - 0.08) / 0.62;
+                const lineW2 = w * easeOut(burstT);
+                ctx.globalAlpha = (1 - burstT) * 0.5 * holdAlpha;
+                ctx.fillStyle = themeColor;
+                ctx.fillRect(cx - lineW2 / 2, burstY - 2, lineW2, 3);
+            }
+
+            // Decorative diamond symbol
+            if (w3alpha > 0.01) {
+                const w3scale = 2.5 - 1.5 * w3enter;
+                ctx.save();
+                ctx.translate(cx, burstY);
+                ctx.scale(w3scale, w3scale);
+                const symSize = Math.min(28, w * 0.07);
+                ctx.font = title(symSize, 'bold');
+                ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.8)`;
+                ctx.shadowBlur = 20 * w3alpha;
+                ctx.globalAlpha = w3alpha;
+                ctx.fillStyle = themeColor;
+                ctx.fillText('◆', 0, 0);
+                ctx.restore();
+            }
+        }
+    }
+
+    renderWorldName(options) {
+        const { t, holdAlpha, cy, ctx, themeColor, cx, w, cfg, rgb } = options;
         if (t > 0.6) {
             const w2t = Math.min(1, (t - 0.6) / 0.5);
             const w2enter = easeOut(w2t);
@@ -527,74 +620,35 @@ export default class OpeningCinematic extends CinematicScene {
                 ctx.fillText(nameText, cx, nameY);
             }
         }
+    }
 
-        // ── Decorative flash + energy burst ──
-        if (t > 1.4) {
-            const w3t = Math.min(1, (t - 1.4) / 0.5);
-            const w3enter = easeOut(w3t);
-            const w3alpha = w3enter * holdAlpha;
-            const burstY = cy + 40;
+    renderWorldLabel(options) {
+        const { t, cy, h, holdAlpha, w, ctx, rgb, themeColor, cx } = options;
+        if (t > 0) {
+            const w1t = Math.min(1, t / 0.5);
+            const w1enter = easeOut(w1t);
+            const labelY = cy - 50 + (1 - w1enter) * (-h * 0.3);
+            const w1alpha = w1enter * holdAlpha;
 
-            // Flash on entry
-            if ((t - 1.4) < 0.12) {
-                const flashA = (1 - (t - 1.4) / 0.12) * 0.35;
-                ctx.globalAlpha = flashA;
-                ctx.fillStyle = themeColor;
-                ctx.fillRect(0, 0, w, h);
-            }
-
-            // Horizontal energy burst
-            if ((t - 1.4) > 0.08 && (t - 1.4) < 0.7) {
-                const burstT = ((t - 1.4) - 0.08) / 0.62;
-                const lineW2 = w * easeOut(burstT);
-                ctx.globalAlpha = (1 - burstT) * 0.5 * holdAlpha;
-                ctx.fillStyle = themeColor;
-                ctx.fillRect(cx - lineW2 / 2, burstY - 2, lineW2, 3);
-            }
-
-            // Decorative diamond symbol
-            if (w3alpha > 0.01) {
-                const w3scale = 2.5 - 1.5 * w3enter;
-                ctx.save();
-                ctx.translate(cx, burstY);
-                ctx.scale(w3scale, w3scale);
-                const symSize = Math.min(28, w * 0.07);
-                ctx.font = title(symSize, 'bold');
+            if (w1alpha > 0.01) {
+                const labelSize = Math.min(18, w * 0.045);
+                ctx.font = mono(labelSize, 'bold');
                 ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.8)`;
-                ctx.shadowBlur = 20 * w3alpha;
-                ctx.globalAlpha = w3alpha;
+                ctx.shadowBlur = 20 * w1alpha;
+                ctx.globalAlpha = w1alpha * 0.7;
                 ctx.fillStyle = themeColor;
-                ctx.fillText('◆', 0, 0);
-                ctx.restore();
+                ctx.fillText(`WORLD ${this.worldNum}`, cx, labelY);
+
+                // Decorative line under label
+                const lineW = 60 * w1enter;
+                ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${w1alpha * 0.5})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx - lineW, labelY + 12);
+                ctx.lineTo(cx + lineW, labelY + 12);
+                ctx.stroke();
             }
         }
-
-        // ── Subtitle (planet/theme info) ──
-        if (t > 2.2) {
-            const subAlpha = easeOut((t - 2.2) / 0.6) * holdAlpha;
-            ctx.globalAlpha = subAlpha * 0.7;
-            ctx.shadowColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.3)`;
-            ctx.shadowBlur = 10;
-            const subSize = Math.min(14, w * 0.035);
-            ctx.font = ui(subSize);
-            ctx.fillStyle = themeColor;
-            ctx.letterSpacing = '3px';
-            const subtitle = cfg.subtitle || cfg.name.toUpperCase();
-            ctx.fillText(subtitle, cx, cy + 80);
-            ctx.letterSpacing = '0px';
-
-            // Planet list teaser for worlds with planets
-            if (cfg.planets && t > 2.8) {
-                const plAlpha = easeOut((t - 2.8) / 0.5) * holdAlpha;
-                ctx.globalAlpha = plAlpha * 0.4;
-                const plSize = Math.min(10, w * 0.025);
-                ctx.font = mono(plSize, 400);
-                ctx.fillStyle = '#aabbcc';
-                ctx.fillText(`${cfg.planets.length} PLANETS TO EXPLORE`, cx, cy + 100);
-            }
-        }
-
-        ctx.restore();
     }
 
     // ───────────────────────────────────────────────────
@@ -664,46 +718,7 @@ export default class OpeningCinematic extends CinematicScene {
             const perkTrigger = lightUpStart + i * lightUpDelay;
             const tST = phaseT - perkTrigger;
 
-            let perkAlpha = 0.15;
-            let glowAmount = 0;
-            let iconScale = 1;
-
-            if (tST >= 0) {
-                const fp = Math.min(1, tST / lightUpDuration);
-                const flash = fp < 0.3 ? easeOut(fp / 0.3) : 1;
-                const settle = fp < 0.3 ? 1 : 1 - (fp - 0.3) / 0.7 * 0.4;
-                perkAlpha = 0.15 + 0.85 * flash * settle;
-                glowAmount = fp < 0.4 ? (1 - fp / 0.4) : 0;
-                iconScale = 1 + glowAmount * 0.4;
-            }
-
-            ctx.save();
-            ctx.globalAlpha = alpha * perkAlpha;
-
-            if (glowAmount > 0.01) {
-                ctx.save();
-                ctx.globalAlpha = alpha * glowAmount * 0.5;
-                const glowR = 22;
-                const glowGrd = ctx.createRadialGradient(ix, iy, 0, ix, iy, glowR);
-                glowGrd.addColorStop(0, C_WHITE);
-                glowGrd.addColorStop(0.4, '#bbbbbb');
-                glowGrd.addColorStop(1, 'transparent');
-                ctx.fillStyle = glowGrd;
-                ctx.beginPath();
-                ctx.arc(ix, iy, glowR, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-
-            const iSize = Math.min(22, w * 0.048) * iconScale;
-            ctx.font = mono(iSize, 400);
-            ctx.fillStyle = tST >= 0 ? C_WHITE : '#333333';
-            if (tST >= 0 && glowAmount > 0.1) {
-                ctx.shadowColor = C_WHITE;
-                ctx.shadowBlur = 12 * glowAmount;
-            }
-            ctx.fillText(perk.icon, ix, iy);
-            ctx.shadowBlur = 0;
+            this.renderPerkGlow({ tST, lightUpDuration, ctx, alpha, ix, iy, w, perk });
 
             if (tST >= lightUpDuration * 0.5) {
                 const nameAlpha = easeOut(Math.min(1, (tST - lightUpDuration * 0.5) / 0.3));
@@ -728,5 +743,49 @@ export default class OpeningCinematic extends CinematicScene {
         ctx.fillText(subText, cx, subtitleY);
 
         ctx.restore();
+    }
+
+    renderPerkGlow(options) {
+        const { tST, lightUpDuration, ctx, alpha, ix, iy, w, perk } = options;
+        let perkAlpha = 0.15;
+        let glowAmount = 0;
+        let iconScale = 1;
+
+        if (tST >= 0) {
+            const fp = Math.min(1, tST / lightUpDuration);
+            const flash = fp < 0.3 ? easeOut(fp / 0.3) : 1;
+            const settle = fp < 0.3 ? 1 : 1 - (fp - 0.3) / 0.7 * 0.4;
+            perkAlpha = 0.15 + 0.85 * flash * settle;
+            glowAmount = fp < 0.4 ? (1 - fp / 0.4) : 0;
+            iconScale = 1 + glowAmount * 0.4;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha * perkAlpha;
+
+        if (glowAmount > 0.01) {
+            ctx.save();
+            ctx.globalAlpha = alpha * glowAmount * 0.5;
+            const glowR = 22;
+            const glowGrd = ctx.createRadialGradient(ix, iy, 0, ix, iy, glowR);
+            glowGrd.addColorStop(0, C_WHITE);
+            glowGrd.addColorStop(0.4, '#bbbbbb');
+            glowGrd.addColorStop(1, 'transparent');
+            ctx.fillStyle = glowGrd;
+            ctx.beginPath();
+            ctx.arc(ix, iy, glowR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        const iSize = Math.min(22, w * 0.048) * iconScale;
+        ctx.font = mono(iSize, 400);
+        ctx.fillStyle = tST >= 0 ? C_WHITE : '#333333';
+        if (tST >= 0 && glowAmount > 0.1) {
+            ctx.shadowColor = C_WHITE;
+            ctx.shadowBlur = 12 * glowAmount;
+        }
+        ctx.fillText(perk.icon, ix, iy);
+        ctx.shadowBlur = 0;
     }
 }

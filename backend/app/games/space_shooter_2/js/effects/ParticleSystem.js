@@ -342,6 +342,38 @@ ParticleSystem.PRESETS = {
             gravity: -20,
             glow: true
         };
+    },
+    tunnelWarpOut: () => {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 80 + Math.random() * 120;
+        return {
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 0.4 + Math.random() * 0.4,
+            size: 3 + Math.random() * 4,
+            endSize: 0,
+            color: { r: 0, g: 200, b: 255 },
+            endColor: { r: 120, g: 80, b: 255 },
+            friction: 0.92,
+            glow: true,
+            shape: 'spark'
+        };
+    },
+    tunnelWarpIn: () => {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 40 + Math.random() * 30;
+        return {
+            vx: -Math.cos(angle) * radius * 2,
+            vy: -Math.sin(angle) * radius * 2,
+            life: 0.3 + Math.random() * 0.3,
+            size: 2 + Math.random() * 3,
+            endSize: 1,
+            color: { r: 0, g: 255, b: 220 },
+            endColor: { r: 0, g: 180, b: 255 },
+            friction: 0.88,
+            glow: true,
+            shape: 'circle'
+        };
     }
 };
 

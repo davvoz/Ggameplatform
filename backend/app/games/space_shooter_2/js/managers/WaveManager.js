@@ -190,6 +190,53 @@ class WaveManager {
         if (perks.getDataLeechChance() > 0 && Math.random() < perks.getDataLeechChance()) {
             this.game.scoreManager.onEnemyKilled(enemy); // extra score credit
         }
+
+        // Wave Collapse: every N kills fires a probability wave
+        this.tryWaveCollapse(perks);
+
+        // Antimatter Harvest: combo kills grant bonus score + ult charge
+        this.tryAntimatterHarvest(perks);
+    }
+
+    tryWaveCollapse(perks) {
+        if (perks.getWaveCollapseInterval() >= Infinity) return;
+
+        perks.waveCollapseKills++;
+        if (perks.waveCollapseKills < perks.getWaveCollapseInterval()) return;
+
+        perks.waveCollapseKills = 0;
+        const g = this.game;
+        const player = g.entityManager.player;
+        if (!player?.active) return;
+
+        const dmg = perks.getWaveCollapseDmg();
+        const pcy = player.position.y + player.height / 2;
+
+        for (const e of g.entityManager.enemies) {
+            if (!e.active || e._isAlly) continue;
+            const ey = e.position.y + e.height / 2;
+            if (Math.abs(ey - pcy) < 75) {
+                e.takeDamage(dmg, g);
+                g.particles.emit(e.position.x + e.width / 2, ey, 'hit', 4);
+            }
+        }
+
+        g.postProcessing.flash({ r: 100, g: 200, b: 255 }, 0.15);
+    }
+
+    tryAntimatterHarvest(perks) {
+        if (!perks.hasAntimatterHarvest()) return;
+        if (this.game.scoreManager.combo < 2) return;
+
+        const g = this.game;
+        const player = g.entityManager.player;
+        if (!player?.active) return;
+
+        const bonusScore = Math.round(10 * perks.getAntimatterScoreBonus());
+        g.scoreManager.addScore(bonusScore);
+
+        const ultBonus = perks.getAntimatterUltBonus();
+        player.ultimateCharge = Math.min(100, player.ultimateCharge + ultBonus);
     }
 
     onBossKilled() {

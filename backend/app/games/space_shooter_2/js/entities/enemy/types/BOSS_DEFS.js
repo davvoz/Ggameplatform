@@ -575,6 +575,11 @@ const BOSS_DEFS = {
         speed: 38,
         movePattern: 'sweep',
         color: '#00ddcc',
+        ability: {
+            type: 'periodicToggle', effect: 'shieldCore',
+            cooldown: 8, duration: 2.5, initialCooldown: 5,
+            indicator: { color: '#00ffff', text: 'SHIELD', dashed: true, lineWidth: 3 }
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 75, height: 75, health: 180,
@@ -611,6 +616,11 @@ const BOSS_DEFS = {
         speed: 30,
         movePattern: 'weave',
         color: '#ff3388',
+        ability: {
+            type: 'periodicAction', action: 'spawnShards',
+            cooldown: 7, initialCooldown: 6,
+            spawnCount: 3, spawnType: 'fragment_shard', spawnSpeedMult: 1.5
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 80, height: 80, health: 220,
@@ -654,6 +664,11 @@ const BOSS_DEFS = {
         speed: 42,
         movePattern: 'erratic',
         color: C_PERIWINKLE,
+        ability: {
+            type: 'periodicToggle', effect: 'reflectBullets',
+            cooldown: 10, duration: 3, initialCooldown: 7,
+            indicator: { color: C_PERIWINKLE, text: 'REFLECT', dashed: true, lineWidth: 2, radius: 90 }
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 85, height: 85, health: 260,
@@ -698,6 +713,11 @@ const BOSS_DEFS = {
         speed: 35,
         movePattern: 'figure8',
         color: '#ff8800',
+        ability: {
+            type: 'periodicAction', action: 'teleportBurst',
+            cooldown: 6, initialCooldown: 4,
+            burstCount: 8, burstSpeed: 120
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 90, height: 90, health: 300,
@@ -744,6 +764,11 @@ const BOSS_DEFS = {
         speed: 40,
         movePattern: 'chase',
         color: '#8844ff',
+        ability: {
+            type: 'periodicToggle', effect: 'absorbDamage',
+            cooldown: 9, duration: 2, initialCooldown: 6,
+            indicator: { color: '#8844ff', text: 'ABSORB', filled: true }
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 92, height: 92, health: 340,
@@ -798,6 +823,13 @@ const BOSS_DEFS = {
         speed: 38,
         movePattern: 'erratic',
         color: '#ff0044',
+        ability: {
+            type: 'hpThreshold',
+            phases: [
+                { threshold: 0.66, movePattern: 'chase', speedMult: 1.2, shootRateMult: 0.75, particleCount: 15 },
+                { threshold: 0.33, movePattern: 'erratic', speedMult: 1.3, shootRateMult: 0.7, spawnType: 'glitch_drone', spawnCount: 2, particleCount: 20 }
+            ]
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 100, height: 100, health: 400,
@@ -865,7 +897,7 @@ const BOSS_DEFS = {
     // ═══════════════════════════════════════════════════════
     //  WORLD 4 BOSSES — Quantum Realm (bossId 19-24)
     //  Levels 95, 100, 105, 110, 115, 120
-    //  Each has a unique quantum-physics mechanic (see _updateW4BossAbility)
+    //  Each has a unique quantum-physics mechanic (see abilities/)
     // ═══════════════════════════════════════════════════════
     // Boss 19 (Level 95): Proton Crusher — 3 quark cores must all be destroyed within 5s window
     19: {
@@ -876,7 +908,10 @@ const BOSS_DEFS = {
         speed: 32,
         movePattern: 'weave',
         color: C_HOT_PINK,
-        w4ability: 'quarkConfinement',
+        ability: {
+            type: 'partRevive', targetRole: 'core',
+            reviveDelay: 5, reviveHpRatio: 0.3
+        },
         parts: [
             // Three quark cores — must all die within 5s or surviving ones regenerate
             {
@@ -927,7 +962,13 @@ const BOSS_DEFS = {
         speed: 35,
         movePattern: 'sweep',
         color: '#ffaa22',
-        w4ability: 'electroweakPhase',
+        ability: {
+            type: 'modeSwitch', interval: 8,
+            modes: [
+                { shootRateMult: 0.7, shootPattern: 'aimed', indicator: { color: '#44ddff', text: 'EM PHASE' } },
+                { shootRateMult: 1.4, shootPattern: 'radial', indicator: { color: '#ff88ff', text: 'WEAK PHASE' } }
+            ]
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 80, height: 80, health: 240,
@@ -975,7 +1016,6 @@ const BOSS_DEFS = {
         speed: 30,
         movePattern: 'slowSweep',
         color: '#33ff88',
-        w4ability: 'colorCharge',
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 85, height: 85, health: 280,
@@ -1042,7 +1082,11 @@ const BOSS_DEFS = {
         speed: 22,
         movePattern: 'slowSweep',
         color: C_GOLD,
-        w4ability: 'massWell',
+        ability: {
+            type: 'periodicToggle', effect: 'pullPlayer',
+            cooldown: 10, duration: 3, initialCooldown: 7,
+            indicator: { color: '#ffcc44', text: 'MASS WELL', filled: true }
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 90, height: 90, health: 320,
@@ -1090,7 +1134,11 @@ const BOSS_DEFS = {
         speed: 34,
         movePattern: 'erratic',
         color: C_VIVID_PURPLE,
-        w4ability: 'antimatterMirror',
+        ability: {
+            type: 'damageBalance',
+            halves: ['matter', 'anti'],
+            imbalanceThreshold: 40, healRatio: 0.2, decayRate: 0.2
+        },
         parts: [
             // Matter core (left)
             {
@@ -1145,7 +1193,15 @@ const BOSS_DEFS = {
         speed: 36,
         movePattern: 'erratic',
         color: C_WHITE,
-        w4ability: 'grandUnification',
+        ability: {
+            type: 'modeSwitch', interval: 6,
+            modes: [
+                { shootRateMult: 1.5, indicator: { color: '#44ff88', text: 'STRONG' } },
+                { shootRateMult: 0.6, indicator: { color: '#44ddff', text: 'EM' } },
+                { shootRateMult: 1, shootPattern: 'radial', indicator: { color: '#cc66ff', text: 'WEAK' } },
+                { shootRateMult: 0.8, shootPattern: 'aimed', indicator: { color: '#ff4444', text: 'GRAVITY' } }
+            ]
+        },
         parts: [
             {
                 role: 'core', offsetX: 0, offsetY: 0, width: 100, height: 100, health: 450,
@@ -1209,11 +1265,11 @@ const BOSS_DEFS = {
             // Weakpoints
             {
                 role: 'weakpoint', offsetX: -50, offsetY: 60, width: 28, height: 28, health: 20,
-                spriteKey: 'boss24_weak', score: 600
+                spriteKey: 'boss24_weakpoint', score: 600
             },
             {
                 role: 'weakpoint', offsetX: 50, offsetY: 60, width: 28, height: 28, health: 20,
-                spriteKey: 'boss24_weak', score: 600
+                spriteKey: 'boss24_weakpoint', score: 600
             },
             {
                 role: 'arm', offsetX: -100, offsetY: 48, width: 52, height: 72, health: 38,

@@ -3,6 +3,7 @@ import { generateEnemySprites } from './assets/Enemies.js';
 import { generateBossSprites } from './assets/Bosses.js';
 import { generateMiniBossSprites } from './assets/MiniBoss.js';
 import { generatePerkDeviceSprites } from './assets/Perk.js';
+import Bullet from '../entities/Bullet.js';
 
 /**
  * AssetManager - handles loading and storing all game sprites in memory for easy access.
@@ -16,11 +17,12 @@ class AssetManager {
     }
 
     async load() {
-        generateShipSprites(this.sprites);
-        generateEnemySprites(this.sprites);
-        generateBossSprites(this.sprites);
-        generateMiniBossSprites(this.sprites);
+        await generateShipSprites(this.sprites);
+        await generateEnemySprites(this.sprites);
+        await generateBossSprites(this.sprites);
+        await generateMiniBossSprites(this.sprites);
         generatePerkDeviceSprites(this.sprites);
+        await Bullet.loadSprites();
         this.loaded = true;
     }
 

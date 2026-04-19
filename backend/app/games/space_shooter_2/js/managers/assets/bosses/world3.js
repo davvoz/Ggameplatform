@@ -1,141 +1,69 @@
-import {
-    core1,
-    turret1,
-    shield1,
-    arm1,
-    core2,
-    orb2,
-    shield2,
-    arm2,
-    core3,
-    turret3,
-    shieldSmall,
-    shieldLarge,
-    arm3,
-    core4,
-    turret4,
-    orb4,
-    shield4,
-    arm4,
-    core5,
-    turret5,
-    orb5,
-    shield5,
-    weakPoint,
-    arm5,
-    core6,
-    turret6,
-    orb6,
-    shieldLarge6,
-    shieldSmall6,
-    weakPoint6,
-    arm6,
-} from './utilities/world3_utils.js';
-
-import { C_HOT_PINK } from '../../../entities/LevelsThemes.js';
+import SpritesheetLoader from '../SpritesheetLoader.js';
 
 // ═══════════════════════════════════════════════
-//  WORLD 3 BOSSES — Simulation Break
-//  Theme: corrupted digital, glitch blocks, neon outlines, scanlines
+//  WORLD 3 BOSSES — registry + loader
 // ═══════════════════════════════════════════════
+const WORLD3_BOSSES = [
+    { id: 13, url: 'assets/spritesheets/boss13.png', frames: {
+        boss13_core:   { x: 0,   y: 0, w: 95,  h: 95 },
+        boss13_turret: { x: 95,  y: 0, w: 44,  h: 44 },
+        boss13_shield: { x: 139, y: 0, w: 112, h: 34 },
+        boss13_arm:    { x: 251, y: 0, w: 50,  h: 62 }
+    }},
+    { id: 14, url: 'assets/spritesheets/boss14.png', frames: {
+        boss14_core:   { x: 0,   y: 0, w: 100, h: 100 },
+        boss14_orb:    { x: 100, y: 0, w: 40,  h: 40 },
+        boss14_shield: { x: 140, y: 0, w: 122, h: 36 },
+        boss14_arm:    { x: 262, y: 0, w: 52,  h: 67 }
+    }},
+    { id: 15, url: 'assets/spritesheets/boss15.png', frames: {
+        boss15_core:    { x: 0,   y: 0, w: 105, h: 105 },
+        boss15_turret:  { x: 105, y: 0, w: 46,  h: 46 },
+        boss15_shield:  { x: 151, y: 0, w: 47,  h: 32 },
+        boss15_shield2: { x: 198, y: 0, w: 102, h: 34 },
+        boss15_arm:     { x: 300, y: 0, w: 54,  h: 70 }
+    }},
+    { id: 16, url: 'assets/spritesheets/boss16.png', frames: {
+        boss16_core:   { x: 0,   y: 0, w: 110, h: 110 },
+        boss16_turret: { x: 110, y: 0, w: 48,  h: 48 },
+        boss16_orb:    { x: 158, y: 0, w: 40,  h: 40 },
+        boss16_shield: { x: 198, y: 0, w: 132, h: 37 },
+        boss16_arm:    { x: 330, y: 0, w: 56,  h: 74 }
+    }},
+    { id: 17, url: 'assets/spritesheets/boss17.png', frames: {
+        boss17_core:   { x: 0,   y: 0, w: 112, h: 112 },
+        boss17_turret: { x: 112, y: 0, w: 50,  h: 50 },
+        boss17_orb:    { x: 162, y: 0, w: 42,  h: 42 },
+        boss17_shield: { x: 204, y: 0, w: 137, h: 36 },
+        boss17_weak:   { x: 341, y: 0, w: 36,  h: 36 },
+        boss17_arm:    { x: 377, y: 0, w: 58,  h: 77 }
+    }},
+    { id: 18, url: 'assets/spritesheets/boss18.png', frames: {
+        boss18_core:    { x: 0,   y: 0, w: 120, h: 120 },
+        boss18_turret:  { x: 120, y: 0, w: 52,  h: 52 },
+        boss18_orb:     { x: 172, y: 0, w: 44,  h: 44 },
+        boss18_shield:  { x: 216, y: 0, w: 152, h: 40 },
+        boss18_shield2: { x: 368, y: 0, w: 44,  h: 30 },
+        boss18_weak:    { x: 412, y: 0, w: 38,  h: 38 },
+        boss18_arm:     { x: 450, y: 0, w: 62,  h: 82 }
+    }}
+];
 
-
-
-// ── BOSS 13: Corrupted Compiler (teal, crashed computer) ──
-export function _genBoss13Sprites(sprites) {
-    const color = '#00ccbb', accent = '#44ffee', dark = '#006655';
-    // Core (75x75 → 95x95) — Cartoon crashed monitor with angry face
-    core1(color, accent, dark, sprites);
-    // Turret (32x32 → 44x44) — Error popup window with ⚠ warning icon
-    turret1(dark, accent, sprites);
-    // Shield (100x22 → 112x34) — Hazard stripe error barrier
-    shield1(dark, accent, sprites);
-    // Arm (38x50 → 50x62) — Keyboard bracket key { }
-    arm1(color, dark, accent, sprites);
+async function loadBoss(sprites, boss) {
+    try {
+        const loaded = await SpritesheetLoader.loadFrames(boss.url, boss.frames);
+        Object.assign(sprites, loaded);
+    } catch {
+        console.warn(`Boss${boss.id} spritesheet failed to load`);
+    }
 }
 
-
-// ── BOSS 14: Fragment King (magenta/pink, jagged crystal crown) ──
-export function _genBoss14Sprites(sprites) {
-    const color = '#ee2266', accent = '#ff5599', dark = '#881133';
-    // Core (80x80 → 100x100) — Jagged crystal crown with menacing face
-    core2(color, accent, dark, sprites);
-    // Orb (28x28 → 40x40) — Faceted diamond crystal shard
-    orb2(accent, color, dark, sprites);
-    // Shield (110x24 → 122x36) — Segmented crystal wall with spikes
-    shield2(accent, color, dark, sprites);
-    // Arm (40x55 → 52x67) — Sharp crystal blade with facet glow
-    arm2(accent, color, dark, sprites);
+async function generateWorld3BossSprites(sprites) {
+    for (const boss of WORLD3_BOSSES) {
+        await loadBoss(sprites, boss);
+    }
 }
 
-
-// ── BOSS 15: Mirror Engine (silver/blue, reflective prism) ──
-export function _genBoss15Sprites(sprites) {
-    const color = '#aaaaee', accent = '#ddddff';
-    // Core (85x85 → 105x105) — Mirror heptagonal with prismatic stripe
-    core3(color, sprites);
-    // Turret (34x34 → 46x46) — Prismatic lens with rainbow iris ring
-    turret3(accent, color, sprites);
-    // Shield small (35x20 → 47x32) — Hexagonal mirror medallion
-    shieldSmall(color, sprites);
-    // Shield large (90x22 → 102x34) — Long reflective plate with prismatic line
-    shieldLarge(color, sprites);
-    // Arm (42x58 → 54x70) — Triangular prism with rainbow bottom edge
-    arm3(color, accent, sprites);
-}
-
-
-// ── BOSS 16: Chaos Generator (orange, fiery chaotic) ──
-export function _genBoss16Sprites(sprites) {
-    const color = '#ee7700', accent = '#ffaa44', dark = '#884400';
-    // Core (90x90 → 110x110) — Octagonal with chaos rune symbols
-    core4(color, dark, accent, sprites);
-    // Turret (36x36 → 48x48) — Gear/cog shape with fire-eye center
-    turret4(accent, color, dark, sprites);
-    // Orb (28x28 → 40x40) — Chaos fire star
-    orb4(accent, color, sprites);
-    // Shield (120x25 → 132x37) — Zigzag sawtooth energy wall
-    shield4(dark, accent, sprites);
-    // Arm (44x62 → 56x74) — Flame tentacle with ember glow
-    arm4(accent, dark, sprites);
-}
-
-
-// ── BOSS 17: Data Devourer (purple, menacing digital maw) ──
-export function _genBoss17Sprites(sprites) {
-    const color = '#7733ee', accent = '#aa66ff', dark = '#441199';
-    // Core (92x92 → 112x112) — Digital maw with pixel teeth
-    core5(color, dark, accent, sprites);
-    // Turret (38x38 → 50x50) — Fang/jaw turret with teeth
-    turret5(accent, color, dark, sprites);
-    // Orb (30x30 → 42x42) — Data packet cube with binary grid
-    orb5(color, accent, dark, sprites);
-    // Shield (125x24 → 137x36) — Pixel teeth barrier
-    shield5(dark, accent, sprites);
-    // Weakpoint (24x24 → 36x36) — Spiral hunger vortex core
-    weakPoint(color, dark, accent, sprites);
-    // Arm (46x65 → 58x77) — Segmented tentacle with suction rings
-    arm5(color, dark, accent, sprites);
-}
-
-
-// ── BOSS 18: The Kernel (red/crimson, ultimate simulation boss) ──
-export function _genBoss18Sprites(sprites) {
-    const color = '#dd0033', accent = C_HOT_PINK, dark = '#880022';
-    // Core (100x100 → 120x120) — Ultimate star boss with multi-eyed face
-    core6(color, dark, accent, sprites);
-    // Turret (40x40 → 52x52) — Crown spike with embedded ruby gem
-    turret6(accent, color, dark, sprites);
-    // Orb (32x32 → 44x44) — Command sigil orb with rune marks
-    orb6(color, dark, accent, sprites);
-    // Shield large (140x28 → 152x40) — Command terminal bar
-    shieldLarge6(accent, sprites);
-    // Shield small (32x18 → 44x30) — Power conduit hexagonal node
-    shieldSmall6(dark, accent, sprites);
-    // Weakpoint (26x26 → 38x38) — Critical error core with crosshair
-    weakPoint6(dark, sprites);
-    // Arm (50x70 → 62x82) — Royal pillar with energy ring bands
-    arm6(dark, accent, color, sprites);
-}
+export { generateWorld3BossSprites };
 
 

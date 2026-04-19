@@ -1,53 +1,42 @@
-import {
-    generateCore5,
-    generateVineSprite,
-    drawMiniBossStructure,
-    drawMiniBossClaw,
-    renderTurretSprite,
-    drawMiniBossCore,
-    createMiniBossOrb,
-    generateMiniBossBase,
-    createMiniBossShield,
-    createMiniBossTurretSprite
-} from './utils/world_mini2_utils.js';
+import SpritesheetLoader from '../SpritesheetLoader.js';
 
 // ═══════════════════════════════════════════════════
-//  WORLD 2 MINI-BOSSES — 4 unique planetary types
+//  WORLD 2 MINI-BOSSES — registry + loader
 // ═══════════════════════════════════════════════════
+const WORLD2_MINIBOSSES = [
+    { id: 5, url: 'assets/spritesheets/miniboss5.png', frames: {
+        mboss5_core: { x: 0,  y: 0, w: 71, h: 71 },
+        mboss5_vine: { x: 71, y: 0, w: 32, h: 45 }
+    }},
+    { id: 6, url: 'assets/spritesheets/miniboss6.png', frames: {
+        mboss6_core: { x: 0,  y: 0, w: 66, h: 66 },
+        mboss6_orb:  { x: 66, y: 0, w: 30, h: 30 }
+    }},
+    { id: 7, url: 'assets/spritesheets/miniboss7.png', frames: {
+        mboss7_core:   { x: 0,   y: 0, w: 76, h: 76 },
+        mboss7_shield: { x: 76,  y: 0, w: 73, h: 26 },
+        mboss7_turret: { x: 149, y: 0, w: 34, h: 34 }
+    }},
+    { id: 8, url: 'assets/spritesheets/miniboss8.png', frames: {
+        mboss8_core:   { x: 0,   y: 0, w: 71, h: 71 },
+        mboss8_claw:   { x: 71,  y: 0, w: 34, h: 42 },
+        mboss8_turret: { x: 105, y: 0, w: 32, h: 32 }
+    }}
+];
 
-// ── MINI-BOSS 5: Vine Sentinel (green, organic, jungle) ──
-export function _genMiniBoss5Sprites(sprites) {
-    const color = '#33aa55', accent = '#66dd88', dark = '#117733';
-    // Core (55x55, pad=8 → 71x71)
-    generateCore5(color, dark, accent, sprites);
-    // Vine (22x35, pad=5 → 32x45) — whip tendril
-    generateVineSprite(dark, accent, sprites);
+async function loadMiniBoss(sprites, miniboss) {
+    try {
+        const loaded = await SpritesheetLoader.loadFrames(miniboss.url, miniboss.frames);
+        Object.assign(sprites, loaded);
+    } catch {
+        console.warn(`MiniBoss${miniboss.id} spritesheet failed to load`);
+    }
 }
-// ── MINI-BOSS 8: Rust Hulk (rusty brown, mechanical junk titan) ──
-export function _genMiniBoss8Sprites(sprites) {
-    const color = '#99775a', accent = '#ccaa88', dark = '#664433';
-    // Core (55x55, pad=8 → 71x71)
-    drawMiniBossStructure(color, dark, sprites);
-    // Claw (24x32, pad=5 → 34x42) — scrap claw arm
-    drawMiniBossClaw(dark, accent, color, sprites);
-    // Turret (22x22, pad=5 → 32x32)
-    renderTurretSprite(accent, sprites);
+
+async function generateWorld2MiniBossSprites(sprites) {
+    for (const miniboss of WORLD2_MINIBOSSES) {
+        await loadMiniBoss(sprites, miniboss);
+    }
 }
-// ── MINI-BOSS 6: Magma Sprite (orange, fiery, fast) ──
-export function _genMiniBoss6Sprites(sprites) {
-    const color = '#ff6600', accent = '#ff9944', dark = '#aa3300';
-    // Core (50x50, pad=8 → 66x66)
-    drawMiniBossCore(color, sprites);
-    // Orb (20x20, pad=5 → 30x30) — orbiting fire ball
-    createMiniBossOrb(accent, dark, sprites);
-}
-// ── MINI-BOSS 7: Cryo Colossus (ice blue, slow, fortified) ──
-export function _genMiniBoss7Sprites(sprites) {
-    const color = '#55ccff', accent = '#88eeff';
-    // Core (60x60, pad=8 → 76x76)
-    generateMiniBossBase(color, sprites);
-    // Shield (65x18, pad=4 → 73x26)
-    createMiniBossShield(sprites);
-    // Turret (24x24, pad=5 → 34x34)
-    createMiniBossTurretSprite(accent, sprites);
-}
+
+export { generateWorld2MiniBossSprites };

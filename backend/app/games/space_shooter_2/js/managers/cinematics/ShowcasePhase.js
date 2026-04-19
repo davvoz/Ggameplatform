@@ -44,7 +44,8 @@ export default class ShowcasePhase {
      * @param {Object}   config
      * @param {Object}   config.header          — { text, color, shadowColor, maxFontSize?, fontSizeRatio?, shadowBlur?, animStyle?, animFreq?, letterSpacing? }
      * @param {Array}    config.items           — entities to present
-     * @param {Function} config.cardRenderer    — fn(ctx, item, x, y, alpha, scale, itemT, game, w, h, index)
+     * @param {Function} config.cardRenderer    — fn(ctx, options) where options = { [itemKey]: item, x, y, alpha, scale, itemT, game, w, h, index }
+     * @param {string}  [config.itemKey]         — property name for the item inside the options object (default 'item')
      * @param {number}   config.startTime       — absolute scene time this phase starts
      * @param {number}  [config.itemDuration]    — seconds per item (default ITEM_SHOWCASE_TIME)
      * @param {number}  [config.crossfade]       — seconds of overlap (default 0.3)
@@ -76,6 +77,7 @@ export default class ShowcasePhase {
         this.scanLine      = config.scanLine       || false;
         this.onPhaseStart  = config.onPhaseStart   || null;
         this.onItemReveal  = config.onItemReveal   || null;
+        this.itemKey        = config.itemKey        || 'item';
 
         this.phaseDuration = this.items.length * this.itemDuration;
     }
@@ -200,7 +202,7 @@ export default class ShowcasePhase {
             const x     = cx + slide(i, enter, exit, w);
             const scale = this.scaleItems ? 0.5 + enter * 0.5 - exit * 0.3 : 1;
 
-            this.cardRenderer(ctx, this.items[i], x, cy, alpha, scale, iT, game, w, h, i);
+            this.cardRenderer(ctx, { [this.itemKey]: this.items[i], x, y: cy, alpha, scale, itemT: iT, game, w, h, index: i });
         }
     }
 }

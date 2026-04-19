@@ -45,7 +45,7 @@ class ScoreManager {
 
         // Ultimate charge is now time-based (no kill-based charge)
 
-        if (perks.hasPerk('vampire_rounds') && entities.player && entities.player.active) {
+        if (perks.hasPerk('vampire_rounds') && entities.player?.active) {
             perks.vampireKillCount++;
             if (perks.vampireKillCount >= perks.getVampireKillThreshold()) {
                 perks.vampireKillCount = 0;
@@ -128,11 +128,12 @@ class ScoreManager {
         this.totalEnemiesKilled++;
 
         for (let i = 0; i < 3; i++) {
-            const types = g.levelManager.currentLevel >= 61
-                ? ['health', 'glitch_clone', 'ultimate']
-                : g.levelManager.currentLevel >= 31
+            const a = g.levelManager.currentLevel >= 31
                 ? ['health', 'drone_companion', 'ultimate']
                 : ['health', 'points', 'ultimate'];
+            const types = g.levelManager.currentLevel >= 61
+                ? ['health', 'glitch_clone', 'ultimate']
+                : a;
             entities.powerUps.push(new PowerUp(
                 cx + (i - 1) * 40 - 17,
                 cy - 17,

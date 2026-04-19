@@ -1,5 +1,7 @@
 import { C_MEDIUM_BLUE, C_GOLD } from './LevelsThemes.js';
 import GameObject from '../../../shared/GameObject.js';
+import PlayerRenderer from './PlayerRenderer.js';
+import PowerUpManager from './powerups/PowerUpManager.js';
 
 /**
  * SHIP_DATA - 5 ships with distinct characteristics
@@ -59,7 +61,8 @@ import GameObject from '../../../shared/GameObject.js';
         icon: '✸',
         description: 'Releases a devastating explosion that damages all enemies on screen.',
         color: '#ff6600',
-        chargeNeeded: 100
+        chargeNeeded: 100,
+        chargeMult: 1
     },
     shield_dome: {
         id: 'shield_dome',
@@ -67,15 +70,17 @@ import GameObject from '../../../shared/GameObject.js';
         icon: '◆',
         description: 'Become invincible for 6 seconds. Charge freezes during effect.',
         color: C_GOLD,
-        chargeNeeded: 100
+        chargeNeeded: 100,
+        chargeMult: 1
     },
     time_warp: {
         id: 'time_warp',
         name: 'Time Warp',
         icon: '⧖',
-        description: 'Slows all enemies to 25% speed for 5 seconds.',
+        description: 'Slows all enemies to 25% speed for 6 seconds.',
         color: '#aa44ff',
-        chargeNeeded: 100
+        chargeNeeded: 100,
+        chargeMult: 2
     },
     missile_storm: {
         id: 'missile_storm',
@@ -83,15 +88,17 @@ import GameObject from '../../../shared/GameObject.js';
         icon: '☄',
         description: 'Launches 16 homing missiles that seek out enemies.',
         color: '#ff4444',
-        chargeNeeded: 100
+        chargeNeeded: 100,
+        chargeMult: 1
     },
     quantum_shift: {
         id: 'quantum_shift',
         name: 'Bullet Reflect',
         icon: '⟲',
-        description: 'All enemy bullets bounce back for 4 seconds, damaging enemies.',
+        description: 'All enemy bullets bounce back for 6 seconds, damaging enemies.',
         color: '#00ddff',
-        chargeNeeded: 100
+        chargeNeeded: 100,
+        chargeMult: 2
     }
 };
 
@@ -132,29 +139,8 @@ class Player extends GameObject {
         this.invincibleDuration = 1.2;
         this.blinkTimer = 0;
 
-        // Shield from power-up
-        this.shieldActive = false;
-        this.shieldTime = 0;
-
-        // Power-up temporaries
-        this.speedBoost = false;
-        this.speedBoostTime = 0;
-        this.rapidFire = false;
-        this.rapidFireTime = 0;
-
-        // ─── World 2 Power-up temporaries ───
-        this.droneActive = false;
-        this.droneTime = 0;
-        this.droneFireTimer = 0;
-        this.droneAngle = 0;
-
-        // ─── World 3 Power-up temporaries ───
-        this.glitchCloneActive = false;
-        this.glitchCloneTime = 0;
-        this.glitchCloneFireTimer = 0;
-        this.glitchCloneAngle = 0;
-        this.dataDrainActive = false;
-        this.dataDrainTime = 0;
+        // Power-up system (delegated to PowerUpManager)
+        this.powerUps = new PowerUpManager();
 
         // Ultimate system
         this.ultimateCharge = 0;
@@ -163,6 +149,8 @@ class Player extends GameObject {
 
         // Visual
         this.thrusterFlicker = 0;
+        this.bankLevel = 0; // -2..+2, smooth banking for left/right movement
+        this.tunnelShiftAnimTimer = 0; // >0 = warp-in animation active
     }
 
     /**
@@ -208,9 +196,6 @@ class Player extends GameObject {
         // Charge accumulates always EXCEPT during Invincibility ultimate (frozen while active)
         this.updateUltimateCharge(game, deltaTime);
 
-        // Shield timer
-        this.updateShieldTimer(deltaTime);
-
         // Input movement
         this.handleMovementInput(game, deltaTime);
 
@@ -226,24 +211,8 @@ class Player extends GameObject {
         // Invincibility
         this.updateInvincibilityState(deltaTime);
 
-        // Speed boost
-        this.updateSpeedBoost(deltaTime, game);
-
-        // Rapid fire
-        this.updateRapidFireState(deltaTime);
-
-        // ─── World 2 Power-up Timers ───
-
-        // Drone companion
-        this.updateDroneBehavior(deltaTime, game);
-
-        // ─── World 3 Power-up Timers ───
-
-        // Glitch Clone — 2 holographic clones orbit and fire
-        this.updateGlitchClone(deltaTime, game);
-
-        // Data Drain — AoE damage field around player
-        this.updateDataDrain(deltaTime, game);
+        // Power-ups (shield, speed boost, rapid fire, drone, glitch clone, data drain)
+        this.powerUps.update(deltaTime, this, game);
 
         this.thrusterFlicker += deltaTime * 10;
     }
@@ -256,23 +225,21 @@ class Player extends GameObject {
         this.position.x += this.velocity.x * deltaTime;
         this.position.y += this.velocity.y * deltaTime;
 
+        // Smooth banking interpolation based on horizontal velocity
+        const vxNorm = this.speed > 0 ? this.velocity.x / this.speed : 0;
+        const targetBank = vxNorm * 2; // maps -1..+1 → -2..+2
+        this.bankLevel += (targetBank - this.bankLevel) * Math.min(1, deltaTime * 10);
+        this.bankLevel = Math.max(-2, Math.min(2, this.bankLevel));
+
         // Clamp to screen (logical coordinates)
         this.position.x = Math.max(0, Math.min(game.logicalWidth - this.width, this.position.x));
         this.position.y = Math.max(0, Math.min(game.logicalHeight - this.height, this.position.y));
     }
 
-    updateShieldTimer(deltaTime) {
-        if (this.shieldActive) {
-            this.shieldTime -= deltaTime;
-            if (this.shieldTime <= 0) {
-                this.shieldActive = false;
-            }
-        }
-    }
-
     updateUltimateCharge(game, deltaTime) {
         if (this.ultimateCharge < 100 && !(this._invincibilityUlt && this.ultimateActive)) {
-            const chargeRate = (100 / 30) * (game.perkSystem ? game.perkSystem.getUltChargeMultiplier() : 1);
+            const ultMult = this.ultimateData.chargeMult || 1;
+            const chargeRate = (100 / 30) * ultMult * (game.perkSystem ? game.perkSystem.getUltChargeMultiplier() : 1);
             this.ultimateCharge = Math.min(100, this.ultimateCharge + chargeRate * deltaTime);
         }
     }
@@ -291,95 +258,21 @@ class Player extends GameObject {
                 this._bulletReflectTime = (this._bulletReflectTime || 0) + deltaTime;
             }
 
+            // Time Warp: track animation time
+            if (this.ultimateId === 'time_warp') {
+                this._timeWarpTime = (this._timeWarpTime || 0) + deltaTime;
+            }
+
             if (this.ultimateTimer <= 0) {
                 this.endUltimate(game);
             }
         }
     }
 
-    updateDataDrain(deltaTime, game) {
-        if (this.dataDrainActive) {
-            this.dataDrainTime -= deltaTime;
-            const pcx = this.position.x + this.width / 2;
-            const pcy = this.position.y + this.height / 2;
-            const drainRadius = 100;
-            const em = game.entityManager;
-            for (const enemy of em.enemies) {
-                if (!enemy.active) continue;
-                const ecx = enemy.position.x + enemy.width / 2;
-                const ecy = enemy.position.y + enemy.height / 2;
-                const dx = ecx - pcx, dy = ecy - pcy;
-                if (dx * dx + dy * dy < drainRadius * drainRadius) {
-                    enemy.health -= 15 * deltaTime;
-                    if (enemy.health <= 0) enemy.health = 0;
-                }
-            }
-            if (this.dataDrainTime <= 0) {
-                this.dataDrainActive = false;
-            }
-        }
-    }
-
-    updateGlitchClone(deltaTime, game) {
-        if (this.glitchCloneActive) {
-            this.glitchCloneTime -= deltaTime;
-            this.glitchCloneAngle += deltaTime * 2;
-            this.glitchCloneFireTimer -= deltaTime;
-            if (this.glitchCloneFireTimer <= 0) {
-                this.glitchCloneFireTimer = 0.45;
-                for (let i = 0; i < 2; i++) {
-                    const a = this.glitchCloneAngle + i * Math.PI;
-                    const cx = this.position.x + this.width / 2 + Math.cos(a) * 40;
-                    const cy = this.position.y + this.height / 2 + Math.sin(a) * 40;
-                    game.spawnBullet(cx, cy, 0, -480, 'player');
-                }
-            }
-            if (this.glitchCloneTime <= 0) {
-                this.glitchCloneActive = false;
-            }
-        }
-    }
-
-    updateDroneBehavior(deltaTime, game) {
-        if (this.droneActive) {
-            this.droneTime -= deltaTime;
-            this.droneAngle += deltaTime * 2.5;
-            this.droneFireTimer -= deltaTime;
-            // Drone auto-fires
-            if (this.droneFireTimer <= 0) {
-                this.droneFireTimer = 0.5;
-                const dAngle = this.droneAngle;
-                const cx = this.position.x + this.width / 2 + Math.cos(dAngle) * 35;
-                const cy = this.position.y + this.height / 2 + Math.sin(dAngle) * 35;
-                game.spawnBullet(cx, cy, 0, -500, 'player');
-            }
-            if (this.droneTime <= 0) {
-                this.droneActive = false;
-            }
-        }
-    }
-
-    updateRapidFireState(deltaTime) {
-        if (this.rapidFire) {
-            this.rapidFireTime -= deltaTime;
-            if (this.rapidFireTime <= 0) {
-                this.rapidFire = false;
-                this.fireRate = this.baseFireRate;
-            }
-        }
-    }
-
-    updateSpeedBoost(deltaTime, game) {
-        if (this.speedBoost) {
-            this.speedBoostTime -= deltaTime;
-            if (this.speedBoostTime <= 0) {
-                this.speedBoost = false;
-                this.speed = this.baseSpeed * (game.perkSystem ? game.perkSystem.getSpeedMultiplier() : 1);
-            }
-        }
-    }
-
     updateInvincibilityState(deltaTime) {
+        if (this.tunnelShiftAnimTimer > 0) {
+            this.tunnelShiftAnimTimer -= deltaTime;
+        }
         if (this.invincible) {
             this.invincibleTime -= deltaTime;
             this.blinkTimer += deltaTime;
@@ -494,19 +387,7 @@ class Player extends GameObject {
     }
 
     takeDamage(amount, game) {
-        if (this.invincible || this.shieldActive) {
-            if (this.shieldActive) {
-                game.sound.playShieldHit();
-                game.particles.emit(
-                    this.position.x + this.width / 2,
-                    this.position.y + this.height / 2,
-                    'shield', 5
-                );
-            }
-            return false;
-        }
-        // Invincibility ultimate blocks all damage
-        if (this.ultimateActive && this.ultimateId === 'shield_dome') return false;
+        if (this._isDamageBlocked(game)) return false;
 
         // Apply resistance
         const effectiveDamage = Math.max(1, Math.round(amount * (1 - this.resistance)));
@@ -517,39 +398,21 @@ class Player extends GameObject {
         this.invincibleTime = this.invincibleDuration;
         this.blinkTimer = 0;
 
-        game.sound.playDamage();
-        game.postProcessing.shake(6, 0.15);
-        game.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.2);
-        game.particles.emit(
-            this.position.x + this.width / 2,
-            this.position.y + this.height / 2,
-            'hit', 8
-        );
+        this._emitDamageEffects(game);
 
         // Downgrade weapon on hit (lose 1 multi-shot level)
         if (this.weaponLevel > 1) {
             this.weaponLevel--;
         }
 
-        // ── Emergency Protocol: prevent death, grant 3s invincibility + slow-mo ──
-        if (this.health <= 1 && game.perkSystem?.hasEmergencyProtocol()) {
-            if (this.health <= 0) this.health = 1; // prevent lethal blow
-            game.perkSystem.emergencyUsedThisLevel = true;
-            this.invincible = true;
-            this.invincibleTime = 3;
-            this.blinkTimer = 0;
-            if (game.perkEffectsManager) {
-                game.perkEffectsManager._emergencySlowTimer = 3;
-            }
-            game.timeScale = 0.4;
-            game.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.3);
-            game.postProcessing.shake(10, 0.5);
-            game.particles.emit(
-                this.position.x + this.width / 2,
-                this.position.y + this.height / 2,
-                'explosion', 20
-            );
-            return false; // survived thanks to Emergency Protocol
+        // ── Emergency Protocol: prevent lethal damage, grant 3s invincibility + slow-mo ──
+        if (this.health <= 0 && this._tryEmergencyProtocol(game)) {
+            return false;
+        }
+
+        // ── Tunnel Shift: teleport instead of dying (fallback if Emergency already used) ──
+        if (this.health <= 0 && this._tryTunnelShift(game)) {
+            return false;
         }
 
         if (this.health <= 0) {
@@ -559,16 +422,103 @@ class Player extends GameObject {
         }
 
         // ── Glitch Dash: on-hit invuln + speed boost ──
-        if (game.perkSystem && game.perkSystem.getGlitchDashDuration() > 0) {
-            const dur = game.perkSystem.getGlitchDashDuration();
-            game.perkSystem.glitchDashTimer = dur;
-            this.invincible = true;
-            this.invincibleTime = dur;
-            this.blinkTimer = 0;
-            game.postProcessing.flash({ r: 0, g: 255, b: 200 }, 0.15);
-        }
+        this._tryGlitchDash(game);
 
         return false;
+    }
+
+    _isDamageBlocked(game) {
+        if (this.invincible || this.shieldActive) {
+            if (this.shieldActive) {
+                game.sound.playShieldHit();
+                game.particles.emit(
+                    this.position.x + this.width / 2,
+                    this.position.y + this.height / 2,
+                    'shield', 5
+                );
+            }
+            return true;
+        }
+        // Invincibility ultimate blocks all damage
+        return this.ultimateActive && this.ultimateId === 'shield_dome';
+    }
+
+    _emitDamageEffects(game) {
+        game.sound.playDamage();
+        game.postProcessing.shake(6, 0.15);
+        game.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.2);
+        game.particles.emit(
+            this.position.x + this.width / 2,
+            this.position.y + this.height / 2,
+            'hit', 8
+        );
+    }
+
+    _tryEmergencyProtocol(game) {
+        if (!game.perkSystem?.hasEmergencyProtocol()) return false;
+
+        if (this.health <= 0) this.health = 1;
+        game.perkSystem.emergencyUsedThisLevel = true;
+        this.invincible = true;
+        this.invincibleTime = 3;
+        this.blinkTimer = 0;
+        if (game.perkEffectsManager) {
+            game.perkEffectsManager._emergencySlowTimer = 3;
+        }
+        game.timeScale = 0.4;
+        game.postProcessing.flash({ r: 255, g: 50, b: 50 }, 0.3);
+        game.postProcessing.shake(10, 0.5);
+        game.particles.emit(
+            this.position.x + this.width / 2,
+            this.position.y + this.height / 2,
+            'explosion', 20
+        );
+        return true;
+    }
+
+    _tryGlitchDash(game) {
+        if (!game.perkSystem || game.perkSystem.getGlitchDashDuration() <= 0) return;
+
+        const dur = game.perkSystem.getGlitchDashDuration();
+        game.perkSystem.glitchDashTimer = dur;
+        this.invincible = true;
+        this.invincibleTime = dur;
+        this.blinkTimer = 0;
+        game.postProcessing.flash({ r: 0, g: 255, b: 200 }, 0.15);
+    }
+
+    _tryTunnelShift(game) {
+        if (!game.perkSystem?.hasTunnelShift()) return false;
+
+        game.perkSystem.tunnelShiftUsed = true;
+        this.health = 1;
+
+        // Departure VFX at old position
+        const oldCx = this.position.x + this.width / 2;
+        const oldCy = this.position.y + this.height / 2;
+        game.particles.emit(oldCx, oldCy, 'tunnelWarpOut', 20);
+
+        // Teleport to random safe position in bottom third
+        const margin = this.width;
+        const maxX = game.logicalWidth - this.width - margin;
+        const minY = game.logicalHeight * 0.6;
+        const maxY = game.logicalHeight - this.height - margin;
+        this.position.x = margin + Math.random() * maxX;
+        this.position.y = minY + Math.random() * (maxY - minY);
+
+        // Arrival VFX at new position
+        const newCx = this.position.x + this.width / 2;
+        const newCy = this.position.y + this.height / 2;
+        game.particles.emit(newCx, newCy, 'tunnelWarpIn', 18);
+
+        this.invincible = true;
+        this.invincibleTime = 1.5;
+        this.blinkTimer = 0;
+        this.tunnelShiftAnimTimer = 0.45;
+
+        game.postProcessing.flash({ r: 0, g: 220, b: 255 }, 0.4);
+        game.postProcessing.shake(8, 0.3);
+        return true;
     }
 
     // ===== ULTIMATE ABILITIES =====
@@ -615,8 +565,11 @@ class Player extends GameObject {
                 break;
 
             case 'time_warp':
-                this.ultimateTimer = 5;
+                this.ultimateTimer = 6;
+                this._timeWarpTime = 0;
                 game.timeScale = 0.25;
+                game.postProcessing.flash({ r: 120, g: 40, b: 255 }, 0.4);
+                game.postProcessing.shake(4, 0.2);
                 break;
 
             case 'missile_storm':
@@ -637,8 +590,8 @@ class Player extends GameObject {
                 break;
 
             case 'quantum_shift':
-                // Bullet Reflect: 4 seconds of reflecting enemy bullets
-                this.ultimateTimer = 4;
+                // Bullet Reflect: 6 seconds of reflecting enemy bullets
+                this.ultimateTimer = 6;
                 this._bulletReflectActive = true;
                 this._bulletReflectTime = 0;
                 game.postProcessing.flash({ r: 0, g: 200, b: 255 }, 0.4);
@@ -663,727 +616,51 @@ class Player extends GameObject {
             this._bulletReflectActive = false;
         }
         this._novaTime = 0;
+        this._timeWarpTime = 0;
     }
+
+    // ── Power-up state delegation (backward compat for Renderer, PowerUp, Perks, Game) ──
+
+    get shieldActive() { return this.powerUps.isActive('shield'); }
+    set shieldActive(v) { this.powerUps.get('shield').active = v; }
+    get shieldTime() { return this.powerUps.get('shield').time; }
+    set shieldTime(v) { this.powerUps.get('shield').time = v; }
+
+    get speedBoost() { return this.powerUps.isActive('speed'); }
+    set speedBoost(v) { this.powerUps.get('speed').active = v; }
+    get speedBoostTime() { return this.powerUps.get('speed').time; }
+    set speedBoostTime(v) { this.powerUps.get('speed').time = v; }
+
+    get rapidFire() { return this.powerUps.isActive('rapid'); }
+    set rapidFire(v) { this.powerUps.get('rapid').active = v; }
+    get rapidFireTime() { return this.powerUps.get('rapid').time; }
+    set rapidFireTime(v) { this.powerUps.get('rapid').time = v; }
+
+    get droneActive() { return this.powerUps.isActive('drone_companion'); }
+    set droneActive(v) { this.powerUps.get('drone_companion').active = v; }
+    get droneTime() { return this.powerUps.get('drone_companion').time; }
+    set droneTime(v) { this.powerUps.get('drone_companion').time = v; }
+    get droneFireTimer() { return this.powerUps.get('drone_companion').fireTimer; }
+    set droneFireTimer(v) { this.powerUps.get('drone_companion').fireTimer = v; }
+    get droneAngle() { return this.powerUps.get('drone_companion').angle; }
+    set droneAngle(v) { this.powerUps.get('drone_companion').angle = v; }
+
+    get glitchCloneActive() { return this.powerUps.isActive('glitch_clone'); }
+    set glitchCloneActive(v) { this.powerUps.get('glitch_clone').active = v; }
+    get glitchCloneTime() { return this.powerUps.get('glitch_clone').time; }
+    set glitchCloneTime(v) { this.powerUps.get('glitch_clone').time = v; }
+    get glitchCloneFireTimer() { return this.powerUps.get('glitch_clone').fireTimer; }
+    set glitchCloneFireTimer(v) { this.powerUps.get('glitch_clone').fireTimer = v; }
+    get glitchCloneAngle() { return this.powerUps.get('glitch_clone').angle; }
+    set glitchCloneAngle(v) { this.powerUps.get('glitch_clone').angle = v; }
+
+    get dataDrainActive() { return this.powerUps.isActive('data_drain'); }
+    set dataDrainActive(v) { this.powerUps.get('data_drain').active = v; }
+    get dataDrainTime() { return this.powerUps.get('data_drain').time; }
+    set dataDrainTime(v) { this.powerUps.get('data_drain').time = v; }
 
     render(ctx, assets, perkSystem) {
-        if (!this.active) return;
-
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-
-        const cx = this.position.x + this.width / 2;
-        const cy = this.position.y + this.height / 2;
-        const by = this.position.y + this.height;
-        const flicker = 0.7 + 0.3 * Math.sin(this.thrusterFlicker);
-
-        // ── ENGINE FLAMES (bigger with speed upgrades) ──
-        const flameCount = 2 + Math.min(2, Math.floor(this.bonusStats.speed / 2));
-        const flameSize = 16 + this.bonusStats.speed * 2;
-        ctx.save();
-        ctx.globalCompositeOperation = 'lighter';
-        const shipColor = this.shipData.color;
-
-        this.renderEngineFlames(flameCount, cx, by, flameSize, flicker, ctx, shipColor);
-
-        // ── SHIP SPRITE ──
-        this.renderShipSprite(assets, ctx);
-
-        // ── PERK DEVICE OVERLAYS ──
-        // Concentric-ring layout: symmetric hardpoints around the ship
-        this.renderPerkOverlays(perkSystem, assets, cx, cy, ctx);
-
-        // ── WEAPON LEVEL indicator (small dots near nose) ──
-        this.renderWeaponLevelIndicators(ctx, cx);
-
-        // ── DRONE COMPANION VISUAL ──
-        this.renderDrone(ctx, cx, cy);
-
-        // ── GLITCH CLONE VISUAL ──
-        this.renderGlitchClone(ctx, cx, cy);
-
-        // ── DATA DRAIN VISUAL ──
-        this.renderDataDrainEffect(ctx, cx, cy);
-
-        // ── SHIELD VISUAL ──
-        this.renderShieldVisuals(ctx, cx, cy);
-
-        // ── INVINCIBILITY ULTIMATE VISUAL ──
-        this.renderShieldDomeEffect(ctx, cx, cy);
-
-        // ── NOVA BLAST SHOCKWAVE VISUAL ──
-        this.renderNovaBlastEffect(ctx, flameCount, cx, cy);
-
-        // ── BULLET REFLECT VISUAL ──
-        this.renderBulletReflectEffect(ctx, cx, cy);
-
-        // ── THORNS VISUAL ──
-        this.renderThornEffect(perkSystem, ctx, cx, cy);
-
-        // ── HEAT BAR (visible when heat > 40%) ──
-        this.renderHeatBar(cx, ctx);
-
-        ctx.restore();
-    }
-
-    renderShipSprite(assets, ctx) {
-        const sprite = assets.getSprite(`ship_${this.shipId}`);
-        const spriteSize = this.width + 24; // 88px render from 128px canvas
-        const spriteX = this.position.x - 12;
-        const spriteY = this.position.y - 12;
-        if (sprite) {
-            ctx.drawImage(sprite, spriteX, spriteY, spriteSize, spriteSize);
-        }
-    }
-
-    renderHeatBar(cx, ctx) {
-        if (this.heat > 40) {
-            const barW = 40;
-            const barH = 4;
-            const barX = cx - barW / 2;
-            const barY = this.position.y - 12;
-            ctx.fillStyle = 'rgba(0,0,0,0.6)';
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.roundRect(barX, barY, barW, barH, 2);
-            ctx.fill();
-            ctx.stroke();
-            const heatPct = this.heat / this.maxHeat;
-            const heatGrad = ctx.createLinearGradient(barX, barY, barX + barW * heatPct, barY);
-            heatGrad.addColorStop(0, this.overheated ? '#ff2222' : '#ffaa00');
-            heatGrad.addColorStop(1, this.overheated ? '#ff4444' : '#ff6600');
-            ctx.fillStyle = heatGrad;
-            ctx.beginPath();
-            ctx.roundRect(barX, barY, barW * heatPct, barH, 2);
-            ctx.fill();
-        }
-    }
-
-    renderThornEffect(perkSystem, ctx, cx, cy) {
-        if (perkSystem?.hasThorns()) {
-            ctx.save();
-            const thornCount = 10;
-            const baseR = 38;
-            const spikeLen = 16;
-            const rotBase = perkSystem.thornsAngle;
-            const tTime = perkSystem.thornsTime;
-            const pulse = 0.6 + 0.3 * Math.sin(tTime * 4);
-
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-
-            for (let i = 0; i < thornCount; i++) {
-                const angle = rotBase + (i / thornCount) * Math.PI * 2;
-                const wobble = Math.sin(tTime * 6 + i * 1.2) * 3;
-                const innerR = baseR + wobble;
-                const outerR = innerR + spikeLen;
-
-                const ix = cx + Math.cos(angle) * innerR;
-                const iy = cy + Math.sin(angle) * innerR;
-                const ox = cx + Math.cos(angle) * outerR;
-                const oy = cy + Math.sin(angle) * outerR;
-
-                // Spike line
-                ctx.globalAlpha = pulse * 0.7;
-                ctx.strokeStyle = '#aadd55';
-                ctx.shadowColor = '#88ff33';
-                ctx.shadowBlur = 8;
-                ctx.beginPath();
-                ctx.moveTo(ix, iy);
-                ctx.lineTo(ox, oy);
-                ctx.stroke();
-
-                // Bright tip
-                ctx.globalAlpha = pulse;
-                ctx.fillStyle = '#eeffaa';
-                ctx.beginPath();
-                ctx.arc(ox, oy, 1.8, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Base ring glow
-            ctx.globalAlpha = pulse * 0.25;
-            ctx.strokeStyle = '#88cc44';
-            ctx.shadowColor = '#66ff22';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
-            ctx.stroke();
-
-            ctx.restore();
-        }
-    }
-
-    renderBulletReflectEffect(ctx, cx, cy) {
-        if (this._bulletReflectActive && this.ultimateActive && this.ultimateId === 'quantum_shift') {
-            ctx.save();
-            const now = Date.now();
-            const pulse = 0.5 + 0.3 * Math.sin(now * 0.007);
-            const reflectR = 48 + 4 * Math.sin(now * 0.005);
-
-            // Cyan energy field
-            const fieldGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, reflectR);
-            fieldGrad.addColorStop(0, 'rgba(0,220,255,0.05)');
-            fieldGrad.addColorStop(0.6, 'rgba(0,180,255,0.08)');
-            fieldGrad.addColorStop(1, 'rgba(0,150,255,0.15)');
-            ctx.globalAlpha = pulse;
-            ctx.fillStyle = fieldGrad;
-            ctx.beginPath();
-            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Outer cyan ring
-            ctx.strokeStyle = '#00ddff';
-            ctx.lineWidth = 2.5;
-            ctx.shadowColor = '#00ccff';
-            ctx.shadowBlur = 12;
-            ctx.globalAlpha = pulse * 0.9;
-            ctx.beginPath();
-            ctx.arc(cx, cy, reflectR, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Counter-rotating arc pairs
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 3; i++) {
-                // Clockwise arcs
-                const a1 = (i * Math.PI * 2 / 3) + now * 0.005;
-                ctx.globalAlpha = pulse * 0.7;
-                ctx.strokeStyle = '#66eeff';
-                ctx.beginPath();
-                ctx.arc(cx, cy, reflectR - 3, a1, a1 + Math.PI * 0.3);
-                ctx.stroke();
-                // Counter-clockwise arcs
-                const a2 = (i * Math.PI * 2 / 3) - now * 0.003;
-                ctx.globalAlpha = pulse * 0.5;
-                ctx.strokeStyle = '#00aadd';
-                ctx.beginPath();
-                ctx.arc(cx, cy, reflectR + 4, a2, a2 + Math.PI * 0.25);
-                ctx.stroke();
-            }
-
-            // Reflect arrow indicators
-            ctx.shadowBlur = 0;
-            const arrowCount = 6;
-            for (let i = 0; i < arrowCount; i++) {
-                const angle = (i / arrowCount) * Math.PI * 2 + now * 0.002;
-                const ar = reflectR - 8;
-                const ax = cx + Math.cos(angle) * ar;
-                const ay = cy + Math.sin(angle) * ar;
-                ctx.globalAlpha = pulse * 0.6;
-                ctx.fillStyle = '#00ffff';
-                ctx.beginPath();
-                // Small arrow pointing outward (reflected)
-                const aLen = 5;
-                ctx.moveTo(ax + Math.cos(angle) * aLen, ay + Math.sin(angle) * aLen);
-                ctx.lineTo(ax + Math.cos(angle + 2.5) * 3, ay + Math.sin(angle + 2.5) * 3);
-                ctx.lineTo(ax + Math.cos(angle - 2.5) * 3, ay + Math.sin(angle - 2.5) * 3);
-                ctx.closePath();
-                ctx.fill();
-            }
-
-            // Timer warning: blink in last 1.5s
-            if (this.ultimateTimer <= 1.5) {
-                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
-                ctx.globalAlpha = blink * 0.4;
-                ctx.strokeStyle = '#ff4400';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(cx, cy, reflectR + 6, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-    }
-
-    renderNovaBlastEffect(ctx, flameCount, cx, cy) {
-        if (this.ultimateActive && this.ultimateId === 'nova_blast' && this._novaTime > 0) {
-            ctx.save();
-            const t = this._novaTime;
-            const duration = 1.2;
-            const progress = Math.min(t / duration, 1);
-
-            // Multiple expanding rings
-            this.renderEnergyRings(t, duration, flameCount, ctx, cx, cy);
-
-            // Central flash (bright white → orange fade)
-            this.renderFlashEffect(progress, ctx, cx, cy);
-
-            ctx.restore();
-        }
-    }
-
-    renderFlashEffect(progress, ctx, cx, cy) {
-        if (progress < 0.3) {
-            const flashAlpha = (1 - progress / 0.3) * 0.8;
-            const flashR = 30 + progress * 200;
-            const flashGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, flashR);
-            flashGrad.addColorStop(0, `rgba(255,255,255,${flashAlpha})`);
-            flashGrad.addColorStop(0.4, `rgba(255,200,50,${flashAlpha * 0.5})`);
-            flashGrad.addColorStop(1, 'rgba(255,100,0,0)');
-            ctx.globalAlpha = 1;
-            ctx.fillStyle = flashGrad;
-            ctx.beginPath();
-            ctx.arc(cx, cy, flashR, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    renderEnergyRings(t, duration, flameCount, ctx, cx, cy) {
-        for (let ring = 0; ring < 3; ring++) {
-            const ringDelay = ring * 0.15;
-            const ringProgress = Math.max(0, Math.min((t - ringDelay) / (duration - ringDelay), 1));
-            if (ringProgress <= 0) continue;
-
-            const maxRadius = 400 + ring * 80;
-            const radius = ringProgress * maxRadius;
-            const alpha = (1 - ringProgress) * (0.7 - ring * 0.15);
-
-            // Ring glow
-            ctx.globalAlpha = alpha;
-            const a = ring === 1 ? '#ff8800' : '#ffaa00';
-            ctx.strokeStyle = ring === 0 ? '#ff6600' : a;
-            ctx.lineWidth = (8 - ring * 2) * (1 - ringProgress * 0.5);
-            ctx.shadowColor = '#ff8800';
-            ctx.shadowBlur = 20 - ring * 5;
-            ctx.beginPath();
-            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Inner fill for first ring
-            if (ring === 0 && ringProgress < 0.5) {
-                const fillGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                fillGrad.addColorStop(0, 'rgba(255,200,50,0.3)');
-                fillGrad.addColorStop(0.7, 'rgba(255,100,0,0.1)');
-                fillGrad.addColorStop(1, 'rgba(255,60,0,0)');
-                ctx.globalAlpha = alpha * 0.5;
-                ctx.fillStyle = fillGrad;
-                ctx.beginPath();
-                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-    }
-
-    renderShieldDomeEffect(ctx, cx, cy) {
-        if (this._invincibilityUlt && this.ultimateActive && this.ultimateId === 'shield_dome') {
-            ctx.save();
-            const now = Date.now();
-            const pulse = 0.6 + 0.3 * Math.sin(now * 0.008);
-            const auraPulse = 0.8 + 0.2 * Math.sin(now * 0.006);
-            const auraR = 50 + 8 * auraPulse;
-
-            // Golden radial glow
-            const goldGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, auraR);
-            goldGrad.addColorStop(0, 'rgba(255,215,0,0.25)');
-            goldGrad.addColorStop(0.5, 'rgba(255,180,0,0.10)');
-            goldGrad.addColorStop(1, 'rgba(255,150,0,0)');
-            ctx.globalAlpha = pulse;
-            ctx.fillStyle = goldGrad;
-            ctx.beginPath();
-            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Outer golden ring
-            ctx.globalAlpha = pulse * 0.9;
-            ctx.strokeStyle = C_GOLD;
-            ctx.lineWidth = 3;
-            ctx.shadowColor = '#ffaa00';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Spinning golden arcs
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 2.5;
-            for (let i = 0; i < 4; i++) {
-                const aStart = (i * Math.PI / 2) + now * 0.004;
-                const aEnd = aStart + Math.PI * 0.3;
-                ctx.globalAlpha = pulse * 0.8;
-                ctx.strokeStyle = '#ffe066';
-                ctx.beginPath();
-                ctx.arc(cx, cy, auraR - 4, aStart, aEnd);
-                ctx.stroke();
-            }
-
-            // Rising golden particles
-            ctx.shadowBlur = 0;
-            for (let i = 0; i < 8; i++) {
-                const angle = (i / 8) * Math.PI * 2 + now * 0.002;
-                const dist = 30 + 15 * Math.sin(now * 0.005 + i * 0.8);
-                const px = cx + Math.cos(angle) * dist;
-                const py = cy + Math.sin(angle) * dist - 5 * Math.sin(now * 0.003 + i);
-                ctx.globalAlpha = pulse * 0.7;
-                ctx.fillStyle = C_GOLD;
-                ctx.beginPath();
-                ctx.arc(px, py, 1.5 + Math.sin(now * 0.01 + i) * 0.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Timer warning: blink in last 2s
-            if (this.ultimateTimer <= 2) {
-                const blink = 0.5 + 0.5 * Math.sin(now * 0.02);
-                ctx.globalAlpha = blink * 0.4;
-                ctx.strokeStyle = '#ff4400';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(cx, cy, auraR + 5, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-    }
-
-    renderShieldVisuals(ctx, cx, cy) {
-        if (this.shieldActive) {
-            ctx.save();
-            const now = Date.now();
-            const shieldPulse = 0.45 + 0.2 * Math.sin(now * 0.005);
-            const shieldColor = '#44aaff';
-            const shieldColorInner = 'rgba(68,170,255,';
-            const shieldR = 54;
-
-            // Outer glow ring
-            ctx.globalAlpha = shieldPulse;
-            ctx.strokeStyle = shieldColor;
-            ctx.lineWidth = 3;
-            ctx.shadowColor = shieldColor;
-            ctx.shadowBlur = 20;
-            ctx.beginPath();
-            ctx.arc(cx, cy, shieldR, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Inner fill gradient
-            const innerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, shieldR);
-            innerGrad.addColorStop(0, shieldColorInner + '0.0)');
-            innerGrad.addColorStop(0.6, shieldColorInner + '0.04)');
-            innerGrad.addColorStop(1, shieldColorInner + '0.12)');
-            ctx.globalAlpha = shieldPulse;
-            ctx.fillStyle = innerGrad;
-            ctx.beginPath();
-            ctx.arc(cx, cy, shieldR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Rotating arc segments (energy flow)
-            ctx.shadowBlur = 8;
-            ctx.lineWidth = 2;
-            const arcCount = 3;
-            for (let i = 0; i < arcCount; i++) {
-                const aStart = (i * Math.PI * 2 / arcCount) + now * 0.003;
-                const aEnd = aStart + Math.PI * 0.4;
-                ctx.globalAlpha = shieldPulse * 0.7;
-                ctx.beginPath();
-                ctx.arc(cx, cy, shieldR - 3, aStart, aEnd);
-                ctx.stroke();
-            }
-
-            // Hexagonal grid overlay
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = shieldPulse * 0.4;
-            ctx.lineWidth = 1;
-            for (let i = 0; i < 6; i++) {
-                const a = i * Math.PI / 3 + now * 0.001;
-                const hx = cx + Math.cos(a) * 40;
-                const hy = cy + Math.sin(a) * 40;
-                ctx.beginPath();
-                for (let j = 0; j < 6; j++) {
-                    const ha = j * Math.PI / 3;
-                    const px = hx + Math.cos(ha) * 7;
-                    const py = hy + Math.sin(ha) * 7;
-                    j === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-                }
-                ctx.closePath();
-                ctx.stroke();
-            }
-
-            // Shield about to expire warning — blink faster in last 2s
-            if (this.shieldTime <= 2) {
-                const blinkRate = 0.5 + 0.5 * Math.sin(now * 0.02);
-                ctx.globalAlpha = blinkRate * 0.3;
-                ctx.strokeStyle = '#ff6644';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(cx, cy, shieldR + 4, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-    }
-
-    renderDataDrainEffect(ctx, cx, cy) {
-        if (this.dataDrainActive) {
-            ctx.save();
-            const now = Date.now();
-            const pulse = 0.4 + 0.2 * Math.sin(now * 0.006);
-            const drainR = 100;
-            // Outer pulsing ring
-            ctx.globalAlpha = pulse * 0.6;
-            ctx.strokeStyle = '#7832f0';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#9955ff';
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            ctx.arc(cx, cy, drainR, 0, Math.PI * 2);
-            ctx.stroke();
-            // Inner gradient field
-            const dg = ctx.createRadialGradient(cx, cy, 10, cx, cy, drainR);
-            dg.addColorStop(0, 'rgba(120,50,240,0.08)');
-            dg.addColorStop(0.6, 'rgba(120,50,240,0.04)');
-            dg.addColorStop(1, 'rgba(120,50,240,0)');
-            ctx.globalAlpha = pulse;
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = dg;
-            ctx.beginPath(); ctx.arc(cx, cy, drainR, 0, Math.PI * 2); ctx.fill();
-            // Rotating drain arcs
-            ctx.lineWidth = 1.5;
-            for (let i = 0; i < 4; i++) {
-                const a = (i * Math.PI / 2) + now * 0.003;
-                ctx.globalAlpha = pulse * 0.5;
-                ctx.strokeStyle = '#aa66ff';
-                ctx.beginPath();
-                ctx.arc(cx, cy, drainR * 0.7, a, a + Math.PI * 0.3);
-                ctx.stroke();
-            }
-            // Spiraling particles converging inward
-            ctx.shadowBlur = 0;
-            for (let i = 0; i < 6; i++) {
-                const angle = (i / 6) * Math.PI * 2 + now * 0.004;
-                const dist = drainR * (0.3 + 0.5 * ((now * 0.001 + i * 0.3) % 1));
-                const px = cx + Math.cos(angle) * dist;
-                const py = cy + Math.sin(angle) * dist;
-                ctx.globalAlpha = pulse * 0.8;
-                ctx.fillStyle = '#cc88ff';
-                ctx.beginPath();
-                ctx.arc(px, py, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-    }
-
-    renderGlitchClone(ctx, cx, cy) {
-        if (this.glitchCloneActive) {
-            ctx.save();
-            const now = Date.now();
-            for (let i = 0; i < 2; i++) {
-                const cloneAngle = this.glitchCloneAngle + i * Math.PI;
-                const clX = cx + Math.cos(cloneAngle) * 40;
-                const clY = cy + Math.sin(cloneAngle) * 40;
-                const flicker = 0.35 + 0.15 * Math.sin(now * 0.008 + i * 3);
-                ctx.globalAlpha = flicker;
-                // Holographic tinted ship silhouette
-                const cloneGrad = ctx.createRadialGradient(clX, clY, 0, clX, clY, 14);
-                cloneGrad.addColorStop(0, 'rgba(0,220,200,0.6)');
-                cloneGrad.addColorStop(1, 'rgba(0,220,200,0)');
-                ctx.fillStyle = cloneGrad;
-                ctx.beginPath(); ctx.arc(clX, clY, 14, 0, Math.PI * 2); ctx.fill();
-                // Clone body (small triangle ship)
-                ctx.fillStyle = 'rgba(0,255,220,0.5)';
-                ctx.strokeStyle = 'rgba(0,255,220,0.7)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(clX, clY - 10);
-                ctx.lineTo(clX + 7, clY + 6);
-                ctx.lineTo(clX - 7, clY + 6);
-                ctx.closePath();
-                ctx.fill(); ctx.stroke();
-                // Scanline effect
-                ctx.strokeStyle = 'rgba(0,255,220,0.2)';
-                ctx.lineWidth = 1;
-                for (let s = -8; s <= 8; s += 4) {
-                    ctx.beginPath();
-                    ctx.moveTo(clX - 6, clY + s);
-                    ctx.lineTo(clX + 6, clY + s);
-                    ctx.stroke();
-                }
-            }
-            ctx.restore();
-        }
-    }
-
-    renderDrone(ctx, cx, cy) {
-        if (this.droneActive) {
-            ctx.save();
-            const drCx = cx + Math.cos(this.droneAngle) * 35;
-            const drCy = cy + Math.sin(this.droneAngle) * 35;
-            // Drone body
-            const droneGrad = ctx.createRadialGradient(drCx, drCy, 0, drCx, drCy, 8);
-            droneGrad.addColorStop(0, '#aaeeff');
-            droneGrad.addColorStop(0.5, '#44aadd');
-            droneGrad.addColorStop(1, '#115577');
-            ctx.fillStyle = droneGrad;
-            ctx.beginPath();
-            ctx.arc(drCx, drCy, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#111';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-            // Drone eye
-            ctx.fillStyle = '#66ffff';
-            ctx.beginPath();
-            ctx.arc(drCx, drCy, 3, 0, Math.PI * 2);
-            ctx.fill();
-            // Energy trail
-            ctx.globalAlpha = 0.3;
-            ctx.strokeStyle = '#66ddff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            const trailAngle = this.droneAngle - 0.4;
-            ctx.moveTo(cx + Math.cos(trailAngle) * 35, cy + Math.sin(trailAngle) * 35);
-            ctx.lineTo(drCx, drCy);
-            ctx.stroke();
-            ctx.restore();
-        }
-    }
-
-    renderWeaponLevelIndicators(ctx, cx) {
-        if (this.weaponLevel > 1) {
-            ctx.save();
-            ctx.globalAlpha = 0.8;
-            const dotCount = this.weaponLevel - 1;
-            const dotSpacing = 6;
-            const startX = cx - (dotCount - 1) * dotSpacing / 2;
-            const dotY = this.position.y - 4;
-            for (let i = 0; i < dotCount; i++) {
-                ctx.fillStyle = '#ffdd44';
-                ctx.shadowColor = '#ffdd44';
-                ctx.shadowBlur = 4;
-                ctx.beginPath();
-                ctx.arc(startX + i * dotSpacing, dotY, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.restore();
-        }
-    }
-
-    renderPerkOverlays(perkSystem, assets, cx, cy, ctx) {
-        if (perkSystem) {
-            const devSlots = {
-                // ═══ SPINE (center axis, top to bottom) ═══
-                piercing_rounds: { dx: 0, dy: -26, c: 'o' }, // nose tip
-                thorns: { dx: 0, dy: -4, c: 'd' }, // cockpit hull
-                orbital_drone: { dx: 0, dy: 12, c: 'u' }, // belly
-                ultimate_engine: { dx: 0, dy: 26, c: 'u' }, // tail
-
-
-                // ═══ INNER RING (±12, hull-mounted) ═══
-                critical_strike: { dx: 12, dy: -14, c: 'o' }, // R fwd inner
-                explosive_rounds: { dx: -12, dy: -14, c: 'o' }, // L fwd inner
-                auto_shield: { dx: 12, dy: 4, c: 'd' }, // R mid inner
-                phase_dodge: { dx: -12, dy: 4, c: 'd' }, // L mid inner
-                combo_master: { dx: 12, dy: 18, c: 'u' }, // R aft inner
-                cool_exhaust: { dx: -12, dy: 18, c: 'u' }, // L aft inner
-
-
-                // ═══ OUTER RING (±26, wing hardpoints) ═══
-                double_barrel: { dx: 26, dy: -18, c: 'o' }, // R fwd wing
-                glass_cannon: { dx: -26, dy: -18, c: 'o' }, // L fwd wing
-                chain_lightning: { dx: 26, dy: -6, c: 'o' }, // R mid-fwd wing
-                vampire_rounds: { dx: -26, dy: -6, c: 'o' }, // L mid-fwd wing
-                emergency_protocol: { dx: 26, dy: 6, c: 'd' }, // R mid wing
-                damage_converter: { dx: -26, dy: 6, c: 'd' }, // L mid wing
-                fortress_mode: { dx: 26, dy: 16, c: 'd' }, // R aft wing
-                magnet_field: { dx: -26, dy: 16, c: 'u' }, // L aft wing
-                lucky_drops: { dx: 26, dy: 26, c: 'u' }, // R tail wing
-                point_multiplier: { dx: -26, dy: 26, c: 'u' }, // L tail wing
-
-
-                // ═══ WORLD 2 — MID RING (±18, between inner & outer) ═══
-                neural_hijack: { dx: 18, dy: -20, c: 'o' }, // R fwd mid
-                predatore: { dx: -18, dy: -20, c: 'o' }, // L fwd mid
-                colpo_critico: { dx: 18, dy: -8, c: 'o' }, // R mid mid
-                scia_infuocata: { dx: -18, dy: -8, c: 'd' }, // L mid mid
-                esploratore: { dx: 18, dy: 10, c: 'u' }, // R aft mid
-                sovraccarico: { dx: -18, dy: 10, c: 'u' }, // L aft mid
-
-
-                // ═══ WORLD 3 — FAR RING (±32, outermost hardpoints) ═══
-                packet_burst: { dx: 32, dy: -12, c: 'o' }, // R fwd far
-                virus_inject: { dx: -32, dy: -12, c: 'o' }, // L fwd far
-                glitch_dash: { dx: 32, dy: 2, c: 'd' }, // R mid far
-                entropy_shield: { dx: -32, dy: 2, c: 'd' }, // L mid far
-                data_leech: { dx: 32, dy: 16, c: 'u' }, // R aft far
-            };
-
-            // Category glow colors: offensive=red, defensive=blue, utility=green
-            const glowTint = { o: '#ff5030', d: '#3388ff', u: '#33dd77' };
-
-            const activePerks = perkSystem.getActivePerks();
-            const t = Date.now() * 0.002;
-
-            // Draw outer ring first (behind inner), then inner, then spine
-            const sorted = activePerks
-                .filter(p => devSlots[p.id])
-                .sort((a, b) => {
-                    const sa = devSlots[a.id], sb = devSlots[b.id];
-                    return (sb.dx * sb.dx + sb.dy * sb.dy)
-                        - (sa.dx * sa.dx + sa.dy * sa.dy);
-                });
-
-            for (const { id, stacks } of sorted) {
-                const slot = devSlots[id];
-                const spriteKey = `perk_${id}_${Math.min(stacks, 3)}`;
-                const devSprite = assets.getSprite(spriteKey);
-                if (!devSprite) continue;
-
-                const float = Math.sin(t + slot.dx * 0.07 + slot.dy * 0.05) * 0.8;
-                const devCx = cx + slot.dx;
-                const devCy = cy + slot.dy + float;
-
-                // Category-colored glow halo
-                ctx.save();
-                ctx.shadowColor = glowTint[slot.c] || '#fff';
-                ctx.shadowBlur = 6;
-                ctx.globalAlpha = 0.9;
-                ctx.drawImage(devSprite,
-                    devCx - devSprite.width / 2,
-                    devCy - devSprite.height / 2);
-                ctx.restore();
-            }
-        }
-    }
-
-    renderEngineFlames(flameCount, cx, by, flameSize, flicker, ctx, shipColor) {
-        for (let i = 0; i < flameCount; i++) {
-            const a = (i === 0 ? -12 : 12);
-            const b = (i - (flameCount - 1) / 2) * 16;
-            const offsetX = flameCount <= 2 ? a : b;
-            const fx = cx + offsetX;
-            const fy = by + 2;
-            const fh = flameSize * flicker;
-            const fw = 6 + i % 2 * 2;
-
-            // Outer flame
-            ctx.globalAlpha = 0.4 * flicker;
-            const outerGrad = ctx.createLinearGradient(fx, fy, fx, fy + fh);
-            outerGrad.addColorStop(0, shipColor);
-            outerGrad.addColorStop(0.5, 'rgba(255,200,50,0.6)');
-            outerGrad.addColorStop(1, 'rgba(255,100,0,0)');
-            ctx.fillStyle = outerGrad;
-            ctx.beginPath();
-            ctx.moveTo(fx - fw, fy);
-            ctx.bezierCurveTo(fx - fw * 0.8, fy + fh * 0.4, fx - 1, fy + fh * 0.7, fx, fy + fh);
-            ctx.bezierCurveTo(fx + 1, fy + fh * 0.7, fx + fw * 0.8, fy + fh * 0.4, fx + fw, fy);
-            ctx.closePath();
-            ctx.fill();
-
-            // Inner white core
-            ctx.globalAlpha = 0.6 * flicker;
-            const coreGrad = ctx.createLinearGradient(fx, fy, fx, fy + fh * 0.6);
-            coreGrad.addColorStop(0, '#fff');
-            coreGrad.addColorStop(1, 'rgba(255,255,200,0)');
-            ctx.fillStyle = coreGrad;
-            ctx.beginPath();
-            ctx.moveTo(fx - fw * 0.4, fy);
-            ctx.quadraticCurveTo(fx, fy + fh * 0.5, fx + fw * 0.4, fy);
-            ctx.closePath();
-            ctx.fill();
-        }
-        ctx.restore();
+        PlayerRenderer.render(ctx, this, assets, perkSystem);
     }
 }
 

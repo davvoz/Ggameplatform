@@ -890,11 +890,17 @@ class Game {
         this.entityManager.miniBossActive = false;
         this.entityManager.miniBoss = null;
 
+        // Reset time effects
+        this.timeScale = 1;
+        this.bulletTimeActive = false;
+        this.bulletTimeTimer = 0;
+
         // Restart waves for current level
         this.waveManager.resetForLevel();
 
         // Re-apply perks & reset per-level perk state (e.g. Emergency Protocol)
         this.perkSystem.onLevelStart();
+        this.perkEffectsManager._emergencySlowTimer = 0;
         this.perkEffectsManager.applyPerkModifiersToPlayer();
 
         // Visual feedback

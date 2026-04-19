@@ -19,7 +19,7 @@ export default class LevelIntroCinematic extends CinematicScene {
         this.duration = 3.5;
         this.levelNum = level;
         this.levelName = levelData ? levelData.name : `Sector ${level}`;
-        this.isBossLevel = !!(levelData && levelData.boss);
+        this.isBossLevel = !!(levelData?.boss);
 
         // Warp stars
         this.warpStars = [];
@@ -72,70 +72,37 @@ export default class LevelIntroCinematic extends CinematicScene {
         const fadeStart = 2.6;
 
         // Warp streaks
-        const warpIntensity = t < warpEnd
-            ? Math.min(1, t / 0.3)
-            : Math.max(0, 1 - (t - warpEnd) / 0.6);
-
-        if (warpIntensity > 0) {
-            ctx.save();
-            for (const s of this.warpStars) {
-                const streakLen = s.len * warpIntensity;
-                const alpha = s.brightness * warpIntensity * 0.8;
-                ctx.strokeStyle = `rgba(180,220,255,${alpha.toFixed(3)})`;
-                ctx.lineWidth = s.z * 1.8;
-                ctx.beginPath();
-                ctx.moveTo(s.x, s.y);
-                ctx.lineTo(s.x, s.y - streakLen);
-                ctx.stroke();
-            }
-            ctx.restore();
-        }
+        this.renderWarpStreaks(t, warpEnd, ctx);
 
         // Vignette
-        const vigAlpha = t < 0.4 ? t / 0.4 * 0.5
-            : t > fadeStart ? Math.max(0, 0.5 * (1 - (t - fadeStart) / (dur - fadeStart)))
-            : 0.5;
-        if (vigAlpha > 0.01) {
-            const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.2, w / 2, h / 2, w * 0.8);
-            grad.addColorStop(0, 'rgba(0,0,0,0)');
-            grad.addColorStop(1, `rgba(0,0,0,${vigAlpha.toFixed(3)})`);
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, w, h);
-        }
+        this.renderVignette(t, fadeStart, dur, ctx, w, h);
 
         // Scan lines
-        ctx.save();
-        for (const sl of this.scanLines) {
-            const slAlpha = sl.alpha * (t < 0.3 ? t / 0.3 : t > fadeStart ? Math.max(0, 1 - (t - fadeStart) / 0.5) : 1);
-            if (slAlpha > 0.005) {
-                ctx.strokeStyle = `rgba(100,200,255,${slAlpha.toFixed(3)})`;
-                ctx.lineWidth = sl.width;
-                ctx.beginPath();
-                ctx.moveTo(0, sl.y);
-                ctx.lineTo(w, sl.y);
-                ctx.stroke();
-            }
-        }
-        ctx.restore();
+        this.renderScanLines(ctx, t, fadeStart, w);
 
         // Horizontal lines
-        if (t > 0.2 && t < fadeStart + 0.5) {
-            const lineAlpha = t < 0.5 ? (t - 0.2) / 0.3
-                : t > fadeStart ? Math.max(0, 1 - (t - fadeStart) / 0.5) : 1;
-            ctx.save();
-            ctx.strokeStyle = `rgba(0,180,255,${(lineAlpha * 0.6).toFixed(3)})`;
-            ctx.lineWidth = 2;
-            ctx.shadowColor = 'rgba(0,180,255,0.8)';
-            ctx.shadowBlur = 12;
-            const lineW = w * 0.7 * Math.min(1, (t - 0.2) / 0.5);
-            const lcx = w / 2;
-            ctx.beginPath(); ctx.moveTo(lcx - lineW / 2, h * 0.28); ctx.lineTo(lcx + lineW / 2, h * 0.28); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(lcx - lineW / 2, h * 0.62); ctx.lineTo(lcx + lineW / 2, h * 0.62); ctx.stroke();
-            ctx.shadowBlur = 0;
-            ctx.restore();
-        }
+        this.renderHorizontalLines(t, fadeStart, ctx, w, h);
 
         // Title
+        this.renderTitleAndWarning({ t, titleStart, titleFullAt, fadeStart, dur, ctx, w, h });
+
+        // Transition flash
+        this.renderTransitionFlash(t, fadeStart, dur, ctx, w, h);
+    }
+
+    renderTransitionFlash(t, fadeStart, dur, ctx, w, h) {
+        if (t > fadeStart) {
+            const flashProg = (t - fadeStart) / (dur - fadeStart);
+            const flashAlpha = flashProg < 0.3 ? flashProg / 0.3 * 0.15 : 0.15 * (1 - (flashProg - 0.3) / 0.7);
+            if (flashAlpha > 0.005) {
+                ctx.fillStyle = `rgba(180,220,255,${flashAlpha.toFixed(3)})`;
+                ctx.fillRect(0, 0, w, h);
+            }
+        }
+    }
+
+    renderTitleAndWarning(options) {
+        const { t, titleStart, titleFullAt, fadeStart, dur, ctx, w, h } = options;
         if (t > titleStart) {
             const titleProgress = Math.min(1, (t - titleStart) / (titleFullAt - titleStart));
             const titleFade = t > fadeStart ? Math.max(0, 1 - (t - fadeStart) / (dur - fadeStart)) : 1;
@@ -159,65 +126,135 @@ export default class LevelIntroCinematic extends CinematicScene {
 
             // Level name
             const nameDelay = 0.2;
-            if (t > titleStart + nameDelay) {
-                const nameProgress = Math.min(1, (t - titleStart - nameDelay) / 0.5);
-                const nameEased = 1 - Math.pow(1 - nameProgress, 3);
-                const nameSlideX = w / 2 + (1 - nameEased) * (w * 0.3);
-                const nameY = h * 0.46;
-
-                ctx.shadowColor = this.isBossLevel ? 'rgba(255,60,60,0.8)' : 'rgba(0,255,180,0.6)';
-                ctx.shadowBlur = 15 * titleFade;
-
-                const nameFontSize = Math.min(22, w * 0.05);
-                ctx.font = title(nameFontSize, 600);
-                const nameColor = this.isBossLevel
-                    ? `rgba(255,120,100,${(titleFade * nameEased).toFixed(3)})`
-                    : `rgba(120,255,200,${(titleFade * nameEased).toFixed(3)})`;
-                ctx.fillStyle = nameColor;
-                ctx.fillText(`» ${this.levelName.toUpperCase()} «`, nameSlideX, nameY);
-            }
+            this.renderLevelName(t, titleStart, nameDelay, w, h, ctx, titleFade);
 
             // Boss warning
-            if (this.isBossLevel && t > titleStart + 0.5) {
-                const warnProg = Math.min(1, (t - titleStart - 0.5) / 0.4);
-                const warnEased = 1 - Math.pow(1 - warnProg, 2);
-                const pulse = 0.7 + Math.sin(t * 6) * 0.3;
-                const warnY = h * 0.54;
-                ctx.shadowColor = 'rgba(255,30,30,0.9)';
-                ctx.shadowBlur = 20 * titleFade;
-                const warnFontSize = Math.min(16, w * 0.035);
-                ctx.font = title(warnFontSize, 'bold');
-                ctx.fillStyle = `rgba(255,80,60,${(titleFade * warnEased * pulse).toFixed(3)})`;
-                ctx.fillText('⚠ BOSS SECTOR ⚠', w / 2, warnY);
-            }
+            this.renderBossWarning(t, titleStart, h, ctx, titleFade, w);
 
             // Corner brackets
-            if (eased > 0.5) {
-                const bracketAlpha = titleFade * Math.min(1, (eased - 0.5) * 2);
-                ctx.strokeStyle = `rgba(0,180,255,${(bracketAlpha * 0.5).toFixed(3)})`;
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 0;
-                const bSize = 20;
-                const pad = w * 0.12;
-                const top = h * 0.3;
-                const bottom = h * 0.6;
-                ctx.beginPath(); ctx.moveTo(pad, top + bSize); ctx.lineTo(pad, top); ctx.lineTo(pad + bSize, top); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(w - pad, top + bSize); ctx.lineTo(w - pad, top); ctx.lineTo(w - pad - bSize, top); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(pad, bottom - bSize); ctx.lineTo(pad, bottom); ctx.lineTo(pad + bSize, bottom); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(w - pad, bottom - bSize); ctx.lineTo(w - pad, bottom); ctx.lineTo(w - pad - bSize, bottom); ctx.stroke();
-            }
+            this.renderCornerBrackets(eased, titleFade, ctx, w, h);
 
             ctx.restore();
         }
+    }
 
-        // Transition flash
-        if (t > fadeStart) {
-            const flashProg = (t - fadeStart) / (dur - fadeStart);
-            const flashAlpha = flashProg < 0.3 ? flashProg / 0.3 * 0.15 : 0.15 * (1 - (flashProg - 0.3) / 0.7);
-            if (flashAlpha > 0.005) {
-                ctx.fillStyle = `rgba(180,220,255,${flashAlpha.toFixed(3)})`;
-                ctx.fillRect(0, 0, w, h);
+    renderCornerBrackets(eased, titleFade, ctx, w, h) {
+        if (eased > 0.5) {
+            const bracketAlpha = titleFade * Math.min(1, (eased - 0.5) * 2);
+            ctx.strokeStyle = `rgba(0,180,255,${(bracketAlpha * 0.5).toFixed(3)})`;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
+            const bSize = 20;
+            const pad = w * 0.12;
+            const top = h * 0.3;
+            const bottom = h * 0.6;
+            ctx.beginPath(); ctx.moveTo(pad, top + bSize); ctx.lineTo(pad, top); ctx.lineTo(pad + bSize, top); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(w - pad, top + bSize); ctx.lineTo(w - pad, top); ctx.lineTo(w - pad - bSize, top); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(pad, bottom - bSize); ctx.lineTo(pad, bottom); ctx.lineTo(pad + bSize, bottom); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(w - pad, bottom - bSize); ctx.lineTo(w - pad, bottom); ctx.lineTo(w - pad - bSize, bottom); ctx.stroke();
+        }
+    }
+
+    renderBossWarning(t, titleStart, h, ctx, titleFade, w) {
+        if (this.isBossLevel && t > titleStart + 0.5) {
+            const warnProg = Math.min(1, (t - titleStart - 0.5) / 0.4);
+            const warnEased = 1 - Math.pow(1 - warnProg, 2);
+            const pulse = 0.7 + Math.sin(t * 6) * 0.3;
+            const warnY = h * 0.54;
+            ctx.shadowColor = 'rgba(255,30,30,0.9)';
+            ctx.shadowBlur = 20 * titleFade;
+            const warnFontSize = Math.min(16, w * 0.035);
+            ctx.font = title(warnFontSize, 'bold');
+            ctx.fillStyle = `rgba(255,80,60,${(titleFade * warnEased * pulse).toFixed(3)})`;
+            ctx.fillText('⚠ BOSS SECTOR ⚠', w / 2, warnY);
+        }
+    }
+
+    renderLevelName(t, titleStart, nameDelay, w, h, ctx, titleFade) {
+        if (t > titleStart + nameDelay) {
+            const nameProgress = Math.min(1, (t - titleStart - nameDelay) / 0.5);
+            const nameEased = 1 - Math.pow(1 - nameProgress, 3);
+            const nameSlideX = w / 2 + (1 - nameEased) * (w * 0.3);
+            const nameY = h * 0.46;
+
+            ctx.shadowColor = this.isBossLevel ? 'rgba(255,60,60,0.8)' : 'rgba(0,255,180,0.6)';
+            ctx.shadowBlur = 15 * titleFade;
+
+            const nameFontSize = Math.min(22, w * 0.05);
+            ctx.font = title(nameFontSize, 600);
+            const nameColor = this.isBossLevel
+                ? `rgba(255,120,100,${(titleFade * nameEased).toFixed(3)})`
+                : `rgba(120,255,200,${(titleFade * nameEased).toFixed(3)})`;
+            ctx.fillStyle = nameColor;
+            ctx.fillText(`» ${this.levelName.toUpperCase()} «`, nameSlideX, nameY);
+        }
+    }
+
+    renderHorizontalLines(t, fadeStart, ctx, w, h) {
+        if (t > 0.2 && t < fadeStart + 0.5) {
+            const a = t > fadeStart ? Math.max(0, 1 - (t - fadeStart) / 0.5) : 1;
+            const lineAlpha = t < 0.5 ? (t - 0.2) / 0.3 : a;
+            ctx.save();
+            ctx.strokeStyle = `rgba(0,180,255,${(lineAlpha * 0.6).toFixed(3)})`;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(0,180,255,0.8)';
+            ctx.shadowBlur = 12;
+            const lineW = w * 0.7 * Math.min(1, (t - 0.2) / 0.5);
+            const lcx = w / 2;
+            ctx.beginPath(); ctx.moveTo(lcx - lineW / 2, h * 0.28); ctx.lineTo(lcx + lineW / 2, h * 0.28); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(lcx - lineW / 2, h * 0.62); ctx.lineTo(lcx + lineW / 2, h * 0.62); ctx.stroke();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+    }
+
+    renderScanLines(ctx, t, fadeStart, w) {
+        ctx.save();
+        for (const sl of this.scanLines) {
+            const a = t > fadeStart ? Math.max(0, 1 - (t - fadeStart) / 0.5) : 1;
+            const slAlpha = sl.alpha * (t < 0.3 ? t / 0.3 : a);
+            if (slAlpha > 0.005) {
+                ctx.strokeStyle = `rgba(100,200,255,${slAlpha.toFixed(3)})`;
+                ctx.lineWidth = sl.width;
+                ctx.beginPath();
+                ctx.moveTo(0, sl.y);
+                ctx.lineTo(w, sl.y);
+                ctx.stroke();
             }
+        }
+        ctx.restore();
+    }
+
+    renderVignette(t, fadeStart, dur, ctx, w, h) {
+        const a = t > fadeStart ? Math.max(0, 0.5 * (1 - (t - fadeStart) / (dur - fadeStart))): 0.5;
+        const vigAlpha = t < 0.4 ? t / 0.4 * 0.5 : a;
+        if (vigAlpha > 0.01) {
+            const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.2, w / 2, h / 2, w * 0.8);
+            grad.addColorStop(0, 'rgba(0,0,0,0)');
+            grad.addColorStop(1, `rgba(0,0,0,${vigAlpha.toFixed(3)})`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+        }
+    }
+
+    renderWarpStreaks(t, warpEnd, ctx) {
+        const warpIntensity = t < warpEnd
+            ? Math.min(1, t / 0.3)
+            : Math.max(0, 1 - (t - warpEnd) / 0.6);
+
+        if (warpIntensity > 0) {
+            ctx.save();
+            for (const s of this.warpStars) {
+                const streakLen = s.len * warpIntensity;
+                const alpha = s.brightness * warpIntensity * 0.8;
+                ctx.strokeStyle = `rgba(180,220,255,${alpha.toFixed(3)})`;
+                ctx.lineWidth = s.z * 1.8;
+                ctx.beginPath();
+                ctx.moveTo(s.x, s.y);
+                ctx.lineTo(s.x, s.y - streakLen);
+                ctx.stroke();
+            }
+            ctx.restore();
         }
     }
 }

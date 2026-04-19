@@ -178,4 +178,7 @@ function _mkCanvas(w, h) {
     return cv;
 }
 
-export { outlineAndFill, drawHighlight, drawCockpit, drawEngineNozzle, _drawPartEye, drawEnemyEye, drawBossEyes, drawPentagon, drawStarShape, _mkCanvas };
+
+
+export { outlineAndFill, drawHighlight, drawCockpit, drawEngineNozzle, _drawPartEye,
+     drawEnemyEye, drawBossEyes, drawPentagon, drawStarShape, _mkCanvas };

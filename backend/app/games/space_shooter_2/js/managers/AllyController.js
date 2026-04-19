@@ -34,7 +34,8 @@ class AllyController {
 
         // Purge dead allies (iterate backwards)
         for (let i = perks.alliedEnemies.length - 1; i >= 0; i--) {
-            if (!perks.alliedEnemies[i].active) {
+            const a = perks.alliedEnemies[i];
+            if (!a?.active || !a.position) {
                 perks.alliedEnemies.splice(i, 1);
             }
         }
@@ -74,8 +75,8 @@ class AllyController {
             if (nearest) {
                 const ax = ally.position.x + ally.width / 2;
                 const ay = ally.position.y + ally.height / 2;
-                const tx = nearest.position.x + nearest.width / 2;
-                const ty = nearest.position.y + nearest.height / 2;
+                const tx = (nearest.worldX ?? nearest.position.x) + nearest.width / 2;
+                const ty = (nearest.worldY ?? nearest.position.y) + nearest.height / 2;
                 desiredFacing = Math.atan2(ty - ay, tx - ax);
             }
 
@@ -143,7 +144,8 @@ class AllyController {
                     ally.position.x - pad, ally.position.y - pad,
                     ally.width + pad * 2, ally.height + pad * 2
                 );
-            } else if (ally.config?.w4behaviour) {
+            } 
+            else if (ally.config?.w4behaviour) {
                 const t = performance.now() * 0.001;
                 drawW4Sprite(ctx, {
                     type: ally.type, cx, cy, w: ally.width, h: ally.height, t,
@@ -156,7 +158,8 @@ class AllyController {
                         forceBoosted: !!ally._forceBoostedVisual,
                     },
                 });
-            } else {
+            } 
+            else {
                 ctx.fillStyle = ally.config.color;
                 ctx.fillRect(ally.position.x, ally.position.y, ally.width, ally.height);
             }
@@ -183,14 +186,6 @@ class AllyController {
             ctx.arc(cx, cy, radius, 0, Math.PI * 2);
             ctx.stroke();
 
-            // ── ⚡ icon (drawn without rotation so it's readable) ──
-            ctx.restore(); // pop rotation
-            ctx.save();
-            ctx.globalAlpha = ally.alpha * 0.8;
-            ctx.fillStyle   = '#00ffcc';
-            ctx.font        = '12px sans-serif';
-            ctx.textAlign   = 'center';
-            ctx.fillText('⚡', cx, ally.position.y - 8);
             ctx.restore();
         }
     }
@@ -211,14 +206,34 @@ class AllyController {
             const d  = Math.hypot(dx, dy);
             if (d < nearDist) { nearDist = d; nearest = e; }
         }
-        return nearest;
+
+        // Also target miniboss / boss parts
+        const mbResult = this._checkBossTarget(this.game.entityManager.miniBoss, ax, ay, nearDist, nearest);
+        const bResult = this._checkBossTarget(this.game.entityManager.boss, ax, ay, mbResult.dist, mbResult.nearest);
+        return bResult.nearest;
+    }
+
+    _checkBossTarget(boss, ax, ay, bestDist, bestTarget) {
+        if (!boss?.active || boss.entering) return { nearest: bestTarget, dist: bestDist };
+
+        let nearest = bestTarget;
+        let nearDist = bestDist;
+
+        for (const part of boss.parts) {
+            if (part.active === false) continue;
+            const dx = (part.worldX + part.width / 2) - ax;
+            const dy = (part.worldY + part.height / 2) - ay;
+            const d  = Math.hypot(dx, dy);
+            if (d < nearDist) { nearDist = d; nearest = part; }
+        }
+        return { nearest, dist: nearDist };
     }
 
     _shoot(ally, target) {
         const ax = ally.position.x + ally.width  / 2;
         const ay = ally.position.y + ally.height / 2;
-        const tx = target.position.x + target.width  / 2;
-        const ty = target.position.y + target.height / 2;
+        const tx = (target.worldX ?? target.position.x) + target.width  / 2;
+        const ty = (target.worldY ?? target.position.y) + target.height / 2;
         const angle = Math.atan2(ty - ay, tx - ax);
 
         this.game.entityManager.spawnBullet(

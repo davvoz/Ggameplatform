@@ -437,11 +437,11 @@ const PERK_CATALOG = [
     {
         id: 'tunnel_shift',
         name: 'Tunnel Shift',
-        description: 'Taking lethal damage: 40% chance to quantum-tunnel to a safe position instead of dying. Once per level.',
-        stackDesc: '+20% trigger chance per stack',
+        description: 'Taking lethal damage: quantum-tunnel to a safe position instead of dying. Once per level.',
+        stackDesc: 'No additional effect',
         category: 'defensive',
         rarity: 'legendary',
-        maxStacks: 2,
+        maxStacks: 1,
         icon: '◈',
         world: 4
     },
@@ -734,11 +734,26 @@ class PerkSystem {
     getEntropyShieldKills()   { return this.hasPerk('entropy_shield') ? 20 - (this.getStacks('entropy_shield') - 1) * 5 : Infinity; }
     getDataLeechChance()      { return this.hasPerk('data_leech') ? 0.2 + (this.getStacks('data_leech') - 1) * 0.1 : 0; }
 
+    // ── World 4 Perk Getters ──
+    hasQuantumEntangle()        { return this.hasPerk('quantum_entangle'); }
+    getQuantumEntangleRange()   { return this.hasPerk('quantum_entangle') ? 100 + (this.getStacks('quantum_entangle') - 1) * 30 : 0; }
+    getQuantumEntangleDmgPct()  { return this.hasPerk('quantum_entangle') ? 0.5 + (this.getStacks('quantum_entangle') - 1) * 0.15 : 0; }
+    getWaveCollapseInterval()   { return this.hasPerk('wave_collapse') ? 12 - (this.getStacks('wave_collapse') - 1) * 3 : Infinity; }
+    getWaveCollapseDmg()        { return this.hasPerk('wave_collapse') ? 4 + (this.getStacks('wave_collapse') - 1) : 0; }
+    hasProbabilityField()       { return this.hasPerk('probability_field'); }
+    getProbabilityFieldChance() { return this.hasPerk('probability_field') ? 0.15 + (this.getStacks('probability_field') - 1) * 0.1 : 0; }
+    getProbabilityFieldRange()  { return this.hasPerk('probability_field') ? 60 + (this.getStacks('probability_field') - 1) * 15 : 0; }
+    hasAntimatterHarvest()      { return this.hasPerk('antimatter_harvest'); }
+    getAntimatterScoreBonus()   { return this.hasPerk('antimatter_harvest') ? 0.5 + (this.getStacks('antimatter_harvest') - 1) * 0.25 : 0; }
+    getAntimatterUltBonus()     { return this.hasPerk('antimatter_harvest') ? 5 + (this.getStacks('antimatter_harvest') - 1) * 3 : 0; }
+
     //  Boolean shortcuts
     hasExplosiveRounds()   { return this.hasPerk('explosive_rounds'); }
     hasThorns()            { return this.hasPerk('thorns'); }
     hasDoubleBarrel()      { return this.hasPerk('double_barrel'); }
     hasEmergencyProtocol() { return this.hasPerk('emergency_protocol') && !this.emergencyUsedThisLevel; }
+    hasTunnelShift()       { return this.hasPerk('tunnel_shift') && !this.tunnelShiftUsed; }
+    getTunnelShiftChance() { return this.hasPerk('tunnel_shift') ? 0.4 + (this.getStacks('tunnel_shift') - 1) * 0.2 : 0; }
 
     // ══════════════════════════════════
     //  LIFECYCLE
@@ -747,8 +762,11 @@ class PerkSystem {
     /** Called at the start of each level */
     onLevelStart() {
         this.emergencyUsedThisLevel = false;
+        this.tunnelShiftUsed = false;
         this.fireTrailSegments = [];
         this.fireTrailTimer = 0;
+        this.waveCollapseKills = 0;
+        this.alliedEnemies = [];
         // Deploy shield shortly after level starts (2s delay)
         this.autoShieldTimer = this.hasPerk('auto_shield') ? 2 : this.getAutoShieldCooldown();
     }
@@ -772,6 +790,10 @@ class PerkSystem {
         this.packetBurstCounter = 0;
         this.glitchDashTimer = 0;
         this.entropyShieldKills = 0;
+        // World 4
+        this.waveCollapseKills = 0;
+        this.tunnelShiftUsed = false;
+        this.entangledTarget = null;
     }
 }
 

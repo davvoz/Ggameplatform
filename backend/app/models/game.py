@@ -7,6 +7,8 @@ import json
 
 from app.models.base import Base
 
+_CASCADE_ALL_DELETE_ORPHAN = "all, delete-orphan"
+
 
 class GameStatus(Base):
     """Game status model for configurable game states."""
@@ -62,9 +64,9 @@ class Game(Base):
 
     # Relationships
     status = relationship("GameStatus", back_populates="games")
-    sessions = relationship("GameSession", back_populates="game", cascade="all, delete-orphan")
-    leaderboard_entries = relationship("Leaderboard", back_populates="game", cascade="all, delete-orphan")
-    xp_rules = relationship("XPRule", back_populates="game", cascade="all, delete-orphan")
+    sessions = relationship("GameSession", back_populates="game", cascade=_CASCADE_ALL_DELETE_ORPHAN)
+    leaderboard_entries = relationship("Leaderboard", back_populates="game", cascade=_CASCADE_ALL_DELETE_ORPHAN)
+    xp_rules = relationship("XPRule", back_populates="game", cascade=_CASCADE_ALL_DELETE_ORPHAN)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert game instance to dictionary."""

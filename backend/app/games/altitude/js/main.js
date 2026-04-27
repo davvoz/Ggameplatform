@@ -191,6 +191,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', () => {
+            const sdk = globalThis.PlatformSDK;
+            if (sdk && typeof sdk.toggleFullscreen === 'function') sdk.toggleFullscreen();
+            else if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen().catch(() => {});
+        });
+    }
+
     game = await Game.create(canvas);
     globalThis.game = game;
 

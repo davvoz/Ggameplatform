@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devil Crash Pinball — Level Editor</title>
+    <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+
+<div id="topbar">
+    <span class="title">🔧 Devil Crash — Level Editor</span>
+    <div id="level-tabs"></div>
+    <div id="topbar-actions">
+        <button id="btn-undo"         title="Undo (Ctrl+Z)">↩ Undo</button>
+        <button id="btn-redo"         title="Redo (Ctrl+Y / Ctrl+Shift+Z)">↪ Redo</button>
+        <button id="btn-new-section"  title="Create new section">＋ Section</button>
+        <button id="btn-export"       title="Download current section JSON">⬇ Export</button>
+        <button id="btn-export-board" title="Download all sections + board.json as separate files">⬇ Export All</button>
+        <button id="btn-copy"         title="Copy current section JSON to clipboard">📋 Copy</button>
+        <button id="btn-board-order"  title="Configure board section order">⬆⬇ Board</button>
+    </div>
+</div>
+
+<!-- ── Board Order Dialog ─────────────────────────────────────────────────── -->
+<dialog id="board-order-dialog">
+    <form id="board-order-form" method="dialog">
+        <h2>Board Section Order</h2>
+        <p class="hint">⬆ primo = cima del mondo (Y=0) · ⬇ ultimo = fondo · trascina o usa le frecce per riordinare</p>
+        <ul id="board-order-list"></ul>
+        <div class="ns-actions">
+            <button type="button" id="btn-board-save">💾 Save board.json</button>
+            <button type="submit">Close</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- ── New Section Dialog ──────────────────────────────────────────────── -->
+<dialog id="new-section-dialog">
+    <form id="new-section-form" method="dialog">
+        <h2>New Section</h2>
+
+        <label for="ns-key">Key <span class="hint">(snake_case, no spaces)</span></label>
+        <input id="ns-key" type="text" pattern="[a-z][a-z0-9_]*" placeholder="hell_vault" required autocomplete="off">
+
+        <label for="ns-name">Display Name <span class="hint">(shown in HUD)</span></label>
+        <input id="ns-name" type="text" placeholder="INFERNO" value="NEW" required>
+
+        <fieldset>
+            <legend>Palette</legend>
+            <div class="ns-palette-grid">
+                <label for="ns-bg">bg</label>         <input id="ns-bg"       type="color" value="#080006">
+                <label for="ns-bgTop">bgTop</label>   <input id="ns-bgTop"    type="color" value="#1c0020">
+                <label for="ns-wall">wall</label>     <input id="ns-wall"     type="color" value="#ff1a1a">
+                <label for="ns-wallGlow">wallGlow</label><input id="ns-wallGlow" type="color" value="#ff5040">
+                <label for="ns-accent">accent</label> <input id="ns-accent"   type="color" value="#ffd700">
+                <label for="ns-accent2">accent2</label><input id="ns-accent2"  type="color" value="#ff8030">
+            </div>
+        </fieldset>
+
+        <label for="ns-audio-profile">Audio Profile <span class="hint">(DSP character on section entry)</span></label>
+        <select id="ns-audio-profile">
+            <option value="inferno">inferno — Hell Stone Hall</option>
+            <option value="abyss">abyss — Underground Cavern</option>
+            <option value="crystal_vault">crystal_vault — Arcade Vault</option>
+            <option value="ritual_chamber">ritual_chamber — Witch Dungeon</option>
+            <option value="demon_forge">demon_forge — Boss Forge</option>
+        </select>
+
+        <div class="ns-actions">
+            <button type="button" id="ns-cancel">Cancel</button>
+            <button type="submit"  id="ns-create">Create</button>
+        </div>
+    </form>
+</dialog>
+
+<div id="main">
+    <div id="toolbar-panel"></div>
+
+    <div id="canvas-wrap">
+        <canvas id="level-canvas" width="480" height="720"></canvas>
+        <div id="canvas-overlay">
+            <span id="cursor-pos">0, 0</span>
+        </div>
+    </div>
+
+    <div id="inspector-panel">
+        <div class="inspector-empty">Loading…</div>
+    </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

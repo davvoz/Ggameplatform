@@ -1,0 +1,229 @@
+﻿{
+    "_comment":  "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
+    "section":  "main_table",
+    "audioProfile":  "demon_forge",
+    "palette":  {
+                    "bg":  "#080006",
+                    "bgTop":  "#1c0020",
+                    "wall":  "#ff1a1a",
+                    "wallGlow":  "#fa7900",
+                    "accent":  "#ffd700",
+                    "accent2":  "#ff8030",
+                    "ink":  "rgba(255,26,26,0.20)",
+                    "name":  "INFERNO"
+                },
+    "background":  {
+                       "gradient":  {
+                                        "top":  "#1c0020",
+                                        "bottom":  "#080006"
+                                    },
+                       "layers":  [
+                                      {
+                                          "type":  "nebula",
+                                          "color":  "#ff5040",
+                                          "alpha":  0.1,
+                                          "y":  0.42
+                                      },
+                                      {
+                                          "type":  "lava_glow",
+                                          "color":  "#dc3200",
+                                          "alpha":  0.08,
+                                          "yStart":  0.72
+                                      },
+                                      {
+                                          "type":  "lava_fissures",
+                                          "color":  "#ff4400",
+                                          "alpha":  0.08,
+                                          "yStart":  0.64
+                                      }
+                                  ]
+                   },
+    "walls":  [
+                  {
+                      "ax":  20,
+                      "ay":  0,
+                      "bx":  20,
+                      "by":  720
+                  },
+                  {
+                      "ax":  480,
+                      "ay":  0,
+                      "bx":  370,
+                      "by":  40
+                  }
+              ],
+    "slingshots":  [
+                       {
+                           "ax":  74,
+                           "ay":  533,
+                           "bx":  130,
+                           "by":  621,
+                           "nx":  0.7,
+                           "ny":  -0.7
+                       },
+                       {
+                           "ax":  396,
+                           "ay":  539,
+                           "bx":  329,
+                           "by":  625,
+                           "nx":  -0.7,
+                           "ny":  -0.7
+                       }
+                   ],
+    "flippers":  [
+                     {
+                         "x":  147,
+                         "y":  641,
+                         "side":  "LEFT",
+                         "length":  76,
+                         "restAngle":  0.42,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  316,
+                         "y":  643,
+                         "side":  "RIGHT",
+                         "length":  73,
+                         "restAngle":  0.42,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  29,
+                         "y":  482,
+                         "side":  "LEFT",
+                         "length":  40,
+                         "restAngle":  1.5708,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  428,
+                         "y":  474,
+                         "side":  "RIGHT",
+                         "length":  52,
+                         "restAngle":  1.55,
+                         "activeAngle":  -0.58
+                     }
+                 ],
+    "bumpers":  [
+                    {
+                        "x":  110,
+                        "y":  300
+                    },
+                    {
+                        "x":  240,
+                        "y":  200
+                    },
+                    {
+                        "x":  370,
+                        "y":  290
+                    }
+                ],
+    "gears":  [
+                  {
+                      "x":  230,
+                      "y":  410,
+                      "teeth":  6,
+                      "speed":  0.4,
+                      "angularSpeed":  2.8
+                  }
+              ],
+    "warps":  [
+                  {
+                      "x":  90,
+                      "y":  150
+                  }
+              ],
+    "gates":  [
+                  {
+                      "x1":  60,
+                      "x2":  150,
+                      "y":  20,
+                      "dir":  1
+                  },
+                  {
+                      "x1":  190,
+                      "x2":  260,
+                      "y":  10,
+                      "dir":  1
+                  }
+              ],
+    "boss":  {
+                 "type":  "DemonBoss",
+                 "x":  225,
+                 "y":  130,
+                 "killEvent":  "demon_kill"
+             },
+    "corridors":  [
+                      {
+                          "cx":  460,
+                          "cy":  432,
+                          "angleDeg":  -90,
+                          "length":  564,
+                          "width":  40,
+                          "restitution":  0.55
+                      }
+                  ],
+    "curvedCorridors":  [
+                            {
+                                "cx":  370,
+                                "cy":  150,
+                                "midRadius":  89,
+                                "width":  40,
+                                "startAngleDeg":  -2,
+                                "angularSpanDeg":  -91,
+                                "segments":  12,
+                                "restitution":  0.55
+                            }
+                        ],
+    "springs":  [
+                    {
+                        "x":  415,
+                        "y":  663,
+                        "radius":  15,
+                        "angleDeg":  -90,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  410,
+                        "y":  20,
+                        "radius":  8,
+                        "angleDeg":  -118,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  50,
+                        "y":  660,
+                        "radius":  17,
+                        "angleDeg":  270,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    }
+                ],
+    "ballStarts":  [
+                       {
+                           "x":  456,
+                           "y":  562
+                       }
+                   ],
+    "deathLines":  [
+                       {
+                           "ax":  0,
+                           "ay":  710,
+                           "bx":  530,
+                           "by":  710
+                       }
+                   ],
+    "launchSprings":  [
+                          {
+                              "x":  459,
+                              "y":  701,
+                              "radius":  20,
+                              "angleDeg":  -90,
+                              "maxPower":  3200,
+                              "chargeTime":  1.2,
+                              "maxExtension":  109
+                          }
+                      ]
+}

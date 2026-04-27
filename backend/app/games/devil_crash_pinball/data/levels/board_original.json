@@ -1,0 +1,10 @@
+{
+  "_comment": "Ordered list of section config keys. Each key maps to a JSON file in this folder. floorIndex inside each section JSON determines the world-Y position. To add a new floor: add a key here and supply the corresponding JSON file.",
+  "sections": [
+    "arkanoid_vault",
+    "abyss_floor",
+    "bonus_dungeon",
+    "upper_table",
+    "main_table"
+  ]
+}

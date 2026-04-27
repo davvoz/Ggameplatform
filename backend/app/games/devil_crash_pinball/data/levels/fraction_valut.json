@@ -1,0 +1,289 @@
+{
+  "section": "fraction_valut",
+  "audioProfile": "inferno",
+  "palette": {
+    "bg": "#0a1801",
+    "bgTop": "#00420d",
+    "wall": "#37f104",
+    "wallGlow": "#2aa771",
+    "accent": "#00fae9",
+    "accent2": "#e46b21",
+    "ink": "rgba(255,26,26,0.20)",
+    "name": "FRACTION",
+    "ambientKey": "INFERNO"
+  },
+  "walls": [
+    {
+      "ax": 20,
+      "ay": 0,
+      "bx": 20,
+      "by": 720
+    },
+    {
+      "ax": 460,
+      "ay": 0,
+      "bx": 460,
+      "by": 720
+    }
+  ],
+  "corridors": [
+    {
+      "cx": 170,
+      "cy": 380,
+      "angleDeg": -90,
+      "length": 296,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "cx": 210,
+      "cy": 380,
+      "angleDeg": -90,
+      "length": 296,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "cx": 250,
+      "cy": 380,
+      "angleDeg": -90,
+      "length": 296,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "cx": 290,
+      "cy": 380,
+      "angleDeg": -90,
+      "length": 296,
+      "width": 40,
+      "restitution": 0.55
+    }
+  ],
+  "slingshots": [
+    {
+      "ax": 30,
+      "ay": 570,
+      "bx": 160,
+      "by": 690,
+      "nx": 0.88,
+      "ny": -0.47
+    },
+    {
+      "ax": 320,
+      "ay": 690,
+      "bx": 450,
+      "by": 570,
+      "nx": 0.88,
+      "ny": -0.47
+    }
+  ],
+  "flippers": [
+    {
+      "x": 160,
+      "y": 690,
+      "side": "LEFT",
+      "length": 64,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 320,
+      "y": 690,
+      "side": "RIGHT",
+      "length": 64,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 40,
+      "y": 180,
+      "side": "LEFT",
+      "length": 71,
+      "restAngle": 1.53,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 440,
+      "y": 140,
+      "side": "LEFT",
+      "length": 71,
+      "restAngle": 1.56,
+      "activeAngle": -0.58
+    }
+  ],
+  "springs": [
+    {
+      "x": 190,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 210,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 230,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 250,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 270,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 290,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 170,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 50,
+      "y": 530,
+      "radius": 8,
+      "angleDeg": -51,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 50,
+      "y": 490,
+      "radius": 8,
+      "angleDeg": -51,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 50,
+      "y": 450,
+      "radius": 8,
+      "angleDeg": -51,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 50,
+      "y": 410,
+      "radius": 8,
+      "angleDeg": -51,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 310,
+      "y": 580,
+      "radius": 8,
+      "angleDeg": -90,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 230,
+      "y": 200,
+      "radius": 8,
+      "angleDeg": -90,
+      "power": 1300,
+      "cooldown": 0.4
+    }
+  ],
+  "curvedCorridors": [
+    {
+      "cx": 100,
+      "cy": 230,
+      "midRadius": 70,
+      "width": 40,
+      "startAngleDeg": -57,
+      "angularSpanDeg": 57,
+      "segments": 12,
+      "restitution": 0.55
+    },
+    {
+      "cx": 360,
+      "cy": 240,
+      "midRadius": 71,
+      "width": 40,
+      "startAngleDeg": -174,
+      "angularSpanDeg": 62,
+      "segments": 12,
+      "restitution": 0.77
+    }
+  ],
+  "bumpers": [
+    {
+      "x": 380,
+      "y": 260
+    },
+    {
+      "x": 380,
+      "y": 340
+    },
+    {
+      "x": 380,
+      "y": 420
+    },
+    {
+      "x": 390,
+      "y": 510
+    },
+    {
+      "x": 90,
+      "y": 320
+    },
+    {
+      "x": 90,
+      "y": 40
+    }
+  ],
+  "pendulums": [
+    {
+      "x": 240,
+      "y": 20,
+      "armLength": 80,
+      "velX": 0.88,
+      "velY": 0.52,
+      "slideRange": 100,
+      "slideSpeed": 0.9
+    }
+  ],
+  "warpExits": [
+    {
+      "fromSection": "minussa_valut",
+      "x": 360,
+      "y": 50,
+      "vx": 0,
+      "vy": -650
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+﻿{
+    "_comment":  "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
+    "section":  "bonus_dungeon",
+    "audioProfile":  "inferno",
+    "palette":  {
+                    "bg":  "#06030e",
+                    "bgTop":  "#5000e6",
+                    "wall":  "#bb33ff",
+                    "wallGlow":  "#005dd6",
+                    "accent":  "#93df07",
+                    "accent2":  "#e63900",
+                    "ink":  "rgba(200,80,255,0.20)",
+                    "name":  "DUNGEON",
+                    "ambientKey":  "DUNGEON"
+                },
+    "walls":  [
+                  {
+                      "ax":  20,
+                      "ay":  0,
+                      "bx":  20,
+                      "by":  720
+                  },
+                  {
+                      "ax":  460,
+                      "ay":  0,
+                      "bx":  460,
+                      "by":  720
+                  },
+                  {
+                      "ax":  390,
+                      "ay":  590,
+                      "bx":  460,
+                      "by":  452
+                  }
+              ],
+    "dropTargets":  [
+                        {
+                            "x":  300,
+                            "y":  250
+                        },
+                        {
+                            "x":  330,
+                            "y":  250
+                        },
+                        {
+                            "x":  180,
+                            "y":  250
+                        },
+                        {
+                            "x":  270,
+                            "y":  250
+                        },
+                        {
+                            "x":  210,
+                            "y":  250
+                        },
+                        {
+                            "x":  240,
+                            "y":  250
+                        }
+                    ],
+    "gates":  [
+                  {
+                      "x1":  86,
+                      "x2":  156,
+                      "y":  19,
+                      "dir":  1
+                  },
+                  {
+                      "x1":  250,
+                      "x2":  310,
+                      "y":  710,
+                      "dir":  -1
+                  },
+                  {
+                      "x1":  226,
+                      "x2":  306,
+                      "y":  22,
+                      "dir":  1
+                  }
+              ],
+    "bumpers":  [
+                    {
+                        "x":  290,
+                        "y":  510
+                    },
+                    {
+                        "x":  200,
+                        "y":  60
+                    },
+                    {
+                        "x":  89,
+                        "y":  345
+                    }
+                ],
+    "flippers":  [
+                     {
+                         "x":  450,
+                         "y":  450,
+                         "side":  "RIGHT",
+                         "length":  64,
+                         "restAngle":  0.42,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  380,
+                         "y":  300,
+                         "side":  "RIGHT",
+                         "length":  64,
+                         "restAngle":  1.57,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  120,
+                         "y":  670,
+                         "side":  "LEFT",
+                         "length":  99,
+                         "restAngle":  0,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  210,
+                         "y":  410,
+                         "side":  "LEFT",
+                         "length":  92,
+                         "restAngle":  1.56,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  380,
+                         "y":  670,
+                         "side":  "RIGHT",
+                         "length":  99,
+                         "restAngle":  0,
+                         "activeAngle":  -0.58
+                     }
+                 ],
+    "warps":  [
+                  {
+                      "x":  190,
+                      "y":  140
+                  }
+              ],
+    "boss":  {
+                 "type":  "DragonBoss",
+                 "killEvent":  "witch_kill",
+                 "x":  240,
+                 "y":  240,
+                 "radius":  130
+             },
+    "curvedCorridors":  [
+                            {
+                                "cx":  290,
+                                "cy":  720,
+                                "midRadius":  144,
+                                "width":  40,
+                                "startAngleDeg":  -2,
+                                "angularSpanDeg":  -54,
+                                "segments":  12,
+                                "restitution":  0.55,
+                                "restAngle":  0
+                            },
+                            {
+                                "cx":  357,
+                                "cy":  213,
+                                "midRadius":  70,
+                                "width":  60,
+                                "startAngleDeg":  -177,
+                                "angularSpanDeg":  79,
+                                "segments":  12,
+                                "restitution":  0.55
+                            },
+                            {
+                                "cx":  328,
+                                "cy":  77,
+                                "midRadius":  70,
+                                "width":  60,
+                                "startAngleDeg":  76,
+                                "angularSpanDeg":  -53,
+                                "segments":  18,
+                                "restitution":  0.59
+                            }
+                        ],
+    "springs":  [
+                    {
+                        "x":  390,
+                        "y":  570,
+                        "radius":  17,
+                        "angleDeg":  -150,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  423,
+                        "y":  510,
+                        "radius":  12,
+                        "angleDeg":  -148,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  99,
+                        "y":  491,
+                        "radius":  21,
+                        "angleDeg":  -57,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    }
+                ],
+    "slingshots":  [
+                       {
+                           "ax":  24,
+                           "ay":  177,
+                           "bx":  140,
+                           "by":  280,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       },
+                       {
+                           "ax":  457,
+                           "ay":  166,
+                           "bx":  384,
+                           "by":  264,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       },
+                       {
+                           "ax":  20,
+                           "ay":  530,
+                           "bx":  110,
+                           "by":  670,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       }
+                   ],
+    "warpExits":  [
+                      {
+                          "fromSection":  "upper_table",
+                          "x":  340,
+                          "y":  320,
+                          "vx":  0,
+                          "vy":  -650
+                      }
+                  ],
+    "corridors":  [
+                      {
+                          "cx":  170,
+                          "cy":  379,
+                          "angleDeg":  -56,
+                          "length":  215,
+                          "width":  70,
+                          "restitution":  0.55
+                      }
+                  ]
+}

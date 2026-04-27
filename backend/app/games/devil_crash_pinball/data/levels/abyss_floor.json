@@ -1,0 +1,273 @@
+﻿{
+    "_comment":  "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
+    "section":  "abyss_floor",
+    "audioProfile":  "abyss",
+    "palette":  {
+                    "bg":  "#000a14",
+                    "bgTop":  "#001428",
+                    "wall":  "#00e5ff",
+                    "wallGlow":  "#00b3cc",
+                    "accent":  "#76ff03",
+                    "accent2":  "#00e5ff",
+                    "ink":  "rgba(0,229,255,0.15)",
+                    "name":  "VOID"
+                },
+    "background":  {
+                       "gradient":  {
+                                        "top":  "#001428",
+                                        "bottom":  "#000a14"
+                                    },
+                       "layers":  [
+                                      {
+                                          "type":  "nebula",
+                                          "color":  "#00e5ff",
+                                          "alpha":  0.08,
+                                          "y":  0.4
+                                      },
+                                      {
+                                          "type":  "nebula_bands",
+                                          "color":  "#00e5ff",
+                                          "alpha":  0.03,
+                                          "count":  4
+                                      },
+                                      {
+                                          "type":  "void_dark",
+                                          "color":  "#00050f",
+                                          "alpha":  0.22,
+                                          "yStart":  0.6
+                                      }
+                                  ]
+                   },
+    "walls":  [
+                  {
+                      "ax":  20,
+                      "ay":  0,
+                      "bx":  20,
+                      "by":  720
+                  },
+                  {
+                      "ax":  460,
+                      "ay":  0,
+                      "bx":  460,
+                      "by":  720
+                  },
+                  {
+                      "ax":  460,
+                      "ay":  580,
+                      "bx":  348,
+                      "by":  715
+                  },
+                  {
+                      "ax":  458,
+                      "ay":  9,
+                      "bx":  354,
+                      "by":  93
+                  }
+              ],
+    "dropTargets":  [
+                        {
+                            "x":  140,
+                            "y":  50
+                        },
+                        {
+                            "x":  100,
+                            "y":  50
+                        },
+                        {
+                            "x":  180,
+                            "y":  50
+                        },
+                        {
+                            "x":  260,
+                            "y":  50
+                        },
+                        {
+                            "x":  220,
+                            "y":  50
+                        }
+                    ],
+    "gears":  [
+                  {
+                      "x":  210,
+                      "y":  130,
+                      "teeth":  12,
+                      "speed":  0.07,
+                      "angularSpeed":  3
+                  }
+              ],
+    "bumpers":  [
+                    {
+                        "x":  310,
+                        "y":  200
+                    },
+                    {
+                        "x":  70,
+                        "y":  240
+                    },
+                    {
+                        "x":  290,
+                        "y":  330
+                    },
+                    {
+                        "x":  245,
+                        "y":  499
+                    }
+                ],
+    "warps":  [
+                  {
+                      "x":  340,
+                      "y":  430,
+                      "radius":  18
+                  }
+              ],
+    "slingshots":  [
+                       {
+                           "ax":  64,
+                           "ay":  465,
+                           "bx":  140,
+                           "by":  570,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       },
+                       {
+                           "ax":  390,
+                           "ay":  420,
+                           "bx":  340,
+                           "by":  550,
+                           "nx":  -0.88,
+                           "ny":  -0.47
+                       }
+                   ],
+    "flippers":  [
+                     {
+                         "x":  160,
+                         "y":  580,
+                         "side":  "LEFT",
+                         "length":  79,
+                         "restAngle":  0.42,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  330,
+                         "y":  570,
+                         "side":  "RIGHT",
+                         "length":  64,
+                         "restAngle":  1,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  230,
+                         "y":  680,
+                         "side":  "LEFT",
+                         "length":  64,
+                         "restAngle":  0.42,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  33,
+                         "y":  360,
+                         "side":  "LEFT",
+                         "length":  77,
+                         "restAngle":  1.54,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  451,
+                         "y":  266,
+                         "side":  "RIGHT",
+                         "length":  64,
+                         "restAngle":  1.57,
+                         "activeAngle":  -0.58
+                     }
+                 ],
+    "boss":  {
+                 "type":  "GolemBoss",
+                 "x":  240,
+                 "y":  175,
+                 "killEvent":  "golem_kill",
+                 "radius":  100
+             },
+    "springs":  [
+                    {
+                        "x":  400,
+                        "y":  640,
+                        "radius":  20,
+                        "angleDeg":  -140,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  391,
+                        "y":  56,
+                        "radius":  18,
+                        "angleDeg":  -132,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  414,
+                        "y":  549,
+                        "radius":  20,
+                        "angleDeg":  -62,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    }
+                ],
+    "warpExits":  [
+                      {
+                          "fromSection":  "bonus_dungeon",
+                          "x":  90,
+                          "y":  130,
+                          "vx":  0,
+                          "vy":  -650
+                      }
+                  ],
+    "curvedCorridors":  [
+                            {
+                                "cx":  330,
+                                "cy":  230,
+                                "midRadius":  115,
+                                "width":  50,
+                                "startAngleDeg":  -81,
+                                "angularSpanDeg":  59,
+                                "segments":  12,
+                                "restitution":  0.55
+                            }
+                        ],
+    "gates":  [
+                  {
+                      "x1":  93,
+                      "x2":  173,
+                      "y":  14,
+                      "dir":  -1
+                  },
+                  {
+                      "x1":  33,
+                      "x2":  113,
+                      "y":  713,
+                      "dir":  1
+                  }
+              ],
+    "kickers":  [
+                    {
+                        "x":  150,
+                        "y":  360,
+                        "w":  76,
+                        "h":  16,
+                        "angleDeg":  0,
+                        "dirX":  0,
+                        "dirY":  -1,
+                        "power":  1000
+                    }
+                ],
+    "corridors":  [
+                      {
+                          "cx":  100,
+                          "cy":  610,
+                          "angleDeg":  54,
+                          "length":  273,
+                          "width":  96,
+                          "restitution":  0.55
+                      }
+                  ]
+}

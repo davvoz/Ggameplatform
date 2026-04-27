@@ -30,6 +30,36 @@ body {
     image-rendering: crisp-edges;
 }
 
+/* Fullscreen Button */
+#fullscreen-btn {
+    position: fixed;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    z-index: 1000;
+    width: 38px;
+    height: 38px;
+    background: rgba(10, 10, 26, 0.7);
+    border: 1px solid rgba(80, 140, 255, 0.4);
+    border-radius: 8px;
+    color: rgba(160, 200, 255, 0.85);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    backdrop-filter: blur(6px);
+}
+#fullscreen-btn:hover {
+    background: rgba(80, 140, 255, 0.2);
+    border-color: rgba(100, 160, 255, 0.65);
+    box-shadow: 0 0 14px rgba(80, 140, 255, 0.4);
+}
+#fullscreen-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* Loading Screen */
 #loading-screen {
     position: fixed;

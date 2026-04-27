@@ -17,6 +17,7 @@ import { PlatformSDKAdapter } from '../platform/PlatformSDKAdapter.js';
 import { HitState } from '../states/HitState.js';
 import { DealerTurnState } from '../states/DealerTurnState.js';
 import { ResultState } from '../states/ResultState.js';
+import { LoadingScreen } from '../ui/LoadingScreen.js';
 
 /**
  * Main game controller for Sette e Mezzo.
@@ -115,9 +116,23 @@ export class Game {
     }
 
     async start() {
+        const loading = new LoadingScreen(this.#renderer.canvas);
+        loading.start();
+        loading.setProgress(0, 'Loading cards\u2026');
+
         await CardView.ready();
+        loading.setProgress(0.4, 'Loading dealer\u2026');
+
         await this.#croupier.load();
+        loading.setCroupier(this.#croupier);
+        loading.setProgress(0.8, 'Connecting\u2026');
+
         await this.#initPlatform();
+        loading.setProgress(1, 'Ready!');
+
+        await loading.stop(); // waits \u2265 2 happy loops, then fades out
+        loading.destroy();
+
         this.#loop.start();
         this.#fsm.transition('betting');
     }

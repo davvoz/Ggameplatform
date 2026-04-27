@@ -1,0 +1,312 @@
+{
+  "_comment": "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
+  "section": "arkanoid_vault",
+  "audioProfile": "crystal_vault",
+  "palette": {
+    "bg": "#000810",
+    "bgTop": "#001a2e",
+    "wall": "#ff9900",
+    "wallGlow": "#ffcc44",
+    "accent": "#ff3388",
+    "accent2": "#ff9900",
+    "ink": "rgba(255,153,0,0.18)",
+    "name": "ARCADE"
+  },
+  "background": {
+    "gradient": {
+      "top": "#001a2e",
+      "bottom": "#000810"
+    },
+    "layers": [
+      {
+        "type": "nebula",
+        "color": "#ffcc44",
+        "alpha": 0.09,
+        "y": 0.4
+      },
+      {
+        "type": "scanlines",
+        "color": "#ff9900",
+        "alpha": 0.04,
+        "step": 6
+      },
+      {
+        "type": "cabinet_columns",
+        "color": "#ff9900",
+        "alpha": 0.03,
+        "width": 40
+      }
+    ]
+  },
+  "walls": [
+    {
+      "ax": 20,
+      "ay": 2,
+      "bx": 20,
+      "by": 720
+    },
+    {
+      "ax": 460,
+      "ay": 2,
+      "bx": 460,
+      "by": 720
+    },
+    {
+      "ax": 340,
+      "ay": 560,
+      "bx": 360,
+      "by": 610
+    },
+    {
+      "ax": 350,
+      "ay": 420,
+      "bx": 420,
+      "by": 470
+    },
+    {
+      "ax": 419,
+      "ay": 232,
+      "bx": 460,
+      "by": 185
+    },
+    {
+      "ax": 360,
+      "ay": 300,
+      "bx": 420,
+      "by": 400
+    }
+  ],
+  "brickGrids": [
+    {
+      "x": 178,
+      "cols": 5,
+      "rows": 4,
+      "brickW": 28,
+      "brickH": 18,
+      "gapX": 10,
+      "gapY": 12,
+      "startY": 137
+    }
+  ],
+  "slingshots": [
+    {
+      "ax": 20,
+      "ay": 410,
+      "bx": 88,
+      "by": 495,
+      "nx": 0.86,
+      "ny": -0.51
+    },
+    {
+      "ax": 410,
+      "ay": 470,
+      "bx": 342,
+      "by": 555,
+      "nx": -0.86,
+      "ny": -0.51
+    },
+    {
+      "ax": 20,
+      "ay": 520,
+      "bx": 100,
+      "by": 630,
+      "nx": 0.88,
+      "ny": -0.47
+    }
+  ],
+  "flippers": [
+    {
+      "x": 130,
+      "y": 620,
+      "side": "LEFT",
+      "length": 97,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 334,
+      "y": 564,
+      "side": "RIGHT",
+      "length": 87,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 97,
+      "y": 501,
+      "side": "LEFT",
+      "length": 85,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 350,
+      "y": 420,
+      "side": "RIGHT",
+      "length": 81,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 70,
+      "y": 320,
+      "side": "LEFT",
+      "length": 64,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 360,
+      "y": 300,
+      "side": "RIGHT",
+      "length": 64,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 280,
+      "y": 60,
+      "side": "LEFT",
+      "length": 64,
+      "restAngle": 1.55,
+      "activeAngle": -0.58
+    }
+  ],
+  "corridors": [
+    {
+      "cx": 440,
+      "cy": 595,
+      "angleDeg": 90,
+      "length": 250,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "cx": 440,
+      "cy": 353,
+      "angleDeg": -90,
+      "length": 95,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "cx": 364,
+      "cy": 64,
+      "angleDeg": 90,
+      "length": 136,
+      "width": 192,
+      "restitution": 0.55
+    }
+  ],
+  "launchSprings": [
+    {
+      "x": 440,
+      "y": 720,
+      "radius": 20,
+      "angleDeg": 270,
+      "maxPower": 2000,
+      "chargeTime": 1.2,
+      "maxExtension": 80
+    }
+  ],
+  "springs": [
+    {
+      "x": 360,
+      "y": 630,
+      "radius": 20,
+      "angleDeg": -177,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 350,
+      "y": 660,
+      "radius": 16,
+      "angleDeg": -151,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 380,
+      "y": 290,
+      "radius": 19,
+      "angleDeg": -121,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 40,
+      "y": 284,
+      "radius": 13,
+      "angleDeg": -96,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 430,
+      "y": 180,
+      "radius": 10,
+      "angleDeg": -139,
+      "power": 1300,
+      "cooldown": 0.4
+    }
+  ],
+  "bumpers": [
+    {
+      "x": 219,
+      "y": 320
+    },
+    {
+      "x": 213,
+      "y": 473
+    }
+  ],
+  "curvedCorridors": [
+    {
+      "cx": 370,
+      "cy": 310,
+      "midRadius": 70,
+      "width": 40,
+      "startAngleDeg": -57,
+      "angularSpanDeg": 55,
+      "segments": 12,
+      "restitution": 0.55
+    }
+  ],
+  "warps": [
+    {
+      "x": 170,
+      "y": 110,
+      "radius": 18
+    }
+  ],
+  "warpExits": [
+    {
+      "fromSection": "abyss_floor",
+      "x": 266,
+      "y": 375,
+      "vx": 0,
+      "vy": -650
+    }
+  ],
+  "kickers": [
+    {
+      "x": 410,
+      "y": 60,
+      "w": 77,
+      "h": 37,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    }
+  ],
+  "gates": [
+    {
+      "x1": 180,
+      "x2": 260,
+      "y": 10,
+      "dir": -1
+    }
+  ]
+}

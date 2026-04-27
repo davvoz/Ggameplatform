@@ -1,0 +1,197 @@
+﻿<!DOCTYPE html><html lang="it"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quality Chronicle - Archivio</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0f14;--bg2:#131720;--bg3:#1a1e2a;--bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);--text:#dde1ed;--muted:#737a96;--hint:#4a5068;--acc:#7c6af7;--acc2:#a78bfa;--green:#34d399;--gbg:rgba(52,211,153,0.10);--gb:rgba(52,211,153,0.22);--amber:#fbbf24;--abg:rgba(251,191,36,0.10);--ab:rgba(251,191,36,0.22);--red:#f87171;--rbg:rgba(248,113,113,0.10);--rb:rgba(248,113,113,0.22);--blue:#60a5fa;--teal:#2dd4bf;--mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;--r:8px;--rl:14px;--rxl:20px}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+.page{max-width:1320px;margin:0 auto;padding:0 40px 100px;position:relative;z-index:1}
+header{padding:60px 0 40px;text-align:center;border-bottom:1px solid var(--bd);margin-bottom:40px}
+.pid{font-family:var(--mono);font-size:12px;color:var(--acc2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+h1{font-size:clamp(32px,4.5vw,52px);font-weight:700;letter-spacing:-.025em;line-height:1.05;color:#fff}
+h1 span{color:var(--acc2)}
+.hmeta{font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:14px}
+.stats-bar{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:28px 0 0}
+.stat-pill{background:var(--bg3);border:1px solid var(--bd);border-radius:100px;padding:8px 18px;font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.03em}
+.stat-pill b{color:var(--acc2);font-weight:700}
+.st{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc2);margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.st::after{content:'';flex:1;height:1px;background:var(--bd)}
+.timeline{display:flex;flex-direction:column;gap:14px}
+.edition-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rxl);padding:24px 28px;text-decoration:none;color:var(--text);transition:all .2s;display:grid;grid-template-columns:80px 1fr auto;gap:24px;align-items:center}
+.edition-card:hover{border-color:var(--acc);box-shadow:0 0 24px rgba(124,106,247,.08);transform:translateY(-2px)}
+.ed-num{font-size:28px;font-weight:700;font-family:var(--mono);color:var(--acc);text-align:center;line-height:1}
+.ed-num small{display:block;font-size:11px;font-weight:400;color:var(--hint);margin-top:4px;letter-spacing:.02em}
+.ed-body h3{font-size:15px;font-weight:500;margin-bottom:6px;line-height:1.4;color:#fff}
+.ed-body .date{font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:8px}
+.ed-body .metrics{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.ed-body .metrics span b{font-weight:700;color:var(--text)}
+.delta-pos{color:var(--green)!important} .delta-neg{color:var(--red)!important} .delta-zero{color:var(--muted)!important}
+.qg-col{text-align:center}
+.badge{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:5px;letter-spacing:.04em;white-space:nowrap}
+.bg2{background:rgba(52,211,153,.10);color:var(--green);border:1px solid rgba(52,211,153,.22)}
+.br2{background:rgba(248,113,113,.10);color:var(--red);border:1px solid rgba(248,113,113,.22)}
+.latest-tag{display:inline-block;background:var(--acc);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;letter-spacing:.05em}
+footer{text-align:center;padding:48px 0 16px;color:var(--hint);font-family:var(--mono);font-size:12px;border-top:1px solid var(--bd);margin-top:56px}
+@media(max-width:700px){.edition-card{grid-template-columns:1fr;gap:12px}.ed-num{text-align:left;font-size:22px}.page{padding:0 16px 60px}}
+</style></head><body><div class="page">
+<header>
+<div class="pid">GGAMEPLATFORM &middot; SONARCLOUD EU</div>
+<h1>Quality<span>Chronicle</span></h1>
+<div class="hmeta">Archivio edizioni &mdash; SonarCloud Analysis</div>
+<div id="stats" class="stats-bar"></div>
+</header>
+<div class="st">EDIZIONI</div>
+<div id="timeline" class="timeline"></div>
+<footer>Quality Chronicle &mdash; generato automaticamente da generate_newspaper_edition.ps1</footer>
+</div>
+<script>
+var M=[
+    {
+        "file":  "edition-2026-04-12-2255.json",
+        "edition":  1,
+        "date":  "12 Aprile 2026",
+        "time":  "22:55",
+        "isoDate":  "2026-04-12",
+        "headline":  "Stato eccellente: zero bug, zero vulnerabilita\u0027, triplo rating A",
+        "qg":  "PASSED",
+        "codeSmells":  1524,
+        "debtHours":  206,
+        "bugs":  0,
+        "vulns":  0,
+        "ncloc":  214790,
+        "files":  769,
+        "hotspotsTotal":  42,
+        "ratings":  "A/A/A",
+        "deltaSmells":  0,
+        "deltaDebt":  0
+    },
+    {
+        "file":  "edition-2026-04-13-0027.json",
+        "edition":  2,
+        "date":  "13 aprile 2026",
+        "time":  "00:27",
+        "isoDate":  "2026-04-13",
+        "headline":  "Pulizia profonda: 265 code smell rimossi in una sessione",
+        "qg":  "PASSED",
+        "codeSmells":  1259,
+        "debtHours":  155,
+        "bugs":  0,
+        "vulns":  0,
+        "ncloc":  214932,
+        "files":  769,
+        "hotspotsTotal":  42,
+        "ratings":  "A/A/A",
+        "deltaSmells":  -265,
+        "deltaDebt":  -51
+    },
+    {
+        "file":  "edition-2026-04-14-1411.json",
+        "edition":  3,
+        "date":  "14 aprile 2026",
+        "time":  "14:11",
+        "isoDate":  "2026-04-14",
+        "headline":  "Pulizia profonda: 149 code smell rimossi in una sessione",
+        "qg":  "PASSED",
+        "codeSmells":  1110,
+        "debtHours":  149,
+        "bugs":  0,
+        "vulns":  0,
+        "ncloc":  215089,
+        "files":  777,
+        "hotspotsTotal":  42,
+        "ratings":  "A/A/A",
+        "deltaSmells":  -149,
+        "deltaDebt":  -6
+    },
+    {
+        "file":  "edition-2026-04-15-1646.json",
+        "edition":  4,
+        "date":  "15 aprile 2026",
+        "time":  "16:46",
+        "isoDate":  "2026-04-15",
+        "headline":  "Progresso costante: 57 code smell in meno, qualita\u0027 in crescita",
+        "qg":  "PASSED",
+        "codeSmells":  1053,
+        "debtHours":  131,
+        "bugs":  0,
+        "vulns":  0,
+        "ncloc":  215884,
+        "files":  785,
+        "hotspotsTotal":  42,
+        "ratings":  "A/A/A",
+        "deltaSmells":  -57,
+        "deltaDebt":  -18
+    },
+    {
+        "file":  "edition-2026-04-15-1716.json",
+        "edition":  5,
+        "date":  "15 aprile 2026",
+        "time":  "17:16",
+        "isoDate":  "2026-04-15",
+        "headline":  "Progresso costante: 18 code smell in meno, qualita\u0027 in crescita",
+        "qg":  "PASSED",
+        "codeSmells":  1035,
+        "debtHours":  129,
+        "bugs":  0,
+        "vulns":  0,
+        "ncloc":  212056,
+        "files":  769,
+        "hotspotsTotal":  30,
+        "ratings":  "A/A/A",
+        "deltaSmells":  -18,
+        "deltaDebt":  -2
+    },
+    {
+        "file":  "edition-2026-04-20-0055.json",
+        "edition":  6,
+        "date":  "20 aprile 2026",
+        "time":  "00:55",
+        "isoDate":  "2026-04-20",
+        "headline":  "Progresso costante: 21 code smell in meno, qualita\u0027 in crescita",
+        "qg":  "PASSED",
+        "codeSmells":  1014,
+        "debtHours":  124,
+        "bugs":  0,
+        "vulns":  0,
+        "ncloc":  208308,
+        "files":  798,
+        "hotspotsTotal":  30,
+        "ratings":  "A/A/A",
+        "deltaSmells":  -21,
+        "deltaDebt":  -5
+    }
+];
+var latest=M.length?M[M.length-1]:null;
+if(latest){
+document.getElementById('stats').innerHTML=[
+'<span class="stat-pill"><b>'+M.length+'</b> edizioni</span>',
+'<span class="stat-pill">Ultimo: <b>'+latest.date+'</b></span>',
+'<span class="stat-pill">Smells: <b>'+latest.codeSmells.toLocaleString('it-IT')+'</b></span>',
+'<span class="stat-pill">Debt: <b>'+latest.debtHours+'h</b></span>',
+'<span class="stat-pill">Rating: <b>'+latest.ratings+'</b></span>'
+].join('');
+}
+var tl=document.getElementById('timeline');
+[].concat(M).reverse().forEach(function(e,i){
+var isLatest=i===0;
+var dc=e.deltaSmells<0?'delta-pos':e.deltaSmells>0?'delta-neg':'delta-zero';
+var ds=e.deltaSmells!==0?(e.deltaSmells>0?'+':'')+e.deltaSmells:'=';
+var slug=e.file.replace('.json','');
+tl.innerHTML+='<a class="edition-card" href="viewer.html?e='+slug+'">'+
+'<div class="ed-num">#'+e.edition+'<small>'+e.isoDate+'</small></div>'+
+'<div class="ed-body">'+
+'<h3>'+e.headline+(isLatest?'<span class="latest-tag">LATEST</span>':'')+'</h3>'+
+'<div class="date">'+e.date+' ore '+e.time+'</div>'+
+'<div class="metrics">'+
+'<span>Smells: <b>'+e.codeSmells.toLocaleString('it-IT')+'</b></span>'+
+'<span>Debt: <b>'+e.debtHours+'h</b></span>'+
+'<span>Delta: <b class="'+dc+'">'+ds+'</b></span>'+
+'<span>Bugs: <b>'+e.bugs+'</b></span>'+
+'<span>Vulns: <b>'+e.vulns+'</b></span>'+
+'</div></div>'+
+'<div class="qg-col"><span class="badge '+(e.qg==='PASSED'?'bg2':'br2')+'">'+e.qg+'</span></div>'+
+'</a>';
+});
+</script></body></html>

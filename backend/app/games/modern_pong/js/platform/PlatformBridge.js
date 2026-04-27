@@ -36,7 +36,7 @@ export class PlatformBridge {
         // XP banner & level-up via raw postMessage only (not SDK events)
         // to avoid duplicate triggers from the SDK's generic triggerEvent.
         window.addEventListener('message', (event) => {
-            if (!event.data?.data.type) return;
+            if (!event.data?.type) return;
             if (event.data.protocolVersion !== '1.0.0') return;
             if (this.#parentOrigin && event.origin !== this.#parentOrigin) return;
             if (!this.#parentOrigin && event.origin) this.#parentOrigin = event.origin;

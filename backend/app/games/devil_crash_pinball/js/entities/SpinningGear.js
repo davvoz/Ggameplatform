@@ -1,0 +1,97 @@
+import { GameConfig as C } from '../config/GameConfig.js';
+
+/**
+ * Infernal spinning gear — the centrepiece of the INFERNO section.
+ *
+ * Tiny hub, very long teeth. On tooth contact the ball receives ONLY a
+ * tangential kick in the direction the teeth are moving — no radial
+ * bounce-out. The gear acts as a spin redirector, not a bumper.
+ */
+export class SpinningGear {
+    /**
+     * @param {number} x            world X of gear centre
+     * @param {number} y            world Y of gear centre
+     * @param {number} radius       hub radius (tooth-base circle)
+     * @param {number} teethCount   number of teeth
+     * @param {number} angularSpeed rad/s; positive = clockwise
+     */
+    constructor(x, y, radius = 12, teethCount = 5, angularSpeed = 2.8) {
+        this.x             = x;
+        this.y             = y;
+        this.radius        = radius;
+        this.toothHeight   = 42;
+        this.teethCount    = teethCount;
+        this.angularSpeed  = angularSpeed;
+        this.angle         = 0;
+        this.flash         = 0;
+        this._hitCooldown  = 0;
+        this.score         = C.BUMPER_SCORE * 2;
+        this.onHit         = null;
+    }
+
+    /** Collision radius = body + protruding teeth. */
+    get outerRadius() {
+        return this.radius + this.toothHeight;
+    }
+
+    update(dt) {
+        this.angle = (this.angle + this.angularSpeed * dt) % (Math.PI * 2);
+        if (this.flash > 0)        this.flash        = Math.max(0, this.flash        - dt);
+        if (this._hitCooldown > 0) this._hitCooldown = Math.max(0, this._hitCooldown - dt);
+    }
+
+    resolve(ball) {
+        const dx   = ball.pos.x - this.x;
+        const dy   = ball.pos.y - this.y;
+        const dist = Math.hypot(dx, dy) || 1e-6;
+
+        // Broad phase
+        if (dist > this.outerRadius + ball.radius) return false;
+
+        const nx = dx / dist;
+        const ny = dy / dist;
+
+        // ── Hub collision: solid core, elastic reflect ──────────────────────
+        const hubR = this.radius + ball.radius;
+        if (dist < hubR) {
+            ball.pos.x += nx * (hubR - dist);
+            ball.pos.y += ny * (hubR - dist);
+            const vn = ball.vel.x * nx + ball.vel.y * ny;
+            if (vn < 0) {
+                ball.vel.x -= 2 * vn * nx;
+                ball.vel.y -= 2 * vn * ny;
+            }
+            return true;
+        }
+
+        // ── Tooth zone: detect angular alignment with a tooth tip ───────────
+        if (this._hitCooldown > 0) return false;
+
+        const step   = (Math.PI * 2) / this.teethCount;
+        // Half-width of a tooth base in radians (matches renderer)
+        const halfTW = (Math.PI / this.teethCount) * 0.42;
+
+        // Ball angle relative to gear, un-rotated
+        let relAngle = Math.atan2(dy, dx) - this.angle;
+        relAngle = ((relAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+
+        // Angular distance to nearest tooth centre
+        const nearestTooth = Math.round(relAngle / step) * step;
+        const angDiff = Math.abs(relAngle - nearestTooth);
+        const angDiffWrapped = Math.min(angDiff, Math.PI * 2 - angDiff);
+
+        if (angDiffWrapped > halfTW) return false; // ball is in a gap — no contact
+
+        // ── Single tangential impulse ────────────────────────────────────────
+        const sign      = this.angularSpeed > 0 ? 1 : -1;
+        const tipSpeed  = Math.abs(this.angularSpeed) * this.outerRadius;
+        const kick      = tipSpeed * 1.6;
+        ball.vel.x +=  ny * sign * kick;
+        ball.vel.y += -nx * sign * kick;
+
+        this.flash        = 0.22;
+        this._hitCooldown = 0.28; // prevent multi-frame accumulation
+        if (this.onHit) this.onHit(this.score);
+        return true;
+    }
+}

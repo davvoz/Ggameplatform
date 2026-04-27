@@ -1,0 +1,309 @@
+﻿{
+    "section":  "minussa_valut",
+    "audioProfile":  "crystal_vault",
+    "palette":  {
+                    "bg":  "#030a04",
+                    "bgTop":  "#071206",
+                    "wall":  "#00ff6e",
+                    "wallGlow":  "#0bc16c",
+                    "accent":  "#a3ff00",
+                    "accent2":  "#00cc55",
+                    "ink":  "rgba(0,255,110,0.18)",
+                    "name":  "MINUSSA"
+                },
+    "background":  {
+                       "gradient":  {
+                                        "top":  "#071206",
+                                        "bottom":  "#030a04"
+                                    },
+                       "layers":  [
+                                      {
+                                          "type":  "nebula",
+                                          "color":  "#00ff6e",
+                                          "alpha":  0.08,
+                                          "y":  0.45
+                                      },
+                                      {
+                                          "type":  "nebula_bands",
+                                          "color":  "#00ff6e",
+                                          "alpha":  0.025,
+                                          "count":  3
+                                      },
+                                      {
+                                          "type":  "green_glow",
+                                          "color":  "#00ff6e",
+                                          "alpha":  0.07,
+                                          "yStart":  0.55
+                                      }
+                                  ]
+                   },
+    "walls":  [
+                  {
+                      "ax":  20,
+                      "ay":  0,
+                      "bx":  20,
+                      "by":  720
+                  },
+                  {
+                      "ax":  460,
+                      "ay":  0,
+                      "bx":  460,
+                      "by":  720
+                  }
+              ],
+    "bumpers":  [
+                    {
+                        "x":  64,
+                        "y":  367
+                    },
+                    {
+                        "x":  214,
+                        "y":  534,
+                        "velY":  0
+                    },
+                    {
+                        "x":  57,
+                        "y":  127
+                    },
+                    {
+                        "x":  330,
+                        "y":  49
+                    },
+                    {
+                        "x":  175,
+                        "y":  356
+                    }
+                ],
+    "gates":  [
+                  {
+                      "x1":  286,
+                      "x2":  366,
+                      "y":  715,
+                      "dir":  1
+                  }
+              ],
+    "slingshots":  [
+                       {
+                           "ax":  23,
+                           "ay":  223,
+                           "bx":  111,
+                           "by":  340,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       },
+                       {
+                           "ax":  220,
+                           "ay":  700,
+                           "bx":  360,
+                           "by":  610,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       },
+                       {
+                           "ax":  404,
+                           "ay":  555,
+                           "bx":  432,
+                           "by":  649,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       },
+                       {
+                           "ax":  286,
+                           "ay":  418,
+                           "bx":  336,
+                           "by":  534,
+                           "nx":  0.88,
+                           "ny":  -0.47
+                       }
+                   ],
+    "corridors":  [
+                      {
+                          "cx":  353,
+                          "cy":  507,
+                          "angleDeg":  -111,
+                          "length":  465,
+                          "width":  60,
+                          "restitution":  0.55
+                      },
+                      {
+                          "cx":  257,
+                          "cy":  185,
+                          "angleDeg":  114,
+                          "length":  94,
+                          "width":  36,
+                          "restitution":  0.55
+                      }
+                  ],
+    "curvedCorridors":  [
+                            {
+                                "cx":  226,
+                                "cy":  308,
+                                "midRadius":  48,
+                                "width":  58,
+                                "startAngleDeg":  -25,
+                                "angularSpanDeg":  -42,
+                                "segments":  12,
+                                "restitution":  0.55
+                            }
+                        ],
+    "flippers":  [
+                     {
+                         "x":  49,
+                         "y":  455,
+                         "side":  "LEFT",
+                         "length":  99,
+                         "restAngle":  1.57,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  213,
+                         "y":  699,
+                         "side":  "RIGHT",
+                         "length":  64,
+                         "restAngle":  1.57,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  120,
+                         "y":  260,
+                         "side":  "LEFT",
+                         "length":  64,
+                         "restAngle":  1.53,
+                         "activeAngle":  -0.58
+                     },
+                     {
+                         "x":  451,
+                         "y":  72,
+                         "side":  "RIGHT",
+                         "length":  64,
+                         "restAngle":  1.58,
+                         "activeAngle":  -0.58
+                     }
+                 ],
+    "springs":  [
+                    {
+                        "x":  375,
+                        "y":  260,
+                        "radius":  85,
+                        "angleDeg":  -113,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  267,
+                        "y":  602,
+                        "radius":  20,
+                        "angleDeg":  -123,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  398,
+                        "y":  678,
+                        "radius":  10,
+                        "angleDeg":  -116,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  374,
+                        "y":  514,
+                        "radius":  8,
+                        "angleDeg":  -116,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    },
+                    {
+                        "x":  313,
+                        "y":  357,
+                        "radius":  10,
+                        "angleDeg":  -114,
+                        "power":  1300,
+                        "cooldown":  0.4
+                    }
+                ],
+    "kickers":  [
+                    {
+                        "x":  105,
+                        "y":  673,
+                        "w":  45,
+                        "h":  82,
+                        "dirX":  2,
+                        "dirY":  -2,
+                        "power":  82
+                    }
+                ],
+    "warpExits":  [
+                      {
+                          "fromSection":  "arkanoid_vault",
+                          "x":  260,
+                          "y":  50,
+                          "vx":  0,
+                          "vy":  -650
+                      }
+                  ],
+    "pendulums":  [
+                      {
+                          "x":  382,
+                          "y":  51,
+                          "armLength":  80,
+                          "velX":  0,
+                          "velY":  0,
+                          "slideRange":  0.1,
+                          "slideSpeed":  0.1
+                      }
+                  ],
+    "brickGrids":  [
+                       {
+                           "x":  150,
+                           "startY":  76,
+                           "cols":  3,
+                           "rows":  3,
+                           "brickW":  29,
+                           "brickH":  44,
+                           "gapX":  13,
+                           "gapY":  15
+                       }
+                   ],
+    "dropTargets":  [
+                        {
+                            "x":  287,
+                            "y":  297
+                        },
+                        {
+                            "x":  277,
+                            "y":  347
+                        },
+                        {
+                            "x":  311,
+                            "y":  424
+                        },
+                        {
+                            "x":  347,
+                            "y":  460
+                        },
+                        {
+                            "x":  352,
+                            "y":  545
+                        },
+                        {
+                            "x":  382,
+                            "y":  613
+                        },
+                        {
+                            "x":  425,
+                            "y":  659
+                        },
+                        {
+                            "x":  384,
+                            "y":  575
+                        }
+                    ],
+    "warps":  [
+                  {
+                      "x":  150,
+                      "y":  30,
+                      "radius":  18
+                  }
+              ]
+}

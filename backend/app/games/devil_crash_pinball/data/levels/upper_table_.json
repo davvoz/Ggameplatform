@@ -1,0 +1,82 @@
+{
+  "_comment": "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
+  "section": "upper_table",
+  "audioProfile": "demon_forge",
+  "floorIndex": 3,
+  "palette": "UPPER",
+
+  "walls": [
+    { "ax":  20, "ay":   0, "bx":  20, "by": 720 },
+    { "ax": 460, "ay":   0, "bx": 460, "by": 720 },
+    { "ax":  20, "ay": 580, "bx": 132, "by": 715 },
+    { "ax": 460, "ay": 580, "bx": 348, "by": 715 },
+    { "ax":  40, "ay": 720, "bx":  40, "by": 660 },
+    { "ax": 440, "ay": 720, "bx": 440, "by": 660 },
+    { "ax":  40, "ay": 660, "bx": 130, "by": 630 },
+    { "ax": 440, "ay": 660, "bx": 350, "by": 630 }
+  ],
+
+  "dropTargets": [
+    { "x":  90, "y": 80 },
+    { "x": 150, "y": 80 },
+    { "x": 210, "y": 80 },
+    { "x": 270, "y": 80 },
+    { "x": 330, "y": 80 }
+  ],
+
+  "bumpers": [
+    { "x": 100, "y": 280 },
+    { "x": 380, "y": 280 },
+    { "x": 240, "y": 350 }
+  ],
+
+  "flippers": [
+    { "x":  35, "y": 330, "side": "LEFT",  "length": 40, "restAngle": 1.5708 },
+    { "x": 445, "y": 330, "side": "RIGHT", "length": 40, "restAngle": 1.5708 },
+    { "x": 160, "y": 605, "side": "LEFT"  },
+    { "x": 320, "y": 605, "side": "RIGHT" }
+  ],
+
+  "kickers": [
+    {
+      "x": 210, "y": 30, "w": 60, "h": 16,
+      "dirX": 0, "dirY": -1, "power": 1,
+      "circleRadius": 22, "circleSpeed": 1
+    }
+  ],
+
+  "gates": [
+    { "x1": 210, "x2": 270, "y":   4, "dir":  1 },
+    { "x1":  40, "x2": 130, "y": 716, "dir": -1 },
+    { "x1": 350, "x2": 420, "y": 716, "dir": -1 }
+  ],
+
+  "slingshots": [
+    { "ax":  55, "ay": 450, "bx": 140, "by": 560, "nx":  0.88, "ny": -0.47 },
+    { "ax": 425, "ay": 450, "bx": 340, "by": 560, "nx": -0.88, "ny": -0.47 }
+  ],
+
+  "warps": [
+    { "name": "warp_0", "x":  78, "y": 610, "radius": 18 },
+    { "name": "warp_1", "x": 402, "y": 610, "radius": 18 },
+    { "name": "warp_2", "x": 240, "y":  50, "radius": 22 }
+  ],
+
+  "pendulums": [
+    {
+      "x": 240, "y": 170,
+      "armLength": 80, "velX": 0.88, "velY": 0.52,
+      "slideRange": 100, "slideSpeed": 0.9
+    }
+  ],
+
+  "lights": [
+    { "x":  90, "y": 690, "colorKey": "accent", "radius": 4, "cycleSpeed": 0.8, "on": true },
+    { "x": 165, "y": 690, "colorKey": "accent", "radius": 4, "cycleSpeed": 0.9, "on": true },
+    { "x": 240, "y": 690, "colorKey": "accent", "radius": 4, "cycleSpeed": 1.0, "on": true },
+    { "x": 315, "y": 690, "colorKey": "accent", "radius": 4, "cycleSpeed": 1.1, "on": true },
+    { "x": 390, "y": 690, "colorKey": "accent", "radius": 4, "cycleSpeed": 1.2, "on": true }
+  ],
+
+  "boss": { "type": "DragonBoss", "x": 240, "y": 450, "radius": 130 }
+}

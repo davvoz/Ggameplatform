@@ -65,8 +65,6 @@ export class SpinningGear {
         }
 
         // ── Tooth zone: detect angular alignment with a tooth tip ───────────
-        if (this._hitCooldown > 0) return false;
-
         const step   = (Math.PI * 2) / this.teethCount;
         // Half-width of a tooth base in radians (matches renderer)
         const halfTW = (Math.PI / this.teethCount) * 0.42;
@@ -81,6 +79,26 @@ export class SpinningGear {
         const angDiffWrapped = Math.min(angDiff, Math.PI * 2 - angDiff);
 
         if (angDiffWrapped > halfTW) return false; // ball is in a gap — no contact
+
+        // ── Solid tooth contact: positional correction (always) ─────────────
+        // The tooth is a radial bar reaching outerRadius. Push the ball back
+        // to the tooth tip surface so it cannot tunnel through the gear,
+        // even during the score-throttle cooldown.
+        const surfaceR = this.outerRadius + ball.radius;
+        if (dist < surfaceR) {
+            ball.pos.x += nx * (surfaceR - dist);
+            ball.pos.y += ny * (surfaceR - dist);
+            // Cancel inward radial velocity component (no rebound — tangential kick replaces it).
+            const vn = ball.vel.x * nx + ball.vel.y * ny;
+            if (vn < 0) {
+                ball.vel.x -= vn * nx;
+                ball.vel.y -= vn * ny;
+            }
+        }
+
+        // Throttle scoring/SFX/impulse to avoid multi-frame accumulation,
+        // but the collision itself (above) is always resolved.
+        if (this._hitCooldown > 0) return true;
 
         // ── Single tangential impulse ────────────────────────────────────────
         const sign      = this.angularSpeed > 0 ? 1 : -1;

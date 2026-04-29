@@ -1,318 +1,407 @@
-﻿{
-    "_comment":  "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
-    "section":  "upper_table",
-    "audioProfile":  "inferno",
-    "palette":  {
-                    "bg":  "#030610",
-                    "bgTop":  "#0a1535",
-                    "wall":  "#2288ff",
-                    "wallGlow":  "#44aaff",
-                    "accent":  "#ffd23f",
-                    "accent2":  "#44ccff",
-                    "ink":  "rgba(68,170,255,0.20)",
-                    "name":  "CATHEDRAL",
-                    "ambientKey":  "CATHEDRAL"
-                },
-    "walls":  [
-                  {
-                      "ax":  20,
-                      "ay":  0,
-                      "bx":  20,
-                      "by":  720
-                  },
-                  {
-                      "ax":  460,
-                      "ay":  0,
-                      "bx":  460,
-                      "by":  720
-                  }
-              ],
-    "dropTargets":  [
-                        {
-                            "x":  240,
-                            "y":  270
-                        },
-                        {
-                            "x":  120,
-                            "y":  270
-                        },
-                        {
-                            "x":  280,
-                            "y":  270
-                        },
-                        {
-                            "x":  200,
-                            "y":  270
-                        },
-                        {
-                            "x":  160,
-                            "y":  270
-                        }
-                    ],
-    "bumpers":  [
-                    {
-                        "x":  140,
-                        "y":  380
-                    },
-                    {
-                        "x":  220,
-                        "y":  490
-                    }
-                ],
-    "flippers":  [
-                     {
-                         "x":  29,
-                         "y":  367,
-                         "side":  "LEFT",
-                         "length":  63,
-                         "restAngle":  1.5708,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  454,
-                         "y":  477,
-                         "side":  "RIGHT",
-                         "length":  40,
-                         "restAngle":  1.5708,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  129,
-                         "y":  588,
-                         "side":  "LEFT",
-                         "length":  86,
-                         "restAngle":  0.42,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  305,
-                         "y":  598,
-                         "side":  "RIGHT",
-                         "length":  105,
-                         "restAngle":  0.48,
-                         "activeAngle":  -0.51
-                     },
-                     {
-                         "x":  240,
-                         "y":  176,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1.56,
-                         "activeAngle":  -0.67
-                     },
-                     {
-                         "x":  30,
-                         "y":  190,
-                         "side":  "LEFT",
-                         "length":  64,
-                         "restAngle":  1.56,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  190,
-                         "y":  290,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1.56,
-                         "activeAngle":  -0.58
-                     }
-                 ],
-    "kickers":  [
-                    {
-                        "x":  130,
-                        "y":  230,
-                        "w":  60,
-                        "h":  16,
-                        "dirX":  0,
-                        "dirY":  -2.01,
-                        "power":  100,
-                        "circleRadius":  40,
-                        "circleSpeed":  1
-                    }
-                ],
-    "gates":  [
-                  {
-                      "x1":  91,
-                      "x2":  151,
-                      "y":  7,
-                      "dir":  1
-                  },
-                  {
-                      "x1":  40,
-                      "x2":  130,
-                      "y":  716,
-                      "dir":  -1
-                  },
-                  {
-                      "x1":  350,
-                      "x2":  420,
-                      "y":  716,
-                      "dir":  -1
-                  },
-                  {
-                      "x1":  252,
-                      "x2":  332,
-                      "y":  9,
-                      "dir":  1
-                  }
-              ],
-    "slingshots":  [
-                       {
-                           "ax":  37,
-                           "ay":  469,
-                           "bx":  122,
-                           "by":  579,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  398,
-                           "ay":  487,
-                           "bx":  313,
-                           "by":  597,
-                           "nx":  -0.88,
-                           "ny":  -0.47
-                       }
-                   ],
-    "warps":  [
-                  {
-                      "x":  224,
-                      "y":  43,
-                      "radius":  18
-                  }
-              ],
-    "pendulums":  [
-                      {
-                          "x":  136,
-                          "y":  47,
-                          "armLength":  80,
-                          "velX":  0.88,
-                          "velY":  0.52,
-                          "slideRange":  100,
-                          "slideSpeed":  0.9
-                      }
-                  ],
-    "boss":  {
-                 "type":  "DragonBoss",
-                 "x":  240,
-                 "y":  450,
-                 "radius":  55,
-                 "killEvent":  "dragon_kill"
-             },
-    "warpExits":  [
-                      {
-                          "fromSection":  "main_table",
-                          "x":  336,
-                          "y":  236,
-                          "vx":  0,
-                          "vy":  -650
-                      }
-                  ],
-    "corridors":  [
-                      {
-                          "cx":  425,
-                          "cy":  333,
-                          "angleDeg":  -90,
-                          "length":  300,
-                          "width":  70,
-                          "restitution":  0.55
-                      }
-                  ],
-    "springs":  [
-                    {
-                        "x":  399,
-                        "y":  399,
-                        "radius":  10,
-                        "angleDeg":  270,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  447,
-                        "y":  299,
-                        "radius":  8,
-                        "angleDeg":  270,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  401,
-                        "y":  189,
-                        "radius":  8,
-                        "angleDeg":  270,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  388,
-                        "y":  524,
-                        "radius":  8,
-                        "angleDeg":  -55,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  439,
-                        "y":  578,
-                        "radius":  20,
-                        "angleDeg":  270,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  412,
-                        "y":  57,
-                        "radius":  10,
-                        "angleDeg":  -67,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  449,
-                        "y":  70,
-                        "radius":  8,
-                        "angleDeg":  270,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  353,
-                        "y":  45,
-                        "radius":  11,
-                        "angleDeg":  -91,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  374,
-                        "y":  45,
-                        "radius":  11,
-                        "angleDeg":  270,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    }
-                ],
-    "curvedCorridors":  [
-                            {
-                                "cx":  355,
-                                "cy":  181,
-                                "midRadius":  70,
-                                "width":  70,
-                                "startAngleDeg":  180,
-                                "angularSpanDeg":  180,
-                                "segments":  12,
-                                "restitution":  0.55
-                            }
-                        ],
-    "curves":  [
-                   {
-                       "cx":  387,
-                       "cy":  138,
-                       "radius":  70,
-                       "startAngle":  0.16722327666982897,
-                       "endAngle":  -2.0259128890345997,
-                       "segments":  12,
-                       "restitution":  0.55
-                   }
-               ]
+{
+  "_comment": "Advanced multi-loop tactical pinball layout - high skill ceiling",
+  "section": "upper_table",
+  "boundary": {
+    "right": 460
+  },
+  "audioProfile": "abyss_temple",
+  "palette": {
+    "bg": "#02040a",
+    "bgTop": "#0d1b2a",
+    "wall": "#00eaff",
+    "wallGlow": "#33f0ff",
+    "accent": "#ff3c6a",
+    "accent2": "#ffd166",
+    "ink": "rgba(0,234,255,0.18)",
+    "name": "ABYSSAL SANCTUM",
+    "ambientKey": "ABYSS"
+  },
+  "walls": [
+    {
+      "ax": 20,
+      "ay": 0,
+      "bx": 20,
+      "by": 720
+    },
+    {
+      "ax": 460,
+      "ay": 0,
+      "bx": 460,
+      "by": 720
+    },
+    {
+      "ax": 67,
+      "ay": 79,
+      "bx": 119,
+      "by": 3
+    },
+    {
+      "ax": 59,
+      "ay": 108,
+      "bx": 58,
+      "by": 180
+    }
+  ],
+  "bumpers": [
+    {
+      "x": 270,
+      "y": 240
+    },
+    {
+      "x": 220,
+      "y": 380
+    }
+  ],
+  "dropTargets": [
+    {
+      "x": 250,
+      "y": 500
+    },
+    {
+      "x": 290,
+      "y": 480
+    },
+    {
+      "x": 210,
+      "y": 520
+    },
+    {
+      "x": 170,
+      "y": 520
+    },
+    {
+      "x": 290,
+      "y": 500
+    },
+    {
+      "x": 250,
+      "y": 520
+    },
+    {
+      "x": 290,
+      "y": 520
+    },
+    {
+      "x": 210,
+      "y": 480
+    },
+    {
+      "x": 170,
+      "y": 480
+    },
+    {
+      "x": 250,
+      "y": 480
+    },
+    {
+      "x": 170,
+      "y": 500
+    },
+    {
+      "x": 210,
+      "y": 500
+    }
+  ],
+  "flippers": [
+    {
+      "x": 139,
+      "y": 657,
+      "side": "LEFT",
+      "length": 90,
+      "restAngle": 0.45,
+      "activeAngle": -0.6
+    },
+    {
+      "x": 341,
+      "y": 652,
+      "side": "RIGHT",
+      "length": 90,
+      "restAngle": 0.45,
+      "activeAngle": -0.6
+    },
+    {
+      "x": 30,
+      "y": 470,
+      "side": "LEFT",
+      "length": 65,
+      "restAngle": 1.56,
+      "activeAngle": -0.65
+    },
+    {
+      "x": 360,
+      "y": 510,
+      "side": "RIGHT",
+      "length": 65,
+      "restAngle": 1.56,
+      "activeAngle": -0.65
+    }
+  ],
+  "slingshots": [
+    {
+      "ax": 31,
+      "ay": 559,
+      "bx": 121,
+      "by": 659,
+      "nx": 0.9,
+      "ny": -0.4
+    },
+    {
+      "ax": 456,
+      "ay": 548,
+      "bx": 366,
+      "by": 648,
+      "nx": -0.9,
+      "ny": -0.4
+    }
+  ],
+  "kickers": [
+    {
+      "x": 410,
+      "y": 330,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 180,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 40,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 260,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 110,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 130,
+      "y": 420,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 130,
+      "y": 560,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 400,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 470,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 410,
+      "y": 540,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 130,
+      "y": 500,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 130,
+      "y": 340,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 130,
+      "y": 250,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 130,
+      "y": 170,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    }
+  ],
+  "gates": [
+    {
+      "x1": 320,
+      "x2": 420,
+      "y": 10,
+      "dir": 1
+    }
+  ],
+  "warps": [
+    {
+      "x": 230,
+      "y": 40,
+      "radius": 18
+    }
+  ],
+  "warpExits": [
+    {
+      "fromSection": "main_table",
+      "x": 55,
+      "y": 259,
+      "vx": 0,
+      "vy": -700
+    }
+  ],
+  "corridors": [
+    {
+      "cx": 120,
+      "cy": 300,
+      "angleDeg": -90,
+      "length": 280,
+      "width": 60,
+      "restitution": 0.6
+    },
+    {
+      "cx": 360,
+      "cy": 300,
+      "angleDeg": -90,
+      "length": 280,
+      "width": 60,
+      "restitution": 0.6
+    }
+  ],
+  "curvedCorridors": [
+    {
+      "cx": 240,
+      "cy": 160,
+      "midRadius": 120,
+      "width": 60,
+      "startAngleDeg": 180,
+      "angularSpanDeg": 180,
+      "segments": 16,
+      "restitution": 0.6
+    },
+    {
+      "cx": 327,
+      "cy": 439,
+      "midRadius": 50,
+      "width": 28,
+      "startAngleDeg": 57,
+      "angularSpanDeg": -54,
+      "segments": 12,
+      "restitution": 0.55
+    },
+    {
+      "cx": 240,
+      "cy": 160,
+      "midRadius": 50,
+      "width": 28,
+      "startAngleDeg": -179,
+      "angularSpanDeg": 176,
+      "segments": 12,
+      "restitution": 0.55
+    }
+  ],
+  "springs": [
+    {
+      "x": 340,
+      "y": 290,
+      "radius": 8,
+      "angleDeg": -90,
+      "power": 1100,
+      "cooldown": 0.5
+    },
+    {
+      "x": 450,
+      "y": 480,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 380,
+      "y": 449,
+      "radius": 10,
+      "angleDeg": -59,
+      "power": 1100,
+      "cooldown": 0.5
+    },
+    {
+      "x": 380,
+      "y": 150,
+      "radius": 8,
+      "angleDeg": -90,
+      "power": 1100,
+      "cooldown": 0.5
+    }
+  ]
 }

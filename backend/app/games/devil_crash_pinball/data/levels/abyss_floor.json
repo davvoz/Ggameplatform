@@ -1,273 +1,297 @@
-﻿{
-    "_comment":  "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
-    "section":  "abyss_floor",
-    "audioProfile":  "abyss",
-    "palette":  {
-                    "bg":  "#000a14",
-                    "bgTop":  "#001428",
-                    "wall":  "#00e5ff",
-                    "wallGlow":  "#00b3cc",
-                    "accent":  "#76ff03",
-                    "accent2":  "#00e5ff",
-                    "ink":  "rgba(0,229,255,0.15)",
-                    "name":  "VOID"
-                },
-    "background":  {
-                       "gradient":  {
-                                        "top":  "#001428",
-                                        "bottom":  "#000a14"
-                                    },
-                       "layers":  [
-                                      {
-                                          "type":  "nebula",
-                                          "color":  "#00e5ff",
-                                          "alpha":  0.08,
-                                          "y":  0.4
-                                      },
-                                      {
-                                          "type":  "nebula_bands",
-                                          "color":  "#00e5ff",
-                                          "alpha":  0.03,
-                                          "count":  4
-                                      },
-                                      {
-                                          "type":  "void_dark",
-                                          "color":  "#00050f",
-                                          "alpha":  0.22,
-                                          "yStart":  0.6
-                                      }
-                                  ]
-                   },
-    "walls":  [
-                  {
-                      "ax":  20,
-                      "ay":  0,
-                      "bx":  20,
-                      "by":  720
-                  },
-                  {
-                      "ax":  460,
-                      "ay":  0,
-                      "bx":  460,
-                      "by":  720
-                  },
-                  {
-                      "ax":  460,
-                      "ay":  580,
-                      "bx":  348,
-                      "by":  715
-                  },
-                  {
-                      "ax":  458,
-                      "ay":  9,
-                      "bx":  354,
-                      "by":  93
-                  }
-              ],
-    "dropTargets":  [
-                        {
-                            "x":  140,
-                            "y":  50
-                        },
-                        {
-                            "x":  100,
-                            "y":  50
-                        },
-                        {
-                            "x":  180,
-                            "y":  50
-                        },
-                        {
-                            "x":  260,
-                            "y":  50
-                        },
-                        {
-                            "x":  220,
-                            "y":  50
-                        }
-                    ],
-    "gears":  [
-                  {
-                      "x":  210,
-                      "y":  130,
-                      "teeth":  12,
-                      "speed":  0.07,
-                      "angularSpeed":  3
-                  }
-              ],
-    "bumpers":  [
-                    {
-                        "x":  310,
-                        "y":  200
-                    },
-                    {
-                        "x":  70,
-                        "y":  240
-                    },
-                    {
-                        "x":  290,
-                        "y":  330
-                    },
-                    {
-                        "x":  245,
-                        "y":  499
-                    }
-                ],
-    "warps":  [
-                  {
-                      "x":  340,
-                      "y":  430,
-                      "radius":  18
-                  }
-              ],
-    "slingshots":  [
-                       {
-                           "ax":  64,
-                           "ay":  465,
-                           "bx":  140,
-                           "by":  570,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  390,
-                           "ay":  420,
-                           "bx":  340,
-                           "by":  550,
-                           "nx":  -0.88,
-                           "ny":  -0.47
-                       }
-                   ],
-    "flippers":  [
-                     {
-                         "x":  160,
-                         "y":  580,
-                         "side":  "LEFT",
-                         "length":  79,
-                         "restAngle":  0.42,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  330,
-                         "y":  570,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  230,
-                         "y":  680,
-                         "side":  "LEFT",
-                         "length":  64,
-                         "restAngle":  0.42,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  33,
-                         "y":  360,
-                         "side":  "LEFT",
-                         "length":  77,
-                         "restAngle":  1.54,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  451,
-                         "y":  266,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1.57,
-                         "activeAngle":  -0.58
-                     }
-                 ],
-    "boss":  {
-                 "type":  "GolemBoss",
-                 "x":  240,
-                 "y":  175,
-                 "killEvent":  "golem_kill",
-                 "radius":  100
-             },
-    "springs":  [
-                    {
-                        "x":  400,
-                        "y":  640,
-                        "radius":  20,
-                        "angleDeg":  -140,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  391,
-                        "y":  56,
-                        "radius":  18,
-                        "angleDeg":  -132,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  414,
-                        "y":  549,
-                        "radius":  20,
-                        "angleDeg":  -62,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    }
-                ],
-    "warpExits":  [
-                      {
-                          "fromSection":  "bonus_dungeon",
-                          "x":  90,
-                          "y":  130,
-                          "vx":  0,
-                          "vy":  -650
-                      }
-                  ],
-    "curvedCorridors":  [
-                            {
-                                "cx":  330,
-                                "cy":  230,
-                                "midRadius":  115,
-                                "width":  50,
-                                "startAngleDeg":  -81,
-                                "angularSpanDeg":  59,
-                                "segments":  12,
-                                "restitution":  0.55
-                            }
-                        ],
-    "gates":  [
-                  {
-                      "x1":  93,
-                      "x2":  173,
-                      "y":  14,
-                      "dir":  -1
-                  },
-                  {
-                      "x1":  33,
-                      "x2":  113,
-                      "y":  713,
-                      "dir":  1
-                  }
-              ],
-    "kickers":  [
-                    {
-                        "x":  150,
-                        "y":  360,
-                        "w":  76,
-                        "h":  16,
-                        "angleDeg":  0,
-                        "dirX":  0,
-                        "dirY":  -1,
-                        "power":  1000
-                    }
-                ],
-    "corridors":  [
-                      {
-                          "cx":  100,
-                          "cy":  610,
-                          "angleDeg":  54,
-                          "length":  273,
-                          "width":  96,
-                          "restitution":  0.55
-                      }
-                  ]
+{
+  "_comment": "Abyss Floor — Golem arena, diamond bumper cluster, dual vertical channels, symmetric slingshots, clean 4-flipper layout.",
+  "section": "abyss_floor",
+  "boundary": {
+    "right": 460
+  },
+  "audioProfile": "abyss",
+  "palette": {
+    "bg": "#000a14",
+    "bgTop": "#001428",
+    "wall": "#edfe06",
+    "wallGlow": "#fa0000",
+    "accent": "#006da3",
+    "accent2": "#cb01ba",
+    "ink": "rgba(0,229,255,0.18)",
+    "name": "VOID",
+    "ambientKey": "VOID"
+  },
+  "background": {
+    "gradient": {
+      "top": "#001428",
+      "bottom": "#000a14"
+    },
+    "layers": [
+      {
+        "type": "nebula",
+        "color": "#00e5ff",
+        "alpha": 0.08,
+        "y": 0.4
+      },
+      {
+        "type": "nebula_bands",
+        "color": "#00e5ff",
+        "alpha": 0.03,
+        "count": 4
+      },
+      {
+        "type": "void_dark",
+        "color": "#00050f",
+        "alpha": 0.22,
+        "yStart": 0.6
+      }
+    ]
+  },
+  "walls": [
+    {
+      "ax": 20,
+      "ay": 0,
+      "bx": 20,
+      "by": 720
+    },
+    {
+      "ax": 460,
+      "ay": 0,
+      "bx": 460,
+      "by": 720
+    },
+    {
+      "ax": 458,
+      "ay": 9,
+      "bx": 354,
+      "by": 93
+    },
+    {
+      "ax": 51,
+      "ay": 34,
+      "bx": 70,
+      "by": 0
+    },
+    {
+      "ax": 50,
+      "ay": 110,
+      "bx": 130,
+      "by": 40
+    }
+  ],
+  "dropTargets": [
+    {
+      "x": 270,
+      "y": 90
+    },
+    {
+      "x": 240,
+      "y": 110
+    },
+    {
+      "x": 210,
+      "y": 110
+    },
+    {
+      "x": 210,
+      "y": 90
+    },
+    {
+      "x": 240,
+      "y": 90
+    },
+    {
+      "x": 270,
+      "y": 110
+    }
+  ],
+  "bumpers": [
+    {
+      "x": 230,
+      "y": 160
+    },
+    {
+      "x": 130,
+      "y": 240
+    },
+    {
+      "x": 330,
+      "y": 230
+    },
+    {
+      "x": 230,
+      "y": 320
+    }
+  ],
+  "warps": [
+    {
+      "x": 400,
+      "y": 140,
+      "radius": 18
+    }
+  ],
+  "slingshots": [
+    {
+      "ax": 60,
+      "ay": 500,
+      "bx": 140,
+      "by": 570,
+      "nx": 0.88,
+      "ny": -0.47
+    },
+    {
+      "ax": 396,
+      "ay": 465,
+      "bx": 320,
+      "by": 570,
+      "nx": -0.88,
+      "ny": -0.47
+    }
+  ],
+  "flippers": [
+    {
+      "x": 147,
+      "y": 641,
+      "side": "LEFT",
+      "length": 76,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 316,
+      "y": 643,
+      "side": "RIGHT",
+      "length": 73,
+      "restAngle": 0.42,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 60,
+      "y": 240,
+      "side": "LEFT",
+      "length": 65,
+      "restAngle": 1.56,
+      "activeAngle": -0.65
+    },
+    {
+      "x": 448,
+      "y": 378,
+      "side": "RIGHT",
+      "length": 64,
+      "restAngle": 1.57,
+      "activeAngle": -0.65
+    }
+  ],
+  "springs": [
+    {
+      "x": 77,
+      "y": 386,
+      "radius": 10,
+      "angleDeg": 1,
+      "power": 1150,
+      "cooldown": 0.5
+    },
+    {
+      "x": 418,
+      "y": 555,
+      "radius": 14,
+      "angleDeg": -135,
+      "power": 1200,
+      "cooldown": 0.5
+    },
+    {
+      "x": 65,
+      "y": 651,
+      "radius": 15,
+      "angleDeg": -90,
+      "power": 1300,
+      "cooldown": 0.4
+    }
+  ],
+  "warpExits": [
+    {
+      "fromSection": "bonus_dungeon",
+      "x": 110,
+      "y": 150,
+      "vx": 0,
+      "vy": -650
+    }
+  ],
+  "gates": [
+    {
+      "x1": 280,
+      "x2": 380,
+      "y": 14,
+      "dir": -1
+    },
+    {
+      "x1": 91,
+      "x2": 175,
+      "y": 714,
+      "dir": 1
+    }
+  ],
+  "kickers": [
+    {
+      "x": 420,
+      "y": 250,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 420,
+      "y": 330,
+      "w": 24,
+      "h": 14,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "x": 420,
+      "y": 210,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 420,
+      "y": 290,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    },
+    {
+      "x": 420,
+      "y": 170,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1000
+    }
+  ],
+  "corridors": [
+    {
+      "cx": 31,
+      "cy": 427,
+      "angleDeg": -90,
+      "length": 556,
+      "width": 24,
+      "restitution": 0.58
+    }
+  ],
+  "boss": {
+    "type": "DemonBoss",
+    "killEvent": "demon_kill",
+    "x": 240,
+    "y": 470
+  }
 }

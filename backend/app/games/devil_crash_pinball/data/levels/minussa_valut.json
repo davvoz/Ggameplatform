@@ -1,309 +1,375 @@
-﻿{
-    "section":  "minussa_valut",
-    "audioProfile":  "crystal_vault",
-    "palette":  {
-                    "bg":  "#030a04",
-                    "bgTop":  "#071206",
-                    "wall":  "#00ff6e",
-                    "wallGlow":  "#0bc16c",
-                    "accent":  "#a3ff00",
-                    "accent2":  "#00cc55",
-                    "ink":  "rgba(0,255,110,0.18)",
-                    "name":  "MINUSSA"
-                },
-    "background":  {
-                       "gradient":  {
-                                        "top":  "#071206",
-                                        "bottom":  "#030a04"
-                                    },
-                       "layers":  [
-                                      {
-                                          "type":  "nebula",
-                                          "color":  "#00ff6e",
-                                          "alpha":  0.08,
-                                          "y":  0.45
-                                      },
-                                      {
-                                          "type":  "nebula_bands",
-                                          "color":  "#00ff6e",
-                                          "alpha":  0.025,
-                                          "count":  3
-                                      },
-                                      {
-                                          "type":  "green_glow",
-                                          "color":  "#00ff6e",
-                                          "alpha":  0.07,
-                                          "yStart":  0.55
-                                      }
-                                  ]
-                   },
-    "walls":  [
-                  {
-                      "ax":  20,
-                      "ay":  0,
-                      "bx":  20,
-                      "by":  720
-                  },
-                  {
-                      "ax":  460,
-                      "ay":  0,
-                      "bx":  460,
-                      "by":  720
-                  }
-              ],
-    "bumpers":  [
-                    {
-                        "x":  64,
-                        "y":  367
-                    },
-                    {
-                        "x":  214,
-                        "y":  534,
-                        "velY":  0
-                    },
-                    {
-                        "x":  57,
-                        "y":  127
-                    },
-                    {
-                        "x":  330,
-                        "y":  49
-                    },
-                    {
-                        "x":  175,
-                        "y":  356
-                    }
-                ],
-    "gates":  [
-                  {
-                      "x1":  286,
-                      "x2":  366,
-                      "y":  715,
-                      "dir":  1
-                  }
-              ],
-    "slingshots":  [
-                       {
-                           "ax":  23,
-                           "ay":  223,
-                           "bx":  111,
-                           "by":  340,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  220,
-                           "ay":  700,
-                           "bx":  360,
-                           "by":  610,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  404,
-                           "ay":  555,
-                           "bx":  432,
-                           "by":  649,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  286,
-                           "ay":  418,
-                           "bx":  336,
-                           "by":  534,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       }
-                   ],
-    "corridors":  [
-                      {
-                          "cx":  353,
-                          "cy":  507,
-                          "angleDeg":  -111,
-                          "length":  465,
-                          "width":  60,
-                          "restitution":  0.55
-                      },
-                      {
-                          "cx":  257,
-                          "cy":  185,
-                          "angleDeg":  114,
-                          "length":  94,
-                          "width":  36,
-                          "restitution":  0.55
-                      }
-                  ],
-    "curvedCorridors":  [
-                            {
-                                "cx":  226,
-                                "cy":  308,
-                                "midRadius":  48,
-                                "width":  58,
-                                "startAngleDeg":  -25,
-                                "angularSpanDeg":  -42,
-                                "segments":  12,
-                                "restitution":  0.55
-                            }
-                        ],
-    "flippers":  [
-                     {
-                         "x":  49,
-                         "y":  455,
-                         "side":  "LEFT",
-                         "length":  99,
-                         "restAngle":  1.57,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  213,
-                         "y":  699,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1.57,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  120,
-                         "y":  260,
-                         "side":  "LEFT",
-                         "length":  64,
-                         "restAngle":  1.53,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  451,
-                         "y":  72,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1.58,
-                         "activeAngle":  -0.58
-                     }
-                 ],
-    "springs":  [
-                    {
-                        "x":  375,
-                        "y":  260,
-                        "radius":  85,
-                        "angleDeg":  -113,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  267,
-                        "y":  602,
-                        "radius":  20,
-                        "angleDeg":  -123,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  398,
-                        "y":  678,
-                        "radius":  10,
-                        "angleDeg":  -116,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  374,
-                        "y":  514,
-                        "radius":  8,
-                        "angleDeg":  -116,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  313,
-                        "y":  357,
-                        "radius":  10,
-                        "angleDeg":  -114,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    }
-                ],
-    "kickers":  [
-                    {
-                        "x":  105,
-                        "y":  673,
-                        "w":  45,
-                        "h":  82,
-                        "dirX":  2,
-                        "dirY":  -2,
-                        "power":  82
-                    }
-                ],
-    "warpExits":  [
-                      {
-                          "fromSection":  "arkanoid_vault",
-                          "x":  260,
-                          "y":  50,
-                          "vx":  0,
-                          "vy":  -650
-                      }
-                  ],
-    "pendulums":  [
-                      {
-                          "x":  382,
-                          "y":  51,
-                          "armLength":  80,
-                          "velX":  0,
-                          "velY":  0,
-                          "slideRange":  0.1,
-                          "slideSpeed":  0.1
-                      }
-                  ],
-    "brickGrids":  [
-                       {
-                           "x":  150,
-                           "startY":  76,
-                           "cols":  3,
-                           "rows":  3,
-                           "brickW":  29,
-                           "brickH":  44,
-                           "gapX":  13,
-                           "gapY":  15
-                       }
-                   ],
-    "dropTargets":  [
-                        {
-                            "x":  287,
-                            "y":  297
-                        },
-                        {
-                            "x":  277,
-                            "y":  347
-                        },
-                        {
-                            "x":  311,
-                            "y":  424
-                        },
-                        {
-                            "x":  347,
-                            "y":  460
-                        },
-                        {
-                            "x":  352,
-                            "y":  545
-                        },
-                        {
-                            "x":  382,
-                            "y":  613
-                        },
-                        {
-                            "x":  425,
-                            "y":  659
-                        },
-                        {
-                            "x":  384,
-                            "y":  575
-                        }
-                    ],
-    "warps":  [
-                  {
-                      "x":  150,
-                      "y":  30,
-                      "radius":  18
-                  }
-              ]
+{
+  "_comment": "Crystal Vault — Hexagonal crystal constellation, Gothic arch top, symmetric twin slingshots (high), side kicker ramps, pendulum gate at center. Jamma-style vertical pinball feel.",
+  "section": "minussa_valut",
+  "boundary": {
+    "right": 460
+  },
+  "audioProfile": "crystal_vault",
+  "palette": {
+    "bg": "#010810",
+    "bgTop": "#001a28",
+    "wall": "#00ffe0",
+    "wallGlow": "#00ccb3",
+    "accent": "#a3ff00",
+    "accent2": "#00e5ff",
+    "ink": "rgba(0,255,224,0.15)",
+    "name": "CRYSTAL VAULT",
+    "ambientKey": "CRYSTAL"
+  },
+  "background": {
+    "gradient": {
+      "top": "#001a28",
+      "bottom": "#010810"
+    },
+    "layers": [
+      {
+        "type": "nebula",
+        "color": "#00ffe0",
+        "alpha": 0.07,
+        "y": 0.35
+      },
+      {
+        "type": "nebula_bands",
+        "color": "#00e5ff",
+        "alpha": 0.02,
+        "count": 4
+      },
+      {
+        "type": "scanlines",
+        "color": "#00ffe0",
+        "alpha": 0.025,
+        "step": 8
+      }
+    ]
+  },
+  "walls": [
+    {
+      "ax": 20,
+      "ay": 0,
+      "bx": 20,
+      "by": 720
+    },
+    {
+      "ax": 460,
+      "ay": 0,
+      "bx": 460,
+      "by": 720
+    },
+    {
+      "ax": 70,
+      "ay": 50,
+      "bx": 110,
+      "by": 20
+    }
+  ],
+  "corridors": [
+    {
+      "_comment": "Left ramp — feeds ball from lower area toward upper slingshot",
+      "cx": 145,
+      "cy": 415,
+      "angleDeg": -70,
+      "length": 202,
+      "width": 34,
+      "restitution": 0.5
+    },
+    {
+      "_comment": "Right ramp — mirror",
+      "cx": 40,
+      "cy": 400,
+      "angleDeg": 90,
+      "length": 640,
+      "width": 40,
+      "restitution": 0.5
+    },
+    {
+      "_comment": "Center divider top-left — splits arch zone",
+      "cx": 190,
+      "cy": 120,
+      "angleDeg": 55,
+      "length": 80,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "_comment": "Center divider top-right",
+      "cx": 300,
+      "cy": 120,
+      "angleDeg": -55,
+      "length": 80,
+      "width": 40,
+      "restitution": 0.55
+    }
+  ],
+  "bumpers": [
+    {
+      "_comment": "Hex constellation center",
+      "x": 240,
+      "y": 190
+    },
+    {
+      "_comment": "Hex bottom-left",
+      "x": 390,
+      "y": 400
+    },
+    {
+      "_comment": "Hex bottom-right",
+      "x": 340,
+      "y": 250
+    }
+  ],
+  "slingshots": [
+    {
+      "_comment": "HIGH left slingshot — inusual, near mid-field",
+      "ax": 200,
+      "ay": 430,
+      "bx": 160,
+      "by": 510,
+      "nx": 0.85,
+      "ny": -0.53
+    },
+    {
+      "_comment": "Low-left classic slingshot",
+      "ax": 90,
+      "ay": 610,
+      "bx": 110,
+      "by": 630,
+      "nx": 0.82,
+      "ny": -0.57
+    },
+    {
+      "_comment": "Low-right classic slingshot — mirror",
+      "ax": 412,
+      "ay": 608,
+      "bx": 380,
+      "by": 630,
+      "nx": -1,
+      "ny": -1.57
+    },
+    {
+      "_comment": "HIGH left slingshot — inusual, near mid-field",
+      "ax": 310,
+      "ay": 420,
+      "bx": 360,
+      "by": 500,
+      "nx": -6,
+      "ny": 6
+    }
+  ],
+  "dropTargets": [
+    {
+      "_comment": "Left bank — 3 targets in a diagonal row",
+      "x": 200,
+      "y": 370
+    },
+    {
+      "x": 200,
+      "y": 390
+    },
+    {
+      "x": 240,
+      "y": 390
+    },
+    {
+      "_comment": "Right bank — mirror",
+      "x": 240,
+      "y": 370
+    },
+    {
+      "x": 280,
+      "y": 370
+    },
+    {
+      "x": 280,
+      "y": 390
+    }
+  ],
+  "kickers": [
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 100,
+      "y": 320,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 100,
+      "y": 260,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 430,
+      "y": 260,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 430,
+      "y": 190,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 430,
+      "y": 120,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 430,
+      "y": 60,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 100,
+      "y": 200,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 100,
+      "y": 140,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 100,
+      "y": 90,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 100,
+      "y": 380,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    },
+    {
+      "_comment": "Left side kicker — launches ball toward right bumper cluster",
+      "x": 430,
+      "y": 310,
+      "w": 36,
+      "h": 25,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 900
+    }
+  ],
+  "pendulums": [
+    {
+      "_comment": "Crystal pendulum guardian — swings across center gap below bumper cluster",
+      "x": 240,
+      "y": 10,
+      "armLength": 68,
+      "velX": 0,
+      "velY": 0,
+      "slideRange": 0.55,
+      "slideSpeed": 1.4
+    }
+  ],
+  "flippers": [
+    {
+      "_comment": "Main left flipper",
+      "x": 140,
+      "y": 630,
+      "side": "LEFT",
+      "length": 88,
+      "restAngle": 0.43,
+      "activeAngle": -0.58
+    },
+    {
+      "_comment": "Main right flipper",
+      "x": 340,
+      "y": 630,
+      "side": "RIGHT",
+      "length": 88,
+      "restAngle": 0.43,
+      "activeAngle": -0.58
+    },
+    {
+      "_comment": "Side left flipper — horizontal wall shot",
+      "x": 80,
+      "y": 530,
+      "side": "LEFT",
+      "length": 65,
+      "restAngle": 1.56,
+      "activeAngle": -0.62
+    },
+    {
+      "_comment": "Side right flipper — mirror",
+      "x": 440,
+      "y": 540,
+      "side": "RIGHT",
+      "length": 65,
+      "restAngle": 1.56,
+      "activeAngle": -0.62
+    }
+  ],
+  "warps": [
+    {
+      "x": 240,
+      "y": 260,
+      "radius": 18
+    }
+  ],
+  "warpExits": [
+    {
+      "fromSection": "arkanoid_vault",
+      "x": 150,
+      "y": 410,
+      "vx": 0,
+      "vy": -600
+    }
+  ],
+  "springs": [
+    {
+      "_comment": "Right arch spring — mirror",
+      "x": 335,
+      "y": 170,
+      "radius": 14,
+      "angleDeg": 150,
+      "power": 1100,
+      "cooldown": 0.5
+    }
+  ]
 }

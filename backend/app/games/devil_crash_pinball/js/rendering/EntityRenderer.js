@@ -1,14 +1,12 @@
-import { GameConfig as C } from '../config/GameConfig.js';
+﻿import { GameConfig as C } from '../config/GameConfig.js';
 import { LaunchSpring }    from '../entities/LaunchSpring.js';
-
-const BOSS_SLEEP    = 0;
-const BOSS_DEFEATED = 4;
+import { BossRenderer }    from './BossRenderer.js';
 
 /**
  * Convert a hex color + alpha to CSS rgba(). Accepts "#rrggbb" or "#rgb".
  * Module-level to avoid per-frame allocation.
  * @param {string} hex
- * @param {number} a  0–1
+ * @param {number} a  0â€“1
  * @returns {string}
  */
 function _hexToRgba(hex, a) {
@@ -27,7 +25,7 @@ function _hexToRgba(hex, a) {
 }
 
 /**
- * Renders all in-world entities (walls, bumpers, flippers, warps, gears, …).
+ * Renders all in-world entities (walls, bumpers, flippers, warps, gears, â€¦).
  *
  * Single Responsibility: knows HOW to draw entities, not WHEN or WHERE
  * in the render loop to draw them.
@@ -41,20 +39,22 @@ export class EntityRenderer {
     _ctx       = null;
     _time      = 0;
     _particles = null;
+    _bossRenderer = new BossRenderer();
 
     /**
      * Must be called at the start of each frame before any draw method.
      * @param {CanvasRenderingContext2D} ctx
-     * @param {number} time  — elapsed seconds
+     * @param {number} time  â€” elapsed seconds
      * @param {{ burst: Function }} particles
      */
     setup(ctx, time, particles) {
         this._ctx       = ctx;
         this._time      = time;
         this._particles = particles;
+        this._bossRenderer.setup(ctx, time);
     }
 
-    // ── Public draw API ──────────────────────────────────────────────────────
+    // â”€â”€ Public draw API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Draw all entities belonging to a section (world-space).
@@ -97,7 +97,7 @@ export class EntityRenderer {
         }
     }
 
-    // ── Entity draw methods ──────────────────────────────────────────────────
+    // â”€â”€ Entity draw methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     _drawWalls(section, p) {
         const ctx = this._ctx;
@@ -153,12 +153,12 @@ export class EntityRenderer {
         const ctx = this._ctx;
         if (!section.corridors?.length) return;
 
-        // ── Background fill (drawn first, walls on top) ──────────────────────
+        // â”€â”€ Background fill (drawn first, walls on top) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         for (const co of section.corridors) {
             this._drawCorridorBg(co, p);
         }
 
-        // ── Walls ────────────────────────────────────────────────────────────
+        // â”€â”€ Walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
@@ -224,12 +224,12 @@ export class EntityRenderer {
         const ctx = this._ctx;
         if (!section.curvedCorridors?.length) return;
 
-        // ── Background fill (drawn first, arcs on top) ───────────────────────
+        // â”€â”€ Background fill (drawn first, arcs on top) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         for (const cc of section.curvedCorridors) {
             this._drawCurvedCorridorBg(cc, p);
         }
 
-        // ── Arc walls ────────────────────────────────────────────────────────
+        // â”€â”€ Arc walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
@@ -277,7 +277,7 @@ export class EntityRenderer {
         const glow   = p.wallGlow ?? p.wall ?? '#880088';
         const bgCol  = p.bg      ?? '#04020a';
 
-        // Radial gradient: dark at inner edge → glow at centre ring → dark at outer edge
+        // Radial gradient: dark at inner edge â†’ glow at centre ring â†’ dark at outer edge
         const grad = ctx.createRadialGradient(cc.cx, cc.cy, inner, cc.cx, cc.cy, outer);
         grad.addColorStop(0,    _hexToRgba(bgCol, 0.97));
         grad.addColorStop(0.25, _hexToRgba(glow,  0.06 + 0.04 * pulse));
@@ -288,7 +288,7 @@ export class EntityRenderer {
         ctx.save();
         ctx.fillStyle = grad;
         ctx.beginPath();
-        // Outer arc (forward), then inner arc (reverse) — closes the annular sector
+        // Outer arc (forward), then inner arc (reverse) â€” closes the annular sector
         ctx.arc(cc.cx, cc.cy, outer, start, end, ccw);
         ctx.arc(cc.cx, cc.cy, inner, end, start, !ccw);
         ctx.closePath();
@@ -313,7 +313,7 @@ export class EntityRenderer {
     _drawTarget(t, p) {
         const ctx = this._ctx;
 
-        // ── Respawning: animated pop-up from bottom ──────────────────────────
+        // â”€â”€ Respawning: animated pop-up from bottom â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (t.respawning && t.respawnProgress > 0) {
             const prog = t.respawnProgress;          // 0..1
             const h    = t.h * prog;
@@ -332,14 +332,14 @@ export class EntityRenderer {
             return;
         }
 
-        // ── Down (flat line) ─────────────────────────────────────────────────
+        // â”€â”€ Down (flat line) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (!t.standing) {
             ctx.fillStyle = C.COLOR_DIM;
             ctx.fillRect(t.x, t.y + t.h - 2, t.w, 2);
             return;
         }
 
-        // ── Standing ─────────────────────────────────────────────────────────
+        // â”€â”€ Standing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 8;
@@ -371,7 +371,7 @@ export class EntityRenderer {
         this._drawBumperBody(b, r, fired, flashRatio, bodyPop, idleAngle, p);
     }
 
-    /** @private — elastic rubber ring with 3-lobe squash deformation on ball impact */
+    /** @private â€” elastic rubber ring with 3-lobe squash deformation on ball impact */
     _drawBumperRubber(b, r, fired, flashRatio, rubberAmp, pulse, p) {
         const ctx     = this._ctx;
         const rBase   = r + 7.5;
@@ -383,7 +383,7 @@ export class EntityRenderer {
         ctx.shadowColor = fired ? p.accent : p.wallGlow;
         ctx.shadowBlur  = fired ? 20 * flashRatio : 5;
 
-        // Outer rubber contour — deforms into 3-lobe shape on hit
+        // Outer rubber contour â€” deforms into 3-lobe shape on hit
         ctx.beginPath();
         for (let i = 0; i <= pts; i++) {
             const a  = (i / pts) * Math.PI * 2;
@@ -439,7 +439,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private — fixed metal mounting band with 24 dial ticks and 6 hex bolt studs */
+    /** @private â€” fixed metal mounting band with 24 dial ticks and 6 hex bolt studs */
     _drawBumperMount(b, r, fired, flashRatio, p) {
         const ctx   = this._ctx;
         const rBand = r + 2;
@@ -488,7 +488,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private — 6 fixed hex bolt studs riveted through the rubber ring */
+    /** @private â€” 6 fixed hex bolt studs riveted through the rubber ring */
     _drawBumperHexBolts(b, boltD, boltR, fired, flashRatio, p) {
         const ctx = this._ctx;
         ctx.save();
@@ -520,7 +520,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private — 8-segment LED activation ring */
+    /** @private â€” 8-segment LED activation ring */
     _drawBumperSegments(b, r, fired, flashRatio, pulse, chaseAngle, p) {
         const ctx      = this._ctx;
         const segCount = 8;
@@ -541,7 +541,7 @@ export class EntityRenderer {
                 ctx.shadowColor = p.accent;
                 ctx.shadowBlur  = 15 + 10 * flashRatio;
             } else {
-                // Idle chase: a bright peak (cos³ envelope) orbits the LED ring
+                // Idle chase: a bright peak (cosÂ³ envelope) orbits the LED ring
                 const segAngle = (i / segCount) * Math.PI * 2;
                 const chase    = Math.pow(Math.max(0, Math.cos(segAngle - chaseAngle)), 3);
                 ctx.globalAlpha = 0.12 + 0.55 * chase;
@@ -559,7 +559,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private — main disc body: engraved spokes, cap disc, solenoid pop on impact */
+    /** @private â€” main disc body: engraved spokes, cap disc, solenoid pop on impact */
     _drawBumperBody(b, r, fired, flashRatio, bodyPop, idleAngle, p) {
         const ctx    = this._ctx;
         const pulse  = 0.5 + 0.5 * Math.sin(this._time * 3 + b.x * 0.07);
@@ -593,7 +593,7 @@ export class EntityRenderer {
         ctx.arc(b.x, b.y, rBody - 0.5, 0, Math.PI * 2);
         ctx.stroke();
 
-        // 6 engraved spokes (asterisk) — rotate slowly in idle
+        // 6 engraved spokes (asterisk) â€” rotate slowly in idle
         ctx.strokeStyle = fired ? 'rgba(0,0,0,0.38)' : 'rgba(0,0,0,0.28)';
         ctx.lineWidth   = 1.1;
         for (let i = 0; i < 6; i++) {
@@ -651,7 +651,7 @@ export class EntityRenderer {
         this._drawSlingBolts(s, fired, p);
     }
 
-    /** @private — metal backing plate + rivets */
+    /** @private â€” metal backing plate + rivets */
     _drawSlingPlate(s, tx, ty, fired, p) {
         const ctx     = this._ctx;
         const nx      = s.nx;
@@ -707,7 +707,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private — curved rubber band with specular highlight */
+    /** @private â€” curved rubber band with specular highlight */
     _drawSlingBand(s, fired, flashRatio, p) {
         const ctx   = this._ctx;
         const nx    = s.nx;
@@ -743,7 +743,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private — mechanical bolt mount at each endpoint */
+    /** @private â€” mechanical bolt mount at each endpoint */
     _drawSlingBolts(s, fired, p) {
         const ctx       = this._ctx;
         const boltColor = fired ? p.accent : '#6a8aaa';
@@ -797,7 +797,7 @@ export class EntityRenderer {
         ctx.translate(cx, cy);
         ctx.rotate((k.angleDeg ?? 0) * Math.PI / 180);
 
-        // ── Housing body ───────────────────────────────────────────────────
+        // â”€â”€ Housing body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.shadowColor = fired ? p.accent : p.wallGlow;
         ctx.shadowBlur  = fired ? 20 : 6;
         ctx.fillStyle   = '#080812';
@@ -823,7 +823,7 @@ export class EntityRenderer {
         ctx.shadowBlur  = fired ? 22 : 8;
         ctx.strokeRect(-w/2 + 0.5, -h/2 + 0.5, w - 1, h - 1);
 
-        // ── Piston rods ────────────────────────────────────────────────────
+        // â”€â”€ Piston rods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const rodTopY    = -h/2 - kickOut + plateH;
         const rodBottomY =  h/2 - 2;
         ctx.strokeStyle  = fired ? p.accent : '#44556a';
@@ -836,7 +836,7 @@ export class EntityRenderer {
             ctx.stroke();
         }
 
-        // ── Launch surface plate (punches outward in local -y on fire) ─────
+        // â”€â”€ Launch surface plate (punches outward in local -y on fire) â”€â”€â”€â”€â”€
         const plateTopY = -h/2 - kickOut;
         ctx.shadowBlur  = fired ? 28 : 12;
         ctx.fillStyle   = fired ? '#ffffff' : p.accent;
@@ -851,7 +851,7 @@ export class EntityRenderer {
         ctx.lineTo( w/2 - 5, plateTopY + plateH * 0.45);
         ctx.stroke();
 
-        // ── Corner bolts ───────────────────────────────────────────────────
+        // â”€â”€ Corner bolts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.shadowBlur = 0;
         const bolts = [[-w/2+3.5, -h/2+3.5], [w/2-3.5, -h/2+3.5], [-w/2+3.5, h/2-3.5], [w/2-3.5, h/2-3.5]];
         for (const [bx, by] of bolts) {
@@ -889,7 +889,7 @@ export class EntityRenderer {
         const glowColor     = fired ? p.accent : p.wallGlow;
         const padColor      = fired ? '#ffffff' : p.accent;
         const boltColor     = fired ? '#e0b840' : '#3a5068';
-        // glowK = 0 at rest, 1 when fired — drives all numeric glow values without extra ternaries
+        // glowK = 0 at rest, 1 when fired â€” drives all numeric glow values without extra ternaries
         const glowK         = fired ? 1 : 0;
         const baseShadow    = 4 + glowK * 10;
         const coilBlur      = 2 + glowK * 8;
@@ -914,7 +914,7 @@ export class EntityRenderer {
 
         ctx.save();
 
-        // ── BASE MOUNT: thick plate + two mounting bolts ────────────────────
+        // â”€â”€ BASE MOUNT: thick plate + two mounting bolts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.shadowColor = glowColor;
         ctx.shadowBlur  = baseShadow;
         ctx.strokeStyle = mainColor;
@@ -956,7 +956,7 @@ export class EntityRenderer {
         ctx.moveTo(b2x, b2y - 1.4); ctx.lineTo(b2x, b2y + 1.4);
         ctx.stroke();
 
-        // ── COIL: two-pass depth illusion ───────────────────────────────────
+        // â”€â”€ COIL: two-pass depth illusion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // Pass 1: wide dark shadow (simulates the back of the coil tube)
         ctx.shadowBlur  = 0;
         ctx.lineWidth   = 3.4;
@@ -986,7 +986,7 @@ export class EntityRenderer {
         ctx.lineTo(coilEndX, coilEndY);
         ctx.stroke();
 
-        // ── PAD: plunger cap — body + front face + side walls + bevel ───────
+        // â”€â”€ PAD: plunger cap â€” body + front face + side walls + bevel â”€â”€â”€â”€â”€â”€â”€
         ctx.shadowColor = glowColor;
         ctx.shadowBlur  = padBlur;
         ctx.strokeStyle = padColor;
@@ -1205,610 +1205,14 @@ export class EntityRenderer {
         ctx.restore();
     }
 
+    /**
+     * Draw a boss with its full animation rig (delegated to BossRenderer).
+     * @param {object} boss
+     * @param {object} p section palette
+     * @private
+     */
     _drawBoss(boss, p) {
-        const ctx = this._ctx;
-        if (boss.state === BOSS_SLEEP || boss.state === BOSS_DEFEATED) return;
-        if (boss.drawType === 'dragon') { this._drawDragonBoss(boss, p); return; }
-        if (boss.drawType === 'demon')  { this._drawDemonBoss(boss, p);  return; }
-        if (boss.drawType === 'golem')  { this._drawGolemBoss(boss, p);  return; }
-        if (boss.drawType === 'witch')  { this._drawWitchBoss(boss, p);  return; }
-        const flash = boss.flash > 0;
-        const r     = boss.radius;
-        ctx.save();
-        ctx.shadowColor = p.wallGlow;
-        ctx.shadowBlur  = 22;
-        const g = ctx.createRadialGradient(boss.x, boss.y - r * 0.3, r * 0.2, boss.x, boss.y, r);
-        g.addColorStop(0, flash ? '#fff' : '#ffaaaa');
-        g.addColorStop(1, p.wall);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(boss.x, boss.y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur  = 0;
-        this._drawBossHorns(ctx, boss, r, p);
-        this._drawBossEyes(ctx, boss, r, p);
-        this._drawBossMouth(ctx, boss, r);
-        this._drawBossHpBar(ctx, boss, r, p);
-        ctx.restore();
-    }
-
-    /** @private — dragon-specific renderer (serpentine body + fanged head). */
-    _drawDragonBoss(boss, p) {
-        const ctx    = this._ctx;
-        const t      = boss._movT ?? 0;
-        const flash  = boss.flash > 0;
-        const r      = boss.radius;
-        const FIRE   = flash ? '#ffffff' : '#ff6600';
-        const DEEP   = flash ? '#ffaaaa' : '#881100';
-        const GLOW   = flash ? '#ffffff' : '#ff3300';
-
-        ctx.save();
-
-        // ── Body segments tail→neck (drawn first so head sits on top) ──────
-        for (let i = 5; i >= 1; i--) {
-            const ph = t - i * 0.2;
-            const sx = boss.cx + Math.sin(ph * 1.6) * boss.range * (1 - i * 0.07);
-            const sy = boss.cy + Math.cos(ph * 0.9) * 20;
-            const sr = r * Math.max(0.22, 0.72 - i * 0.08);
-            ctx.shadowColor = GLOW;
-            ctx.shadowBlur  = 12;
-            const sg = ctx.createRadialGradient(sx, sy - sr * 0.3, sr * 0.1, sx, sy, sr);
-            sg.addColorStop(0, flash ? '#fff' : '#ff8833');
-            sg.addColorStop(1, DEEP);
-            ctx.fillStyle = sg;
-            ctx.beginPath();
-            ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // ── Head ────────────────────────────────────────────────────────────
-        const hx     = boss.x;
-        const hy     = boss.y;
-        const facing = Math.cos(t * 1.6) >= 0 ? 1 : -1;
-
-        // Horns first so skull covers their base
-        ctx.shadowColor = GLOW;
-        ctx.shadowBlur  = 8;
-        ctx.fillStyle   = flash ? '#fff' : '#ffcc55';
-        ctx.beginPath();   // main horn curves backward
-        ctx.moveTo(hx - facing * r * 0.1, hy - r * 0.6);
-        ctx.lineTo(hx - facing * r * 0.55, hy - r * 1.58);
-        ctx.lineTo(hx + facing * r * 0.18, hy - r * 0.65);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();   // side horn
-        ctx.moveTo(hx - facing * r * 0.55, hy - r * 0.32);
-        ctx.lineTo(hx - facing * r,         hy - r * 1.05);
-        ctx.lineTo(hx - facing * r * 0.28, hy - r * 0.38);
-        ctx.closePath();
-        ctx.fill();
-
-        // Skull
-        ctx.shadowColor = GLOW;
-        ctx.shadowBlur  = 22;
-        const hg = ctx.createRadialGradient(hx, hy - r * 0.25, r * 0.1, hx, hy, r);
-        hg.addColorStop(0, flash ? '#fff' : '#ff9944');
-        hg.addColorStop(1, DEEP);
-        ctx.fillStyle = hg;
-        ctx.beginPath();
-        ctx.ellipse(hx, hy, r, r * 0.88, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Upper jaw / snout
-        ctx.shadowBlur = 10;
-        ctx.fillStyle  = flash ? '#ffbbaa' : '#cc4400';
-        ctx.beginPath();
-        ctx.moveTo(hx + facing * r * 0.35, hy - r * 0.22);
-        ctx.lineTo(hx + facing * r * 1.45, hy + r * 0.05);
-        ctx.lineTo(hx + facing * r * 0.35, hy + r * 0.38);
-        ctx.closePath();
-        ctx.fill();
-
-        // Lower jaw (open)
-        ctx.fillStyle = flash ? '#ffaaaa' : '#992200';
-        ctx.beginPath();
-        ctx.moveTo(hx + facing * r * 0.35, hy + r * 0.22);
-        ctx.lineTo(hx + facing * r * 1.3,  hy + r * 0.38);
-        ctx.lineTo(hx + facing * r * 0.35, hy + r * 0.54);
-        ctx.closePath();
-        ctx.fill();
-
-        // Fang
-        ctx.shadowColor = '#fff';
-        ctx.shadowBlur  = 6;
-        ctx.fillStyle   = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(hx + facing * r * 0.7,  hy + r * 0.2);
-        ctx.lineTo(hx + facing * r * 0.85, hy + r * 0.46);
-        ctx.lineTo(hx + facing * r,         hy + r * 0.2);
-        ctx.closePath();
-        ctx.fill();
-
-        // Fire breath (flickers)
-        const flick   = 0.78 + 0.22 * Math.sin(this._time * 15);
-        const fx      = hx + facing * (r * 1.35 + r * 0.65);
-        const fy      = hy + r * 0.22 + Math.sin(this._time * 11) * 3;
-        ctx.globalAlpha = 0.72 * flick;
-        const fg = ctx.createRadialGradient(fx - facing * r * 0.3, fy, 2, fx, fy, r * 0.85 * flick);
-        fg.addColorStop(0,   '#ffff99');
-        fg.addColorStop(0.4, FIRE);
-        fg.addColorStop(1,   'rgba(255,50,0,0)');
-        ctx.shadowColor = '#ff4400';
-        ctx.shadowBlur  = 18;
-        ctx.fillStyle   = fg;
-        ctx.beginPath();
-        ctx.ellipse(fx, fy, r * 0.82 * flick, r * 0.2 * flick, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-
-        // Eye with vertical slit pupil
-        const eyeX = hx + facing * r * 0.15;
-        const eyeY = hy - r * 0.18;
-        ctx.shadowColor = '#ffff00';
-        ctx.shadowBlur  = 14;
-        ctx.fillStyle   = '#ffee00';
-        ctx.beginPath();
-        ctx.ellipse(eyeX, eyeY, 5.5, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle  = '#000';
-        ctx.beginPath();
-        ctx.ellipse(eyeX + facing * 1.5, eyeY, 2, 4.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // HP bar
-        this._drawBossHpBar(ctx, boss, r, p);
-
-        ctx.restore();
-    }
-
-    /** @private — demon boss: 3-phase Hell Lord with orbiting fire, curved horns, fire cracks. */
-    _drawDemonBoss(boss, p) {
-        const ctx   = this._ctx;
-        const t     = this._time;
-        const flash = boss.flash > 0;
-        const ph    = boss.phase ?? 0;
-        const r     = boss.radius;
-
-        ctx.save();
-
-        // ── Arena dashed ring ────────────────────────────────────────────────
-        if (boss.arenaRadius) {
-            const pulse = 0.3 + 0.12 * Math.sin(t * 1.8);
-            ctx.globalAlpha = pulse;
-            ctx.strokeStyle = '#cc0000';
-            ctx.lineWidth   = 1.5;
-            ctx.setLineDash([8, 12]);
-            ctx.beginPath();
-            ctx.arc(boss.cx, boss.cy, boss.arenaRadius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.globalAlpha = 1;
-        }
-
-        this._drawDemonOrbits(ctx, boss, r, ph, flash, t);
-        this._drawDemonHorns(ctx, boss, r, ph, flash);
-        this._drawDemonBody(ctx, boss, r, ph, flash);
-        this._drawDemonFace(ctx, boss, r, ph, flash, t);
-        this._drawBossHpBar(ctx, boss, r, p);
-        ctx.restore();
-    }
-
-    /** @private */
-    _drawDemonOrbits(ctx, boss, r, ph, flash, t) {
-        for (let i = 0; i < 3; i++) {
-            const angle  = t * (0.95 + i * 0.38) + i * (Math.PI * 2 / 3);
-            const orbitR = r * (1.8 + ph * 0.35);
-            const sx = boss.x + Math.cos(angle) * orbitR;
-            const sy = boss.y + Math.sin(angle) * orbitR * 0.7;
-            const sr = 4 + ph * 1.5;
-            ctx.shadowColor = '#ff4400';
-            ctx.shadowBlur  = 10;
-            ctx.fillStyle   = flash ? '#ffffff' : '#ff6600';
-            ctx.beginPath();
-            ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    /** @private */
-    _drawDemonHorns(ctx, boss, r, ph, flash) {
-        const hs = 1 + ph * 0.35;
-        ctx.shadowColor = flash ? '#fff' : '#660000';
-        ctx.shadowBlur  = 8;
-        ctx.fillStyle   = flash ? '#ffffff' : '#1a0000';
-        ctx.beginPath();
-        ctx.moveTo(boss.x - r * 0.35, boss.y - r * 0.6);
-        ctx.bezierCurveTo(
-            boss.x - r * 0.9 * hs, boss.y - r * 1.4 * hs,
-            boss.x - r * 1.1 * hs, boss.y - r * hs,
-            boss.x - r * 0.55 * hs, boss.y - r * 0.42
-        );
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(boss.x + r * 0.35, boss.y - r * 0.6);
-        ctx.bezierCurveTo(
-            boss.x + r * 0.9 * hs, boss.y - r * 1.4 * hs,
-            boss.x + r * 1.1 * hs, boss.y - r * hs,
-            boss.x + r * 0.55 * hs, boss.y - r * 0.42
-        );
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    /** @private */
-    _drawDemonBody(ctx, boss, r, ph, flash) {
-        ctx.shadowColor = flash ? '#ffffff' : '#ff0000';
-        ctx.shadowBlur  = 28;
-        const bg = ctx.createRadialGradient(boss.x, boss.y - r * 0.3, r * 0.15, boss.x, boss.y, r);
-        const bodyColor = ph >= 2 ? '#ff4400' : '#cc2200';
-        bg.addColorStop(0, flash ? '#ffffff' : bodyColor);
-        bg.addColorStop(0.6, flash ? '#ffaaaa' : '#550000');
-        bg.addColorStop(1, '#1a0000');
-        ctx.fillStyle = bg;
-        ctx.beginPath();
-        ctx.arc(boss.x, boss.y, r, 0, Math.PI * 2);
-        ctx.fill();
-        if (ph >= 2 && !flash) {
-            ctx.strokeStyle = '#ff6600';
-            ctx.lineWidth   = 1.2;
-            ctx.shadowColor = '#ff3300';
-            ctx.shadowBlur  = 8;
-            const cracks = [[0.1,-0.5,0.4,-0.9],[-0.3,0.2,-0.7,0.6],[0.5,0.1,0.85,0.5],[-0.1,0.4,0.3,0.9]];
-            for (const [x1,y1,x2,y2] of cracks) {
-                ctx.beginPath();
-                ctx.moveTo(boss.x + r * x1, boss.y + r * y1);
-                ctx.lineTo(boss.x + r * x2, boss.y + r * y2);
-                ctx.stroke();
-            }
-        }
-    }
-
-    /** @private */
-    _drawDemonFace(ctx, boss, r, ph, flash, t) {
-        const eyeSize = 5.5 + ph * 2;
-        ctx.shadowColor = flash ? '#ffffff' : '#ff2200';
-        ctx.shadowBlur  = 16;
-        ctx.fillStyle   = flash ? '#ffffff' : '#ff2200';
-        for (const ex of [boss.x - r * 0.32, boss.x + r * 0.32]) {
-            ctx.beginPath();
-            ctx.ellipse(ex, boss.y - r * 0.2, eyeSize, eyeSize * 0.75, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.fillStyle = '#000000';
-        ctx.shadowBlur = 0;
-        for (const ex of [boss.x - r * 0.32, boss.x + r * 0.32]) {
-            ctx.beginPath();
-            ctx.ellipse(ex, boss.y - r * 0.2, 2.5, eyeSize * 0.65, 0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        const mo    = boss.mouthOpen ?? 0.5;
-        const mhMax = r * 0.28 * (0.2 + 0.8 * mo);
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.ellipse(boss.x, boss.y + r * 0.36, r * 0.55, mhMax, 0, 0, Math.PI * 2);
-        ctx.fill();
-        if (mo > 0.4) {
-            ctx.fillStyle = flash ? '#ffaaff' : '#dddddd';
-            for (const fx of [boss.x - r * 0.28, boss.x + r * 0.28]) {
-                ctx.beginPath();
-                ctx.moveTo(fx - 4, boss.y + r * 0.3);
-                ctx.lineTo(fx,     boss.y + r * 0.3 + mhMax * 1.4);
-                ctx.lineTo(fx + 4, boss.y + r * 0.3);
-                ctx.closePath();
-                ctx.fill();
-            }
-        }
-        void 0; // boss.mouthOpen drives mhMax via mo assignment above
-    }
-
-    // Note: _drawDemonFace t param is intentionally unused at this layer
-    // (mouth animation is driven by boss.mouthOpen computed in stateUpdate).
-
-    /** @private — golem boss: stone titan with angular body, orbiting rocks, crystal eyes, cracks. */
-    _drawGolemBoss(boss, p) {
-        const ctx      = this._ctx;
-        const t        = this._time;
-        const flash    = boss.flash > 0;
-        const r        = boss.radius;
-        const hpRatio  = boss.hp / boss.maxHp;
-
-        ctx.save();
-
-        // ── Arena dashed ring ────────────────────────────────────────────────
-        if (boss.arenaRadius) {
-            ctx.globalAlpha = 0.22;
-            ctx.strokeStyle = '#778899';
-            ctx.lineWidth   = 2;
-            ctx.setLineDash([10, 8]);
-            ctx.beginPath();
-            ctx.arc(boss.cx, boss.cy, boss.arenaRadius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.globalAlpha = 1;
-        }
-
-        this._drawGolemRocks(ctx, boss, r, flash, t);
-        this._drawGolemBody(ctx, boss, r, flash, hpRatio);
-        this._drawBossHpBar(ctx, boss, r, p);
-        ctx.restore();
-    }
-
-    /** @private */
-    _drawGolemRocks(ctx, boss, r, flash, t) {
-        for (let i = 0; i < 3; i++) {
-            const angle  = t * (0.6 - i * 0.15) + i * (Math.PI * 2 / 3);
-            const orbitR = r * 1.9;
-            const sx = boss.x + Math.cos(angle) * orbitR;
-            const sy = boss.y + Math.sin(angle) * orbitR * 0.6;
-            const cs = 8 + i * 3;
-            ctx.save();
-            ctx.translate(sx, sy);
-            ctx.rotate(angle * 2);
-            ctx.shadowColor = '#aabbcc';
-            ctx.shadowBlur  = 6;
-            ctx.fillStyle   = flash ? '#ffffff' : '#556677';
-            ctx.beginPath();
-            ctx.moveTo(0, -cs);
-            ctx.lineTo(cs * 0.7, -cs * 0.3);
-            ctx.lineTo(cs * 0.9,  cs * 0.5);
-            ctx.lineTo(0,          cs * 0.8);
-            ctx.lineTo(-cs * 0.8,  cs * 0.4);
-            ctx.lineTo(-cs * 0.6, -cs * 0.6);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-    }
-
-    /** @private */
-    _drawGolemBody(ctx, boss, r, flash, hpRatio) {
-        ctx.shadowColor = flash ? '#ffffff' : '#445566';
-        ctx.shadowBlur  = 20;
-        const bg = ctx.createRadialGradient(boss.x - r * 0.2, boss.y - r * 0.3, r * 0.1, boss.x, boss.y, r);
-        bg.addColorStop(0,   flash ? '#ffffff' : '#8899aa');
-        bg.addColorStop(0.5, flash ? '#bbbbbb' : '#445566');
-        bg.addColorStop(1,   '#1a2230');
-        ctx.fillStyle = bg;
-        ctx.beginPath();
-        const vx = [0,-r, r*0.72,-r*0.72, r,0, r*0.72,r*0.72, 0,r*0.88, -r*0.72,r*0.72, -r,0, -r*0.72,-r*0.72];
-        ctx.moveTo(boss.x + vx[0], boss.y + vx[1]);
-        for (let i = 2; i < vx.length; i += 2) ctx.lineTo(boss.x + vx[i], boss.y + vx[i + 1]);
-        ctx.closePath();
-        ctx.fill();
-        // Brow
-        ctx.fillStyle = flash ? '#dddddd' : '#334455';
-        ctx.shadowBlur = 0;
-        ctx.beginPath();
-        ctx.moveTo(boss.x - r * 0.8, boss.y - r * 0.2);
-        ctx.lineTo(boss.x + r * 0.8, boss.y - r * 0.2);
-        ctx.lineTo(boss.x + r * 0.7, boss.y - r * 0.02);
-        ctx.lineTo(boss.x - r * 0.7, boss.y - r * 0.02);
-        ctx.closePath();
-        ctx.fill();
-        // Crystal eyes
-        const ep = 0.7 + 0.3 * Math.sin(this._time * 2.5);
-        ctx.shadowColor = '#00bbff';
-        ctx.shadowBlur  = 14;
-        ctx.fillStyle   = flash ? '#ffffff' : `rgba(0,180,255,${ep})`;
-        ctx.fillRect(boss.x - r * 0.52, boss.y - r * 0.16, r * 0.32, r * 0.22);
-        ctx.fillRect(boss.x + r * 0.2,  boss.y - r * 0.16, r * 0.32, r * 0.22);
-        // Mouth
-        ctx.fillStyle  = '#000000';
-        ctx.shadowBlur = 0;
-        ctx.fillRect(boss.x - r * 0.45, boss.y + r * 0.3, r * 0.9, r * 0.14);
-        ctx.fillStyle = flash ? '#ffeeee' : '#aabbcc';
-        for (let i = 0; i < 4; i++) {
-            ctx.fillRect(boss.x - r * 0.38 + i * r * 0.24, boss.y + r * 0.3, r * 0.14, r * 0.12);
-        }
-        // Cracks (deepen as HP drops)
-        if (!flash) {
-            const crackCount = Math.floor((1 - hpRatio) * 6);
-            ctx.strokeStyle  = '#223344';
-            ctx.lineWidth    = 1;
-            const allCracks  = [
-                [[-0.2,-0.5],[0.1,-0.1],[-0.3,0.3]],  [[0.4,-0.3],[0.6,0.2]],
-                [[-0.5,0.1],[-0.2,0.5]],              [[0.2,0.4],[0.5,0.7]],
-                [[-0.4,-0.6],[-0.1,-0.9]],            [[0.3,-0.7],[0.6,-0.3],[0.8,0.1]],
-            ];
-            for (let ci = 0; ci < crackCount; ci++) {
-                const crack = allCracks[ci];
-                ctx.beginPath();
-                ctx.moveTo(boss.x + crack[0][0] * r, boss.y + crack[0][1] * r);
-                for (let k = 1; k < crack.length; k++) ctx.lineTo(boss.x + crack[k][0] * r, boss.y + crack[k][1] * r);
-                ctx.stroke();
-            }
-        }
-    }
-
-    /** @private — witch boss: floating sorceress with orbital orbs, pointed hat, crescent grin, blink fade. */
-    _drawWitchBoss(boss, p) {
-        const ctx  = this._ctx;
-        const t    = this._time;
-        const flash = boss.flash > 0;
-        const r    = boss.radius;
-        const fade = boss.fade ?? 1;
-
-        if (fade <= 0.02) return;
-        ctx.save();
-        ctx.globalAlpha = fade;
-
-        // ── Arena: rotating dashed rune ring ───────────────────────────────
-        if (boss.arenaRadius) {
-            const pulse = 0.28 + 0.14 * Math.sin(t * 2.2);
-            ctx.globalAlpha  = fade * pulse;
-            ctx.strokeStyle  = '#cc00ff';
-            ctx.lineWidth    = 1.5;
-            ctx.setLineDash([6, 10]);
-            ctx.lineDashOffset = -t * 38;
-            ctx.beginPath();
-            ctx.arc(boss.cx, boss.cy, boss.arenaRadius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.lineDashOffset = 0;
-            ctx.globalAlpha  = fade;
-        }
-
-        this._drawWitchOrbs(ctx, boss, r, flash, t);
-        this._drawWitchBody(ctx, boss, r, flash, t);
-        this._drawBossHpBar(ctx, boss, r, p);
-        ctx.restore();
-    }
-
-    /** @private */
-    _drawWitchOrbs(ctx, boss, r, flash, t) {
-        const COLORS = ['#ff44ff', '#8800ff', '#44aaff', '#ffff00'];
-        for (let i = 0; i < 4; i++) {
-            const dir    = i % 2 === 0 ? 1 : -1;
-            const angle  = t * (0.7 + i * 0.25) * dir + i * (Math.PI / 2);
-            const orbR   = r * (2 + i * 0.4);
-            const ox     = boss.x + Math.cos(angle) * orbR;
-            const oy     = boss.y + Math.sin(angle) * orbR * 0.55;
-            const os     = 4.5 - i * 0.5;
-            ctx.shadowColor = COLORS[i];
-            ctx.shadowBlur  = 12;
-            ctx.fillStyle   = flash ? '#ffffff' : COLORS[i];
-            ctx.beginPath();
-            ctx.arc(ox, oy, os, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    /** @private */
-    _drawWitchBody(ctx, boss, r, flash, t) {
-        this._drawWitchRobesAndHat(ctx, boss, r, flash, t);
-        this._drawWitchFace(ctx, boss, r, flash);
-    }
-
-    /** @private */
-    _drawWitchRobesAndHat(ctx, boss, r, flash, t) {
-        // Robes
-        ctx.shadowColor = flash ? '#ffffff' : '#660099';
-        ctx.shadowBlur  = 16;
-        const rg = ctx.createLinearGradient(boss.x - r, boss.y, boss.x + r, boss.y + r * 2.2);
-        rg.addColorStop(0, flash ? '#ffffff' : '#8800dd');
-        rg.addColorStop(1, flash ? '#ddaaff' : '#220044');
-        ctx.fillStyle = rg;
-        ctx.beginPath();
-        ctx.moveTo(boss.x,           boss.y + r * 0.5);
-        ctx.lineTo(boss.x - r * 1.2, boss.y + r * 2.5);
-        ctx.lineTo(boss.x + r * 1.2, boss.y + r * 2.5);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = flash ? '#ffffff' : '#cc66ff';
-        ctx.lineWidth   = 1;
-        ctx.shadowBlur  = 4;
-        ctx.stroke();
-        // Hat brim
-        const hg = ctx.createLinearGradient(boss.x, boss.y - r * 3.5, boss.x, boss.y - r * 0.5);
-        hg.addColorStop(0, flash ? '#ffffff' : '#550077');
-        hg.addColorStop(1, flash ? '#ddaaff' : '#1a0033');
-        ctx.fillStyle   = hg;
-        ctx.shadowColor = '#aa00ff';
-        ctx.shadowBlur  = 14;
-        ctx.beginPath();
-        ctx.ellipse(boss.x, boss.y - r * 0.5, r * 1.45, r * 0.35, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Hat cone
-        ctx.beginPath();
-        ctx.moveTo(boss.x - r * 1.1, boss.y - r * 0.5);
-        ctx.lineTo(boss.x + r * 0.3, boss.y - r * 3.3);
-        ctx.lineTo(boss.x + r * 1.1, boss.y - r * 0.5);
-        ctx.closePath();
-        ctx.fill();
-        // Spinning star on hat
-        ctx.shadowColor = '#ffff00';
-        ctx.shadowBlur  = 10;
-        ctx.fillStyle   = flash ? '#ffffff' : '#ffee00';
-        const sx = boss.x + r * 0.15;
-        const sy = boss.y - r * 2.2;
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            const a  = (i * 4 * Math.PI) / 5 - Math.PI / 2 + t * 1.5;
-            const a2 = ((i * 4 + 2) * Math.PI) / 5 - Math.PI / 2 + t * 1.5;
-            if (i === 0) ctx.moveTo(sx + Math.cos(a) * 5,  sy + Math.sin(a) * 5);
-            else         ctx.lineTo(sx + Math.cos(a) * 5,  sy + Math.sin(a) * 5);
-            ctx.lineTo(sx + Math.cos(a2) * 2, sy + Math.sin(a2) * 2);
-        }
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    /** @private */
-    _drawWitchFace(ctx, boss, r, flash) {
-        ctx.shadowColor = flash ? '#ffffff' : '#9900cc';
-        ctx.shadowBlur  = 8;
-        const fg = ctx.createRadialGradient(boss.x, boss.y - r * 0.1, 2, boss.x, boss.y, r);
-        fg.addColorStop(0, flash ? '#ffffff' : '#ddbbee');
-        fg.addColorStop(1, flash ? '#ffaaff' : '#772299');
-        ctx.fillStyle = fg;
-        ctx.beginPath();
-        ctx.arc(boss.x, boss.y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowColor = '#00ff88';
-        ctx.shadowBlur  = 12;
-        ctx.fillStyle   = flash ? '#ffffff' : '#00ff88';
-        ctx.beginPath();
-        ctx.arc(boss.x - r * 0.35, boss.y - r * 0.15, 3.5, 0, Math.PI * 2);
-        ctx.arc(boss.x + r * 0.35, boss.y - r * 0.15, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur  = 0;
-        ctx.strokeStyle = flash ? '#ffffff' : '#1a0033';
-        ctx.lineWidth   = 1.8;
-        ctx.beginPath();
-        ctx.arc(boss.x, boss.y + r * 0.2, r * 0.42, 0.2, Math.PI - 0.2);
-        ctx.stroke();
-    }
-
-    /** @private */
-    _drawBossHorns(ctx, boss, r) {
-        ctx.fillStyle = '#1a0010';
-        ctx.beginPath();
-        ctx.moveTo(boss.x - r * 0.7, boss.y - r * 0.6);
-        ctx.lineTo(boss.x - r * 0.4, boss.y - r * 1.15);
-        ctx.lineTo(boss.x - r * 0.2, boss.y - r * 0.55);
-        ctx.closePath();
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(boss.x + r * 0.7, boss.y - r * 0.6);
-        ctx.lineTo(boss.x + r * 0.4, boss.y - r * 1.15);
-        ctx.lineTo(boss.x + r * 0.2, boss.y - r * 0.55);
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    /** @private */
-    _drawBossEyes(ctx, boss, r, p) {
-        ctx.shadowColor = p.accent;
-        ctx.shadowBlur  = 8;
-        ctx.fillStyle   = p.accent;
-        ctx.beginPath();
-        ctx.arc(boss.x - r * 0.35, boss.y - r * 0.15, 4, 0, Math.PI * 2);
-        ctx.arc(boss.x + r * 0.35, boss.y - r * 0.15, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-
-    /** @private */
-    _drawBossMouth(ctx, boss, r) {
-        const mw = r * 0.7;
-        const mh = r * 0.18 * (0.6 + 0.4 * Math.sin(this._time * 3));
-        ctx.fillStyle = '#000';
-        ctx.beginPath();
-        ctx.ellipse(boss.x, boss.y + r * 0.3, mw / 2, mh, 0, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    /** @private */
-    _drawBossHpBar(ctx, boss, r, p) {
-        const w = r * 2;
-        const x = boss.x - r;
-        const y = boss.y - r - 14;
-        ctx.fillStyle = '#000';
-        ctx.fillRect(x, y, w, 5);
-        ctx.fillStyle = p.accent;
-        ctx.fillRect(x, y, w * (boss.hp / boss.maxHp), 5);
+        this._bossRenderer.draw(boss, p);
     }
 
     _drawFlipper(f, p) {
@@ -1844,7 +1248,7 @@ export class EntityRenderer {
         const p1x = f.pivot.x + perpX * rBase;  const p1y = f.pivot.y + perpY * rBase;
         const p4x = ex         + perpX * rTip;   const p4y = ey         + perpY * rTip;
 
-        // Body gradient (pivot → tip)
+        // Body gradient (pivot â†’ tip)
         const grad = ctx.createLinearGradient(f.pivot.x, f.pivot.y, ex, ey);
         if (f.active) {
             const pulse = 0.8 + 0.2 * Math.sin(this._time * 9);
@@ -1862,7 +1266,7 @@ export class EntityRenderer {
         ctx.shadowBlur  = f.active ? 32 * (0.85 + 0.15 * Math.sin(this._time * 8)) : 10;
         ctx.fillStyle   = grad;
 
-        // Tapered polygon: upper edge → rounded tip cap → lower edge → rounded pivot cap
+        // Tapered polygon: upper edge â†’ rounded tip cap â†’ lower edge â†’ rounded pivot cap
         ctx.beginPath();
         ctx.moveTo(p1x, p1y);
         ctx.lineTo(p4x, p4y);
@@ -2139,7 +1543,7 @@ export class EntityRenderer {
     /** Build gear tooth silhouette path (in translated+rotated context). */
     _buildGearPath(radius, outerR, teethCount) {
         const ctx    = this._ctx;
-        // Narrow tooth base (0.38 of full slot) → sharp, elongated teeth
+        // Narrow tooth base (0.38 of full slot) â†’ sharp, elongated teeth
         const halfTW = (Math.PI / teethCount) * 0.38;
         const step   = (Math.PI * 2) / teethCount;
         ctx.beginPath();

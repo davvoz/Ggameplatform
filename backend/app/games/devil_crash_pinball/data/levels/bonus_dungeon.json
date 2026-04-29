@@ -1,255 +1,446 @@
-﻿{
-    "_comment":  "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
-    "section":  "bonus_dungeon",
-    "audioProfile":  "inferno",
-    "palette":  {
-                    "bg":  "#06030e",
-                    "bgTop":  "#5000e6",
-                    "wall":  "#bb33ff",
-                    "wallGlow":  "#005dd6",
-                    "accent":  "#93df07",
-                    "accent2":  "#e63900",
-                    "ink":  "rgba(200,80,255,0.20)",
-                    "name":  "DUNGEON",
-                    "ambientKey":  "DUNGEON"
-                },
-    "walls":  [
-                  {
-                      "ax":  20,
-                      "ay":  0,
-                      "bx":  20,
-                      "by":  720
-                  },
-                  {
-                      "ax":  460,
-                      "ay":  0,
-                      "bx":  460,
-                      "by":  720
-                  },
-                  {
-                      "ax":  390,
-                      "ay":  590,
-                      "bx":  460,
-                      "by":  452
-                  }
-              ],
-    "dropTargets":  [
-                        {
-                            "x":  300,
-                            "y":  250
-                        },
-                        {
-                            "x":  330,
-                            "y":  250
-                        },
-                        {
-                            "x":  180,
-                            "y":  250
-                        },
-                        {
-                            "x":  270,
-                            "y":  250
-                        },
-                        {
-                            "x":  210,
-                            "y":  250
-                        },
-                        {
-                            "x":  240,
-                            "y":  250
-                        }
-                    ],
-    "gates":  [
-                  {
-                      "x1":  86,
-                      "x2":  156,
-                      "y":  19,
-                      "dir":  1
-                  },
-                  {
-                      "x1":  250,
-                      "x2":  310,
-                      "y":  710,
-                      "dir":  -1
-                  },
-                  {
-                      "x1":  226,
-                      "x2":  306,
-                      "y":  22,
-                      "dir":  1
-                  }
-              ],
-    "bumpers":  [
-                    {
-                        "x":  290,
-                        "y":  510
-                    },
-                    {
-                        "x":  200,
-                        "y":  60
-                    },
-                    {
-                        "x":  89,
-                        "y":  345
-                    }
-                ],
-    "flippers":  [
-                     {
-                         "x":  450,
-                         "y":  450,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  0.42,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  380,
-                         "y":  300,
-                         "side":  "RIGHT",
-                         "length":  64,
-                         "restAngle":  1.57,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  120,
-                         "y":  670,
-                         "side":  "LEFT",
-                         "length":  99,
-                         "restAngle":  0,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  210,
-                         "y":  410,
-                         "side":  "LEFT",
-                         "length":  92,
-                         "restAngle":  1.56,
-                         "activeAngle":  -0.58
-                     },
-                     {
-                         "x":  380,
-                         "y":  670,
-                         "side":  "RIGHT",
-                         "length":  99,
-                         "restAngle":  0,
-                         "activeAngle":  -0.58
-                     }
-                 ],
-    "warps":  [
-                  {
-                      "x":  190,
-                      "y":  140
-                  }
-              ],
-    "boss":  {
-                 "type":  "DragonBoss",
-                 "killEvent":  "witch_kill",
-                 "x":  240,
-                 "y":  240,
-                 "radius":  130
-             },
-    "curvedCorridors":  [
-                            {
-                                "cx":  290,
-                                "cy":  720,
-                                "midRadius":  144,
-                                "width":  40,
-                                "startAngleDeg":  -2,
-                                "angularSpanDeg":  -54,
-                                "segments":  12,
-                                "restitution":  0.55,
-                                "restAngle":  0
-                            },
-                            {
-                                "cx":  357,
-                                "cy":  213,
-                                "midRadius":  70,
-                                "width":  60,
-                                "startAngleDeg":  -177,
-                                "angularSpanDeg":  79,
-                                "segments":  12,
-                                "restitution":  0.55
-                            },
-                            {
-                                "cx":  328,
-                                "cy":  77,
-                                "midRadius":  70,
-                                "width":  60,
-                                "startAngleDeg":  76,
-                                "angularSpanDeg":  -53,
-                                "segments":  18,
-                                "restitution":  0.59
-                            }
-                        ],
-    "springs":  [
-                    {
-                        "x":  390,
-                        "y":  570,
-                        "radius":  17,
-                        "angleDeg":  -150,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  423,
-                        "y":  510,
-                        "radius":  12,
-                        "angleDeg":  -148,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    },
-                    {
-                        "x":  99,
-                        "y":  491,
-                        "radius":  21,
-                        "angleDeg":  -57,
-                        "power":  1300,
-                        "cooldown":  0.4
-                    }
-                ],
-    "slingshots":  [
-                       {
-                           "ax":  24,
-                           "ay":  177,
-                           "bx":  140,
-                           "by":  280,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  457,
-                           "ay":  166,
-                           "bx":  384,
-                           "by":  264,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       },
-                       {
-                           "ax":  20,
-                           "ay":  530,
-                           "bx":  110,
-                           "by":  670,
-                           "nx":  0.88,
-                           "ny":  -0.47
-                       }
-                   ],
-    "warpExits":  [
-                      {
-                          "fromSection":  "upper_table",
-                          "x":  340,
-                          "y":  320,
-                          "vx":  0,
-                          "vy":  -650
-                      }
-                  ],
-    "corridors":  [
-                      {
-                          "cx":  170,
-                          "cy":  379,
-                          "angleDeg":  -56,
-                          "length":  215,
-                          "width":  70,
-                          "restitution":  0.55
-                      }
-                  ]
+{
+  "_comment": "Dungeon Ritual — pentagram bumper cluster, arched vault ceiling, dual side channels, classic slingshot pair. High-energy bonus section.",
+  "section": "bonus_dungeon",
+  "boundary": {
+    "right": 460
+  },
+  "audioProfile": "inferno",
+  "palette": {
+    "bg": "#06030e",
+    "bgTop": "#5000e6",
+    "wall": "#bb33ff",
+    "wallGlow": "#5533cc",
+    "accent": "#93df07",
+    "accent2": "#e63900",
+    "ink": "rgba(200,80,255,0.22)",
+    "name": "DUNGEON",
+    "ambientKey": "DUNGEON"
+  },
+  "walls": [
+    {
+      "ax": 20,
+      "ay": 0,
+      "bx": 20,
+      "by": 720
+    },
+    {
+      "ax": 460,
+      "ay": 0,
+      "bx": 460,
+      "by": 720
+    }
+  ],
+  "bumpers": [
+    {
+      "x": 350,
+      "y": 150
+    },
+    {
+      "x": 254,
+      "y": 544
+    },
+    {
+      "x": 250,
+      "y": 340
+    }
+  ],
+  "dropTargets": [
+    {
+      "x": 210,
+      "y": 420
+    },
+    {
+      "x": 210,
+      "y": 400
+    },
+    {
+      "x": 270,
+      "y": 420
+    },
+    {
+      "x": 270,
+      "y": 440
+    },
+    {
+      "x": 240,
+      "y": 400
+    },
+    {
+      "x": 240,
+      "y": 420
+    },
+    {
+      "x": 300,
+      "y": 420
+    },
+    {
+      "x": 300,
+      "y": 400
+    },
+    {
+      "x": 300,
+      "y": 440
+    },
+    {
+      "x": 270,
+      "y": 400
+    },
+    {
+      "x": 210,
+      "y": 440
+    },
+    {
+      "x": 240,
+      "y": 440
+    }
+  ],
+  "slingshots": [
+    {
+      "ax": 90,
+      "ay": 594,
+      "bx": 106,
+      "by": 620,
+      "nx": 0.9,
+      "ny": -0.4
+    },
+    {
+      "ax": 360,
+      "ay": 610,
+      "bx": 330,
+      "by": 630,
+      "nx": -0.9,
+      "ny": -0.4
+    }
+  ],
+  "flippers": [
+    {
+      "x": 120,
+      "y": 640,
+      "side": "LEFT",
+      "length": 80,
+      "restAngle": 0.45,
+      "activeAngle": -0.6
+    },
+    {
+      "x": 300,
+      "y": 640,
+      "side": "RIGHT",
+      "length": 80,
+      "restAngle": 0.45,
+      "activeAngle": -0.6
+    },
+    {
+      "x": 80,
+      "y": 480,
+      "side": "LEFT",
+      "length": 68,
+      "restAngle": 1.56,
+      "activeAngle": -0.65
+    },
+    {
+      "x": 400,
+      "y": 470,
+      "side": "RIGHT",
+      "length": 68,
+      "restAngle": 1.56,
+      "activeAngle": -0.65
+    }
+  ],
+  "gates": [
+    {
+      "x1": 170,
+      "x2": 250,
+      "y": 720,
+      "dir": -1
+    }
+  ],
+  "warps": [
+    {
+      "x": 290,
+      "y": 70,
+      "radius": 18
+    }
+  ],
+  "warpExits": [
+    {
+      "fromSection": "upper_table",
+      "x": 260,
+      "y": 200,
+      "vx": 0,
+      "vy": -650
+    }
+  ],
+  "corridors": [
+    {
+      "cx": 140,
+      "cy": 310,
+      "angleDeg": -90,
+      "length": 230,
+      "width": 70,
+      "restitution": 0.6
+    },
+    {
+      "cx": 371,
+      "cy": 320,
+      "angleDeg": -90,
+      "length": 280,
+      "width": 60,
+      "restitution": 0.6
+    },
+    {
+      "cx": 420,
+      "cy": 670,
+      "angleDeg": -90,
+      "length": 154,
+      "width": 80,
+      "restitution": 0.6
+    },
+    {
+      "cx": 40,
+      "cy": 490,
+      "angleDeg": -90,
+      "length": 210,
+      "width": 39,
+      "restitution": 0.55
+    },
+    {
+      "cx": 82,
+      "cy": 319,
+      "angleDeg": -90,
+      "length": 262,
+      "width": 46,
+      "restitution": 0.55
+    }
+  ],
+  "curvedCorridors": [
+    {
+      "cx": 280,
+      "cy": 200,
+      "midRadius": 140,
+      "width": 70,
+      "startAngleDeg": -39,
+      "angularSpanDeg": -140,
+      "segments": 14,
+      "restitution": 0.62
+    },
+    {
+      "cx": 302,
+      "cy": 94,
+      "midRadius": 136,
+      "width": 40,
+      "startAngleDeg": -28,
+      "angularSpanDeg": 27,
+      "segments": 12,
+      "restitution": 0.55
+    },
+    {
+      "cx": 160,
+      "cy": 590,
+      "midRadius": 120,
+      "width": 40,
+      "startAngleDeg": 179,
+      "angularSpanDeg": -57,
+      "segments": 12,
+      "restitution": 0.55
+    }
+  ],
+  "springs": [
+    {
+      "x": 390,
+      "y": 690,
+      "radius": 8,
+      "angleDeg": 270,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 320,
+      "y": 530,
+      "radius": 10,
+      "angleDeg": -90,
+      "power": 1150,
+      "cooldown": 0.5
+    },
+    {
+      "x": 352,
+      "y": 290,
+      "radius": 8,
+      "angleDeg": -90,
+      "power": 1150,
+      "cooldown": 0.5
+    },
+    {
+      "x": 290,
+      "y": 120,
+      "radius": 8,
+      "angleDeg": 88,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 170,
+      "y": 490,
+      "radius": 8,
+      "angleDeg": -90,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 390,
+      "y": 45,
+      "radius": 8,
+      "angleDeg": -129,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 451,
+      "y": 22,
+      "radius": 8,
+      "angleDeg": -123,
+      "power": 1300,
+      "cooldown": 0.4
+    }
+  ],
+  "kickers": [
+    {
+      "x": 140,
+      "y": 440,
+      "w": 30,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 540,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 410,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 170,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 480,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 290,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 230,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 680,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 620,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 430,
+      "y": 340,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 140,
+      "y": 360,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 140,
+      "y": 270,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    },
+    {
+      "x": 140,
+      "y": 190,
+      "w": 20,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 10000
+    }
+  ],
+  "gears": [
+    {
+      "x": 90,
+      "y": 30,
+      "teeth": 3,
+      "speed": 1,
+      "angularSpeed": 1
+    }
+  ]
 }

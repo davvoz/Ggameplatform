@@ -1,4 +1,5 @@
 import { TempVec } from './Vec2.js';
+import { GameConfig as C } from '../config/GameConfig.js';
 
 /**
  * Stateless collision helpers. All inputs are read-only; outputs are written
@@ -18,16 +19,47 @@ export class Collisions {
         const dy = ball.pos.y - cy;
         const distSq = dx * dx + dy * dy;
         const r = ball.radius + cr;
-        if (distSq >= r * r) return false;
+        if (distSq < r * r) {
+            // ── Narrow-phase ────────────────────────────────────────────────
+            const dist = Math.sqrt(distSq) || 1e-6;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const overlap = r - dist;
+            ball.pos.x += nx * overlap;
+            ball.pos.y += ny * overlap;
+            const vn = ball.vel.x * nx + ball.vel.y * ny;
+            if (vn < 0) {
+                ball.vel.x -= (1 + restitution) * vn * nx;
+                ball.vel.y -= (1 + restitution) * vn * ny;
+            }
+            return true;
+        }
 
-        const dist = Math.sqrt(distSq) || 1e-6;
-        const nx = dx / dist;
-        const ny = dy / dist;
-        // Push out
-        const overlap = r - dist;
-        ball.pos.x += nx * overlap;
-        ball.pos.y += ny * overlap;
-        // Reflect velocity
+        // ── CCD fallback: swept-sphere test ──────────────────────────────
+        // Catches full pass-through when prevPos and pos are both outside
+        // but the path crossed inside the combined circle.
+        if (!ball.prevPos) return false;
+        const mvx = ball.pos.x - ball.prevPos.x;
+        const mvy = ball.pos.y - ball.prevPos.y;
+        const a = mvx * mvx + mvy * mvy;
+        if (a < 1e-10) return false;
+        const pdx = ball.prevPos.x - cx;
+        const pdy = ball.prevPos.y - cy;
+        const b  = 2 * (pdx * mvx + pdy * mvy);
+        const cc = pdx * pdx + pdy * pdy - r * r;
+        const disc = b * b - 4 * a * cc;
+        if (disc < 0) return false;
+        const toi = (-b - Math.sqrt(disc)) / (2 * a);
+        if (toi < 0 || toi > 1) return false;
+        const impX   = ball.prevPos.x + mvx * toi;
+        const impY   = ball.prevPos.y + mvy * toi;
+        const impDx  = impX - cx;
+        const impDy  = impY - cy;
+        const impLen = Math.hypot(impDx, impDy) || 1e-6;
+        const nx = impDx / impLen;
+        const ny = impDy / impLen;
+        ball.pos.x = cx + nx * r;
+        ball.pos.y = cy + ny * r;
         const vn = ball.vel.x * nx + ball.vel.y * ny;
         if (vn < 0) {
             ball.vel.x -= (1 + restitution) * vn * nx;
@@ -57,15 +89,21 @@ export class Collisions {
         const dy = ball.pos.y - py;
         const distSq = dx * dx + dy * dy;
         const r = ball.radius;
+        // WALL_SKIN: detect collision slightly before visual surface so the ball
+        // can never clip through at high speed. Pushout still uses bare radius.
+        const detR = r + C.WALL_SKIN;
 
-        if (distSq < r * r) {
-            // ── Narrow-phase resolution (standard) ──────────────────────────
+        if (distSq < detR * detR) {
+            // ── Narrow-phase resolution ──────────────────────────────────────
             const dist = Math.sqrt(distSq) || 1e-6;
             const nx = dx / dist;
             const ny = dy / dist;
+            // Push out only when truly penetrating; in the skin zone just reflect.
             const overlap = r - dist;
-            ball.pos.x += nx * overlap;
-            ball.pos.y += ny * overlap;
+            if (overlap > 0) {
+                ball.pos.x += nx * overlap;
+                ball.pos.y += ny * overlap;
+            }
             const vn = ball.vel.x * nx + ball.vel.y * ny;
             if (vn < 0) {
                 ball.vel.x -= (1 + restitution) * vn * nx;
@@ -118,33 +156,94 @@ export class Collisions {
      * @returns {boolean} hit
      */
     static circleVsRect(ball, x, y, w, h, restitution) {
-        const cx = Math.max(x, Math.min(ball.pos.x, x + w));
-        const cy = Math.max(y, Math.min(ball.pos.y, y + h));
-        const dx = ball.pos.x - cx;
-        const dy = ball.pos.y - cy;
+        const closestX = Math.max(x, Math.min(ball.pos.x, x + w));
+        const closestY = Math.max(y, Math.min(ball.pos.y, y + h));
+        const dx = ball.pos.x - closestX;
+        const dy = ball.pos.y - closestY;
         const distSq = dx * dx + dy * dy;
         const r = ball.radius;
-        if (distSq >= r * r) return false;
-
-        let nx = dx;
-        let ny = dy;
-        const dist = Math.sqrt(distSq);
-        if (dist < 1e-6) {
-            // Center inside rect: push along smallest axis
-            ny = -1; nx = 0;
-        } else {
-            nx /= dist;
-            ny /= dist;
+        if (distSq < r * r) {
+            const dist = Math.sqrt(distSq);
+            const [nx, ny] = dist < 1e-6
+                ? Collisions._rectInsideNormal(ball, x, y, w, h)
+                : [dx / dist, dy / dist];
+            const overlap = r - dist;
+            ball.pos.x += nx * overlap;
+            ball.pos.y += ny * overlap;
+            const vn = ball.vel.x * nx + ball.vel.y * ny;
+            if (vn < 0) {
+                ball.vel.x -= (1 + restitution) * vn * nx;
+                ball.vel.y -= (1 + restitution) * vn * ny;
+            }
+            return true;
         }
-        const overlap = r - dist;
-        ball.pos.x += nx * overlap;
-        ball.pos.y += ny * overlap;
-        const vn = ball.vel.x * nx + ball.vel.y * ny;
+        return Collisions._circleVsRectCcd(ball, x, y, w, h, r, restitution);
+    }
+
+    /** Return the outward normal for a ball whose centre is inside the rect. @private */
+    static _rectInsideNormal(ball, x, y, w, h) {
+        if (!ball.prevPos) return [0, -1];
+        const offL = x         - ball.prevPos.x; // > 0 → prev was left of rect
+        const offR = ball.prevPos.x - (x + w);   // > 0 → prev was right of rect
+        const offT = y         - ball.prevPos.y;  // > 0 → prev was above rect
+        const offB = ball.prevPos.y - (y + h);    // > 0 → prev was below rect
+        const max  = Math.max(offL, offR, offT, offB);
+        if (max === offT) return [ 0, -1];
+        if (max === offB) return [ 0,  1];
+        if (max === offL) return [-1,  0];
+        return [1, 0];
+    }
+
+    /**
+     * CCD fallback for circleVsRect: swept-rect test.
+     * Catches complete pass-through when the ball skipped over the rect. @private
+     */
+    static _circleVsRectCcd(ball, x, y, w, h, r, restitution) {
+        if (!ball.prevPos) return false;
+        const er = r;
+        const pMinX = Math.min(ball.prevPos.x, ball.pos.x);
+        const pMaxX = Math.max(ball.prevPos.x, ball.pos.x);
+        const pMinY = Math.min(ball.prevPos.y, ball.pos.y);
+        const pMaxY = Math.max(ball.prevPos.y, ball.pos.y);
+        // Fast AABB reject
+        if (pMaxX < x - er || pMinX > x + w + er ||
+            pMaxY < y - er || pMinY > y + h + er) return false;
+        const face = Collisions._firstRectFaceCrossing(ball, x, y, w, h, er);
+        if (!face) return false;
+        const crossX = ball.prevPos.x + (ball.pos.x - ball.prevPos.x) * face.toi;
+        const crossY = ball.prevPos.y + (ball.pos.y - ball.prevPos.y) * face.toi;
+        ball.pos.x = crossX + face.nx * (r + 0.5);
+        ball.pos.y = crossY + face.ny * (r + 0.5);
+        const vn = ball.vel.x * face.nx + ball.vel.y * face.ny;
         if (vn < 0) {
-            ball.vel.x -= (1 + restitution) * vn * nx;
-            ball.vel.y -= (1 + restitution) * vn * ny;
+            ball.vel.x -= (1 + restitution) * vn * face.nx;
+            ball.vel.y -= (1 + restitution) * vn * face.ny;
         }
         return true;
+    }
+
+    /** Find the earliest rect face the ball crosses. Returns {toi,nx,ny} or null. @private */
+    static _firstRectFaceCrossing(ball, x, y, w, h, er) {
+        const px = ball.prevPos.x, py = ball.prevPos.y;
+        const qx = ball.pos.x,    qy = ball.pos.y;
+        // [d0, d1, nx, ny, faceL, faceR, isHoriz]
+        const faces = [
+            [y      - py, y      - qy,  0, -1, x,   x+w, true ],
+            [py - (y+h),  qy - (y+h),   0,  1, x,   x+w, true ],
+            [x      - px, x      - qx, -1,  0, y,   y+h, false],
+            [px - (x+w),  qx - (x+w),   1,  0, y,   y+h, false],
+        ];
+        let bestToi = 2, bestFace = null;
+        for (const [d0, d1, nx, ny, fL, fR, horiz] of faces) {
+            if (d0 * d1 >= 0 || d0 < 0) continue;
+            const toi = d0 / (d0 - d1);
+            if (toi >= bestToi) continue;
+            const coord = horiz ? px + (qx - px) * toi : py + (qy - py) * toi;
+            if (coord < fL - er || coord > fR + er) continue;
+            bestToi = toi;
+            bestFace = { toi, nx, ny };
+        }
+        return bestFace;
     }
 
     /**

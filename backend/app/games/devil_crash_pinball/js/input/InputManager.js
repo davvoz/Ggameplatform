@@ -21,6 +21,7 @@ export class InputManager {
         this.tiltPressed = false;
         this.escPressed = false;
         this._spaceDown = false;
+        this._pointerLaunchActive = false;
         this._activePointers = new Map(); // pointerId -> 'left'|'right'|'launch'|'hud'
         // Last pointer-down position (normalised 0–1) for HUD button hit-testing.
         this._lastTapPos = null;
@@ -84,10 +85,36 @@ export class InputManager {
 
         globalThis.addEventListener('keydown', this._kd);
         globalThis.addEventListener('keyup', this._ku);
+        // Reset all transient flags when the window/tab loses focus, the user
+        // alt-tabs, or fullscreen state changes. Without this, a flipper key
+        // held during a focus change stays "stuck" (no keyup ever fires)
+        // and the game appears frozen with the flipper raised.
+        this._reset = () => this._resetAllInputs();
+        globalThis.addEventListener('blur', this._reset);
+        globalThis.addEventListener('visibilitychange', this._reset);
+        document.addEventListener('fullscreenchange', this._reset);
         this.canvas.addEventListener('pointerdown', this._pd, { passive: false });
         this.canvas.addEventListener('pointerup', this._pu, { passive: false });
         this.canvas.addEventListener('pointercancel', this._pu, { passive: false });
         this.canvas.addEventListener('pointermove', this._pm, { passive: false });
+    }
+
+    /**
+     * Clear all transient input state. Called on focus loss / fullscreen
+     * change to avoid "stuck key" glitches (held flipper that never releases,
+     * queued ESC that pauses the game right after exiting fullscreen, etc.).
+     */
+    _resetAllInputs() {
+        this.left = false;
+        this.right = false;
+        this.launchPressed = false;
+        this.launchHeld = false;
+        this.tiltPressed = false;
+        this.escPressed = false;
+        this._spaceDown = false;
+        this._pointerLaunchActive = false;
+        this._activePointers.clear();
+        this._lastTapPos = null;
     }
 
     _zoneFor(e) {
@@ -162,6 +189,9 @@ export class InputManager {
     destroy() {
         globalThis.removeEventListener('keydown', this._kd);
         globalThis.removeEventListener('keyup', this._ku);
+        globalThis.removeEventListener('blur', this._reset);
+        globalThis.removeEventListener('visibilitychange', this._reset);
+        document.removeEventListener('fullscreenchange', this._reset);
         this.canvas.removeEventListener('pointerdown', this._pd);
         this.canvas.removeEventListener('pointerup', this._pu);
         this.canvas.removeEventListener('pointercancel', this._pu);

@@ -35,6 +35,7 @@ const EVENT_FX = {
     drop_target: { sfx: 'target',      color: C.COLOR_RED,    r:  8, spd: 200, life: 0.7 },
     brick:       { sfx: 'brick',       color: '#ff9900',      r:  7, spd: 180, life: 0.6 },
     slingshot:   { sfx: 'sling',       color: '#ff5050',      r: 10, spd: 240, life: 0.5 },
+    spring:      { sfx: 'spring',      color: '#00e5ff',      r: 13, spd: 260, life: 0.42 },
     kicker:      { sfx: 'kicker',      color: C.COLOR_GOLD,   r: 16, spd: 320, life: 0.3 },
     warp:        { sfx: 'warp',       color: C.COLOR_PURPLE, r: 20, spd: 300, life: 0.5 },
     warp_enter:  { sfx: 'warp_enter', color: C.COLOR_PURPLE, r: 28, spd: 360, life: 0.9, shake: 0.1 },
@@ -86,9 +87,6 @@ export class Game {
         // Position-based stuck detection (catches vibrating-but-trapped balls)
         this._stuckPosRef  = { x: 0, y: 0 };
         this._stuckPosTimer = 0;
-        // Position-based stuck detection (catches vibrating-but-trapped balls)
-        this._stuckPosRef  = { x: 0, y: 0 };
-        this._stuckPosTimer = 0;
 
         // Dedicated display-stuck tracker for the HUD RESET button.
         // More sensitive than the auto-nudge: 2s window, 60px movement threshold.
@@ -104,6 +102,9 @@ export class Game {
         // Input guard for menu states: blocks menu-dismiss until timer expires.
         // Prevents held flipper inputs from instantly skipping the game-over screen.
         this._menuInputGuard = 0;
+        // Arm flag for menu input: requires inputs to be released after the guard
+        // before a press counts. Kills queued/held inputs from the previous round.
+        this._menuInputArmed = false;
         this._prevFlipR = false;
 
         // Loop
@@ -198,8 +199,14 @@ export class Game {
         const cx = tap.x * C.VIEW_WIDTH;
         const cy = tap.y * C.VIEW_HEIGHT;
         const hit = HUD.hitTest(cx, cy);
-        if (hit === 'rescue') this.rescueBall();
-        else if (hit === 'tilt') this.triggerTilt();
+        if      (hit === 'rescue') this.rescueBall();
+        else if (hit === 'tilt')   this.triggerTilt();
+        else if (hit === 'bgm')    this.audio.toggleBgm();
+        else if (hit === 'sfx')    this.audio.toggleMute();
+        else if (hit === 'pause') {
+            if (this.state === GameState.PLAY)   this.state = GameState.PAUSED;
+            else if (this.state === GameState.PAUSED) this.state = GameState.PLAY;
+        }
     }
 
     // ── FSM transitions ─────────────────────────────────────────────
@@ -219,6 +226,7 @@ export class Game {
         if (this.board.main?.audioProfile) {
             this.audio.applyProfile(this.board.main.audioProfile, 0);
         }
+        this.audio.playBgm();
         this._wakeAllBosses();
         this.platform.sendGameStarted();
         this._loadBall();
@@ -401,6 +409,14 @@ export class Game {
     _gameOver() {
         this.state = GameState.GAME_OVER;
         this._menuInputGuard = 2;   // block input for 2 s so the game-over banner is visible
+        this._menuInputArmed = false;
+        // Drop any queued input edges from the drain/play phase so they can't
+        // bleed through the guard and dismiss the banner instantly.
+        this.input.consumeLaunch();
+        this.input.consumeTilt();
+        this.input.consumeEsc();
+        this.input.consumeCanvasTap();
+        this.audio.stopBgm();
         this.timePlayed = (performance.now() - this.startTime) / 1000;
         const achievements = [];
         if (this.bossesDefeated > 0) achievements.push('mini_boss_slayer');
@@ -473,14 +489,24 @@ export class Game {
         this.lastTime = ts;
         const dt = Math.min(dtRaw, 0.05);
 
-        this._update(dt);
-        this._draw();
+        // Defensive: a single render error must not kill the game loop.
+        // Without this, an exception in _update/_draw skips the trailing
+        // requestAnimationFrame and the page appears frozen.
+        try {
+            this._update(dt);
+            this._draw();
+        } catch (err) {
+            console.error('[devil_crash_pinball] frame error', err);
+        }
         requestAnimationFrame(this._loop);
     }
 
     _menuInputPressed() {
         // Used ONLY for ATTRACT/GAME_OVER screens: any input starts a new game.
-        return this.input.consumeLaunch() || this.input.left || this.input.right;
+        // Only accept edge events (consumeLaunch) — steady flipper holds must NOT
+        // count, otherwise a player still holding a flipper at game-over would
+        // restart immediately when the menu input guard expires.
+        return this.input.consumeLaunch();
     }
 
     /** Update the plunger while in BALL_READY. Returns true once the ball is launched. */
@@ -580,7 +606,7 @@ export class Game {
         if (this.ball.state !== Ball.STATE.LIVE) return;
         const prev  = this.board.sectionIndexAt(this.ball.pos.y);
         const prevY = this.ball.pos.y;
-        this.physics.step(dt, this.board.activeSection(this.ball));
+        this.physics.step(dt, ball => this.board.activeSection(ball));
         const next = this.board.sectionIndexAt(this.ball.pos.y);
         if (next !== prev) {
             const goingUp = next < prev;
@@ -712,8 +738,8 @@ export class Game {
 
     _update(dt) {
         this.elapsed += dt;
+        this._checkHudButtons();
         this.hud.update(dt);
-        this.audio.update(dt);
         this.updateHintTimer(dt);
         this.togglePauseState();
         this._stateHandlers[this.state].update(dt);
@@ -777,6 +803,7 @@ export class Game {
             hintTimer: this.hintTimer,
             ballReady: this.state === GameState.BALL_READY,
             muted: this.audio.muted,
+            bgmMuted: this.audio.bgmMuted,
             plungerCharge: this.plungerCharge,
             launchHeld: this.input.launchHeld,
             timePlayed: Math.round(this.timePlayed ?? 0),

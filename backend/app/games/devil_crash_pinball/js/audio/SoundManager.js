@@ -101,6 +101,21 @@ export class SoundManager {
      */
     _tremoloDepth = null;
 
+    /** @type {AudioBuffer|null} Decoded background music buffer — loaded once at init. */
+    _bgmBuffer = null;
+
+    /** @type {AudioBufferSourceNode|null} Currently active looping BGM source. */
+    _bgmSource = null;
+
+    /** @type {GainNode|null} Volume lane for the BGM channel. */
+    _bgmGain = null;
+
+    /** True when playBgm() was called before _bgmBuffer finished loading. */
+    _bgmPending = false;
+
+    /** Whether the BGM channel is independently muted. */
+    bgmMuted = false;
+
     // ── Initialisation ────────────────────────────────────────────────────────
 
     /** Must be called from a user-gesture handler. */
@@ -113,6 +128,7 @@ export class SoundManager {
         this._preallocateNoise();
         this._buildAllReverbIRs();
         this.muted = C.AUDIO_DEFAULT_MUTED;
+        this._loadBgm();
     }
 
     /**
@@ -186,6 +202,12 @@ export class SoundManager {
         this._reverbGain.connect(this._comp);
         this._comp.connect(this.master);
         this.master.connect(ctx.destination);
+
+        // ── Background music gain — feeds into _lp so it shares the master chain
+        //    (section profile LP/tremolo/compressor colour the BGM too).
+        this._bgmGain            = ctx.createGain();
+        this._bgmGain.gain.value = C.AUDIO_BGM_VOLUME;
+        this._bgmGain.connect(ctx.destination);
     }
 
     /**
@@ -255,6 +277,13 @@ export class SoundManager {
         this.muted = !!on;
         if (this.master) this.master.gain.value = on ? 0 : C.AUDIO_MASTER;
     }
+
+    setBgmMuted(on) {
+        this.bgmMuted = !!on;
+        if (this._bgmGain) this._bgmGain.gain.value = on ? 0 : C.AUDIO_BGM_VOLUME;
+    }
+
+    toggleBgm() { this.setBgmMuted(!this.bgmMuted); return this.bgmMuted; }
 
     toggleMute() { this.setMuted(!this.muted); return this.muted; }
 
@@ -337,8 +366,62 @@ export class SoundManager {
         this._reverb.buffer = this._reverbIRs.get(profileId) ?? this._reverb.buffer;
     }
 
-    /** Interface compatibility — no background music by design. */
-    update(_dt) { /* no background music */ }
+    /**
+     * Fetch and decode the background music MP3.
+     * Fire-and-forget: called once from init(). Non-fatal on failure.
+     * Starts playback immediately if playBgm() was called while loading.
+     */
+    async _loadBgm() {
+        try {
+            const resp = await fetch(C.AUDIO_BGM_PATH);
+            if (!resp.ok) return;
+            const arrayBuf = await resp.arrayBuffer();
+            this._bgmBuffer = await this.ctx.decodeAudioData(arrayBuf);
+            if (this._bgmPending) {
+                this._bgmPending = false;
+                this._startBgmSource();
+            }
+        } catch (err) {
+            console.error('[devil_crash_pinball] BGM load error', err);
+        }
+    }
+
+    /**
+     * Begin looped background music playback.
+     * Safe to call while _bgmBuffer is still loading — playback defers until ready.
+     */
+    playBgm() {
+        if (!this.ctx) return;
+        this.stopBgm();
+        if (!this._bgmBuffer) {
+            this._bgmPending = true;
+            return;
+        }
+        this._startBgmSource();
+    }
+
+    /** Stop background music and release the source node. */
+    stopBgm() {
+        this._bgmPending = false;
+        if (!this._bgmSource) return;
+        try { this._bgmSource.stop(0); } catch (err) { console.warn('[devil_crash_pinball] BGM stop error', err); }
+        this._bgmSource.disconnect();
+        this._bgmSource = null;
+    }
+
+    /**
+     * Create and start a looping AudioBufferSourceNode connected to _bgmGain.
+     * @private
+     */
+    _startBgmSource() {
+        if (!this.ctx || !this._bgmBuffer || !this._bgmGain) return;
+        const src  = this.ctx.createBufferSource();
+        src.buffer = this._bgmBuffer;
+        src.loop   = true;
+        src.connect(this._bgmGain);
+        src.start(0);
+        this._bgmSource = src;
+    }
 
     /**
      * Play a one-shot SFX.
@@ -447,12 +530,14 @@ export class SoundManager {
             noiseFilter: { type: 'bandpass', freq: 920 },
         },
 
-        // «Hellspring» — tight spring twang; extreme FM depth (260) creates
-        // the characteristic «boing» via rapid frequency modulation transient.
+        // «Hellspring» — classic «boing»: sine starts high (880 Hz) and sweeps
+        // steeply downward (−660 Hz) over 0.38 s — the pitch-drop that defines the
+        // sound. FM (ratio 4, depth 180) adds a metallic spring-coil transient on
+        // the attack before the clean tone takes over on the release tail.
         spring: {
-            f: 480,  dur: 0.26, type: 'sine', sweep: 340, noise: 0.03, vol: 0.88,
-            fm: { ratio: 9, depth: 260 },
-            adsr: { a: 0.001, d: 0.09, s: 0.12, r: 0.14 },
+            f: 880,  dur: 0.38, type: 'sine', sweep: -660, noise: 0.02, vol: 0.92,
+            fm: { ratio: 4, depth: 180 },
+            adsr: { a: 0.001, d: 0.07, s: 0.08, r: 0.28 },
         },
 
         // «Creaking Gate» — heavy mechanical gate; slow FM (ratio 1.2) modulates
@@ -852,6 +937,7 @@ export class SoundManager {
     }
 
     destroy() {
+        this.stopBgm();
         if (this._tremoloLFO) { this._tremoloLFO.stop(0); }
         if (this.ctx) { this.ctx.close().catch(() => { /* already closed */ }); }
         this.ctx = null;

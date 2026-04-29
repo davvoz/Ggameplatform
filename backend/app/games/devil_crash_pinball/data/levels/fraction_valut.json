@@ -1,16 +1,46 @@
 {
+  "_comment": "Fracture Vault — X-cross neon diagonal ramps, magenta palette, V-bumper crown, quad slingshots. Signature: two ±45° corridors crossing at center creating unpredictable split-deflection gameplay.",
   "section": "fraction_valut",
+  "boundary": {
+    "right": 460
+  },
   "audioProfile": "inferno",
   "palette": {
-    "bg": "#0a1801",
-    "bgTop": "#00420d",
-    "wall": "#37f104",
-    "wallGlow": "#2aa771",
-    "accent": "#00fae9",
-    "accent2": "#e46b21",
-    "ink": "rgba(255,26,26,0.20)",
-    "name": "FRACTION",
-    "ambientKey": "INFERNO"
+    "bg": "#0e0018",
+    "bgTop": "#1e0030",
+    "wall": "#ff0066",
+    "wallGlow": "#cc0044",
+    "accent": "#ffdd00",
+    "accent2": "#ff6600",
+    "ink": "rgba(255,0,102,0.18)",
+    "name": "FRACTURE",
+    "ambientKey": "FRACTURE"
+  },
+  "background": {
+    "gradient": {
+      "top": "#1e0030",
+      "bottom": "#0e0018"
+    },
+    "layers": [
+      {
+        "type": "nebula",
+        "color": "#ff0066",
+        "alpha": 0.08,
+        "y": 0.38
+      },
+      {
+        "type": "nebula_bands",
+        "color": "#cc0044",
+        "alpha": 0.022,
+        "count": 4
+      },
+      {
+        "type": "scanlines",
+        "color": "#ff0066",
+        "alpha": 0.028,
+        "step": 7
+      }
+    ]
   },
   "walls": [
     {
@@ -28,262 +58,288 @@
   ],
   "corridors": [
     {
-      "cx": 170,
-      "cy": 380,
+      "_comment": "X-cross arm 1 — top-left to bottom-right diagonal",
+      "cx": 43,
+      "cy": 640,
       "angleDeg": -90,
-      "length": 296,
-      "width": 40,
+      "length": 122,
+      "width": 46,
+      "restitution": 0.68
+    },
+    {
+      "_comment": "X-cross arm 2 — top-right to bottom-left diagonal",
+      "cx": 44,
+      "cy": 491,
+      "angleDeg": 90,
+      "length": 99,
+      "width": 46,
+      "restitution": 0.68
+    },
+    {
+      "_comment": "Top divider left — guides ball from arch toward bumper V",
+      "cx": 160,
+      "cy": 80,
+      "angleDeg": 48,
+      "length": 72,
+      "width": 46,
       "restitution": 0.55
     },
     {
-      "cx": 210,
-      "cy": 380,
-      "angleDeg": -90,
-      "length": 296,
-      "width": 40,
+      "_comment": "Top divider right — mirror",
+      "cx": 370,
+      "cy": 90,
+      "angleDeg": -36,
+      "length": 86,
+      "width": 50,
       "restitution": 0.55
     },
     {
-      "cx": 250,
-      "cy": 380,
-      "angleDeg": -90,
-      "length": 296,
-      "width": 40,
-      "restitution": 0.55
-    },
-    {
-      "cx": 290,
-      "cy": 380,
-      "angleDeg": -90,
-      "length": 296,
-      "width": 40,
-      "restitution": 0.55
-    }
-  ],
-  "slingshots": [
-    {
-      "ax": 30,
-      "ay": 570,
-      "bx": 160,
-      "by": 690,
-      "nx": 0.88,
-      "ny": -0.47
-    },
-    {
-      "ax": 320,
-      "ay": 690,
-      "bx": 450,
-      "by": 570,
-      "nx": 0.88,
-      "ny": -0.47
-    }
-  ],
-  "flippers": [
-    {
-      "x": 160,
-      "y": 690,
-      "side": "LEFT",
-      "length": 64,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 320,
-      "y": 690,
-      "side": "RIGHT",
-      "length": 64,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 40,
-      "y": 180,
-      "side": "LEFT",
-      "length": 71,
-      "restAngle": 1.53,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 440,
-      "y": 140,
-      "side": "LEFT",
-      "length": 71,
-      "restAngle": 1.56,
-      "activeAngle": -0.58
-    }
-  ],
-  "springs": [
-    {
-      "x": 190,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 210,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 230,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 250,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 270,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 290,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 170,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 50,
-      "y": 530,
-      "radius": 8,
-      "angleDeg": -51,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 50,
-      "y": 490,
-      "radius": 8,
-      "angleDeg": -51,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 50,
-      "y": 450,
-      "radius": 8,
-      "angleDeg": -51,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 50,
-      "y": 410,
-      "radius": 8,
-      "angleDeg": -51,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 310,
-      "y": 580,
-      "radius": 8,
-      "angleDeg": -90,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 230,
-      "y": 200,
-      "radius": 8,
-      "angleDeg": -90,
-      "power": 1300,
-      "cooldown": 0.4
-    }
-  ],
-  "curvedCorridors": [
-    {
-      "cx": 100,
-      "cy": 230,
-      "midRadius": 70,
-      "width": 40,
-      "startAngleDeg": -57,
-      "angularSpanDeg": 57,
-      "segments": 12,
-      "restitution": 0.55
-    },
-    {
-      "cx": 360,
-      "cy": 240,
-      "midRadius": 71,
-      "width": 40,
-      "startAngleDeg": -174,
-      "angularSpanDeg": 62,
-      "segments": 12,
-      "restitution": 0.77
+      "_comment": "X-cross arm 2 — top-right to bottom-left diagonal",
+      "cx": 44,
+      "cy": 340,
+      "angleDeg": 90,
+      "length": 99,
+      "width": 46,
+      "restitution": 0.68
     }
   ],
   "bumpers": [
     {
-      "x": 380,
+      "_comment": "V-crown top center",
+      "x": 200,
       "y": 260
     },
     {
-      "x": 380,
-      "y": 340
+      "_comment": "V-crown left",
+      "x": 240,
+      "y": 490
     },
     {
-      "x": 380,
-      "y": 420
+      "_comment": "V-crown right",
+      "x": 250,
+      "y": 200
     },
     {
-      "x": 390,
-      "y": 510
+      "_comment": "V-crown lower-left",
+      "x": 240,
+      "y": 330
     },
     {
-      "x": 90,
-      "y": 320
-    },
-    {
-      "x": 90,
-      "y": 40
+      "_comment": "V-crown lower-right",
+      "x": 260,
+      "y": 410
     }
   ],
-  "pendulums": [
+  "dropTargets": [
+    {
+      "_comment": "Left diagonal bank",
+      "x": 340,
+      "y": 200
+    },
+    {
+      "x": 340,
+      "y": 260
+    },
+    {
+      "x": 340,
+      "y": 280
+    },
+    {
+      "_comment": "Right diagonal bank — mirror",
+      "x": 340,
+      "y": 220
+    },
+    {
+      "x": 340,
+      "y": 240
+    },
+    {
+      "x": 340,
+      "y": 300
+    }
+  ],
+  "slingshots": [
+    {
+      "_comment": "High-left — flanks upper X arm",
+      "ax": 116,
+      "ay": 300,
+      "bx": 144,
+      "by": 336,
+      "nx": 2.83,
+      "ny": -0.56
+    },
+    {
+      "_comment": "High-right — mirror",
+      "ax": 440,
+      "ay": 380,
+      "bx": 405,
+      "by": 415,
+      "nx": -1.83,
+      "ny": -3.56
+    },
+    {
+      "_comment": "Low-left classic",
+      "ax": 98,
+      "ay": 459,
+      "bx": 143,
+      "by": 505,
+      "nx": 2.82,
+      "ny": -2.57
+    },
+    {
+      "_comment": "Low-right classic — mirror",
+      "ax": 382,
+      "ay": 541,
+      "bx": 354,
+      "by": 569,
+      "nx": -0.82,
+      "ny": -0.57
+    },
+    {
+      "_comment": "High-right — mirror",
+      "ax": 440,
+      "ay": 170,
+      "bx": 410,
+      "by": 210,
+      "nx": -0.83,
+      "ny": -0.56
+    },
+    {
+      "_comment": "High-right — mirror",
+      "ax": 430,
+      "ay": 460,
+      "bx": 400,
+      "by": 500,
+      "nx": -0.83,
+      "ny": -1.56
+    },
+    {
+      "_comment": "Low-right classic — mirror",
+      "ax": 100,
+      "ay": 250,
+      "bx": 80,
+      "by": 210,
+      "nx": -0.82,
+      "ny": -0.57
+    }
+  ],
+  "kickers": [
+    {
+      "_comment": "Left kicker at X-center — launches ball toward right cluster",
+      "x": 170,
+      "y": 580,
+      "w": 16,
+      "h": 46,
+      "dirX": 3,
+      "dirY": -2,
+      "power": 880
+    },
+    {
+      "_comment": "Right kicker at X-center — mirror",
+      "x": 310,
+      "y": 610,
+      "w": 16,
+      "h": 46,
+      "dirX": -3,
+      "dirY": -2,
+      "power": 880
+    }
+  ],
+  "springs": [
+    {
+      "_comment": "Left arch deflector — catches ball falling from left crown divider",
+      "x": 148,
+      "y": 178,
+      "radius": 13,
+      "angleDeg": 35,
+      "power": 1050,
+      "cooldown": 0.45
+    },
+    {
+      "_comment": "Right arch deflector — mirror",
+      "x": 380,
+      "y": 150,
+      "radius": 13,
+      "angleDeg": 145,
+      "power": 1050,
+      "cooldown": 0.45
+    }
+  ],
+  "flippers": [
+    {
+      "_comment": "Main left flipper",
+      "x": 140,
+      "y": 658,
+      "side": "LEFT",
+      "length": 88,
+      "restAngle": 0.43,
+      "activeAngle": -0.58
+    },
+    {
+      "_comment": "Main right flipper",
+      "x": 340,
+      "y": 658,
+      "side": "RIGHT",
+      "length": 88,
+      "restAngle": 0.43,
+      "activeAngle": -0.58
+    },
+    {
+      "_comment": "Side left flipper — wall shot into X",
+      "x": 100,
+      "y": 350,
+      "side": "LEFT",
+      "length": 62,
+      "restAngle": 1.56,
+      "activeAngle": -0.62
+    },
+    {
+      "_comment": "Side right flipper — mirror",
+      "x": 440,
+      "y": 630,
+      "side": "RIGHT",
+      "length": 62,
+      "restAngle": 1.56,
+      "activeAngle": -0.62
+    }
+  ],
+  "gates": [
+    {
+      "_comment": "Top-left entry gate",
+      "x1": 50,
+      "x2": 125,
+      "y": 10,
+      "dir": 1
+    },
+    {
+      "_comment": "Top-right entry gate",
+      "x1": 355,
+      "x2": 430,
+      "y": 10,
+      "dir": 1
+    },
+    {
+      "_comment": "Bottom exit gate",
+      "x1": 140,
+      "x2": 340,
+      "y": 715,
+      "dir": -1
+    }
+  ],
+  "warps": [
     {
       "x": 240,
-      "y": 20,
-      "armLength": 80,
-      "velX": 0.88,
-      "velY": 0.52,
-      "slideRange": 100,
-      "slideSpeed": 0.9
+      "y": 80,
+      "radius": 18
     }
   ],
   "warpExits": [
     {
       "fromSection": "minussa_valut",
-      "x": 360,
-      "y": 50,
+      "x": 350,
+      "y": 380,
       "vx": 0,
-      "vy": -650
+      "vy": -600
     }
   ]
 }

@@ -12,14 +12,19 @@ export class PhysicsWorld {
 
     /**
      * @param {number} dt
-     * @param {{resolve: function(Ball): void}} activeSection
+     * @param {{resolve: function(Ball): void} | function(Ball): {resolve: function(Ball): void}} sectionOrResolver
+     *   Pass a Section directly, or a function (ball) => Section to re-evaluate the active
+     *   section every substep. The latter prevents cross-boundary tunneling when the ball
+     *   crosses a section edge mid-frame.
      */
-    step(dt, activeSection) {
+    step(dt, sectionOrResolver) {
         const subDt = dt / C.PHYSICS_SUBSTEPS;
+        const isDynamic = typeof sectionOrResolver === 'function';
         for (let i = 0; i < C.PHYSICS_SUBSTEPS; i++) {
             this.ball.prevPos.copy(this.ball.pos); // snapshot before integration (CCD)
             this.ball.integrate(subDt);
-            activeSection.resolve(this.ball);
+            const section = isDynamic ? sectionOrResolver(this.ball) : sectionOrResolver;
+            section.resolve(this.ball, subDt);
         }
         this.ball.pushTrail();
     }

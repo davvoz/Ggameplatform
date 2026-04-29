@@ -4,6 +4,15 @@ import { EntityInspector }  from './EntityInspector.js';
 import { Toolbar }          from './Toolbar.js';
 import { setLevelKeys }     from './EntityDefs.js';
 
+// ── Security helpers ──────────────────────────────────────────────────────────
+const VALID_LEVEL_KEY_RE = /^[a-zA-Z0-9_-]+$/;
+function validateKey(key) {
+    if (typeof key !== 'string' || !VALID_LEVEL_KEY_RE.test(key)) {
+        throw new Error('Invalid level key');
+    }
+    return key;
+}
+
 const BASE_URL = '../data/levels';
 
 // ── Load board.json, then all section configs ────────────────────────────────
@@ -16,7 +25,7 @@ try {
 
     const entries = await Promise.all(
         LEVEL_KEYS.map(async key => {
-            const res = await fetch(`${BASE_URL}/${key}.json`);
+            const res = await fetch(`${BASE_URL}/${encodeURIComponent(validateKey(key))}.json`);
             if (!res.ok) throw new Error(`HTTP ${res.status} for ${key}.json`);
             return [key, await res.json()];
         })
@@ -24,12 +33,19 @@ try {
     configs = Object.fromEntries(entries);
     setLevelKeys(LEVEL_KEYS);
 } catch (err) {
-    document.body.innerHTML = `<div style="color:#f88;font:16px monospace;padding:40px">
-        <b>Failed to load level configs.</b><br><br>
-        ${err.message}<br><br>
-        Open this tool through the game server:<br>
-        <code>http://localhost:PORT/games/devil_crash_pinball/tools/level-editor.html</code>
-    </div>`;
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'color:#f88;font:16px monospace;padding:40px';
+    const bold = document.createElement('b');
+    bold.textContent = 'Failed to load level configs.';
+    const code = document.createElement('code');
+    code.textContent = 'http://localhost:PORT/games/devil_crash_pinball/tools/level-editor.html';
+    errDiv.append(
+        bold, document.createElement('br'), document.createElement('br'),
+        err.message, document.createElement('br'), document.createElement('br'),
+        'Open this tool through the game server:', document.createElement('br'),
+        code
+    );
+    document.body.replaceChildren(errDiv);
     throw err;
 }
 
@@ -180,20 +196,46 @@ function _rebuildBoardOrderList() {
         const cfg      = editor.getConfig(key);
         const label    = (cfg?.section ?? key).replaceAll('_', ' ').toUpperCase();
         const hasBall  = Array.isArray(cfg?.ballStarts) && cfg.ballStarts.length > 0;
-        const badges   = hasBall ? '<span class="bo-badge bo-badge-ball" title="Ball Start qui">🎯 BALL START</span>' : '';
-        const li    = document.createElement('li');
-        li.className     = 'board-order-row' + (hasBall ? ' bo-ballstart' : '');
-        li.draggable     = true;
-        li.dataset.idx   = i;
-        li.innerHTML = `
-            <span class="bo-handle" title="Trascina per riordinare">⠿</span>
-            <span class="bo-index">[${i}]</span>
-            <span class="bo-name">${label}${badges}</span>
-            <span class="bo-y">Y ${i * 720}–${(i + 1) * 720}</span>
-            <span class="bo-arrows">
-                <button type="button" class="bo-up"   data-idx="${i}" title="Sposta su"   ${i === 0 ? 'disabled' : ''}>▲</button>
-                <button type="button" class="bo-down" data-idx="${i}" title="Sposta giù" ${i === lastIdx ? 'disabled' : ''}>▼</button>
-            </span>`;
+        const li = document.createElement('li');
+        li.className = 'board-order-row' + (hasBall ? ' bo-ballstart' : '');
+        li.draggable = true;
+        li.dataset.idx = i;
+
+        const handleSpan = document.createElement('span');
+        handleSpan.className = 'bo-handle';
+        handleSpan.title = 'Trascina per riordinare';
+        handleSpan.textContent = '⠿';
+
+        const idxSpan = document.createElement('span');
+        idxSpan.className = 'bo-index';
+        idxSpan.textContent = `[${i}]`;
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'bo-name';
+        nameSpan.textContent = label;
+        if (hasBall) {
+            const badge = document.createElement('span');
+            badge.className = 'bo-badge bo-badge-ball';
+            badge.title = 'Ball Start qui';
+            badge.textContent = '🎯 BALL START';
+            nameSpan.appendChild(badge);
+        }
+
+        const ySpan = document.createElement('span');
+        ySpan.className = 'bo-y';
+        ySpan.textContent = `Y ${i * 720}–${(i + 1) * 720}`;
+
+        const arrowsSpan = document.createElement('span');
+        arrowsSpan.className = 'bo-arrows';
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button'; upBtn.className = 'bo-up'; upBtn.dataset.idx = i;
+        upBtn.title = 'Sposta su'; upBtn.textContent = '▲'; upBtn.disabled = (i === 0);
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button'; downBtn.className = 'bo-down'; downBtn.dataset.idx = i;
+        downBtn.title = 'Sposta giù'; downBtn.textContent = '▼'; downBtn.disabled = (i === lastIdx);
+        arrowsSpan.append(upBtn, downBtn);
+
+        li.append(handleSpan, idxSpan, nameSpan, ySpan, arrowsSpan);
 
         li.addEventListener('dragstart', e => {
             _dragSrcIdx = i;

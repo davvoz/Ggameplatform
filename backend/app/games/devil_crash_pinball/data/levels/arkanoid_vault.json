@@ -1,6 +1,9 @@
 {
   "_comment": "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
   "section": "arkanoid_vault",
+  "boundary": {
+    "right": 460
+  },
   "audioProfile": "crystal_vault",
   "palette": {
     "bg": "#000810",
@@ -52,149 +55,105 @@
       "by": 720
     },
     {
-      "ax": 340,
-      "ay": 560,
-      "bx": 360,
-      "by": 610
+      "ax": 270,
+      "ay": 290,
+      "bx": 320,
+      "by": 330
     },
     {
-      "ax": 350,
-      "ay": 420,
-      "bx": 420,
-      "by": 470
-    },
-    {
-      "ax": 419,
-      "ay": 232,
-      "bx": 460,
-      "by": 185
-    },
-    {
-      "ax": 360,
-      "ay": 300,
-      "bx": 420,
-      "by": 400
+      "ax": 120,
+      "ay": 10,
+      "bx": 60,
+      "by": 270
     }
   ],
   "brickGrids": [
     {
-      "x": 178,
-      "cols": 5,
+      "x": 200,
+      "cols": 7,
       "rows": 4,
-      "brickW": 28,
-      "brickH": 18,
-      "gapX": 10,
-      "gapY": 12,
-      "startY": 137
+      "brickW": 16,
+      "brickH": 14,
+      "gapX": 6,
+      "gapY": 8,
+      "startY": 43
     }
   ],
   "slingshots": [
     {
-      "ax": 20,
-      "ay": 410,
-      "bx": 88,
-      "by": 495,
-      "nx": 0.86,
-      "ny": -0.51
-    },
-    {
-      "ax": 410,
-      "ay": 470,
-      "bx": 342,
-      "by": 555,
-      "nx": -0.86,
-      "ny": -0.51
-    },
-    {
-      "ax": 20,
-      "ay": 520,
-      "bx": 100,
-      "by": 630,
+      "ax": 260,
+      "ay": 270,
+      "bx": 160,
+      "by": 300,
       "nx": 0.88,
       "ny": -0.47
     }
   ],
   "flippers": [
     {
+      "x": 150,
+      "y": 580,
+      "side": "LEFT",
+      "length": 84,
+      "restAngle": 1.58,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 290,
+      "y": 580,
+      "side": "RIGHT",
+      "length": 84,
+      "restAngle": 1.57,
+      "activeAngle": -0.58
+    },
+    {
+      "x": 80,
+      "y": 300,
+      "side": "LEFT",
+      "length": 34,
+      "restAngle": 1.58,
+      "activeAngle": -0.58
+    },
+    {
       "x": 130,
-      "y": 620,
-      "side": "LEFT",
-      "length": 97,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 334,
-      "y": 564,
-      "side": "RIGHT",
-      "length": 87,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 97,
-      "y": 501,
-      "side": "LEFT",
-      "length": 85,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 350,
-      "y": 420,
-      "side": "RIGHT",
-      "length": 81,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 70,
-      "y": 320,
-      "side": "LEFT",
-      "length": 64,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 360,
       "y": 300,
       "side": "RIGHT",
-      "length": 64,
-      "restAngle": 0.42,
-      "activeAngle": -0.58
-    },
-    {
-      "x": 280,
-      "y": 60,
-      "side": "LEFT",
-      "length": 64,
-      "restAngle": 1.55,
+      "length": 34,
+      "restAngle": 1.58,
       "activeAngle": -0.58
     }
   ],
   "corridors": [
     {
       "cx": 440,
-      "cy": 595,
+      "cy": 585,
       "angleDeg": 90,
-      "length": 250,
+      "length": 270,
       "width": 40,
       "restitution": 0.55
     },
     {
       "cx": 440,
-      "cy": 353,
+      "cy": 330,
       "angleDeg": -90,
-      "length": 95,
+      "length": 120,
       "width": 40,
       "restitution": 0.55
     },
     {
-      "cx": 364,
-      "cy": 64,
-      "angleDeg": 90,
-      "length": 136,
-      "width": 192,
+      "cx": 357,
+      "cy": 350,
+      "angleDeg": 61,
+      "length": 69,
+      "width": 40,
+      "restitution": 0.55
+    },
+    {
+      "cx": 40,
+      "cy": 500,
+      "angleDeg": -90,
+      "length": 395,
+      "width": 40,
       "restitution": 0.55
     }
   ],
@@ -203,10 +162,10 @@
       "x": 440,
       "y": 720,
       "radius": 20,
-      "angleDeg": 270,
+      "angleDeg": -90,
       "maxPower": 2000,
       "chargeTime": 1.2,
-      "maxExtension": 80
+      "maxExtension": 107
     }
   ],
   "springs": [
@@ -214,99 +173,246 @@
       "x": 360,
       "y": 630,
       "radius": 20,
-      "angleDeg": -177,
-      "power": 1300,
-      "cooldown": 0.4
+      "angleDeg": -180,
+      "power": 1050,
+      "cooldown": 0.45
     },
     {
-      "x": 350,
-      "y": 660,
+      "x": 370,
+      "y": 690,
       "radius": 16,
-      "angleDeg": -151,
-      "power": 1300,
-      "cooldown": 0.4
+      "angleDeg": 180,
+      "power": 1050,
+      "cooldown": 0.45
     },
     {
       "x": 380,
       "y": 290,
       "radius": 19,
       "angleDeg": -121,
-      "power": 1300,
-      "cooldown": 0.4
+      "power": 1420,
+      "cooldown": 0.35
     },
     {
-      "x": 40,
-      "y": 284,
-      "radius": 13,
-      "angleDeg": -96,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 430,
-      "y": 180,
+      "x": 390,
+      "y": 590,
       "radius": 10,
-      "angleDeg": -139,
+      "angleDeg": 179,
+      "power": 1280,
+      "cooldown": 0.4
+    },
+    {
+      "x": 400,
+      "y": 280,
+      "radius": 8,
+      "angleDeg": -122,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 400,
+      "y": 260,
+      "radius": 8,
+      "angleDeg": -122,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 350,
+      "y": 270,
+      "radius": 8,
+      "angleDeg": -122,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 390,
+      "y": 230,
+      "radius": 8,
+      "angleDeg": -122,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 380,
+      "y": 260,
+      "radius": 8,
+      "angleDeg": -122,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 360,
+      "y": 250,
+      "radius": 8,
+      "angleDeg": -122,
       "power": 1300,
       "cooldown": 0.4
     }
   ],
   "bumpers": [
     {
-      "x": 219,
-      "y": 320
-    },
-    {
-      "x": 213,
-      "y": 473
+      "x": 290,
+      "y": 390
     }
   ],
   "curvedCorridors": [
     {
       "cx": 370,
-      "cy": 310,
+      "cy": 270,
       "midRadius": 70,
       "width": 40,
       "startAngleDeg": -57,
       "angularSpanDeg": 55,
       "segments": 12,
       "restitution": 0.55
+    },
+    {
+      "cx": 420,
+      "cy": 360,
+      "midRadius": 50,
+      "width": 40,
+      "startAngleDeg": 121,
+      "angularSpanDeg": 31,
+      "segments": 12,
+      "restitution": 0.55
     }
   ],
   "warps": [
     {
-      "x": 170,
-      "y": 110,
+      "x": 198,
+      "y": 82,
       "radius": 18
     }
   ],
   "warpExits": [
     {
       "fromSection": "abyss_floor",
-      "x": 266,
-      "y": 375,
+      "x": 190,
+      "y": 210,
       "vx": 0,
       "vy": -650
     }
   ],
   "kickers": [
     {
-      "x": 410,
-      "y": 60,
-      "w": 77,
-      "h": 37,
+      "x": 450,
+      "y": 170,
+      "w": 10,
+      "h": 16,
       "angleDeg": 0,
       "dirX": 0,
       "dirY": -1,
-      "power": 1000
+      "power": 1
+    },
+    {
+      "x": 450,
+      "y": 210,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 450,
+      "y": 190,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 440,
+      "y": 200,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 430,
+      "y": 190,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 110,
+      "y": 690,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 110,
+      "y": 600,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 110,
+      "y": 550,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 110,
+      "y": 500,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 110,
+      "y": 450,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 110,
+      "y": 640,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
     }
   ],
-  "gates": [
+  "gears": [
     {
-      "x1": 180,
-      "x2": 260,
-      "y": 10,
-      "dir": -1
+      "x": 360,
+      "y": 80,
+      "teeth": 3,
+      "speed": 2,
+      "angularSpeed": 3
     }
   ]
 }

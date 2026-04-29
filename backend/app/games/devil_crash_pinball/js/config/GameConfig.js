@@ -22,7 +22,8 @@ export const GameConfig = Object.freeze({
     BALL_RESTITUTION_SLING: 1.15,
     BALL_RESTITUTION_TARGET: 0.5,
     BALL_DAMPING: 1,                // no air friction; only collisions lose energy
-    PHYSICS_SUBSTEPS: 8,
+    PHYSICS_SUBSTEPS: 16,     // 16 substeps → max ~6.9 px/substep at dt=50ms (safely < BALL_RADIUS)
+    WALL_SKIN: 2,             // extra detection margin for wall segments: ball bounces 2px before visual wall
 
     // Flipper
     FLIPPER_LENGTH: 64,
@@ -130,11 +131,13 @@ export const GameConfig = Object.freeze({
     INPUT_LAUNCH_KEY: 'ArrowDown',
     INPUT_TILT_KEY: 'KeyT',
 
-    // Audio (SFX-only; background music removed by design)
+    // Audio
     AUDIO_MASTER: 0.22,
     AUDIO_DEFAULT_MUTED: false,
     AUDIO_PROFILE_TRANSITION: 0.55,   // s — LP / reverb / comp crossfade on section change
     AUDIO_DEFAULT_PROFILE: 'inferno', // profile id applied at game start
+    AUDIO_BGM_VOLUME: 0.35,           // background music gain (feeds into master chain)
+    AUDIO_BGM_PATH:   'assets/background/PINBALL2.mp3',
 
     // Anti-stuck (last-resort rescue only — real pinball never needs it)
     STUCK_VEL_THRESHOLD: 25,
@@ -166,9 +169,12 @@ export const GameConfig = Object.freeze({
     // HUD canvas action buttons (canvas pixel space, VIEW_WIDTH=480, top bar=40px)
     // Guard: touch events with yN < HUD_ZONE_Y land in the top bar → not a flipper zone.
     HUD_ZONE_Y:       0.056,          // fraction of VIEW_HEIGHT (≈ 40/720)
-    HUD_BTN_Y:        8,              // top edge of both buttons (px)
+    HUD_BTN_Y:        8,              // top edge of all buttons (px)
     HUD_BTN_W:        44,             // button width (px)
     HUD_BTN_H:        24,             // button height (px)
-    HUD_BTN_RESCUE_X: 192,            // RESET button left edge — centres pair at x=240
-    HUD_BTN_TILT_X:   244,            // TILT  button left edge
+    HUD_BTN_RESCUE_X: 144,            // RESET button left edge
+    HUD_BTN_TILT_X:   196,            // TILT  button left edge
+    HUD_BTN_BGM_X:    248,            // BGM toggle left edge
+    HUD_BTN_SFX_X:    300,            // SFX toggle left edge
+    HUD_BTN_PAUSE_X:  352,            // PAUSE toggle left edge
 });

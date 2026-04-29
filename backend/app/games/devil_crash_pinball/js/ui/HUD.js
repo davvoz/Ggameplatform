@@ -84,9 +84,13 @@ export class HUD {
      */
     static hitTest(cx, cy) {
         const { HUD_BTN_RESCUE_X: rx, HUD_BTN_TILT_X: tx,
+                HUD_BTN_BGM_X: bgmx, HUD_BTN_SFX_X: sfxx, HUD_BTN_PAUSE_X: px,
                 HUD_BTN_Y: by, HUD_BTN_W: bw, HUD_BTN_H: bh } = C;
-        if (cx >= rx && cx <= rx + bw && cy >= by && cy <= by + bh) return 'rescue';
-        if (cx >= tx && cx <= tx + bw && cy >= by && cy <= by + bh) return 'tilt';
+        if (cx >= rx   && cx <= rx   + bw && cy >= by && cy <= by + bh) return 'rescue';
+        if (cx >= tx   && cx <= tx   + bw && cy >= by && cy <= by + bh) return 'tilt';
+        if (cx >= bgmx && cx <= bgmx + bw && cy >= by && cy <= by + bh) return 'bgm';
+        if (cx >= sfxx && cx <= sfxx + bw && cy >= by && cy <= by + bh) return 'sfx';
+        if (cx >= px   && cx <= px   + bw && cy >= by && cy <= by + bh) return 'pause';
         return null;
     }
 
@@ -98,15 +102,30 @@ export class HUD {
      * @private
      */
     _drawActionButtons(data) {
-        if (data.gameState !== 2) return;   // GameState.PLAY
         const { HUD_BTN_RESCUE_X: rx, HUD_BTN_TILT_X: tx,
+                HUD_BTN_BGM_X: bgmx, HUD_BTN_SFX_X: sfxx, HUD_BTN_PAUSE_X: pausex,
                 HUD_BTN_Y: by, HUD_BTN_W: bw, HUD_BTN_H: bh } = C;
-        // Pulse factor: smooth sine oscillation at ~1.4 Hz when RESET is active.
-        const pulseFactor = data.isStuck
-            ? 0.5 + 0.5 * Math.sin(this._rescuePulse * Math.PI * 2.8)
-            : 0;
-        this._drawHudButton({ x: rx, y: by, w: bw, h: bh, label: 'RESET', lit: !!data.isStuck, litColor: C.COLOR_PURPLE, pulse: pulseFactor });
-        this._drawHudButton({ x: tx, y: by, w: bw, h: bh, label: 'TILT', lit: !data.tilted, litColor: '#ff6622', pulse: 0 });
+
+        // RESET & TILT — only during active play
+        if (data.gameState === 2) {
+            const pulseFactor = data.isStuck
+                ? 0.5 + 0.5 * Math.sin(this._rescuePulse * Math.PI * 2.8)
+                : 0;
+            this._drawHudButton({ x: rx, y: by, w: bw, h: bh, label: 'RESET', lit: !!data.isStuck, litColor: C.COLOR_PURPLE, pulse: pulseFactor });
+            this._drawHudButton({ x: tx, y: by, w: bw, h: bh, label: 'TILT',  lit: !data.tilted,   litColor: '#ff6622',      pulse: 0 });
+        }
+
+        // BGM, SFX, PAUSE — always visible
+        this._drawHudButton({ x: bgmx,  y: by, w: bw, h: bh, label: '\u266b BGM', lit: !data.bgmMuted,              litColor: '#00e5ff', pulse: 0 });
+        this._drawHudButton({ x: sfxx,  y: by, w: bw, h: bh, label: 'SFX',        lit: !data.muted,                 litColor: '#aa44ff', pulse: 0 });
+        const isPaused = data.gameState === 4;
+        const pauseLit = data.gameState === 2 || isPaused;
+        this._drawHudButton({ x: pausex, y: by, w: bw, h: bh,
+            label:    isPaused ? '\u25b6 GO' : 'PAUSE',
+            lit:      pauseLit,
+            litColor: isPaused ? '#44ff88' : '#ffcc00',
+            pulse:    0,
+        });
     }
 
     /**

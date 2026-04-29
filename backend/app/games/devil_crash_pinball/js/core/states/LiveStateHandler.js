@@ -10,12 +10,11 @@ import { GameStateHandler } from './GameStateHandler.js';
 export class LiveStateHandler extends GameStateHandler {
     update(dt) {
         const g = this._game;
-        g._checkHudButtons();
         g._handleTilt();
         g._updateFlippers();
         this._updateInput(dt);
-        g._stepPhysicsAndSection(dt);
-        g.board.update(dt);
+        g.board.update(dt);           // entities move BEFORE physics so collisions
+        g._stepPhysicsAndSection(dt); // resolve against current-frame positions
         g.score.update(dt);
         if (g.ballSaveTimer > 0) g.ballSaveTimer = Math.max(0, g.ballSaveTimer - dt);
         g._checkReplunge();

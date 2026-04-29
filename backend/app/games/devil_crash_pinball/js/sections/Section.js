@@ -41,6 +41,12 @@ export class Section {
         this.height = C.SECTION_HEIGHT;
         this.palette      = cfg.palette;
         this.background   = cfg.background ?? null;
+        // Per-section right playfield boundary (from JSON "boundary.right").
+        // Sections with a hard right wall at x<WORLD_WIDTH declare it so
+        // _clampToBoundary can catch balls that tunnelled through the wall.
+        // Sections that legitimately share the right edge (e.g. launch channel
+        // in main_table) omit it, defaulting to WORLD_WIDTH.
+        this._rightBound  = cfg.boundary?.right ?? C.WORLD_WIDTH;
         /** @type {string} Audio profile id — drives SoundManager.applyProfile() on section entry. */
         this.audioProfile = cfg.audioProfile ?? C.AUDIO_DEFAULT_PROFILE;
 
@@ -105,11 +111,16 @@ export class Section {
     /**
      * Resolve ball collisions against all owned colliders. Called by physics.
      * @param {import('../physics/Ball.js').Ball} ball
+     * @param {number} [dt=0] substep delta-time (used by environmental forces, e.g. boss wind)
      */
-    resolve(ball) {
+    resolve(ball, dt = 0) {
         if (this._resolveInterceptors(ball)) return;
 
         const prevY = ball.pos.y - ball.vel.y * (1 / 60);
+
+        // Environmental forces (boss wind etc.) — applied before collisions
+        // so the resolved velocity already accounts for the push this substep.
+        if (this.boss?.applyWindToBall) this.boss.applyWindToBall(ball, dt);
 
         // Walls (static lines)
         this.resolveWallCollisions(ball);
@@ -170,8 +181,8 @@ export class Section {
      */
     _clampToBoundary(ball) {
         const r    = ball.radius;
-        const xMin = 20 + r;        // inside left wall at x=20
-        const xMax = this.width - r; // canvas right edge (launch channel must not be clamped)
+        const xMin = 20 + r;              // inside left wall at x=20
+        const xMax = this._rightBound - r; // right playfield wall (or canvas edge if no wall declared)
         if (ball.pos.x < xMin) {
             ball.pos.x = xMin;
             if (ball.vel.x < 0) ball.vel.x = Math.abs(ball.vel.x) * C.BALL_RESTITUTION_WALL;
@@ -200,7 +211,14 @@ export class Section {
         if (!this.boss?.isAlive()) return;
         if (this.boss.state < 1 || this.boss.state === 4) return;
         const hit = Collisions.circleVsCircle(ball, this.boss.x, this.boss.y, this.boss.radius, 0.9);
-        if (hit) this.boss.hit(1);
+        if (hit) {
+            // Contact normal pointing from ball toward boss center — drives the
+            // boss animation rig (recoil, squash) in the correct direction.
+            const dx = this.boss.x - ball.pos.x;
+            const dy = this.boss.y - ball.pos.y;
+            const len = Math.hypot(dx, dy) || 1;
+            this.boss.hit(1, dx / len, dy / len);
+        }
     }
 
     /** Helper: build a wall segment with default restitution. */
@@ -359,7 +377,15 @@ export class Section {
     /** @private */
     _buildGears(gears, top) {
         for (const g of gears ?? []) {
-            const gear = new SpinningGear(g.x, top + g.y, g.teeth, g.speed, g.angularSpeed);
+            // Constructor signature is (x, y, radius, teethCount, angularSpeed).
+            // JSON keys: x, y, radius?, teeth, angularSpeed (legacy `speed` accepted as fallback).
+            const gear = new SpinningGear(
+                g.x,
+                top + g.y,
+                g.radius,
+                g.teeth,
+                g.angularSpeed ?? g.speed,
+            );
             gear.onHit = (s) => this._emit(s, 'bumper');
             this.gears.push(gear);
         }

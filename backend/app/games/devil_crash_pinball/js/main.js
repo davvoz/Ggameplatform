@@ -11,11 +11,14 @@ if (canvas) {
     const game = new Game(canvas);
 
     if (fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', () => {
+        fullscreenBtn.addEventListener('click', (ev) => {
             const sdk = typeof globalThis !== 'undefined' && globalThis.PlatformSDK;
             if (sdk && typeof sdk.toggleFullscreen === 'function') sdk.toggleFullscreen();
             else if (document.fullscreenElement) document.exitFullscreen();
             else document.documentElement.requestFullscreen().catch(() => {});
+            // Return focus to the page so subsequent keyboard input reaches
+            // the game (a focused button would swallow Space/arrows).
+            ev.currentTarget.blur();
         });
     }
 

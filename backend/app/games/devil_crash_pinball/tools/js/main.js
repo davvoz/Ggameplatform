@@ -79,7 +79,28 @@ undoBtn.addEventListener('click', () => editor.undo());
 redoBtn.addEventListener('click', () => editor.redo());
 
 // ── Export buttons ────────────────────────────────────────────────────────────
+
+/**
+ * Validates editor state before any export. On hard errors, blocks the action
+ * unless the user explicitly confirms an override. On warnings, logs and
+ * proceeds. Returns true if the caller may continue with the download.
+ * @param {string} actionLabel  human-readable label for the confirm dialog
+ */
+function gateExport(actionLabel) {
+    const { errors, warnings } = editor.validate();
+    if (warnings.length > 0) {
+        console.warn(`[LevelValidator] ${warnings.length} warning(s):`, warnings);
+    }
+    if (errors.length === 0) return true;
+    const lines = errors.map(e => `  • ${e.msg}`).join('\n');
+    const msg =
+        `⚠ ${errors.length} validation error(s) — runtime will crash on load:\n\n${lines}\n\n` +
+        `${actionLabel} anyway? (NOT recommended)`;
+    return globalThis.confirm(msg);
+}
+
 document.getElementById('btn-export').addEventListener('click', () => {
+    if (!gateExport('Export current section')) return;
     const json = editor.exportJson();
     const key  = editor.currentLevel;
     const blob = new Blob([json], { type: 'application/json' });
@@ -90,6 +111,7 @@ document.getElementById('btn-export').addEventListener('click', () => {
 });
 
 document.getElementById('btn-copy').addEventListener('click', async () => {
+    if (!gateExport('Copy current section JSON')) return;
     const json = editor.exportJson();
     await navigator.clipboard.writeText(json);
     const copyBtn = document.getElementById('btn-copy');
@@ -100,6 +122,7 @@ document.getElementById('btn-copy').addEventListener('click', async () => {
 
 // ── Export All (every section + board.json) ───────────────────────────────────
 document.getElementById('btn-export-board').addEventListener('click', () => {
+    if (!gateExport('Export ALL sections + board.json')) return;
     const files = editor.exportAllJson();
     for (const [filename, json] of Object.entries(files)) {
         const blob = new Blob([json], { type: 'application/json' });
@@ -288,6 +311,7 @@ document.getElementById('btn-board-order').addEventListener('click', () => {
 });
 
 document.getElementById('btn-board-save').addEventListener('click', () => {
+    if (!gateExport('Save board.json')) return;
     const json = editor.exportBoardJson();
     const blob = new Blob([json], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);

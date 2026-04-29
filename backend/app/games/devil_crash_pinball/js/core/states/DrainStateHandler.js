@@ -1,14 +1,11 @@
 import { GameStateHandler } from './GameStateHandler.js';
 
 /**
- * Handles BALL_DRAIN: drives the animated implode → hold → spawn sequence.
- * Board entities keep animating; camera follows the ball during travel.
+ * Handles BALL_DRAIN: drives the animated implode \u2192 hold \u2192 spawn sequence.
+ * Delegates to {@link Game#tickDrain}.
  */
 export class DrainStateHandler extends GameStateHandler {
     update(dt) {
-        const g = this._game;
-        g._updateDrain(dt);
-        g.board.update(dt);
-        g.renderer.follow(g.ball, dt);
+        this._game.tickDrain(dt);
     }
 }

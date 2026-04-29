@@ -105,26 +105,9 @@ export class BossRenderer {
             case 'demon':  this._drawDemon(boss, p);  break;
             case 'golem':  this._drawGolem(boss, p);  break;
             case 'witch':  this._drawWitch(boss, p);  break;
-            default:       this._drawGeneric(boss, p);
+            default:
+                throw new Error(`[BossRenderer] Unknown drawType: '${boss.drawType}'`);
         }
-    }
-
-    /** @private — fallback skull boss for unknown drawType. */
-    _drawGeneric(boss, p) {
-        const ctx = this._ctx;
-        const r   = boss.radius;
-        const flash = boss.flash > 0;
-        ctx.save();
-        ctx.shadowColor = p.wallGlow;
-        ctx.shadowBlur  = 22;
-        const g = ctx.createRadialGradient(boss.x, boss.y - r * 0.3, r * 0.2, boss.x, boss.y, r);
-        g.addColorStop(0, flash ? '#fff' : '#ffaaaa');
-        g.addColorStop(1, p.wall);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(boss.x, boss.y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
     }
 
     // ──────────────────────────────────────────────────────────────────────────

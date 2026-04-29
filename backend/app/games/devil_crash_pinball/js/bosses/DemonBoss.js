@@ -49,7 +49,6 @@ export class DemonBoss extends Boss {
         this.windStrength   = 0;
         this.corePulse      = 0;
         this.jawOpen        = 0;
-        this.mouthOpen      = 0;        // legacy alias
 
         this._sub        = SUB.HOVER;
         this._subTimer   = 0;
@@ -78,7 +77,6 @@ export class DemonBoss extends Boss {
         this.windStrength   = 0;
         this.corePulse      = 0;
         this.jawOpen        = 0;
-        this.mouthOpen      = 0;
         this._sub           = SUB.HOVER;
         this._subTimer      = 0;
         this._orbitAngle    = 0;
@@ -99,9 +97,6 @@ export class DemonBoss extends Boss {
                 break;
             default: break;
         }
-
-        // Mirror legacy field
-        this.mouthOpen = this.jawOpen;
     }
 
     /** @private — slow rig animation: wings, core pulse, shockwave decay. */

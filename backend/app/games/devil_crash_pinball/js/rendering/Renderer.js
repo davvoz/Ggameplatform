@@ -152,13 +152,21 @@ export class Renderer {
      */
     draw(board, ball) {
         const ctx = this.ctx;
-        const W = this.canvas.width;
-        const H = this.canvas.height;
+        const W = C.VIEW_WIDTH;
+        const H = C.VIEW_HEIGHT;
         const sx = (Math.random() - 0.5) * this.shake * 8;
         const sy = (Math.random() - 0.5) * this.shake * 8;
 
         this._sectionCount = board.sections.length;
         this._entityRenderer.setup(this.ctx, this.time, this.particles);
+
+        // Clip everything to the playfield rect — the strip below is owned
+        // exclusively by the HUD control bar and must not be polluted by
+        // section / particle / overlay draws.
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, W, H);
+        ctx.clip();
 
         // 1. Solid wipe (per-section bg gradient lives below)
         ctx.fillStyle = '#000';
@@ -206,6 +214,8 @@ export class Renderer {
 
         // 8. Drain transition overlay — screen-space, topmost renderer layer
         if (this._drainEffect) this._drawDrainOverlay(this._drainEffect);
+
+        ctx.restore();
     }
 
     // ── Drain overlay ─────────────────────────────────────────────────────────
@@ -216,12 +226,12 @@ export class Renderer {
      * @param {object} d  drain effect data set by Game via setDrainEffect()
      */
     _drawDrainOverlay(d) {
-        const IMPLODE_END = 0.55;
-        const HOLD_END    = 2.5;
-        const SPAWN_END   = 3.2;
+        const IMPLODE_END = C.DRAIN_IMPLODE_END;
+        const HOLD_END    = C.DRAIN_HOLD_END;
+        const SPAWN_END   = C.DRAIN_SPAWN_END;
         const ctx    = this.ctx;
-        const W      = this.canvas.width;
-        const H      = this.canvas.height;
+        const W      = C.VIEW_WIDTH;
+        const H      = C.VIEW_HEIGHT;
         const t      = d.timer;
         const camTop = this.cameraY;
         if (t < IMPLODE_END)

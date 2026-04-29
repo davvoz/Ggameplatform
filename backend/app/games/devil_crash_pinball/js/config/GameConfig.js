@@ -21,8 +21,8 @@ export const GameConfig = Object.freeze({
     BALL_RESTITUTION_BUMPER: 1.05,  // active push
     BALL_RESTITUTION_SLING: 1.15,
     BALL_RESTITUTION_TARGET: 0.5,
-    BALL_DAMPING: 1,                // no air friction; only collisions lose energy
-    PHYSICS_SUBSTEPS: 16,     // 16 substeps → max ~6.9 px/substep at dt=50ms (safely < BALL_RADIUS)
+    PHYSICS_SUBSTEPS: 16,     // see PhysicsWorld._assertNoTunneling: max substep displacement must stay < BALL_RADIUS
+    FRAME_DT_CLAMP: 0.05,     // hard cap on frame dt (50 ms). Tab-switch / debugger pauses must not break physics.
     WALL_SKIN: 2,             // extra detection margin for wall segments: ball bounces 2px before visual wall
 
     // Flipper
@@ -144,6 +144,49 @@ export const GameConfig = Object.freeze({
     STUCK_TIME: 4,
     STUCK_NUDGE_X: 120,
     STUCK_NUDGE_Y: 260,
+    // Position-based stuck: ball moved < threshold over window seconds.
+    STUCK_POS_WINDOW: 3,
+    STUCK_POS_THRESHOLD: 40,
+    // Display-stuck (HUD RESET button glow): more sensitive than nudge.
+    STUCK_DISPLAY_WINDOW: 2,
+    STUCK_DISPLAY_THRESHOLD: 60,
+    // Nudge randomisation factors (kept here so tuning lives in one place).
+    NUDGE_X_RANDOM_BASE: 0.6,
+    NUDGE_X_RANDOM_RANGE: 0.6,
+    NUDGE_Y_RANDOM_BASE: 0.7,
+    NUDGE_Y_RANDOM_RANGE: 0.5,
+    NUDGE_SHAKE: 0.15,
+
+    // Drain animation phase boundaries (seconds since drain start).
+    // Read by both the Renderer (DrainOverlayRenderer) and the BallLifecycle
+    // controller — keep them in one place to avoid desync.
+    DRAIN_IMPLODE_END: 0.55,
+    DRAIN_HOLD_END:    2.5,
+    DRAIN_SPAWN_END:   3.2,
+
+    // Tilt — escalation factors and impulse magnitudes.
+    TILT_INTENSITY_BASE:   0.7,
+    TILT_INTENSITY_STEP:   0.25,
+    TILT_KICK_X:           280,
+    TILT_KICK_Y:           340,
+    TILT_KICK_X_RAND_BASE: 0.7,
+    TILT_KICK_X_RAND_RANGE: 0.6,
+    TILT_KICK_Y_RAND_BASE: 0.5,
+    TILT_KICK_Y_RAND_RANGE: 0.5,
+    TILT_SHAKE:            0.4,
+    TILT_FX_COLOR:         '#ff4400',
+    TILT_FX_RADIUS:        14,
+    TILT_FX_SPEED:         260,
+    TILT_FX_LIFE:          0.5,
+
+    // Game-over UX
+    MENU_GUARD_TIME:       2,         // seconds the game-over banner is locked
+
+    // Playfield boundary (left wall position in world coords).
+    PLAYFIELD_LEFT_X:      20,
+
+    // Loop self-protection: bail out after N consecutive frame errors.
+    LOOP_MAX_ERRORS:       30,
 
     // Particles (FX pool size)
     PARTICLE_POOL: 96,
@@ -162,13 +205,7 @@ export const GameConfig = Object.freeze({
     DEFLECTOR_RADIUS: 60,            // outer-curve radius (must be > tube width)
     DEFLECTOR_SEGMENTS: 12,          // straight segments approximating each arc
 
-    // Touch-zone fractions of canvas
-    LAUNCH_ZONE_X: 0.7,              // x > 0.7  -> launch zone
-    LAUNCH_ZONE_Y: 0.6,              // y > 0.6  -> launch zone
-
     // HUD canvas action buttons (canvas pixel space, VIEW_WIDTH=480, top bar=40px)
-    // Guard: touch events with yN < HUD_ZONE_Y land in the top bar → not a flipper zone.
-    HUD_ZONE_Y:       0.056,          // fraction of VIEW_HEIGHT (≈ 40/720)
     HUD_BTN_Y:        8,              // top edge of all buttons (px)
     HUD_BTN_W:        44,             // button width (px)
     HUD_BTN_H:        24,             // button height (px)
@@ -177,4 +214,11 @@ export const GameConfig = Object.freeze({
     HUD_BTN_BGM_X:    248,            // BGM toggle left edge
     HUD_BTN_SFX_X:    300,            // SFX toggle left edge
     HUD_BTN_PAUSE_X:  352,            // PAUSE toggle left edge
+
+    // ── Mobile control bar (canvas-px band BELOW the playfield) ─────────────
+    // Total physical canvas height = VIEW_HEIGHT + CTRL_BAR_HEIGHT.
+    // Renderer is clipped to the playfield; HUD owns the bar exclusively.
+    CTRL_BAR_HEIGHT:  170,
+    CTRL_BTN_PAD:     14,             // outer padding (canvas px)
+    CTRL_BTN_GAP:     14,             // gap between LEFT and RIGHT buttons
 });

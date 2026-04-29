@@ -38,6 +38,12 @@ export class HUD {
         this._drawTopBar(data, viewW);
         this._drawActionButtons(data);
 
+        // Mobile control bar — only meaningful while a ball is in flight or
+        // sitting on the launcher. Hidden during ATTRACT / GAME_OVER / PAUSED
+        // so menus own the full canvas.
+        const playing = data.gameState === 2 || data.ballReady;
+        if (playing) this._drawControlBar(data);
+
         if (data.gameState === 0) this._drawAttract(viewW, viewH);
         else if (data.gameState === 3) this._drawGameOver(viewW, viewH, data.score, data.timePlayed, data.bossesDefeated);
         else if (data.ballReady) this._drawPlungerPrompt(data, viewW, viewH);
@@ -77,21 +83,76 @@ export class HUD {
     // ── Canvas action buttons (RESET / TILT) ─────────────────────────────────
 
     /**
-     * Hit-test a canvas-space point against the action buttons.
-     * @param {number} cx  Canvas x (0…VIEW_WIDTH)
-     * @param {number} cy  Canvas y (0…VIEW_HEIGHT)
-     * @returns {'rescue'|'tilt'|null}
+     * Hit-test a canvas-space point against EVERY HUD-owned button.
+     *
+     * Top-bar buttons are momentary (TAP semantics). Control-bar buttons
+     * (`flipL`, `flipR`, `launch`) are held — InputManager maps them to
+     * gameplay zones and tracks them across pointermove.
+     *
+     * @param {number}  cx          Canvas x (0…VIEW_WIDTH)
+     * @param {number}  cy          Canvas y (0…VIEW_HEIGHT + CTRL_BAR_HEIGHT)
+     * @param {boolean} ballReady   True while the ball sits on the launcher;
+     *                              swaps the L/R bar for a single LAUNCH button.
+     * @returns {'rescue'|'tilt'|'bgm'|'sfx'|'pause'|'flipL'|'flipR'|'launch'|null}
      */
-    static hitTest(cx, cy) {
-        const { HUD_BTN_RESCUE_X: rx, HUD_BTN_TILT_X: tx,
-                HUD_BTN_BGM_X: bgmx, HUD_BTN_SFX_X: sfxx, HUD_BTN_PAUSE_X: px,
-                HUD_BTN_Y: by, HUD_BTN_W: bw, HUD_BTN_H: bh } = C;
-        if (cx >= rx   && cx <= rx   + bw && cy >= by && cy <= by + bh) return 'rescue';
-        if (cx >= tx   && cx <= tx   + bw && cy >= by && cy <= by + bh) return 'tilt';
-        if (cx >= bgmx && cx <= bgmx + bw && cy >= by && cy <= by + bh) return 'bgm';
-        if (cx >= sfxx && cx <= sfxx + bw && cy >= by && cy <= by + bh) return 'sfx';
-        if (cx >= px   && cx <= px   + bw && cy >= by && cy <= by + bh) return 'pause';
+    static hitTest(cx, cy, ballReady = false) {
+        const top = HUD._topBarButtons();
+        for (const id of Object.keys(top)) {
+            if (HUD._inRect(cx, cy, top[id])) return id;
+        }
+        if (cy >= C.VIEW_HEIGHT) {
+            const ctrl = HUD._ctrlButtons(ballReady);
+            for (const id of Object.keys(ctrl)) {
+                if (HUD._inRect(cx, cy, ctrl[id])) return id;
+            }
+        }
         return null;
+    }
+
+    /** @private */
+    static _inRect(cx, cy, r) {
+        return cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h;
+    }
+
+    /**
+     * Layout of the top-bar action buttons. Single source of truth shared by
+     * `hitTest` and (indirectly) `_drawActionButtons` via the same `C.HUD_*`
+     * constants.
+     * @private
+     */
+    static _topBarButtons() {
+        const w = C.HUD_BTN_W;
+        const h = C.HUD_BTN_H;
+        const y = C.HUD_BTN_Y;
+        return {
+            rescue: { x: C.HUD_BTN_RESCUE_X, y, w, h },
+            tilt:   { x: C.HUD_BTN_TILT_X,   y, w, h },
+            bgm:    { x: C.HUD_BTN_BGM_X,    y, w, h },
+            sfx:    { x: C.HUD_BTN_SFX_X,    y, w, h },
+            pause:  { x: C.HUD_BTN_PAUSE_X,  y, w, h },
+        };
+    }
+
+    /**
+     * Layout of the bottom control bar. Single source of truth used by both
+     * the renderer (`_drawControlBar`) and the hit-test (`hitTest`).
+     * @param {boolean} ballReady
+     * @returns {{flipL?:object, flipR?:object, launch?:object}}
+     * @private
+     */
+    static _ctrlButtons(ballReady) {
+        const pad = C.CTRL_BTN_PAD;
+        const gap = C.CTRL_BTN_GAP;
+        const y   = C.VIEW_HEIGHT + pad;
+        const h   = C.CTRL_BAR_HEIGHT - pad * 2;
+        if (ballReady) {
+            return { launch: { x: pad, y, w: C.VIEW_WIDTH - pad * 2, h } };
+        }
+        const halfW = (C.VIEW_WIDTH - pad * 2 - gap) / 2;
+        return {
+            flipL: { x: pad,                 y, w: halfW, h },
+            flipR: { x: pad + halfW + gap,   y, w: halfW, h },
+        };
     }
 
     /**
@@ -129,16 +190,153 @@ export class HUD {
     }
 
     /**
-     * Render a single inline HUD button.
-     * @param {number}  x        Left edge (canvas px)
-     * @param {number}  y        Top edge (canvas px)
-     * @param {number}  w        Width
-     * @param {number}  h        Height
-     * @param {string}  label    Button text
-     * @param {boolean} lit      Whether the button is in its active/highlighted state
-     * @param {string}  litColor CSS colour used when lit
+     * Render the bottom mobile control bar (canvas band below the playfield).
+     *
+     * Two layouts, decided by `ballReady`:
+     *  - playing → LEFT and RIGHT flipper buttons (lit while pressed).
+     *  - ball on launcher → single LAUNCH button with embedded charge fill.
+     *
+     * The bar is drawn on top of the canvas band the Renderer never touches
+     * (Renderer is clipped to the playfield rect).
+     *
+     * @param {{ ballReady:boolean, plungerCharge:number, launchHeld:boolean,
+     *           flipL?:boolean, flipR?:boolean, tilted:boolean }} data
      * @private
      */
+    _drawControlBar(data) {
+        const ctx = this.ctx;
+        const W   = C.VIEW_WIDTH;
+        const top = C.VIEW_HEIGHT;
+        const H   = C.CTRL_BAR_HEIGHT;
+
+        // Bar background — opaque, slight gradient, accent line above
+        ctx.save();
+        const g = ctx.createLinearGradient(0, top, 0, top + H);
+        g.addColorStop(0, '#0a0418');
+        g.addColorStop(1, '#04020a');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, top, W, H);
+        ctx.strokeStyle = 'rgba(136, 34, 238, 0.55)';
+        ctx.lineWidth   = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, top + 0.5);
+        ctx.lineTo(W, top + 0.5);
+        ctx.stroke();
+        ctx.restore();
+
+        const btns = HUD._ctrlButtons(data.ballReady);
+        if (data.ballReady) {
+            this._drawLaunchButton(btns.launch, data);
+        } else {
+            this._drawFlipperButton(btns.flipL, '◀',  'LEFT',  data.flipL && !data.tilted, C.COLOR_RED);
+            this._drawFlipperButton(btns.flipR, '▶',  'RIGHT', data.flipR && !data.tilted, '#3a8cff');
+        }
+    }
+
+    /**
+     * Big chunky flipper button. Lit + pulsing while the user holds it.
+     * @private
+     */
+    _drawFlipperButton(rect, glyph, label, lit, color) {
+        const ctx = this.ctx;
+        const { x, y, w, h } = rect;
+        ctx.save();
+
+        // Body
+        const bg = ctx.createLinearGradient(0, y, 0, y + h);
+        bg.addColorStop(0, lit ? 'rgba(60,18,80,0.95)'  : 'rgba(20,8,38,0.95)');
+        bg.addColorStop(1, lit ? 'rgba(28, 8,40,0.95)'  : 'rgba(10,4,20,0.95)');
+        ctx.fillStyle = bg;
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 18);
+        ctx.fill();
+
+        // Border + glow
+        ctx.shadowColor = color;
+        ctx.shadowBlur  = lit ? 22 : 6;
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = lit ? 1 : 0.55;
+        ctx.lineWidth   = lit ? 3 : 2;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur  = 0;
+
+        // Glyph (chevron)
+        ctx.fillStyle    = lit ? '#fff' : color;
+        ctx.font         = 'bold 56px "Orbitron", monospace';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor  = color;
+        ctx.shadowBlur   = lit ? 18 : 0;
+        ctx.fillText(glyph, x + w / 2, y + h / 2 - 6);
+        ctx.shadowBlur   = 0;
+
+        // Label
+        ctx.fillStyle = lit ? color : 'rgba(180,140,200,0.55)';
+        ctx.font      = 'bold 11px "Orbitron", monospace';
+        ctx.fillText(label, x + w / 2, y + h - 14);
+
+        ctx.restore();
+    }
+
+    /**
+     * Big LAUNCH button — visible only while the ball sits on the launcher.
+     * Background fills bottom-up with the current plunger charge fraction.
+     * @private
+     */
+    _drawLaunchButton(rect, data) {
+        const ctx = this.ctx;
+        const { x, y, w, h } = rect;
+        const charge = Math.max(0, Math.min(1, data.plungerCharge ?? 0));
+        const held   = !!data.launchHeld;
+
+        ctx.save();
+
+        // Body
+        ctx.fillStyle = 'rgba(14, 6, 28, 0.95)';
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, 18);
+        ctx.fill();
+
+        // Charge fill — bottom-up gradient (purple → gold), clipped to button
+        ctx.save();
+        ctx.clip();
+        const fillH = Math.max(2, h * charge);
+        const fg = ctx.createLinearGradient(0, y + h - fillH, 0, y + h);
+        fg.addColorStop(0, C.COLOR_GOLD);
+        fg.addColorStop(1, C.COLOR_PURPLE);
+        ctx.fillStyle   = fg;
+        ctx.globalAlpha = held ? 0.85 : 0.55;
+        ctx.fillRect(x, y + h - fillH, w, fillH);
+        ctx.restore();
+
+        // Border + glow
+        const glow = held ? C.COLOR_GOLD : C.COLOR_PURPLE;
+        ctx.shadowColor = glow;
+        ctx.shadowBlur  = held ? 28 : 10;
+        ctx.strokeStyle = glow;
+        ctx.lineWidth   = held ? 3 : 2;
+        ctx.stroke();
+        ctx.shadowBlur  = 0;
+
+        // Glyph + label
+        ctx.fillStyle    = '#fff';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font         = 'bold 38px "Orbitron", monospace';
+        ctx.shadowColor  = glow;
+        ctx.shadowBlur   = 16;
+        ctx.fillText('▲', x + w / 2, y + h / 2 - 14);
+        ctx.shadowBlur   = 0;
+
+        ctx.font      = 'bold 16px "Orbitron", monospace';
+        ctx.fillStyle = held ? C.COLOR_GOLD : '#fff';
+        ctx.fillText(held ? 'RELEASE TO LAUNCH' : 'HOLD TO CHARGE', x + w / 2, y + h - 22);
+
+        ctx.restore();
+    }
+
+
     /**
      * @param {Object} options
      * @param {number} options.x

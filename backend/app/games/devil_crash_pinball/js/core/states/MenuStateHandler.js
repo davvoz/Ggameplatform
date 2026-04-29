@@ -1,37 +1,24 @@
 import { GameStateHandler } from './GameStateHandler.js';
 
 /**
- * Handles ATTRACT and GAME_OVER: waits for the input guard to expire,
- * then starts a new game on any input.
+ * ATTRACT and GAME_OVER. Waits out the menu input guard, then watches for
+ * a menu-press latched this frame by {@link InputRouter}.
+ *
+ * The latched flag (instead of a queue read) lets a single canvas-tap drive
+ * both "menu dismiss" here and "plunger charge start" in BALL_READY on the
+ * following frame, without re-entering the queue twice.
  */
 export class MenuStateHandler extends GameStateHandler {
     update(dt) {
         const g = this._game;
-        if (g._menuInputGuard > 0) {
-            g._menuInputGuard = Math.max(0, g._menuInputGuard - dt);
-            // Drop any input edges that arrive during the guard so they
-            // can't dismiss the banner the moment the timer expires.
-            g.input.consumeLaunch();
-            g.input.consumeTilt();
-            g.input.consumeEsc();
-            g.input.consumeCanvasTap();
+        if (g.session.menuGuard > 0) {
+            g.session.menuGuard = Math.max(0, g.session.menuGuard - dt);
+            g.inputRouter.menuPressLatched = false;
             return;
         }
-        // Arm: require all menu-dismiss inputs to be released at least once
-        // after the guard before accepting a new press. This kills the
-        // "held flipper / still-pressed launch" case that was restarting
-        // the game without a real click.
-        if (!g._menuInputArmed) {
-            const anyHeld = g.input.left || g.input.right || g.input.launchHeld;
-            if (anyHeld) {
-                g.input.consumeLaunch();
-                return;
-            }
-            g._menuInputArmed = true;
-        }
-        if (g._menuInputPressed()) {
-            g._menuInputArmed = false;
-            g._startNewGame();
+        if (g.inputRouter.menuPressLatched) {
+            g.inputRouter.menuPressLatched = false;
+            g.startNewGame();
         }
     }
 }

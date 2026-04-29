@@ -1,6 +1,7 @@
 import { GameConfig as C } from '../config/GameConfig.js';
 import { SectionRegistry } from './SectionRegistry.js';
 import { WarpWirer }       from './WarpWirer.js';
+import { LevelConfigStore } from './LevelConfigStore.js';
 
 /**
  * Owns all sections, returns the active one for the ball's current Y, and
@@ -32,8 +33,50 @@ export class BoardManager {
 
         // Collect all LaunchSpring instances across every section.
         this.launchSprings = this.sections.flatMap(s => s.launchSprings);
-        // Convenience ref: first spring, or null if none placed.
+        // First spring (validate() guarantees it exists).
         this.launchSpring  = this.launchSprings[0] ?? null;
+
+        // Resolved at validate() time from main_table.ballStarts[0].
+        this._ballSpawn = null;
+    }
+
+    /**
+     * Boot-time invariants. Called by Game.init() after the registry has
+     * created every section and the LevelConfigStore is loaded.
+     *
+     * Fails loud (throws) if any required structural element is missing,
+     * so configuration bugs surface at startup instead of producing
+     * wrong-but-playable gameplay through silent fallbacks.
+     */
+    validate() {
+        if (!this.main) {
+            throw new Error('[BoardManager] Required section "main_table" is missing.');
+        }
+        if (!this.launchSpring) {
+            throw new Error('[BoardManager] No LaunchSpring entity found in any section.');
+        }
+
+        const bottom = this.sections.at(-1);
+        if (!bottom?.deathLines?.length) {
+            throw new Error(
+                `[BoardManager] Bottom section "${bottom?.sectionKey}" must define at least one deathLine.`
+            );
+        }
+
+        const mainCfg = LevelConfigStore.get('main_table');
+        const bs = mainCfg?.ballStarts?.[0];
+        if (!bs || typeof bs.x !== 'number' || typeof bs.y !== 'number') {
+            throw new Error('[BoardManager] main_table.json must define ballStarts[0] with numeric x/y.');
+        }
+        this._ballSpawn = { x: bs.x, y: this.main.top + bs.y };
+    }
+
+    /** Validated ball spawn point in world coordinates. Available after validate(). */
+    get ballSpawn() {
+        if (!this._ballSpawn) {
+            throw new Error('[BoardManager] ballSpawn read before validate().');
+        }
+        return this._ballSpawn;
     }
 
     /** @private */
@@ -65,13 +108,10 @@ export class BoardManager {
     }
 
     isDrained(ball) {
-        // Death-line triggers (explicit drain zones placed in level JSON)
         for (const s of this.sections) {
             if (s.touchesDeathLine(ball)) return true;
         }
-        // Fallback: ball exits the world boundary
-        const bottomSection = this.sections.at(-1);
-        return ball.pos.y >= bottomSection.bottom - 12;
+        return false;
     }
 
     resetTargets() {

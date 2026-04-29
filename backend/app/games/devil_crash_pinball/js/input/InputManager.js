@@ -1,200 +1,251 @@
 import { GameConfig as C } from '../config/GameConfig.js';
 
 /**
- * Touch + keyboard input. Touch zones split canvas in half: left flipper /
- * right flipper. Tap on launcher zone (bottom-right corner) launches ball
- * when IDLE.
+ * Input event types emitted by {@link InputManager}.
+ * @readonly
+ * @enum {string}
+ */
+export const InputAction = Object.freeze({
+    /** Pointer down on the canvas. Carries x/y, zone and hudButton classification. */
+    TAP:        'TAP',
+    /** Space (configurable) keydown — keyboard equivalent of a launch-zone tap. */
+    LAUNCH_KEY: 'LAUNCH_KEY',
+    /** Tilt requested via T key or on-screen TILT button. */
+    TILT:       'TILT',
+    /** Escape pressed — toggles pause. */
+    ESC:        'ESC',
+});
+
+/**
+ * @typedef {Object} InputEvent
+ * @property {string} action          One of {@link InputAction}.
+ * @property {number} [x]             TAP only: normalised canvas x (0–1).
+ * @property {number} [y]             TAP only: normalised canvas y (0–1).
+ * @property {'launch'|'left'|'right'|'hud'|'none'} [zone]  TAP only: classified zone.
+ * @property {string|null} [hudButton] TAP only: HUD button id under the press, or null.
+ */
+
+/**
+ * Input layer.
  *
- * MOUSE is intentionally NOT used for gameplay. The mouse stays free for
- * UI confirmations and other on-screen buttons. Only `touch` and `pen`
- * pointer types are accepted on the canvas.
+ * Two surfaces are exposed and they map cleanly onto two distinct concerns:
  *
- * Reports state via flags; consumed by Game each frame.
+ *   1. {@link held} — steady boolean state for actions whose semantics is
+ *      "while pressed, do something every frame" (the flippers and the
+ *      plunger pull). Held state is naturally idempotent and never replays.
+ *
+ *   2. {@link poll} — a queue of one-shot {@link InputEvent}s. Each press
+ *      produces one event, consumed exactly once. Events are never
+ *      reissued, so a state transition can never accidentally inherit a
+ *      stale press from the previous state. This eliminates the entire
+ *      class of bugs that the old InputManager papered over with manual
+ *      `consume*()` calls and ad-hoc "armed" flags.
+ *
+ * Mouse pointers are still rejected from gameplay zones (only `touch`/`pen`
+ * generate gameplay TAPs); mouse clicks below the HUD are accepted as
+ * menu-dismiss TAPs so the desktop attract screen remains usable.
  */
 export class InputManager {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.left = false;
-        this.right = false;
-        this.launchPressed = false;   // edge: set true on press, consumed once
-        this.launchHeld = false;      // steady: true while launch zone or Space is held
-        this.tiltPressed = false;
-        this.escPressed = false;
-        this._spaceDown = false;
-        this._pointerLaunchActive = false;
-        this._activePointers = new Map(); // pointerId -> 'left'|'right'|'launch'|'hud'
-        // Last pointer-down position (normalised 0–1) for HUD button hit-testing.
-        this._lastTapPos = null;
+    /**
+     * @param {HTMLCanvasElement} canvas
+     * @param {(canvasX:number, canvasY:number) => string|null} hudHitTest
+     *   Pure function returning the HUD button id under a canvas-space
+     *   point, or null. Injected to keep this class free of HUD knowledge.
+     */
+    constructor(canvas, hudHitTest) {
+        this._canvas     = canvas;
+        this._hudHitTest = hudHitTest;
+        /** @type {InputEvent[]} */
+        this._queue      = [];
+        this.held        = { flipL: false, flipR: false, launch: false };
+
+        // Internal: which active pointer ids are currently in which zone.
+        // Touch/pen only — mouse never enters this map.
+        this._activePointers = new Map(); // pointerId -> Zone
+        this._spaceDown      = false;
+
         this._bind();
     }
+
+    // ── Public API ──────────────────────────────────────────────────────────
+
+    /**
+     * Returns and clears the queued events. Each event is delivered exactly
+     * once. Call once per frame from the game loop.
+     * @returns {InputEvent[]}
+     */
+    poll() {
+        const out = this._queue;
+        this._queue = [];
+        return out;
+    }
+
+    /** Discard all queued events. Used by guard timers (e.g. game-over banner). */
+    drain() {
+        this._queue.length = 0;
+    }
+
+    /** Synthesize a TILT event (for on-screen TILT button). */
+    requestTilt() {
+        this._queue.push({ action: InputAction.TILT });
+    }
+
+    /**
+     * Hard reset: clear queue and held flags. Called on focus loss / fullscreen
+     * change so a key/finger held during the transition cannot stay stuck.
+     */
+    reset() {
+        this.held.flipL  = false;
+        this.held.flipR  = false;
+        this.held.launch = false;
+        this._activePointers.clear();
+        this._spaceDown  = false;
+        this._queue.length = 0;
+    }
+
+    destroy() {
+        globalThis.removeEventListener('keydown', this._kd);
+        globalThis.removeEventListener('keyup',   this._ku);
+        globalThis.removeEventListener('blur',    this._reset);
+        globalThis.removeEventListener('visibilitychange', this._reset);
+        document.removeEventListener('fullscreenchange',  this._reset);
+        this._canvas.removeEventListener('pointerdown',   this._pd);
+        this._canvas.removeEventListener('pointerup',     this._pu);
+        this._canvas.removeEventListener('pointercancel', this._pu);
+        this._canvas.removeEventListener('pointermove',   this._pm);
+    }
+
+    // ── Bindings ────────────────────────────────────────────────────────────
 
     _bind() {
         this._kd = (e) => {
             if (e.code === 'Escape') {
                 e.preventDefault();
-                this.escPressed = true;
+                this._queue.push({ action: InputAction.ESC });
                 return;
             }
-            if (e.code === C.INPUT_LEFT_KEY) this.left = true;
-            else if (e.code === C.INPUT_RIGHT_KEY) this.right = true;
+            if (e.code === C.INPUT_LEFT_KEY)        this.held.flipL = true;
+            else if (e.code === C.INPUT_RIGHT_KEY)  this.held.flipR = true;
+            else if (e.code === C.INPUT_TILT_KEY)   this._queue.push({ action: InputAction.TILT });
             else if (e.code === C.INPUT_LAUNCH_KEY) {
-                if (!this._spaceDown) this.launchPressed = true;
-                this._spaceDown = true;
-                this._recomputeLaunchHeld();
+                if (!this._spaceDown) this._queue.push({ action: InputAction.LAUNCH_KEY });
+                this._spaceDown   = true;
+                this.held.launch  = true;
             }
-            else if (e.code === C.INPUT_TILT_KEY) this.tiltPressed = true;
         };
+
         this._ku = (e) => {
-            if (e.code === C.INPUT_LEFT_KEY) this.left = false;
-            else if (e.code === C.INPUT_RIGHT_KEY) this.right = false;
+            if (e.code === C.INPUT_LEFT_KEY)        this.held.flipL = false;
+            else if (e.code === C.INPUT_RIGHT_KEY)  this.held.flipR = false;
             else if (e.code === C.INPUT_LAUNCH_KEY) {
                 this._spaceDown = false;
                 this._recomputeLaunchHeld();
             }
         };
+
         this._pd = (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const xN = (e.clientX - rect.left) / rect.width;
-            const yN = (e.clientY - rect.top)  / rect.height;
-            // Always record tap position so Game can hit-test HUD buttons.
-            this._lastTapPos = { x: xN, y: yN };
-            // MOUSE: only fires launch edge for menu dismissal.
-            // Excluded from top-bar so clicking HUD buttons doesn't start a launch.
+            const { xN, yN } = this._normalise(e);
+            const { zone, hudButton } = this._classify(xN, yN);
+
+            // Mouse pointers participate in TAPs (for menu dismiss + HUD clicks)
+            // but never drive gameplay zones (flippers / plunger hold).
             if (e.pointerType === 'mouse') {
-                if (yN >= C.HUD_ZONE_Y) this.launchPressed = true;
+                this._queue.push({ action: InputAction.TAP, x: xN, y: yN, zone, hudButton });
                 return;
             }
+
             e.preventDefault();
-            const zone = this._zoneFor(e);
             this._activePointers.set(e.pointerId, zone);
-            this._apply();
+            this._refreshHeld();
+            this._queue.push({ action: InputAction.TAP, x: xN, y: yN, zone, hudButton });
         };
+
         this._pu = (e) => {
             if (e.pointerType === 'mouse') return;
             e.preventDefault();
             this._activePointers.delete(e.pointerId);
-            this._apply();
+            this._refreshHeld();
         };
+
         this._pm = (e) => {
             if (e.pointerType === 'mouse') return;
             if (!this._activePointers.has(e.pointerId)) return;
-            const zone = this._zoneFor(e);
-            this._activePointers.set(e.pointerId, zone);
-            this._apply();
+            const { xN, yN } = this._normalise(e);
+            this._activePointers.set(e.pointerId, this._classify(xN, yN).zone);
+            this._refreshHeld();
         };
 
+        this._reset = () => this.reset();
+
         globalThis.addEventListener('keydown', this._kd);
-        globalThis.addEventListener('keyup', this._ku);
-        // Reset all transient flags when the window/tab loses focus, the user
-        // alt-tabs, or fullscreen state changes. Without this, a flipper key
-        // held during a focus change stays "stuck" (no keyup ever fires)
-        // and the game appears frozen with the flipper raised.
-        this._reset = () => this._resetAllInputs();
-        globalThis.addEventListener('blur', this._reset);
-        globalThis.addEventListener('visibilitychange', this._reset);
-        document.addEventListener('fullscreenchange', this._reset);
-        this.canvas.addEventListener('pointerdown', this._pd, { passive: false });
-        this.canvas.addEventListener('pointerup', this._pu, { passive: false });
-        this.canvas.addEventListener('pointercancel', this._pu, { passive: false });
-        this.canvas.addEventListener('pointermove', this._pm, { passive: false });
+        globalThis.addEventListener('keyup',   this._ku);
+        // Stuck-key prevention on focus / fullscreen changes.
+        globalThis.addEventListener('blur',              this._reset);
+        globalThis.addEventListener('visibilitychange',  this._reset);
+        document.addEventListener('fullscreenchange',    this._reset);
+        this._canvas.addEventListener('pointerdown',   this._pd, { passive: false });
+        this._canvas.addEventListener('pointerup',     this._pu, { passive: false });
+        this._canvas.addEventListener('pointercancel', this._pu, { passive: false });
+        this._canvas.addEventListener('pointermove',   this._pm, { passive: false });
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    _normalise(e) {
+        const rect = this._canvas.getBoundingClientRect();
+        return {
+            xN: (e.clientX - rect.left) / rect.width,
+            yN: (e.clientY - rect.top)  / rect.height,
+        };
     }
 
     /**
-     * Clear all transient input state. Called on focus loss / fullscreen
-     * change to avoid "stuck key" glitches (held flipper that never releases,
-     * queued ESC that pauses the game right after exiting fullscreen, etc.).
+     * Single classification step: derives both the gameplay zone (held) and
+     * the HUD button id (TAP) from one canvas-space hit-test.
+     *
+     * Mapping:
+     *   HUD ctrl-bar id   →  gameplay zone (`flipL`/`flipR`/`launch`)
+     *   HUD top-bar id    →  zone='hud', tap is dispatched as a momentary action
+     *   no hit            →  zone='none' (no flipper is held, menu-dismiss accepted)
+     *
+     * The canvas now spans VIEW_HEIGHT + CTRL_BAR_HEIGHT vertically, so we
+     * normalise against the full physical height.
+     *
+     * @private
      */
-    _resetAllInputs() {
-        this.left = false;
-        this.right = false;
-        this.launchPressed = false;
-        this.launchHeld = false;
-        this.tiltPressed = false;
-        this.escPressed = false;
-        this._spaceDown = false;
-        this._pointerLaunchActive = false;
-        this._activePointers.clear();
-        this._lastTapPos = null;
+    _classify(xN, yN) {
+        const cx  = xN * C.VIEW_WIDTH;
+        const cy  = yN * (C.VIEW_HEIGHT + C.CTRL_BAR_HEIGHT);
+        const hit = this._hudHitTest(cx, cy);
+        if (hit === 'flipL')  return { zone: 'left',   hudButton: null };
+        if (hit === 'flipR')  return { zone: 'right',  hudButton: null };
+        if (hit === 'launch') return { zone: 'launch', hudButton: null };
+        if (hit !== null)     return { zone: 'hud',    hudButton: hit  };
+        return { zone: 'none', hudButton: null };
     }
 
-    _zoneFor(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const xN = (e.clientX - rect.left) / rect.width;
-        const yN = (e.clientY - rect.top) / rect.height;
-        // Top-bar guard: HUD button area — must not trigger flippers.
-        if (yN < C.HUD_ZONE_Y) return 'hud';
-        // Right portion + lower portion -> launch (large area, easy to find)
-        if (xN > C.LAUNCH_ZONE_X && yN > C.LAUNCH_ZONE_Y) return 'launch';
-        return xN < 0.5 ? 'left' : 'right';
-    }
-
-    _apply() {
-        let l = false, r = false, launchActive = false;
-        for (const v of this._activePointers.values()) {
-            if (v === 'left') l = true;
-            else if (v === 'right') r = true;
-            else if (v === 'launch') launchActive = true;
+    /** Recompute held flags from active touch/pen pointers + spacebar. */
+    _refreshHeld() {
+        let l = false;
+        let r = false;
+        let launchPointer = false;
+        for (const z of this._activePointers.values()) {
+            if (z === 'left')        l = true;
+            else if (z === 'right')  r = true;
+            else if (z === 'launch') launchPointer = true;
         }
-        this.left = l;
-        this.right = r;
-        // launch edge
-        if (launchActive && !this._pointerLaunchActive) this.launchPressed = true;
-        this._pointerLaunchActive = launchActive;
-        this._recomputeLaunchHeld();
+        this.held.flipL  = l;
+        this.held.flipR  = r;
+        this.held.launch = launchPointer || this._spaceDown;
     }
 
     _recomputeLaunchHeld() {
-        this.launchHeld = !!this._spaceDown || !!this._pointerLaunchActive;
-    }
-
-    consumeLaunch() {
-        const v = this.launchPressed;
-        this.launchPressed = false;
-        return v;
-    }
-
-    consumeTilt() {
-        const v = this.tiltPressed;
-        this.tiltPressed = false;
-        return v;
-    }
-
-    consumeEsc() {
-        const v = this.escPressed;
-        this.escPressed = false;
-        return v;
-    }
-
-    /**
-     * Programmatically request a tilt (e.g. from an on-screen button).
-     * Sets the same flag that the T key sets; consumed by the game loop
-     * on the next frame via consumeTilt().
-     */
-    requestTilt() {
-        this.tiltPressed = true;
-    }
-
-    /**
-     * Consume and return the last pointer-down canvas position (normalised 0–1).
-     * Used by Game to hit-test HUD action buttons each frame.
-     * Returns null if no new tap occurred since last call.
-     * @returns {{ x: number, y: number } | null}
-     */
-    consumeCanvasTap() {
-        const v = this._lastTapPos;
-        this._lastTapPos = null;
-        return v;
-    }
-
-    destroy() {
-        globalThis.removeEventListener('keydown', this._kd);
-        globalThis.removeEventListener('keyup', this._ku);
-        globalThis.removeEventListener('blur', this._reset);
-        globalThis.removeEventListener('visibilitychange', this._reset);
-        document.removeEventListener('fullscreenchange', this._reset);
-        this.canvas.removeEventListener('pointerdown', this._pd);
-        this.canvas.removeEventListener('pointerup', this._pu);
-        this.canvas.removeEventListener('pointercancel', this._pu);
-        this.canvas.removeEventListener('pointermove', this._pm);
+        // Called only on Space keyup; pointer state hasn't changed so we can
+        // recompute purely from the current map + spaceDown flag.
+        let launchPointer = false;
+        for (const z of this._activePointers.values()) {
+            if (z === 'launch') { launchPointer = true; break; }
+        }
+        this.held.launch = launchPointer || this._spaceDown;
     }
 }

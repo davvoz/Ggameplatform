@@ -1,5 +1,6 @@
 import { EntityDefs } from './EntityDefs.js';
 import { HistoryManager } from './HistoryManager.js';
+import { validateLevels } from './LevelValidator.js';
 
 /**
  * Central model and event hub for the level editor.
@@ -300,6 +301,19 @@ export class LevelEditor {
             if (Array.isArray(v) && v.length === 0) delete out[k];
         }
         return JSON.stringify(out, null, 2);
+    }
+
+    /**
+     * Run every validation rule against the current editor state.
+     * Mirror of BoardManager.validate() — JSON files that fail this check
+     * will crash the runtime on load.
+     * @returns {{ errors: {code:string,msg:string}[], warnings: {code:string,msg:string}[] }}
+     */
+    validate() {
+        return validateLevels({
+            configs:   this.#configs,
+            levelKeys: this.#levelKeys,
+        });
     }
 
     // ─── Events ───────────────────────────────────────────────────────────────

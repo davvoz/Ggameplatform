@@ -5,6 +5,6 @@ import { LiveStateHandler } from './LiveStateHandler.js';
  */
 export class BallReadyStateHandler extends LiveStateHandler {
     _updateInput(dt) {
-        this._game._updatePlunger(dt);
+        this._game.plunger.update(dt);
     }
 }

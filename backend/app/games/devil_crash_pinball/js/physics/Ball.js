@@ -2,28 +2,28 @@ import { Vec2 } from './Vec2.js';
 import { GameConfig as C } from '../config/GameConfig.js';
 
 /**
- * The pinball. Holds position/velocity and applies gravity + damping.
- * State machine: IDLE (in plunger), LIVE, LOST.
+ * The pinball. Holds position/velocity, applies gravity, clamps top speed.
+ *
+ * State machine: IDLE → LIVE → LOST. WARPING is a transient visual state
+ * driven by warp holes (no physics integration while warping).
  */
 export class Ball {
     static STATE = Object.freeze({ IDLE: 0, LIVE: 1, LOST: 2, WARPING: 3 });
 
     constructor(x = 0, y = 0) {
         this.pos = new Vec2(x, y);
-        this.prevPos = new Vec2(x, y); // position at start of current substep (CCD)
         this.vel = new Vec2(0, 0);
         this.radius = C.BALL_RADIUS;
         this.state = Ball.STATE.IDLE;
-        this.warpScale = 1;   // visual scale during warp transit (0=hidden, 1=normal)
-        this.trail = [];          // small ring buffer for visual trail
+        this.warpScale = 1;            // visual scale during warp transit
         this.trailMax = 8;
-        for (let i = 0; i < this.trailMax; i++) this.trail.push({ x, y });
+        this.trail = new Array(this.trailMax);
+        for (let i = 0; i < this.trailMax; i++) this.trail[i] = { x, y };
         this.trailIdx = 0;
     }
 
     reset(x, y) {
         this.pos.set(x, y);
-        this.prevPos.set(x, y);
         this.vel.set(0, 0);
         this.state = Ball.STATE.IDLE;
         for (let i = 0; i < this.trailMax; i++) {
@@ -38,21 +38,19 @@ export class Ball {
     }
 
     /**
-     * Integrate gravity and damping. Caller is responsible for collisions.
-     * @param {number} dt
+     * Integrate gravity and clamp top speed. Caller resolves collisions
+     * after each integrate() call.
+     * @param {number} dt seconds
      */
     integrate(dt) {
         if (this.state !== Ball.STATE.LIVE) return;
         this.vel.y += C.GRAVITY * dt;
-        // Clamp top speed (safety)
         const sp = this.vel.length();
         if (sp > C.BALL_MAX_SPEED) {
             const k = C.BALL_MAX_SPEED / sp;
             this.vel.x *= k;
             this.vel.y *= k;
         }
-        this.vel.x *= C.BALL_DAMPING;
-        this.vel.y *= C.BALL_DAMPING;
         this.pos.x += this.vel.x * dt;
         this.pos.y += this.vel.y * dt;
     }

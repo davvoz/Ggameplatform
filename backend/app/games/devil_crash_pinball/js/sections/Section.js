@@ -83,9 +83,6 @@ export class Section {
         }
     }
 
-    /** Convenience getter — returns the first LaunchSpring or null (backward compat). */
-    get launchSpring() { return this.launchSprings[0] ?? null; }
-
     _emit(score, type) {
         if (score && this.onScore) this.onScore(score);
         if (type && this.onEvent) this.onEvent(type);
@@ -320,7 +317,7 @@ export class Section {
     /** @private */
     _buildKickers(kickers, top) {
         for (const k of kickers ?? []) {
-            const kicker = new Kicker({//k.x, top + k.y, k.w, k.h, k.dirX, k.dirY, k.power, k.angleDeg ?? 0)
+            const kicker = new Kicker({
                 x: k.x,
                 y: top + k.y,
                 w: k.w,
@@ -328,7 +325,7 @@ export class Section {
                 dirX: k.dirX,
                 dirY: k.dirY,
                 cooldown: k.cooldown,
-                angleDeg: k.angleDeg ?? 0
+                angleDeg: k.angleDeg ?? 0,
             });
             kicker.onHit = (s) => this._emit(s, 'kicker');
             if (k.circleRadius != null) kicker.circleRadius = k.circleRadius;
@@ -378,13 +375,13 @@ export class Section {
     _buildGears(gears, top) {
         for (const g of gears ?? []) {
             // Constructor signature is (x, y, radius, teethCount, angularSpeed).
-            // JSON keys: x, y, radius?, teeth, angularSpeed (legacy `speed` accepted as fallback).
+            // JSON keys: x, y, radius?, teeth, angularSpeed.
             const gear = new SpinningGear(
                 g.x,
                 top + g.y,
                 g.radius,
                 g.teeth,
-                g.angularSpeed ?? g.speed,
+                g.angularSpeed,
             );
             gear.onHit = (s) => this._emit(s, 'bumper');
             this.gears.push(gear);

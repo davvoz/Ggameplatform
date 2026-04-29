@@ -1,8 +1,17 @@
 {
-  "version": "5.1.4",
-  "timestamp": "2026-04-29T00:34:31.316Z",
-  "buildNumber": 537,
+  "version": "5.1.5",
+  "timestamp": "2026-04-29T22:08:56.456Z",
+  "buildNumber": 538,
   "changelog": [
+    {
+      "version": "5.1.5",
+      "date": "2026-04-29",
+      "type": "patch",
+      "changes": [
+        "fix:[DC] mobile",
+        "🔖 Bump version to 5.1.4 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.4",
       "date": "2026-04-29",
@@ -84,15 +93,6 @@
       "changes": [
         "fix : sonar",
         "🔖 Bump version to 5.0.15 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.15",
-      "date": "2026-04-14",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2] Total refractor",
-        "🔖 Bump version to 5.0.14 [skip-version]"
       ]
     }
   ]

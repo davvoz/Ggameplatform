@@ -40,9 +40,10 @@ export class HUD {
 
         // Mobile control bar — only meaningful while a ball is in flight or
         // sitting on the launcher. Hidden during ATTRACT / GAME_OVER / PAUSED
-        // so menus own the full canvas.
+        // so menus own the full canvas. Also hidden entirely on non-touch
+        // devices (CTRL_BAR_HEIGHT collapses to 0 → keyboard owns input).
         const playing = data.gameState === 2 || data.ballReady;
-        if (playing) this._drawControlBar(data);
+        if (playing && C.CTRL_BAR_HEIGHT > 0) this._drawControlBar(data);
 
         if (data.gameState === 0) this._drawAttract(viewW, viewH);
         else if (data.gameState === 3) this._drawGameOver(viewW, viewH, data.score, data.timePlayed, data.bossesDefeated);
@@ -100,7 +101,7 @@ export class HUD {
         for (const id of Object.keys(top)) {
             if (HUD._inRect(cx, cy, top[id])) return id;
         }
-        if (cy >= C.VIEW_HEIGHT) {
+        if (C.CTRL_BAR_HEIGHT > 0 && cy >= C.VIEW_HEIGHT) {
             const ctrl = HUD._ctrlButtons(ballReady);
             for (const id of Object.keys(ctrl)) {
                 if (HUD._inRect(cx, cy, ctrl[id])) return id;

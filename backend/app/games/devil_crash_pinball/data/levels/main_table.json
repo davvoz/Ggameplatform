@@ -5,9 +5,9 @@
   "palette": {
     "bg": "#080006",
     "bgTop": "#1c0020",
-    "wall": "#ff1a1a",
-    "wallGlow": "#fa7900",
-    "accent": "#ffd700",
+    "wall": "#f50000",
+    "wallGlow": "#f57600",
+    "accent": "#594e0d",
     "accent2": "#ff8030",
     "ink": "rgba(255,26,26,0.20)",
     "name": "INFERNO"
@@ -43,19 +43,22 @@
       "ax": 20,
       "ay": 0,
       "bx": 20,
-      "by": 720
+      "by": 720,
+      "thickness": 15
     },
     {
       "ax": 480,
       "ay": 0,
-      "bx": 370,
-      "by": 40
+      "bx": 390,
+      "by": 30,
+      "thickness": 15
     },
     {
       "ax": 0,
       "ay": 710,
       "bx": 480,
-      "by": 710
+      "by": 710,
+      "thickness": 15
     },
     {
       "ax": 20,
@@ -72,18 +75,18 @@
   ],
   "slingshots": [
     {
-      "ax": 74,
-      "ay": 533,
-      "bx": 130,
-      "by": 621,
+      "ax": 60,
+      "ay": 560,
+      "bx": 110,
+      "by": 620,
       "nx": 0.7,
       "ny": -0.7
     },
     {
       "ax": 396,
-      "ay": 539,
-      "bx": 329,
-      "by": 625,
+      "ay": 559,
+      "bx": 350,
+      "by": 620,
       "nx": -0.7,
       "ny": -0.7
     }
@@ -93,7 +96,7 @@
       "x": 147,
       "y": 641,
       "side": "LEFT",
-      "length": 76,
+      "length": 70,
       "restAngle": 0.42,
       "activeAngle": -0.58
     },
@@ -101,7 +104,7 @@
       "x": 316,
       "y": 643,
       "side": "RIGHT",
-      "length": 73,
+      "length": 70,
       "restAngle": 0.42,
       "activeAngle": -0.58
     },
@@ -124,53 +127,40 @@
   ],
   "bumpers": [
     {
-      "x": 110,
-      "y": 300
-    },
-    {
-      "x": 240,
-      "y": 200
-    },
-    {
-      "x": 370,
-      "y": 290
+      "x": 220,
+      "y": 460
     }
   ],
   "gears": [
     {
       "x": 230,
-      "y": 410,
-      "teeth": 6,
-      "angularSpeed": 2.8
+      "y": 240,
+      "radius": 30,
+      "toothHeight": 91,
+      "teeth": 5,
+      "angularSpeed": -0.8
     }
   ],
   "warps": [
     {
-      "x": 90,
-      "y": 150
+      "x": 220,
+      "y": 310
     }
   ],
   "gates": [
     {
-      "x1": 60,
-      "x2": 150,
-      "y": 20,
+      "x1": 90,
+      "x2": 180,
+      "y": 40,
       "dir": 1
     },
     {
-      "x1": 190,
-      "x2": 260,
-      "y": 10,
+      "x1": 240,
+      "x2": 310,
+      "y": 40,
       "dir": 1
     }
   ],
-  "boss": {
-    "type": "DemonBoss",
-    "x": 225,
-    "y": 130,
-    "killEvent": "demon_kill",
-    "enabled": false
-  },
   "corridors": [
     {
       "cx": 460,
@@ -178,19 +168,21 @@
       "angleDeg": -90,
       "length": 564,
       "width": 40,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     }
   ],
   "curvedCorridors": [
     {
       "cx": 370,
-      "cy": 150,
+      "cy": 140,
       "midRadius": 89,
       "width": 40,
       "startAngleDeg": -2,
       "angularSpanDeg": -91,
       "segments": 12,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     }
   ],
   "springs": [
@@ -203,7 +195,7 @@
       "cooldown": 0.4
     },
     {
-      "x": 410,
+      "x": 390,
       "y": 20,
       "radius": 8,
       "angleDeg": -118,
@@ -247,7 +239,7 @@
   "warpExits": [
     {
       "fromSection": "fraction_valut",
-      "x": 390,
+      "x": 380,
       "y": 220,
       "vx": 0,
       "vy": -650

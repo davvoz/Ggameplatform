@@ -25,6 +25,7 @@ export class CurvedCorridor {
     /** @type {number} */ angularSpan;  // radians
     /** @type {number} */ segments;
     /** @type {number} */ restitution;
+    /** @type {number} */ thickness;
 
     /** @type {Array<{ax:number,ay:number,bx:number,by:number}>} */
     #innerSegs = [];
@@ -38,7 +39,7 @@ export class CurvedCorridor {
      * @param {number} width        gap between inner and outer wall
      * @param {number} startAngle   radians (internal, converted from degrees by Section)
      * @param {number} angularSpan  radians (internal, converted from degrees by Section)
-     * @param {{ segments?: number, restitution?: number }} [opts]
+     * @param {{ segments?: number, restitution?: number, thickness?: number }} [opts]
      */
     constructor(cx, cy, midRadius, width, startAngle, angularSpan, opts = {}) {
         this.cx          = cx;
@@ -49,16 +50,17 @@ export class CurvedCorridor {
         this.angularSpan = angularSpan;
         this.segments    = opts.segments    ?? 12;
         this.restitution = opts.restitution ?? 0.55;
+        this.thickness   = opts.thickness   ?? 0;
         this.#build();
     }
 
     /** @param {import('../physics/Ball.js').Ball} ball */
     resolve(ball) {
         for (const s of this.#innerSegs) {
-            Collisions.circleVsSegment(ball, s.ax, s.ay, s.bx, s.by, this.restitution);
+            Collisions.circleVsSegment(ball, s.ax, s.ay, s.bx, s.by, this.restitution, this.thickness);
         }
         for (const s of this.#outerSegs) {
-            Collisions.circleVsSegment(ball, s.ax, s.ay, s.bx, s.by, this.restitution);
+            Collisions.circleVsSegment(ball, s.ax, s.ay, s.bx, s.by, this.restitution, this.thickness);
         }
     }
 

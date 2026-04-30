@@ -2,6 +2,15 @@
  * Single source of truth for tunable constants.
  * No magic numbers anywhere else in the codebase.
  */
+
+// Runtime touch-capability sniff. The on-screen control bar (LEFT/RIGHT/LAUNCH)
+// only makes sense on touch devices; on desktop the keyboard owns input and the
+// bar would just steal vertical space. Detected once at module load.
+const _IS_TOUCH_DEVICE = (typeof globalThis !== 'undefined') && (
+    ('ontouchstart' in globalThis) ||
+    ((navigator?.maxTouchPoints ?? 0) > 0)
+);
+
 export const GameConfig = Object.freeze({
     // Virtual canvas (portrait, mobile-first)
     VIEW_WIDTH: 480,
@@ -218,7 +227,9 @@ export const GameConfig = Object.freeze({
     // ── Mobile control bar (canvas-px band BELOW the playfield) ─────────────
     // Total physical canvas height = VIEW_HEIGHT + CTRL_BAR_HEIGHT.
     // Renderer is clipped to the playfield; HUD owns the bar exclusively.
-    CTRL_BAR_HEIGHT:  170,
+    // On desktop (no touch) the bar collapses to 0 — keyboard handles input.
+    IS_TOUCH_DEVICE:  _IS_TOUCH_DEVICE,
+    CTRL_BAR_HEIGHT:  _IS_TOUCH_DEVICE ? 170 : 0,
     CTRL_BTN_PAD:     14,             // outer padding (canvas px)
     CTRL_BTN_GAP:     14,             // gap between LEFT and RIGHT buttons
 });

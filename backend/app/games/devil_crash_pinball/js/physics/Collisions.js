@@ -36,11 +36,17 @@ export class Collisions {
     }
 
     /**
-     * Circle vs line segment (a → b). Treats the segment as a zero-thickness wall.
-     * `WALL_SKIN` widens the detection band so the ball reflects slightly before
-     * the visible surface; pushout still uses the bare radius.
+     * Circle vs line segment (a → b).
+     * When `thickness` is 0 the segment is a zero-thickness wall (legacy behaviour);
+     * `WALL_SKIN` then widens the detection band so the ball reflects slightly before
+     * the visible surface, and pushout uses the bare radius.
+     * When `thickness > 0` the segment is treated as a capsule of half-width
+     * `thickness / 2`. This eliminates the "ball flips to the wrong side" tunneling
+     * artefact that can occur with zero-thickness walls when an external impulse
+     * (spring, slingshot…) drives the ball centre across the line in one substep:
+     * the volumetric collider always pushes the ball back along the entry normal.
      */
-    static circleVsSegment(ball, ax, ay, bx, by, restitution) {
+    static circleVsSegment(ball, ax, ay, bx, by, restitution, thickness = 0) {
         const ex = bx - ax;
         const ey = by - ay;
         const lenSq = ex * ex + ey * ey;
@@ -54,13 +60,15 @@ export class Collisions {
         const dy = ball.pos.y - py;
         const distSq = dx * dx + dy * dy;
         const r = ball.radius;
-        const detR = r + C.WALL_SKIN;
+        const halfTh = thickness * 0.5;
+        const surfaceR = r + halfTh;             // bare collision radius
+        const detR    = surfaceR + C.WALL_SKIN;  // detection radius (includes skin)
         if (distSq >= detR * detR) return false;
 
         const dist = Math.sqrt(distSq) || 1e-6;
         const nx = dx / dist;
         const ny = dy / dist;
-        const overlap = r - dist;
+        const overlap = surfaceR - dist;
         if (overlap > 0) {
             ball.pos.x += nx * overlap;
             ball.pos.y += ny * overlap;

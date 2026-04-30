@@ -104,20 +104,28 @@ export class EntityRenderer {
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
-        ctx.strokeStyle = p.wall;
-        ctx.lineWidth   = 4;
         ctx.lineCap     = 'round';
-        ctx.beginPath();
+        // Group walls by lineWidth (distinct base width per thickness) to minimise
+        // strokeStyle/lineWidth swaps while keeping per-wall thickness honoured.
         for (const w of section.walls) {
+            const lw = Math.max(4, (w[5] ?? 0));
+            ctx.strokeStyle = p.wall;
+            ctx.lineWidth   = lw;
+            ctx.beginPath();
             ctx.moveTo(w[0], w[1]);
             ctx.lineTo(w[2], w[3]);
+            ctx.stroke();
         }
-        ctx.stroke();
         ctx.shadowBlur  = 0;
         ctx.strokeStyle = '#ffffff';
         ctx.globalAlpha = 0.5;
-        ctx.lineWidth   = 1.5;
-        ctx.stroke();
+        for (const w of section.walls) {
+            ctx.lineWidth = Math.max(1.5, (w[5] ?? 0) * 0.4);
+            ctx.beginPath();
+            ctx.moveTo(w[0], w[1]);
+            ctx.lineTo(w[2], w[3]);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
@@ -163,21 +171,28 @@ export class EntityRenderer {
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
         ctx.strokeStyle = p.wall;
-        ctx.lineWidth   = 4;
         ctx.lineCap     = 'round';
-        ctx.beginPath();
         for (const co of section.corridors) {
+            ctx.lineWidth = Math.max(4, co.thickness ?? 0);
+            ctx.beginPath();
             for (const w of co.walls) {
                 ctx.moveTo(w.ax, w.ay);
                 ctx.lineTo(w.bx, w.by);
             }
+            ctx.stroke();
         }
-        ctx.stroke();
         ctx.shadowBlur  = 0;
         ctx.strokeStyle = '#ffffff';
         ctx.globalAlpha = 0.5;
-        ctx.lineWidth   = 1.5;
-        ctx.stroke();
+        for (const co of section.corridors) {
+            ctx.lineWidth = Math.max(1.5, (co.thickness ?? 0) * 0.4);
+            ctx.beginPath();
+            for (const w of co.walls) {
+                ctx.moveTo(w.ax, w.ay);
+                ctx.lineTo(w.bx, w.by);
+            }
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
@@ -234,9 +249,9 @@ export class EntityRenderer {
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
         ctx.strokeStyle = p.wall;
-        ctx.lineWidth   = 4;
         ctx.lineCap     = 'round';
         for (const cc of section.curvedCorridors) {
+            ctx.lineWidth = Math.max(4, cc.thickness ?? 0);
             for (const arc of cc.arcs) {
                 ctx.beginPath();
                 const ccw = arc.endAngle < arc.startAngle;
@@ -247,8 +262,8 @@ export class EntityRenderer {
         ctx.shadowBlur  = 0;
         ctx.strokeStyle = '#ffffff';
         ctx.globalAlpha = 0.5;
-        ctx.lineWidth   = 1.5;
         for (const cc of section.curvedCorridors) {
+            ctx.lineWidth = Math.max(1.5, (cc.thickness ?? 0) * 0.4);
             for (const arc of cc.arcs) {
                 ctx.beginPath();
                 const ccw = arc.endAngle < arc.startAngle;

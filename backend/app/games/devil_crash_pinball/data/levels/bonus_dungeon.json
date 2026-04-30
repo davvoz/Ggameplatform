@@ -28,20 +28,30 @@
       "ay": 0,
       "bx": 460,
       "by": 720
+    },
+    {
+      "ax": 60,
+      "ay": 440,
+      "bx": 90,
+      "by": 480,
+      "thickness": 15
+    },
+    {
+      "ax": 30,
+      "ay": 720,
+      "bx": 80,
+      "by": 710,
+      "thickness": 16
     }
   ],
   "bumpers": [
     {
-      "x": 350,
-      "y": 150
+      "x": 210,
+      "y": 540
     },
     {
-      "x": 254,
-      "y": 544
-    },
-    {
-      "x": 250,
-      "y": 340
+      "x": 270,
+      "y": 330
     }
   ],
   "dropTargets": [
@@ -131,15 +141,16 @@
     },
     {
       "x": 80,
-      "y": 480,
+      "y": 490,
       "side": "LEFT",
       "length": 68,
       "restAngle": 1.56,
-      "activeAngle": -0.65
+      "activeAngle": -0.65,
+      "speed": -5
     },
     {
-      "x": 400,
-      "y": 470,
+      "x": 380,
+      "y": 460,
       "side": "RIGHT",
       "length": 68,
       "restAngle": 1.56,
@@ -164,8 +175,8 @@
   "warpExits": [
     {
       "fromSection": "upper_table",
-      "x": 260,
-      "y": 200,
+      "x": 290,
+      "y": 190,
       "vx": 0,
       "vy": -650
     }
@@ -180,11 +191,11 @@
       "restitution": 0.6
     },
     {
-      "cx": 371,
-      "cy": 320,
+      "cx": 420,
+      "cy": 310,
       "angleDeg": -90,
       "length": 280,
-      "width": 60,
+      "width": 80,
       "restitution": 0.6
     },
     {
@@ -205,9 +216,9 @@
     },
     {
       "cx": 82,
-      "cy": 319,
+      "cy": 289,
       "angleDeg": -90,
-      "length": 262,
+      "length": 202,
       "width": 46,
       "restitution": 0.55
     }
@@ -247,46 +258,6 @@
   "springs": [
     {
       "x": 390,
-      "y": 690,
-      "radius": 8,
-      "angleDeg": 270,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 320,
-      "y": 530,
-      "radius": 10,
-      "angleDeg": -90,
-      "power": 1150,
-      "cooldown": 0.5
-    },
-    {
-      "x": 352,
-      "y": 290,
-      "radius": 8,
-      "angleDeg": -90,
-      "power": 1150,
-      "cooldown": 0.5
-    },
-    {
-      "x": 290,
-      "y": 120,
-      "radius": 8,
-      "angleDeg": 88,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 170,
-      "y": 490,
-      "radius": 8,
-      "angleDeg": -90,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
-      "x": 390,
       "y": 45,
       "radius": 8,
       "angleDeg": -129,
@@ -303,16 +274,6 @@
     }
   ],
   "kickers": [
-    {
-      "x": 140,
-      "y": 440,
-      "w": 30,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 10000
-    },
     {
       "x": 430,
       "y": 540,
@@ -415,16 +376,6 @@
     },
     {
       "x": 140,
-      "y": 270,
-      "w": 20,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 10000
-    },
-    {
-      "x": 140,
       "y": 190,
       "w": 20,
       "h": 16,
@@ -436,10 +387,32 @@
   ],
   "gears": [
     {
-      "x": 90,
-      "y": 30,
-      "teeth": 3,
+      "x": 80,
+      "y": 60,
+      "radius": 3,
+      "toothHeight": 42,
+      "teeth": 4,
       "angularSpeed": 1
+    },
+    {
+      "x": 420,
+      "y": 130,
+      "radius": 3,
+      "toothHeight": 6,
+      "teeth": 5,
+      "angularSpeed": -29.7,
+      "speed": 1
+    }
+  ],
+  "curves": [
+    {
+      "cx": 320,
+      "cy": 170,
+      "radius": 60,
+      "startAngle": 0.22,
+      "endAngle": -1.39,
+      "segments": 12,
+      "restitution": 0.55
     }
   ]
 }

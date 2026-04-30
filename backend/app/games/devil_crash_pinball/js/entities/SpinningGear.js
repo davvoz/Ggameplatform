@@ -14,12 +14,13 @@ export class SpinningGear {
      * @param {number} radius       hub radius (tooth-base circle)
      * @param {number} teethCount   number of teeth
      * @param {number} angularSpeed rad/s; positive = clockwise
+     * @param {number} toothHeight  length of teeth protruding from the hub
      */
-    constructor(x, y, radius = 12, teethCount = 5, angularSpeed = 2.8) {
+    constructor(x, y, radius = 12, teethCount = 5, angularSpeed = 2.8, toothHeight = 42) {
         this.x             = x;
         this.y             = y;
         this.radius        = radius;
-        this.toothHeight   = 42;
+        this.toothHeight   = toothHeight;
         this.teethCount    = teethCount;
         this.angularSpeed  = angularSpeed;
         this.angle         = 0;
@@ -51,16 +52,22 @@ export class SpinningGear {
         const nx = dx / dist;
         const ny = dy / dist;
 
-        // ── Hub collision: solid core, elastic reflect ──────────────────────
-        const hubR = this.radius + ball.radius;
-        if (dist < hubR) {
-            ball.pos.x += nx * (hubR - dist);
-            ball.pos.y += ny * (hubR - dist);
+        // Reflect helper — wall-style bounce with BALL_RESTITUTION_WALL.
+        const reflect = (surfaceR) => {
+            ball.pos.x += nx * (surfaceR - dist);
+            ball.pos.y += ny * (surfaceR - dist);
             const vn = ball.vel.x * nx + ball.vel.y * ny;
             if (vn < 0) {
-                ball.vel.x -= 2 * vn * nx;
-                ball.vel.y -= 2 * vn * ny;
+                const k = (1 + C.BALL_RESTITUTION_WALL) * vn;
+                ball.vel.x -= k * nx;
+                ball.vel.y -= k * ny;
             }
+        };
+
+        // ── Hub collision: solid core ───────────────────────────────────────
+        const hubR = this.radius + ball.radius;
+        if (dist < hubR) {
+            reflect(hubR);
             return true;
         }
 
@@ -80,35 +87,15 @@ export class SpinningGear {
 
         if (angDiffWrapped > halfTW) return false; // ball is in a gap — no contact
 
-        // ── Solid tooth contact: positional correction (always) ─────────────
-        // The tooth is a radial bar reaching outerRadius. Push the ball back
-        // to the tooth tip surface so it cannot tunnel through the gear,
-        // even during the score-throttle cooldown.
-        const surfaceR = this.outerRadius + ball.radius;
-        if (dist < surfaceR) {
-            ball.pos.x += nx * (surfaceR - dist);
-            ball.pos.y += ny * (surfaceR - dist);
-            // Cancel inward radial velocity component (no rebound — tangential kick replaces it).
-            const vn = ball.vel.x * nx + ball.vel.y * ny;
-            if (vn < 0) {
-                ball.vel.x -= vn * nx;
-                ball.vel.y -= vn * ny;
-            }
-        }
+        // ── Solid tooth contact: wall-style reflect at the tooth tip ────────
+        reflect(this.outerRadius + ball.radius);
 
-        // Throttle scoring/SFX/impulse to avoid multi-frame accumulation,
+        // Throttle scoring/SFX to avoid multi-frame accumulation,
         // but the collision itself (above) is always resolved.
         if (this._hitCooldown > 0) return true;
 
-        // ── Single tangential impulse ────────────────────────────────────────
-        const sign      = this.angularSpeed > 0 ? 1 : -1;
-        const tipSpeed  = Math.abs(this.angularSpeed) * this.outerRadius;
-        const kick      = tipSpeed * 1.6;
-        ball.vel.x +=  ny * sign * kick;
-        ball.vel.y += -nx * sign * kick;
-
         this.flash        = 0.22;
-        this._hitCooldown = 0.28; // prevent multi-frame accumulation
+        this._hitCooldown = 0.28;
         if (this.onHit) this.onHit(this.score);
         return true;
     }

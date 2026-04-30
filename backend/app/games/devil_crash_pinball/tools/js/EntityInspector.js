@@ -290,9 +290,15 @@ export class EntityInspector {
         form.className = 'inspector-form';
         form.id = 'inspector-form';
 
+        // Fallback values for fields missing on legacy entities (e.g. radius
+        // added after the JSON was authored). We read them from the def's
+        // defaults() so the inspector always shows an editable value.
+        const defaults = (typeof def.defaults === 'function') ? def.defaults() : {};
+
         for (const fieldDef of def.fields) {
             const { name, type, step, options } = fieldDef;
-            const value = entity[name];
+            let value = entity[name];
+            if (value === undefined) value = defaults[name];
             if (value === undefined) continue;
 
             const row = document.createElement('div');

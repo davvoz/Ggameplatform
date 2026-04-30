@@ -14,6 +14,7 @@ export class Corridor {
     /** @type {number} */ by;
     /** @type {number} */ width;
     /** @type {number} */ restitution;
+    /** @type {number} */ thickness;
 
     // Each wall: { ax, ay, bx, by }
     #wallA = null;
@@ -26,14 +27,16 @@ export class Corridor {
      * @param {number} by          axis end Y
      * @param {number} width       gap between the two walls
      * @param {number} restitution
+     * @param {number} [thickness=0] physical thickness of each wall (0 = legacy zero-thickness line)
      */
-    constructor(ax, ay, bx, by, width, restitution = 0.55) {
+    constructor(ax, ay, bx, by, width, restitution = 0.55, thickness = 0) {
         this.ax          = ax;
         this.ay          = ay;
         this.bx          = bx;
         this.by          = by;
         this.width       = width;
         this.restitution = restitution;
+        this.thickness   = thickness;
         this.#build();
     }
 
@@ -41,8 +44,8 @@ export class Corridor {
     resolve(ball) {
         const w = this.#wallA;
         const v = this.#wallB;
-        Collisions.circleVsSegment(ball, w.ax, w.ay, w.bx, w.by, this.restitution);
-        Collisions.circleVsSegment(ball, v.ax, v.ay, v.bx, v.by, this.restitution);
+        Collisions.circleVsSegment(ball, w.ax, w.ay, w.bx, w.by, this.restitution, this.thickness);
+        Collisions.circleVsSegment(ball, v.ax, v.ay, v.bx, v.by, this.restitution, this.thickness);
     }
 
     /** Call after editing properties to refresh geometry. */

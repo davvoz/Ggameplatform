@@ -46,33 +46,37 @@
       "ax": 20,
       "ay": 2,
       "bx": 20,
-      "by": 720
+      "by": 720,
+      "thickness": 15
     },
     {
       "ax": 460,
       "ay": 2,
       "bx": 460,
-      "by": 720
+      "by": 720,
+      "thickness": 15
     },
     {
       "ax": 270,
       "ay": 290,
       "bx": 320,
-      "by": 330
+      "by": 330,
+      "thickness": 15
     },
     {
-      "ax": 120,
+      "ax": 110,
       "ay": 10,
-      "bx": 60,
-      "by": 270
+      "bx": 80,
+      "by": 120,
+      "thickness": 15
     }
   ],
   "brickGrids": [
     {
       "x": 200,
-      "cols": 7,
+      "cols": 5,
       "rows": 4,
-      "brickW": 16,
+      "brickW": 29,
       "brickH": 14,
       "gapX": 6,
       "gapY": 8,
@@ -81,10 +85,10 @@
   ],
   "slingshots": [
     {
-      "ax": 260,
-      "ay": 270,
-      "bx": 160,
-      "by": 300,
+      "ax": 230,
+      "ay": 280,
+      "bx": 180,
+      "by": 290,
       "nx": 0.88,
       "ny": -0.47
     }
@@ -115,7 +119,7 @@
       "activeAngle": -0.58
     },
     {
-      "x": 130,
+      "x": 140,
       "y": 300,
       "side": "RIGHT",
       "length": 34,
@@ -130,7 +134,8 @@
       "angleDeg": 90,
       "length": 270,
       "width": 40,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     },
     {
       "cx": 440,
@@ -138,7 +143,8 @@
       "angleDeg": -90,
       "length": 120,
       "width": 40,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     },
     {
       "cx": 357,
@@ -146,15 +152,17 @@
       "angleDeg": 61,
       "length": 69,
       "width": 40,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     },
     {
       "cx": 40,
-      "cy": 500,
+      "cy": 440,
       "angleDeg": -90,
-      "length": 395,
+      "length": 560,
       "width": 40,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     }
   ],
   "launchSprings": [
@@ -265,7 +273,8 @@
       "startAngleDeg": -57,
       "angularSpanDeg": 55,
       "segments": 12,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     },
     {
       "cx": 420,
@@ -275,7 +284,8 @@
       "startAngleDeg": 121,
       "angularSpanDeg": 31,
       "segments": 12,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 15
     }
   ],
   "warps": [
@@ -316,8 +326,8 @@
       "power": 1
     },
     {
-      "x": 450,
-      "y": 190,
+      "x": 440,
+      "y": 180,
       "w": 10,
       "h": 16,
       "angleDeg": 0,
@@ -333,7 +343,7 @@
       "angleDeg": 0,
       "dirX": 0,
       "dirY": -1,
-      "power": 1
+      "power": 100
     },
     {
       "x": 430,
@@ -404,14 +414,47 @@
       "dirX": 0,
       "dirY": -1,
       "power": 1
+    },
+    {
+      "x": 450,
+      "y": 190,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 1
+    },
+    {
+      "x": 420,
+      "y": 180,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 100
+    },
+    {
+      "x": 440,
+      "y": 180,
+      "w": 10,
+      "h": 16,
+      "angleDeg": 0,
+      "dirX": 0,
+      "dirY": -1,
+      "power": 100
     }
   ],
   "gears": [
     {
-      "x": 360,
-      "y": 80,
+      "x": 370,
+      "y": 120,
+      "radius": 12,
+      "toothHeight": 42,
       "teeth": 3,
-      "angularSpeed": 3
+      "angularSpeed": 19,
+      "power": 1000
     }
   ]
 }

@@ -191,7 +191,8 @@ export class Section {
 
     resolveWallCollisions(ball) {
         for (const w of this.walls) {
-            Collisions.circleVsSegment(ball, w[0], w[1], w[2], w[3], w[4]);
+            // w = [ax, ay, bx, by, restitution, thickness]
+            Collisions.circleVsSegment(ball, w[0], w[1], w[2], w[3], w[4], w[5]);
         }
     }
 
@@ -219,8 +220,8 @@ export class Section {
     }
 
     /** Helper: build a wall segment with default restitution. */
-    addWall(ax, ay, bx, by, restitution = 0.55) {
-        this.walls.push([ax, ay, bx, by, restitution]);
+    addWall(ax, ay, bx, by, restitution = 0.55, thickness = 0) {
+        this.walls.push([ax, ay, bx, by, restitution, thickness]);
     }
 
     /**
@@ -254,7 +255,7 @@ export class Section {
     /** @private */
     _buildWalls(walls, top) {
         for (const w of walls ?? []) {
-            this.addWall(w.ax, top + w.ay, w.bx, top + w.by, w.restitution);
+            this.addWall(w.ax, top + w.ay, w.bx, top + w.by, w.restitution, w.thickness ?? 0);
         }
     }
 
@@ -272,7 +273,7 @@ export class Section {
     /** @private */
     _buildBumpers(bumpers, top) {
         for (const b of bumpers ?? []) {
-            const bumper = new Bumper(b.x, top + b.y, b.score);
+            const bumper = new Bumper(b.x, top + b.y, b.score, b.radius);
             bumper.onHit = (s) => this._emit(s, 'bumper');
             this.bumpers.push(bumper);
         }
@@ -374,14 +375,15 @@ export class Section {
     /** @private */
     _buildGears(gears, top) {
         for (const g of gears ?? []) {
-            // Constructor signature is (x, y, radius, teethCount, angularSpeed).
-            // JSON keys: x, y, radius?, teeth, angularSpeed.
+            // Constructor signature is (x, y, radius, teethCount, angularSpeed, toothHeight).
+            // JSON keys: x, y, radius?, teeth, angularSpeed, toothHeight?.
             const gear = new SpinningGear(
                 g.x,
                 top + g.y,
                 g.radius,
                 g.teeth,
                 g.angularSpeed,
+                g.toothHeight,
             );
             gear.onHit = (s) => this._emit(s, 'bumper');
             this.gears.push(gear);
@@ -411,7 +413,7 @@ export class Section {
             const ay    = top + c.cy - sin * half;
             const bx    = c.cx + cos * half;
             const by    = top + c.cy + sin * half;
-            this.corridors.push(new Corridor(ax, ay, bx, by, c.width, c.restitution));
+            this.corridors.push(new Corridor(ax, ay, bx, by, c.width, c.restitution, c.thickness ?? 0));
         }
     }
 
@@ -422,7 +424,7 @@ export class Section {
             this.curvedCorridors.push(new CurvedCorridor(
                 c.cx, top + c.cy, c.midRadius, c.width,
                 c.startAngleDeg * D2R, c.angularSpanDeg * D2R,
-                { segments: c.segments, restitution: c.restitution }
+                { segments: c.segments, restitution: c.restitution, thickness: c.thickness ?? 0 }
             ));
         }
     }

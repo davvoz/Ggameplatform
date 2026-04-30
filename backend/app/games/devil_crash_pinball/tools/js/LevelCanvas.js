@@ -1,4 +1,7 @@
-import { EntityDefs, ENTITY_TYPE_ORDER } from './EntityDefs.js';
+import { EntityDefs, ENTITY_TYPE_ORDER }      from './EntityDefs.js';
+import { Section }            from '../../js/sections/Section.js';
+import { EntityRenderer }     from '../../js/rendering/EntityRenderer.js';
+import { BackgroundRenderer } from '../../js/rendering/BackgroundRenderer.js';
 
 const BOSS_COLORS = {
     DemonBoss:  '#ff2222',
@@ -8,6 +11,12 @@ const BOSS_COLORS = {
 };
 
 const EP_RADIUS = 10; // px — endpoint hit test radius
+
+/** Entity types that exist only in the editor and have no in-game renderer. */
+const EDITOR_ONLY_TYPES = ['ballStart', 'warpExit'];
+
+/** No-op particle pool — game renderers expect `particles.burst(...)`. */
+const NULL_PARTICLES = { burst: () => {}, update: () => {} };
 
 /**
  * Manages the canvas: rendering + mouse interaction.
@@ -31,34 +40,99 @@ export class LevelCanvas {
     #hoverEndpoint = null; // 'a' | 'b' | null
     #hoverHandle   = null; // handle id string | null
 
+    // Game-style preview state
+    #entityRenderer = new EntityRenderer();
+    #bgRenderer;
+    /** @type {import('../../js/sections/Section.js').Section | null} */
+    #section = null;
+    #sectionDirty = true;
+    #time = 0;
+    #lastFrameTs = 0;
+
     constructor(canvas, editor) {
         this.#canvas = canvas;
         this.#ctx = canvas.getContext('2d');
         this.#editor = editor;
         this.#posLabel = document.getElementById('cursor-pos');
+        this.#bgRenderer = new BackgroundRenderer(this.#ctx, 480);
         this.#bindEvents();
 
-        editor.on('entityChange', () => this.render());
-        editor.on('levelChange', () => this.render());
+        const markDirty = () => { this.#sectionDirty = true; };
+        editor.on('entityChange',    markDirty);
+        editor.on('levelChange',     markDirty);
         editor.on('selectionChange', () => this.render());
+
+        // Live animation loop — drives bumper / light / gear idle animations
+        // so the editor preview matches the in-game look frame-for-frame.
+        requestAnimationFrame(this.#frame);
+    }
+
+    /** rAF tick — advances simulation time, updates section, redraws. */
+    #frame = (ts) => {
+        if (!this.#lastFrameTs) this.#lastFrameTs = ts;
+        const dt = Math.min(0.05, (ts - this.#lastFrameTs) / 1000);
+        this.#lastFrameTs = ts;
+        this.#time += dt;
+
+        this.#ensureSection();
+        if (this.#section) {
+            try { this.#section.update(dt); } catch { /* ignore malformed-config update errors */ }
+        }
+        this.render();
+        requestAnimationFrame(this.#frame);
+    };
+
+    /** Rebuild the in-game Section from the current editor config when dirty. */
+    #ensureSection() {
+        if (!this.#sectionDirty) return;
+        const cfg = this.#editor.getConfig();
+        try {
+            // top=0 — editor canvas is one section in section-local coords.
+            this.#section = new Section(0, cfg);
+        } catch (err) {
+            // Keep the previous section so the preview stays usable while the
+            // user types invalid values into the inspector.
+            console.warn('[LevelCanvas] Section build failed:', err);
+        }
+        this.#sectionDirty = false;
     }
 
     render() {
         const ctx = this.#ctx;
-        const cfg = this.#editor.getConfig();
         ctx.clearRect(0, 0, 480, 720);
 
-        // Background
-        ctx.fillStyle = '#100010';
-        ctx.fillRect(0, 0, 480, 720);
+        // Background — palette gradient + JSON-driven layers (lava, nebula, …)
+        const bg = this.#section?.background;
+        if (bg) {
+            this.#bgRenderer.draw(bg, 0, 720, this.#time);
+        } else {
+            ctx.fillStyle = this.#section?.palette?.bg ?? '#100010';
+            ctx.fillRect(0, 0, 480, 720);
+        }
 
-        // Optional grid
+        // Optional grid (under entities, over background)
         if (this.#editor.snapEnabled) {
             this.#drawGrid(ctx);
         }
 
-        this.#renderAllEntities(ctx, cfg);
-        this.#renderBoss(ctx, cfg);
+        // Game-style entity rendering (walls, bumpers, flippers, lights, boss…)
+        if (this.#section) {
+            this.#entityRenderer.setup(ctx, this.#time, NULL_PARTICLES);
+            try {
+                this.#entityRenderer.drawSection(this.#section);
+            } catch (err) {
+                console.warn('[LevelCanvas] drawSection failed:', err);
+            }
+        }
+
+        // Editor-only markers (ball start, warp exit) — not drawn by the game
+        this.#renderEditorOnlyEntities(ctx);
+
+        // Disabled boss + WitchBoss-anchor overlay (game build skips these)
+        this.#renderBossOverlay(ctx);
+
+        // Selection / hover highlight on top of everything
+        this.#renderSelectionHighlight(ctx);
     }
 
     // ─── Rendering ────────────────────────────────────────────────────────────
@@ -75,18 +149,78 @@ export class LevelCanvas {
         }
     }
 
-    #renderAllEntities(ctx, cfg) {
+    #renderEditorOnlyEntities(ctx) {
+        const cfg = this.#editor.getConfig();
         const sel = this.#editor.selection;
-        for (const typeName of ENTITY_TYPE_ORDER) {
+        for (const typeName of EDITOR_ONLY_TYPES) {
             const def = EntityDefs[typeName];
             const arr = cfg[def.key];
             if (!Array.isArray(arr)) continue;
             arr.forEach((entity, i) => {
                 const isSelected = sel?.type === typeName && sel?.index === i;
                 def.render(ctx, entity, isSelected);
-                if (isSelected) this.#drawSelectionOverlay(ctx, def, entity);
             });
         }
+    }
+
+    /**
+     * Highlight the currently selected entity. For game-rendered entities we
+     * draw a yellow dashed ring around the centre (and the segment for line
+     * entities). Editor-only entities already render their own selection
+     * styling, so we only emit the handle/endpoint overlay for them.
+     */
+    #renderSelectionHighlight(ctx) {
+        const sel = this.#editor.selection;
+        if (!sel) return;
+        const def = EntityDefs[sel.type];
+        if (!def) return;
+        const entity = sel.type === '_boss'
+            ? this.#editor.getConfig().boss
+            : this.#editor.getSelectedEntity();
+        if (!entity) return;
+
+        if (!EDITOR_ONLY_TYPES.includes(sel.type) && sel.type !== '_boss') {
+            this.#drawSelectionRing(ctx, def, entity);
+        }
+        this.#drawSelectionOverlay(ctx, def, entity);
+    }
+
+    #drawSelectionRing(ctx, def, entity) {
+        ctx.save();
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth   = 2;
+        ctx.setLineDash([4, 3]);
+
+        if (def.isLine) {
+            ctx.beginPath();
+            ctx.moveTo(entity.ax, entity.ay);
+            ctx.lineTo(entity.bx, entity.by);
+            ctx.stroke();
+        }
+
+        const c = def.getCenter?.(entity);
+        if (c) {
+            const r = this.#selectionRingRadius(def, entity);
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+
+    /** Heuristic ring radius matched to entity footprint. */
+    #selectionRingRadius(def, entity) {
+        if (def.isLine) {
+            return Math.max(14, Math.hypot(entity.bx - entity.ax, entity.by - entity.ay) / 2 + 6);
+        }
+        if (entity.radius)    return entity.radius + 8;
+        if (entity.r)         return entity.r + 12;
+        if (entity.length)    return entity.length / 2 + 10;
+        if (entity.midRadius) return entity.midRadius + 10;
+        if (entity.w && entity.h) return Math.max(entity.w, entity.h) / 2 + 8;
+        return 22;
     }
 
     /** Draws endpoint hover highlight and generic handle circles for the selected entity. */
@@ -118,19 +252,26 @@ export class LevelCanvas {
         }
     }
 
-    #renderBoss(ctx, cfg) {
+    /**
+     * Editor-only boss overlay:
+     *   - WitchBoss anchors (the game build doesn't pass them to the boss class)
+     *   - DISABLED indicator (game build skips disabled bosses entirely)
+     */
+    #renderBossOverlay(ctx) {
+        const cfg = this.#editor.getConfig();
         const boss = cfg.boss;
         if (!boss) return;
         const disabled = boss.enabled === false;
         const baseColor = BOSS_COLORS[boss.type] ?? '#ff0000';
-        const color = disabled ? '#555555' : baseColor;
         const sel = this.#editor.selection;
         const isSel = sel?.type === '_boss';
 
         if (boss.anchors) {
-            this.#renderWitchBoss(ctx, boss, color, disabled, isSel, sel);
-        } else {
-            this.#renderSimpleBoss(ctx, boss, color, disabled, isSel);
+            this.#renderWitchBoss(ctx, boss, baseColor, disabled, isSel, sel);
+            return;
+        }
+        if (disabled) {
+            this.#renderSimpleBoss(ctx, boss, baseColor, true, isSel);
         }
     }
 

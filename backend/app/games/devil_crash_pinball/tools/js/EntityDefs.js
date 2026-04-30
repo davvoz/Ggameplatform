@@ -145,16 +145,18 @@ export const EntityDefs = {
         key: 'bumpers', label: 'Bumper', color: '#ff6600',
         isLine: false,
         fields: [
-            { name: 'x', type: 'number' },
-            { name: 'y', type: 'number' },
+            { name: 'x',      type: 'number' },
+            { name: 'y',      type: 'number' },
+            { name: 'radius', type: 'number', step: 1 },
         ],
-        defaults: () => ({ x: 240, y: 360 }),
+        defaults: () => ({ x: 240, y: 360, radius: 22 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
-        hitTest: (e, px, py) => Math.hypot(px - e.x, py - e.y) < 26,
+        hitTest: (e, px, py) => Math.hypot(px - e.x, py - e.y) < (e.radius ?? 22) + 4,
         render(ctx, e, sel) {
+            const r = e.radius ?? 22;
             ctx.beginPath();
-            ctx.arc(e.x, e.y, 22, 0, Math.PI * 2);
+            ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
             ctx.strokeStyle = sel ? '#ffffff' : this.color;
             ctx.lineWidth = sel ? 2.5 : 1.5;
             ctx.stroke();
@@ -205,21 +207,24 @@ export const EntityDefs = {
             { name: 'ay', type: 'number' },
             { name: 'bx', type: 'number' },
             { name: 'by', type: 'number' },
+            { name: 'thickness', type: 'number', step: 1 },
         ],
-        defaults: () => ({ ax: 100, ay: 200, bx: 200, by: 300 }),
+        defaults: () => ({ ax: 100, ay: 200, bx: 200, by: 300, thickness: 6 }),
         getCenter: (e) => ({ x: (e.ax + e.bx) / 2, y: (e.ay + e.by) / 2 }),
         setCenter(e, x, y, g) {
             const cx = (e.ax + e.bx) / 2, cy = (e.ay + e.by) / 2;
             const dx = snap(x, g) - snap(cx, g), dy = snap(y, g) - snap(cy, g);
             e.ax += dx; e.ay += dy; e.bx += dx; e.by += dy;
         },
-        hitTest: (e, px, py) => distToSegment(px, py, e.ax, e.ay, e.bx, e.by) < 8,
+        hitTest: (e, px, py) => distToSegment(px, py, e.ax, e.ay, e.bx, e.by) < ((e.thickness ?? 0) / 2 + 8),
         render(ctx, e, sel) {
+            const th = e.thickness ?? 0;
             ctx.beginPath();
             ctx.moveTo(e.ax, e.ay);
             ctx.lineTo(e.bx, e.by);
             ctx.strokeStyle = sel ? '#ffffff' : this.color;
-            ctx.lineWidth = sel ? 3 : 2;
+            ctx.lineWidth = Math.max(sel ? 3 : 2, th);
+            ctx.lineCap = 'round';
             ctx.stroke();
             if (sel) {
                 ctx.fillStyle = '#ffffff';
@@ -720,33 +725,42 @@ export const EntityDefs = {
         fields: [
             { name: 'x', type: 'number' },
             { name: 'y', type: 'number' },
+            { name: 'radius',       type: 'number', step: 1 },
+            { name: 'toothHeight',  type: 'number', step: 1 },
             { name: 'teeth', type: 'number' },
             { name: 'speed', type: 'number', step: 0.1 },
             { name: 'angularSpeed', type: 'number', step: 0.1 },
         ],
-        defaults: () => ({ x: 240, y: 300, teeth: 12, speed: 5, angularSpeed: 2.8 }),
+        defaults: () => ({ x: 240, y: 300, radius: 12, toothHeight: 42, teeth: 12, speed: 5, angularSpeed: 2.8 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
-        hitTest: (e, px, py) => Math.hypot(px - e.x, py - e.y) < 32,
+        hitTest: (e, px, py) => {
+            const r = (e.radius ?? 12) + (e.toothHeight ?? 42);
+            return Math.hypot(px - e.x, py - e.y) < r + 4;
+        },
         render(ctx, e, sel) {
-            const r = 24;
+            const rHub  = e.radius ?? 12;
+            const rTip  = rHub + (e.toothHeight ?? 42);
+            // Hub disc
             ctx.beginPath();
-            ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+            ctx.arc(e.x, e.y, rHub, 0, Math.PI * 2);
             ctx.strokeStyle = sel ? '#ffffff' : this.color;
-            ctx.lineWidth = sel ? 2.5 : 1.5;
+            ctx.lineWidth   = sel ? 2.5 : 1.5;
             ctx.stroke();
+            // Teeth
             const n = e.teeth ?? 12;
             for (let i = 0; i < n; i++) {
                 const a = (i / n) * Math.PI * 2;
                 ctx.beginPath();
-                ctx.moveTo(e.x + Math.cos(a) * r, e.y + Math.sin(a) * r);
-                ctx.lineTo(e.x + Math.cos(a) * (r + 6), e.y + Math.sin(a) * (r + 6));
+                ctx.moveTo(e.x + Math.cos(a) * rHub, e.y + Math.sin(a) * rHub);
+                ctx.lineTo(e.x + Math.cos(a) * rTip, e.y + Math.sin(a) * rTip);
                 ctx.strokeStyle = sel ? '#ffffff' : this.color;
-                ctx.lineWidth = 1.5;
+                ctx.lineWidth   = 1.5;
                 ctx.stroke();
             }
+            // Centre pivot dot
             ctx.beginPath();
-            ctx.arc(e.x, e.y, 5, 0, Math.PI * 2);
+            ctx.arc(e.x, e.y, Math.min(5, rHub * 0.4), 0, Math.PI * 2);
             ctx.fillStyle = sel ? '#ffffff' : this.color;
             ctx.fill();
         },
@@ -990,9 +1004,10 @@ export const EntityDefs = {
             { name: 'angleDeg',    type: 'number', step: 1 },
             { name: 'length',      type: 'number' },
             { name: 'width',       type: 'number' },
+            { name: 'thickness',   type: 'number', step: 1 },
             { name: 'restitution', type: 'number', step: 0.01 },
         ],
-        defaults: () => ({ cx: 240, cy: 300, angleDeg: 0, length: 120, width: 40, restitution: 0.55 }),
+        defaults: () => ({ cx: 240, cy: 300, angleDeg: 0, length: 120, width: 40, thickness: 6, restitution: 0.55 }),
         getCenter: (e) => ({ x: e.cx, y: e.cy }),
         setCenter: (e, x, y, g) => { e.cx = snap(x, g); e.cy = snap(y, g); },
         hitTest(e, px, py) {
@@ -1015,7 +1030,7 @@ export const EntityDefs = {
             const bx   = e.cx + cos * half, by = e.cy + sin * half;
             const color = sel ? '#ffffff' : this.color;
             ctx.strokeStyle = color;
-            ctx.lineWidth   = sel ? 2.5 : 1.5;
+            ctx.lineWidth   = Math.max(sel ? 2.5 : 1.5, e.thickness ?? 0);
             ctx.lineCap     = 'round';
             // Wall A
             ctx.beginPath();
@@ -1030,6 +1045,7 @@ export const EntityDefs = {
             // Dashed axis
             ctx.setLineDash([5, 5]);
             ctx.globalAlpha = 0.3;
+            ctx.lineWidth   = sel ? 2.5 : 1.5;
             ctx.beginPath();
             ctx.moveTo(ax, ay);
             ctx.lineTo(bx, by);
@@ -1095,19 +1111,38 @@ export const EntityDefs = {
             { name: 'cy',             type: 'number' },
             { name: 'midRadius',      type: 'number' },
             { name: 'width',          type: 'number' },
+            { name: 'thickness',      type: 'number', step: 1 },
             { name: 'startAngleDeg',  type: 'number', step: 1 },
             { name: 'angularSpanDeg', type: 'number', step: 1 },
             { name: 'segments',       type: 'number' },
             { name: 'restitution',    type: 'number', step: 0.01 },
         ],
-        defaults: () => ({ cx: 240, cy: 300, midRadius: 70, width: 40, startAngleDeg: 180, angularSpanDeg: 180, segments: 12, restitution: 0.55 }),
+        defaults: () => ({ cx: 240, cy: 300, midRadius: 70, width: 40, thickness: 6, startAngleDeg: 180, angularSpanDeg: 180, segments: 12, restitution: 0.55 }),
         getCenter: (e) => ({ x: e.cx, y: e.cy }),
         setCenter: (e, x, y, g) => { e.cx = snap(x, g); e.cy = snap(y, g); },
         hitTest(e, px, py) {
             const mid  = e.midRadius ?? 70;
             const half = (e.width ?? 40) / 2;
-            const d    = Math.hypot(px - e.cx, py - e.cy);
-            return d >= mid - half - 10 && d <= mid + half + 10;
+            const dx   = px - e.cx;
+            const dy   = py - e.cy;
+            const d    = Math.hypot(dx, dy);
+            // Radial band check — only the actual corridor thickness (+small tolerance).
+            const tol  = 4;
+            if (d < mid - half - tol || d > mid + half + tol) return false;
+            // Angular check — the point must lie within the swept arc.
+            const D2R   = Math.PI / 180;
+            const start = (e.startAngleDeg  ?? 180) * D2R;
+            const span  = (e.angularSpanDeg ?? 180) * D2R;
+            // Normalise (point - start) into the same rotational direction as span.
+            const TAU   = Math.PI * 2;
+            let delta   = Math.atan2(dy, dx) - start;
+            // Bring delta into the [0, TAU) range when span >=0, or (-TAU, 0] when span <0.
+            if (span >= 0) {
+                delta = ((delta % TAU) + TAU) % TAU;
+                return delta <= span;
+            }
+            delta = ((delta % TAU) - TAU) % TAU; // delta in (-TAU, 0]
+            return delta >= span;
         },
         render(ctx, e, sel) {
             const D2R         = Math.PI / 180;
@@ -1120,7 +1155,8 @@ export const EntityDefs = {
             const endAngle    = startAngle + (e.angularSpanDeg ?? 180) * D2R;
             const ccw         = (e.angularSpanDeg ?? 180) < 0;
             ctx.strokeStyle = color;
-            ctx.lineWidth   = sel ? 2.5 : 1.5;
+            ctx.lineWidth   = Math.max(sel ? 2.5 : 1.5, e.thickness ?? 0);
+            ctx.lineCap     = 'round';
             // Inner arc
             ctx.beginPath();
             ctx.arc(e.cx, e.cy, innerRadius, startAngle, endAngle, ccw);

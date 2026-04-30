@@ -6,10 +6,10 @@ import { Collisions } from '../physics/Collisions.js';
  * scores, lights up briefly, fires onHit(score).
  */
 export class Bumper {
-    constructor(x, y, score = C.BUMPER_SCORE) {
+    constructor(x, y, score = C.BUMPER_SCORE, radius = C.BUMPER_RADIUS) {
         this.x = x;
         this.y = y;
-        this.r = C.BUMPER_RADIUS;
+        this.r = radius;
         this.score = score;
         this.flash = 0;          // seconds remaining of flash effect
         this.onHit = null;       // (score) => void

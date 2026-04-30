@@ -2,6 +2,29 @@
 import { ParticlePool }    from '../effects/ParticlePool.js';
 import { EntityRenderer }  from './EntityRenderer.js';
 import { BackgroundRenderer } from './BackgroundRenderer.js';
+import { PerformanceMode } from '../config/PerformanceMode.js';
+
+/**
+ * Install a `shadowBlur` setter override on the canvas context. When
+ * `PerformanceMode.lowPerf` is on, every write to `ctx.shadowBlur` is
+ * silently coerced to 0 — disabling all glow across the renderer in one
+ * place (OCP: every existing call site keeps working unchanged).
+ * Idempotent: safe to call once per canvas.
+ * @param {CanvasRenderingContext2D} ctx
+ */
+function _installShadowBlurOverride(ctx) {
+    if (ctx.__lowPerfPatched) return;
+    const desc = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(ctx), 'shadowBlur'
+    );
+    if (!desc?.set || !desc.get) return; // unsupported — bail silently
+    Object.defineProperty(ctx, 'shadowBlur', {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { desc.set.call(this, PerformanceMode.lowPerf ? 0 : v); },
+    });
+    ctx.__lowPerfPatched = true;
+}
 
 /**
  * Procedural canvas renderer. Single section drawn per frame (the one the
@@ -15,6 +38,7 @@ export class Renderer {
     constructor(canvas) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
+        _installShadowBlurOverride(this.ctx);
         // Camera starts at 0; snapToBall() is called by Game after the board
         // is built and the ball is placed, so this value is never rendered.
         this.cameraY = 0;
@@ -187,7 +211,7 @@ export class Renderer {
 
         // 3.5 Flipper ambient side-glow (world-space overlay)
         this._updateFlipperFlash(board);
-        this._drawFlipperAmbient(board, camTop);
+        if (!PerformanceMode.lowPerf) this._drawFlipperAmbient(board, camTop);
 
         // 4. Warp transit beam — screen-space overlay during TRAVEL phase
         this._drawWarpBeam(board, sx, sy, camTop);
@@ -210,7 +234,7 @@ export class Renderer {
         if (active) this._drawFloorBadge(active.palette);
 
         // 7. Light scanlines + vignette (subtle)
-        this._drawOverlay();
+        if (!PerformanceMode.lowPerf) this._drawOverlay();
 
         // 8. Drain transition overlay — screen-space, topmost renderer layer
         if (this._drainEffect) this._drawDrainOverlay(this._drainEffect);
@@ -432,6 +456,7 @@ export class Renderer {
     }
 
     _drawStars(yA, yB) {
+        if (PerformanceMode.lowPerf) return;
         const ctx = this.ctx;
         ctx.save();
         for (const s of this._stars) {
@@ -567,24 +592,10 @@ export class Renderer {
         }
 
         // \u2500\u2500 Speed streaks \u2014 radial lines behind ball at high velocity \u2500\u2500\u2500\u2500\u2500\u2500
-        if (hot > 0.05) this._drawBallSpeedStreaks(ctx, bx, by, ball, hot, s);
+        if (hot > 0.05 && !PerformanceMode.lowPerf) this._drawBallSpeedStreaks(ctx, bx, by, ball, hot, s);
 
-        // \u2500\u2500 Trail \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-        for (let i = 0; i < ball.trail.length; i++) {
-            const t   = ball.trail[(ball.trailIdx + i) % ball.trail.length];
-            const pct = i / ball.trail.length;
-            const a   = pct * (0.45 + hot * 0.3) * s;
-            if (hot > 0.3) {
-                ctx.fillStyle = `rgba(255,${Math.round(200 - hot * 160)},${Math.round(50 - hot * 40)},${a.toFixed(2)})`;
-            } else {
-                ctx.fillStyle = pct > 0.6 ? `rgba(255,200,50,${a.toFixed(2)})` : `rgba(200,100,20,${a.toFixed(2)})`;
-            }
-            ctx.globalAlpha = a;
-            ctx.beginPath();
-            ctx.arc(t.x, t.y, ball.radius * (0.35 + pct * 0.65), 0, Math.PI * 2);
-            ctx.fill();
-        }
-        ctx.globalAlpha = 1;
+        // ── Trail ──
+        if (!PerformanceMode.lowPerf) this._drawBallTrail(ctx, ball, hot, s);
         this._applyBallGlow(s, hot);
 
         // \u2500\u2500 Sphere gradient \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -653,6 +664,25 @@ export class Renderer {
             ctx.stroke();
         }
         ctx.restore();
+    }
+
+    /** Draw the fading positional trail behind the ball. Skipped in low-perf mode. */
+    _drawBallTrail(ctx, ball, hot, s) {
+        for (let i = 0; i < ball.trail.length; i++) {
+            const t   = ball.trail[(ball.trailIdx + i) % ball.trail.length];
+            const pct = i / ball.trail.length;
+            const a   = pct * (0.45 + hot * 0.3) * s;
+            if (hot > 0.3) {
+                ctx.fillStyle = `rgba(255,${Math.round(200 - hot * 160)},${Math.round(50 - hot * 40)},${a.toFixed(2)})`;
+            } else {
+                ctx.fillStyle = pct > 0.6 ? `rgba(255,200,50,${a.toFixed(2)})` : `rgba(200,100,20,${a.toFixed(2)})`;
+            }
+            ctx.globalAlpha = a;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, ball.radius * (0.35 + pct * 0.65), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1;
     }
 
 

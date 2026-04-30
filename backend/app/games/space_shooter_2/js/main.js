@@ -343,14 +343,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         game.sound.playMenuClick();
     });
 
-    // Ultimate select → Start game
+    // Ultimate select → Start game (or Survivor pre-pick for World 5)
     document.getElementById('btn-select-ultimate')?.addEventListener('click', () => {
         hideScreen('ultimate-select-screen');
+        game.sound.playMenuClick();
+
+        if (selectedWorld === 5) {
+            // Survivor: take over the existing perk-select screen for the pre-run pick.
+            game.survivorPicker.reset();
+            game.survivorPicker.mount({
+                onBack: () => {
+                    game.survivorPicker.unmount();
+                    hideScreen('perk-select-screen');
+                    showScreen('ultimate-select-screen');
+                    game.sound.playMenuClick();
+                },
+                onStart: () => {
+                    game.survivorPicker.commitPicks();
+                    game.survivorPicker.unmount();
+                    hideScreen('perk-select-screen');
+                    game.sound.playMenuClick();
+                    game.saveManager.deleteSave();
+                    game.startSurvivorRun(selectedShip, selectedUltimate, selectedDifficulty);
+                }
+            });
+            showScreen('perk-select-screen');
+            return;
+        }
+
         // New game clears any existing save
         game.saveManager.deleteSave();
         game.startGame(selectedShip, selectedUltimate, selectedDifficulty, selectedWorld);
-        game.sound.playMenuClick();
     });
+
+    // (Survivor BACK / ENTER ARENA wiring is handled by SurvivorPerkPicker.mount callbacks.)
 
     // Back buttons
     document.getElementById('btn-back-to-start')?.addEventListener('click', () => {

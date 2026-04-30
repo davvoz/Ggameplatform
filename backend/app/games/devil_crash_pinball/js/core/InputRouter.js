@@ -1,5 +1,6 @@
 import { GameState }   from './GameState.js';
 import { InputAction } from '../input/InputManager.js';
+import { PerformanceMode } from '../config/PerformanceMode.js';
 
 const HUD_ACTIONS = Object.freeze({
     rescue: (g) => g.rescueBall(),
@@ -7,6 +8,7 @@ const HUD_ACTIONS = Object.freeze({
     bgm:    (g) => g.audio.toggleBgm(),
     sfx:    (g) => g.audio.toggleMute(),
     pause:  (g) => g.togglePause(),
+    perf:   (_g) => PerformanceMode.toggle(),
 });
 
 /**

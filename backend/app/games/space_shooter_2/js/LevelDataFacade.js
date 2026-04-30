@@ -69,6 +69,18 @@ const POOL_MAP = [
 ];
 
 export function getLevelData(level) {
+    // Survivor (W5) — virtual level 121+. No campaign data; SurvivorMode drives spawn.
+    // Returning a stub keeps HUD/UI consumers safe.
+    if (level >= 121) {
+        return {
+            name: 'CUSTOM SURVIVOR',
+            description: 'Adaptive Arena',
+            speedMult: 1,
+            boss: null,
+            waves: []
+        };
+    }
+
     const idx = Math.min(level - 1, LEVEL_DATA.length - 1);
     const base = LEVEL_DATA[idx];
 

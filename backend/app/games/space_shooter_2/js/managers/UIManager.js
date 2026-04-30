@@ -504,6 +504,12 @@ class UIManager {
         const section = document.getElementById('go-continue-section');
         if (!section) return;
 
+        // Survivor (W5) is no-continue by design — a death ends the run.
+        if (this.game.gameMode === 'survivor') {
+            section.classList.add('hidden');
+            return;
+        }
+
         const coinService = this.game.coinService;
         if (!coinService?.isAvailable()) {
             section.classList.add('hidden');

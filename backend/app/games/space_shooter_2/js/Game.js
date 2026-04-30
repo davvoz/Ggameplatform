@@ -23,6 +23,8 @@ import UIManager from './managers/UIManager.js';
 import PerkEffectsManager from './managers/PerkEffectsManager.js';
 import PlatformCoinService from './managers/PlatformCoinService.js';
 import SaveManager from './managers/SaveManager.js';
+import SurvivorMode from './survivor/SurvivorMode.js';
+import SurvivorPerkPicker from './survivor/SurvivorPerkPicker.js';
 
 
 
@@ -107,6 +109,11 @@ class Game {
         this.perkEffectsManager = new PerkEffectsManager(this);
         this.coinService = new PlatformCoinService();
         this.saveManager = new SaveManager(this);
+
+        // ── Survivor (World 5) — alternative game mode ──
+        this.gameMode = 'campaign';            // 'campaign' | 'survivor'
+        this.survivorMode = new SurvivorMode(this);
+        this.survivorPicker = new SurvivorPerkPicker(this);
 
         // Reference needed by loadSavedGame()
         this._difficultyConfig = DIFFICULTY_CONFIG;
@@ -297,7 +304,15 @@ class Game {
             }
         }
 
-        this.waveManager.updateWaves(deltaTime);
+        // ── Wave / Spawn driver ──
+        // Campaign uses WaveManager (LEVEL_DATA-driven).
+        // Survivor uses SurvivorMode (timeline-driven); WaveManager spawn API
+        // is still invoked from inside SurvivorMode for actual entity creation.
+        if (this.gameMode === 'survivor') {
+            this.survivorMode.update(deltaTime);
+        } else {
+            this.waveManager.updateWaves(deltaTime);
+        }
     }
 
     // ── Shared entity update loop (used by updatePlaying & updateEntitiesPassive) ──
@@ -348,6 +363,11 @@ class Game {
         this.hudRenderer.reset();
         this.entityManager.clearAll();
         this.perkSystem.reset();
+
+        // Reset survivor state and exit survivor mode by default.
+        this.gameMode = 'campaign';
+        this.survivorMode.reset();
+        if (this.backgroundFacade) this.backgroundFacade.setSurvivorMode(false);
 
         this.timeScale = 1;
         this.bulletTimeActive = false;
@@ -806,6 +826,76 @@ class Game {
 
     startWorldCinematic(onComplete, worldNum = 2) {
         this.cinematicManager.startCinematic(onComplete, worldNum);
+    }
+
+    /**
+     * Survivor (World 5) intro cinematic. Skippable after 1s.
+     */
+    startSurvivorCinematic(onComplete) {
+        this.cinematicManager.startSurvivorCinematic(onComplete);
+    }
+
+    /**
+     * Begin a survivor run.
+     * Pre-condition: SurvivorPerkPicker.commitPicks() has already been called
+     * (so PerkSystem reflects the player's chosen build).
+     *
+     * @param {string} shipId
+     * @param {string} ultimateId
+     * @param {string} difficultyId
+     */
+    startSurvivorRun(shipId, ultimateId, difficultyId) {
+        this.selectedShipId = shipId;
+        this.selectedUltimateId = ultimateId;
+        this.difficulty = DIFFICULTY_CONFIG[difficultyId] || DIFFICULTY_CONFIG.boring;
+
+        // We need to KEEP the perks chosen by the picker, so we cannot call
+        // _resetSystems() (which would wipe them). Reset only the rest manually.
+        this.scoreManager.reset();
+        this.levelManager.reset();
+        this.waveManager.reset();
+        this.cinematicManager.reset();
+        this.perkEffectsManager.reset();
+        this.hudRenderer.reset();
+        this.entityManager.clearAll();
+        this.timeScale = 1;
+        this.bulletTimeActive = false;
+        this.bulletTimeTimer = 0;
+        this.hasContinued = false;
+        this.lastSentScore = 0;
+
+        // Switch to survivor mode.
+        this.gameMode = 'survivor';
+        this.survivorMode.reset();
+        if (this.backgroundFacade) this.backgroundFacade.setSurvivorMode(true);
+
+        // Survivor uses a virtual level slot (>120) so existing systems
+        // (e.g. theme lookup) won't collide with campaign data.
+        this.levelManager.currentLevel = 121;
+        this.sessionStartLevel = 121;
+        this.levelManager.levelStartTime = performance.now();
+
+        this.entityManager.player = new Player(
+            this.logicalWidth / 2 - 32,
+            this.logicalHeight - 100,
+            shipId,
+            ultimateId
+        );
+
+        // Re-apply perk effects to the freshly-spawned player.
+        this.perkEffectsManager.applyPerkModifiersToPlayer();
+
+        if (globalThis.startGameSession) globalThis.startGameSession();
+
+        this.sound.resume();
+        if (this.sound.musicBuffers.length > 0) {
+            this.sound.playGameMusic();
+        }
+
+        // Skip level intro/outro entirely — jump straight to gameplay.
+        this.state = 'playing';
+        this.uiManager.showHudButtons();
+        this.survivorMode.start();
     }
 
     get currentLevel() {

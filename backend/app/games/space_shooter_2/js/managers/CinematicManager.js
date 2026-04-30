@@ -12,6 +12,7 @@ import OpeningCinematic         from './cinematics/OpeningCinematic.js';
 import LevelIntroCinematic      from './cinematics/LevelIntroCinematic.js';
 import LevelOutroCinematic      from './cinematics/LevelOutroCinematic.js';
 import DeathCinematic           from './cinematics/DeathCinematic.js';
+import SurvivorOpeningCinematic from './cinematics/SurvivorOpeningCinematic.js';
 
 export default class CinematicManager {
 
@@ -22,6 +23,7 @@ export default class CinematicManager {
         this._levelIntro = new LevelIntroCinematic(game);
         this._levelOutro = new LevelOutroCinematic(game);
         this._death      = new DeathCinematic(game);
+        this._survivorOpening = new SurvivorOpeningCinematic(game);
     }
 
     // ───────────────────────────────────────────────────
@@ -29,7 +31,11 @@ export default class CinematicManager {
     //  Game.js checks these for truthiness + reads fields
     // ───────────────────────────────────────────────────
 
-    get cinematic()        { return this._opening.active    ? this._opening    : null; }
+    get cinematic() {
+        if (this._opening.active) return this._opening;
+        if (this._survivorOpening.active) return this._survivorOpening;
+        return null;
+    }
     get levelIntro()       { return this._levelIntro.active ? this._levelIntro : null; }
 
     /**
@@ -48,6 +54,10 @@ export default class CinematicManager {
 
     startCinematic(onComplete, worldNum = 1) {
         const g = this.game;
+        if (worldNum === 5) {
+            this.startSurvivorCinematic(onComplete);
+            return;
+        }
         this._opening.begin({
             worldNum,
             onFinish: () => { if (onComplete) onComplete(); },
@@ -59,8 +69,30 @@ export default class CinematicManager {
         g.sound.playCinematicIntro();
     }
 
-    updateCinematic(dt)          { this._opening.update(dt); }
-    renderCinematic(ctx, w, h)   { this._opening.render(ctx, w, h); }
+    /**
+     * Survivor (World 5) opening cinematic. Self-contained, glitchy magenta theme.
+     * Skippable after 1 second.
+     */
+    startSurvivorCinematic(onComplete) {
+        const g = this.game;
+        this._survivorOpening.begin({
+            onFinish: () => { if (onComplete) onComplete(); },
+            skippable: true,
+            skipDelay: 1
+        });
+        g.state = 'cinematic';
+        g.uiManager.hideHudButtons();
+        g.sound.playCinematicIntro();
+    }
+
+    updateCinematic(dt) {
+        if (this._survivorOpening.active) this._survivorOpening.update(dt);
+        else this._opening.update(dt);
+    }
+    renderCinematic(ctx, w, h) {
+        if (this._survivorOpening.active) this._survivorOpening.render(ctx, w, h);
+        else this._opening.render(ctx, w, h);
+    }
 
     // ───────────────────────────────────────────────────
     //  Level intro
@@ -176,5 +208,6 @@ export default class CinematicManager {
         this._levelIntro.reset();
         this._levelOutro.reset();
         this._death.reset();
+        this._survivorOpening.reset();
     }
 }

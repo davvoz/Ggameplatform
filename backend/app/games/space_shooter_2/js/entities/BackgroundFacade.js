@@ -4,6 +4,7 @@ import { SpaceWorldRenderer } from "./worlds/SpaceWorldRenderer.js";
 import { PlanetWorldRenderer } from "./worlds/PlanetWorldRenderer.js";
 import { SimulationWorldRenderer } from "./worlds/SimulationWorldRenderer.js";
 import { QuantumWorldRenderer } from "./worlds/QuantumWorldRenderer.js";
+import { SurvivorWorldRenderer } from "./worlds/SurvivorWorldRenderer.js";
 
 // ═════════════════════════════════════════════════════════════
 //  BackgroundFacade — thin orchestrator that delegates to WorldRenderers
@@ -48,10 +49,13 @@ export class BackgroundFacade {
             new PlanetWorldRenderer(canvasWidth, canvasHeight, quality),  // World 2 (31-60)
             new SimulationWorldRenderer(canvasWidth, canvasHeight, quality), // World 3 (61-90)
             new QuantumWorldRenderer(canvasWidth, canvasHeight, quality),     // World 4 (91-120)
+            new SurvivorWorldRenderer(canvasWidth, canvasHeight, quality),    // World 5 (custom survivor)
         ];
 
         /** Currently active world renderer. */
         this._activeWorld = null;
+        /** Override: when set, _buildForTheme uses this index instead of computing from level. */
+        this._forcedWorldIdx = null;
 
         this._buildForTheme(getThemeForLevel(1));
     }
@@ -63,6 +67,19 @@ export class BackgroundFacade {
         const theme = getThemeForLevel(level);
         if (theme === this.currentTheme) return;
         this._buildForTheme(theme, level);
+    }
+
+    /**
+     * Force the survivor (World 5) renderer regardless of currentLevel.
+     * Pass `false` to release the override.
+     * @param {boolean} active
+     */
+    setSurvivorMode(active) {
+        const newIdx = active ? this.worlds.length - 1 : null;
+        if (this._forcedWorldIdx === newIdx) return;
+        this._forcedWorldIdx = newIdx;
+        // Force rebuild with current theme to re-bind active world
+        this._buildForTheme(this.currentTheme || getThemeForLevel(this.currentLevel || 1), this.currentLevel);
     }
 
     /** Change quality setting and rebuild. */
@@ -149,9 +166,9 @@ export class BackgroundFacade {
         this.bgColor = theme.bg;
         this.fxParticles = [];
 
-        // Determine which world index this level belongs to
-        const lvl = this.currentLevel;
-        const worldIdx = Math.floor((lvl - 1) / LEVELS_PER_WORLD);
+        // Determine which world index this level belongs to.
+        // Survivor mode forces an explicit index via `_forcedWorldIdx`.
+        const worldIdx = this._forcedWorldIdx ?? Math.floor((this.currentLevel - 1) / LEVELS_PER_WORLD);
         this._activeWorld = this.worlds[worldIdx] || this.worlds[0];
 
         // Build the world

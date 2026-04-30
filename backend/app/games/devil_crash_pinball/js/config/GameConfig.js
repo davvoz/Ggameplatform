@@ -216,13 +216,14 @@ export const GameConfig = Object.freeze({
 
     // HUD canvas action buttons (canvas pixel space, VIEW_WIDTH=480, top bar=40px)
     HUD_BTN_Y:        8,              // top edge of all buttons (px)
-    HUD_BTN_W:        44,             // button width (px)
+    HUD_BTN_W:        36,             // button width (px) — tightened to fit 7 buttons + right MULT/BALLS column
     HUD_BTN_H:        24,             // button height (px)
     HUD_BTN_RESCUE_X: 144,            // RESET button left edge
-    HUD_BTN_TILT_X:   196,            // TILT  button left edge
-    HUD_BTN_BGM_X:    248,            // BGM toggle left edge
-    HUD_BTN_SFX_X:    300,            // SFX toggle left edge
-    HUD_BTN_PAUSE_X:  352,            // PAUSE toggle left edge
+    HUD_BTN_TILT_X:   184,            // TILT  button left edge (step = W + 4)
+    HUD_BTN_BGM_X:    224,            // BGM toggle left edge
+    HUD_BTN_SFX_X:    264,            // SFX toggle left edge
+    HUD_BTN_PAUSE_X:  304,            // PAUSE toggle left edge
+    HUD_BTN_PERF_X:   344,            // LOW-PERF toggle left edge (344+36=380, leaves room for right column)
 
     // ── Mobile control bar (canvas-px band BELOW the playfield) ─────────────
     // Total physical canvas height = VIEW_HEIGHT + CTRL_BAR_HEIGHT.

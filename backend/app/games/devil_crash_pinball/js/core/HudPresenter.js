@@ -1,5 +1,6 @@
 import { GameConfig as C } from '../config/GameConfig.js';
 import { GameState }       from './GameState.js';
+import { PerformanceMode } from '../config/PerformanceMode.js';
 
 /**
  * Assembles the per-frame HUD data object.
@@ -38,6 +39,7 @@ export class HudPresenter {
             bossesDefeated: 0,
             isStuck: false,
             tilted: false,
+            lowPerf: false,
         };
     }
 
@@ -68,6 +70,7 @@ export class HudPresenter {
         d.bossesDefeated = g.session.bossesDefeated;
         d.isStuck       = g.stuck.isDisplayStuck;
         d.tilted        = g.session.tilted;
+        d.lowPerf       = PerformanceMode.lowPerf;
         return d;
     }
 }

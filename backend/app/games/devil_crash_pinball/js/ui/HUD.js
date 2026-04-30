@@ -94,7 +94,7 @@ export class HUD {
      * @param {number}  cy          Canvas y (0…VIEW_HEIGHT + CTRL_BAR_HEIGHT)
      * @param {boolean} ballReady   True while the ball sits on the launcher;
      *                              swaps the L/R bar for a single LAUNCH button.
-     * @returns {'rescue'|'tilt'|'bgm'|'sfx'|'pause'|'flipL'|'flipR'|'launch'|null}
+     * @returns {'rescue'|'tilt'|'bgm'|'sfx'|'pause'|'perf'|'flipL'|'flipR'|'launch'|null}
      */
     static hitTest(cx, cy, ballReady = false) {
         const top = HUD._topBarButtons();
@@ -131,6 +131,7 @@ export class HUD {
             bgm:    { x: C.HUD_BTN_BGM_X,    y, w, h },
             sfx:    { x: C.HUD_BTN_SFX_X,    y, w, h },
             pause:  { x: C.HUD_BTN_PAUSE_X,  y, w, h },
+            perf:   { x: C.HUD_BTN_PERF_X,   y, w, h },
         };
     }
 
@@ -166,6 +167,7 @@ export class HUD {
     _drawActionButtons(data) {
         const { HUD_BTN_RESCUE_X: rx, HUD_BTN_TILT_X: tx,
                 HUD_BTN_BGM_X: bgmx, HUD_BTN_SFX_X: sfxx, HUD_BTN_PAUSE_X: pausex,
+                HUD_BTN_PERF_X: perfx,
                 HUD_BTN_Y: by, HUD_BTN_W: bw, HUD_BTN_H: bh } = C;
 
         // RESET & TILT — only during active play
@@ -186,6 +188,14 @@ export class HUD {
             label:    isPaused ? '\u25b6 GO' : 'PAUSE',
             lit:      pauseLit,
             litColor: isPaused ? '#44ff88' : '#ffcc00',
+            pulse:    0,
+        });
+        // PERF: lit when LOW-perf mode is ON (optimisations active).
+        // Label flips to make state obvious at a glance.
+        this._drawHudButton({ x: perfx, y: by, w: bw, h: bh,
+            label:    data.lowPerf ? 'PERF\u2191' : 'PERF\u2193',
+            lit:      !!data.lowPerf,
+            litColor: '#88ff44',
             pulse:    0,
         });
     }

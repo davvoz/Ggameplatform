@@ -61,6 +61,9 @@ class SaveManager {
      * @param {boolean} levelCompleted - true when called after level completion
      */
     async save(levelCompleted = false) {
+        // Survivor mode is one continuous run with no checkpoints — never autosave.
+        if (this.game?.gameMode === 'survivor') return;
+
         const data = this._buildSaveData(levelCompleted);
         this._cachedSave = data;
 

@@ -56,6 +56,19 @@ const WORLDS = [
         bossIds: [19, 20, 21, 22, 23, 24],
         miniBossIds: [13, 14, 15, 16],
         planets: null
+    },
+    {
+        // World 5 — alternative survivor mode (see Game.gameMode === 'survivor').
+        // Reuses bosses (final of each source world) and 12 mini-bosses.
+        id: 5,
+        name: 'Custom Survivor',
+        subtitle: 'ADAPTIVE ARENA',
+        icon: '◈',
+        themeColor: '#ff44ff',
+        bossIds: [6, 12, 18, 24],
+        miniBossIds: [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15],
+        planets: null,
+        mode: 'survivor'
     }
 ];
 

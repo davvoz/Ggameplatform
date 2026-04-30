@@ -31,8 +31,19 @@ class HUDRenderer {
 
         ctx.fillStyle = '#88ff88';
         ctx.textAlign = 'center';
-        const levelData = getLevelData(g.levelManager.currentLevel);
-        ctx.fillText(`LV.${g.levelManager.currentLevel} - ${levelData?.name || ''}`, w / 2, 24);
+        if (g.gameMode === 'survivor' && g.survivorMode) {
+            const sm = g.survivorMode;
+            const sp = sm.getStepProgress();
+            const phaseLabel = `PHASE ${sm.getPhase() + 1}/4`;
+            const bossLabel = `\u2620 ${sm.bossesDefeated}/4`;
+            const stepLabel = sm.isMilestoneActive()
+                ? '\u26A1 BOSS FIGHT'
+                : `\u2694 ${sp.current}/${sp.target}`;
+            ctx.fillText(`${phaseLabel}   ${bossLabel}   ${stepLabel}`, w / 2, 24);
+        } else {
+            const levelData = getLevelData(g.levelManager.currentLevel);
+            ctx.fillText(`LV.${g.levelManager.currentLevel} - ${levelData?.name || ''}`, w / 2, 24);
+        }
 
         ctx.textAlign = 'right';
         const hpBarW = 80;

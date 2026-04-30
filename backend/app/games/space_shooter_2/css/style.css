@@ -218,7 +218,10 @@ html, body {
     overflow-y: auto;
     padding: 24px 18px;
     text-align: center;
+    -ms-overflow-style: none;        /* IE/Edge: hide scrollbar */
+    scrollbar-width: none;           /* Firefox: hide scrollbar */
 }
+.screen-content::-webkit-scrollbar { display: none; } /* Chrome/Safari: hide scrollbar */
 
 .screen-content h2 {
     font-family: 'Orbitron', 'Segoe UI', sans-serif;
@@ -286,19 +289,19 @@ html, body {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.04);
-    color: #8aaddd;
+    background: rgba(20, 30, 55, 0.92);
+    color: #d0e0ff;
     border: 1px solid rgba(100,150,220,0.25);
 }
 .btn-secondary:hover {
-    background: rgba(68,136,255,0.1);
+    background: rgba(30, 50, 90, 0.95);
     border-color: rgba(100,150,220,0.5);
-    color: #aaccff;
+    color: #ffffff;
 }
 
 .btn-danger {
-    background: rgba(255, 40, 40, 0.12);
-    color: #ff5555;
+    background: rgba(60, 10, 10, 0.92);
+    color: #ffd0d0;
     border: 1px solid rgba(255, 50, 50, 0.3);
 }
 .btn-danger:hover {
@@ -528,12 +531,11 @@ html, body {
     height: 100%;
     border-radius: 2px;
     transition: width 0.5s cubic-bezier(.25,.8,.25,1);
-    box-shadow: 0 0 5px currentColor;
 }
-.stat-fill.hp  { background: linear-gradient(90deg, #cc2222, #ff4444); color: #ff4444; }
-.stat-fill.spd { background: linear-gradient(90deg, #22aa44, #44ff66); color: #44ff66; }
-.stat-fill.res { background: linear-gradient(90deg, #2266cc, #4488ff); color: #4488ff; }
-.stat-fill.rof { background: linear-gradient(90deg, #cc8800, #ffaa22); color: #ffaa22; }
+.stat-fill.hp  { background: linear-gradient(90deg, #cc2222, #ff4444); box-shadow: 0 0 5px #ff4444; }
+.stat-fill.spd { background: linear-gradient(90deg, #22aa44, #44ff66); box-shadow: 0 0 5px #44ff66; }
+.stat-fill.res { background: linear-gradient(90deg, #2266cc, #4488ff); box-shadow: 0 0 5px #4488ff; }
+.stat-fill.rof { background: linear-gradient(90deg, #cc8800, #ffaa22); box-shadow: 0 0 5px #ffaa22; }
 
 /* ===== ULTIMATE SELECTION ===== */
 .selection-grid.ultimates {
@@ -796,16 +798,16 @@ html, body {
     flex-direction: column;
     align-items: center;
     padding: 6px 14px;
-    background: linear-gradient(135deg, #4488ff, #2266dd);
+    background: linear-gradient(135deg, #1a4499, #103377);
     border: none;
     border-radius: 6px;
-    color: #fff;
+    color: #ffffff;
     cursor: pointer;
     font-weight: 700;
     transition: all 0.2s;
 }
 .shop-buy-btn:hover {
-    background: linear-gradient(135deg, #5599ff, #3377ee);
+    background: linear-gradient(135deg, #2255bb, #1844aa);
     transform: scale(1.05);
 }
 .shop-item.expensive .shop-buy-btn {
@@ -825,9 +827,9 @@ html, body {
 .shop-maxed {
     font-size: 12px;
     font-weight: 700;
-    color: #44ff44;
+    color: #aaffaa;
     padding: 6px 10px;
-    background: rgba(68, 255, 68, 0.08);
+    background: rgba(0, 60, 0, 0.55);
     border-radius: 6px;
 }
 
@@ -854,10 +856,10 @@ html, body {
     align-items: center;
     gap: 10px;
     padding: 12px 28px;
-    background: linear-gradient(135deg, rgba(255,170,0,0.25) 0%, rgba(255,120,0,0.18) 100%);
+    background: linear-gradient(135deg, rgba(120,70,0,0.85) 0%, rgba(90,50,0,0.9) 100%);
     border: 1px solid rgba(255,170,0,0.5);
     border-radius: 8px;
-    color: #ffd666;
+    color: #ffe6a3;
     font-family: 'Orbitron', sans-serif;
     font-size: 13px;
     letter-spacing: 2px;
@@ -865,7 +867,7 @@ html, body {
     transition: background 0.25s, border-color 0.25s, transform 0.15s;
 }
 .btn-continue:hover:not(.disabled) {
-    background: linear-gradient(135deg, rgba(255,170,0,0.4) 0%, rgba(255,120,0,0.3) 100%);
+    background: linear-gradient(135deg, rgba(160,95,0,0.9) 0%, rgba(120,70,0,0.95) 100%);
     border-color: rgba(255,170,0,0.8);
     transform: scale(1.04);
 }
@@ -898,12 +900,12 @@ html, body {
     flex-wrap: wrap;
 }
 .btn-continue--build {
-    background: linear-gradient(135deg, rgba(0,180,255,0.22) 0%, rgba(80,120,255,0.16) 100%);
+    background: linear-gradient(135deg, rgba(0,60,100,0.9) 0%, rgba(0,40,90,0.92) 100%);
     border-color: rgba(0,180,255,0.45);
-    color: #88ddff;
+    color: #d0eeff;
 }
 .btn-continue--build:hover:not(.disabled) {
-    background: linear-gradient(135deg, rgba(0,180,255,0.38) 0%, rgba(80,120,255,0.28) 100%);
+    background: linear-gradient(135deg, rgba(0,90,140,0.92) 0%, rgba(0,60,120,0.95) 100%);
     border-color: rgba(0,180,255,0.8);
 }
 
@@ -1068,13 +1070,13 @@ html, body {
     min-width: 70px;
 }
 .toggle-btn.on {
-    background: linear-gradient(135deg, #22aa66, #1a8855);
+    background: linear-gradient(135deg, #117744, #0d5a33);
     color: #fff;
     border: 1px solid rgba(68,204,136,0.4);
     box-shadow: 0 0 14px rgba(68,204,136,0.3);
 }
 .toggle-btn.off {
-    background: linear-gradient(135deg, #aa2222, #882222);
+    background: linear-gradient(135deg, #771111, #550c0c);
     color: #fff;
     border: 1px solid rgba(204,68,68,0.4);
     box-shadow: 0 0 14px rgba(204,68,68,0.3);
@@ -1372,8 +1374,8 @@ html, body {
 .detail-perk-stacks {
     font-size: 10px;
     font-weight: 700;
-    color: #88ff88;
-    background: rgba(100,255,100,0.08);
+    color: #d0ffd0;
+    background: rgba(0, 50, 0, 0.55);
     padding: 2px 8px;
     border-radius: 8px;
     flex-shrink: 0;
@@ -1384,12 +1386,7 @@ html, body {
 }
 
 /* ===== SCROLLBAR FOR SCREEN CONTENT ===== */
-.screen-content {
-    -ms-overflow-style: none;        /* IE/Edge */
-}
-.screen-content::-webkit-scrollbar {
-    display: none;                   /* Chrome/Safari */
-}
+/* Merged into the main .screen-content rule at the top of this file. */
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 400px) {
@@ -1604,9 +1601,9 @@ body.game-fullscreen #game-container {
 }
 .perk-stack {
     font-size: 10px;
-    color: #88ff88;
+    color: #d0ffd0;
     font-weight: 600;
-    background: rgba(100,255,100,0.08);
+    background: rgba(0, 50, 0, 0.55);
     padding: 2px 8px;
     border-radius: 8px;
     margin-top: 4px;
@@ -1652,14 +1649,14 @@ body.game-fullscreen #game-container {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 215, 0, 0.10);
+    background: rgba(60, 50, 0, 0.85);
     border: 1px solid rgba(255, 215, 0, 0.28);
     border-radius: 20px;
     padding: 4px 14px;
     font-family: 'Orbitron', 'Segoe UI', sans-serif;
     font-size: 13px;
     font-weight: 700;
-    color: #ffd700;
+    color: #ffe680;
     letter-spacing: 1px;
 }
 .coin-icon { font-size: 15px; }
@@ -2003,14 +2000,14 @@ body.game-fullscreen #game-container {
     max-width: 280px;
     margin: 10px auto 0;
     padding: 12px 28px;
-    background: rgba(40, 180, 100, 0.12);
+    background: rgba(0, 50, 25, 0.85);
     border: 1px solid rgba(40, 180, 100, 0.35);
-    color: #44dd88;
+    color: #b0ffd0;
 }
 #btn-continue:hover {
-    background: rgba(40, 180, 100, 0.22);
+    background: rgba(0, 70, 35, 0.92);
     border-color: rgba(40, 180, 100, 0.6);
-    color: #66ffaa;
+    color: #d0ffe6;
     box-shadow: 0 0 20px rgba(40, 180, 100, 0.15);
 }
 #btn-continue .continue-label {
@@ -2037,7 +2034,7 @@ body.game-fullscreen #game-container {
     transform: translateX(-50%) translateY(-60px);
     background: rgba(10, 20, 40, 0.92);
     border: 1px solid rgba(40, 180, 100, 0.4);
-    color: #44dd88;
+    color: #b0ffd0;
     font-family: 'Orbitron', sans-serif;
     font-size: 11px;
     font-weight: 700;
@@ -2063,13 +2060,13 @@ body.game-fullscreen #game-container {
 
 #btn-save-quit,
 #btn-save {
-    background: rgba(40, 180, 100, 0.1);
-    color: #44dd88;
+    background: rgba(0, 50, 25, 0.85);
+    color: #b0ffd0;
     border: 1px solid rgba(40, 180, 100, 0.3);
 }
 #btn-save-quit:hover,
 #btn-save:hover {
-    background: rgba(40, 180, 100, 0.2);
+    background: rgba(0, 70, 35, 0.92);
     border-color: rgba(40, 180, 100, 0.5);
     box-shadow: 0 0 16px rgba(40, 180, 100, 0.15);
 }
@@ -2113,3 +2110,103 @@ body.game-fullscreen #game-container {
     margin: 14px 0 4px;
     letter-spacing: 0.3px;
 }
+
+/* ════════════════════════════════════════════════
+   SURVIVOR (W5) — PRE-RUN PERK PICKER
+   Reuses #perk-select-screen + .perk-card markup.
+   These rules add the toolbar, counter, stack badge,
+   and survivor-flavoured tweaks on top.
+   ════════════════════════════════════════════════ */
+
+#perk-select-screen .screen-content:has(.perk-title--survivor) {
+    max-width: 1100px;
+    width: 95vw;
+}
+.perk-title--survivor {
+    color: #ff66dd;
+    text-shadow: 0 0 16px rgba(255, 80, 220, 0.6);
+    letter-spacing: 2px;
+}
+.perk-subtitle--survivor {
+    color: #ccc;
+    font-size: 0.85em;
+}
+
+.survivor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 80, 220, 0.25);
+    border-radius: 6px;
+    background: rgba(20, 0, 30, 0.45);
+}
+.survivor-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.survivor-filter-btn {
+    background: transparent;
+    color: #ccc;
+    border: 1px solid rgba(255, 80, 220, 0.35);
+    padding: 5px 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8em;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.18s ease;
+}
+.survivor-filter-btn:hover { color: #fff; border-color: #ff66dd; }
+.survivor-filter-btn.active {
+    background: rgba(80, 0, 60, 0.85);
+    color: #ffd0f4;
+    border-color: #ff66dd;
+    box-shadow: 0 0 10px rgba(255, 80, 220, 0.4);
+}
+.survivor-pick-counter {
+    color: #88ffff;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95em;
+}
+.survivor-pick-counter.full { color: #ffaa44; }
+
+.perk-cards--survivor {
+    /* Keep the original flex layout from .perk-cards. */
+    /* Allow vertical scroll while hiding the scrollbar. */
+    max-height: 60vh;
+    overflow-y: auto;
+    align-content: flex-start;
+    padding: 6px 4px;
+    border: 1px solid rgba(255, 80, 220, 0.15);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    /* Hide scrollbar — Firefox */
+    scrollbar-width: none;
+    /* Hide scrollbar — IE/Edge legacy */
+    -ms-overflow-style: none;
+}
+.perk-cards--survivor::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* Survivor stack badge inside the standard .perk-card layout */
+.perk-card--survivor { position: relative; cursor: pointer; user-select: none; }
+.perk-card--survivor.survivor-picked {
+    border-color: #66ffaa !important;
+    box-shadow: 0 0 14px rgba(80, 255, 160, 0.45);
+}
+.perk-card--survivor.survivor-maxed { opacity: 0.6; cursor: not-allowed; }
+.perk-card--survivor .perk-survivor-stack {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.72em;
+    color: #66ffaa;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(102, 255, 170, 0.4);
+    pointer-events: none;
+}
+.survivor-screen-actions { margin-top: 12px; }
+

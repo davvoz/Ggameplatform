@@ -1,8 +1,17 @@
 {
-  "version": "5.1.5",
-  "timestamp": "2026-04-29T22:08:56.456Z",
-  "buildNumber": 538,
+  "version": "5.1.6",
+  "timestamp": "2026-04-30T14:28:52.755Z",
+  "buildNumber": 539,
   "changelog": [
+    {
+      "version": "5.1.6",
+      "date": "2026-04-30",
+      "type": "patch",
+      "changes": [
+        "fix:[DC] configure levels , update level editor",
+        "🔖 Bump version to 5.1.5 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.5",
       "date": "2026-04-29",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[SS2] Ultimate bug",
         "🔖 Bump version to 5.0.16 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.16",
-      "date": "2026-04-14",
-      "type": "patch",
-      "changes": [
-        "fix : sonar",
-        "🔖 Bump version to 5.0.15 [skip-version]"
       ]
     }
   ]

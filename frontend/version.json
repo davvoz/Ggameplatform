@@ -1,8 +1,17 @@
 {
-  "version": "5.1.6",
-  "timestamp": "2026-04-30T14:28:52.755Z",
-  "buildNumber": 539,
+  "version": "5.1.7",
+  "timestamp": "2026-04-30T20:03:04.548Z",
+  "buildNumber": 540,
   "changelog": [
+    {
+      "version": "5.1.7",
+      "date": "2026-04-30",
+      "type": "patch",
+      "changes": [
+        "fix:[SD]performance[SS2]world5",
+        "🔖 Bump version to 5.1.6 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.6",
       "date": "2026-04-30",
@@ -84,15 +93,6 @@
       "changes": [
         "fix : trigger sonar analisi",
         "🔖 Bump version to 5.0.17 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.17",
-      "date": "2026-04-15",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2] Ultimate bug",
-        "🔖 Bump version to 5.0.16 [skip-version]"
       ]
     }
   ]

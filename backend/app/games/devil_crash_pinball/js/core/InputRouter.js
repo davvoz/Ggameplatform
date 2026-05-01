@@ -9,6 +9,8 @@ const HUD_ACTIONS = Object.freeze({
     sfx:    (g) => g.audio.toggleMute(),
     pause:  (g) => g.togglePause(),
     perf:   (_g) => PerformanceMode.toggle(),
+    replay: (g) => g.replayGame(),
+    home:   (g) => g.exitToShell(),
 });
 
 /**

@@ -1,0 +1,219 @@
+/* ─── Top-bar separator ─────────────────────────────────────────────────────── */
+#topbar-actions .topbar-sep {
+    display: inline-block;
+    width: 1px;
+    height: 20px;
+    background: #444;
+    margin: 0 4px;
+    vertical-align: middle;
+}
+#btn-test-online,
+#btn-save-online,
+#btn-my-boards {
+    background: #2d3038;
+    border: 1px solid #4a5060;
+}
+#btn-test-online { color: #7ce47c; }
+#btn-save-online { color: #ffd24a; }
+#btn-my-boards   { color: #79c0ff; }
+
+/* ─── Toast notifications ────────────────────────────────────────────────────── */
+.editor-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    max-width: min(480px, 90vw);
+    padding: 10px 18px;
+    border-radius: 6px;
+    font: 600 13px/1.4 'Segoe UI', sans-serif;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 99999;
+    white-space: pre-wrap;
+}
+.editor-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.editor-toast--error   { background: #4a1010; border: 1px solid #c03030; color: #ffa8a8; }
+.editor-toast--success { background: #103020; border: 1px solid #30a060; color: #a8ffc8; }
+.editor-toast--info    { background: #102040; border: 1px solid #3070c0; color: #a8d8ff; }
+
+/* ─── Confirm dialog ─────────────────────────────────────────────────────────── */
+.editor-confirm-dialog {
+    background: #1e2028;
+    border: 1px solid #4a5060;
+    border-radius: 8px;
+    color: #d0d8e8;
+    font: 14px/1.5 'Segoe UI', sans-serif;
+    padding: 20px 24px;
+    max-width: min(400px, 90vw);
+}
+.editor-confirm-dialog p {
+    margin: 0 0 16px;
+    white-space: pre-wrap;
+}
+.editor-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.editor-confirm-ok,
+.editor-confirm-cancel {
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font: 600 13px 'Segoe UI', sans-serif;
+}
+.editor-confirm-ok     { background: #c03030; border: 1px solid #ff5050; color: #fff; }
+.editor-confirm-cancel { background: #2d3038; border: 1px solid #4a5060; color: #d0d8e8; }
+.editor-confirm-ok:hover     { background: #e03030; }
+.editor-confirm-cancel:hover { background: #3a3f4a; }
+
+/* ─── Test modal (iframe) ───────────────────────────────────────────────────── */
+.editor-test-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.editor-test-inner {
+    width: min(420px, 100%);
+    height: min(760px, 100%);
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    border: 2px solid #ff3a3a;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 32px rgba(255, 60, 60, 0.4);
+}
+.editor-test-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: #1a0008;
+    color: #ffd24a;
+    font: 600 13px/1 'Segoe UI', sans-serif;
+}
+.editor-test-bar button {
+    background: transparent;
+    border: 1px solid #ff8a4a;
+    color: #ffb8a8;
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+.editor-test-bar button:hover { color: #fff; }
+.editor-test-iframe {
+    flex: 1 1 auto;
+    width: 100%;
+    border: 0;
+    background: #000;
+}
+
+/* ─── My Boards / Save Online dialogs ───────────────────────────────────────── */
+.editor-online-dialog {
+    min-width: min(480px, 90vw);
+    max-width: 90vw;
+    border: 1px solid #4a5060;
+    background: #1a1d24;
+    color: #d8d8d8;
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+.editor-online-dialog::backdrop { background: rgba(0,0,0,0.65); }
+.editor-online-dialog h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: #ffd24a;
+}
+.mb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+.mb-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #23262e;
+    border: 1px solid #353944;
+    border-radius: 6px;
+}
+.mb-info { min-width: 0; }
+.mb-name {
+    font-weight: 600;
+    color: #ffd24a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mb-meta {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+}
+.mb-row button {
+    background: #2d3038;
+    border: 1px solid #4a5060;
+    color: #d8d8d8;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.mb-row button:hover { background: #3a3e48; }
+.mb-row .mb-danger:hover {
+    background: #5a1010;
+    border-color: #ff5050;
+    color: #ffaaaa;
+}
+
+#save-online-dialog {
+    min-width: min(420px, 90vw);
+    border: 1px solid #4a5060;
+    background: #1a1d24;
+    color: #d8d8d8;
+    border-radius: 8px;
+    padding: 16px 20px;
+}
+#save-online-dialog::backdrop { background: rgba(0,0,0,0.65); }
+#save-online-dialog h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+    color: #ffd24a;
+}
+#save-online-dialog .hint {
+    margin: 0 0 12px;
+    font-size: 12px;
+    color: #888;
+}
+#save-online-dialog label {
+    display: block;
+    margin: 8px 0 4px;
+    font-size: 13px;
+    color: #b0b0b0;
+}
+#save-online-dialog input,
+#save-online-dialog select {
+    width: 100%;
+    padding: 6px 8px;
+    background: #23262e;
+    border: 1px solid #4a5060;
+    color: #d8d8d8;
+    border-radius: 4px;
+    box-sizing: border-box;
+}

@@ -191,6 +191,12 @@ export const GameConfig = Object.freeze({
     // Game-over UX
     MENU_GUARD_TIME:       2,         // seconds the game-over banner is locked
 
+    // Game-over choice buttons (REPLAY / MAIN MENU). Coords in canvas-px.
+    GAMEOVER_BTN_W:        140,
+    GAMEOVER_BTN_H:        44,
+    GAMEOVER_BTN_Y:        540,       // y position of both buttons (top edge)
+    GAMEOVER_BTN_GAP:      24,        // horizontal gap between buttons
+
     // Playfield boundary (left wall position in world coords).
     PLAYFIELD_LEFT_X:      20,
 

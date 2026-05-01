@@ -46,7 +46,7 @@ export class HUD {
         if (playing && C.CTRL_BAR_HEIGHT > 0) this._drawControlBar(data);
 
         if (data.gameState === 0) this._drawAttract(viewW, viewH);
-        else if (data.gameState === 3) this._drawGameOver(viewW, viewH, data.score, data.timePlayed, data.bossesDefeated);
+        else if (data.gameState === 3) this._drawGameOver(viewW, viewH, data);
         else if (data.ballReady) this._drawPlungerPrompt(data, viewW, viewH);
 
         ctx.restore();
@@ -88,24 +88,39 @@ export class HUD {
      *
      * Top-bar buttons are momentary (TAP semantics). Control-bar buttons
      * (`flipL`, `flipR`, `launch`) are held — InputManager maps them to
-     * gameplay zones and tracks them across pointermove.
+     * gameplay zones and tracks them across pointermove. Game-over buttons
+     * (`replay`, `home`) are only active while the GAME_OVER panel is shown.
      *
-     * @param {number}  cx          Canvas x (0…VIEW_WIDTH)
-     * @param {number}  cy          Canvas y (0…VIEW_HEIGHT + CTRL_BAR_HEIGHT)
-     * @param {boolean} ballReady   True while the ball sits on the launcher;
-     *                              swaps the L/R bar for a single LAUNCH button.
-     * @returns {'rescue'|'tilt'|'bgm'|'sfx'|'pause'|'perf'|'flipL'|'flipR'|'launch'|null}
+     * @param {number} cx          Canvas x (0…VIEW_WIDTH)
+     * @param {number} cy          Canvas y (0…VIEW_HEIGHT + CTRL_BAR_HEIGHT)
+     * @param {boolean | {ballReady:boolean, gameState?:number, canExitToShell?:boolean}} opts
+     *        Either a legacy boolean (true = ball-ready) or an options object.
+     * @returns {'rescue'|'tilt'|'bgm'|'sfx'|'pause'|'perf'|'flipL'|'flipR'|'launch'|'replay'|'home'|null}
      */
-    static hitTest(cx, cy, ballReady = false) {
-        const top = HUD._topBarButtons();
-        for (const id of Object.keys(top)) {
-            if (HUD._inRect(cx, cy, top[id])) return id;
+    static hitTest(cx, cy, opts = false) {
+        const o = (typeof opts === 'object' && opts !== null) ? opts : { ballReady: opts };
+        const ballReady = Boolean(o.ballReady);
+        const gameState = o.gameState ?? -1;
+        const canExit   = o.canExitToShell !== false;
+
+        // Game-over choice buttons take priority over everything else: they're
+        // the only legal interaction while the panel is on screen.
+        if (gameState === 3) {
+            const goHit = HUD._findHit(cx, cy, HUD._gameOverButtons(canExit));
+            if (goHit) return goHit;
         }
+        const topHit = HUD._findHit(cx, cy, HUD._topBarButtons());
+        if (topHit) return topHit;
         if (C.CTRL_BAR_HEIGHT > 0 && cy >= C.VIEW_HEIGHT) {
-            const ctrl = HUD._ctrlButtons(ballReady);
-            for (const id of Object.keys(ctrl)) {
-                if (HUD._inRect(cx, cy, ctrl[id])) return id;
-            }
+            return HUD._findHit(cx, cy, HUD._ctrlButtons(ballReady));
+        }
+        return null;
+    }
+
+    /** @private */
+    static _findHit(cx, cy, rects) {
+        for (const id of Object.keys(rects)) {
+            if (HUD._inRect(cx, cy, rects[id])) return id;
         }
         return null;
     }
@@ -132,6 +147,30 @@ export class HUD {
             sfx:    { x: C.HUD_BTN_SFX_X,    y, w, h },
             pause:  { x: C.HUD_BTN_PAUSE_X,  y, w, h },
             perf:   { x: C.HUD_BTN_PERF_X,   y, w, h },
+        };
+    }
+
+    /**
+     * Layout of the Game-Over choice buttons. Centered horizontally on the
+     * canvas. When `canExit` is false (editor test mode) only REPLAY is shown,
+     * centered on its own.
+     * @param {boolean} canExit
+     * @returns {{replay:object, home?:object}}
+     * @private
+     */
+    static _gameOverButtons(canExit) {
+        const w   = C.GAMEOVER_BTN_W;
+        const h   = C.GAMEOVER_BTN_H;
+        const y   = C.GAMEOVER_BTN_Y;
+        const gap = C.GAMEOVER_BTN_GAP;
+        if (!canExit) {
+            return { replay: { x: (C.VIEW_WIDTH - w) / 2, y, w, h } };
+        }
+        const total   = w * 2 + gap;
+        const startX  = (C.VIEW_WIDTH - total) / 2;
+        return {
+            replay: { x: startX,             y, w, h },
+            home:   { x: startX + w + gap,   y, w, h },
         };
     }
 
@@ -577,8 +616,12 @@ export class HUD {
         }
     }
 
-    _drawGameOver(w, h, score, timePlayed, bossesDefeated) {
+    _drawGameOver(w, h, data) {
         const ctx = this.ctx;
+        const score          = data.score;
+        const timePlayed     = data.timePlayed;
+        const bossesDefeated = data.bossesDefeated;
+        const canExit        = data.canExitToShell !== false;
 
         // Full-screen dark panel
         ctx.fillStyle = '#04010c';
@@ -669,16 +712,41 @@ export class HUD {
         ctx.beginPath(); ctx.moveTo(w * 0.12, h * 0.66); ctx.lineTo(w * 0.88, h * 0.66); ctx.stroke();
         ctx.globalAlpha = 1;
 
-        // Blink prompt
+        // Choice buttons (REPLAY + MAIN MENU). Standalone editor-test plays
+        // skip MAIN MENU because the editor host owns navigation.
+        this._drawGameOverButtons(canExit);
+    }
+
+    /**
+     * Render REPLAY (and optionally MAIN MENU) using the same rect layout that
+     * `hitTest` consumes. Pure presentation \u2014 logic lives in {@link Game}.
+     * @private
+     */
+    _drawGameOverButtons(canExit) {
+        const ctx  = this.ctx;
+        const btns = HUD._gameOverButtons(canExit);
         const blink = Math.floor(performance.now() / 520) % 2 === 0;
-        if (blink) {
-            ctx.font        = 'bold 14px "Orbitron", monospace';
-            ctx.fillStyle   = C.COLOR_GOLD;
-            ctx.textAlign   = 'center';
-            ctx.shadowColor = C.COLOR_GOLD;
-            ctx.shadowBlur  = 18;
-            ctx.fillText('▶ TAP TO PLAY AGAIN ◀', w / 2, h * 0.74);
+
+        const draw = (rect, label, accent, glow) => {
+            // Background
+            ctx.fillStyle = 'rgba(8,4,18,0.92)';
+            ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+            // Border
+            ctx.strokeStyle = accent;
+            ctx.lineWidth   = 2;
+            ctx.shadowColor = accent;
+            ctx.shadowBlur  = glow ? 18 : 6;
+            ctx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1);
             ctx.shadowBlur = 0;
-        }
+            // Label
+            ctx.font         = 'bold 14px "Orbitron", monospace';
+            ctx.fillStyle    = accent;
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, rect.x + rect.w / 2, rect.y + rect.h / 2);
+        };
+
+        draw(btns.replay, '\u25B6 REPLAY', C.COLOR_GOLD, blink);
+        if (btns.home) draw(btns.home, 'MAIN MENU', C.COLOR_PURPLE, false);
     }
 }

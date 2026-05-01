@@ -13,6 +13,20 @@ from slowapi.util import get_remote_address
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
+# ============ CONSTANTS ============
+
+USER_NOT_FOUND = "User not found"
+
+# Reusable OpenAPI response docs (Sonar S8415)
+_RESP_400 = {400: {"description": "Bad request"}}
+_RESP_401 = {401: {"description": "Unauthorized"}}
+_RESP_404 = {404: {"description": "Resource not found"}}
+_RESP_500 = {500: {"description": "Internal server error"}}
+_RESP_400_401 = {**_RESP_400, **_RESP_401}
+_RESP_400_404 = {**_RESP_400, **_RESP_404}
+_RESP_400_500 = {**_RESP_400, **_RESP_500}
+_RESP_404_500 = {**_RESP_404, **_RESP_500}
+
 # ============ SCHEMAS ============
 
 class UserRegister(BaseModel):
@@ -54,7 +68,7 @@ class DailyAccess(BaseModel):
 
 # ============ ENDPOINTS ============
 
-@router.post("/register")
+@router.post("/register", responses=_RESP_400)
 @limiter.limit("5/minute")
 async def register_user(request: Request, user_data: UserRegister):
     """Register a new user with username and password."""
@@ -73,7 +87,7 @@ async def register_user(request: Request, user_data: UserRegister):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/login")
+@router.post("/login", responses=_RESP_401)
 @limiter.limit("5/minute")
 async def login_user(request: Request, credentials: UserLogin):
     """Login with username and password."""
@@ -118,7 +132,7 @@ async def create_anonymous_user(request: Request, data: Optional[AnonymousUserCr
         "user": user
     }
 
-@router.post("/steem-auth")
+@router.post("/steem-auth", responses=_RESP_400)
 async def authenticate_with_steem(auth_data: SteemKeychainAuth):
     """Authenticate user with Steem Keychain signature."""
     try:
@@ -208,7 +222,7 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Steem authentication failed: {str(e)}")
 
-@router.post("/steem-posting-key-auth")
+@router.post("/steem-posting-key-auth", responses=_RESP_400_401)
 async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth):
     """Authenticate user with Steem posting key.
     
@@ -307,13 +321,13 @@ async def list_users():
         "users": users
     }
 
-@router.get("/{user_id}")
+@router.get("/{user_id}", responses=_RESP_404)
 async def get_user(user_id: str):
     """Get user details by ID."""
     user = get_user_by_id(user_id)
     
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
     
     # Enrich game_scores with game titles
     game_scores_enriched = []
@@ -379,7 +393,7 @@ async def get_user_game_sessions(user_id: str, limit: Annotated[Optional[int], Q
             "sessions": sessions
         }
 
-@router.post("/sessions/start")
+@router.post("/sessions/start", responses=_RESP_400)
 @limiter.limit("30/minute")
 async def start_session(request: Request, session_data: SessionStart):
     """Start a new game session."""
@@ -396,7 +410,7 @@ async def start_session(request: Request, session_data: SessionStart):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/daily-access")
+@router.post("/daily-access", responses=_RESP_404_500)
 async def track_daily_access(access_data: DailyAccess):
     """Track user daily access for login streak and login quests."""
     from app.database import get_db_session
@@ -409,7 +423,7 @@ async def track_daily_access(access_data: DailyAccess):
             user = db.query(User).filter(User.user_id == access_data.user_id).first()
             
             if not user:
-                raise HTTPException(status_code=404, detail="User not found")
+                raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
             
             # Update last_login timestamp
             user.last_login = datetime.now(timezone.utc).isoformat()
@@ -429,10 +443,10 @@ async def track_daily_access(access_data: DailyAccess):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error tracking daily access: {str(e)}")
 
-@router.post("/sessions/end")
+@router.post("/sessions/end", responses=_RESP_404)
 async def end_game(session_data: SessionEnd):
     """End a game session and calculate XP earned."""
-    print(f"[DEBUG] Received session end request:")
+    print("[DEBUG] Received session end request:")
     print(f"  - session_id: {session_data.session_id}")
     print(f"  - score: {session_data.score} (type: {type(session_data.score).__name__})")
     print(f"  - duration_seconds: {session_data.duration_seconds}")
@@ -555,7 +569,7 @@ async def get_game_leaderboard(game_id: str, limit: int = 10):
     }
 
 
-@router.post("/check-steem-multiplier/{user_id}")
+@router.post("/check-steem-multiplier/{user_id}", responses=_RESP_400_404)
 async def check_steem_multiplier(user_id: str, force: bool = False):
     """
     Check and update Steem multiplier from blockchain.
@@ -569,7 +583,7 @@ async def check_steem_multiplier(user_id: str, force: bool = False):
         user = session.query(User).filter(User.user_id == user_id).first()
         
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
         
         if not user.steem_username:
             raise HTTPException(status_code=400, detail="User has no Steem account")
@@ -591,7 +605,7 @@ async def check_steem_multiplier(user_id: str, force: bool = False):
         }
 
 
-@router.post("/update-steem-data/{user_id}")
+@router.post("/update-steem-data/{user_id}", responses=_RESP_404)
 async def update_steem_data(user_id: str, votes_witness: bool, delegation_amount: float):
     """Update user's Steem witness vote and delegation data, recalculate multiplier."""
     from app.database import get_db_session
@@ -602,7 +616,7 @@ async def update_steem_data(user_id: str, votes_witness: bool, delegation_amount
         user = session.query(User).filter(User.user_id == user_id).first()
         
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
         
         # Update Steem data
         user.votes_cur8_witness = 1 if votes_witness else 0
@@ -623,7 +637,7 @@ async def update_steem_data(user_id: str, votes_witness: bool, delegation_amount
         }
 
 
-@router.get("/multiplier-breakdown/{user_id}")
+@router.get("/multiplier-breakdown/{user_id}", responses=_RESP_404)
 async def get_multiplier_breakdown(user_id: str):
     """Get detailed breakdown of user's CUR8 multiplier calculation."""
     from app.database import get_db_session
@@ -634,7 +648,7 @@ async def get_multiplier_breakdown(user_id: str):
         user = session.query(User).filter(User.user_id == user_id).first()
         
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
         
         breakdown = get_multiplier_breakdown(
             bool(user.votes_cur8_witness),
@@ -650,7 +664,7 @@ async def get_multiplier_breakdown(user_id: str):
 
 # ============ DAILY LOGIN REWARDS ============
 
-@router.get("/daily-login-status/{user_id}")
+@router.get("/daily-login-status/{user_id}", responses=_RESP_500)
 async def get_daily_login_status(user_id: str):
     """Get user's daily login reward status."""
     from app.database import get_db_session
@@ -669,7 +683,7 @@ async def get_daily_login_status(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/daily-login-claim/{user_id}")
+@router.post("/daily-login-claim/{user_id}", responses=_RESP_400_500)
 async def claim_daily_login_reward(user_id: str):
     """Claim today's daily login reward."""
     from app.database import get_db_session
@@ -689,7 +703,7 @@ async def claim_daily_login_reward(user_id: str):
 
 # ========== GAME PROGRESS ==========
 
-@router.get("/game-progress/{user_id}/{game_id}")
+@router.get("/game-progress/{user_id}/{game_id}", responses=_RESP_500)
 async def get_game_progress(user_id: str, game_id: str):
     """Get saved game progress for a user."""
     from app.database import get_game_progress as db_get_progress
@@ -700,7 +714,7 @@ async def get_game_progress(user_id: str, game_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/game-progress/{user_id}/{game_id}")
+@router.put("/game-progress/{user_id}/{game_id}", responses=_RESP_500)
 async def save_game_progress(user_id: str, game_id: str, body: dict):
     """Save game progress for a user (upsert)."""
     from app.database import save_game_progress as db_save_progress

@@ -53,6 +53,11 @@ from app.models.platform import (
     DailyLoginRewardConfig,
 )
 
+from app.models.community_board import (
+    CommunityBoard,
+    CommunityBoardLike,
+)
+
 __all__ = [
     "Base",
     # Game
@@ -87,4 +92,7 @@ __all__ = [
     "Campaign",
     "UserLoginStreak",
     "DailyLoginRewardConfig",
+    # Community Boards (UGC)
+    "CommunityBoard",
+    "CommunityBoardLike",
 ]

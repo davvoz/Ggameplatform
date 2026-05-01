@@ -47,7 +47,11 @@ export class Game {
         this.physics  = new PhysicsWorld(this.ball);
         this.score    = new ScoreManager();
         this.board    = null;
-        this.input    = new InputManager(canvas, (cx, cy) => HUD.hitTest(cx, cy, this.state === GameState.BALL_READY));
+        this.input    = new InputManager(canvas, (cx, cy) => HUD.hitTest(cx, cy, {
+            ballReady: this.state === GameState.BALL_READY,
+            gameState: this.state,
+            canExitToShell: this.canExitToShell(),
+        }));
         this.audio    = new SoundManager();
         this.renderer = new Renderer(canvas);
         this.hud      = new HUD(this.ctx);
@@ -57,6 +61,12 @@ export class Game {
         this.state   = GameState.ATTRACT;
         this.session = new GameSession();
         this.elapsed = 0;
+
+        // Boot mode (set by main.js after init):
+        //   'default'   → campaign    (replay + main-menu allowed)
+        //   'community' → UGC board   (replay + main-menu allowed)
+        //   'editor'    → editor test (replay only — no main-menu, host owns nav)
+        this.kind = 'default';
 
         // Edge-detection state for flipper press SFX (one byte each \u2014 no extraction needed)
         this._prevFlipL = false;
@@ -80,10 +90,14 @@ export class Game {
 
         this.score.onExtraBall = () => this._onExtraBall();
         this._stateHandlers    = this._buildStateHandlers();
+
+        /** Injected by main.js when the shell is active. Called instead of
+         *  location.assign so the page never reloads (preserves fullscreen). */
+        this.onExitToShell = null;
     }
 
-    async init() {
-        await LevelConfigStore.load();
+    async init(boardSource) {
+        await LevelConfigStore.load(boardSource);
         this.board = new BoardManager(
             (s)    => this._onScore(s),
             (type) => this.fxRouter.onEvent(type),
@@ -131,6 +145,51 @@ export class Game {
     togglePause() {
         if (this.state === GameState.PLAY)        this.state = GameState.PAUSED;
         else if (this.state === GameState.PAUSED) this.state = GameState.PLAY;
+    }
+
+    /**
+     * Tag the boot mode (driven by main.js from URL params).
+     * Influences only the game-over UX (whether the MAIN MENU button is shown).
+     * @param {'default'|'community'|'editor'} kind
+     */
+    setKind(kind) {
+        this.kind = kind === 'community' || kind === 'editor' ? kind : 'default';
+    }
+
+    /**
+     * Whether the game-over screen should expose the MAIN MENU button.
+     * Editor test plays don't — the editor is the host and owns navigation.
+     */
+    canExitToShell() { return this.kind !== 'editor'; }
+
+    /**
+     * Replay the current board from the game-over screen.
+     * Honours the menu guard (the same 2 s lockout that blocks accidental taps).
+     */
+    replayGame() {
+        if (this.state !== GameState.GAME_OVER) return;
+        if (this.session.menuGuard > 0) return;
+        this.startNewGame();
+    }
+
+    /**
+     * Leave the current play session and return to the in-game shell.
+     * Drops all URL params so the shell renders the mode picker again.
+     */
+    exitToShell() {
+        if (this.state !== GameState.GAME_OVER) return;
+        if (this.session.menuGuard > 0) return;
+        if (!this.canExitToShell()) return;
+        this.running = false;
+        this.audio.stopBgm();
+        if (typeof this.onExitToShell === 'function') {
+            // Reset to ATTRACT so a re-init + start lands on the title screen.
+            this.state = GameState.ATTRACT;
+            this.onExitToShell();
+            return;
+        }
+        try { globalThis.location.assign('./'); }
+        catch (err) { console.warn('[devil_crash_pinball] exitToShell navigation failed', err); }
     }
 
     startNewGame() {

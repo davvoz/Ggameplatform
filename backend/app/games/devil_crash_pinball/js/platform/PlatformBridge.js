@@ -1,4 +1,5 @@
 import { PlatformNotifications } from './PlatformNotifications.js';
+import { PlatformIdentity } from './PlatformIdentity.js';
 
 const PROTOCOL_VERSION = '1.0.0';
 const SDK_INIT_TIMEOUT_MS = 5000;
@@ -13,6 +14,8 @@ const SDK_INIT_TIMEOUT_MS = 5000;
 export class PlatformBridge {
     #sdk;
     #parentOrigin = null;
+    #sessionEnabled = true;
+    #initPromise = null;
 
     constructor() {
         this.#sdk = (typeof globalThis !== 'undefined' && globalThis.PlatformSDK)
@@ -21,6 +24,19 @@ export class PlatformBridge {
         this.ready = false;
         this.#parentOrigin = PlatformBridge.#resolveParentOrigin();
     }
+
+    /**
+     * Enable or disable platform session reporting (gameStarted / score / gameOver).
+     * Used to suppress XP / leaderboard side-effects in standalone modes
+     * (e.g. community UGC boards, in-editor test plays).
+     * @param {boolean} enabled
+     */
+    setSessionEnabled(enabled) {
+        this.#sessionEnabled = Boolean(enabled);
+    }
+
+    /** @returns {boolean} */
+    isSessionEnabled() { return this.#sessionEnabled; }
 
     /** @returns {string|null} */
     static #resolveParentOrigin() {
@@ -35,12 +51,15 @@ export class PlatformBridge {
     isAvailable() { return Boolean(this.#sdk); }
 
     async initialize() {
+        if (this.#initPromise) return this.#initPromise;
         if (!this.#sdk || typeof this.#sdk.init !== 'function') return;
 
-        window.addEventListener('message', (event) => this.#onMessage(event));
-
-        await this.#safeCall('init', () => this.#sdk.init({ timeout: SDK_INIT_TIMEOUT_MS }));
-        this.ready = true;
+        this.#initPromise = (async () => {
+            window.addEventListener('message', (event) => this.#onMessage(event));
+            await this.#safeCall('init', () => this.#sdk.init({ timeout: SDK_INIT_TIMEOUT_MS }));
+            this.ready = true;
+        })();
+        return this.#initPromise;
     }
 
     on(evt, cb) {
@@ -48,6 +67,7 @@ export class PlatformBridge {
     }
 
     sendGameStarted() {
+        if (!this.#sessionEnabled) return;
         if (!this.#parentOrigin) return;
         this.#safeSync('postMessage(gameStarted)', () => {
             window.parent.postMessage({
@@ -60,11 +80,13 @@ export class PlatformBridge {
     }
 
     sendScore(score, meta = {}) {
+        if (!this.#sessionEnabled) return;
         if (!this.ready) return;
         this.#safeSync('sendScore', () => this.#sdk.sendScore(score, meta));
     }
 
     gameOver(score, meta = {}) {
+        if (!this.#sessionEnabled) return;
         if (!this.ready) return;
         this.#safeSync('gameOver', () => this.#sdk.gameOver(score, meta));
     }
@@ -81,6 +103,13 @@ export class PlatformBridge {
             PlatformNotifications.showXPBanner(data.payload.xp_earned);
         } else if (data.type === 'showLevelUpModal' && data.payload) {
             PlatformNotifications.showLevelUpNotification(data.payload);
+        } else if (data.type === 'config' && data.payload) {
+            // Platform pushes the authenticated user identity here.
+            // Source of truth — replaces the previous localStorage lookup.
+            PlatformIdentity.set({
+                userId: data.payload.userId ?? null,
+                username: data.payload.username ?? null,
+            });
         }
     }
 

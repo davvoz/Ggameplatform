@@ -14,6 +14,39 @@ const MODAL_HIDE_MS   = 300;
 
 export class PlatformNotifications {
     /**
+     * Show a transient "standalone mode" banner (no XP awarded).
+     * Used for community UGC boards and editor test plays.
+     * @param {string} message  short user-facing string (rendered as text, never HTML)
+     */
+    static showStandaloneBanner(message) {
+        const safeMessage = String(message ?? 'Standalone \u2014 no XP awarded');
+
+        const banner = document.createElement('div');
+        banner.className = 'game-xp-banner game-standalone-banner';
+
+        const badge = document.createElement('div');
+        badge.className = 'game-xp-badge';
+
+        const icon = document.createElement('span');
+        icon.className = 'game-xp-icon';
+        icon.textContent = '\u26A0\uFE0F';
+
+        const amount = document.createElement('span');
+        amount.className = 'game-xp-amount';
+        amount.textContent = safeMessage;
+
+        badge.appendChild(icon);
+        badge.appendChild(amount);
+        banner.appendChild(badge);
+        document.body.appendChild(banner);
+
+        setTimeout(() => {
+            banner.classList.add('hiding');
+            setTimeout(() => banner.remove(), BANNER_FADE_MS);
+        }, BANNER_LIFE_MS);
+    }
+
+    /**
      * Show a transient XP earned banner.
      * @param {number} xpAmount  numeric XP (coerced & formatted, never injected as HTML)
      */

@@ -22,7 +22,7 @@ from app.games.briscola_be.router import router as briscola_router
 from app.games.prediction_market_be.router import router as prediction_market_router
 from app.games.blackjack_be.router import router as blackjack_router
 from app.games.modern_pong_be.router import router as modern_pong_router
-#from app.games.city_world_be.router import router as city_world_router
+from app.games.devil_crash_pinball_be.router import router as devil_crash_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -146,21 +146,21 @@ allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
 
 if allow_all_origins:
     # More permissive CORS for LAN access
-    cors_kwargs = dict(
-        allow_origin_regex=r"http://.*",  # Allow any HTTP origin on LAN
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
-    )
+    cors_kwargs = {
+        "allow_origin_regex": r"http://.*",  # Allow any HTTP origin on LAN
+        "allow_credentials": True,
+        "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma"],
+    }
     print("⚠️  CORS: Allowing all HTTP origins (LAN mode)")
 else:
     # Strict CORS for production
-    cors_kwargs = dict(
-        allow_origins=allowed_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization", "Cache-Control", "Pragma"],
-    )
+    cors_kwargs = {
+        "allow_origins": allowed_origins,
+        "allow_credentials": True,
+        "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma"],
+    }
     print(f"🔒 CORS: Allowing specific origins: {allowed_origins}")
 
 # Add CORSMiddleware last in the middleware chain
@@ -192,6 +192,7 @@ app.include_router(rainbow_rush_router, prefix="/api", tags=["Rainbow Rush API"]
 app.include_router(briscola_router, tags=["Briscola Multiplayer"])
 app.include_router(prediction_market_router, tags=["Up or Down"])
 app.include_router(blackjack_router, tags=["Blackjack"])
+app.include_router(devil_crash_router)
 app.include_router(modern_pong_router, tags=["Modern Pong"])
 #app.include_router(city_world_router, tags=["City World"])
 app.include_router(push_notifications.router, tags=["push-notifications"])

@@ -40,6 +40,7 @@ export class HudPresenter {
             isStuck: false,
             tilted: false,
             lowPerf: false,
+            canExitToShell: true,
         };
     }
 
@@ -71,6 +72,7 @@ export class HudPresenter {
         d.isStuck       = g.stuck.isDisplayStuck;
         d.tilted        = g.session.tilted;
         d.lowPerf       = PerformanceMode.lowPerf;
+        d.canExitToShell = g.canExitToShell();
         return d;
     }
 }

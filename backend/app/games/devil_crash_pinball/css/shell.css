@@ -1,0 +1,231 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Pre-game shell (mode picker + community board list).
+   Lives outside the canvas so the game loop is never blocked by DOM work.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#board-shell {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 50;
+    background:
+        radial-gradient(circle at 50% 0%, #2a0010 0%, #0a0006 55%, #000 100%);
+    color: #ffe0d8;
+    font-family: 'Exo 2', 'Segoe UI', system-ui, sans-serif;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+#board-shell.visible { display: block; }
+
+.shell-root {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(16px, 4vw, 48px) clamp(12px, 4vw, 32px);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.shell-title {
+    font-family: 'Orbitron', 'Exo 2', sans-serif;
+    font-size: clamp(28px, 7vw, 48px);
+    margin: 8px 0 4px;
+    color: #ff3a3a;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 16px rgba(255, 60, 60, 0.55);
+}
+.shell-subtitle {
+    margin: 0 0 32px;
+    color: #ffb8a8;
+    font-size: clamp(14px, 2.6vw, 16px);
+    opacity: 0.85;
+}
+
+.shell-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+@media (min-width: 540px) {
+    .shell-cards { grid-template-columns: 1fr 1fr; }
+}
+
+.shell-card {
+    background: linear-gradient(160deg, #1a0008 0%, #2a0010 100%);
+    border: 2px solid #ff3a3a;
+    border-radius: 14px;
+    padding: 22px 18px;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 0 18px rgba(255, 60, 60, 0.18);
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+    font-family: inherit;
+}
+.shell-card:hover, .shell-card:focus-visible {
+    transform: translateY(-2px);
+    border-color: #ffd24a;
+    box-shadow: 0 0 24px rgba(255, 210, 74, 0.28);
+    outline: none;
+}
+.shell-card h2 {
+    margin: 0 0 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    color: #ffd24a;
+    letter-spacing: 0.04em;
+}
+.shell-card p {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #ffd6cc;
+    opacity: 0.85;
+}
+.shell-card-cta {
+    display: inline-block;
+    font-weight: 700;
+    color: #ff8a4a;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+}
+
+.shell-editor-link {
+    display: block;
+    margin: 28px auto 0;
+    padding: 12px 18px;
+    max-width: 460px;
+    text-align: center;
+    text-decoration: none;
+    color: #ffd24a;
+    background: rgba(26, 0, 8, 0.6);
+    border: 1px dashed rgba(255, 210, 74, 0.55);
+    border-radius: 10px;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    transition: background 120ms ease, border-color 120ms ease;
+}
+.shell-editor-link:hover,
+.shell-editor-link:focus-visible {
+    background: rgba(255, 210, 74, 0.12);
+    border-color: #ffd24a;
+    outline: none;
+}
+.shell-editor-link--disabled,
+.shell-editor-link--disabled:hover,
+.shell-editor-link--disabled:focus-visible {
+    cursor: not-allowed;
+    color: rgba(255, 231, 184, 0.55);
+    background: rgba(2, 2, 3, 0.45);
+    border-color: rgba(120, 100, 60, 0.3);
+    border-style: dashed;
+    pointer-events: none;
+}
+
+/* ── Community list ─────────────────────────────────────────────────────── */
+
+.shell-community-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.shell-community-title {
+    font-size: clamp(20px, 5vw, 28px);
+    margin: 0;
+}
+.shell-back {
+    background: transparent;
+    border: 1px solid #ff8a4a;
+    color: #ffb8a8;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+}
+.shell-back:hover { color: #fff; border-color: #ffd24a; }
+
+.shell-sort { display: flex; gap: 6px; }
+.shell-sort-btn {
+    background: transparent;
+    border: 1px solid #4a1018;
+    color: #ffb8a8;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+}
+.shell-sort-btn.active {
+    border-color: #ffd24a;
+    color: #ffd24a;
+}
+
+.shell-board-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.shell-board-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, #190008 0%, #240010 100%);
+    border: 1px solid #4a1018;
+    border-radius: 10px;
+    text-align: left;
+}
+.shell-board-info { min-width: 0; }
+.shell-board-name {
+    font-weight: 700;
+    color: #ffd24a;
+    font-size: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.shell-board-meta {
+    color: #ffb8a8;
+    font-size: 12px;
+    opacity: 0.75;
+    margin-top: 2px;
+}
+.shell-like-btn {
+    background: transparent;
+    border: 1px solid #ff8a4a;
+    color: #ffb8a8;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    min-width: 56px;
+}
+.shell-like-btn.liked {
+    color: #ff3a3a;
+    border-color: #ff3a3a;
+}
+.shell-play-btn {
+    background: #ff3a3a;
+    border: none;
+    color: #1a0008;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+}
+.shell-play-btn:hover { background: #ffd24a; color: #1a0008; }
+
+.shell-empty {
+    color: #ffb8a8;
+    opacity: 0.7;
+    text-align: center;
+    padding: 24px 8px;
+    font-style: italic;
+}

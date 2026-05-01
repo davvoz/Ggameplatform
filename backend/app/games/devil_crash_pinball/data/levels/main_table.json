@@ -96,7 +96,7 @@
       "x": 147,
       "y": 641,
       "side": "LEFT",
-      "length": 70,
+      "length": 72,
       "restAngle": 0.42,
       "activeAngle": -0.58
     },
@@ -104,15 +104,15 @@
       "x": 316,
       "y": 643,
       "side": "RIGHT",
-      "length": 70,
+      "length": 72,
       "restAngle": 0.42,
       "activeAngle": -0.58
     },
     {
-      "x": 29,
-      "y": 482,
+      "x": 40,
+      "y": 480,
       "side": "LEFT",
-      "length": 40,
+      "length": 50,
       "restAngle": 1.5708,
       "activeAngle": -0.58
     },
@@ -120,7 +120,7 @@
       "x": 428,
       "y": 474,
       "side": "RIGHT",
-      "length": 52,
+      "length": 50,
       "restAngle": 1.55,
       "activeAngle": -0.58
     }

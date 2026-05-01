@@ -642,7 +642,7 @@ def _handle_level_up(db_session, user, game_session, extra_data: dict, old_total
     return level_up_info
 
 
-def end_game_session(session_id: str, score: int, duration_seconds: int, extra_data: dict = None) -> dict:
+def end_game_session(session_id: str, score: int, duration_seconds: int, extra_data: dict = None) -> Optional[dict]:
     """End a game session and calculate XP earned using the rules system."""
     print(f"[DB] end_game_session called - session_id: {session_id}, score: {score}, duration: {duration_seconds}, extra_data: {extra_data}")
     

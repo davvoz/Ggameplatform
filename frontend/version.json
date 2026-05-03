@@ -1,8 +1,17 @@
 {
-  "version": "5.1.10",
-  "timestamp": "2026-05-03T10:07:12.433Z",
-  "buildNumber": 543,
+  "version": "5.1.11",
+  "timestamp": "2026-05-03T16:07:17.444Z",
+  "buildNumber": 544,
   "changelog": [
+    {
+      "version": "5.1.11",
+      "date": "2026-05-03",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2] implement victory outro cinematic [SS]modals",
+        "🔖 Bump version to 5.1.10 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.10",
       "date": "2026-05-03",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: remove trash",
         "🔖 Bump version to 5.1.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.1.1",
-      "date": "2026-04-19",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2] sprite deterministici , refractor totale",
-        "🔖 Bump version to 5.1.0 [skip-version]"
       ]
     }
   ]

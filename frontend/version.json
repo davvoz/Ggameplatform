@@ -1,8 +1,17 @@
 {
-  "version": "5.1.11",
-  "timestamp": "2026-05-03T16:07:17.444Z",
-  "buildNumber": 544,
+  "version": "5.1.12",
+  "timestamp": "2026-05-03T20:30:35.379Z",
+  "buildNumber": 545,
   "changelog": [
+    {
+      "version": "5.1.12",
+      "date": "2026-05-03",
+      "type": "patch",
+      "changes": [
+        "fix: [DC]add music selection feature with new tracks and UI panel",
+        "🔖 Bump version to 5.1.11 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.11",
       "date": "2026-05-03",
@@ -82,15 +91,6 @@
       "changes": [
         "fix : add devil crash",
         "🔖 Bump version to 5.1.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.1.2",
-      "date": "2026-04-19",
-      "type": "patch",
-      "changes": [
-        "fix: remove trash",
-        "🔖 Bump version to 5.1.1 [skip-version]"
       ]
     }
   ]

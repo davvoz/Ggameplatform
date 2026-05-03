@@ -1,8 +1,17 @@
 {
-  "version": "5.1.8",
-  "timestamp": "2026-05-01T20:26:46.182Z",
-  "buildNumber": 541,
+  "version": "5.1.9",
+  "timestamp": "2026-05-03T09:54:55.092Z",
+  "buildNumber": 542,
   "changelog": [
+    {
+      "version": "5.1.9",
+      "date": "2026-05-03",
+      "type": "patch",
+      "changes": [
+        "fix:[CD] demon nrg , tools curves",
+        "🔖 Bump version to 5.1.8 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.8",
       "date": "2026-05-01",
@@ -82,17 +91,6 @@
       "changes": [
         "feat: [SS2]add homing missile spawning logic in PerkEffectsManager",
         "🔖 Bump version to 5.0.19 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.0.19",
-      "date": "2026-04-15",
-      "type": "patch",
-      "changes": [
-        "fix : [SS2] delete usless class",
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix : [SS2] delete usless class",
-        "🔖 Bump version to 5.0.18 [skip-version]"
       ]
     }
   ]

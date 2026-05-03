@@ -58,9 +58,11 @@ export class Game {
         this.platform = new PlatformBridge();
 
         // FSM + session
-        this.state   = GameState.ATTRACT;
-        this.session = new GameSession();
-        this.elapsed = 0;
+        this.state            = GameState.ATTRACT;
+        this.session          = new GameSession();
+        this.elapsed          = 0;
+        /** State to restore when resume() is called. @type {number|null} */
+        this._stateBeforePause = null;
 
         // Boot mode (set by main.js after init):
         //   'default'   → campaign    (replay + main-menu allowed)
@@ -118,11 +120,20 @@ export class Game {
     }
 
     pause() {
-        if (this.state === GameState.PLAY) this.state = GameState.PAUSED;
+        if (this.state === GameState.PLAY
+            || this.state === GameState.ATTRACT
+            || this.state === GameState.BALL_READY
+            || this.state === GameState.BALL_DRAIN) {
+            this._stateBeforePause = this.state;
+            this.state = GameState.PAUSED;
+        }
     }
 
     resume() {
-        if (this.state === GameState.PAUSED) this.state = GameState.PLAY;
+        if (this.state === GameState.PAUSED) {
+            this.state = this._stateBeforePause ?? GameState.PLAY;
+            this._stateBeforePause = null;
+        }
     }
 
     destroy() {
@@ -143,8 +154,14 @@ export class Game {
     }
 
     togglePause() {
-        if (this.state === GameState.PLAY)        this.state = GameState.PAUSED;
-        else if (this.state === GameState.PAUSED) this.state = GameState.PLAY;
+        if (this.state === GameState.PLAY
+            || this.state === GameState.ATTRACT
+            || this.state === GameState.BALL_READY
+            || this.state === GameState.BALL_DRAIN) {
+            this.pause();
+        } else if (this.state === GameState.PAUSED) {
+            this.resume();
+        }
     }
 
     /**

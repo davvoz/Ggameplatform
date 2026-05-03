@@ -1,4 +1,5 @@
 import { GameConfig as C } from '../config/GameConfig.js';
+import { MusicSelectorPanel } from './MusicSelectorPanel.js';
 
 /**
  * Heads-up display drawn on top of the game canvas (in screen space).
@@ -47,6 +48,7 @@ export class HUD {
 
         if (data.gameState === 0) this._drawAttract(viewW, viewH);
         else if (data.gameState === 3) this._drawGameOver(viewW, viewH, data);
+        else if (data.gameState === 4) MusicSelectorPanel.draw(this.ctx, viewW, viewH, data.activeBgmPath);
         else if (data.ballReady) this._drawPlungerPrompt(data, viewW, viewH);
 
         ctx.restore();
@@ -111,6 +113,11 @@ export class HUD {
         }
         const topHit = HUD._findHit(cx, cy, HUD._topBarButtons());
         if (topHit) return topHit;
+        if (gameState === 4) {
+            if (MusicSelectorPanel.hitTestClose(cx, cy)) return 'music_close';
+            const trackIdx = MusicSelectorPanel.hitTest(cx, cy);
+            if (trackIdx !== null) return `music_${trackIdx}`;
+        }
         if (C.CTRL_BAR_HEIGHT > 0 && cy >= C.VIEW_HEIGHT) {
             return HUD._findHit(cx, cy, HUD._ctrlButtons(ballReady));
         }
@@ -222,7 +229,7 @@ export class HUD {
         this._drawHudButton({ x: bgmx,  y: by, w: bw, h: bh, label: '\u266b BGM', lit: !data.bgmMuted,              litColor: '#00e5ff', pulse: 0 });
         this._drawHudButton({ x: sfxx,  y: by, w: bw, h: bh, label: 'SFX',        lit: !data.muted,                 litColor: '#aa44ff', pulse: 0 });
         const isPaused = data.gameState === 4;
-        const pauseLit = data.gameState === 2 || isPaused;
+        const pauseLit = data.gameState !== 3;  // lit in every state except GAME_OVER
         this._drawHudButton({ x: pausex, y: by, w: bw, h: bh,
             label:    isPaused ? '\u25b6 GO' : 'PAUSE',
             lit:      pauseLit,

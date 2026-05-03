@@ -1,6 +1,7 @@
 import { GameState }   from './GameState.js';
 import { InputAction } from '../input/InputManager.js';
 import { PerformanceMode } from '../config/PerformanceMode.js';
+import { MusicTrackRegistry } from '../config/MusicTrackRegistry.js';
 
 const HUD_ACTIONS = Object.freeze({
     rescue: (g) => g.rescueBall(),
@@ -60,6 +61,16 @@ export class InputRouter {
 
     /** @private */
     _dispatchHud(buttonId) {
+        if (buttonId === 'music_close') {
+            this._game.resume();
+            return;
+        }
+        if (buttonId.startsWith('music_')) {
+            const idx   = Number.parseInt(buttonId.slice(6), 10);
+            const track = MusicTrackRegistry.tracks[idx];
+            if (track) this._game.audio.switchBgm(track.path);
+            return;
+        }
         const action = HUD_ACTIONS[buttonId];
         if (!action) throw new Error(`[InputRouter] Unknown HUD button "${buttonId}"`);
         action(this._game);

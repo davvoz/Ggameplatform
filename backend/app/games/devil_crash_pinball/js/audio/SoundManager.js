@@ -116,6 +116,12 @@ export class SoundManager {
     /** Whether the BGM channel is independently muted. */
     bgmMuted = false;
 
+    /** Path of the currently loaded BGM track. */
+    _activeBgmPath = C.AUDIO_BGM_PATH;
+
+    /** Read-only: path of the currently active BGM track. */
+    get activeBgmPath() { return this._activeBgmPath; }
+
     // ── Initialisation ────────────────────────────────────────────────────────
 
     /** Must be called from a user-gesture handler. */
@@ -407,6 +413,41 @@ export class SoundManager {
         try { this._bgmSource.stop(0); } catch (err) { console.warn('[devil_crash_pinball] BGM stop error', err); }
         this._bgmSource.disconnect();
         this._bgmSource = null;
+    }
+
+    /**
+     * Swap the background music track.
+     *
+     * Stops the current source, loads the new file, and begins looped playback.
+     * No-op if path already matches the currently loaded track.
+     * Fire-and-forget: non-fatal on fetch or decode failure.
+     *
+     * @param {string} path  Relative path to the MP3 asset.
+     */
+    switchBgm(path) {
+        if (!this.ctx || path === this._activeBgmPath) return;
+        this._activeBgmPath = path;
+        this._bgmBuffer     = null;
+        this.stopBgm();
+        this._loadNewBgm(path);
+    }
+
+    /**
+     * Fetch, decode, and start the given BGM path.
+     * Called exclusively by switchBgm — do not call otherwise.
+     * @private
+     * @param {string} path
+     */
+    async _loadNewBgm(path) {
+        try {
+            const resp = await fetch(path);
+            if (!resp.ok) return;
+            const buf = await resp.arrayBuffer();
+            this._bgmBuffer = await this.ctx.decodeAudioData(buf);
+            this._startBgmSource();
+        } catch (err) {
+            console.error('[devil_crash_pinball] BGM switch error', err);
+        }
     }
 
     /**

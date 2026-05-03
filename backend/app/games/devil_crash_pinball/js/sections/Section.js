@@ -262,11 +262,13 @@ export class Section {
     /** @private */
     _buildCurves(curves, top) {
         for (const c of curves ?? []) {
-            this.curves.push(new CurvedWall(
+            const wall = new CurvedWall(
                 c.cx, top + c.cy, c.radius,
                 c.startAngle, c.endAngle,
                 c.segments, c.restitution
-            ));
+            );
+            wall.thickness = c.thickness ?? 4;
+            this.curves.push(wall);
         }
     }
 
@@ -327,6 +329,7 @@ export class Section {
                 dirY: k.dirY,
                 cooldown: k.cooldown,
                 angleDeg: k.angleDeg ?? 0,
+                power: k.power,
             });
             kicker.onHit = (s) => this._emit(s, 'kicker');
             if (k.circleRadius != null) kicker.circleRadius = k.circleRadius;
@@ -385,6 +388,7 @@ export class Section {
                 g.angularSpeed,
                 g.toothHeight,
             );
+            if (g.restitution != null) gear.restitution = g.restitution;
             gear.onHit = (s) => this._emit(s, 'bumper');
             this.gears.push(gear);
         }
@@ -537,6 +541,7 @@ export class Section {
                 break;
             default: return;
         }
+        if (bossCfg.bodyRadius != null) this.boss.radius = bossCfg.bodyRadius;
         this.boss.onScore = (s) => this._emit(s, 'boss_hit');
         if (bossCfg.killEvent) {
             this.boss.onDefeated = () => this._emit(C.MINI_BOSS_BONUS, bossCfg.killEvent);

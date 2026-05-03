@@ -381,6 +381,9 @@ document.addEventListener('keydown', e => {
             editor.copy();
             editor.paste();
         },
+        // Smart guides toggles (simulate button click to keep UI in sync)
+        'g': () => document.getElementById('tb-guides')?.click(),
+        'm': () => document.getElementById('tb-symmetry')?.click(),
     };
 
     const isCtrl = e.ctrlKey || e.metaKey;

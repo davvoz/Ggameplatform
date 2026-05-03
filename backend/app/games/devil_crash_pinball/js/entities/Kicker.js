@@ -15,13 +15,16 @@ export class Kicker {
      * @param {number} options.dirY      unit launch direction Y
      * @param {number} options.cooldown  seconds between activations
      * @param {number} options.angleDeg  housing rotation in degrees (0 = horizontal)
+     * @param {number} options.power     launch impulse in px/s (default = C.KICKER_IMPULSE)
      */
     constructor(options) {
-        const { x, y, w, h, dirX, dirY, cooldown = 0.6, angleDeg = 0 } = options;
+        const { x, y, w, h, dirX, dirY, cooldown = 0.6, angleDeg = 0, power = C.KICKER_IMPULSE } = options;
         this.x = x; this.y = y; this.w = w; this.h = h;
         this.dirX = dirX; this.dirY = dirY;
         this.cooldown = cooldown;
         this.angleDeg = angleDeg;
+        /** Launch impulse in px/s. */
+        this.power = power;
         const rad  = angleDeg * Math.PI / 180;
         this._cos  = Math.cos(rad);
         this._sin  = Math.sin(rad);
@@ -73,7 +76,7 @@ export class Kicker {
         const powerMult = 0.88 + Math.random() * 0.24;   // 0.88–1.12
         const baseAngle = Math.atan2(this.dirY, this.dirX);
         const angle     = baseAngle + spread;
-        const k         = C.KICKER_IMPULSE * powerMult;
+        const k         = this.power * powerMult;
         ball.vel.x = Math.cos(angle) * k;
         ball.vel.y = Math.sin(angle) * k;
         this.timer = this.cooldown;

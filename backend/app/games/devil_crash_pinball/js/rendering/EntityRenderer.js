@@ -136,9 +136,9 @@ export class EntityRenderer {
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
         ctx.strokeStyle = p.wall;
-        ctx.lineWidth   = 4;
         ctx.lineCap     = 'round';
         for (const c of section.curves) {
+            ctx.lineWidth = c.thickness ?? 4;
             ctx.beginPath();
             const ccw = c.endAngle < c.startAngle;
             ctx.arc(c.cx, c.cy, c.radius, c.startAngle, c.endAngle, ccw);
@@ -147,8 +147,8 @@ export class EntityRenderer {
         ctx.shadowBlur  = 0;
         ctx.strokeStyle = '#ffffff';
         ctx.globalAlpha = 0.5;
-        ctx.lineWidth   = 1.5;
         for (const c of section.curves) {
+            ctx.lineWidth = Math.max(1.5, (c.thickness ?? 4) * 0.375);
             ctx.beginPath();
             const ccw = c.endAngle < c.startAngle;
             ctx.arc(c.cx, c.cy, c.radius, c.startAngle, c.endAngle, ccw);

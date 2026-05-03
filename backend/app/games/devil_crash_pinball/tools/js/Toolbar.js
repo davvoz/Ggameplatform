@@ -120,6 +120,40 @@ export class Toolbar {
         clipSection.appendChild(pasteBtn);
         this.#panel.appendChild(clipSection);
 
+        // ── Guides ──────────────────────────────────────────────────────────
+        const guidesSection = this.#section('Guides');
+
+        let _guidesOn   = true;
+        let _symmetryOn = false;
+
+        const guidesBtn = document.createElement('button');
+        guidesBtn.id        = 'tb-guides';
+        guidesBtn.className = 'tool-btn active';
+        guidesBtn.innerHTML = '⊜ Align';
+        guidesBtn.title     = 'Smart alignment guides — snap to centres & endpoints (G)';
+        guidesBtn.addEventListener('click', () => {
+            _guidesOn = !_guidesOn;
+            guidesBtn.classList.toggle('active', _guidesOn);
+            document.dispatchEvent(new CustomEvent('editor:guides-toggle',
+                { detail: { enabled: _guidesOn } }));
+        });
+
+        const symmetryBtn = document.createElement('button');
+        symmetryBtn.id        = 'tb-symmetry';
+        symmetryBtn.className = 'tool-btn';
+        symmetryBtn.innerHTML = '⋈ Mirror';
+        symmetryBtn.title     = 'Vertical symmetry axis at x=240 (M)';
+        symmetryBtn.addEventListener('click', () => {
+            _symmetryOn = !_symmetryOn;
+            symmetryBtn.classList.toggle('active', _symmetryOn);
+            document.dispatchEvent(new CustomEvent('editor:symmetry-toggle',
+                { detail: { enabled: _symmetryOn } }));
+        });
+
+        guidesSection.appendChild(guidesBtn);
+        guidesSection.appendChild(symmetryBtn);
+        this.#panel.appendChild(guidesSection);
+
         this.#syncToolButtons();
         this.#syncEntityButtons();
         this.#syncClipboardButtons();

@@ -70,8 +70,6 @@ export class GolemBoss extends Boss {
         const S = Boss.STATE;
         if (this.state === S.SLEEP || this.state === S.DEFEATED) return;
 
-        this._tickRig(dt);
-
         switch (this.state) {
             case S.ENTER:
                 if (this.timer > 0.8) { this.state = S.ATTACK; this._sub = SUB.STRIDE; this._subTimer = 0; }
@@ -86,6 +84,7 @@ export class GolemBoss extends Boss {
 
     /** @private — HP-driven damage stage + eye flicker + shockwave decay. */
     _tickRig(dt) {
+        super._tickRig(dt);
         const hpRatio = this.maxHp ? this.hp / this.maxHp : 1;
         // 0 above 66%, 1 in [33%,66%], 2 below 33%
         let stage = 0;

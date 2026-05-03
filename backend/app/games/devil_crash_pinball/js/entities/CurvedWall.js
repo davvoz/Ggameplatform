@@ -15,6 +15,7 @@ export class CurvedWall {
     /** @type {number} */ endAngle;   // radians
     /** @type {number} */ segments;
     /** @type {number} */ restitution;
+    /** @type {number} */ thickness;
 
     /** @type {Array<{ax:number,ay:number,bx:number,by:number}>} */
     #segs = [];
@@ -36,6 +37,7 @@ export class CurvedWall {
         this.endAngle    = endAngle;
         this.segments    = segments;
         this.restitution = restitution;
+        this.thickness   = 4;
         this.#buildSegments();
     }
 

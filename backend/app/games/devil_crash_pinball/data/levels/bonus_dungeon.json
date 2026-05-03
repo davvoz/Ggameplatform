@@ -1,5 +1,5 @@
 {
-  "_comment": "Dungeon Ritual — pentagram bumper cluster, arched vault ceiling, dual side channels, classic slingshot pair. High-energy bonus section.",
+  "_comment": "Dungeon Ritual â€” pentagram bumper cluster, arched vault ceiling, dual side channels, classic slingshot pair. High-energy bonus section.",
   "section": "bonus_dungeon",
   "boundary": {
     "right": 460
@@ -392,7 +392,8 @@
       "radius": 3,
       "toothHeight": 42,
       "teeth": 4,
-      "angularSpeed": 1
+      "angularSpeed": 1,
+      "restitution": 0.35
     },
     {
       "x": 420,
@@ -401,7 +402,8 @@
       "toothHeight": 6,
       "teeth": 5,
       "angularSpeed": -29.7,
-      "speed": 1
+      "speed": 1,
+      "restitution": 0.35
     }
   ],
   "curves": [
@@ -412,7 +414,14 @@
       "startAngle": 0.22,
       "endAngle": -1.39,
       "segments": 12,
-      "restitution": 0.55
+      "restitution": 0.55,
+      "thickness": 4
     }
-  ]
+  ],
+  "boss": {
+    "type": "GolemBoss",
+    "killEvent": "golem_kill",
+    "x": 240,
+    "y": 240
+  }
 }

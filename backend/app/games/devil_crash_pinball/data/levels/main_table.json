@@ -1,14 +1,14 @@
 {
   "_comment": "Section-local coordinates. Y=0 = section top. X is absolute (world X = local X).",
   "section": "main_table",
-  "audioProfile": "demon_forge",
+  "audioProfile": "ritual_chamber",
   "palette": {
     "bg": "#080006",
     "bgTop": "#1c0020",
     "wall": "#f50000",
-    "wallGlow": "#f57600",
-    "accent": "#594e0d",
-    "accent2": "#ff8030",
+    "wallGlow": "#b70606",
+    "accent": "#fff700",
+    "accent2": "#f27602",
     "ink": "rgba(255,26,26,0.20)",
     "name": "INFERNO"
   },
@@ -49,7 +49,7 @@
     {
       "ax": 480,
       "ay": 0,
-      "bx": 390,
+      "bx": 363,
       "by": 30,
       "thickness": 15
     },
@@ -73,97 +73,55 @@
       "by": 730
     }
   ],
-  "slingshots": [
-    {
-      "ax": 60,
-      "ay": 560,
-      "bx": 110,
-      "by": 620,
-      "nx": 0.7,
-      "ny": -0.7
-    },
-    {
-      "ax": 396,
-      "ay": 559,
-      "bx": 350,
-      "by": 620,
-      "nx": -0.7,
-      "ny": -0.7
-    }
-  ],
   "flippers": [
     {
-      "x": 147,
-      "y": 641,
+      "x": 150,
+      "y": 590,
       "side": "LEFT",
-      "length": 72,
-      "restAngle": 0.42,
+      "length": 92,
+      "restAngle": 0.76,
       "activeAngle": -0.58
     },
     {
-      "x": 316,
-      "y": 643,
+      "x": 330,
+      "y": 590,
       "side": "RIGHT",
-      "length": 72,
-      "restAngle": 0.42,
+      "length": 92,
+      "restAngle": 0.76,
       "activeAngle": -0.58
     },
     {
-      "x": 40,
-      "y": 480,
+      "x": 100,
+      "y": 350,
       "side": "LEFT",
-      "length": 50,
+      "length": 120,
       "restAngle": 1.5708,
       "activeAngle": -0.58
     },
     {
-      "x": 428,
-      "y": 474,
+      "x": 380,
+      "y": 350,
       "side": "RIGHT",
-      "length": 50,
+      "length": 120,
       "restAngle": 1.55,
       "activeAngle": -0.58
     }
   ],
   "bumpers": [
     {
-      "x": 220,
-      "y": 460
-    }
-  ],
-  "gears": [
-    {
-      "x": 230,
-      "y": 240,
-      "radius": 30,
-      "toothHeight": 91,
-      "teeth": 5,
-      "angularSpeed": -0.8
+      "x": 240,
+      "y": 432
     }
   ],
   "warps": [
     {
-      "x": 220,
-      "y": 310
-    }
-  ],
-  "gates": [
-    {
-      "x1": 90,
-      "x2": 180,
-      "y": 40,
-      "dir": 1
-    },
-    {
-      "x1": 240,
-      "x2": 310,
-      "y": 40,
-      "dir": 1
+      "x": 240,
+      "y": 190
     }
   ],
   "corridors": [
     {
-      "cx": 460,
+      "cx": 451,
       "cy": 432,
       "angleDeg": -90,
       "length": 564,
@@ -174,39 +132,75 @@
   ],
   "curvedCorridors": [
     {
-      "cx": 370,
-      "cy": 140,
-      "midRadius": 89,
+      "cx": 363.84562691734794,
+      "cy": 138.10726481677693,
+      "midRadius": 87.15437308265206,
       "width": 40,
-      "startAngleDeg": -2,
-      "angularSpanDeg": -91,
+      "startAngleDeg": 0,
+      "angularSpanDeg": -94,
       "segments": 12,
       "restitution": 0.55,
       "thickness": 15
+    },
+    {
+      "cx": 100,
+      "cy": 340,
+      "midRadius": 33.59987319428019,
+      "width": 10,
+      "startAngleDeg": 9,
+      "angularSpanDeg": -189,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 15
+    },
+    {
+      "cx": 380,
+      "cy": 340,
+      "midRadius": 33.59987319428019,
+      "width": 10,
+      "startAngleDeg": 9,
+      "angularSpanDeg": -189,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 15
+    },
+    {
+      "cx": 330,
+      "cy": 590,
+      "midRadius": 29,
+      "width": 10,
+      "startAngleDeg": 4,
+      "angularSpanDeg": -131,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 6
+    },
+    {
+      "cx": 150,
+      "cy": 590,
+      "midRadius": 29,
+      "width": 10,
+      "startAngleDeg": -53,
+      "angularSpanDeg": -131,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 6
     }
   ],
   "springs": [
     {
-      "x": 415,
-      "y": 663,
-      "radius": 15,
-      "angleDeg": -90,
-      "power": 1300,
-      "cooldown": 0.4
-    },
-    {
       "x": 390,
-      "y": 20,
+      "y": 15,
       "radius": 8,
       "angleDeg": -118,
       "power": 1300,
       "cooldown": 0.4
     },
     {
-      "x": 50,
-      "y": 660,
-      "radius": 17,
-      "angleDeg": 270,
+      "x": 400,
+      "y": 290,
+      "radius": 12,
+      "angleDeg": -123,
       "power": 1300,
       "cooldown": 0.4
     }
@@ -227,7 +221,7 @@
   ],
   "launchSprings": [
     {
-      "x": 459,
+      "x": 452,
       "y": 701,
       "radius": 20,
       "angleDeg": -90,
@@ -239,10 +233,90 @@
   "warpExits": [
     {
       "fromSection": "fraction_valut",
-      "x": 380,
-      "y": 220,
+      "x": 390,
+      "y": 140,
       "vx": 0,
       "vy": -650
+    }
+  ],
+  "curves": [
+    {
+      "cx": 179.80021084249458,
+      "cy": 397.95057772172794,
+      "radius": 165.2400111935429,
+      "startAngle": 2.884288045921741,
+      "endAngle": 1.6909119275544011,
+      "segments": 12,
+      "thickness": 15,
+      "restitution": 0.55
+    },
+    {
+      "cx": 298.50925409194264,
+      "cy": 432.032934017325,
+      "radius": 131.7318883180139,
+      "startAngle": 1.406923824010806,
+      "endAngle": 0.06051633381923405,
+      "segments": 12,
+      "thickness": 15,
+      "restitution": 0.55
+    }
+  ],
+  "dropTargets": [
+    {
+      "x": 170,
+      "y": 140
+    },
+    {
+      "x": 210,
+      "y": 140
+    },
+    {
+      "x": 250,
+      "y": 140
+    },
+    {
+      "x": 290,
+      "y": 140
+    },
+    {
+      "x": 290,
+      "y": 160
+    },
+    {
+      "x": 290,
+      "y": 180
+    },
+    {
+      "x": 170,
+      "y": 160
+    },
+    {
+      "x": 170,
+      "y": 180
+    },
+    {
+      "x": 170,
+      "y": 200
+    },
+    {
+      "x": 170,
+      "y": 220
+    },
+    {
+      "x": 210,
+      "y": 220
+    },
+    {
+      "x": 250,
+      "y": 220
+    },
+    {
+      "x": 290,
+      "y": 220
+    },
+    {
+      "x": 290,
+      "y": 200
     }
   ]
 }

@@ -16,6 +16,34 @@ function snap(v, grid) {
     return grid > 1 ? Math.round(v / grid) * grid : Math.round(v);
 }
 
+/**
+ * Circumscribed circle through three non-collinear points.
+ * Returns { cx, cy, radius } or null if the points are collinear.
+ */
+function circleFrom3Points(ax, ay, bx, by, mx, my) {
+    const D = 2 * (ax * (by - my) + bx * (my - ay) + mx * (ay - by));
+    if (Math.abs(D) < 1e-6) return null;
+    const a2 = ax * ax + ay * ay;
+    const b2 = bx * bx + by * by;
+    const m2 = mx * mx + my * my;
+    const cx = (a2 * (by - my) + b2 * (my - ay) + m2 * (ay - by)) / D;
+    const cy = (a2 * (mx - bx) + b2 * (ax - mx) + m2 * (bx - ax)) / D;
+    return { cx, cy, radius: Math.hypot(ax - cx, ay - cy) };
+}
+
+/**
+ * Given three angles on the same circle (start, mid, end), returns the
+ * signed angular span (end - start) whose interpolated arc passes through mid.
+ * Positive = CCW, negative = CW.
+ */
+function arcSpan(sA, mAngle, eA) {
+    const TAU  = Math.PI * 2;
+    const norm = a => ((a % TAU) + TAU) % TAU;
+    const mRel = norm(mAngle - sA); // M relative to A going CCW: [0, 2π)
+    const eRel = norm(eA     - sA); // B relative to A going CCW: [0, 2π)
+    return mRel < eRel ? eRel : eRel - TAU;
+}
+
 export const EntityDefs = {
 
     ballStart: {
@@ -171,8 +199,9 @@ export const EntityDefs = {
             { name: 'x',      type: 'number' },
             { name: 'y',      type: 'number' },
             { name: 'radius', type: 'number' },
+            { name: 'name',   type: 'string' },
         ],
-        defaults: () => ({ x: 240, y: 360, radius: 18 }),
+        defaults: () => ({ x: 240, y: 360, radius: 18, name: '' }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest: (e, px, py) => Math.hypot(px - e.x, py - e.y) < (e.radius ?? 18) + 8,
@@ -387,13 +416,14 @@ export const EntityDefs = {
             { name: 'angleDeg',     type: 'number', step: 1 },
             { name: 'dirX',         type: 'number', step: 0.01 },
             { name: 'dirY',         type: 'number', step: 0.01 },
-            { name: 'power',        type: 'number', step: 0.1 },
+            { name: 'power',        type: 'number', step: 50 },
+            { name: 'cooldown',     type: 'number', step: 0.05 },
             { name: 'circleRadius', type: 'number' },
             { name: 'circleSpeed',  type: 'number', step: 0.1 },
             { name: 'slideRange',   type: 'number' },
             { name: 'slideSpeed',   type: 'number', step: 0.1 },
         ],
-        defaults: () => ({ x: 210, y: 200, w: 60, h: 16, angleDeg: 0, dirX: 0, dirY: -1, power: 1 }),
+        defaults: () => ({ x: 210, y: 200, w: 60, h: 16, angleDeg: 0, dirX: 0, dirY: -1, power: 1100, cooldown: 0.3 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest: (e, px, py) => Math.hypot(px - e.x, py - e.y) < Math.max((e.w ?? 60), (e.h ?? 16)) / 2 + 8,
@@ -730,8 +760,9 @@ export const EntityDefs = {
             { name: 'teeth', type: 'number' },
             { name: 'speed', type: 'number', step: 0.1 },
             { name: 'angularSpeed', type: 'number', step: 0.1 },
+            { name: 'restitution',  type: 'number', step: 0.01 },
         ],
-        defaults: () => ({ x: 240, y: 300, radius: 12, toothHeight: 42, teeth: 12, speed: 5, angularSpeed: 2.8 }),
+        defaults: () => ({ x: 240, y: 300, radius: 12, toothHeight: 42, teeth: 12, speed: 5, angularSpeed: 2.8, restitution: 0.35 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest: (e, px, py) => {
@@ -876,20 +907,34 @@ export const EntityDefs = {
         key: 'curves', label: 'Curve', color: '#44ccff',
         isLine: false,
         fields: [
-            { name: 'cx',         type: 'number' },
-            { name: 'cy',         type: 'number' },
-            { name: 'radius',     type: 'number' },
-            { name: 'startAngle', type: 'number', step: 0.01 },
-            { name: 'endAngle',   type: 'number', step: 0.01 },
-            { name: 'segments',   type: 'number' },
+            { name: 'cx',          type: 'number' },
+            { name: 'cy',          type: 'number' },
+            { name: 'radius',      type: 'number' },
+            { name: 'startAngle',  type: 'number', step: 0.01 },
+            { name: 'endAngle',    type: 'number', step: 0.01 },
+            { name: 'segments',    type: 'number' },
+            { name: 'thickness',   type: 'number', step: 1 },
             { name: 'restitution', type: 'number', step: 0.01 },
         ],
-        defaults: () => ({ cx: 240, cy: 100, radius: 60, startAngle: 0, endAngle: -Math.PI / 2, segments: 12, restitution: 0.55 }),
+        defaults: () => ({ cx: 240, cy: 100, radius: 60, startAngle: 0, endAngle: -Math.PI / 2, segments: 12, thickness: 4, restitution: 0.55 }),
         getCenter: (e) => ({ x: e.cx, y: e.cy }),
         setCenter: (e, x, y, g) => { e.cx = snap(x, g); e.cy = snap(y, g); },
-        hitTest: (e, px, py) =>
-            Math.abs(Math.hypot(px - e.cx, py - e.cy) - (e.radius ?? 60)) < 12 ||
-            Math.hypot(px - e.cx, py - e.cy) < 10,
+        hitTest(e, px, py) {
+            const r  = e.radius ?? 60;
+            const dx = px - e.cx, dy = py - e.cy;
+            if (Math.abs(Math.hypot(dx, dy) - r) > 12) return false;
+            // Angular check: point must lie within the arc's swept span
+            const TAU  = Math.PI * 2;
+            const sA   = e.startAngle ?? 0;
+            const span = (e.endAngle ?? -Math.PI / 2) - sA;
+            let delta  = Math.atan2(dy, dx) - sA;
+            if (span >= 0) {
+                delta = ((delta % TAU) + TAU) % TAU;
+                return delta <= span;
+            }
+            delta = ((delta % TAU) - TAU) % TAU;
+            return delta >= span;
+        },
         render(ctx, e, sel) {
             const n      = e.segments ?? 12;
             const r      = e.radius ?? 60;
@@ -905,49 +950,81 @@ export const EntityDefs = {
                 if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.strokeStyle = sel ? '#ffffff' : this.color;
-            ctx.lineWidth   = sel ? 3 : 2;
+            ctx.lineWidth   = Math.max(sel ? 3 : 2, e.thickness ?? 4);
             ctx.stroke();
 
             if (sel) {
-                // Light sector fill
+                // Chord fill — between the arc and the straight A→B closing line
                 ctx.beginPath();
-                ctx.moveTo(e.cx, e.cy);
                 for (let i = 0; i <= n; i++) {
-                    const a = startA + (i / n) * (endA - startA);
-                    ctx.lineTo(e.cx + r * Math.cos(a), e.cy + r * Math.sin(a));
+                    const a  = startA + (i / n) * (endA - startA);
+                    const px = e.cx + r * Math.cos(a);
+                    const py = e.cy + r * Math.sin(a);
+                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
                 }
                 ctx.closePath();
-                ctx.fillStyle = 'rgba(68,204,255,0.08)';
+                ctx.fillStyle = 'rgba(68,204,255,0.10)';
                 ctx.fill();
+                // Dashed chord line A→B
+                ctx.beginPath();
+                ctx.moveTo(e.cx + r * Math.cos(startA), e.cy + r * Math.sin(startA));
+                ctx.lineTo(e.cx + r * Math.cos(endA),   e.cy + r * Math.sin(endA));
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = 'rgba(68,204,255,0.35)';
+                ctx.lineWidth   = 1;
+                ctx.stroke();
+                ctx.setLineDash([]);
             }
-
-            // Center pivot dot
-            ctx.beginPath();
-            ctx.arc(e.cx, e.cy, 4, 0, Math.PI * 2);
-            ctx.fillStyle = sel ? '#ffffff' : this.color;
-            ctx.fill();
         },
+        getSelectionArc: (e) => ({
+            cx: e.cx,
+            cy: e.cy,
+            r:  (e.radius ?? 60) + 5,
+            sA: e.startAngle ?? 0,
+            eA: e.endAngle   ?? -Math.PI / 2,
+        }),
         handles: {
             get(e) {
-                const r   = e.radius     ?? 60;
-                const sA  = e.startAngle ?? 0;
-                const eA  = e.endAngle   ?? -Math.PI / 2;
-                const mA  = (sA + eA) / 2;
+                const r  = e.radius     ?? 60;
+                const sA = e.startAngle ?? 0;
+                const eA = e.endAngle   ?? -Math.PI / 2;
+                const mA = sA + (eA - sA) * 0.5;
                 return [
-                    { id: 'start',  x: e.cx + r * Math.cos(sA), y: e.cy + r * Math.sin(sA) },
-                    { id: 'end',    x: e.cx + r * Math.cos(eA), y: e.cy + r * Math.sin(eA) },
-                    { id: 'radius', x: e.cx + r * Math.cos(mA), y: e.cy + r * Math.sin(mA) },
+                    { id: 'a', label: 'A', x: e.cx + r * Math.cos(sA), y: e.cy + r * Math.sin(sA) },
+                    { id: 'm', label: '~', x: e.cx + r * Math.cos(mA), y: e.cy + r * Math.sin(mA) },
+                    { id: 'b', label: 'B', x: e.cx + r * Math.cos(eA), y: e.cy + r * Math.sin(eA) },
                 ];
             },
             move(e, id, x, y, g) {
-                const dx = x - e.cx, dy = y - e.cy;
-                if (id === 'radius') {
-                    e.radius = Math.max(5, Math.round(Math.hypot(dx, dy) / g) * g);
-                } else if (id === 'start') {
-                    e.startAngle = Math.atan2(dy, dx);
-                } else {
-                    e.endAngle = Math.atan2(dy, dx);
-                }
+                const r       = e.radius     ?? 60;
+                const sA      = e.startAngle ?? 0;
+                const eA      = e.endAngle   ?? -Math.PI / 2;
+                const mA      = sA + (eA - sA) * 0.5;
+                const oldSpan = eA - sA;
+                // Current world-positions of the three arc control points
+                let ax = e.cx + r * Math.cos(sA), ay = e.cy + r * Math.sin(sA);
+                let bx = e.cx + r * Math.cos(eA), by = e.cy + r * Math.sin(eA);
+                let mx = e.cx + r * Math.cos(mA), my = e.cy + r * Math.sin(mA);
+                // Move only the dragged handle; the other two stay fixed
+                if      (id === 'a') { ax = x; ay = y; }
+                else if (id === 'b') { bx = x; by = y; }
+                else                 { mx = x; my = y; }
+                // Refit a circle through the three control points
+                const circle = circleFrom3Points(ax, ay, bx, by, mx, my);
+                // Guard: reject degenerate (collinear) or excessively large circles
+                if (!circle || circle.radius < 5 || circle.radius > 700) return;
+                // Recompute angles from the refitted circle
+                const newSA   = Math.atan2(ay - circle.cy, ax - circle.cx);
+                const newMA   = Math.atan2(my - circle.cy, mx - circle.cx);
+                const newEA   = Math.atan2(by - circle.cy, bx - circle.cx);
+                const newSpan = arcSpan(newSA, newMA, newEA);
+                // Guard: reject if the arc direction would flip (prevents jarring jumps)
+                if (Math.sign(newSpan) !== Math.sign(oldSpan)) return;
+                e.cx         = circle.cx;
+                e.cy         = circle.cy;
+                e.radius     = circle.radius;
+                e.startAngle = newSA;
+                e.endAngle   = newSA + newSpan;
             },
         },
     },
@@ -1177,39 +1254,65 @@ export const EntityDefs = {
             }
             ctx.setLineDash([]);
             ctx.globalAlpha = 1;
-            // Pivot dot
-            ctx.beginPath();
-            ctx.arc(e.cx, e.cy, 4, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.fill();
         },
         handles: {
             get(e) {
-                const D2R = Math.PI / 180;
-                const sA  = (e.startAngleDeg  ?? 180) * D2R;
-                const eA  = sA + (e.angularSpanDeg ?? 180) * D2R;
-                const mA  = (sA + eA) / 2;
-                const r   = e.midRadius ?? 70;
+                const D2R   = Math.PI / 180;
+                const sA   = (e.startAngleDeg  ?? 180) * D2R;
+                const eA   = sA + (e.angularSpanDeg ?? 180) * D2R;
+                const mA   = sA + (eA - sA) * 0.5;
+                const r    = e.midRadius ?? 70;
+                const half = (e.width    ?? 40) / 2;
                 return [
-                    { id: 'start',  x: e.cx + r * Math.cos(sA), y: e.cy + r * Math.sin(sA) },
-                    { id: 'end',    x: e.cx + r * Math.cos(eA), y: e.cy + r * Math.sin(eA) },
-                    { id: 'radius', x: e.cx + r * Math.cos(mA), y: e.cy + r * Math.sin(mA) },
+                    { id: 'a', label: 'A', x: e.cx + r          * Math.cos(sA), y: e.cy + r          * Math.sin(sA) },
+                    { id: 'm', label: '~', x: e.cx + r          * Math.cos(mA), y: e.cy + r          * Math.sin(mA) },
+                    { id: 'b', label: 'B', x: e.cx + r          * Math.cos(eA), y: e.cy + r          * Math.sin(eA) },
+                    { id: 'w', label: 'W', x: e.cx + (r + half) * Math.cos(mA), y: e.cy + (r + half) * Math.sin(mA) },
                 ];
             },
             move(e, id, x, y, g) {
-                const R2D = 180 / Math.PI;
-                const dx  = x - e.cx;
-                const dy  = y - e.cy;
-                if (id === 'radius') {
-                    e.midRadius = Math.max(10, Math.round(Math.hypot(dx, dy) / g) * g);
-                } else if (id === 'start') {
-                    const endAngle   = (e.startAngleDeg ?? 180) + (e.angularSpanDeg ?? 180);
-                    e.startAngleDeg  = Math.round(Math.atan2(dy, dx) * R2D);
-                    e.angularSpanDeg = Math.round(endAngle - e.startAngleDeg);
-                } else {
-                    e.angularSpanDeg = Math.round(Math.atan2(dy, dx) * R2D - (e.startAngleDeg ?? 180));
+                const D2R  = Math.PI / 180;
+                const R2D  = 180 / Math.PI;
+                const sA   = (e.startAngleDeg  ?? 180) * D2R;
+                const eA   = sA + (e.angularSpanDeg ?? 180) * D2R;
+                const mA   = sA + (eA - sA) * 0.5;
+                const r    = e.midRadius ?? 70;
+                // Width handle — adjusts corridor width by pulling the outer edge
+                if (id === 'w') {
+                    const dist = Math.hypot(x - e.cx, y - e.cy);
+                    e.width = Math.max(4, Math.round(Math.abs(dist - r) * 2 / g) * g);
+                    return;
                 }
+                // Arc handles — refit the circle through A, M, B
+                let ax = e.cx + r * Math.cos(sA), ay = e.cy + r * Math.sin(sA);
+                let bx = e.cx + r * Math.cos(eA), by = e.cy + r * Math.sin(eA);
+                let mx = e.cx + r * Math.cos(mA), my = e.cy + r * Math.sin(mA);
+                if      (id === 'a') { ax = x; ay = y; }
+                else if (id === 'b') { bx = x; by = y; }
+                else                 { mx = x; my = y; }
+                const oldSpan = (e.angularSpanDeg ?? 180) * D2R;
+                const circle = circleFrom3Points(ax, ay, bx, by, mx, my);
+                // Guard: reject degenerate (collinear) or excessively large circles
+                if (!circle || circle.radius < 10 || circle.radius > 700) return;
+                // Recompute angles from the refitted circle
+                const newSA   = Math.atan2(ay - circle.cy, ax - circle.cx);
+                const newMA   = Math.atan2(my - circle.cy, mx - circle.cx);
+                const newEA   = Math.atan2(by - circle.cy, bx - circle.cx);
+                const newSpan = arcSpan(newSA, newMA, newEA);
+                // Guard: reject if the arc direction would flip (prevents jarring jumps)
+                if (Math.sign(newSpan) !== Math.sign(oldSpan)) return;
+                e.cx             = circle.cx;
+                e.cy             = circle.cy;
+                e.midRadius      = circle.radius;
+                e.startAngleDeg  = Math.round(newSA   * R2D);
+                e.angularSpanDeg = Math.round(newSpan * R2D);
             },
+        },
+        getSelectionArc: (e) => {
+            const D2R = Math.PI / 180;
+            const sA  = (e.startAngleDeg  ?? 180) * D2R;
+            const eA  = sA + (e.angularSpanDeg ?? 180) * D2R;
+            return { cx: e.cx, cy: e.cy, r: (e.midRadius ?? 70) + 5, sA, eA };
         },
     },
 };

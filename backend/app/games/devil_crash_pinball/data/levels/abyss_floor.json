@@ -1,5 +1,5 @@
 {
-  "_comment": "Abyss Floor — Golem arena, diamond bumper cluster, dual vertical channels, symmetric slingshots, clean 4-flipper layout.",
+  "_comment": "Abyss Floor â€” Golem arena, diamond bumper cluster, dual vertical channels, symmetric slingshots, clean 4-flipper layout.",
   "section": "abyss_floor",
   "boundary": {
     "right": 460
@@ -289,6 +289,7 @@
     "type": "DemonBoss",
     "killEvent": "demon_kill",
     "x": 240,
-    "y": 470
+    "y": 470,
+    "bodyRadius": 36
   }
 }

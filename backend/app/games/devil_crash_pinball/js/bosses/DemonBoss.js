@@ -33,7 +33,7 @@ const WIND_FALLOFF_K   = 1.7;     // outer reach multiplier of arenaRadius
  */
 export class DemonBoss extends Boss {
     constructor(x, y, arenaRadius = 110) {
-        super(x, y, DemonBoss._totalHp(), C.BOSS_HIT_SCORE);
+        super(x, y, C.DEMON_HP, C.BOSS_HIT_SCORE);
         this.cx           = x;
         this.cy           = y;
         this.arenaRadius  = arenaRadius;
@@ -57,15 +57,10 @@ export class DemonBoss extends Boss {
         this._smiteY     = y;
     }
 
-    /** @private — sum of phase HPs gives single life pool. */
-    static _totalHp() {
-        return C.BOSS_PHASE_HP.reduce((acc, v) => acc + v, 0);
-    }
-
     reset() {
         super.reset();
         this.phase          = 0;
-        this.hp             = DemonBoss._totalHp();
+        this.hp             = C.DEMON_HP;
         this.maxHp          = this.hp;
         this.x              = this.cx;
         this.y              = this.cy;
@@ -84,7 +79,6 @@ export class DemonBoss extends Boss {
 
     stateUpdate(dt) {
         const S = Boss.STATE;
-        this._tickRig(dt);
 
         switch (this.state) {
             case S.SLEEP: break;
@@ -101,6 +95,7 @@ export class DemonBoss extends Boss {
 
     /** @private — slow rig animation: wings, core pulse, shockwave decay. */
     _tickRig(dt) {
+        super._tickRig(dt);
         // Phase is purely cosmetic now: derived from remaining HP ratio.
         const hpRatio = this.maxHp ? this.hp / this.maxHp : 1;
         if (hpRatio > 2 / 3)      this.phase = 0;

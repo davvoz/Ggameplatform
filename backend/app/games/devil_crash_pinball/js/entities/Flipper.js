@@ -67,7 +67,7 @@ export class Flipper {
             ax: this.pivot.x, ay: this.pivot.y,
             bx: ex, by: ey,
             r: this.hitThickness * 0.5,
-            omega: this.omega,
+            omega: this.omega * this.side,
         };
         const hit = Collisions.circleVsCapsule(ball, cap, 0.55);
         if (hit && this.active) {

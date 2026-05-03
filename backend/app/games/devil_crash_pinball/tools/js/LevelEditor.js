@@ -214,6 +214,38 @@ export class LevelEditor {
         this.#emit('entityChange', { action: 'move' });
     }
 
+    // ─── Pre-snapped ("Raw") variants ─────────────────────────────────────────
+    // Called by LevelCanvas when SmartGuides has already applied all snapping,
+    // so no additional grid snap should be applied.
+
+    /** Move selected entity to pre-computed (x, y) — no internal grid snap. */
+    moveSelectedRaw(x, y) {
+        const entity = this.getSelectedEntity();
+        if (!entity) return;
+        const def = EntityDefs[this.#selection.type];
+        def.setCenter(entity, x, y, 1);
+        this.#emit('entityChange', { action: 'move' });
+    }
+
+    /** Move a line endpoint to pre-computed coordinates — no internal grid snap. */
+    moveEndpointRaw(endpoint, x, y) {
+        const entity = this.getSelectedEntity();
+        if (!entity) return;
+        if (endpoint === 'a') { entity.ax = Math.round(x); entity.ay = Math.round(y); }
+        else                  { entity.bx = Math.round(x); entity.by = Math.round(y); }
+        this.#emit('entityChange', { action: 'move' });
+    }
+
+    /** Move a named handle to pre-computed coordinates — no internal grid snap. */
+    moveHandleRaw(handleId, x, y) {
+        const entity = this.getSelectedEntity();
+        if (!entity) return;
+        const def = EntityDefs[this.#selection.type];
+        if (!def?.handles) return;
+        def.handles.move(entity, handleId, x, y, 1);
+        this.#emit('entityChange', { action: 'move' });
+    }
+
     /** Snapshot current config before a drag. */
     snapshotBeforeDrag() {
         this.#history.push(this.#snapshot());

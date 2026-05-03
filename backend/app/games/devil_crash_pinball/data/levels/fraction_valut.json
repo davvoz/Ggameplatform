@@ -1,5 +1,5 @@
 {
-  "_comment": "Fracture Vault — X-cross neon diagonal ramps, magenta palette, V-bumper crown, quad slingshots. Signature: two ±45° corridors crossing at center creating unpredictable split-deflection gameplay.",
+  "_comment": "Fracture Vault â€” X-cross neon diagonal ramps, magenta palette, V-bumper crown, quad slingshots. Signature: two Â±45Â° corridors crossing at center creating unpredictable split-deflection gameplay.",
   "section": "fraction_valut",
   "boundary": {
     "right": 460
@@ -58,7 +58,7 @@
   ],
   "corridors": [
     {
-      "_comment": "X-cross arm 1 — top-left to bottom-right diagonal",
+      "_comment": "X-cross arm 1 â€” top-left to bottom-right diagonal",
       "cx": 43,
       "cy": 640,
       "angleDeg": -90,
@@ -67,7 +67,7 @@
       "restitution": 0.68
     },
     {
-      "_comment": "X-cross arm 2 — top-right to bottom-left diagonal",
+      "_comment": "X-cross arm 2 â€” top-right to bottom-left diagonal",
       "cx": 44,
       "cy": 491,
       "angleDeg": 90,
@@ -76,7 +76,7 @@
       "restitution": 0.68
     },
     {
-      "_comment": "Top divider left — guides ball from arch toward bumper V",
+      "_comment": "Top divider left â€” guides ball from arch toward bumper V",
       "cx": 160,
       "cy": 80,
       "angleDeg": 48,
@@ -85,7 +85,7 @@
       "restitution": 0.55
     },
     {
-      "_comment": "Top divider right — mirror",
+      "_comment": "Top divider right â€” mirror",
       "cx": 370,
       "cy": 90,
       "angleDeg": -36,
@@ -94,7 +94,7 @@
       "restitution": 0.55
     },
     {
-      "_comment": "X-cross arm 2 — top-right to bottom-left diagonal",
+      "_comment": "X-cross arm 2 â€” top-right to bottom-left diagonal",
       "cx": 44,
       "cy": 340,
       "angleDeg": 90,
@@ -145,7 +145,7 @@
       "y": 280
     },
     {
-      "_comment": "Right diagonal bank — mirror",
+      "_comment": "Right diagonal bank â€” mirror",
       "x": 340,
       "y": 220
     },
@@ -160,7 +160,7 @@
   ],
   "slingshots": [
     {
-      "_comment": "High-left — flanks upper X arm",
+      "_comment": "High-left â€” flanks upper X arm",
       "ax": 116,
       "ay": 300,
       "bx": 144,
@@ -169,7 +169,7 @@
       "ny": -0.56
     },
     {
-      "_comment": "High-right — mirror",
+      "_comment": "High-right â€” mirror",
       "ax": 440,
       "ay": 380,
       "bx": 405,
@@ -187,7 +187,7 @@
       "ny": -2.57
     },
     {
-      "_comment": "Low-right classic — mirror",
+      "_comment": "Low-right classic â€” mirror",
       "ax": 382,
       "ay": 541,
       "bx": 354,
@@ -196,7 +196,7 @@
       "ny": -0.57
     },
     {
-      "_comment": "High-right — mirror",
+      "_comment": "High-right â€” mirror",
       "ax": 440,
       "ay": 170,
       "bx": 410,
@@ -205,7 +205,7 @@
       "ny": -0.56
     },
     {
-      "_comment": "High-right — mirror",
+      "_comment": "High-right â€” mirror",
       "ax": 430,
       "ay": 460,
       "bx": 400,
@@ -214,7 +214,7 @@
       "ny": -1.56
     },
     {
-      "_comment": "Low-right classic — mirror",
+      "_comment": "Low-right classic â€” mirror",
       "ax": 100,
       "ay": 250,
       "bx": 80,
@@ -225,7 +225,7 @@
   ],
   "kickers": [
     {
-      "_comment": "Left kicker at X-center — launches ball toward right cluster",
+      "_comment": "Left kicker at X-center â€” launches ball toward right cluster",
       "x": 170,
       "y": 580,
       "w": 16,
@@ -235,7 +235,7 @@
       "power": 880
     },
     {
-      "_comment": "Right kicker at X-center — mirror",
+      "_comment": "Right kicker at X-center â€” mirror",
       "x": 310,
       "y": 610,
       "w": 16,
@@ -247,7 +247,7 @@
   ],
   "springs": [
     {
-      "_comment": "Left arch deflector — catches ball falling from left crown divider",
+      "_comment": "Left arch deflector â€” catches ball falling from left crown divider",
       "x": 148,
       "y": 178,
       "radius": 13,
@@ -256,7 +256,7 @@
       "cooldown": 0.45
     },
     {
-      "_comment": "Right arch deflector — mirror",
+      "_comment": "Right arch deflector â€” mirror",
       "x": 380,
       "y": 150,
       "radius": 13,
@@ -285,7 +285,7 @@
       "activeAngle": -0.58
     },
     {
-      "_comment": "Side left flipper — wall shot into X",
+      "_comment": "Side left flipper â€” wall shot into X",
       "x": 100,
       "y": 350,
       "side": "LEFT",
@@ -294,7 +294,7 @@
       "activeAngle": -0.62
     },
     {
-      "_comment": "Side right flipper — mirror",
+      "_comment": "Side right flipper â€” mirror",
       "x": 440,
       "y": 630,
       "side": "RIGHT",

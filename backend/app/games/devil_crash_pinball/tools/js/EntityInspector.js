@@ -10,6 +10,40 @@ const AUDIO_PROFILE_IDS = [
 ];
 
 /**
+ * Static configuration for each boss type.
+ * Single source of truth for kill events, field definitions, and default values.
+ * @type {Record<string, { killEvent: string, bodyRadius: number, extraFields: Array<{key:string,label:string,default:number,step:number,width:string}>, extraDefaults: (existing: object) => object }>}
+ */
+const BOSS_DEFS = {
+    DemonBoss:  {
+        killEvent:     'demon_kill',
+        bodyRadius:    22,
+        extraFields:   [],
+        extraDefaults: () => ({}),
+    },
+    DragonBoss: {
+        killEvent:     'dragon_kill',
+        bodyRadius:    24,
+        extraFields:   [
+            { key: 'radius', label: 'radius', default: 130, step: 1, width: '70px' },
+        ],
+        extraDefaults: (b) => ({ radius: b.radius ?? 130 }),
+    },
+    GolemBoss:  {
+        killEvent:     'golem_kill',
+        bodyRadius:    36,
+        extraFields:   [],
+        extraDefaults: () => ({}),
+    },
+    WitchBoss:  {
+        killEvent:     'witch_kill',
+        bodyRadius:    22,
+        extraFields:   [],
+        extraDefaults: (b) => ({ anchors: b.anchors ?? [{ x: 240, y: 120 }, { x: 120, y: 220 }, { x: 360, y: 220 }, { x: 240, y: 320 }] }),
+    },
+};
+
+/**
  * Right-side panel: shows and edits the properties of the selected entity.
  */
 export class EntityInspector {
@@ -85,20 +119,13 @@ export class EntityInspector {
 
     /** Builds the boss configuration sub-section for the Level Info panel. */
     #buildBossSection(cfg) {
-        const BOSS_TYPES = ['none', 'DemonBoss', 'DragonBoss', 'GolemBoss', 'WitchBoss'];
-        const KILL_EVENTS = {
-            DemonBoss:  'demon_kill',
-            DragonBoss: 'dragon_kill',
-            GolemBoss:  'golem_kill',
-            WitchBoss:  'witch_kill',
-        };
-
         const section = document.createElement('div');
         section.className = 'inspector-meta';
         section.innerHTML = '<div class="meta-title">Boss</div>';
 
-        const boss = cfg.boss ?? null;
+        const boss        = cfg.boss ?? null;
         const currentType = boss?.type ?? 'none';
+        const bossTypes   = ['none', ...Object.keys(BOSS_DEFS)];
 
         // ── Type selector ──
         const typeRow = document.createElement('div');
@@ -107,9 +134,9 @@ export class EntityInspector {
         const typeSel = document.createElement('select');
         typeSel.id = 'boss-type';
         typeSel.style.width = '120px';
-        for (const t of BOSS_TYPES) {
+        for (const t of bossTypes) {
             const opt = document.createElement('option');
-            opt.value = t;
+            opt.value       = t;
             opt.textContent = t === 'none' ? '— none —' : t.replace('Boss', '');
             if (t === currentType) opt.selected = true;
             typeSel.appendChild(opt);
@@ -126,90 +153,45 @@ export class EntityInspector {
             const t = typeSel.value;
             if (t === 'none') return;
 
-            const b = cfg.boss ?? {};
+            const b   = cfg.boss ?? {};
+            const def = BOSS_DEFS[t];
 
-            // enabled toggle
-            const enabledRow = document.createElement('div');
-            enabledRow.className = 'meta-row brick-row';
-            enabledRow.innerHTML = '<label for="boss-enabled">enabled</label>';
-            const enabledCb = document.createElement('input');
-            enabledCb.type = 'checkbox';
-            enabledCb.id = 'boss-enabled';
-            enabledCb.checked = b.enabled !== false;
-            enabledCb.addEventListener('change', () => {
-                this.#editor.updateBossField('enabled', enabledCb.checked ? undefined : false);
-            });
-            enabledRow.appendChild(enabledCb);
-            dynamicArea.appendChild(enabledRow);
+            this.#appendBossToggle(dynamicArea, 'enabled', b.enabled !== false,
+                (v) => this.#editor.updateBossField('enabled', v ? undefined : false));
 
-            // killEvent
-            const killRow = document.createElement('div');
-            killRow.className = 'meta-row brick-row';
-            killRow.innerHTML = '<label for="boss-killevent">killEvent</label>';
-            const killInp = document.createElement('input');
-            killInp.type = 'text';
-            killInp.id = 'boss-killevent';
-            killInp.style.width = '110px';
-            killInp.value = b.killEvent ?? KILL_EVENTS[t] ?? '';
-            killInp.addEventListener('change', () => {
-                this.#editor.updateBossField('killEvent', killInp.value.trim() || undefined);
-            });
-            killRow.appendChild(killInp);
-            dynamicArea.appendChild(killRow);
+            this.#appendBossText(dynamicArea, 'killEvent', b.killEvent ?? def.killEvent,
+                (v) => this.#editor.updateBossField('killEvent', v || undefined));
 
-            // x / y
             for (const coord of ['x', 'y']) {
-                const row = document.createElement('div');
-                row.className = 'meta-row brick-row';
-                row.innerHTML = `<label for="boss-${coord}">${coord}</label>`;
-                const inp = document.createElement('input');
-                inp.type = 'number';
-                inp.id = `boss-${coord}`;
-                inp.value = b[coord] ?? 240;
-                inp.step = 1;
-                inp.style.width = '70px';
-                inp.addEventListener('change', () => {
-                    this.#editor.updateBossField(coord, Number(inp.value));
-                });
-                row.appendChild(inp);
-                dynamicArea.appendChild(row);
+                this.#appendBossNumber(dynamicArea, coord, b[coord] ?? 240, 1, null, '70px',
+                    (v) => this.#editor.updateBossField(coord, v));
             }
 
-            // radius (DragonBoss only)
-            if (t === 'DragonBoss') {
-                const rRow = document.createElement('div');
-                rRow.className = 'meta-row brick-row';
-                rRow.innerHTML = '<label for="boss-radius">radius</label>';
-                const rInp = document.createElement('input');
-                rInp.type = 'number';
-                rInp.id = 'boss-radius';
-                rInp.value = b.radius ?? 130;
-                rInp.step = 1;
-                rInp.style.width = '70px';
-                rInp.addEventListener('change', () => {
-                    this.#editor.updateBossField('radius', Number(rInp.value));
-                });
-                rRow.appendChild(rInp);
-                dynamicArea.appendChild(rRow);
+            for (const field of def.extraFields) {
+                this.#appendBossNumber(dynamicArea, field.key, b[field.key] ?? field.default, field.step, null, field.width,
+                    (v) => this.#editor.updateBossField(field.key, v));
             }
+
+            this.#appendBossNumber(dynamicArea, 'bodyRadius', b.bodyRadius ?? def.bodyRadius, 1, 10, '70px',
+                (v) => this.#editor.updateBossField('bodyRadius', v));
         };
 
         typeSel.addEventListener('change', () => {
-            const t = typeSel.value;
+            const t        = typeSel.value;
+            const existing = cfg.boss ?? {};
             this.#editor.snapshotBeforeDrag();
             if (t === 'none') {
                 this.#editor.removeBoss();
             } else {
-                const KILL_EVENTS_MAP = { DemonBoss: 'demon_kill', DragonBoss: 'dragon_kill', GolemBoss: 'golem_kill', WitchBoss: 'witch_kill' };
-                const existing = cfg.boss ?? {};
+                const def = BOSS_DEFS[t];
                 this.#editor.setBoss({
-                    ...( existing.type === t ? existing : {} ),
-                    type: t,
-                    killEvent: existing.killEvent ?? KILL_EVENTS_MAP[t],
-                    x: existing.x ?? 240,
-                    y: existing.y ?? 240,
-                    ...(t === 'DragonBoss' ? { radius: existing.radius ?? 130 } : {}),
-                    ...(t === 'WitchBoss'  ? { anchors: existing.anchors ?? [{ x: 240, y: 120 }, { x: 120, y: 220 }, { x: 360, y: 220 }, { x: 240, y: 320 }] } : {}),
+                    ...(existing.type === t ? existing : {}),
+                    type:       t,
+                    killEvent:  existing.killEvent  ?? def.killEvent,
+                    x:          existing.x          ?? 240,
+                    y:          existing.y          ?? 240,
+                    bodyRadius: existing.bodyRadius ?? def.bodyRadius,
+                    ...def.extraDefaults(existing),
                 });
             }
             rebuildDynamic();
@@ -217,6 +199,52 @@ export class EntityInspector {
 
         rebuildDynamic();
         return section;
+    }
+
+    /** Appends a labeled checkbox row to `container`. */
+    #appendBossToggle(container, key, checked, onChange) {
+        const row = document.createElement('div');
+        row.className = 'meta-row brick-row';
+        row.innerHTML = `<label for="boss-${key}">${key}</label>`;
+        const cb = document.createElement('input');
+        cb.type    = 'checkbox';
+        cb.id      = `boss-${key}`;
+        cb.checked = checked;
+        cb.addEventListener('change', () => onChange(cb.checked));
+        row.appendChild(cb);
+        container.appendChild(row);
+    }
+
+    /** Appends a labeled text input row to `container`. */
+    #appendBossText(container, key, value, onChange) {
+        const row = document.createElement('div');
+        row.className = 'meta-row brick-row';
+        row.innerHTML = `<label for="boss-${key}">${key}</label>`;
+        const inp = document.createElement('input');
+        inp.type        = 'text';
+        inp.id          = `boss-${key}`;
+        inp.style.width = '110px';
+        inp.value       = value;
+        inp.addEventListener('change', () => onChange(inp.value.trim()));
+        row.appendChild(inp);
+        container.appendChild(row);
+    }
+
+    /** Appends a labeled number input row to `container`. */
+    #appendBossNumber(container, key, value, step, min, width, onChange) {
+        const row = document.createElement('div');
+        row.className = 'meta-row brick-row';
+        row.innerHTML = `<label for="boss-${key}">${key}</label>`;
+        const inp = document.createElement('input');
+        inp.type        = 'number';
+        inp.id          = `boss-${key}`;
+        inp.value       = value;
+        inp.step        = step;
+        inp.style.width = width;
+        if (min != null) inp.min = min;
+        inp.addEventListener('change', () => onChange(Number(inp.value)));
+        row.appendChild(inp);
+        container.appendChild(row);
     }
 
     /** Builds the audio-profile selector row for the Level Info panel. */

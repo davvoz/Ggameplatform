@@ -26,6 +26,7 @@ export class SpinningGear {
         this.angle         = 0;
         this.flash         = 0;
         this._hitCooldown  = 0;
+        this.restitution   = C.BALL_RESTITUTION_WALL;
         this.score         = C.BUMPER_SCORE * 2;
         this.onHit         = null;
     }
@@ -52,13 +53,13 @@ export class SpinningGear {
         const nx = dx / dist;
         const ny = dy / dist;
 
-        // Reflect helper — wall-style bounce with BALL_RESTITUTION_WALL.
+        // Reflect helper — uses per-instance restitution.
         const reflect = (surfaceR) => {
             ball.pos.x += nx * (surfaceR - dist);
             ball.pos.y += ny * (surfaceR - dist);
             const vn = ball.vel.x * nx + ball.vel.y * ny;
             if (vn < 0) {
-                const k = (1 + C.BALL_RESTITUTION_WALL) * vn;
+                const k = (1 + this.restitution) * vn;
                 ball.vel.x -= k * nx;
                 ball.vel.y -= k * ny;
             }

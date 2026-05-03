@@ -229,12 +229,11 @@ export class HUD {
             litColor: isPaused ? '#44ff88' : '#ffcc00',
             pulse:    0,
         });
-        // PERF: lit when LOW-perf mode is ON (optimisations active).
-        // Label flips to make state obvious at a glance.
+        // PERF: green when LOW-perf (basse performance), red when HIGH-perf (alte performance).
         this._drawHudButton({ x: perfx, y: by, w: bw, h: bh,
             label:    data.lowPerf ? 'PERF\u2191' : 'PERF\u2193',
-            lit:      !!data.lowPerf,
-            litColor: '#88ff44',
+            lit:      true,
+            litColor: data.lowPerf ? '#88ff44' : '#ff4444',
             pulse:    0,
         });
     }

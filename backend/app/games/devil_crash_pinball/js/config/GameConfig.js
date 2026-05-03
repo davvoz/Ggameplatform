@@ -101,13 +101,13 @@ export const GameConfig = Object.freeze({
     TILT_SHAKE_LIMIT: 3,            // shakes before tilt penalty
 
     // Boss
-    BOSS_PHASE_HP: [60, 90, 130],
+    DEMON_HP: 50,           // 3 visual phases at 66% / 33% HP thresholds
     BOSS_HIT_SCORE: 300,
     BOSS_PHASE_BONUS: 25_000,
     BOSS_DEFEAT_BONUS: 250_000,
     DRAGON_HP: 50,
-    WITCH_HP: 45,
-    GOLEM_HP: 55,
+    WITCH_HP: 50,
+    GOLEM_HP: 50,
     MINI_BOSS_BONUS: 50_000,
 
     // Mission system (6 missions)

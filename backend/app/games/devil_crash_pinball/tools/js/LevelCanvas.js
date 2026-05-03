@@ -2,6 +2,7 @@ import { EntityDefs, ENTITY_TYPE_ORDER }      from './EntityDefs.js';
 import { Section }            from '../../js/sections/Section.js';
 import { EntityRenderer }     from '../../js/rendering/EntityRenderer.js';
 import { BackgroundRenderer } from '../../js/rendering/BackgroundRenderer.js';
+import { collectRefPoints, computeGuides, SYMMETRY_X } from './SmartGuides.js';
 
 const BOSS_COLORS = {
     DemonBoss:  '#ff2222',
@@ -34,11 +35,17 @@ export class LevelCanvas {
 
     // Drag state
     #drag = null;
-    // { mode: 'move'|'ep_a'|'ep_b', snapshotted: boolean }
+    // { mode: 'move'|'ep_a'|'ep_b'|'handle', snapshotted: boolean }
 
     // Hover state for endpoint / generic handle highlighting
     #hoverEndpoint = null; // 'a' | 'b' | null
     #hoverHandle   = null; // handle id string | null
+
+    // Smart guides
+    #guidesEnabled   = true;
+    #symmetryEnabled = false;
+    #activeGuides    = [];   // guide lines active during the current drag
+    #mirrorX         = null; // mirror X position (symmetry mode, during drag)
 
     // Game-style preview state
     #entityRenderer = new EntityRenderer();
@@ -65,6 +72,12 @@ export class LevelCanvas {
         // Live animation loop — drives bumper / light / gear idle animations
         // so the editor preview matches the in-game look frame-for-frame.
         requestAnimationFrame(this.#frame);
+
+        // Smart guide / symmetry toggles from Toolbar and keyboard shortcuts
+        document.addEventListener('editor:guides-toggle',
+            e => { this.#guidesEnabled = e.detail.enabled; });
+        document.addEventListener('editor:symmetry-toggle',
+            e => { this.#symmetryEnabled = e.detail.enabled; });
     }
 
     /** rAF tick — advances simulation time, updates section, redraws. */
@@ -128,6 +141,9 @@ export class LevelCanvas {
         // Editor-only markers (ball start, warp exit) — not drawn by the game
         this.#renderEditorOnlyEntities(ctx);
 
+        // Smart guides (alignment + symmetry axis) — above entities, below handles
+        this.#drawSmartGuides(ctx);
+
         // Disabled boss + WitchBoss-anchor overlay (game build skips these)
         this.#renderBossOverlay(ctx);
 
@@ -135,18 +151,109 @@ export class LevelCanvas {
         this.#renderSelectionHighlight(ctx);
     }
 
+    // ─── Smart guides ─────────────────────────────────────────────────────────
+
+    #drawSmartGuides(ctx) {
+        if (!this.#drag) return;
+        ctx.save();
+        this.#drawAlignmentGuides(ctx);
+        if (this.#symmetryEnabled) this.#drawMirrorGhost(ctx);
+        ctx.restore();
+    }
+
+    #drawAlignmentGuides(ctx) {
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        for (const g of this.#activeGuides) {
+            if (g.type === 'h') {
+                ctx.beginPath();
+                ctx.moveTo(0, g.y); ctx.lineTo(480, g.y);
+                ctx.strokeStyle = 'rgba(255, 215, 50, 0.85)';
+                ctx.stroke();
+            } else if (g.type === 'v') {
+                ctx.beginPath();
+                ctx.moveTo(g.x, 0); ctx.lineTo(g.x, 720);
+                ctx.strokeStyle = 'rgba(255, 215, 50, 0.85)';
+                ctx.stroke();
+            }
+        }
+        ctx.setLineDash([]);
+    }
+
+    #drawMirrorGhost(ctx) {
+        if (this.#mirrorX === null) return;
+        const sel    = this.#editor.selection;
+        const entity = this.#editor.getSelectedEntity();
+        if (!entity || !sel) return;
+        const c = EntityDefs[sel.type]?.getCenter?.(entity);
+        if (!c) return;
+
+        const mx = 2 * SYMMETRY_X - c.x;
+        const my = c.y;
+
+        // Dashed connector
+        ctx.setLineDash([3, 5]);
+        ctx.beginPath();
+        ctx.moveTo(c.x, my); ctx.lineTo(mx, my);
+        ctx.strokeStyle = 'rgba(155, 70, 255, 0.45)';
+        ctx.lineWidth   = 1;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Diamond at mirror position
+        const d = 7;
+        ctx.beginPath();
+        ctx.moveTo(mx,     my - d);
+        ctx.lineTo(mx + d, my);
+        ctx.lineTo(mx,     my + d);
+        ctx.lineTo(mx - d, my);
+        ctx.closePath();
+        ctx.fillStyle   = 'rgba(155, 70, 255, 0.15)';
+        ctx.strokeStyle = 'rgba(200, 120, 255, 0.85)';
+        ctx.lineWidth   = 1.5;
+        ctx.fill();
+        ctx.stroke();
+
+        // Coordinate label
+        ctx.fillStyle    = 'rgba(200, 120, 255, 0.80)';
+        ctx.font         = '9px monospace';
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`${Math.round(mx)}, ${Math.round(my)}`, mx, my - d - 2);
+    }
+
     // ─── Rendering ────────────────────────────────────────────────────────────
 
     #drawGrid(ctx) {
         const g = this.#editor.snapGrid;
+
+        // Regular grid lines
         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
         ctx.lineWidth = 0.5;
         for (let x = 0; x <= 480; x += g) {
+            if (x === SYMMETRY_X) continue;           // drawn separately below
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 720); ctx.stroke();
         }
         for (let y = 0; y <= 720; y += g) {
+            if (y === 360) continue;                  // horizontal mid — drawn separately
             ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(480, y); ctx.stroke();
         }
+
+        // Symmetry axes — always visible at reduced opacity, brighter when mirror is on
+        const axisAlpha = this.#symmetryEnabled ? 0.55 : 0.15;
+        ctx.lineWidth = 1;
+
+        // Vertical axis (x = 240)
+        ctx.strokeStyle = `rgba(155, 70, 255, ${axisAlpha})`;
+        if (this.#symmetryEnabled) ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(SYMMETRY_X, 0); ctx.lineTo(SYMMETRY_X, 720); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Horizontal axis (y = 360)
+        ctx.strokeStyle = `rgba(155, 70, 255, ${axisAlpha * 0.65})`;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(0, 360); ctx.lineTo(480, 360); ctx.stroke();
+        ctx.setLineDash([]);
     }
 
     #renderEditorOnlyEntities(ctx) {
@@ -196,14 +303,21 @@ export class LevelCanvas {
             ctx.moveTo(entity.ax, entity.ay);
             ctx.lineTo(entity.bx, entity.by);
             ctx.stroke();
-        }
-
-        const c = def.getCenter?.(entity);
-        if (c) {
-            const r = this.#selectionRingRadius(def, entity);
+        } else if (def.getSelectionArc) {
+            // Arc-shaped entities: draw the highlight only along the real arc span
+            const arc = def.getSelectionArc(entity);
+            const ccw = arc.eA < arc.sA;
             ctx.beginPath();
-            ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+            ctx.arc(arc.cx, arc.cy, arc.r, arc.sA, arc.eA, ccw);
             ctx.stroke();
+        } else {
+            const c = def.getCenter?.(entity);
+            if (c) {
+                const r = this.#selectionRingRadius(def, entity);
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
         }
 
         ctx.setLineDash([]);
@@ -239,16 +353,32 @@ export class LevelCanvas {
             ctx.stroke();
         }
         // Generic handles (corridor endpoints, curvedCorridor arc handles, …)
+        this.drawHandles(def, entity, ctx);
+    }
+
+    drawHandles(def, entity, ctx) {
         if (def.handles) {
             for (const h of def.handles.get(entity)) {
+                const hovered = this.#hoverHandle === h.id;
                 ctx.beginPath();
                 ctx.arc(h.x, h.y, EP_RADIUS, 0, Math.PI * 2);
                 ctx.fillStyle = 'rgba(0,0,0,0.55)';
                 ctx.fill();
-                ctx.strokeStyle = this.#hoverHandle === h.id ? '#ffff00' : def.color;
-                ctx.lineWidth   = this.#hoverHandle === h.id ? 2.5 : 1.5;
+                ctx.strokeStyle = hovered ? '#ffff00' : def.color;
+                ctx.lineWidth = hovered ? 2.5 : 1.5;
                 ctx.stroke();
+                this.drawHandleLabel(h, ctx, hovered, def);
             }
+        }
+    }
+
+    drawHandleLabel(h, ctx, hovered, def) {
+        if (h.label) {
+            ctx.fillStyle = hovered ? '#ffff00' : def.color;
+            ctx.font = 'bold 7px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(h.label, h.x, h.y);
         }
     }
 
@@ -326,8 +456,10 @@ export class LevelCanvas {
         this.#canvas.addEventListener('mousemove', e => this.#onMouseMove(e));
         this.#canvas.addEventListener('mouseup',   e => this.#onMouseUp(e));
         this.#canvas.addEventListener('mouseleave', () => {
-            this.#drag = null;
+            this.#drag         = null;
             this.#hoverEndpoint = null;
+            this.#activeGuides  = [];
+            this.#mirrorX       = null;
         });
         this.#canvas.addEventListener('contextmenu', e => {
             e.preventDefault();
@@ -426,19 +558,39 @@ export class LevelCanvas {
 
         if (!this.#drag) return;
 
+        // ── Smart guide snap ─────────────────────────────────────────────────
+        // collectRefPoints excludes the dragged entity when moving (so it won't
+        // snap to itself), but keeps it for endpoint/handle drags (its own other
+        // points are useful alignment targets).
+        const sel          = this.#editor.selection;
+        const cfg          = this.#editor.getConfig();
+        const gridSnap     = this.#editor.snapEnabled ? this.#editor.snapGrid : 1;
+        const excludeType  = this.#drag.mode === 'move' ? sel?.type    : null;
+        const excludeIndex = this.#drag.mode === 'move' ? (sel?.index ?? -1) : -1;
+        const refPoints    = this.#guidesEnabled
+            ? collectRefPoints(cfg, excludeType, excludeIndex)
+            : [];
+        const { x: fx, y: fy, guides, mirrorX } =
+            computeGuides(x, y, refPoints, gridSnap, this.#symmetryEnabled);
+        this.#activeGuides = guides;
+        this.#mirrorX      = mirrorX;
+
+        // ── Apply movement ────────────────────────────────────────────────────
         if (this.#drag.mode === 'ep_a') {
-            this.#editor.moveEndpoint('a', x, y);
+            this.#editor.moveEndpointRaw('a', fx, fy);
         } else if (this.#drag.mode === 'ep_b') {
-            this.#editor.moveEndpoint('b', x, y);
+            this.#editor.moveEndpointRaw('b', fx, fy);
         } else if (this.#drag.mode === 'handle') {
-            this.#editor.moveHandle(this.#drag.handleId, x, y);
+            this.#editor.moveHandleRaw(this.#drag.handleId, fx, fy);
         } else {
-            this.#editor.moveSelected(x, y);
+            this.#editor.moveSelectedRaw(fx, fy);
         }
     }
 
     #onMouseUp() {
-        this.#drag = null;
+        this.#drag         = null;
+        this.#activeGuides = [];
+        this.#mirrorX      = null;
     }
 
     #updateCursor(x, y) {

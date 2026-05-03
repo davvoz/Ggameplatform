@@ -454,7 +454,8 @@
       "toothHeight": 42,
       "teeth": 3,
       "angularSpeed": 19,
-      "power": 1000
+      "power": 1000,
+      "restitution": 0.35
     }
   ]
 }

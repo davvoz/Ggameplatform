@@ -10,7 +10,7 @@ import { title } from '../../FontConfig.js';
 
 export default class LevelOutroCinematic extends CinematicScene {
 
-    setup() {
+    setup(options = {}) {
         const g = this.game;
         const w = g.logicalWidth;
         const h = g.logicalHeight;
@@ -27,7 +27,8 @@ export default class LevelOutroCinematic extends CinematicScene {
             : h * 0.8;
 
         this.levelNum  = g.levelManager.currentLevel;
-        this.levelName = getLevelData(this.levelNum)?.name
+        this.levelName = options.levelName
+                         || getLevelData(this.levelNum)?.name
                          || `Sector ${this.levelNum}`;
         this.zoom         = 1;
         this.zoomProgress = 0;

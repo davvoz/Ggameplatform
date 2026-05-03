@@ -141,6 +141,28 @@ export default class CinematicManager {
     updateLevelOutro(dt)         { this._levelOutro.update(dt); }
     renderLevelOutro(ctx, w, h)  { this._levelOutro.render(ctx, w, h); }
 
+    /**
+     * Victory outro — reuses LevelOutroCinematic with a custom onFinish.
+     * Called when the final boss (e.g. World 5 Survivor) is defeated.
+     * @param {Function} onFinish — invoked after the animation completes.
+     */
+    beginVictoryOutro(onFinish) {
+        const g = this.game;
+        const entities = g.entityManager;
+
+        this._levelOutro.begin({
+            levelName: 'Survivor Complete',
+            onFinish: () => { if (onFinish) onFinish(); }
+        });
+
+        g.state = 'levelOutro';
+        g.uiManager.hideHudButtons();
+        g.sound.playLevelOutro();
+
+        entities.bullets = entities.bullets.filter(b => b.owner === 'player');
+        g.postProcessing.flash({ r: 255, g: 215, b: 0 }, 0.4);
+    }
+
     // ───────────────────────────────────────────────────
     //  Death cinematic
     // ───────────────────────────────────────────────────

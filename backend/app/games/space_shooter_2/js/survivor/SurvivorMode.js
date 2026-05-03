@@ -220,10 +220,12 @@ export default class SurvivorMode {
     _triggerVictory() {
         const g = this.game;
         this.stop();
-        if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(5);
-        g.saveManager?.deleteSave?.();
-        g.state = 'victory';
-        g.uiManager.showVictoryScreen();
+        g.cinematicManager.beginVictoryOutro(() => {
+            if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(5);
+            g.saveManager?.deleteSave?.();
+            g.state = 'victory';
+            g.uiManager.showVictoryScreen();
+        });
     }
 
     // ───────────────────────────────────────────────

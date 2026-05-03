@@ -77,8 +77,8 @@
     },
     {
       "_comment": "Top divider left â€” guides ball from arch toward bumper V",
-      "cx": 160,
-      "cy": 80,
+      "cx": 124,
+      "cy": 70,
       "angleDeg": 48,
       "length": 72,
       "width": 46,
@@ -86,8 +86,8 @@
     },
     {
       "_comment": "Top divider right â€” mirror",
-      "cx": 370,
-      "cy": 90,
+      "cx": 375,
+      "cy": 60,
       "angleDeg": -36,
       "length": 86,
       "width": 50,
@@ -106,92 +106,64 @@
   "bumpers": [
     {
       "_comment": "V-crown top center",
-      "x": 200,
-      "y": 260
+      "x": 185,
+      "y": 190
     },
     {
       "_comment": "V-crown left",
-      "x": 240,
-      "y": 490
+      "x": 340,
+      "y": 540
     },
     {
       "_comment": "V-crown right",
-      "x": 250,
-      "y": 200
+      "x": 330,
+      "y": 190
     },
     {
       "_comment": "V-crown lower-left",
       "x": 240,
-      "y": 330
+      "y": 491
     },
     {
       "_comment": "V-crown lower-right",
-      "x": 260,
-      "y": 410
-    }
-  ],
-  "dropTargets": [
-    {
-      "_comment": "Left diagonal bank",
-      "x": 340,
-      "y": 200
-    },
-    {
-      "x": 340,
-      "y": 260
-    },
-    {
-      "x": 340,
-      "y": 280
-    },
-    {
-      "_comment": "Right diagonal bank â€” mirror",
-      "x": 340,
-      "y": 220
-    },
-    {
-      "x": 340,
-      "y": 240
-    },
-    {
-      "x": 340,
-      "y": 300
+      "x": 148,
+      "y": 555
     }
   ],
   "slingshots": [
     {
       "_comment": "High-left â€” flanks upper X arm",
-      "ax": 116,
-      "ay": 300,
-      "bx": 144,
-      "by": 336,
+      "ax": 96,
+      "ay": 232,
+      "bx": 124,
+      "by": 268,
       "nx": 2.83,
       "ny": -0.56
     },
     {
       "_comment": "High-right â€” mirror",
-      "ax": 440,
-      "ay": 380,
-      "bx": 405,
-      "by": 415,
+      "ax": 442,
+      "ay": 282,
+      "bx": 407,
+      "by": 317,
       "nx": -1.83,
       "ny": -3.56
     },
     {
       "_comment": "Low-left classic",
-      "ax": 98,
-      "ay": 459,
-      "bx": 143,
-      "by": 505,
+      "ax": 117,
+      "ay": 427,
+      "bx": 162,
+      "by": 473,
       "nx": 2.82,
       "ny": -2.57
     },
     {
       "_comment": "Low-right classic â€” mirror",
-      "ax": 382,
-      "ay": 541,
-      "bx": 354,
-      "by": 569,
+      "ax": 439,
+      "ay": 468,
+      "bx": 411,
+      "by": 496,
       "nx": -0.82,
       "ny": -0.57
     },
@@ -206,19 +178,19 @@
     },
     {
       "_comment": "High-right â€” mirror",
-      "ax": 430,
-      "ay": 460,
-      "bx": 400,
-      "by": 500,
+      "ax": 440,
+      "ay": 395,
+      "bx": 410,
+      "by": 435,
       "nx": -0.83,
       "ny": -1.56
     },
     {
       "_comment": "Low-right classic â€” mirror",
-      "ax": 100,
-      "ay": 250,
-      "bx": 80,
-      "by": 210,
+      "ax": 70,
+      "ay": 190,
+      "bx": 50,
+      "by": 150,
       "nx": -0.82,
       "ny": -0.57
     }
@@ -226,8 +198,8 @@
   "kickers": [
     {
       "_comment": "Left kicker at X-center â€” launches ball toward right cluster",
-      "x": 170,
-      "y": 580,
+      "x": 88,
+      "y": 620,
       "w": 16,
       "h": 46,
       "dirX": 3,
@@ -236,8 +208,8 @@
     },
     {
       "_comment": "Right kicker at X-center â€” mirror",
-      "x": 310,
-      "y": 610,
+      "x": 340,
+      "y": 415,
       "w": 16,
       "h": 46,
       "dirX": -3,
@@ -248,8 +220,8 @@
   "springs": [
     {
       "_comment": "Left arch deflector â€” catches ball falling from left crown divider",
-      "x": 148,
-      "y": 178,
+      "x": 96,
+      "y": 130,
       "radius": 13,
       "angleDeg": 35,
       "power": 1050,
@@ -257,8 +229,8 @@
     },
     {
       "_comment": "Right arch deflector â€” mirror",
-      "x": 380,
-      "y": 150,
+      "x": 407,
+      "y": 130,
       "radius": 13,
       "angleDeg": 145,
       "power": 1050,
@@ -286,8 +258,8 @@
     },
     {
       "_comment": "Side left flipper â€” wall shot into X",
-      "x": 100,
-      "y": 350,
+      "x": 96,
+      "y": 318,
       "side": "LEFT",
       "length": 62,
       "restAngle": 1.56,
@@ -304,20 +276,6 @@
     }
   ],
   "gates": [
-    {
-      "_comment": "Top-left entry gate",
-      "x1": 50,
-      "x2": 125,
-      "y": 10,
-      "dir": 1
-    },
-    {
-      "_comment": "Top-right entry gate",
-      "x1": 355,
-      "x2": 430,
-      "y": 10,
-      "dir": 1
-    },
     {
       "_comment": "Bottom exit gate",
       "x1": 140,
@@ -341,5 +299,13 @@
       "vx": 0,
       "vy": -600
     }
-  ]
+  ],
+  "boss": {
+    "type": "DragonBoss",
+    "killEvent": "dragon_kill",
+    "x": 240,
+    "y": 240,
+    "bodyRadius": 44,
+    "radius": 130
+  }
 }

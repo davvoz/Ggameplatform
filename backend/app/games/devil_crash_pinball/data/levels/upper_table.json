@@ -37,57 +37,7 @@
     },
     {
       "x": 240,
-      "y": 310
-    }
-  ],
-  "dropTargets": [
-    {
-      "x": 250,
-      "y": 500
-    },
-    {
-      "x": 290,
-      "y": 480
-    },
-    {
-      "x": 210,
-      "y": 520
-    },
-    {
-      "x": 170,
-      "y": 520
-    },
-    {
-      "x": 290,
-      "y": 500
-    },
-    {
-      "x": 250,
-      "y": 520
-    },
-    {
-      "x": 290,
-      "y": 520
-    },
-    {
-      "x": 210,
-      "y": 480
-    },
-    {
-      "x": 170,
-      "y": 480
-    },
-    {
-      "x": 250,
-      "y": 480
-    },
-    {
-      "x": 170,
-      "y": 500
-    },
-    {
-      "x": 210,
-      "y": 500
+      "y": 360
     }
   ],
   "flippers": [
@@ -128,16 +78,16 @@
     {
       "ax": 50,
       "ay": 580,
-      "bx": 100,
-      "by": 630,
+      "bx": 85,
+      "by": 620,
       "nx": 0.9,
       "ny": -0.4
     },
     {
       "ax": 430,
       "ay": 590,
-      "bx": 380,
-      "by": 630,
+      "bx": 390,
+      "by": 620,
       "nx": -0.9,
       "ny": -0.4
     }
@@ -184,8 +134,8 @@
       "power": 1000
     },
     {
-      "x": 440,
-      "y": 430,
+      "x": 450,
+      "y": 450,
       "w": 10,
       "h": 16,
       "angleDeg": 0,
@@ -204,19 +154,19 @@
       "power": 1000
     },
     {
-      "x": 130,
+      "x": 120,
       "y": 510,
-      "w": 10,
+      "w": 60,
       "h": 16,
       "angleDeg": 0,
       "dirX": 0,
-      "dirY": -1,
+      "dirY": 1,
       "power": 1000
     },
     {
-      "x": 340,
+      "x": 300,
       "y": 510,
-      "w": 10,
+      "w": 60,
       "h": 16,
       "angleDeg": 0,
       "dirX": 0,
@@ -298,6 +248,50 @@
       "angularSpanDeg": 176,
       "segments": 12,
       "restitution": 0.55
+    },
+    {
+      "cx": 139,
+      "cy": 657,
+      "midRadius": 29,
+      "width": 10,
+      "startAngleDeg": -53,
+      "angularSpanDeg": -131,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 6
+    },
+    {
+      "cx": 341,
+      "cy": 657,
+      "midRadius": 29,
+      "width": 10,
+      "startAngleDeg": 26,
+      "angularSpanDeg": -131,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 6
+    },
+    {
+      "cx": 31,
+      "cy": 474.5958065169103,
+      "midRadius": 21.5745869303709,
+      "width": 4,
+      "startAngleDeg": -13,
+      "angularSpanDeg": -102,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 6
+    },
+    {
+      "cx": 435,
+      "cy": 483,
+      "midRadius": 21.5745869303709,
+      "width": 4,
+      "startAngleDeg": -16,
+      "angularSpanDeg": -102,
+      "segments": 12,
+      "restitution": 0.55,
+      "thickness": 6
     }
   ],
   "springs": [
@@ -310,12 +304,31 @@
       "cooldown": 0.5
     },
     {
-      "x": 30,
-      "y": 400,
+      "x": 31,
+      "y": 430,
       "radius": 8,
       "angleDeg": -90,
       "power": 1100,
       "cooldown": 0.5
+    }
+  ],
+  "boss": {
+    "type": "DemonBoss",
+    "killEvent": "demon_kill",
+    "x": 240,
+    "y": 240,
+    "bodyRadius": 52
+  },
+  "brickGrids": [
+    {
+      "x": 240,
+      "startY": 423,
+      "cols": 7,
+      "rows": 5,
+      "brickW": 10,
+      "brickH": 10,
+      "gapX": 5,
+      "gapY": 5
     }
   ]
 }

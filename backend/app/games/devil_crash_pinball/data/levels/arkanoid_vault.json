@@ -256,6 +256,14 @@
       "angleDeg": -122,
       "power": 1300,
       "cooldown": 0.4
+    },
+    {
+      "x": 445,
+      "y": 190,
+      "radius": 19,
+      "angleDeg": -135,
+      "power": 1420,
+      "cooldown": 0.35
     }
   ],
   "bumpers": [
@@ -305,56 +313,6 @@
     }
   ],
   "kickers": [
-    {
-      "x": 450,
-      "y": 170,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 1
-    },
-    {
-      "x": 450,
-      "y": 210,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 1
-    },
-    {
-      "x": 440,
-      "y": 180,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 1
-    },
-    {
-      "x": 440,
-      "y": 200,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 100
-    },
-    {
-      "x": 430,
-      "y": 190,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 1
-    },
     {
       "x": 110,
       "y": 690,
@@ -414,41 +372,11 @@
       "dirX": 0,
       "dirY": -1,
       "power": 1
-    },
-    {
-      "x": 450,
-      "y": 190,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 1
-    },
-    {
-      "x": 420,
-      "y": 180,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 100
-    },
-    {
-      "x": 440,
-      "y": 180,
-      "w": 10,
-      "h": 16,
-      "angleDeg": 0,
-      "dirX": 0,
-      "dirY": -1,
-      "power": 100
     }
   ],
   "gears": [
     {
-      "x": 370,
+      "x": 350,
       "y": 120,
       "radius": 12,
       "toothHeight": 42,

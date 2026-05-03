@@ -92,7 +92,7 @@
     },
     {
       "x": 100,
-      "y": 350,
+      "y": 340,
       "side": "LEFT",
       "length": 120,
       "restAngle": 1.5708,
@@ -100,7 +100,7 @@
     },
     {
       "x": 380,
-      "y": 350,
+      "y": 340,
       "side": "RIGHT",
       "length": 120,
       "restAngle": 1.55,
@@ -203,6 +203,22 @@
       "angleDeg": -123,
       "power": 1300,
       "cooldown": 0.4
+    },
+    {
+      "x": 340,
+      "y": 550,
+      "radius": 8,
+      "angleDeg": -118,
+      "power": 1300,
+      "cooldown": 0.4
+    },
+    {
+      "x": 140,
+      "y": 550,
+      "radius": 8,
+      "angleDeg": -45,
+      "power": 1300,
+      "cooldown": 0.4
     }
   ],
   "ballStarts": [
@@ -261,62 +277,46 @@
       "restitution": 0.55
     }
   ],
-  "dropTargets": [
+  "brickGrids": [
     {
-      "x": 170,
-      "y": 140
+      "x": 240,
+      "startY": 218,
+      "cols": 5,
+      "rows": 1,
+      "brickW": 20,
+      "brickH": 10,
+      "gapX": 5,
+      "gapY": 5
     },
     {
-      "x": 210,
-      "y": 140
+      "x": 240,
+      "startY": 148,
+      "cols": 5,
+      "rows": 1,
+      "brickW": 20,
+      "brickH": 10,
+      "gapX": 5,
+      "gapY": 5
     },
     {
-      "x": 250,
-      "y": 140
-    },
-    {
-      "x": 290,
-      "y": 140
-    },
-    {
-      "x": 290,
-      "y": 160
-    },
-    {
-      "x": 290,
-      "y": 180
-    },
-    {
-      "x": 170,
-      "y": 160
-    },
-    {
-      "x": 170,
-      "y": 180
-    },
-    {
-      "x": 170,
-      "y": 200
-    },
-    {
-      "x": 170,
-      "y": 220
-    },
-    {
-      "x": 210,
-      "y": 220
-    },
-    {
-      "x": 250,
-      "y": 220
+      "x": 190,
+      "startY": 168,
+      "cols": 1,
+      "rows": 3,
+      "brickW": 20,
+      "brickH": 10,
+      "gapX": 5,
+      "gapY": 5
     },
     {
       "x": 290,
-      "y": 220
-    },
-    {
-      "x": 290,
-      "y": 200
+      "startY": 168,
+      "cols": 1,
+      "rows": 3,
+      "brickW": 20,
+      "brickH": 10,
+      "gapX": 5,
+      "gapY": 5
     }
   ]
 }

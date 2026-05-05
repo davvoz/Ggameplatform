@@ -1,5 +1,5 @@
 {
-  "_comment": "Crystal Vault â€” Hexagonal crystal constellation, Gothic arch top, symmetric twin slingshots (high), side kicker ramps, pendulum gate at center. Jamma-style vertical pinball feel.",
+  "_comment": "Crystal Vault  Hexagonal crystal constellation, Gothic arch top, symmetric twin slingshots (high), side kicker ramps, pendulum gate at center. Jamma-style vertical pinball feel.",
   "section": "minussa_valut",
   "boundary": {
     "right": 460
@@ -64,7 +64,7 @@
   ],
   "corridors": [
     {
-      "_comment": "Left ramp â€” feeds ball from lower area toward upper slingshot",
+      "_comment": "Left ramp  feeds ball from lower area toward upper slingshot",
       "cx": 145,
       "cy": 415,
       "angleDeg": -70,
@@ -73,7 +73,7 @@
       "restitution": 0.5
     },
     {
-      "_comment": "Right ramp â€” mirror",
+      "_comment": "Right ramp  mirror",
       "cx": 40,
       "cy": 400,
       "angleDeg": 90,
@@ -82,7 +82,7 @@
       "restitution": 0.5
     },
     {
-      "_comment": "Center divider top-left â€” splits arch zone",
+      "_comment": "Center divider top-left  splits arch zone",
       "cx": 190,
       "cy": 120,
       "angleDeg": 55,
@@ -119,7 +119,7 @@
   ],
   "slingshots": [
     {
-      "_comment": "HIGH left slingshot â€” inusual, near mid-field",
+      "_comment": "HIGH left slingshot  inusual, near mid-field",
       "ax": 200,
       "ay": 430,
       "bx": 160,
@@ -137,7 +137,7 @@
       "ny": -0.57
     },
     {
-      "_comment": "Low-right classic slingshot â€” mirror",
+      "_comment": "Low-right classic slingshot  mirror",
       "ax": 412,
       "ay": 608,
       "bx": 380,
@@ -146,7 +146,7 @@
       "ny": -1.57
     },
     {
-      "_comment": "HIGH left slingshot â€” inusual, near mid-field",
+      "_comment": "HIGH left slingshot  inusual, near mid-field",
       "ax": 310,
       "ay": 420,
       "bx": 360,
@@ -157,7 +157,7 @@
   ],
   "dropTargets": [
     {
-      "_comment": "Left bank â€” 3 targets in a diagonal row",
+      "_comment": "Left bank  3 targets in a diagonal row",
       "x": 200,
       "y": 370
     },
@@ -170,7 +170,7 @@
       "y": 390
     },
     {
-      "_comment": "Right bank â€” mirror",
+      "_comment": "Right bank  mirror",
       "x": 240,
       "y": 370
     },
@@ -185,7 +185,7 @@
   ],
   "kickers": [
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 100,
       "y": 320,
       "w": 36,
@@ -195,7 +195,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 100,
       "y": 260,
       "w": 36,
@@ -205,7 +205,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 430,
       "y": 260,
       "w": 36,
@@ -215,7 +215,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 430,
       "y": 190,
       "w": 36,
@@ -225,7 +225,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 430,
       "y": 120,
       "w": 36,
@@ -235,7 +235,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 430,
       "y": 60,
       "w": 36,
@@ -245,7 +245,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 100,
       "y": 200,
       "w": 36,
@@ -255,7 +255,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 100,
       "y": 140,
       "w": 36,
@@ -265,7 +265,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 100,
       "y": 90,
       "w": 36,
@@ -275,7 +275,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 100,
       "y": 380,
       "w": 36,
@@ -285,7 +285,7 @@
       "power": 900
     },
     {
-      "_comment": "Left side kicker â€” launches ball toward right bumper cluster",
+      "_comment": "Left side kicker  launches ball toward right bumper cluster",
       "x": 430,
       "y": 310,
       "w": 36,
@@ -297,7 +297,7 @@
   ],
   "pendulums": [
     {
-      "_comment": "Crystal pendulum guardian â€” swings across center gap below bumper cluster",
+      "_comment": "Crystal pendulum guardian  swings across center gap below bumper cluster",
       "x": 240,
       "y": 10,
       "armLength": 68,
@@ -327,7 +327,7 @@
       "activeAngle": -0.58
     },
     {
-      "_comment": "Side left flipper â€” horizontal wall shot",
+      "_comment": "Side left flipper  horizontal wall shot",
       "x": 80,
       "y": 530,
       "side": "LEFT",
@@ -336,7 +336,7 @@
       "activeAngle": -0.62
     },
     {
-      "_comment": "Side right flipper â€” mirror",
+      "_comment": "Side right flipper  mirror",
       "x": 440,
       "y": 540,
       "side": "RIGHT",
@@ -363,7 +363,7 @@
   ],
   "springs": [
     {
-      "_comment": "Right arch spring â€” mirror",
+      "_comment": "Right arch spring  mirror",
       "x": 335,
       "y": 170,
       "radius": 14,

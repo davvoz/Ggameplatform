@@ -44,7 +44,7 @@ export class EntityRenderer {
     /**
      * Must be called at the start of each frame before any draw method.
      * @param {CanvasRenderingContext2D} ctx
-     * @param {number} time  â€” elapsed seconds
+     * @param {number} time   elapsed seconds
      * @param {{ burst: Function }} particles
      */
     setup(ctx, time, particles) {
@@ -303,7 +303,7 @@ export class EntityRenderer {
         ctx.save();
         ctx.fillStyle = grad;
         ctx.beginPath();
-        // Outer arc (forward), then inner arc (reverse) â€” closes the annular sector
+        // Outer arc (forward), then inner arc (reverse)  closes the annular sector
         ctx.arc(cc.cx, cc.cy, outer, start, end, ccw);
         ctx.arc(cc.cx, cc.cy, inner, end, start, !ccw);
         ctx.closePath();
@@ -386,7 +386,7 @@ export class EntityRenderer {
         this._drawBumperBody(b, r, fired, flashRatio, bodyPop, idleAngle, p);
     }
 
-    /** @private â€” elastic rubber ring with 3-lobe squash deformation on ball impact */
+    /** @private  elastic rubber ring with 3-lobe squash deformation on ball impact */
     _drawBumperRubber(b, r, fired, flashRatio, rubberAmp, pulse, p) {
         const ctx     = this._ctx;
         const rBase   = r + 7.5;
@@ -398,7 +398,7 @@ export class EntityRenderer {
         ctx.shadowColor = fired ? p.accent : p.wallGlow;
         ctx.shadowBlur  = fired ? 20 * flashRatio : 5;
 
-        // Outer rubber contour â€” deforms into 3-lobe shape on hit
+        // Outer rubber contour  deforms into 3-lobe shape on hit
         ctx.beginPath();
         for (let i = 0; i <= pts; i++) {
             const a  = (i / pts) * Math.PI * 2;
@@ -454,7 +454,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private â€” fixed metal mounting band with 24 dial ticks and 6 hex bolt studs */
+    /** @private  fixed metal mounting band with 24 dial ticks and 6 hex bolt studs */
     _drawBumperMount(b, r, fired, flashRatio, p) {
         const ctx   = this._ctx;
         const rBand = r + 2;
@@ -503,7 +503,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private â€” 6 fixed hex bolt studs riveted through the rubber ring */
+    /** @private  6 fixed hex bolt studs riveted through the rubber ring */
     _drawBumperHexBolts(b, boltD, boltR, fired, flashRatio, p) {
         const ctx = this._ctx;
         ctx.save();
@@ -535,7 +535,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private â€” 8-segment LED activation ring */
+    /** @private  8-segment LED activation ring */
     _drawBumperSegments(b, r, fired, flashRatio, pulse, chaseAngle, p) {
         const ctx      = this._ctx;
         const segCount = 8;
@@ -574,7 +574,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private â€” main disc body: engraved spokes, cap disc, solenoid pop on impact */
+    /** @private  main disc body: engraved spokes, cap disc, solenoid pop on impact */
     _drawBumperBody(b, r, fired, flashRatio, bodyPop, idleAngle, p) {
         const ctx    = this._ctx;
         const pulse  = 0.5 + 0.5 * Math.sin(this._time * 3 + b.x * 0.07);
@@ -608,7 +608,7 @@ export class EntityRenderer {
         ctx.arc(b.x, b.y, rBody - 0.5, 0, Math.PI * 2);
         ctx.stroke();
 
-        // 6 engraved spokes (asterisk) â€” rotate slowly in idle
+        // 6 engraved spokes (asterisk)  rotate slowly in idle
         ctx.strokeStyle = fired ? 'rgba(0,0,0,0.38)' : 'rgba(0,0,0,0.28)';
         ctx.lineWidth   = 1.1;
         for (let i = 0; i < 6; i++) {
@@ -666,7 +666,7 @@ export class EntityRenderer {
         this._drawSlingBolts(s, fired, p);
     }
 
-    /** @private â€” metal backing plate + rivets */
+    /** @private  metal backing plate + rivets */
     _drawSlingPlate(s, tx, ty, fired, p) {
         const ctx     = this._ctx;
         const nx      = s.nx;
@@ -722,7 +722,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private â€” curved rubber band with specular highlight */
+    /** @private  curved rubber band with specular highlight */
     _drawSlingBand(s, fired, flashRatio, p) {
         const ctx   = this._ctx;
         const nx    = s.nx;
@@ -758,7 +758,7 @@ export class EntityRenderer {
         ctx.restore();
     }
 
-    /** @private â€” mechanical bolt mount at each endpoint */
+    /** @private  mechanical bolt mount at each endpoint */
     _drawSlingBolts(s, fired, p) {
         const ctx       = this._ctx;
         const boltColor = fired ? p.accent : '#6a8aaa';
@@ -904,7 +904,7 @@ export class EntityRenderer {
         const glowColor     = fired ? p.accent : p.wallGlow;
         const padColor      = fired ? '#ffffff' : p.accent;
         const boltColor     = fired ? '#e0b840' : '#3a5068';
-        // glowK = 0 at rest, 1 when fired â€” drives all numeric glow values without extra ternaries
+        // glowK = 0 at rest, 1 when fired  drives all numeric glow values without extra ternaries
         const glowK         = fired ? 1 : 0;
         const baseShadow    = 4 + glowK * 10;
         const coilBlur      = 2 + glowK * 8;
@@ -1001,7 +1001,7 @@ export class EntityRenderer {
         ctx.lineTo(coilEndX, coilEndY);
         ctx.stroke();
 
-        // â”€â”€ PAD: plunger cap â€” body + front face + side walls + bevel â”€â”€â”€â”€â”€â”€â”€
+        // â”€â”€ PAD: plunger cap  body + front face + side walls + bevel â”€â”€â”€â”€â”€â”€â”€
         ctx.shadowColor = glowColor;
         ctx.shadowBlur  = padBlur;
         ctx.strokeStyle = padColor;

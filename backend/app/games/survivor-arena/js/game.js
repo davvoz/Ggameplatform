@@ -1,14 +1,11 @@
 import { UIManager } from './ui.js';
 import { AudioManager } from './audio.js';
-import { EventEmitter } from './utils.js';
+import { EventEmitter, MathUtils, Vector2,  SpatialHash } from './utils.js';
+import { Player } from './player.js';
 import { Spawner } from './spawner.js';
 import { ParticleSystem } from './particles.js';
-import { SpatialHash } from './utils.js';
-import { Player } from './player.js';
-import { CONFIG, WORLDS, WORLD_WEAPONS, WORLD_ORDER, PORTAL_CONFIG, BOSS_DROP_WEAPONS } from './config.js';
-import { Vector2 } from './utils.js';
-import { MathUtils } from './utils.js';
-import { XPOrb , HealthPack , MagnetPickup , BombPickup, DimensionalPortal, BossChest  } from './pickups.js';
+import { CONFIG, WORLDS, WORLD_WEAPONS, WORLD_ORDER, BOSS_DROP_WEAPONS } from './config.js';
+import { XPOrb, HealthPack, MagnetPickup, BombPickup, DimensionalPortal, BossChest } from './pickups.js';
 import { Drone, Projectile } from './weapons.js';
 import { Enemy } from './enemies.js';
 import { CharacterManager } from './characters.js';
@@ -96,9 +93,6 @@ class Game {
         this.handleResize = this.handleResize.bind(this);
     }
 
-    /**
-     * Initialize game
-     */
     async init() {
         console.log('[Game] Initializing Survivor Arena...');
 
@@ -131,9 +125,6 @@ class Game {
         console.log('[Game] Initialization complete');
     }
 
-    /**
-     * Simulate loading progress
-     */
     async simulateLoading() {
         const steps = 10;
         for (let i = 0; i <= steps; i++) {
@@ -142,9 +133,6 @@ class Game {
         }
     }
 
-    /**
-     * Show main menu
-     */
     showMenu() {
         this.state = GAME_STATE.MENU;
         this.ui.showScreen('start');
@@ -152,9 +140,6 @@ class Game {
         this.startIntroAnimation();
     }
 
-    /**
-     * Animated intro canvas background for start screen
-     */
     startIntroAnimation() {
         const canvas = document.getElementById('introCanvas');
         if (!canvas) return;
@@ -207,7 +192,7 @@ class Game {
 
         const spawnWorldEffect = (w, h) => {
             const type = worldTypes[Math.floor(Math.random() * worldTypes.length)];
-            const base = { type, life: 1.0, x: Math.random() * w, y: Math.random() * h };
+            const base = { type, life: 1, x: Math.random() * w, y: Math.random() * h };
 
             if (type === 'lightning') {
                 // Neon lightning bolt
@@ -265,21 +250,7 @@ class Game {
             ctx.fillRect(0, 0, w, h);
 
             // Slow moving fog/nebula layers
-            for (let i = 0; i < 3; i++) {
-                const fogX = w / 2 + Math.sin(t / 4000 + i * 2) * w * 0.3;
-                const fogY = h / 2 + Math.cos(t / 5000 + i * 3) * h * 0.2;
-                const fogR = h * (0.3 + i * 0.15);
-                const fog = ctx.createRadialGradient(fogX, fogY, 0, fogX, fogY, fogR);
-                const colors = [
-                    ['rgba(80, 20, 100, 0.06)', 'rgba(40, 0, 60, 0)'],
-                    ['rgba(100, 40, 0, 0.05)', 'rgba(60, 10, 0, 0)'],
-                    ['rgba(0, 40, 80, 0.04)', 'rgba(0, 10, 40, 0)']
-                ];
-                fog.addColorStop(0, colors[i][0]);
-                fog.addColorStop(1, colors[i][1]);
-                ctx.fillStyle = fog;
-                ctx.fillRect(0, 0, w, h);
-            }
+            this.renderFogLayers(w, t, h, ctx);
 
             // Spawn world-themed effects more frequently
             fxTimer++;
@@ -289,167 +260,13 @@ class Game {
             }
 
             // Render world effects
-            for (let i = worldFx.length - 1; i >= 0; i--) {
-                const fx = worldFx[i];
-                fx.life -= fx.type === 'fire' ? 0.008 : 0.012;
-                if (fx.life <= 0) { worldFx.splice(i, 1); continue; }
-
-                ctx.save();
-
-                if (fx.type === 'lightning') {
-                    // Neon lightning bolt
-                    const a = fx.life * 0.7;
-                    ctx.shadowColor = 'rgba(0, 200, 255, 0.6)';
-                    ctx.shadowBlur = 12 * fx.life;
-                    ctx.strokeStyle = `rgba(100, 220, 255, ${a})`;
-                    ctx.lineWidth = 2.5 * fx.life;
-                    ctx.beginPath();
-                    for (const seg of fx.segments) {
-                        ctx.moveTo(seg.x1, seg.y1);
-                        ctx.lineTo(seg.x2, seg.y2);
-                    }
-                    ctx.stroke();
-                    // Branch
-                    if (fx.branch) {
-                        ctx.strokeStyle = `rgba(150, 230, 255, ${a * 0.6})`;
-                        ctx.lineWidth = 1.5 * fx.life;
-                        ctx.beginPath();
-                        for (const seg of fx.branch) {
-                            ctx.moveTo(seg.x1, seg.y1);
-                            ctx.lineTo(seg.x2, seg.y2);
-                        }
-                        ctx.stroke();
-                    }
-                    // Flash glow at origin
-                    if (fx.life > 0.8) {
-                        const flashGrad = ctx.createRadialGradient(fx.x, fx.y, 0, fx.x, fx.y, 30);
-                        flashGrad.addColorStop(0, `rgba(200, 240, 255, ${(fx.life - 0.8) * 2})`);
-                        flashGrad.addColorStop(1, 'rgba(0, 150, 255, 0)');
-                        ctx.fillStyle = flashGrad;
-                        ctx.beginPath();
-                        ctx.arc(fx.x, fx.y, 30, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-
-                } else if (fx.type === 'fire') {
-                    // Rising fireball with trail
-                    fx.y += fx.vy;
-                    fx.x += fx.vx;
-                    const a = Math.min(fx.life, 0.5) * 1.4;
-                    const sz = fx.size * fx.life;
-                    // Trail glow
-                    for (let tr = 0; tr < 4; tr++) {
-                        const ty = fx.y + tr * 8;
-                        const ta = a * (1 - tr * 0.25);
-                        const trGrad = ctx.createRadialGradient(fx.x, ty, 0, fx.x, ty, sz * (1 - tr * 0.15));
-                        trGrad.addColorStop(0, `rgba(255, 180, 0, ${ta})`);
-                        trGrad.addColorStop(0.5, `rgba(255, 80, 0, ${ta * 0.5})`);
-                        trGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');
-                        ctx.fillStyle = trGrad;
-                        ctx.beginPath();
-                        ctx.arc(fx.x, ty, sz * (1 - tr * 0.15), 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-
-                } else if (fx.type === 'void') {
-                    // Void swirl / portal
-                    fx.rotation += fx.rotSpeed;
-                    const a = fx.life * 0.2;
-                    const sz = fx.size * (0.5 + fx.life * 0.5);
-                    ctx.translate(fx.x, fx.y);
-                    ctx.rotate(fx.rotation);
-                    // Spiral arms
-                    for (let arm = 0; arm < 3; arm++) {
-                        const armAngle = (arm / 3) * Math.PI * 2;
-                        ctx.strokeStyle = `rgba(120, 0, 200, ${a})`;
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        for (let s = 0; s < 20; s++) {
-                            const spiralR = (s / 20) * sz;
-                            const spiralA = armAngle + (s / 20) * Math.PI * 1.5;
-                            const sx = Math.cos(spiralA) * spiralR;
-                            const sy = Math.sin(spiralA) * spiralR;
-                            if (s === 0) ctx.moveTo(sx, sy);
-                            else ctx.lineTo(sx, sy);
-                        }
-                        ctx.stroke();
-                    }
-                    // Center glow
-                    const voidGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, sz * 0.4);
-                    voidGrad.addColorStop(0, `rgba(180, 50, 255, ${a * 1.5})`);
-                    voidGrad.addColorStop(1, 'rgba(80, 0, 150, 0)');
-                    ctx.fillStyle = voidGrad;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, sz * 0.4, 0, Math.PI * 2);
-                    ctx.fill();
-
-                } else if (fx.type === 'shadow') {
-                    // Shadow eye
-                    fx.blinkPhase += 0.03;
-                    const blink = Math.sin(fx.blinkPhase);
-                    const eyeOpen = Math.max(0, blink) * fx.life;
-                    const a = eyeOpen * 0.4;
-                    const sz = fx.size;
-                    if (eyeOpen > 0.05) {
-                        // Eye shape
-                        ctx.fillStyle = `rgba(180, 0, 0, ${a * 0.3})`;
-                        ctx.beginPath();
-                        ctx.ellipse(fx.x, fx.y, sz, sz * 0.4 * eyeOpen, 0, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Iris
-                        ctx.fillStyle = `rgba(255, 0, 0, ${a * 0.8})`;
-                        ctx.beginPath();
-                        ctx.arc(fx.x, fx.y, sz * 0.25 * eyeOpen, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Pupil
-                        ctx.fillStyle = `rgba(0, 0, 0, ${a})`;
-                        ctx.beginPath();
-                        ctx.arc(fx.x, fx.y, sz * 0.1 * eyeOpen, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-
-                ctx.shadowBlur = 0;
-                ctx.restore();
-            }
+            this.renderWorldEffects(worldFx, ctx);
 
             // Floating orbs
-            for (const icon of floatingIcons) {
-                icon.y -= icon.speed;
-                icon.wobble += icon.wobbleSpeed;
-                icon.x += Math.sin(icon.wobble) * 0.5;
-                if (icon.y < -30) {
-                    icon.y = h + 30;
-                    icon.x = Math.random() * w;
-                }
-                ctx.globalAlpha = icon.alpha;
-                const orbGrad = ctx.createRadialGradient(icon.x, icon.y, 0, icon.x, icon.y, icon.size);
-                orbGrad.addColorStop(0, icon.color);
-                orbGrad.addColorStop(1, 'transparent');
-                ctx.fillStyle = orbGrad;
-                ctx.beginPath();
-                ctx.arc(icon.x, icon.y, icon.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            }
+            this.renderFloatingIcons(floatingIcons, h, w, ctx);
 
             // Draw particles
-            for (const p of particles) {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.pulse += 0.03;
-                if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
-                if (p.x < -10) p.x = w + 10;
-                if (p.x > w + 10) p.x = -10;
-
-                const a = p.alpha * (0.6 + Math.sin(p.pulse) * 0.4);
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = a;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            }
+            this.renderParticles(particles, h, w, ctx);
 
             // Center glow behind title
             const centerGlow = ctx.createRadialGradient(w / 2, h * 0.32, 0, w / 2, h * 0.32, h * 0.35);
@@ -471,9 +288,222 @@ class Game {
         render();
     }
 
-    /**
-     * Stop intro animation
-     */
+    renderParticles(particles, h, w, ctx) {
+        for (const p of particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.pulse += 0.03;
+            if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+            if (p.x < -10) p.x = w + 10;
+            if (p.x > w + 10) p.x = -10;
+
+            const a = p.alpha * (0.6 + Math.sin(p.pulse) * 0.4);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = a;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    renderFloatingIcons(floatingIcons, h, w, ctx) {
+        for (const icon of floatingIcons) {
+            icon.y -= icon.speed;
+            icon.wobble += icon.wobbleSpeed;
+            icon.x += Math.sin(icon.wobble) * 0.5;
+            if (icon.y < -30) {
+                icon.y = h + 30;
+                icon.x = Math.random() * w;
+            }
+            ctx.globalAlpha = icon.alpha;
+            const orbGrad = ctx.createRadialGradient(icon.x, icon.y, 0, icon.x, icon.y, icon.size);
+            orbGrad.addColorStop(0, icon.color);
+            orbGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = orbGrad;
+            ctx.beginPath();
+            ctx.arc(icon.x, icon.y, icon.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    renderWorldEffects(worldFx, ctx) {
+        for (let i = worldFx.length - 1; i >= 0; i--) {
+            const fx = worldFx[i];
+            fx.life -= fx.type === 'fire' ? 0.008 : 0.012;
+            if (fx.life <= 0) {
+                worldFx.splice(i, 1);
+                continue;
+            }
+
+            ctx.save();
+
+            this.renderEffect(fx, ctx);
+
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+    }
+
+    renderEffect(fx, ctx) {
+        switch (fx.type) {
+            case 'lightning': {
+                // Neon lightning bolt
+                this.renderLightningEffect(fx, ctx);
+                break;
+            }
+
+            case 'fire': {
+                // Rising fireball with trail
+                this.renderFireTrail(fx, ctx);
+                break;
+            }
+
+            case 'void': {
+                // Void swirl / portal
+                this.renderVoidSwirl(fx, ctx);
+                break;
+            }
+
+            case 'shadow': {
+                // Shadow eye
+                this.renderShadowEye(fx, ctx);
+                break;
+            }
+        }
+    }
+
+    renderShadowEye(fx, ctx) {
+        fx.blinkPhase += 0.03;
+        const blink = Math.sin(fx.blinkPhase);
+        const eyeOpen = Math.max(0, blink) * fx.life;
+        const a = eyeOpen * 0.4;
+        const sz = fx.size;
+        if (eyeOpen > 0.05) {
+            // Eye shape
+            ctx.fillStyle = `rgba(180, 0, 0, ${a * 0.3})`;
+            ctx.beginPath();
+            ctx.ellipse(fx.x, fx.y, sz, sz * 0.4 * eyeOpen, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Iris
+            ctx.fillStyle = `rgba(255, 0, 0, ${a * 0.8})`;
+            ctx.beginPath();
+            ctx.arc(fx.x, fx.y, sz * 0.25 * eyeOpen, 0, Math.PI * 2);
+            ctx.fill();
+            // Pupil
+            ctx.fillStyle = `rgba(0, 0, 0, ${a})`;
+            ctx.beginPath();
+            ctx.arc(fx.x, fx.y, sz * 0.1 * eyeOpen, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderVoidSwirl(fx, ctx) {
+        fx.rotation += fx.rotSpeed;
+        const a = fx.life * 0.2;
+        const sz = fx.size * (0.5 + fx.life * 0.5);
+        ctx.translate(fx.x, fx.y);
+        ctx.rotate(fx.rotation);
+        // Spiral arms
+        for (let arm = 0; arm < 3; arm++) {
+            const armAngle = (arm / 3) * Math.PI * 2;
+            ctx.strokeStyle = `rgba(120, 0, 200, ${a})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let s = 0; s < 20; s++) {
+                const spiralR = (s / 20) * sz;
+                const spiralA = armAngle + (s / 20) * Math.PI * 1.5;
+                const sx = Math.cos(spiralA) * spiralR;
+                const sy = Math.sin(spiralA) * spiralR;
+                if (s === 0) ctx.moveTo(sx, sy);
+                else ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+        }
+        // Center glow
+        const voidGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, sz * 0.4);
+        voidGrad.addColorStop(0, `rgba(180, 50, 255, ${a * 1.5})`);
+        voidGrad.addColorStop(1, 'rgba(80, 0, 150, 0)');
+        ctx.fillStyle = voidGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, sz * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    renderFireTrail(fx, ctx) {
+        fx.y += fx.vy;
+        fx.x += fx.vx;
+        const a = Math.min(fx.life, 0.5) * 1.4;
+        const sz = fx.size * fx.life;
+        // Trail glow
+        for (let tr = 0; tr < 4; tr++) {
+            const ty = fx.y + tr * 8;
+            const ta = a * (1 - tr * 0.25);
+            const trGrad = ctx.createRadialGradient(fx.x, ty, 0, fx.x, ty, sz * (1 - tr * 0.15));
+            trGrad.addColorStop(0, `rgba(255, 180, 0, ${ta})`);
+            trGrad.addColorStop(0.5, `rgba(255, 80, 0, ${ta * 0.5})`);
+            trGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');
+            ctx.fillStyle = trGrad;
+            ctx.beginPath();
+            ctx.arc(fx.x, ty, sz * (1 - tr * 0.15), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderLightningEffect(fx, ctx) {
+        const a = fx.life * 0.7;
+        ctx.shadowColor = 'rgba(0, 200, 255, 0.6)';
+        ctx.shadowBlur = 12 * fx.life;
+        ctx.strokeStyle = `rgba(100, 220, 255, ${a})`;
+        ctx.lineWidth = 2.5 * fx.life;
+        ctx.beginPath();
+        for (const seg of fx.segments) {
+            ctx.moveTo(seg.x1, seg.y1);
+            ctx.lineTo(seg.x2, seg.y2);
+        }
+        ctx.stroke();
+        // Branch
+        if (fx.branch) {
+            ctx.strokeStyle = `rgba(150, 230, 255, ${a * 0.6})`;
+            ctx.lineWidth = 1.5 * fx.life;
+            ctx.beginPath();
+            for (const seg of fx.branch) {
+                ctx.moveTo(seg.x1, seg.y1);
+                ctx.lineTo(seg.x2, seg.y2);
+            }
+            ctx.stroke();
+        }
+        // Flash glow at origin
+        if (fx.life > 0.8) {
+            const flashGrad = ctx.createRadialGradient(fx.x, fx.y, 0, fx.x, fx.y, 30);
+            flashGrad.addColorStop(0, `rgba(200, 240, 255, ${(fx.life - 0.8) * 2})`);
+            flashGrad.addColorStop(1, 'rgba(0, 150, 255, 0)');
+            ctx.fillStyle = flashGrad;
+            ctx.beginPath();
+            ctx.arc(fx.x, fx.y, 30, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderFogLayers(w, t, h, ctx) {
+        for (let i = 0; i < 3; i++) {
+            const fogX = w / 2 + Math.sin(t / 4000 + i * 2) * w * 0.3;
+            const fogY = h / 2 + Math.cos(t / 5000 + i * 3) * h * 0.2;
+            const fogR = h * (0.3 + i * 0.15);
+            const fog = ctx.createRadialGradient(fogX, fogY, 0, fogX, fogY, fogR);
+            const colors = [
+                ['rgba(80, 20, 100, 0.06)', 'rgba(40, 0, 60, 0)'],
+                ['rgba(100, 40, 0, 0.05)', 'rgba(60, 10, 0, 0)'],
+                ['rgba(0, 40, 80, 0.04)', 'rgba(0, 10, 40, 0)']
+            ];
+            fog.addColorStop(0, colors[i][0]);
+            fog.addColorStop(1, colors[i][1]);
+            ctx.fillStyle = fog;
+            ctx.fillRect(0, 0, w, h);
+        }
+    }
+
     stopIntroAnimation() {
         if (this._introAnimCleanup) {
             this._introAnimCleanup();
@@ -481,9 +511,6 @@ class Game {
         }
     }
 
-    /**
-     * Start new game
-     */
     startGame() {
         console.log('[Game] Starting new game...');
 
@@ -597,9 +624,6 @@ class Game {
         console.log('[Game] Game started!');
     }
 
-    /**
-     * Main game loop
-     */
     gameLoop() {
         const currentTime = performance.now();
         const deltaTime = Math.min((currentTime - this.lastFrameTime) / 1000, 0.1);
@@ -614,10 +638,6 @@ class Game {
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 
-    /**
-     * Update game state
-     * @param {number} deltaTime 
-     */
     update(deltaTime) {
         // Update game time
         this.gameTime += deltaTime;
@@ -691,15 +711,12 @@ class Game {
         this.updateUI();
     }
 
-    /**
-     * Render game
-     */
     render() {
         const ctx = this.ctx;
 
         // Clear canvas
         let bgColor = '#1a0a2e';
-        if (this.currentWorld && WORLDS[this.currentWorld] && WORLDS[this.currentWorld].background) {
+        if (this.currentWorld && WORLDS[this.currentWorld]?.background) {
             bgColor = WORLDS[this.currentWorld].background.color || bgColor;
         }
         ctx.fillStyle = bgColor;
@@ -726,7 +743,7 @@ class Game {
         }
 
         // Draw portal
-        if (this.portal && this.portal.active) {
+        if (this.portal?.active) {
             this.renderSeamless(ctx, this.portal);
         }
 
@@ -736,72 +753,16 @@ class Game {
         }
 
         // Draw enemies
-        for (const enemy of this.enemies) {
-            this.renderSeamless(ctx, enemy);
-            // Fire trails (Flame Imp) — rendered here for correct world positioning
-            if (enemy.type === 'flameImp' && enemy.fireTrails) {
-                for (const trail of enemy.fireTrails) {
-                    const screen = this.worldToScreen(trail.x, trail.y);
-                    if (!screen.visible) continue;
-                    const alpha = 1 - (trail.timer / trail.lifetime);
-                    const flicker = 0.7 + Math.sin(Date.now() / 80 + trail.x) * 0.3;
-                    ctx.fillStyle = `rgba(255, ${Math.floor(100 * alpha)}, 0, ${alpha * 0.5 * flicker})`;
-                    ctx.beginPath();
-                    ctx.arc(screen.x, screen.y, trail.radius * (0.5 + alpha * 0.5) * this.camera.zoom, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-            // Draw enemy projectiles (ranged enemies)
-            if (enemy.projectiles) {
-                for (const proj of enemy.projectiles) {
-                    if (proj.active) {
-                        this.renderSeamless(ctx, proj);
-                    }
-                }
-            }
-        }
+        this.renderEnemies(ctx);
 
         // Draw mini-boss
-        if (this.miniBoss && !this.miniBoss.isDead()) {
-            this.renderSeamless(ctx, this.miniBoss);
-            // Draw AOE if charging or active
-            if ((this.miniBoss.aoeCharging || this.miniBoss.aoeActive) && this.miniBoss.aoeData) {
-                this.renderAOE(ctx, this.miniBoss.aoeData, this.miniBoss);
-            }
-        }
+        this.renderMiniBoss(ctx);
 
         // Draw all bosses
-        for (const boss of this.bosses) {
-            if (boss && !boss.isDead()) {
-                this.renderSeamless(ctx, boss);
-                // Draw AOE if charging or active
-                if ((boss.aoeCharging || boss.aoeActive) && boss.aoeData) {
-                    this.renderAOE(ctx, boss.aoeData, boss, boss.bossShape);
-                }
-                // Freeze zone (Cryomancer) â€” rendered here for correct world positioning
-                if (boss.freezeZoneActive && boss.freezeZoneData) {
-                    this.renderFreezeZone(ctx, boss.freezeZoneData);
-                }
-                // Eruption zones + magma trails (Pyroclasm)
-                if (boss.eruptionZones) {
-                    this.renderEruptionZones(ctx, boss.eruptionZones);
-                }
-                if (boss.magmaTrails) {
-                    this.renderMagmaTrails(ctx, boss.magmaTrails);
-                }
-            }
-        }
+        this.renderBosses(ctx);
 
         // Draw drones
-        for (const drone of this.drones) {
-            this.renderSeamless(ctx, drone);
-            // Also render drone projectiles
-            for (const proj of drone.projectilePool) {
-                if (proj.active) {
-                    this.renderSeamless(ctx, proj);
-                }
-            }
-        }
+        this.renderDrones(ctx);
 
         // Draw player (always at center of screen)
         if (this.player && !this.player.isDead()) {
@@ -821,6 +782,13 @@ class Game {
         this.renderExplosionRings(ctx);
 
         // Full-screen red flash when player takes damage
+        this.renderDamageFlash(ctx);
+
+        // Restore context
+        ctx.restore();
+    }
+
+    renderDamageFlash(ctx) {
         if (this.player && this.player.damageFlash > 0) {
             const flashAlpha = Math.min(this.player.damageFlash / 150, 1) * 0.12;
             const vw = this.canvas.width / this.camera.zoom;
@@ -828,19 +796,94 @@ class Game {
             ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
             ctx.fillRect(-vw, -vh, vw * 3, vh * 3);
         }
-
-        // Restore context
-        ctx.restore();
     }
 
-    /**
-     * Render an entity using seamless toroidal projection
-     * Entity appears at the wrapped shortest-path position from player
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {Entity} entity
-     */
+    renderDrones(ctx) {
+        for (const drone of this.drones) {
+            this.renderSeamless(ctx, drone);
+            // Also render drone projectiles
+            for (const proj of drone.projectilePool) {
+                if (proj.active) {
+                    this.renderSeamless(ctx, proj);
+                }
+            }
+        }
+    }
+
+    renderBosses(ctx) {
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                this.renderBossEffects(ctx, boss);
+            }
+        }
+    }
+
+    renderBossEffects(ctx, boss) {
+        this.renderSeamless(ctx, boss);
+        // Draw AOE if charging or active
+        if ((boss.aoeCharging || boss.aoeActive) && boss.aoeData) {
+            this.renderAOE(ctx, boss.aoeData, boss, boss.bossShape);
+        }
+        // Freeze zone (Cryomancer)  rendered here for correct world positioning
+        if (boss.freezeZoneActive && boss.freezeZoneData) {
+            this.renderFreezeZone(ctx, boss.freezeZoneData);
+        }
+        // Eruption zones + magma trails (Pyroclasm)
+        if (boss.eruptionZones) {
+            this.renderEruptionZones(ctx, boss.eruptionZones);
+        }
+        if (boss.magmaTrails) {
+            this.renderMagmaTrails(ctx, boss.magmaTrails);
+        }
+    }
+
+    renderMiniBoss(ctx) {
+        if (this.miniBoss && !this.miniBoss.isDead()) {
+            this.renderSeamless(ctx, this.miniBoss);
+            // Draw AOE if charging or active
+            if ((this.miniBoss.aoeCharging || this.miniBoss.aoeActive) && this.miniBoss.aoeData) {
+                this.renderAOE(ctx, this.miniBoss.aoeData, this.miniBoss);
+            }
+        }
+    }
+
+    renderEnemies(ctx) {
+        for (const enemy of this.enemies) {
+            this.renderSeamless(ctx, enemy);
+            // Fire trails (Flame Imp) — rendered here for correct world positioning
+            this.drawFlameImpTrails(enemy, ctx);
+            // Draw enemy projectiles (ranged enemies)
+            this.renderProjectilesForEnemy(enemy, ctx);
+        }
+    }
+
+    renderProjectilesForEnemy(enemy, ctx) {
+        if (enemy.projectiles) {
+            for (const proj of enemy.projectiles) {
+                if (proj.active) {
+                    this.renderSeamless(ctx, proj);
+                }
+            }
+        }
+    }
+
+    drawFlameImpTrails(enemy, ctx) {
+        if (enemy.type === 'flameImp' && enemy.fireTrails) {
+            for (const trail of enemy.fireTrails) {
+                const screen = this.worldToScreen(trail.x, trail.y);
+                if (!screen.visible) continue;
+                const alpha = 1 - (trail.timer / trail.lifetime);
+                const flicker = 0.7 + Math.sin(Date.now() / 80 + trail.x) * 0.3;
+                ctx.fillStyle = `rgba(255, ${Math.floor(100 * alpha)}, 0, ${alpha * 0.5 * flicker})`;
+                ctx.beginPath();
+                ctx.arc(screen.x, screen.y, trail.radius * (0.5 + alpha * 0.5) * this.camera.zoom, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
     renderSeamless(ctx, entity) {
-        if (!entity || !entity.active) return;
+        if (!entity?.active) return;
 
         // Get screen position using toroidal wrapping
         const screen = this.worldToScreen(entity.x, entity.y);
@@ -864,10 +907,6 @@ class Game {
         entity.y = origY;
     }
 
-    /**
-     * Render particles with seamless wrapping
-     * @param {CanvasRenderingContext2D} ctx
-     */
     renderParticlesSeamless(ctx) {
         // Particles need to be rendered relative to player too
         // Pass 1: normal particles
@@ -901,16 +940,19 @@ class Game {
         ctx.globalAlpha = 1;
     }
 
-    /**
-     * Render expanding shockwave rings for AoE weapon explosions
-     * @param {CanvasRenderingContext2D} ctx
-     */
     renderExplosionRings(ctx) {
-        if (!this._activeExplosions || this._activeExplosions.length === 0) return;
+        if (!this._activeExplosions || this._activeExplosions.length === 0)
+            return;
 
         const now = Date.now();
         const duration = 700;
 
+        this.renderExplosionEffects(now, duration, ctx);
+
+        ctx.globalAlpha = 1;
+    }
+
+    renderExplosionEffects(now, duration, ctx) {
         for (let i = this._activeExplosions.length - 1; i >= 0; i--) {
             const exp = this._activeExplosions[i];
             const elapsed = now - exp.time;
@@ -929,268 +971,292 @@ class Game {
             if (!screen.visible) continue;
 
             // Phase 1: bright flash at center (first 30%)
-            if (progress < 0.3) {
-                const flashAlpha = (1 - progress / 0.3);
-                const flashScale = wt === 'meteorStaff' ? 0.5 : 0.4;
-                const flashRadius = exp.radius * flashScale * z;
-                const flashGrad = ctx.createRadialGradient(
-                    screen.x, screen.y, 0,
-                    screen.x, screen.y, flashRadius
-                );
-
-                if (wt === 'plasmaCannon') {
-                    flashGrad.addColorStop(0, '#ffffff');
-                    flashGrad.addColorStop(0.2, '#aaffee');
-                    flashGrad.addColorStop(0.5, exp.color);
-                    flashGrad.addColorStop(1, exp.color + '00');
-                } else if (wt === 'meteorStaff') {
-                    flashGrad.addColorStop(0, '#ffffff');
-                    flashGrad.addColorStop(0.15, '#ffee88');
-                    flashGrad.addColorStop(0.4, exp.color);
-                    flashGrad.addColorStop(1, exp.color + '00');
-                } else {
-                    flashGrad.addColorStop(0, '#ffffff');
-                    flashGrad.addColorStop(0.3, exp.color);
-                    flashGrad.addColorStop(1, exp.color + '00');
-                }
-
-                ctx.globalAlpha = flashAlpha * 0.9;
-                ctx.fillStyle = flashGrad;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, flashRadius, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            this.renderExplosionFlash(progress, wt, exp, z, ctx, screen);
 
             // Phase 2: expanding shockwave ring
-            const ringProgress = Math.min(progress * 1.5, 1);
-            const currentRadius = exp.radius * ringProgress * z;
+            const currentRadius = this.drawProgressCircles(progress, exp, z, ctx, screen, alpha, wt);
 
-            // Thick outer ring
+            // Weapon-specific extra visuals
+            this.renderWeaponEffects({ wt, progress, ctx, z, exp, screen, currentRadius, elapsed, alpha });
+        }
+    }
+
+    drawProgressCircles(progress, exp, z, ctx, screen, alpha, wt) {
+        const ringProgress = Math.min(progress * 1.5, 1);
+        const currentRadius = exp.radius * ringProgress * z;
+
+        // Thick outer ring
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, currentRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = exp.color;
+        ctx.lineWidth = Math.max(1, (4 - 3 * progress) * z);
+        ctx.globalAlpha = alpha * 0.85;
+        ctx.stroke();
+
+        // Secondary thinner ring (slightly behind)
+        if (progress > 0.1) {
+            const innerRingR = exp.radius * Math.min((progress - 0.1) * 1.5, 1) * z;
             ctx.beginPath();
-            ctx.arc(screen.x, screen.y, currentRadius, 0, Math.PI * 2);
-            ctx.strokeStyle = exp.color;
-            ctx.lineWidth = Math.max(1, (4 - 3 * progress) * z);
-            ctx.globalAlpha = alpha * 0.85;
+            ctx.arc(screen.x, screen.y, innerRingR, 0, Math.PI * 2);
+            ctx.strokeStyle = wt === 'plasmaCannon' ? '#aaffee' : '#ffffff';
+            ctx.lineWidth = Math.max(1, (2 - 1.5 * progress) * z);
+            ctx.globalAlpha = alpha * 0.4;
             ctx.stroke();
+        }
 
-            // Secondary thinner ring (slightly behind)
-            if (progress > 0.1) {
-                const innerRingR = exp.radius * Math.min((progress - 0.1) * 1.5, 1) * z;
+        // Inner glow fill
+        const grad = ctx.createRadialGradient(
+            screen.x, screen.y, 0,
+            screen.x, screen.y, currentRadius
+        );
+        grad.addColorStop(0, exp.color + '50');
+        grad.addColorStop(0.5, exp.color + '20');
+        grad.addColorStop(1, exp.color + '00');
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = alpha * 0.6;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, currentRadius, 0, Math.PI * 2);
+        ctx.fill();
+        return currentRadius;
+    }
+
+    renderWeaponEffects(options) {
+        const { wt, progress, ctx, z, exp, screen, currentRadius, elapsed, alpha } = options;
+        if (wt === 'meteorStaff') {
+            // More (12) thicker crack lines + radial glow
+            this.meteorStaffRender(progress, ctx, z, exp, screen);
+
+        } else if (wt === 'plasmaCannon') {
+            // Electric arc segments between ring points
+            this.plasmaCannonRender(progress, ctx, z, currentRadius, screen, elapsed, alpha);
+
+        } else if (wt === 'iceGrenade') {
+            // Frost ring expanding + ice crystal pattern
+            this.iceGrenadeRender(progress, ctx, screen, currentRadius, z);
+
+        } else {
+            // Rocket: fiery debris + crack lines + heat haze
+            this.rocketRender(progress, ctx, exp, z, screen);
+        }
+    }
+
+    rocketRender(progress, ctx, exp, z, screen) {
+        if (progress < 0.6) {
+            const crackAlpha = (1 - progress / 0.6) * 0.7;
+            ctx.globalAlpha = crackAlpha;
+            ctx.strokeStyle = exp.color;
+            ctx.lineWidth = Math.max(1, 2.5 * z);
+            const crackCount = 10;
+            for (let c = 0; c < crackCount; c++) {
+                const angle = (Math.PI * 2 / crackCount) * c + (exp.time % 200) * 0.005;
+                const len = exp.radius * (0.3 + progress * 0.7) * z;
                 ctx.beginPath();
-                ctx.arc(screen.x, screen.y, innerRingR, 0, Math.PI * 2);
-                ctx.strokeStyle = wt === 'plasmaCannon' ? '#aaffee' : '#ffffff';
-                ctx.lineWidth = Math.max(1, (2 - 1.5 * progress) * z);
-                ctx.globalAlpha = alpha * 0.4;
+                ctx.moveTo(
+                    screen.x + Math.cos(angle) * 5 * z,
+                    screen.y + Math.sin(angle) * 5 * z
+                );
+                // Jagged mid-point for more realistic crack
+                const midLen = len * 0.5;
+                const midJitter = 8 * z;
+                ctx.lineTo(
+                    screen.x + Math.cos(angle) * midLen + Math.sin(angle + c) * midJitter,
+                    screen.y + Math.sin(angle) * midLen - Math.cos(angle + c) * midJitter
+                );
+                ctx.lineTo(
+                    screen.x + Math.cos(angle) * len,
+                    screen.y + Math.sin(angle) * len
+                );
                 ctx.stroke();
             }
+        }
+        // Flying debris particles
+        if (progress < 0.5) {
+            const debrisAlpha = (1 - progress / 0.5) * 0.6;
+            ctx.globalAlpha = debrisAlpha;
+            for (let d = 0; d < 8; d++) {
+                const da = (Math.PI * 2 / 8) * d + (exp.time % 300) * 0.008;
+                const dd = exp.radius * (0.3 + progress * 1.2) * z;
+                const dx = screen.x + Math.cos(da) * dd;
+                const dy = screen.y + Math.sin(da) * dd - (1 - progress * 2) * 15 * z;
+                ctx.fillStyle = d % 2 === 0 ? '#ff8800' : '#ffcc44';
+                ctx.beginPath();
+                ctx.arc(dx, dy, Math.max(1, (3 - progress * 5) * z), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        // Smoky haze
+        if (progress > 0.2 && progress < 0.75) {
+            const hazeAlpha = Math.min((progress - 0.2) * 3, 1) * (1 - (progress - 0.2) / 0.55) * 0.2;
+            const hazeR = exp.radius * 0.6 * z;
+            const hazeGrad = ctx.createRadialGradient(
+                screen.x, screen.y, 0,
+                screen.x, screen.y, hazeR
+            );
+            hazeGrad.addColorStop(0, '#55555050');
+            hazeGrad.addColorStop(0.6, '#44444030');
+            hazeGrad.addColorStop(1, '#33333300');
+            ctx.globalAlpha = hazeAlpha;
+            ctx.fillStyle = hazeGrad;
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, hazeR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
 
-            // Inner glow fill
-            const grad = ctx.createRadialGradient(
+    iceGrenadeRender(progress, ctx, screen, currentRadius, z) {
+        if (progress < 0.7) {
+            const frostAlpha = (1 - progress / 0.7) * 0.5;
+            ctx.globalAlpha = frostAlpha;
+            const frostGrad = ctx.createRadialGradient(
                 screen.x, screen.y, 0,
                 screen.x, screen.y, currentRadius
             );
-            grad.addColorStop(0, exp.color + '50');
-            grad.addColorStop(0.5, exp.color + '20');
-            grad.addColorStop(1, exp.color + '00');
-            ctx.fillStyle = grad;
-            ctx.globalAlpha = alpha * 0.6;
+            frostGrad.addColorStop(0, 'rgba(150, 220, 255, 0.3)');
+            frostGrad.addColorStop(0.6, 'rgba(100, 200, 255, 0.15)');
+            frostGrad.addColorStop(1, 'rgba(100, 200, 255, 0)');
+            ctx.fillStyle = frostGrad;
             ctx.beginPath();
             ctx.arc(screen.x, screen.y, currentRadius, 0, Math.PI * 2);
             ctx.fill();
+            ctx.strokeStyle = '#aaeeff';
+            ctx.lineWidth = Math.max(1, 1.5 * z);
+            for (let c = 0; c < 6; c++) {
+                const angle = (Math.PI * 2 / 6) * c;
+                const len = currentRadius * 0.8;
+                ctx.beginPath();
+                ctx.moveTo(screen.x, screen.y);
+                ctx.lineTo(
+                    screen.x + Math.cos(angle) * len,
+                    screen.y + Math.sin(angle) * len
+                );
+                ctx.stroke();
+            }
+        }
+    }
 
-            // Weapon-specific extra visuals
-            if (wt === 'meteorStaff') {
-                // More (12) thicker crack lines + radial glow
-                if (progress < 0.6) {
-                    const crackAlpha = (1 - progress / 0.6) * 0.8;
-                    ctx.globalAlpha = crackAlpha;
-                    ctx.strokeStyle = '#ff8833';
-                    ctx.lineWidth = Math.max(1, 3 * z);
-                    const crackCount = 12;
-                    for (let c = 0; c < crackCount; c++) {
-                        const angle = (Math.PI * 2 / crackCount) * c + (exp.time % 100) * 0.01;
-                        const len = exp.radius * (0.35 + progress * 0.65) * z;
-                        ctx.beginPath();
-                        ctx.moveTo(
-                            screen.x + Math.cos(angle) * 6 * z,
-                            screen.y + Math.sin(angle) * 6 * z
-                        );
-                        ctx.lineTo(
-                            screen.x + Math.cos(angle) * len,
-                            screen.y + Math.sin(angle) * len
-                        );
-                        ctx.stroke();
-                    }
-                }
-
-                // Smoky haze circle
-                if (progress > 0.15 && progress < 0.8) {
-                    const hazeAlpha = Math.min((progress - 0.15) * 3, 1) * (1 - (progress - 0.15) / 0.65) * 0.25;
-                    const hazeR = exp.radius * 0.7 * z;
-                    const hazeGrad = ctx.createRadialGradient(
-                        screen.x, screen.y, 0,
-                        screen.x, screen.y, hazeR
-                    );
-                    hazeGrad.addColorStop(0, '#44444040');
-                    hazeGrad.addColorStop(0.6, '#33333330');
-                    hazeGrad.addColorStop(1, '#33333300');
-                    ctx.globalAlpha = hazeAlpha;
-                    ctx.fillStyle = hazeGrad;
-                    ctx.beginPath();
-                    ctx.arc(screen.x, screen.y, hazeR, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-            } else if (wt === 'plasmaCannon') {
-                // Electric arc segments between ring points
-                if (progress < 0.5) {
-                    const arcAlpha = (1 - progress / 0.5) * 0.7;
-                    ctx.globalAlpha = arcAlpha;
-                    ctx.strokeStyle = '#66ffee';
-                    ctx.lineWidth = Math.max(1, 1.5 * z);
-                    const arcCount = 6;
-                    for (let c = 0; c < arcCount; c++) {
-                        const a1 = (Math.PI * 2 / arcCount) * c;
-                        const a2 = a1 + (Math.PI * 2 / arcCount);
-                        const r = currentRadius * 0.85;
-                        // Jagged arc: 3 segments with random offsets
-                        ctx.beginPath();
-                        const sx = screen.x + Math.cos(a1) * r;
-                        const sy = screen.y + Math.sin(a1) * r;
-                        ctx.moveTo(sx, sy);
-                        const mid1a = a1 + (a2 - a1) * 0.33;
-                        const mid2a = a1 + (a2 - a1) * 0.66;
-                        const jitter = 12 * z;
-                        ctx.lineTo(
-                            screen.x + Math.cos(mid1a) * (r + (Math.sin(elapsed * 0.05 + c) * jitter)),
-                            screen.y + Math.sin(mid1a) * (r + (Math.cos(elapsed * 0.07 + c) * jitter))
-                        );
-                        ctx.lineTo(
-                            screen.x + Math.cos(mid2a) * (r - (Math.sin(elapsed * 0.06 + c * 2) * jitter)),
-                            screen.y + Math.sin(mid2a) * (r - (Math.cos(elapsed * 0.04 + c * 2) * jitter))
-                        );
-                        ctx.lineTo(
-                            screen.x + Math.cos(a2) * r,
-                            screen.y + Math.sin(a2) * r
-                        );
-                        ctx.stroke();
-                    }
-                }
-
-                // Pulsing inner energy ring
-                if (progress > 0.05 && progress < 0.45) {
-                    const pulseR = currentRadius * (0.4 + Math.sin(elapsed * 0.015) * 0.1);
-                    ctx.globalAlpha = alpha * 0.35;
-                    ctx.beginPath();
-                    ctx.arc(screen.x, screen.y, pulseR, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#00ffcc';
-                    ctx.lineWidth = Math.max(1, 2 * z);
-                    ctx.stroke();
-                }
-
-            } else if (wt === 'iceGrenade') {
-                // Frost ring expanding + ice crystal pattern
-                if (progress < 0.7) {
-                    const frostAlpha = (1 - progress / 0.7) * 0.5;
-                    ctx.globalAlpha = frostAlpha;
-                    const frostGrad = ctx.createRadialGradient(
-                        screen.x, screen.y, 0,
-                        screen.x, screen.y, currentRadius
-                    );
-                    frostGrad.addColorStop(0, 'rgba(150, 220, 255, 0.3)');
-                    frostGrad.addColorStop(0.6, 'rgba(100, 200, 255, 0.15)');
-                    frostGrad.addColorStop(1, 'rgba(100, 200, 255, 0)');
-                    ctx.fillStyle = frostGrad;
-                    ctx.beginPath();
-                    ctx.arc(screen.x, screen.y, currentRadius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = '#aaeeff';
-                    ctx.lineWidth = Math.max(1, 1.5 * z);
-                    for (let c = 0; c < 6; c++) {
-                        const angle = (Math.PI * 2 / 6) * c;
-                        const len = currentRadius * 0.8;
-                        ctx.beginPath();
-                        ctx.moveTo(screen.x, screen.y);
-                        ctx.lineTo(
-                            screen.x + Math.cos(angle) * len,
-                            screen.y + Math.sin(angle) * len
-                        );
-                        ctx.stroke();
-                    }
-                }
-
-            } else {
-                // Rocket: fiery debris + crack lines + heat haze
-                if (progress < 0.6) {
-                    const crackAlpha = (1 - progress / 0.6) * 0.7;
-                    ctx.globalAlpha = crackAlpha;
-                    ctx.strokeStyle = exp.color;
-                    ctx.lineWidth = Math.max(1, 2.5 * z);
-                    const crackCount = 10;
-                    for (let c = 0; c < crackCount; c++) {
-                        const angle = (Math.PI * 2 / crackCount) * c + (exp.time % 200) * 0.005;
-                        const len = exp.radius * (0.3 + progress * 0.7) * z;
-                        ctx.beginPath();
-                        ctx.moveTo(
-                            screen.x + Math.cos(angle) * 5 * z,
-                            screen.y + Math.sin(angle) * 5 * z
-                        );
-                        // Jagged mid-point for more realistic crack
-                        const midLen = len * 0.5;
-                        const midJitter = 8 * z;
-                        ctx.lineTo(
-                            screen.x + Math.cos(angle) * midLen + Math.sin(angle + c) * midJitter,
-                            screen.y + Math.sin(angle) * midLen - Math.cos(angle + c) * midJitter
-                        );
-                        ctx.lineTo(
-                            screen.x + Math.cos(angle) * len,
-                            screen.y + Math.sin(angle) * len
-                        );
-                        ctx.stroke();
-                    }
-                }
-                // Flying debris particles
-                if (progress < 0.5) {
-                    const debrisAlpha = (1 - progress / 0.5) * 0.6;
-                    ctx.globalAlpha = debrisAlpha;
-                    for (let d = 0; d < 8; d++) {
-                        const da = (Math.PI * 2 / 8) * d + (exp.time % 300) * 0.008;
-                        const dd = exp.radius * (0.3 + progress * 1.2) * z;
-                        const dx = screen.x + Math.cos(da) * dd;
-                        const dy = screen.y + Math.sin(da) * dd - (1 - progress * 2) * 15 * z;
-                        ctx.fillStyle = d % 2 === 0 ? '#ff8800' : '#ffcc44';
-                        ctx.beginPath();
-                        ctx.arc(dx, dy, Math.max(1, (3 - progress * 5) * z), 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-                // Smoky haze
-                if (progress > 0.2 && progress < 0.75) {
-                    const hazeAlpha = Math.min((progress - 0.2) * 3, 1) * (1 - (progress - 0.2) / 0.55) * 0.2;
-                    const hazeR = exp.radius * 0.6 * z;
-                    const hazeGrad = ctx.createRadialGradient(
-                        screen.x, screen.y, 0,
-                        screen.x, screen.y, hazeR
-                    );
-                    hazeGrad.addColorStop(0, '#55555050');
-                    hazeGrad.addColorStop(0.6, '#44444030');
-                    hazeGrad.addColorStop(1, '#33333300');
-                    ctx.globalAlpha = hazeAlpha;
-                    ctx.fillStyle = hazeGrad;
-                    ctx.beginPath();
-                    ctx.arc(screen.x, screen.y, hazeR, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+    plasmaCannonRender(progress, ctx, z, currentRadius, screen, elapsed, alpha) {
+        if (progress < 0.5) {
+            const arcAlpha = (1 - progress / 0.5) * 0.7;
+            ctx.globalAlpha = arcAlpha;
+            ctx.strokeStyle = '#66ffee';
+            ctx.lineWidth = Math.max(1, 1.5 * z);
+            const arcCount = 6;
+            for (let c = 0; c < arcCount; c++) {
+                const a1 = (Math.PI * 2 / arcCount) * c;
+                const a2 = a1 + (Math.PI * 2 / arcCount);
+                const r = currentRadius * 0.85;
+                // Jagged arc: 3 segments with random offsets
+                ctx.beginPath();
+                const sx = screen.x + Math.cos(a1) * r;
+                const sy = screen.y + Math.sin(a1) * r;
+                ctx.moveTo(sx, sy);
+                const mid1a = a1 + (a2 - a1) * 0.33;
+                const mid2a = a1 + (a2 - a1) * 0.66;
+                const jitter = 12 * z;
+                ctx.lineTo(
+                    screen.x + Math.cos(mid1a) * (r + (Math.sin(elapsed * 0.05 + c) * jitter)),
+                    screen.y + Math.sin(mid1a) * (r + (Math.cos(elapsed * 0.07 + c) * jitter))
+                );
+                ctx.lineTo(
+                    screen.x + Math.cos(mid2a) * (r - (Math.sin(elapsed * 0.06 + c * 2) * jitter)),
+                    screen.y + Math.sin(mid2a) * (r - (Math.cos(elapsed * 0.04 + c * 2) * jitter))
+                );
+                ctx.lineTo(
+                    screen.x + Math.cos(a2) * r,
+                    screen.y + Math.sin(a2) * r
+                );
+                ctx.stroke();
             }
         }
 
-        ctx.globalAlpha = 1;
+        // Pulsing inner energy ring
+        if (progress > 0.05 && progress < 0.45) {
+            const pulseR = currentRadius * (0.4 + Math.sin(elapsed * 0.015) * 0.1);
+            ctx.globalAlpha = alpha * 0.35;
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, pulseR, 0, Math.PI * 2);
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = Math.max(1, 2 * z);
+            ctx.stroke();
+        }
     }
 
-    /**
-     * Draw arena background with grid (scrolls smoothly without jumps)
-     * @param {CanvasRenderingContext2D} ctx 
-     */
+    meteorStaffRender(progress, ctx, z, exp, screen) {
+        if (progress < 0.6) {
+            const crackAlpha = (1 - progress / 0.6) * 0.8;
+            ctx.globalAlpha = crackAlpha;
+            ctx.strokeStyle = '#ff8833';
+            ctx.lineWidth = Math.max(1, 3 * z);
+            const crackCount = 12;
+            for (let c = 0; c < crackCount; c++) {
+                const angle = (Math.PI * 2 / crackCount) * c + (exp.time % 100) * 0.01;
+                const len = exp.radius * (0.35 + progress * 0.65) * z;
+                ctx.beginPath();
+                ctx.moveTo(
+                    screen.x + Math.cos(angle) * 6 * z,
+                    screen.y + Math.sin(angle) * 6 * z
+                );
+                ctx.lineTo(
+                    screen.x + Math.cos(angle) * len,
+                    screen.y + Math.sin(angle) * len
+                );
+                ctx.stroke();
+            }
+        }
+
+        // Smoky haze circle
+        if (progress > 0.15 && progress < 0.8) {
+            const hazeAlpha = Math.min((progress - 0.15) * 3, 1) * (1 - (progress - 0.15) / 0.65) * 0.25;
+            const hazeR = exp.radius * 0.7 * z;
+            const hazeGrad = ctx.createRadialGradient(
+                screen.x, screen.y, 0,
+                screen.x, screen.y, hazeR
+            );
+            hazeGrad.addColorStop(0, '#44444040');
+            hazeGrad.addColorStop(0.6, '#33333330');
+            hazeGrad.addColorStop(1, '#33333300');
+            ctx.globalAlpha = hazeAlpha;
+            ctx.fillStyle = hazeGrad;
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, hazeR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderExplosionFlash(progress, wt, exp, z, ctx, screen) {
+        if (progress < 0.3) {
+            const flashAlpha = (1 - progress / 0.3);
+            const flashScale = wt === 'meteorStaff' ? 0.5 : 0.4;
+            const flashRadius = exp.radius * flashScale * z;
+            const flashGrad = ctx.createRadialGradient(
+                screen.x, screen.y, 0,
+                screen.x, screen.y, flashRadius
+            );
+
+            if (wt === 'plasmaCannon') {
+                flashGrad.addColorStop(0, '#ffffff');
+                flashGrad.addColorStop(0.2, '#aaffee');
+                flashGrad.addColorStop(0.5, exp.color);
+                flashGrad.addColorStop(1, exp.color + '00');
+            } else if (wt === 'meteorStaff') {
+                flashGrad.addColorStop(0, '#ffffff');
+                flashGrad.addColorStop(0.15, '#ffee88');
+                flashGrad.addColorStop(0.4, exp.color);
+                flashGrad.addColorStop(1, exp.color + '00');
+            } else {
+                flashGrad.addColorStop(0, '#ffffff');
+                flashGrad.addColorStop(0.3, exp.color);
+                flashGrad.addColorStop(1, exp.color + '00');
+            }
+
+            ctx.globalAlpha = flashAlpha * 0.9;
+            ctx.fillStyle = flashGrad;
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, flashRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
     drawArenaBackground(ctx) {
         const viewWidth = this.canvas.width / this.camera.zoom;
         const viewHeight = this.canvas.height / this.camera.zoom;
@@ -1263,7 +1329,7 @@ class Game {
         }
 
         // Floating void particles
-        if (bg && bg.particles) {
+        if (bg?.particles) {
             const pCount = bg.particles.count || 20;
             for (let i = 0; i < pCount; i++) {
                 const seed = i * 97.3;
@@ -1290,202 +1356,30 @@ class Game {
         ctx.fillRect(0, 0, vw, vh);
 
         // Soft color noise - large radial patches (no hard edges)
-        const lz = 240;
-        const lx0 = Math.floor(sx / lz) - 1, lx1 = Math.ceil((sx + vw) / lz) + 1;
-        const ly0 = Math.floor(sy / lz) - 1, ly1 = Math.ceil((sy + vh) / lz) + 1;
-        for (let ly = ly0; ly <= ly1; ly++) {
-            const rowOff = (((ly % 2) + 2) % 2) * lz * 0.5;
-            for (let lx = lx0; lx <= lx1; lx++) {
-                const x = lx * lz + rowOff - sx, y = ly * lz - sy;
-                const sd = Math.abs(lx * 4517 + ly * 7331) % 100;
-                const r = 140 + (sd % 30), g = 110 + (sd % 25), b = 45 + (sd % 20);
-                const cx = x + lz * 0.5, cy = y + lz * 0.5;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, lz * 0.65);
-                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.5)`);
-                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(x - 20, y - 20, lz + 40, lz + 40);
-            }
-        }
+        this.drawSoftColorNoise(sx, vw, sy, vh, ctx);
         // Medium patches
-        const mz = 120;
-        const mx0 = Math.floor(sx / mz) - 1, mx1 = Math.ceil((sx + vw) / mz) + 1;
-        const my0 = Math.floor(sy / mz) - 1, my1 = Math.ceil((sy + vh) / mz) + 1;
-        for (let my = my0; my <= my1; my++) {
-            const rowOff = (((my % 3) + 3) % 3) * mz * 0.33;
-            for (let mx = mx0; mx <= mx1; mx++) {
-                const sd = Math.abs(mx * 8219 + my * 3671) % 100;
-                if (sd % 2 !== 0) continue;
-                const x = mx * mz + rowOff - sx, y = my * mz - sy;
-                const r = 120 + (sd % 40), g = 90 + (sd % 30), b = 35 + (sd % 20);
-                const cx = x + mz * 0.5, cy = y + mz * 0.5;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, mz * 0.55);
-                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.3)`);
-                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(x - 10, y - 10, mz + 20, mz + 20);
-            }
-        }
+        this.drawSandPatches(sx, vw, sy, vh, ctx);
 
         // === CRACKS TYPE 1: Long winding cracks ===
-        const crSp1 = 100;
-        const cr1x = (((-sx % crSp1) + crSp1) % crSp1), cr1y = (((-sy % crSp1) + crSp1) % crSp1);
-        for (let gx = cr1x - crSp1; gx <= vw + crSp1; gx += crSp1) {
-            for (let gy = cr1y - crSp1; gy <= vh + crSp1; gy += crSp1) {
-                const seed = Math.abs(Math.floor((gx + sx) * 5.7 + (gy + sy) * 11.3)) % 100;
-                if (seed % 3 !== 0) continue;
-                const jx = ((seed * 29 + 3) % crSp1) - crSp1 * 0.4;
-                const jy = ((seed * 43 + 17) % crSp1) - crSp1 * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                ctx.strokeStyle = `rgba(55, 35, 12, ${0.22 + (seed % 10) * 0.015})`;
-                ctx.lineWidth = 0.8 + (seed % 3) * 0.3;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                let px = cx, py = cy;
-                const segs = 4 + seed % 5;
-                let prevAngle = ((seed * 19) % 100) / 100 * Math.PI * 2;
-                for (let s = 0; s < segs; s++) {
-                    prevAngle += ((seed * (s + 7) * 13) % 60 - 30) / 100 * Math.PI;
-                    const len = 10 + ((seed * (s + 3)) % 20);
-                    px += Math.cos(prevAngle) * len;
-                    py += Math.sin(prevAngle) * len;
-                    ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-            }
-        }
+        this.drawLongWindingCracks(sx, sy, vw, vh, ctx);
 
         // === CRACKS TYPE 2: Y-fork cracks ===
-        const crSp2 = 160;
-        const cr2x = (((-sx % crSp2) + crSp2) % crSp2), cr2y = (((-sy % crSp2) + crSp2) % crSp2);
-        for (let gx = cr2x - crSp2; gx <= vw + crSp2; gx += crSp2) {
-            for (let gy = cr2y - crSp2; gy <= vh + crSp2; gy += crSp2) {
-                const seed = Math.abs(Math.floor((gx + sx) * 8.3 + (gy + sy) * 3.7)) % 100;
-                if (seed % 4 !== 0) continue;
-                const jx = ((seed * 37 + 11) % crSp2) - crSp2 * 0.4;
-                const jy = ((seed * 53 + 23) % crSp2) - crSp2 * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                const baseAngle = ((seed * 17) % 100) / 100 * Math.PI * 2;
-                const stemLen = 18 + seed % 15;
-                ctx.strokeStyle = `rgba(50, 32, 10, ${0.2 + (seed % 8) * 0.015})`;
-                ctx.lineWidth = 1;
-                const ex = cx + Math.cos(baseAngle) * stemLen;
-                const ey = cy + Math.sin(baseAngle) * stemLen;
-                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
-                const forkLen = 12 + seed % 10;
-                ctx.beginPath(); ctx.moveTo(ex, ey);
-                ctx.lineTo(ex + Math.cos(baseAngle - 0.5) * forkLen, ey + Math.sin(baseAngle - 0.5) * forkLen);
-                ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(ex, ey);
-                ctx.lineTo(ex + Math.cos(baseAngle + 0.4) * forkLen, ey + Math.sin(baseAngle + 0.4) * forkLen);
-                ctx.stroke();
-            }
-        }
+        this.drawYForkCracks(sx, sy, vw, vh, ctx);
 
         // === CRACKS TYPE 3: Short jagged micro-cracks ===
-        const crSp3 = 80;
-        const cr3x = (((-sx % crSp3) + crSp3) % crSp3), cr3y = (((-sy % crSp3) + crSp3) % crSp3);
-        for (let gx = cr3x - crSp3; gx <= vw + crSp3; gx += crSp3) {
-            for (let gy = cr3y - crSp3; gy <= vh + crSp3; gy += crSp3) {
-                const seed = Math.abs(Math.floor((gx + sx) * 12.1 + (gy + sy) * 6.7)) % 100;
-                if (seed % 5 !== 0) continue;
-                const jx = ((seed * 41 + 7) % crSp3) - crSp3 * 0.4;
-                const jy = ((seed * 59 + 13) % crSp3) - crSp3 * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                ctx.strokeStyle = `rgba(60, 38, 15, ${0.15 + (seed % 8) * 0.01})`;
-                ctx.lineWidth = 0.6;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                let px = cx, py = cy;
-                const dir = ((seed * 23) % 100) / 100 * Math.PI * 2;
-                for (let s = 0; s < 3 + seed % 3; s++) {
-                    const zigAngle = dir + (s % 2 === 0 ? 0.6 : -0.6);
-                    const len = 5 + seed % 6;
-                    px += Math.cos(zigAngle) * len;
-                    py += Math.sin(zigAngle) * len;
-                    ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-            }
-        }
+        this.drawJaggedCracks(sx, sy, vw, vh, ctx);
 
         // === CRACKS TYPE 4: Branching network ===
-        const crSp4 = 200;
-        const cr4x = (((-sx % crSp4) + crSp4) % crSp4), cr4y = (((-sy % crSp4) + crSp4) % crSp4);
-        for (let gx = cr4x - crSp4; gx <= vw + crSp4; gx += crSp4) {
-            for (let gy = cr4y - crSp4; gy <= vh + crSp4; gy += crSp4) {
-                const seed = Math.abs(Math.floor((gx + sx) * 4.1 + (gy + sy) * 9.3)) % 100;
-                if (seed % 5 !== 0) continue;
-                const jx = ((seed * 31 + 19) % crSp4) - crSp4 * 0.4;
-                const jy = ((seed * 47 + 29) % crSp4) - crSp4 * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                ctx.strokeStyle = `rgba(50, 30, 10, ${0.18 + (seed % 6) * 0.012})`;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath(); ctx.moveTo(cx, cy);
-                let px = cx, py = cy;
-                const mainDir = ((seed * 13) % 100) / 100 * Math.PI * 2;
-                const pts = [];
-                pts.push({x: px, y: py});
-                for (let s = 0; s < 5 + seed % 3; s++) {
-                    const a = mainDir + ((seed * (s + 5) * 7) % 40 - 20) / 100;
-                    const len = 8 + ((seed * (s + 2)) % 14);
-                    px += Math.cos(a) * len; py += Math.sin(a) * len;
-                    ctx.lineTo(px, py);
-                    pts.push({x: px, y: py});
-                }
-                ctx.stroke();
-                ctx.lineWidth = 0.7;
-                for (let i = 1; i < pts.length; i += 2) {
-                    const bp = pts[i];
-                    const brAngle = mainDir + (i % 2 === 0 ? 1.2 : -1.2);
-                    const brLen = 8 + (seed * i) % 12;
-                    ctx.beginPath(); ctx.moveTo(bp.x, bp.y);
-                    ctx.lineTo(bp.x + Math.cos(brAngle) * brLen, bp.y + Math.sin(brAngle) * brLen);
-                    ctx.stroke();
-                }
-            }
-        }
+        this.drawBranchingCracks(sx, sy, vw, vh, ctx);
 
         // DECORATION: Large desert boulders
-        const rockSp = 300;
-        const rx0 = (((-sx % rockSp) + rockSp) % rockSp), ry0 = (((-sy % rockSp) + rockSp) % rockSp);
-        for (let gx = rx0 - rockSp; gx <= vw + rockSp; gx += rockSp) {
-            for (let gy = ry0 - rockSp; gy <= vh + rockSp; gy += rockSp) {
-                const rs = Math.abs(Math.floor((gx + sx) * 11.3 + (gy + sy) * 7.1)) % 100;
-                if (rs % 3 !== 0) continue;
-                const jx = ((rs * 37 + 13) % rockSp) - rockSp * 0.5;
-                const jy = ((rs * 53 + 7) % rockSp) - rockSp * 0.5;
-                const bx = gx + jx * 0.65, by = gy + jy * 0.65;
-                const rz = 16 + rs % 16;
-                const pts = 6 + rs % 3;
-                ctx.fillStyle = 'rgba(30, 18, 5, 0.3)';
-                ctx.beginPath();
-                for (let i = 0; i < pts; i++) {
-                    const a = (Math.PI * 2 / pts) * i + rs * 0.1;
-                    const r = rz * (0.6 + ((rs * (i + 1) * 17) % 35) / 100);
-                    if (i === 0) ctx.moveTo(bx + 4 + Math.cos(a) * r, by + 4 + Math.sin(a) * r);
-                    else ctx.lineTo(bx + 4 + Math.cos(a) * r, by + 4 + Math.sin(a) * r);
-                }
-                ctx.closePath(); ctx.fill();
-                ctx.fillStyle = `rgb(${80 + rs % 25}, ${55 + rs % 20}, ${30 + rs % 15})`;
-                ctx.beginPath();
-                for (let i = 0; i < pts; i++) {
-                    const a = (Math.PI * 2 / pts) * i + rs * 0.1;
-                    const r = rz * (0.6 + ((rs * (i + 1) * 17) % 35) / 100);
-                    if (i === 0) ctx.moveTo(bx + Math.cos(a) * r, by + Math.sin(a) * r);
-                    else ctx.lineTo(bx + Math.cos(a) * r, by + Math.sin(a) * r);
-                }
-                ctx.closePath(); ctx.fill();
-                ctx.fillStyle = 'rgba(180, 140, 80, 0.2)';
-                ctx.beginPath();
-                ctx.moveTo(bx - rz * 0.3, by - rz * 0.45);
-                ctx.lineTo(bx + rz * 0.25, by - rz * 0.15);
-                ctx.lineTo(bx - rz * 0.05, by + rz * 0.1);
-                ctx.closePath(); ctx.fill();
-            }
-        }
+        this.drawDesertBoulders(sx, sy, vw, vh, ctx);
 
         // DECORATION: Dead bushes
+        this.drawDesertBushes(sx, sy, vw, vh, ctx);
+    }
+
+    drawDesertBushes(sx, sy, vw, vh, ctx) {
         const bushSp = 380;
         const bx0 = (((-sx % bushSp) + bushSp) % bushSp), by0 = (((-sy % bushSp) + bushSp) % bushSp);
         for (let gx = bx0 - bushSp; gx <= vw + bushSp; gx += bushSp) {
@@ -1519,6 +1413,218 @@ class Game {
         }
     }
 
+    drawDesertBoulders(sx, sy, vw, vh, ctx) {
+        const rockSp = 300;
+        const rx0 = (((-sx % rockSp) + rockSp) % rockSp), ry0 = (((-sy % rockSp) + rockSp) % rockSp);
+        for (let gx = rx0 - rockSp; gx <= vw + rockSp; gx += rockSp) {
+            this.drawBoulders(ry0, rockSp, vh, gx, sx, sy, ctx);
+        }
+    }
+
+    drawBoulders(ry0, rockSp, vh, gx, sx, sy, ctx) {
+        for (let gy = ry0 - rockSp; gy <= vh + rockSp; gy += rockSp) {
+            const rs = Math.abs(Math.floor((gx + sx) * 11.3 + (gy + sy) * 7.1)) % 100;
+            if (rs % 3 !== 0) continue;
+            const jx = ((rs * 37 + 13) % rockSp) - rockSp * 0.5;
+            const jy = ((rs * 53 + 7) % rockSp) - rockSp * 0.5;
+            const bx = gx + jx * 0.65, by = gy + jy * 0.65;
+            const rz = 16 + rs % 16;
+            const pts = 6 + rs % 3;
+            ctx.fillStyle = 'rgba(30, 18, 5, 0.3)';
+            ctx.beginPath();
+            for (let i = 0; i < pts; i++) {
+                const a = (Math.PI * 2 / pts) * i + rs * 0.1;
+                const r = rz * (0.6 + ((rs * (i + 1) * 17) % 35) / 100);
+                if (i === 0) ctx.moveTo(bx + 4 + Math.cos(a) * r, by + 4 + Math.sin(a) * r);
+                else ctx.lineTo(bx + 4 + Math.cos(a) * r, by + 4 + Math.sin(a) * r);
+            }
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = `rgb(${80 + rs % 25}, ${55 + rs % 20}, ${30 + rs % 15})`;
+            ctx.beginPath();
+            for (let i = 0; i < pts; i++) {
+                const a = (Math.PI * 2 / pts) * i + rs * 0.1;
+                const r = rz * (0.6 + ((rs * (i + 1) * 17) % 35) / 100);
+                if (i === 0) ctx.moveTo(bx + Math.cos(a) * r, by + Math.sin(a) * r);
+                else ctx.lineTo(bx + Math.cos(a) * r, by + Math.sin(a) * r);
+            }
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = 'rgba(180, 140, 80, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(bx - rz * 0.3, by - rz * 0.45);
+            ctx.lineTo(bx + rz * 0.25, by - rz * 0.15);
+            ctx.lineTo(bx - rz * 0.05, by + rz * 0.1);
+            ctx.closePath(); ctx.fill();
+        }
+    }
+
+    drawBranchingCracks(sx, sy, vw, vh, ctx) {
+        const crSp4 = 200;
+        const cr4x = (((-sx % crSp4) + crSp4) % crSp4), cr4y = (((-sy % crSp4) + crSp4) % crSp4);
+        for (let gx = cr4x - crSp4; gx <= vw + crSp4; gx += crSp4) {
+            this.createCrackPatterns(cr4y, crSp4, vh, gx, sx, sy, ctx);
+        }
+    }
+
+    createCrackPatterns(cr4y, crSp4, vh, gx, sx, sy, ctx) {
+        for (let gy = cr4y - crSp4; gy <= vh + crSp4; gy += crSp4) {
+            const seed = Math.abs(Math.floor((gx + sx) * 4.1 + (gy + sy) * 9.3)) % 100;
+            if (seed % 5 !== 0) continue;
+            const jx = ((seed * 31 + 19) % crSp4) - crSp4 * 0.4;
+            const jy = ((seed * 47 + 29) % crSp4) - crSp4 * 0.4;
+            const cx = gx + jx, cy = gy + jy;
+            ctx.strokeStyle = `rgba(50, 30, 10, ${0.18 + (seed % 6) * 0.012})`;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.moveTo(cx, cy);
+            let px = cx, py = cy;
+            const mainDir = ((seed * 13) % 100) / 100 * Math.PI * 2;
+            const pts = [];
+            pts.push({ x: px, y: py });
+            for (let s = 0; s < 5 + seed % 3; s++) {
+                const a = mainDir + ((seed * (s + 5) * 7) % 40 - 20) / 100;
+                const len = 8 + ((seed * (s + 2)) % 14);
+                px += Math.cos(a) * len; py += Math.sin(a) * len;
+                ctx.lineTo(px, py);
+                pts.push({ x: px, y: py });
+            }
+            ctx.stroke();
+            ctx.lineWidth = 0.7;
+            for (let i = 1; i < pts.length; i += 2) {
+                const bp = pts[i];
+                const brAngle = mainDir + (i % 2 === 0 ? 1.2 : -1.2);
+                const brLen = 8 + (seed * i) % 12;
+                ctx.beginPath(); ctx.moveTo(bp.x, bp.y);
+                ctx.lineTo(bp.x + Math.cos(brAngle) * brLen, bp.y + Math.sin(brAngle) * brLen);
+                ctx.stroke();
+            }
+        }
+    }
+
+    drawJaggedCracks(sx, sy, vw, vh, ctx) {
+        const crSp3 = 80;
+        const cr3x = (((-sx % crSp3) + crSp3) % crSp3), cr3y = (((-sy % crSp3) + crSp3) % crSp3);
+        for (let gx = cr3x - crSp3; gx <= vw + crSp3; gx += crSp3) {
+            for (let gy = cr3y - crSp3; gy <= vh + crSp3; gy += crSp3) {
+                const seed = Math.abs(Math.floor((gx + sx) * 12.1 + (gy + sy) * 6.7)) % 100;
+                if (seed % 5 !== 0) continue;
+                const jx = ((seed * 41 + 7) % crSp3) - crSp3 * 0.4;
+                const jy = ((seed * 59 + 13) % crSp3) - crSp3 * 0.4;
+                const cx = gx + jx, cy = gy + jy;
+                ctx.strokeStyle = `rgba(60, 38, 15, ${0.15 + (seed % 8) * 0.01})`;
+                ctx.lineWidth = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                let px = cx, py = cy;
+                const dir = ((seed * 23) % 100) / 100 * Math.PI * 2;
+                for (let s = 0; s < 3 + seed % 3; s++) {
+                    const zigAngle = dir + (s % 2 === 0 ? 0.6 : -0.6);
+                    const len = 5 + seed % 6;
+                    px += Math.cos(zigAngle) * len;
+                    py += Math.sin(zigAngle) * len;
+                    ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+    }
+
+    drawYForkCracks(sx, sy, vw, vh, ctx) {
+        const crSp2 = 160;
+        const cr2x = (((-sx % crSp2) + crSp2) % crSp2), cr2y = (((-sy % crSp2) + crSp2) % crSp2);
+        for (let gx = cr2x - crSp2; gx <= vw + crSp2; gx += crSp2) {
+            for (let gy = cr2y - crSp2; gy <= vh + crSp2; gy += crSp2) {
+                const seed = Math.abs(Math.floor((gx + sx) * 8.3 + (gy + sy) * 3.7)) % 100;
+                if (seed % 4 !== 0) continue;
+                const jx = ((seed * 37 + 11) % crSp2) - crSp2 * 0.4;
+                const jy = ((seed * 53 + 23) % crSp2) - crSp2 * 0.4;
+                const cx = gx + jx, cy = gy + jy;
+                const baseAngle = ((seed * 17) % 100) / 100 * Math.PI * 2;
+                const stemLen = 18 + seed % 15;
+                ctx.strokeStyle = `rgba(50, 32, 10, ${0.2 + (seed % 8) * 0.015})`;
+                ctx.lineWidth = 1;
+                const ex = cx + Math.cos(baseAngle) * stemLen;
+                const ey = cy + Math.sin(baseAngle) * stemLen;
+                ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+                const forkLen = 12 + seed % 10;
+                ctx.beginPath(); ctx.moveTo(ex, ey);
+                ctx.lineTo(ex + Math.cos(baseAngle - 0.5) * forkLen, ey + Math.sin(baseAngle - 0.5) * forkLen);
+                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(ex, ey);
+                ctx.lineTo(ex + Math.cos(baseAngle + 0.4) * forkLen, ey + Math.sin(baseAngle + 0.4) * forkLen);
+                ctx.stroke();
+            }
+        }
+    }
+
+    drawLongWindingCracks(sx, sy, vw, vh, ctx) {
+        const crSp1 = 100;
+        const cr1x = (((-sx % crSp1) + crSp1) % crSp1), cr1y = (((-sy % crSp1) + crSp1) % crSp1);
+        for (let gx = cr1x - crSp1; gx <= vw + crSp1; gx += crSp1) {
+            for (let gy = cr1y - crSp1; gy <= vh + crSp1; gy += crSp1) {
+                const seed = Math.abs(Math.floor((gx + sx) * 5.7 + (gy + sy) * 11.3)) % 100;
+                if (seed % 3 !== 0) continue;
+                const jx = ((seed * 29 + 3) % crSp1) - crSp1 * 0.4;
+                const jy = ((seed * 43 + 17) % crSp1) - crSp1 * 0.4;
+                const cx = gx + jx, cy = gy + jy;
+                ctx.strokeStyle = `rgba(55, 35, 12, ${0.22 + (seed % 10) * 0.015})`;
+                ctx.lineWidth = 0.8 + (seed % 3) * 0.3;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                let px = cx, py = cy;
+                const segs = 4 + seed % 5;
+                let prevAngle = ((seed * 19) % 100) / 100 * Math.PI * 2;
+                for (let s = 0; s < segs; s++) {
+                    prevAngle += ((seed * (s + 7) * 13) % 60 - 30) / 100 * Math.PI;
+                    const len = 10 + ((seed * (s + 3)) % 20);
+                    px += Math.cos(prevAngle) * len;
+                    py += Math.sin(prevAngle) * len;
+                    ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+    }
+
+    drawSandPatches(sx, vw, sy, vh, ctx) {
+        const mz = 120;
+        const mx0 = Math.floor(sx / mz) - 1, mx1 = Math.ceil((sx + vw) / mz) + 1;
+        const my0 = Math.floor(sy / mz) - 1, my1 = Math.ceil((sy + vh) / mz) + 1;
+        for (let my = my0; my <= my1; my++) {
+            const rowOff = (((my % 3) + 3) % 3) * mz * 0.33;
+            for (let mx = mx0; mx <= mx1; mx++) {
+                const sd = Math.abs(mx * 8219 + my * 3671) % 100;
+                if (sd % 2 !== 0) continue;
+                const x = mx * mz + rowOff - sx, y = my * mz - sy;
+                const r = 120 + (sd % 40), g = 90 + (sd % 30), b = 35 + (sd % 20);
+                const cx = x + mz * 0.5, cy = y + mz * 0.5;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, mz * 0.55);
+                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.3)`);
+                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(x - 10, y - 10, mz + 20, mz + 20);
+            }
+        }
+    }
+
+    drawSoftColorNoise(sx, vw, sy, vh, ctx) {
+        const lz = 240;
+        const lx0 = Math.floor(sx / lz) - 1, lx1 = Math.ceil((sx + vw) / lz) + 1;
+        const ly0 = Math.floor(sy / lz) - 1, ly1 = Math.ceil((sy + vh) / lz) + 1;
+        for (let ly = ly0; ly <= ly1; ly++) {
+            const rowOff = (((ly % 2) + 2) % 2) * lz * 0.5;
+            for (let lx = lx0; lx <= lx1; lx++) {
+                const x = lx * lz + rowOff - sx, y = ly * lz - sy;
+                const sd = Math.abs(lx * 4517 + ly * 7331) % 100;
+                const r = 140 + (sd % 30), g = 110 + (sd % 25), b = 45 + (sd % 20);
+                const cx = x + lz * 0.5, cy = y + lz * 0.5;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, lz * 0.65);
+                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.5)`);
+                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(x - 20, y - 20, lz + 40, lz + 40);
+            }
+        }
+    }
+
     _drawFrozenBackground(ctx, vw, vh, t, sx, sy, bg) {
         // Icy blue base
         ctx.fillStyle = '#7A9DBD';
@@ -1529,113 +1635,28 @@ class Game {
         const lx0 = Math.floor(sx / lz) - 1, lx1 = Math.ceil((sx + vw) / lz) + 1;
         const ly0 = Math.floor(sy / lz) - 1, ly1 = Math.ceil((sy + vh) / lz) + 1;
         for (let ly = ly0; ly <= ly1; ly++) {
-            const rowOff = (((ly % 2) + 2) % 2) * lz * 0.5;
-            for (let lx = lx0; lx <= lx1; lx++) {
-                const x = lx * lz + rowOff - sx, y = ly * lz - sy;
-                const sd = Math.abs(lx * 5431 + ly * 8293) % 100;
-                const r = 105 + (sd % 35), g = 140 + (sd % 30), b = 170 + (sd % 25);
-                const cx = x + lz * 0.5, cy = y + lz * 0.5;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, lz * 0.62);
-                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.45)`);
-                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(x - 20, y - 20, lz + 40, lz + 40);
-            }
+            this.generateSoftColorZones(ly, lz, lx0, lx1, sx, sy, ctx);
         }
         // Smaller detail patches
         const mz = 100;
         const mx0 = Math.floor(sx / mz) - 1, mx1 = Math.ceil((sx + vw) / mz) + 1;
         const myy0 = Math.floor(sy / mz) - 1, myy1 = Math.ceil((sy + vh) / mz) + 1;
         for (let my = myy0; my <= myy1; my++) {
-            const rowOff = (((my % 3) + 3) % 3) * mz * 0.33;
-            for (let mx = mx0; mx <= mx1; mx++) {
-                const sd = Math.abs(mx * 6173 + my * 4391) % 100;
-                if (sd % 3 !== 0) continue;
-                const x = mx * mz + rowOff - sx, y = my * mz - sy;
-                const r = 115 + (sd % 30), g = 150 + (sd % 25), b = 185 + (sd % 18);
-                const cx = x + mz * 0.5, cy = y + mz * 0.5;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, mz * 0.5);
-                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.25)`);
-                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(x - 8, y - 8, mz + 16, mz + 16);
-            }
+            this.drawMistEffect(my, mz, mx0, mx1, sx, sy, ctx);
         }
 
         // Frost scratches
         const frostSp = 90;
         const f0 = (((-sx % frostSp) + frostSp) % frostSp), f1 = (((-sy % frostSp) + frostSp) % frostSp);
         for (let gx = f0 - frostSp; gx <= vw + frostSp; gx += frostSp) {
-            for (let gy = f1 - frostSp; gy <= vh + frostSp; gy += frostSp) {
-                const seed = Math.abs(Math.floor((gx + sx) * 6.7 + (gy + sy) * 12.1)) % 100;
-                if (seed % 3 !== 0) continue;
-                const jx = ((seed * 37 + 5) % frostSp) - frostSp * 0.4;
-                const jy = ((seed * 53 + 19) % frostSp) - frostSp * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                ctx.strokeStyle = `rgba(200, 225, 245, ${0.18 + (seed % 8) * 0.012})`;
-                ctx.lineWidth = 0.5;
-                ctx.beginPath(); ctx.moveTo(cx, cy);
-                let px = cx, py = cy;
-                for (let s = 0; s < 2 + seed % 3; s++) {
-                    const angle = ((seed * 11 + s * 37) % 100) / 100 * Math.PI * 2;
-                    const len = 8 + ((seed * (s + 2)) % 15);
-                    px += Math.cos(angle) * len; py += Math.sin(angle) * len;
-                    ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-            }
+            this.generateFrostedStreaks(f1, frostSp, vh, gx, sx, sy, ctx);
         }
 
         // DECORATION: Icicle clusters - TRULY VARIED sizes and spike counts
         const icSp = 220;
         const icx = (((-sx % icSp) + icSp) % icSp), icy = (((-sy % icSp) + icSp) % icSp);
         for (let gx = icx - icSp; gx <= vw + icSp; gx += icSp) {
-            for (let gy = icy - icSp; gy <= vh + icSp; gy += icSp) {
-                const cs = Math.abs(Math.floor((gx + sx) * 6.3 + (gy + sy) * 8.7)) % 100;
-                if (cs % 3 !== 0) continue;
-                const jx = ((cs * 31 + 23) % icSp) - icSp * 0.5;
-                const jy = ((cs * 67 + 11) % icSp) - icSp * 0.5;
-                const bx = gx + jx * 0.6, by = gy + jy * 0.6;
-                const shm = Math.sin(t / 2000 + cs * 0.3) * 0.04;
-                // Truly varied: use full seed range for size
-                const sizeVal = cs % 10; // 0-9
-                let baseH, baseW, spikes;
-                if (sizeVal < 2) { baseH = 18 + cs % 8; baseW = 10; spikes = 1; }        // tiny single spike
-                else if (sizeVal < 4) { baseH = 28 + cs % 10; baseW = 16; spikes = 2; }  // small pair
-                else if (sizeVal < 6) { baseH = 42 + cs % 12; baseW = 24; spikes = 3; }  // medium trio
-                else if (sizeVal < 8) { baseH = 55 + cs % 15; baseW = 30; spikes = 4 + cs % 2; }  // large cluster
-                else { baseH = 68 + cs % 18; baseW = 38; spikes = 5 + cs % 2; }            // huge formation
-                // Ice mound base
-                ctx.fillStyle = 'rgba(80, 140, 185, 0.3)';
-                ctx.beginPath();
-                ctx.ellipse(bx, by + 2, baseW, 4 + spikes, 0, 0, Math.PI * 2);
-                ctx.fill();
-                // Icicle spikes - each with individual varied height
-                for (let i = 0; i < spikes; i++) {
-                    const spX = bx + (i - (spikes - 1) / 2) * (5 + cs % 4 + baseW / spikes * 0.6);
-                    // Each spike gets its own height variation
-                    const heightVar = ((cs * (i * 17 + 7) + i * 31) % 30) / 30;
-                    const spH = baseH * (0.5 + heightVar * 0.6);
-                    const spW = 2.5 + (cs % 3) + baseW / spikes * 0.3;
-                    // Dark face
-                    ctx.fillStyle = `rgba(55, 120, 185, ${0.7 + shm})`;
-                    ctx.beginPath();
-                    ctx.moveTo(spX, by - spH); ctx.lineTo(spX - spW, by); ctx.lineTo(spX, by);
-                    ctx.closePath(); ctx.fill();
-                    // Light face
-                    ctx.fillStyle = `rgba(120, 190, 235, ${0.65 + shm})`;
-                    ctx.beginPath();
-                    ctx.moveTo(spX, by - spH); ctx.lineTo(spX + spW, by); ctx.lineTo(spX, by);
-                    ctx.closePath(); ctx.fill();
-                    // Bright edge line
-                    ctx.strokeStyle = `rgba(190, 230, 250, ${0.45 + shm})`;
-                    ctx.lineWidth = 1;
-                    ctx.beginPath(); ctx.moveTo(spX, by - spH); ctx.lineTo(spX, by - spH * 0.3); ctx.stroke();
-                    // Tip glow
-                    ctx.fillStyle = `rgba(220, 240, 255, ${0.6 + shm})`;
-                    ctx.beginPath(); ctx.arc(spX, by - spH + 2, 1.5 + spikes * 0.15, 0, Math.PI * 2); ctx.fill();
-                }
-            }
+            this.generateIcyStructures({ icy, icSp, vh, gx, sx, sy, t, ctx });
         }
 
         // DECORATION: Frozen trees - snow follows branch angle, NOT all trees have snow
@@ -1727,21 +1748,128 @@ class Game {
         const mndSp = 280;
         const mnx = (((-sx % mndSp) + mndSp) % mndSp), mny = (((-sy % mndSp) + mndSp) % mndSp);
         for (let gx = mnx - mndSp; gx <= vw + mndSp; gx += mndSp) {
-            for (let gy = mny - mndSp; gy <= vh + mndSp; gy += mndSp) {
-                const ms = Math.abs(Math.floor((gx + sx) * 9.1 + (gy + sy) * 3.7)) % 100;
-                if (ms % 4 !== 0) continue;
-                const jx = ((ms * 41 + 17) % mndSp) - mndSp * 0.5;
-                const jy = ((ms * 59 + 7) % mndSp) - mndSp * 0.5;
-                const bx = gx + jx * 0.6, by = gy + jy * 0.6;
-                const mw = 22 + ms % 16;
-                const mh = 5 + ms % 3;
-                ctx.fillStyle = 'rgba(195, 220, 240, 0.2)';
+            this.generateFrostedMounds(mny, mndSp, vh, gx, sx, sy, ctx);
+        }
+    }
+
+    generateFrostedMounds(mny, mndSp, vh, gx, sx, sy, ctx) {
+        for (let gy = mny - mndSp; gy <= vh + mndSp; gy += mndSp) {
+            const ms = Math.abs(Math.floor((gx + sx) * 9.1 + (gy + sy) * 3.7)) % 100;
+            if (ms % 4 !== 0) continue;
+            const jx = ((ms * 41 + 17) % mndSp) - mndSp * 0.5;
+            const jy = ((ms * 59 + 7) % mndSp) - mndSp * 0.5;
+            const bx = gx + jx * 0.6, by = gy + jy * 0.6;
+            const mw = 22 + ms % 16;
+            const mh = 5 + ms % 3;
+            ctx.fillStyle = 'rgba(195, 220, 240, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(bx - mw, by);
+            ctx.quadraticCurveTo(bx - mw * 0.4, by - mh * 1.3, bx, by - mh);
+            ctx.quadraticCurveTo(bx + mw * 0.4, by - mh * 1.3, bx + mw, by);
+            ctx.closePath(); ctx.fill();
+        }
+    }
+
+    generateIcyStructures(options) {
+        const { icy, icSp, vh, gx, sx, sy, t, ctx } = options;
+        for (let gy = icy - icSp; gy <= vh + icSp; gy += icSp) {
+            const cs = Math.abs(Math.floor((gx + sx) * 6.3 + (gy + sy) * 8.7)) % 100;
+            if (cs % 3 !== 0) continue;
+            const jx = ((cs * 31 + 23) % icSp) - icSp * 0.5;
+            const jy = ((cs * 67 + 11) % icSp) - icSp * 0.5;
+            const bx = gx + jx * 0.6, by = gy + jy * 0.6;
+            const shm = Math.sin(t / 2000 + cs * 0.3) * 0.04;
+            // Truly varied: use full seed range for size
+            const sizeVal = cs % 10; // 0-9
+            let baseH, baseW, spikes;
+            if (sizeVal < 2) { baseH = 18 + cs % 8; baseW = 10; spikes = 1; } // tiny single spike
+            else if (sizeVal < 4) { baseH = 28 + cs % 10; baseW = 16; spikes = 2; } // small pair
+            else if (sizeVal < 6) { baseH = 42 + cs % 12; baseW = 24; spikes = 3; } // medium trio
+            else if (sizeVal < 8) { baseH = 55 + cs % 15; baseW = 30; spikes = 4 + cs % 2; } // large cluster
+            else { baseH = 68 + cs % 18; baseW = 38; spikes = 5 + cs % 2; } // huge formation
+
+            // Ice mound base
+            ctx.fillStyle = 'rgba(80, 140, 185, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(bx, by + 2, baseW, 4 + spikes, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Icicle spikes - each with individual varied height
+            for (let i = 0; i < spikes; i++) {
+                const spX = bx + (i - (spikes - 1) / 2) * (5 + cs % 4 + baseW / spikes * 0.6);
+                // Each spike gets its own height variation
+                const heightVar = ((cs * (i * 17 + 7) + i * 31) % 30) / 30;
+                const spH = baseH * (0.5 + heightVar * 0.6);
+                const spW = 2.5 + (cs % 3) + baseW / spikes * 0.3;
+                // Dark face
+                ctx.fillStyle = `rgba(55, 120, 185, ${0.7 + shm})`;
                 ctx.beginPath();
-                ctx.moveTo(bx - mw, by);
-                ctx.quadraticCurveTo(bx - mw * 0.4, by - mh * 1.3, bx, by - mh);
-                ctx.quadraticCurveTo(bx + mw * 0.4, by - mh * 1.3, bx + mw, by);
+                ctx.moveTo(spX, by - spH); ctx.lineTo(spX - spW, by); ctx.lineTo(spX, by);
                 ctx.closePath(); ctx.fill();
+                // Light face
+                ctx.fillStyle = `rgba(120, 190, 235, ${0.65 + shm})`;
+                ctx.beginPath();
+                ctx.moveTo(spX, by - spH); ctx.lineTo(spX + spW, by); ctx.lineTo(spX, by);
+                ctx.closePath(); ctx.fill();
+                // Bright edge line
+                ctx.strokeStyle = `rgba(190, 230, 250, ${0.45 + shm})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(spX, by - spH); ctx.lineTo(spX, by - spH * 0.3); ctx.stroke();
+                // Tip glow
+                ctx.fillStyle = `rgba(220, 240, 255, ${0.6 + shm})`;
+                ctx.beginPath(); ctx.arc(spX, by - spH + 2, 1.5 + spikes * 0.15, 0, Math.PI * 2); ctx.fill();
             }
+        }
+    }
+
+    generateFrostedStreaks(f1, frostSp, vh, gx, sx, sy, ctx) {
+        for (let gy = f1 - frostSp; gy <= vh + frostSp; gy += frostSp) {
+            const seed = Math.abs(Math.floor((gx + sx) * 6.7 + (gy + sy) * 12.1)) % 100;
+            if (seed % 3 !== 0) continue;
+            const jx = ((seed * 37 + 5) % frostSp) - frostSp * 0.4;
+            const jy = ((seed * 53 + 19) % frostSp) - frostSp * 0.4;
+            const cx = gx + jx, cy = gy + jy;
+            ctx.strokeStyle = `rgba(200, 225, 245, ${0.18 + (seed % 8) * 0.012})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath(); ctx.moveTo(cx, cy);
+            let px = cx, py = cy;
+            for (let s = 0; s < 2 + seed % 3; s++) {
+                const angle = ((seed * 11 + s * 37) % 100) / 100 * Math.PI * 2;
+                const len = 8 + ((seed * (s + 2)) % 15);
+                px += Math.cos(angle) * len; py += Math.sin(angle) * len;
+                ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        }
+    }
+
+    drawMistEffect(my, mz, mx0, mx1, sx, sy, ctx) {
+        const rowOff = (((my % 3) + 3) % 3) * mz * 0.33;
+        for (let mx = mx0; mx <= mx1; mx++) {
+            const sd = Math.abs(mx * 6173 + my * 4391) % 100;
+            if (sd % 3 !== 0) continue;
+            const x = mx * mz + rowOff - sx, y = my * mz - sy;
+            const r = 115 + (sd % 30), g = 150 + (sd % 25), b = 185 + (sd % 18);
+            const cx = x + mz * 0.5, cy = y + mz * 0.5;
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, mz * 0.5);
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.25)`);
+            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(x - 8, y - 8, mz + 16, mz + 16);
+        }
+    }
+
+    generateSoftColorZones(ly, lz, lx0, lx1, sx, sy, ctx) {
+        const rowOff = (((ly % 2) + 2) % 2) * lz * 0.5;
+        for (let lx = lx0; lx <= lx1; lx++) {
+            const x = lx * lz + rowOff - sx, y = ly * lz - sy;
+            const sd = Math.abs(lx * 5431 + ly * 8293) % 100;
+            const r = 105 + (sd % 35), g = 140 + (sd % 30), b = 170 + (sd % 25);
+            const cx = x + lz * 0.5, cy = y + lz * 0.5;
+            const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, lz * 0.62);
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.45)`);
+            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(x - 20, y - 20, lz + 40, lz + 40);
         }
     }
 
@@ -1751,125 +1879,22 @@ class Game {
         ctx.fillRect(0, 0, vw, vh);
 
         // Uniform tech floor panels - clean aligned grid, same size, NO overlap
-        const pw = 64, ph = 64, gap = 3;
-        const c0 = Math.floor(sx / pw) - 1, c1 = Math.ceil((sx + vw) / pw) + 1;
-        const r0 = Math.floor(sy / ph) - 1, r1 = Math.ceil((sy + vh) / ph) + 1;
-        for (let row = r0; row <= r1; row++) {
-            for (let col = c0; col <= c1; col++) {
-                const x = col * pw - sx, y = row * ph - sy;
-                const sd = Math.abs(col * 4219 + row * 8731) % 1000;
-                const shade = 14 + (sd % 8);
-                ctx.fillStyle = `rgb(${shade}, ${shade + 4}, ${shade + 2})`;
-                ctx.fillRect(x + gap, y + gap, pw - gap * 2, ph - gap * 2);
-                // Thin neon panel border
-                ctx.strokeStyle = `rgba(0, 200, 100, ${0.05 + (sd % 4) * 0.008})`;
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(x + gap, y + gap, pw - gap * 2, ph - gap * 2);
-            }
-        }
+        this.drawTechFloorPanels(sx, vw, sy, vh, ctx);
 
         // Longer neon accent lines across floor
-        const lineSp = 200;
-        const lg0 = (((-sx % lineSp) + lineSp) % lineSp), lg1 = (((-sy % lineSp) + lineSp) % lineSp);
-        for (let gx = lg0 - lineSp; gx <= vw + lineSp; gx += lineSp) {
-            for (let gy = lg1 - lineSp; gy <= vh + lineSp; gy += lineSp) {
-                const seed = Math.abs(Math.floor((gx + sx) * 4.3 + (gy + sy) * 8.9)) % 100;
-                if (seed % 4 !== 0) continue;
-                const jx = ((seed * 29 + 7) % lineSp) - lineSp * 0.4;
-                const jy = ((seed * 41 + 13) % lineSp) - lineSp * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                const len = 40 + seed % 80;
-                const horiz = seed % 2 === 0;
-                // Glow
-                ctx.strokeStyle = `rgba(0, 255, 136, 0.05)`;
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                if (horiz) { ctx.moveTo(cx, cy); ctx.lineTo(cx + len, cy); }
-                else { ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + len); }
-                ctx.stroke();
-                // Line
-                ctx.strokeStyle = `rgba(0, 255, 136, ${0.12 + (seed % 6) * 0.015})`;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
-        }
+        this.drawNeonLines(sx, sy, vw, vh, ctx);
 
         // Circuit L-shapes
-        const trSp = 180;
-        const ttx = (((-sx % trSp) + trSp) % trSp), tty = (((-sy % trSp) + trSp) % trSp);
-        for (let gx = ttx - trSp; gx <= vw + trSp; gx += trSp) {
-            for (let gy = tty - trSp; gy <= vh + trSp; gy += trSp) {
-                const cs = Math.abs(Math.floor((gx + sx) * 2.1 + (gy + sy) * 7.9)) % 100;
-                if (cs % 4 !== 0) continue;
-                const jx = ((cs * 37 + 5) % trSp) - trSp * 0.4;
-                const jy = ((cs * 51 + 17) % trSp) - trSp * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                const hLen = 25 + cs % 18, vLen = 20 + cs % 15;
-                ctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + hLen, cy);
-                ctx.lineTo(cx + hLen, cy + vLen);
-                ctx.stroke();
-                // Pulsing node
-                ctx.fillStyle = `rgba(0, 255, 136, ${0.2 + Math.sin(t / 1200 + cs) * 0.1})`;
-                ctx.beginPath();
-                ctx.arc(cx + hLen, cy, 2.5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.drawCircuitPatterns(sx, sy, vw, vh, ctx, t);
 
         // DECORATION: Server racks (big, recognizable)
-        const rkSp = 300;
-        const rkx = (((-sx % rkSp) + rkSp) % rkSp), rky = (((-sy % rkSp) + rkSp) % rkSp);
-        for (let gx = rkx - rkSp; gx <= vw + rkSp; gx += rkSp) {
-            for (let gy = rky - rkSp; gy <= vh + rkSp; gy += rkSp) {
-                const rs = Math.abs(Math.floor((gx + sx) * 9.3 + (gy + sy) * 4.1)) % 100;
-                if (rs % 3 !== 0) continue;
-                const jx = ((rs * 39 + 7) % rkSp) - rkSp * 0.5;
-                const jy = ((rs * 57 + 19) % rkSp) - rkSp * 0.5;
-                const bx = gx + jx * 0.6, by = gy + jy * 0.6;
-                const rw = 24 + rs % 12;
-                const rh = 44 + rs % 20;
-                // Shadow
-                ctx.fillStyle = 'rgba(0, 20, 10, 0.3)';
-                ctx.fillRect(bx - rw / 2 + 4, by - rh + 4, rw, rh);
-                // Rack body
-                ctx.fillStyle = `rgb(${8 + rs % 4}, ${12 + rs % 4}, ${10 + rs % 4})`;
-                ctx.fillRect(bx - rw / 2, by - rh, rw, rh);
-                // Border
-                ctx.strokeStyle = 'rgba(0, 255, 136, 0.25)';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(bx - rw / 2, by - rh, rw, rh);
-                // Bay dividers + LEDs
-                const bays = 4 + rs % 3;
-                const bayH = rh / bays;
-                for (let b = 0; b < bays; b++) {
-                    const yy = by - rh + b * bayH;
-                    if (b > 0) {
-                        ctx.strokeStyle = 'rgba(0, 255, 136, 0.08)';
-                        ctx.lineWidth = 0.5;
-                        ctx.beginPath();
-                        ctx.moveTo(bx - rw / 2 + 3, yy);
-                        ctx.lineTo(bx + rw / 2 - 3, yy);
-                        ctx.stroke();
-                    }
-                    // LED indicators (2 per bay)
-                    const on1 = Math.sin(t / 500 + rs + b * 2.5) > 0;
-                    ctx.fillStyle = on1 ? 'rgba(0, 255, 100, 0.75)' : 'rgba(0, 60, 25, 0.2)';
-                    ctx.fillRect(bx - rw / 2 + 3, yy + bayH * 0.35, 3, 3);
-                    const on2 = Math.sin(t / 700 + rs + b * 1.8) > 0.2;
-                    ctx.fillStyle = on2 ? 'rgba(255, 180, 0, 0.6)' : 'rgba(60, 40, 0, 0.15)';
-                    ctx.fillRect(bx - rw / 2 + 8, yy + bayH * 0.35, 3, 3);
-                    // Drive slots
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.fillRect(bx - rw / 2 + 14, yy + bayH * 0.25, rw - 20, bayH * 0.5);
-                }
-            }
-        }
+        this.drawServerRacks(sx, sy, vw, vh, ctx, t);
 
         // DECORATION: Antenna towers (tall, recognizable)
+        this.drawAntennaTowers(sx, sy, vw, vh, ctx, t);
+    }
+
+    drawAntennaTowers(sx, sy, vw, vh, ctx, t) {
         const anSp = 480;
         const anx = (((-sx % anSp) + anSp) % anSp), any = (((-sy % anSp) + anSp) % anSp);
         for (let gx = anx - anSp; gx <= vw + anSp; gx += anSp) {
@@ -1904,140 +1929,260 @@ class Game {
         }
     }
 
+    drawServerRacks(sx, sy, vw, vh, ctx, t) {
+        const rkSp = 300;
+        const rkx = (((-sx % rkSp) + rkSp) % rkSp), rky = (((-sy % rkSp) + rkSp) % rkSp);
+        for (let gx = rkx - rkSp; gx <= vw + rkSp; gx += rkSp) {
+            this.drawServerRack({ rky, rkSp, vh, gx, sx, sy, ctx, t });
+        }
+    }
+
+    drawServerRack(options) {
+        const { rky, rkSp, vh, gx, sx, sy, ctx, t } = options;
+        for (let gy = rky - rkSp; gy <= vh + rkSp; gy += rkSp) {
+            const rs = Math.abs(Math.floor((gx + sx) * 9.3 + (gy + sy) * 4.1)) % 100;
+            if (rs % 3 !== 0) continue;
+            const jx = ((rs * 39 + 7) % rkSp) - rkSp * 0.5;
+            const jy = ((rs * 57 + 19) % rkSp) - rkSp * 0.5;
+            const bx = gx + jx * 0.6, by = gy + jy * 0.6;
+            const rw = 24 + rs % 12;
+            const rh = 44 + rs % 20;
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 20, 10, 0.3)';
+            ctx.fillRect(bx - rw / 2 + 4, by - rh + 4, rw, rh);
+            // Rack body
+            ctx.fillStyle = `rgb(${8 + rs % 4}, ${12 + rs % 4}, ${10 + rs % 4})`;
+            ctx.fillRect(bx - rw / 2, by - rh, rw, rh);
+            // Border
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.25)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx - rw / 2, by - rh, rw, rh);
+            // Bay dividers + LEDs
+            const bays = 4 + rs % 3;
+            const bayH = rh / bays;
+            for (let b = 0; b < bays; b++) {
+                const yy = by - rh + b * bayH;
+                if (b > 0) {
+                    ctx.strokeStyle = 'rgba(0, 255, 136, 0.08)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(bx - rw / 2 + 3, yy);
+                    ctx.lineTo(bx + rw / 2 - 3, yy);
+                    ctx.stroke();
+                }
+                // LED indicators (2 per bay)
+                const on1 = Math.sin(t / 500 + rs + b * 2.5) > 0;
+                ctx.fillStyle = on1 ? 'rgba(0, 255, 100, 0.75)' : 'rgba(0, 60, 25, 0.2)';
+                ctx.fillRect(bx - rw / 2 + 3, yy + bayH * 0.35, 3, 3);
+                const on2 = Math.sin(t / 700 + rs + b * 1.8) > 0.2;
+                ctx.fillStyle = on2 ? 'rgba(255, 180, 0, 0.6)' : 'rgba(60, 40, 0, 0.15)';
+                ctx.fillRect(bx - rw / 2 + 8, yy + bayH * 0.35, 3, 3);
+                // Drive slots
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(bx - rw / 2 + 14, yy + bayH * 0.25, rw - 20, bayH * 0.5);
+            }
+        }
+    }
+
+    drawCircuitPatterns(sx, sy, vw, vh, ctx, t) {
+        const trSp = 180;
+        const ttx = (((-sx % trSp) + trSp) % trSp), tty = (((-sy % trSp) + trSp) % trSp);
+        for (let gx = ttx - trSp; gx <= vw + trSp; gx += trSp) {
+            for (let gy = tty - trSp; gy <= vh + trSp; gy += trSp) {
+                const cs = Math.abs(Math.floor((gx + sx) * 2.1 + (gy + sy) * 7.9)) % 100;
+                if (cs % 4 !== 0) continue;
+                const jx = ((cs * 37 + 5) % trSp) - trSp * 0.4;
+                const jy = ((cs * 51 + 17) % trSp) - trSp * 0.4;
+                const cx = gx + jx, cy = gy + jy;
+                const hLen = 25 + cs % 18, vLen = 20 + cs % 15;
+                ctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + hLen, cy);
+                ctx.lineTo(cx + hLen, cy + vLen);
+                ctx.stroke();
+                // Pulsing node
+                ctx.fillStyle = `rgba(0, 255, 136, ${0.2 + Math.sin(t / 1200 + cs) * 0.1})`;
+                ctx.beginPath();
+                ctx.arc(cx + hLen, cy, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    drawNeonLines(sx, sy, vw, vh, ctx) {
+        const lineSp = 200;
+        const lg0 = (((-sx % lineSp) + lineSp) % lineSp), lg1 = (((-sy % lineSp) + lineSp) % lineSp);
+        for (let gx = lg0 - lineSp; gx <= vw + lineSp; gx += lineSp) {
+            for (let gy = lg1 - lineSp; gy <= vh + lineSp; gy += lineSp) {
+                const seed = Math.abs(Math.floor((gx + sx) * 4.3 + (gy + sy) * 8.9)) % 100;
+                if (seed % 4 !== 0) continue;
+                const jx = ((seed * 29 + 7) % lineSp) - lineSp * 0.4;
+                const jy = ((seed * 41 + 13) % lineSp) - lineSp * 0.4;
+                const cx = gx + jx, cy = gy + jy;
+                const len = 40 + seed % 80;
+                const horiz = seed % 2 === 0;
+                // Glow
+                ctx.strokeStyle = `rgba(0, 255, 136, 0.05)`;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                if (horiz) { ctx.moveTo(cx, cy); ctx.lineTo(cx + len, cy); }
+                else { ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + len); }
+                ctx.stroke();
+                // Line
+                ctx.strokeStyle = `rgba(0, 255, 136, ${0.12 + (seed % 6) * 0.015})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+    }
+
+    drawTechFloorPanels(sx, vw, sy, vh, ctx) {
+        const pw = 64, ph = 64, gap = 3;
+        const c0 = Math.floor(sx / pw) - 1, c1 = Math.ceil((sx + vw) / pw) + 1;
+        const r0 = Math.floor(sy / ph) - 1, r1 = Math.ceil((sy + vh) / ph) + 1;
+        for (let row = r0; row <= r1; row++) {
+            for (let col = c0; col <= c1; col++) {
+                const x = col * pw - sx, y = row * ph - sy;
+                const sd = Math.abs(col * 4219 + row * 8731) % 1000;
+                const shade = 14 + (sd % 8);
+                ctx.fillStyle = `rgb(${shade}, ${shade + 4}, ${shade + 2})`;
+                ctx.fillRect(x + gap, y + gap, pw - gap * 2, ph - gap * 2);
+                // Thin neon panel border
+                ctx.strokeStyle = `rgba(0, 200, 100, ${0.05 + (sd % 4) * 0.008})`;
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x + gap, y + gap, pw - gap * 2, ph - gap * 2);
+            }
+        }
+    }
+
     _drawShadowBackground(ctx, vw, vh, t, sx, sy, bg) {
         // Dark base (slightly brighter so things are more visible)
         ctx.fillStyle = '#120A1E';
         ctx.fillRect(0, 0, vw, vh);
 
         // Dark earth color variation - radial gradient patches (NO TILES)
-        const lz = 220;
-        const lx0 = Math.floor(sx / lz) - 1, lx1 = Math.ceil((sx + vw) / lz) + 1;
-        const ly0 = Math.floor(sy / lz) - 1, ly1 = Math.ceil((sy + vh) / lz) + 1;
-        for (let ly = ly0; ly <= ly1; ly++) {
-            const rowOff = (((ly % 2) + 2) % 2) * lz * 0.5;
-            for (let lx = lx0; lx <= lx1; lx++) {
-                const x = lx * lz + rowOff - sx, y = ly * lz - sy;
-                const sd = Math.abs(lx * 5731 + ly * 9173) % 100;
-                const r = 18 + (sd % 14);
-                const g = 10 + (sd % 10);
-                const b = 24 + (sd % 16);
-                const cx = x + lz * 0.5, cy = y + lz * 0.5;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, lz * 0.6);
-                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.5)`);
-                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(x - 20, y - 20, lz + 40, lz + 40);
-            }
-        }
+        this.drawRadialGradientPatches(sx, vw, sy, vh, ctx);
         // Medium detail patches
-        const mz = 110;
-        const mx0 = Math.floor(sx / mz) - 1, mx1 = Math.ceil((sx + vw) / mz) + 1;
-        const myy0 = Math.floor(sy / mz) - 1, myy1 = Math.ceil((sy + vh) / mz) + 1;
-        for (let my = myy0; my <= myy1; my++) {
-            const rowOff = (((my % 3) + 3) % 3) * mz * 0.33;
-            for (let mx = mx0; mx <= mx1; mx++) {
-                const sd = Math.abs(mx * 7219 + my * 3491) % 100;
-                if (sd % 3 !== 0) continue;
-                const x = mx * mz + rowOff - sx, y = my * mz - sy;
-                const r = 20 + (sd % 12), g = 12 + (sd % 9), b = 28 + (sd % 14);
-                const cx = x + mz * 0.5, cy = y + mz * 0.5;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, mz * 0.5);
-                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.3)`);
-                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-                ctx.fillStyle = grad;
-                ctx.fillRect(x - 8, y - 8, mz + 16, mz + 16);
-            }
-        }
+        this.drawColorVariations(sx, vw, sy, vh, ctx);
 
         // Eerie purple glow spots
-        const glowSp = 300;
-        const gx0 = (((-sx % glowSp) + glowSp) % glowSp), gy0 = (((-sy % glowSp) + glowSp) % glowSp);
-        for (let gx = gx0 - glowSp; gx <= vw + glowSp; gx += glowSp) {
-            for (let gy = gy0 - glowSp; gy <= vh + glowSp; gy += glowSp) {
-                const gs = Math.abs(Math.floor((gx + sx) * 4.3 + (gy + sy) * 9.1)) % 100;
-                if (gs % 3 !== 0) continue;
-                const jx = ((gs * 37 + 11) % glowSp) - glowSp * 0.5;
-                const jy = ((gs * 53 + 19) % glowSp) - glowSp * 0.5;
-                const cx = gx + jx * 0.5, cy = gy + jy * 0.5;
-                const gr = 30 + gs % 25;
-                const pulse = Math.sin(t / 2500 + gs * 0.5) * 0.03;
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
-                grad.addColorStop(0, `rgba(110, 10, 190, ${0.14 + pulse})`);
-                grad.addColorStop(0.6, `rgba(70, 5, 130, ${0.06 + pulse})`);
-                grad.addColorStop(1, 'rgba(40, 0, 80, 0)');
-                ctx.fillStyle = grad;
-                ctx.fillRect(cx - gr, cy - gr, gr * 2, gr * 2);
-            }
-        }
+        this.renderMysticGlowEffects(sx, sy, vw, vh, t, ctx);
 
         // Dark cracks/veins in the ground
-        const crSp = 120;
-        const ckx = (((-sx % crSp) + crSp) % crSp), cky = (((-sy % crSp) + crSp) % crSp);
-        for (let gx = ckx - crSp; gx <= vw + crSp; gx += crSp) {
-            for (let gy = cky - crSp; gy <= vh + crSp; gy += crSp) {
-                const seed = Math.abs(Math.floor((gx + sx) * 5.3 + (gy + sy) * 10.7)) % 100;
-                if (seed % 3 !== 0) continue;
-                const jx = ((seed * 29 + 3) % crSp) - crSp * 0.4;
-                const jy = ((seed * 47 + 17) % crSp) - crSp * 0.4;
-                const cx = gx + jx, cy = gy + jy;
-                ctx.strokeStyle = 'rgba(90, 10, 150, 0.1)';
-                ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(cx, cy);
-                let px = cx, py = cy;
-                for (let s = 0; s < 3 + seed % 3; s++) {
-                    const angle = ((seed * 9 + s * 43) % 100) / 100 * Math.PI * 2;
-                    const len = 12 + ((seed * (s + 2)) % 20);
-                    px += Math.cos(angle) * len; py += Math.sin(angle) * len;
-                    ctx.lineTo(px, py);
-                }
-                ctx.stroke();
-                ctx.strokeStyle = `rgba(${90 + seed % 30}, 10, ${140 + seed % 40}, 0.18)`;
-                ctx.lineWidth = 0.8;
-                ctx.stroke();
-            }
-        }
+        this.renderCrackedSurface(sx, sy, vw, vh, ctx);
 
         // DECORATION: Tombstones (BIGGER)
-        const grSp = 300;
-        const gvx = (((-sx % grSp) + grSp) % grSp), gvy = (((-sy % grSp) + grSp) % grSp);
-        for (let gx = gvx - grSp; gx <= vw + grSp; gx += grSp) {
-            for (let gy = gvy - grSp; gy <= vh + grSp; gy += grSp) {
-                const gs = Math.abs(Math.floor((gx + sx) * 8.1 + (gy + sy) * 5.3)) % 100;
-                if (gs % 3 !== 0) continue;
-                const jx = ((gs * 43 + 11) % grSp) - grSp * 0.5;
-                const jy = ((gs * 59 + 17) % grSp) - grSp * 0.5;
-                const bx = gx + jx * 0.6, by = gy + jy * 0.6;
-                const gw = 22 + gs % 12;
-                const gh = 38 + gs % 18;
-                // Shadow
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-                ctx.fillRect(bx - gw / 2 + 4, by - 4, gw, 8);
-                // Tombstone body (rounded top rectangle)
-                ctx.fillStyle = `rgb(${48 + gs % 15}, ${38 + gs % 10}, ${55 + gs % 15})`;
-                ctx.beginPath();
-                ctx.moveTo(bx - gw / 2, by);
-                ctx.lineTo(bx - gw / 2, by - gh + gw / 2);
-                ctx.arc(bx, by - gh + gw / 2, gw / 2, Math.PI, 0);
-                ctx.lineTo(bx + gw / 2, by);
-                ctx.closePath(); ctx.fill();
-                // Outline
-                ctx.strokeStyle = 'rgba(80, 60, 100, 0.4)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(bx - gw / 2, by);
-                ctx.lineTo(bx - gw / 2, by - gh + gw / 2);
-                ctx.arc(bx, by - gh + gw / 2, gw / 2, Math.PI, 0);
-                ctx.lineTo(bx + gw / 2, by);
-                ctx.stroke();
-                // Cross marking
-                ctx.strokeStyle = 'rgba(80, 55, 100, 0.5)';
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(bx, by - gh * 0.72); ctx.lineTo(bx, by - gh * 0.2); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(bx - gw * 0.28, by - gh * 0.52); ctx.lineTo(bx + gw * 0.28, by - gh * 0.52); ctx.stroke();
-            }
-        }
+        this.drawTombstones(sx, sy, vw, vh, ctx);
 
         // DECORATION: Dead twisted trees (BIGGER)
+        this.drawDeadTrees(sx, sy, vw, vh, ctx);
+
+        // DECORATION: Skull piles (BIGGER)
+        this.drawSkullPiles(sx, sy, vw, vh, ctx);
+
+        // DECORATION: Glowing runes on ground (BIGGER)
+        this.renderGlowingRunes(sx, sy, vw, vh, t, ctx);
+    }
+
+    renderGlowingRunes(sx, sy, vw, vh, t, ctx) {
+        const rnSp = 350;
+        const rnx = (((-sx % rnSp) + rnSp) % rnSp), rny = (((-sy % rnSp) + rnSp) % rnSp);
+        for (let gx = rnx - rnSp; gx <= vw + rnSp; gx += rnSp) {
+            this.renderRuneEffects({ rny, rnSp, vh, gx, sx, sy, t, ctx });
+        }
+    }
+
+    renderRuneEffects(options) {
+        const { rny, rnSp, vh, gx, sx, sy, t, ctx } = options;
+        for (let gy = rny - rnSp; gy <= vh + rnSp; gy += rnSp) {
+            const rs = Math.abs(Math.floor((gx + sx) * 3.7 + (gy + sy) * 8.9)) % 100;
+            if (rs % 5 !== 0) continue;
+            const jx = ((rs * 47 + 31) % rnSp) - rnSp * 0.5;
+            const jy = ((rs * 29 + 41) % rnSp) - rnSp * 0.5;
+            const bx = gx + jx * 0.5, by = gy + jy * 0.5;
+            const rsz = 14 + rs % 10;
+            const pulse = Math.sin(t / 2000 + rs * 0.7) * 0.08;
+            // Outer glow
+            const grd = ctx.createRadialGradient(bx, by, rsz * 0.8, bx, by, rsz * 1.5);
+            grd.addColorStop(0, `rgba(120, 0, 200, ${0.06 + pulse})`);
+            grd.addColorStop(1, 'rgba(80, 0, 160, 0)');
+            ctx.fillStyle = grd;
+            ctx.fillRect(bx - rsz * 1.5, by - rsz * 1.5, rsz * 3, rsz * 3);
+            // Rune circle
+            ctx.strokeStyle = `rgba(140, 10, 210, ${0.18 + pulse})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(bx, by, rsz, 0, Math.PI * 2); ctx.stroke();
+            // Inner symbol
+            ctx.strokeStyle = `rgba(170, 40, 250, ${0.24 + pulse})`;
+            ctx.lineWidth = 1.2;
+            const sym = rs % 4;
+            if (sym === 0) {
+                ctx.beginPath(); ctx.moveTo(bx, by - rsz * 0.6); ctx.lineTo(bx, by + rsz * 0.6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(bx - rsz * 0.6, by); ctx.lineTo(bx + rsz * 0.6, by); ctx.stroke();
+            } else if (sym === 1) {
+                ctx.beginPath();
+                ctx.moveTo(bx, by - rsz * 0.6);
+                ctx.lineTo(bx - rsz * 0.5, by + rsz * 0.4);
+                ctx.lineTo(bx + rsz * 0.5, by + rsz * 0.4);
+                ctx.closePath(); ctx.stroke();
+            } else if (sym === 2) {
+                ctx.beginPath();
+                ctx.moveTo(bx, by - rsz * 0.6); ctx.lineTo(bx + rsz * 0.5, by);
+                ctx.lineTo(bx, by + rsz * 0.6); ctx.lineTo(bx - rsz * 0.5, by);
+                ctx.closePath(); ctx.stroke();
+            } else {
+                for (let i = 0; i < 5; i++) {
+                    const a1 = (Math.PI * 2 / 5) * i - Math.PI / 2;
+                    const a2 = (Math.PI * 2 / 5) * ((i + 2) % 5) - Math.PI / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(bx + Math.cos(a1) * rsz * 0.55, by + Math.sin(a1) * rsz * 0.55);
+                    ctx.lineTo(bx + Math.cos(a2) * rsz * 0.55, by + Math.sin(a2) * rsz * 0.55);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
+    drawSkullPiles(sx, sy, vw, vh, ctx) {
+        const skSp = 450;
+        const skx = (((-sx % skSp) + skSp) % skSp), sky = (((-sy % skSp) + skSp) % skSp);
+        for (let gx = skx - skSp; gx <= vw + skSp; gx += skSp) {
+            for (let gy = sky - skSp; gy <= vh + skSp; gy += skSp) {
+                const ss = Math.abs(Math.floor((gx + sx) * 12.7 + (gy + sy) * 6.1)) % 100;
+                if (ss % 5 !== 0) continue;
+                const jx = ((ss * 41 + 13) % skSp) - skSp * 0.5;
+                const jy = ((ss * 67 + 23) % skSp) - skSp * 0.5;
+                const bx = gx + jx * 0.55, by = gy + jy * 0.55;
+                const sz = 12 + ss % 6;
+                // Skull head
+                ctx.fillStyle = `rgba(${55 + ss % 18}, ${45 + ss % 12}, ${60 + ss % 18}, 0.75)`;
+                ctx.beginPath();
+                ctx.arc(bx, by - sz * 0.3, sz, 0, Math.PI * 2);
+                ctx.fill();
+                // Jaw
+                ctx.beginPath();
+                ctx.moveTo(bx - sz * 0.7, by + sz * 0.3);
+                ctx.lineTo(bx - sz * 0.5, by + sz * 0.85);
+                ctx.lineTo(bx + sz * 0.5, by + sz * 0.85);
+                ctx.lineTo(bx + sz * 0.7, by + sz * 0.3);
+                ctx.closePath(); ctx.fill();
+                // Eye sockets
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                ctx.beginPath(); ctx.arc(bx - sz * 0.35, by - sz * 0.4, sz * 0.25, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(bx + sz * 0.35, by - sz * 0.4, sz * 0.25, 0, Math.PI * 2); ctx.fill();
+                // Nose
+                ctx.beginPath();
+                ctx.moveTo(bx, by - sz * 0.05);
+                ctx.lineTo(bx - sz * 0.14, by + sz * 0.18);
+                ctx.lineTo(bx + sz * 0.14, by + sz * 0.18);
+                ctx.closePath(); ctx.fill();
+            }
+        }
+    }
+
+    drawDeadTrees(sx, sy, vw, vh, ctx) {
         const dtSp = 400;
         const dtx = (((-sx % dtSp) + dtSp) % dtSp), dty = (((-sy % dtSp) + dtSp) % dtSp);
         for (let gx = dtx - dtSp; gx <= vw + dtSp; gx += dtSp) {
@@ -2081,93 +2226,138 @@ class Game {
                 ctx.quadraticCurveTo(bx + 11, by + 7, bx + 16, by + 2); ctx.stroke();
             }
         }
+    }
 
-        // DECORATION: Skull piles (BIGGER)
-        const skSp = 450;
-        const skx = (((-sx % skSp) + skSp) % skSp), sky = (((-sy % skSp) + skSp) % skSp);
-        for (let gx = skx - skSp; gx <= vw + skSp; gx += skSp) {
-            for (let gy = sky - skSp; gy <= vh + skSp; gy += skSp) {
-                const ss = Math.abs(Math.floor((gx + sx) * 12.7 + (gy + sy) * 6.1)) % 100;
-                if (ss % 5 !== 0) continue;
-                const jx = ((ss * 41 + 13) % skSp) - skSp * 0.5;
-                const jy = ((ss * 67 + 23) % skSp) - skSp * 0.5;
-                const bx = gx + jx * 0.55, by = gy + jy * 0.55;
-                const sz = 12 + ss % 6;
-                // Skull head
-                ctx.fillStyle = `rgba(${55 + ss % 18}, ${45 + ss % 12}, ${60 + ss % 18}, 0.75)`;
+    drawTombstones(sx, sy, vw, vh, ctx) {
+        const grSp = 300;
+        const gvx = (((-sx % grSp) + grSp) % grSp), gvy = (((-sy % grSp) + grSp) % grSp);
+        for (let gx = gvx - grSp; gx <= vw + grSp; gx += grSp) {
+            for (let gy = gvy - grSp; gy <= vh + grSp; gy += grSp) {
+                const gs = Math.abs(Math.floor((gx + sx) * 8.1 + (gy + sy) * 5.3)) % 100;
+                if (gs % 3 !== 0) continue;
+                const jx = ((gs * 43 + 11) % grSp) - grSp * 0.5;
+                const jy = ((gs * 59 + 17) % grSp) - grSp * 0.5;
+                const bx = gx + jx * 0.6, by = gy + jy * 0.6;
+                const gw = 22 + gs % 12;
+                const gh = 38 + gs % 18;
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.fillRect(bx - gw / 2 + 4, by - 4, gw, 8);
+                // Tombstone body (rounded top rectangle)
+                ctx.fillStyle = `rgb(${48 + gs % 15}, ${38 + gs % 10}, ${55 + gs % 15})`;
                 ctx.beginPath();
-                ctx.arc(bx, by - sz * 0.3, sz, 0, Math.PI * 2);
-                ctx.fill();
-                // Jaw
-                ctx.beginPath();
-                ctx.moveTo(bx - sz * 0.7, by + sz * 0.3);
-                ctx.lineTo(bx - sz * 0.5, by + sz * 0.85);
-                ctx.lineTo(bx + sz * 0.5, by + sz * 0.85);
-                ctx.lineTo(bx + sz * 0.7, by + sz * 0.3);
+                ctx.moveTo(bx - gw / 2, by);
+                ctx.lineTo(bx - gw / 2, by - gh + gw / 2);
+                ctx.arc(bx, by - gh + gw / 2, gw / 2, Math.PI, 0);
+                ctx.lineTo(bx + gw / 2, by);
                 ctx.closePath(); ctx.fill();
-                // Eye sockets
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-                ctx.beginPath(); ctx.arc(bx - sz * 0.35, by - sz * 0.4, sz * 0.25, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(bx + sz * 0.35, by - sz * 0.4, sz * 0.25, 0, Math.PI * 2); ctx.fill();
-                // Nose
+                // Outline
+                ctx.strokeStyle = 'rgba(80, 60, 100, 0.4)';
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(bx, by - sz * 0.05);
-                ctx.lineTo(bx - sz * 0.14, by + sz * 0.18);
-                ctx.lineTo(bx + sz * 0.14, by + sz * 0.18);
-                ctx.closePath(); ctx.fill();
+                ctx.moveTo(bx - gw / 2, by);
+                ctx.lineTo(bx - gw / 2, by - gh + gw / 2);
+                ctx.arc(bx, by - gh + gw / 2, gw / 2, Math.PI, 0);
+                ctx.lineTo(bx + gw / 2, by);
+                ctx.stroke();
+                // Cross marking
+                ctx.strokeStyle = 'rgba(80, 55, 100, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(bx, by - gh * 0.72); ctx.lineTo(bx, by - gh * 0.2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(bx - gw * 0.28, by - gh * 0.52); ctx.lineTo(bx + gw * 0.28, by - gh * 0.52); ctx.stroke();
             }
         }
+    }
 
-        // DECORATION: Glowing runes on ground (BIGGER)
-        const rnSp = 350;
-        const rnx = (((-sx % rnSp) + rnSp) % rnSp), rny = (((-sy % rnSp) + rnSp) % rnSp);
-        for (let gx = rnx - rnSp; gx <= vw + rnSp; gx += rnSp) {
-            for (let gy = rny - rnSp; gy <= vh + rnSp; gy += rnSp) {
-                const rs = Math.abs(Math.floor((gx + sx) * 3.7 + (gy + sy) * 8.9)) % 100;
-                if (rs % 5 !== 0) continue;
-                const jx = ((rs * 47 + 31) % rnSp) - rnSp * 0.5;
-                const jy = ((rs * 29 + 41) % rnSp) - rnSp * 0.5;
-                const bx = gx + jx * 0.5, by = gy + jy * 0.5;
-                const rsz = 14 + rs % 10;
-                const pulse = Math.sin(t / 2000 + rs * 0.7) * 0.08;
-                // Outer glow
-                const grd = ctx.createRadialGradient(bx, by, rsz * 0.8, bx, by, rsz * 1.5);
-                grd.addColorStop(0, `rgba(120, 0, 200, ${0.06 + pulse})`);
-                grd.addColorStop(1, 'rgba(80, 0, 160, 0)');
-                ctx.fillStyle = grd;
-                ctx.fillRect(bx - rsz * 1.5, by - rsz * 1.5, rsz * 3, rsz * 3);
-                // Rune circle
-                ctx.strokeStyle = `rgba(140, 10, 210, ${0.18 + pulse})`;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.arc(bx, by, rsz, 0, Math.PI * 2); ctx.stroke();
-                // Inner symbol
-                ctx.strokeStyle = `rgba(170, 40, 250, ${0.24 + pulse})`;
-                ctx.lineWidth = 1.2;
-                const sym = rs % 4;
-                if (sym === 0) {
-                    ctx.beginPath(); ctx.moveTo(bx, by - rsz * 0.6); ctx.lineTo(bx, by + rsz * 0.6); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(bx - rsz * 0.6, by); ctx.lineTo(bx + rsz * 0.6, by); ctx.stroke();
-                } else if (sym === 1) {
-                    ctx.beginPath();
-                    ctx.moveTo(bx, by - rsz * 0.6);
-                    ctx.lineTo(bx - rsz * 0.5, by + rsz * 0.4);
-                    ctx.lineTo(bx + rsz * 0.5, by + rsz * 0.4);
-                    ctx.closePath(); ctx.stroke();
-                } else if (sym === 2) {
-                    ctx.beginPath();
-                    ctx.moveTo(bx, by - rsz * 0.6); ctx.lineTo(bx + rsz * 0.5, by);
-                    ctx.lineTo(bx, by + rsz * 0.6); ctx.lineTo(bx - rsz * 0.5, by);
-                    ctx.closePath(); ctx.stroke();
-                } else {
-                    for (let i = 0; i < 5; i++) {
-                        const a1 = (Math.PI * 2 / 5) * i - Math.PI / 2;
-                        const a2 = (Math.PI * 2 / 5) * ((i + 2) % 5) - Math.PI / 2;
-                        ctx.beginPath();
-                        ctx.moveTo(bx + Math.cos(a1) * rsz * 0.55, by + Math.sin(a1) * rsz * 0.55);
-                        ctx.lineTo(bx + Math.cos(a2) * rsz * 0.55, by + Math.sin(a2) * rsz * 0.55);
-                        ctx.stroke();
-                    }
+    renderCrackedSurface(sx, sy, vw, vh, ctx) {
+        const crSp = 120;
+        const ckx = (((-sx % crSp) + crSp) % crSp), cky = (((-sy % crSp) + crSp) % crSp);
+        for (let gx = ckx - crSp; gx <= vw + crSp; gx += crSp) {
+            for (let gy = cky - crSp; gy <= vh + crSp; gy += crSp) {
+                const seed = Math.abs(Math.floor((gx + sx) * 5.3 + (gy + sy) * 10.7)) % 100;
+                if (seed % 3 !== 0) continue;
+                const jx = ((seed * 29 + 3) % crSp) - crSp * 0.4;
+                const jy = ((seed * 47 + 17) % crSp) - crSp * 0.4;
+                const cx = gx + jx, cy = gy + jy;
+                ctx.strokeStyle = 'rgba(90, 10, 150, 0.1)';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(cx, cy);
+                let px = cx, py = cy;
+                for (let s = 0; s < 3 + seed % 3; s++) {
+                    const angle = ((seed * 9 + s * 43) % 100) / 100 * Math.PI * 2;
+                    const len = 12 + ((seed * (s + 2)) % 20);
+                    px += Math.cos(angle) * len; py += Math.sin(angle) * len;
+                    ctx.lineTo(px, py);
                 }
+                ctx.stroke();
+                ctx.strokeStyle = `rgba(${90 + seed % 30}, 10, ${140 + seed % 40}, 0.18)`;
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+            }
+        }
+    }
+
+    renderMysticGlowEffects(sx, sy, vw, vh, t, ctx) {
+        const glowSp = 300;
+        const gx0 = (((-sx % glowSp) + glowSp) % glowSp), gy0 = (((-sy % glowSp) + glowSp) % glowSp);
+        for (let gx = gx0 - glowSp; gx <= vw + glowSp; gx += glowSp) {
+            for (let gy = gy0 - glowSp; gy <= vh + glowSp; gy += glowSp) {
+                const gs = Math.abs(Math.floor((gx + sx) * 4.3 + (gy + sy) * 9.1)) % 100;
+                if (gs % 3 !== 0) continue;
+                const jx = ((gs * 37 + 11) % glowSp) - glowSp * 0.5;
+                const jy = ((gs * 53 + 19) % glowSp) - glowSp * 0.5;
+                const cx = gx + jx * 0.5, cy = gy + jy * 0.5;
+                const gr = 30 + gs % 25;
+                const pulse = Math.sin(t / 2500 + gs * 0.5) * 0.03;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, gr);
+                grad.addColorStop(0, `rgba(110, 10, 190, ${0.14 + pulse})`);
+                grad.addColorStop(0.6, `rgba(70, 5, 130, ${0.06 + pulse})`);
+                grad.addColorStop(1, 'rgba(40, 0, 80, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(cx - gr, cy - gr, gr * 2, gr * 2);
+            }
+        }
+    }
+
+    drawColorVariations(sx, vw, sy, vh, ctx) {
+        const mz = 110;
+        const mx0 = Math.floor(sx / mz) - 1, mx1 = Math.ceil((sx + vw) / mz) + 1;
+        const myy0 = Math.floor(sy / mz) - 1, myy1 = Math.ceil((sy + vh) / mz) + 1;
+        for (let my = myy0; my <= myy1; my++) {
+            const rowOff = (((my % 3) + 3) % 3) * mz * 0.33;
+            for (let mx = mx0; mx <= mx1; mx++) {
+                const sd = Math.abs(mx * 7219 + my * 3491) % 100;
+                if (sd % 3 !== 0) continue;
+                const x = mx * mz + rowOff - sx, y = my * mz - sy;
+                const r = 20 + (sd % 12), g = 12 + (sd % 9), b = 28 + (sd % 14);
+                const cx = x + mz * 0.5, cy = y + mz * 0.5;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, mz * 0.5);
+                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.3)`);
+                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(x - 8, y - 8, mz + 16, mz + 16);
+            }
+        }
+    }
+
+    drawRadialGradientPatches(sx, vw, sy, vh, ctx) {
+        const lz = 220;
+        const lx0 = Math.floor(sx / lz) - 1, lx1 = Math.ceil((sx + vw) / lz) + 1;
+        const ly0 = Math.floor(sy / lz) - 1, ly1 = Math.ceil((sy + vh) / lz) + 1;
+        for (let ly = ly0; ly <= ly1; ly++) {
+            const rowOff = (((ly % 2) + 2) % 2) * lz * 0.5;
+            for (let lx = lx0; lx <= lx1; lx++) {
+                const x = lx * lz + rowOff - sx, y = ly * lz - sy;
+                const sd = Math.abs(lx * 5731 + ly * 9173) % 100;
+                const r = 18 + (sd % 14);
+                const g = 10 + (sd % 10);
+                const b = 24 + (sd % 16);
+                const cx = x + lz * 0.5, cy = y + lz * 0.5;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, lz * 0.6);
+                grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.5)`);
+                grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+                ctx.fillStyle = grad;
+                ctx.fillRect(x - 20, y - 20, lz + 40, lz + 40);
             }
         }
     }
@@ -2176,10 +2366,6 @@ class Game {
         // No visible bounds in seamless toroidal world
     }
 
-    /**
-     * Draw minimap (player-centered, toroidal world with wrapped distances)
-     * @param {CanvasRenderingContext2D} ctx 
-     */
     drawMinimap(ctx) {
         const size = 120;
         const margin = 10;
@@ -2204,6 +2390,27 @@ class Game {
         ctx.stroke();
 
         // Clip to circle
+        this.drawMinimapContent(ctx, centerX, centerY, size, viewRadius, scale);
+
+        // Player (cyan dot) - always at center
+        ctx.fillStyle = '#00ffff';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Direction indicator
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(
+            centerX + this.player.facingDirection.x * 10,
+            centerY + this.player.facingDirection.y * 10
+        );
+        ctx.stroke();
+    }
+
+    drawMinimapContent(ctx, centerX, centerY, size, viewRadius, scale) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(centerX, centerY, size / 2 - 2, 0, Math.PI * 2);
@@ -2211,29 +2418,10 @@ class Game {
 
         // Enemies (red dots) - using wrapped distance for toroidal world
         ctx.fillStyle = '#ff4444';
-        for (const enemy of this.enemies) {
-            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-            if (wrapped.distance < viewRadius) {
-                const ex = centerX - wrapped.dx * scale; // Negative because wrapped.dx is player->enemy
-                const ey = centerY - wrapped.dy * scale;
-                ctx.beginPath();
-                ctx.arc(ex, ey, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.minimapEnemy(viewRadius, centerX, scale, centerY, ctx);
 
         // Boss (large orange dot) - using wrapped distance
-        for (const boss of this.bosses) {
-            if (boss && !boss.isDead()) {
-                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
-                ctx.fillStyle = '#ff8800';
-                const bx = centerX - wrapped.dx * scale;
-                const by = centerY - wrapped.dy * scale;
-                ctx.beginPath();
-                ctx.arc(bx, by, 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.minimapBosses(ctx, centerX, scale, centerY);
 
         // Mini-boss (orange dot) - using wrapped distance
         if (this.miniBoss && !this.miniBoss.isDead()) {
@@ -2260,7 +2448,7 @@ class Game {
         }
 
         // Portal (pulsing purple dot) - using wrapped distance
-        if (this.portal && this.portal.active) {
+        if (this.portal?.active) {
             const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.portal.x, this.portal.y);
             const portalPulse = 0.6 + Math.sin(Date.now() / 300) * 0.4;
             ctx.fillStyle = `rgba(180, 100, 255, ${portalPulse})`;
@@ -2272,33 +2460,38 @@ class Game {
         }
 
         ctx.restore();
-
-        // Player (cyan dot) - always at center
-        ctx.fillStyle = '#00ffff';
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Direction indicator
-        ctx.strokeStyle = '#00ffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(
-            centerX + this.player.facingDirection.x * 10,
-            centerY + this.player.facingDirection.y * 10
-        );
-        ctx.stroke();
     }
 
-    /**
-     * Update camera to follow player (seamless toroidal - no teleport)
-     */
+    minimapBosses(ctx, centerX, scale, centerY) {
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                ctx.fillStyle = '#ff8800';
+                const bx = centerX - wrapped.dx * scale;
+                const by = centerY - wrapped.dy * scale;
+                ctx.beginPath();
+                ctx.arc(bx, by, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    minimapEnemy(viewRadius, centerX, scale, centerY, ctx) {
+        for (const enemy of this.enemies) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (wrapped.distance < viewRadius) {
+                const ex = centerX - wrapped.dx * scale; // Negative because wrapped.dx is player->enemy
+                const ey = centerY - wrapped.dy * scale;
+                ctx.beginPath();
+                ctx.arc(ex, ey, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
     updateCamera() {
         if (!this.player) return;
 
-        const W = CONFIG.ARENA.WIDTH;
-        const H = CONFIG.ARENA.HEIGHT;
 
         // Effective viewport size based on zoom
         const viewWidth = this.canvas.width / this.camera.zoom;
@@ -2310,12 +2503,6 @@ class Game {
         this.camera.y = this.player.y - viewHeight / 2;
     }
 
-    /**
-     * Convert world position to screen position (handles toroidal wrapping)
-     * @param {number} worldX 
-     * @param {number} worldY 
-     * @returns {{x: number, y: number, visible: boolean}}
-     */
     worldToScreen(worldX, worldY) {
         const W = CONFIG.ARENA.WIDTH;
         const H = CONFIG.ARENA.HEIGHT;
@@ -2350,26 +2537,12 @@ class Game {
         return { x: screenX, y: screenY, visible };
     }
 
-    /**
-     * Wrap coordinate for infinite toroidal world
-     * @param {number} value - Current coordinate
-     * @param {number} max - Maximum value (arena size)
-     * @returns {number} Wrapped coordinate
-     */
     wrapCoordinate(value, max) {
         if (value < 0) return value + max;
         if (value >= max) return value - max;
         return value;
     }
 
-    /**
-     * Get wrapped distance between two points (shortest path in toroidal world)
-     * @param {number} x1 
-     * @param {number} y1 
-     * @param {number} x2 
-     * @param {number} y2 
-     * @returns {Object} {dx, dy, distance}
-     */
     getWrappedDistance(x1, y1, x2, y2) {
         let dx = x2 - x1;
         let dy = y2 - y1;
@@ -2391,47 +2564,31 @@ class Game {
         };
     }
 
-    /**
-     * Fire player weapons
-     * @param {number} deltaTime 
-     */
     fireWeapons(deltaTime) {
         // Weapons disabled check (emPulser EMP effect)
-        if (this.player._weaponsDisabled) return;
+        if (this.player._weaponsDisabled)
+            return;
 
         // Find nearest enemy using wrapped distance (toroidal world)
         let nearestEnemy = null;
         let nearestDist = Infinity;
 
-        for (const enemy of this.enemies) {
-            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-            if (wrapped.distance < nearestDist) {
-                nearestDist = wrapped.distance;
-                nearestEnemy = enemy;
-            }
-        }
+        ({ nearestDist, nearestEnemy } = this.geEnemiesFireWeaponsInfo(nearestDist, nearestEnemy));
 
         // Also check mini-boss and boss
-        if (this.miniBoss && !this.miniBoss.isDead()) {
-            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y);
-            if (wrapped.distance < nearestDist) {
-                nearestDist = wrapped.distance;
-                nearestEnemy = this.miniBoss;
-            }
-        }
+        ({ nearestDist, nearestEnemy } = this.getMiniBossFireWeaponsInfo(nearestDist, nearestEnemy));
 
         // Check all bosses
-        for (const boss of this.bosses) {
-            if (boss && !boss.isDead()) {
-                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
-                if (wrapped.distance < nearestDist) {
-                    nearestDist = wrapped.distance;
-                    nearestEnemy = boss;
-                }
-            }
-        }
+        ({ nearestDist, nearestEnemy } = this.getBossFireWeaponsInfo(nearestDist, nearestEnemy));
 
         // Fire weapons toward nearest enemy
+        this.fireWeaponsAtTarget(nearestEnemy, nearestDist, deltaTime);
+
+        // Apply laser and forcefield damage
+        this.updateSpecialWeaponsDamage(deltaTime);
+    }
+
+    fireWeaponsAtTarget(nearestEnemy, nearestDist, deltaTime) {
         for (const weapon of this.player.weapons) {
             if (!weapon) continue;
 
@@ -2451,273 +2608,366 @@ class Game {
             // Update continuous weapons
             weapon.update(deltaTime, this.player);
         }
-
-        // Apply laser and forcefield damage
-        this.updateSpecialWeaponsDamage(deltaTime);
     }
 
-    /**
-     * Update special weapons damage (laser, forcefield)
-     * @param {number} deltaTime
-     */
+    getBossFireWeaponsInfo(nearestDist, nearestEnemy) {
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                if (wrapped.distance < nearestDist) {
+                    nearestDist = wrapped.distance;
+                    nearestEnemy = boss;
+                }
+            }
+        }
+        return { nearestDist, nearestEnemy };
+    }
+
+    getMiniBossFireWeaponsInfo(nearestDist, nearestEnemy) {
+        if (this.miniBoss && !this.miniBoss.isDead()) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y);
+            if (wrapped.distance < nearestDist) {
+                nearestDist = wrapped.distance;
+                nearestEnemy = this.miniBoss;
+            }
+        }
+        return { nearestDist, nearestEnemy };
+    }
+
+    geEnemiesFireWeaponsInfo(nearestDist, nearestEnemy) {
+        for (const enemy of this.enemies) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (wrapped.distance < nearestDist) {
+                nearestDist = wrapped.distance;
+                nearestEnemy = enemy;
+            }
+        }
+        return { nearestDist, nearestEnemy };
+    }
+
     updateSpecialWeaponsDamage(deltaTime) {
         for (const weapon of this.player.weapons) {
-            if (!weapon) continue;
+            if (!weapon)
+                continue;
 
-            // Laser beam - powerful burst with cooldown
-            if (weapon.type === 'laser') {
-                // Initialize laser state if needed
-                if (weapon.laserCooldown === undefined) {
-                    weapon.laserCooldown = 0;
-                    weapon.laserFiring = false;
-                    weapon.laserTimer = 0;
-                    weapon.laserAngle = 0;
-                    weapon.laserTarget = null;
-                }
+            switch (weapon.type) {
+                case 'laser':
+                    // Laser beam - powerful burst with cooldown
+                    this.updateLaserFiring(weapon, deltaTime);
+                    break;
+                case 'forcefield':
+                    // Forcefield - damages all enemies inside radius
+                    this.updateForcefield(weapon, deltaTime);
+                    break;
+                case 'teslaCoil':
+                    // Tesla Coil - chain lightning to nearest + chained targets
+                    this.updateTeslaCoil(weapon, deltaTime);
+                    break;
+                case 'soulDrain':
+                    // Soul Drain - beam to nearest, lifeSteal
+                    this.updateSoulDrain(weapon, deltaTime);
+                    break;
+            }
+        }
+    }
 
-                // Update cooldown (sync with weapon.cooldown for UI)
-                if (weapon.laserCooldown > 0) {
-                    weapon.laserCooldown -= deltaTime * 1000;
-                    weapon.cooldown = weapon.laserCooldown; // Sync for UI display
-                } else {
-                    weapon.cooldown = 0;
-                }
+    updateSoulDrain(weapon, deltaTime) {
+        let nearest = null;
+        let nearestDist = weapon.range;
+        const allTargets = [...this.enemies];
+        if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) allTargets.push(boss);
+        }
 
-                // Update firing animation
-                if (weapon.laserFiring) {
-                    weapon.laserTimer -= deltaTime * 1000;
-                    if (weapon.laserTimer <= 0) {
-                        weapon.laserFiring = false;
-                    }
-                }
+        for (const enemy of allTargets) {
+            const d = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y).distance;
+            if (d < nearestDist) {
+                nearestDist = d;
+                nearest = enemy;
+            }
+        }
 
-                // Fire when ready
-                if (weapon.laserCooldown <= 0 && !weapon.laserFiring) {
-                    // Find nearest enemy using wrapped distance
-                    let nearest = null;
-                    let nearestDist = weapon.range;
+        weapon._soulTarget = nearest;
+        if (nearest) {
+            const dmg = weapon.damage * this.player.stats.damageMultiplier * deltaTime * 10;
+            nearest.takeDamage(dmg);
+            // Life steal
+            const heal = dmg * (weapon.lifeSteal || 0.15);
+            this.player.heal(heal);
+            if (nearest.isDead()) this.handleEnemyDeath(nearest);
+        }
+    }
 
-                    for (const enemy of this.enemies) {
-                        const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-                        if (wrapped.distance < nearestDist) {
-                            nearestDist = wrapped.distance;
-                            nearest = enemy;
-                        }
-                    }
+    updateTeslaCoil(weapon, deltaTime) {
+        if (weapon._teslaCooldown === undefined)
+            weapon._teslaCooldown = 0;
+        if (weapon._teslaChain === undefined)
+            weapon._teslaChain = null;
 
-                    // Check miniboss
-                    if (this.miniBoss && !this.miniBoss.isDead()) {
-                        const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y);
-                        if (wrapped.distance < nearestDist) {
-                            nearestDist = wrapped.distance;
-                            nearest = this.miniBoss;
-                        }
-                    }
+        weapon._teslaCooldown -= deltaTime * 1000;
 
-                    // Check boss
-                    for (const boss of this.bosses) {
-                        if (boss && !boss.isDead()) {
-                            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
-                            if (wrapped.distance < nearestDist) {
-                                nearestDist = wrapped.distance;
-                                nearest = boss;
-                            }
-                        }
-                    }
+        this.applyTeslaChain(weapon);
 
-                    if (nearest) {
-                        // Calculate angle to target
-                        const wrapped = this.getWrappedDistance(this.player.x, this.player.y, nearest.x, nearest.y);
-                        weapon.laserAngle = Math.atan2(wrapped.dy, wrapped.dx);
-                        weapon.laserFiring = true;
-                        weapon.laserTimer = CONFIG.WEAPONS.laser.beamDuration;
-                        weapon.laserCooldown = weapon.fireRate;
+        // Decay chain display
+        if (weapon._teslaChainTime > 0) {
+            weapon._teslaChainTime -= deltaTime * 1000;
+            if (weapon._teslaChainTime <= 0) weapon._teslaChain = null;
+        }
+    }
 
-                        // Damage ALL enemies in the beam path (piercing)
-                        const beamLength = weapon.range;
-                        const beamWidth = weapon.width * 2;
+    applyTeslaChain(weapon) {
+        if (weapon._teslaCooldown <= 0) {
+            // Find nearest enemy
+            let nearest = null;
+            let nearestDist = weapon.range;
+            const allTargets = [...this.enemies];
+            if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
+            for (const boss of this.bosses) {
+                if (boss && !boss.isDead()) allTargets.push(boss);
+            }
 
-                        // Check all enemies for beam collision
-                        const allTargets = [...this.enemies];
-                        if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
-                        for (const boss of this.bosses) {
-                            if (boss && !boss.isDead()) allTargets.push(boss);
-                        }
-
-                        for (const enemy of allTargets) {
-                            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-                            if (wrapped.distance > beamLength) continue;
-
-                            // Check if enemy is within beam width (using perpendicular distance)
-                            const enemyAngle = Math.atan2(wrapped.dy, wrapped.dx);
-                            let angleDiff = Math.abs(enemyAngle - weapon.laserAngle);
-                            if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
-                            // Skip enemies behind the beam
-                            if (angleDiff > Math.PI / 2) continue;
-                            const perpDist = Math.sin(angleDiff) * wrapped.distance;
-
-                            if (Math.abs(perpDist) < beamWidth + enemy.radius) {
-                                const hit = this.calcPlayerDamage(weapon.damage);
-                                enemy.takeDamage(hit.damage);
-                                if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                                this.particles.createHitEffect(enemy.x, enemy.y, '#00ffff');
-
-                                if (enemy.isDead()) {
-                                    this.handleEnemyDeath(enemy);
-                                }
-                            }
-                        }
-
-                        // Screen shake and sound
-                        this.ui.triggerScreenShake(8, 200);
-                        // Sound removed - too frequent
-                    }
+            for (const enemy of allTargets) {
+                const d = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y).distance;
+                if (d < nearestDist) {
+                    nearestDist = d;
+                    nearest = enemy;
                 }
             }
 
-            // Forcefield - damages all enemies inside radius
-            if (weapon.type === 'forcefield') {
-                const ffDmg = weapon.damage * this.player.stats.damageMultiplier * deltaTime * 10;
-                // Check all enemies
-                for (const enemy of this.enemies) {
-                    const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-                    if (wrapped.distance < weapon.radius) {
-                        enemy.takeDamage(ffDmg);
+            this.activateChainAttack(nearest, weapon, allTargets);
+        }
+    }
 
-                        if (enemy.isDead()) {
-                            this.handleEnemyDeath(enemy);
-                        }
-                    }
-                }
+    activateChainAttack(nearest, weapon, allTargets) {
+        if (nearest) {
+            weapon._teslaCooldown = weapon.fireRate;
+            const chainTargets = weapon.chainTargets || 3;
+            const chainRange = weapon.chainRange || 120;
+            const chain = [nearest];
+            const hit = new Set([nearest]);
 
-                // Check miniboss
-                if (this.miniBoss && !this.miniBoss.isDead()) {
-                    const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y);
-                    if (wrapped.distance < weapon.radius) {
-                        this.miniBoss.takeDamage(ffDmg);
-                    }
-                }
+            // Damage primary
+            const teslaHit = this.calcPlayerDamage(weapon.damage);
+            nearest.takeDamage(teslaHit.damage);
 
-                // Check all bosses
-                for (const boss of this.bosses) {
-                    if (boss && !boss.isDead()) {
-                        const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
-                        if (wrapped.distance < weapon.radius) {
-                            boss.takeDamage(ffDmg);
-                        }
-                    }
-                }
+            if (teslaHit.isCrit)
+                this.particles.createDamageNumber(nearest.x, nearest.y, Math.round(teslaHit.damage), true);
+
+            if (nearest.isDead())
+                this.handleEnemyDeath(nearest);
+
+            // Chain to nearby enemies
+            this.processChainTargets(chainTargets, chainRange, allTargets, hit, nearest, chain, weapon);
+
+            // Store chain for rendering
+            weapon._teslaChain = chain.map(e => ({ x: e.x, y: e.y }));
+            weapon._teslaChainTime = 200;
+        }
+    }
+
+    processChainTargets(chainTargets, chainRange, allTargets, hit, nearest, chain, weapon) {
+        for (let c = 0; c < chainTargets; c++) {
+
+            const nextTarget = this.getNextTarget(chainRange, allTargets, hit, nearest);
+            if (nextTarget) {
+                hit.add(nextTarget);
+                chain.push(nextTarget);
+                const chainHit = this.calcPlayerDamage(weapon.damage * (0.7 - c * 0.1));
+                nextTarget.takeDamage(chainHit.damage);
+                if (chainHit.isCrit)
+                    this.particles.createDamageNumber(nextTarget.x, nextTarget.y, Math.round(chainHit.damage), true);
+                if (nextTarget.isDead())
+                    this.handleEnemyDeath(nextTarget);
             }
 
-            // Tesla Coil â€” chain lightning to nearest + chained targets
-            if (weapon.type === 'teslaCoil') {
-                if (weapon._teslaCooldown === undefined) weapon._teslaCooldown = 0;
-                if (weapon._teslaChain === undefined) weapon._teslaChain = null;
+        }
+    }
 
-                weapon._teslaCooldown -= deltaTime * 1000;
-
-                if (weapon._teslaCooldown <= 0) {
-                    // Find nearest enemy
-                    let nearest = null;
-                    let nearestDist = weapon.range;
-                    const allTargets = [...this.enemies];
-                    if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
-                    for (const boss of this.bosses) {
-                        if (boss && !boss.isDead()) allTargets.push(boss);
-                    }
-
-                    for (const enemy of allTargets) {
-                        const d = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y).distance;
-                        if (d < nearestDist) {
-                            nearestDist = d;
-                            nearest = enemy;
-                        }
-                    }
-
-                    if (nearest) {
-                        weapon._teslaCooldown = weapon.fireRate;
-                        const chainTargets = weapon.chainTargets || 3;
-                        const chainRange = weapon.chainRange || 120;
-                        const chain = [nearest];
-                        const hit = new Set([nearest]);
-
-                        // Damage primary
-                        const teslaHit = this.calcPlayerDamage(weapon.damage);
-                        nearest.takeDamage(teslaHit.damage);
-                        if (teslaHit.isCrit) this.particles.createDamageNumber(nearest.x, nearest.y, Math.round(teslaHit.damage), true);
-                        if (nearest.isDead()) this.handleEnemyDeath(nearest);
-
-                        // Chain to nearby enemies
-                        let current = nearest;
-                        for (let c = 0; c < chainTargets; c++) {
-                            let nextTarget = null;
-                            let nextDist = chainRange;
-                            for (const enemy of allTargets) {
-                                if (hit.has(enemy) || enemy.isDead()) continue;
-                                const d = this.getWrappedDistance(current.x, current.y, enemy.x, enemy.y).distance;
-                                if (d < nextDist) {
-                                    nextDist = d;
-                                    nextTarget = enemy;
-                                }
-                            }
-                            if (!nextTarget) break;
-                            hit.add(nextTarget);
-                            chain.push(nextTarget);
-                            const chainHit = this.calcPlayerDamage(weapon.damage * (0.7 - c * 0.1));
-                            nextTarget.takeDamage(chainHit.damage);
-                            if (chainHit.isCrit) this.particles.createDamageNumber(nextTarget.x, nextTarget.y, Math.round(chainHit.damage), true);
-                            if (nextTarget.isDead()) this.handleEnemyDeath(nextTarget);
-                            current = nextTarget;
-                        }
-
-                        // Store chain for rendering
-                        weapon._teslaChain = chain.map(e => ({ x: e.x, y: e.y }));
-                        weapon._teslaChainTime = 200; // ms to display
-                    }
-                }
-
-                // Decay chain display
-                if (weapon._teslaChainTime > 0) {
-                    weapon._teslaChainTime -= deltaTime * 1000;
-                    if (weapon._teslaChainTime <= 0) weapon._teslaChain = null;
-                }
+    getNextTarget(chainRange, allTargets, hit, current) {
+        let nextTarget = null;
+        let nextDist = chainRange;
+        for (const enemy of allTargets) {
+            if (hit.has(enemy) || enemy.isDead()) continue;
+            const d = this.getWrappedDistance(current.x, current.y, enemy.x, enemy.y).distance;
+            if (d < nextDist) {
+                nextDist = d;
+                nextTarget = enemy;
             }
+        }
+        return nextTarget;
+    }
 
-            // Soul Drain â€” beam to nearest, lifeSteal
-            if (weapon.type === 'soulDrain') {
-                let nearest = null;
-                let nearestDist = weapon.range;
-                const allTargets = [...this.enemies];
-                if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
-                for (const boss of this.bosses) {
-                    if (boss && !boss.isDead()) allTargets.push(boss);
-                }
+    updateForcefield(weapon, deltaTime) {
+        const ffDmg = weapon.damage * this.player.stats.damageMultiplier * deltaTime * 10;
+        // Check all enemies
+        this.checkEnemiesInRange(weapon, ffDmg);
 
-                for (const enemy of allTargets) {
-                    const d = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y).distance;
-                    if (d < nearestDist) {
-                        nearestDist = d;
-                        nearest = enemy;
-                    }
-                }
+        // Check miniboss
+        if (this.miniBoss && !this.miniBoss.isDead()) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y);
+            if (wrapped.distance < weapon.radius) {
+                this.miniBoss.takeDamage(ffDmg);
+            }
+        }
 
-                weapon._soulTarget = nearest;
-                if (nearest) {
-                    const dmg = weapon.damage * this.player.stats.damageMultiplier * deltaTime * 10;
-                    nearest.takeDamage(dmg);
-                    // Life steal
-                    const heal = dmg * (weapon.lifeSteal || 0.15);
-                    this.player.heal(heal);
-                    if (nearest.isDead()) this.handleEnemyDeath(nearest);
+        // Check all bosses
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                if (wrapped.distance < weapon.radius) {
+                    boss.takeDamage(ffDmg);
                 }
             }
         }
     }
 
-    /**
-     * Render special weapons (laser, forcefield)
-     * @param {CanvasRenderingContext2D} ctx
-     */
+    checkEnemiesInRange(weapon, ffDmg) {
+        for (const enemy of this.enemies) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (wrapped.distance < weapon.radius) {
+                enemy.takeDamage(ffDmg);
+
+                if (enemy.isDead()) {
+                    this.handleEnemyDeath(enemy);
+                }
+            }
+        }
+    }
+
+    updateLaserFiring(weapon, deltaTime) {
+        if (weapon.laserCooldown === undefined) {
+            weapon.laserCooldown = 0;
+            weapon.laserFiring = false;
+            weapon.laserTimer = 0;
+            weapon.laserAngle = 0;
+            weapon.laserTarget = null;
+        }
+
+        // Update cooldown (sync with weapon.cooldown for UI)
+        if (weapon.laserCooldown > 0) {
+            weapon.laserCooldown -= deltaTime * 1000;
+            weapon.cooldown = weapon.laserCooldown; // Sync for UI display
+        } else {
+            weapon.cooldown = 0;
+        }
+
+        // Update firing animation
+        if (weapon.laserFiring) {
+            weapon.laserTimer -= deltaTime * 1000;
+            if (weapon.laserTimer <= 0) {
+                weapon.laserFiring = false;
+            }
+        }
+
+        // Fire when ready
+        this.handleLaserFiring(weapon);
+    }
+
+    handleLaserFiring(weapon) {
+        if (weapon.laserCooldown <= 0 && !weapon.laserFiring) {
+            // Find nearest enemy using wrapped distance
+            let nearest = null;
+            let nearestDist = weapon.range;
+
+            ({ nearestDist, nearest } = this.getClosestEnemy(nearestDist, nearest));
+
+            // Check miniboss
+            if (this.miniBoss && !this.miniBoss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y);
+                if (wrapped.distance < nearestDist) {
+                    nearestDist = wrapped.distance;
+                    nearest = this.miniBoss;
+                }
+            }
+
+            // Check boss
+            nearest = this.determineNearestBoss(nearestDist, nearest);
+
+            this.launchLaserStrike(nearest, weapon);
+        }
+    }
+
+    determineNearestBoss(nearestDist, nearest) {
+        let nD = nearestDist;
+        for (const boss of this.bosses) {
+
+            if (boss && !boss.isDead()) {
+                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+                if (wrapped.distance < nD) {
+                    nD = wrapped.distance;
+                    nearest = boss;
+                }
+            }
+        }
+        return nearest;
+    }
+
+    launchLaserStrike(nearest, weapon) {
+        if (nearest) {
+            // Calculate angle to target
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, nearest.x, nearest.y);
+            weapon.laserAngle = Math.atan2(wrapped.dy, wrapped.dx);
+            weapon.laserFiring = true;
+            weapon.laserTimer = CONFIG.WEAPONS.laser.beamDuration;
+            weapon.laserCooldown = weapon.fireRate;
+
+            // Damage ALL enemies in the beam path (piercing)
+            const beamLength = weapon.range;
+            const beamWidth = weapon.width * 2;
+
+            // Check all enemies for beam collision
+            const allTargets = [...this.enemies];
+            if (this.miniBoss && !this.miniBoss.isDead()) allTargets.push(this.miniBoss);
+            for (const boss of this.bosses) {
+                if (boss && !boss.isDead()) allTargets.push(boss);
+            }
+
+            this.handleBeamTargets(allTargets, beamLength, weapon, beamWidth);
+
+            // Screen shake and sound
+            this.ui.triggerScreenShake(8, 200);
+            // Sound removed - too frequent
+        }
+    }
+
+    handleBeamTargets(allTargets, beamLength, weapon, beamWidth) {
+        for (const enemy of allTargets) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (wrapped.distance > beamLength) continue;
+
+            // Check if enemy is within beam width (using perpendicular distance)
+            const enemyAngle = Math.atan2(wrapped.dy, wrapped.dx);
+            let angleDiff = Math.abs(enemyAngle - weapon.laserAngle);
+            if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+            // Skip enemies behind the beam
+            if (angleDiff > Math.PI / 2) continue;
+            const perpDist = Math.sin(angleDiff) * wrapped.distance;
+
+            if (Math.abs(perpDist) < beamWidth + enemy.radius) {
+                const hit = this.calcPlayerDamage(weapon.damage);
+                enemy.takeDamage(hit.damage);
+                if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+                this.particles.createHitEffect(enemy.x, enemy.y, '#00ffff');
+
+                if (enemy.isDead()) {
+                    this.handleEnemyDeath(enemy);
+                }
+            }
+        }
+    }
+
+    getClosestEnemy(nearestDist, nearest) {
+        for (const enemy of this.enemies) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (wrapped.distance < nearestDist) {
+                nearestDist = wrapped.distance;
+                nearest = enemy;
+            }
+        }
+        return { nearestDist, nearest };
+    }
+
     renderSpecialWeapons(ctx) {
         // Use zoomed viewport center (since ctx is already scaled)
         const viewWidth = this.canvas.width / this.camera.zoom;
@@ -2726,240 +2976,252 @@ class Game {
         const playerScreenY = viewHeight / 2;
 
         for (const weapon of this.player.weapons) {
-            if (!weapon) continue;
+            if (weapon) {
+                // Draw laser beam - powerful burst animation
+                this.displayLaserAnimation(weapon, playerScreenX, playerScreenY, ctx);
 
-            // Draw laser beam - powerful burst animation
-            if (weapon.type === 'laser' && weapon.laserFiring) {
-                const beamLength = weapon.range;
-                const endX = playerScreenX + Math.cos(weapon.laserAngle) * beamLength;
-                const endY = playerScreenY + Math.sin(weapon.laserAngle) * beamLength;
+                // Draw forcefield
+                this.createForcefieldVisuals(weapon, ctx, playerScreenX, playerScreenY);
 
-                // Calculate beam intensity based on timer
-                const progress = weapon.laserTimer / CONFIG.WEAPONS.laser.beamDuration;
-                const intensity = Math.sin(progress * Math.PI); // Fade in and out
-                const beamWidth = weapon.width * (1 + (1 - progress) * 0.5); // Slight expand as it fades
+                // Draw Tesla Coil chain lightning
+                this.displayTeslaChainVisuals(weapon, ctx, playerScreenX, playerScreenY);
 
-                ctx.save();
-
-                // Outer glow
-                ctx.strokeStyle = `rgba(0, 255, 255, ${0.15 * intensity})`;
-                ctx.lineWidth = beamWidth * 4;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(endX, endY);
-                ctx.stroke();
-
-                // Middle glow
-                ctx.strokeStyle = `rgba(100, 255, 255, ${0.3 * intensity})`;
-                ctx.lineWidth = beamWidth * 2;
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(endX, endY);
-                ctx.stroke();
-
-                // Core beam (bright white-cyan)
-                const gradient = ctx.createLinearGradient(
-                    playerScreenX, playerScreenY, endX, endY
-                );
-                gradient.addColorStop(0, `rgba(255, 255, 255, ${intensity})`);
-                gradient.addColorStop(0.5, `rgba(0, 255, 255, ${intensity})`);
-                gradient.addColorStop(1, `rgba(255, 255, 255, ${0.5 * intensity})`);
-
-                ctx.strokeStyle = gradient;
-                ctx.lineWidth = beamWidth;
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(endX, endY);
-                ctx.stroke();
-
-                // Inner core (pure white)
-                ctx.strokeStyle = `rgba(255, 255, 255, ${intensity})`;
-                ctx.lineWidth = beamWidth * 0.4;
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(endX, endY);
-                ctx.stroke();
-
-                // Impact flash at end (smaller)
-                const impactSize = 15 + Math.random() * 10;
-                const impactGradient = ctx.createRadialGradient(endX, endY, 0, endX, endY, impactSize * intensity);
-                impactGradient.addColorStop(0, `rgba(255, 255, 255, ${intensity})`);
-                impactGradient.addColorStop(0.4, `rgba(0, 255, 255, ${0.6 * intensity})`);
-                impactGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
-
-                ctx.fillStyle = impactGradient;
-                ctx.beginPath();
-                ctx.arc(endX, endY, impactSize * intensity, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Small muzzle flash
-                const muzzleGradient = ctx.createRadialGradient(playerScreenX, playerScreenY, 0, playerScreenX, playerScreenY, 20 * intensity);
-                muzzleGradient.addColorStop(0, `rgba(255, 255, 255, ${0.6 * intensity})`);
-                muzzleGradient.addColorStop(0.5, `rgba(0, 255, 255, ${0.3 * intensity})`);
-                muzzleGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
-
-                ctx.fillStyle = muzzleGradient;
-                ctx.beginPath();
-                ctx.arc(playerScreenX, playerScreenY, 20 * intensity, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.restore();
+                // Draw Soul Drain beam
+                this.drawSoulDrainVisuals(weapon, ctx, playerScreenX, playerScreenY);
             }
 
-            // Draw forcefield
-            if (weapon.type === 'forcefield') {
-                ctx.save();
-                ctx.translate(playerScreenX, playerScreenY);
-                ctx.rotate(weapon.rotation);
 
-                // Outer ring
-                ctx.strokeStyle = 'rgba(0, 191, 255, 0.6)';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.arc(0, 0, weapon.radius, 0, Math.PI * 2);
-                ctx.stroke();
-
-                // Inner glow
-                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, weapon.radius);
-                gradient.addColorStop(0, 'rgba(0, 191, 255, 0)');
-                gradient.addColorStop(0.6, 'rgba(0, 191, 255, 0.05)');
-                gradient.addColorStop(0.9, 'rgba(0, 191, 255, 0.15)');
-                gradient.addColorStop(1, 'rgba(0, 191, 255, 0.3)');
-
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(0, 0, weapon.radius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Rotating segments
-                ctx.strokeStyle = '#00bfff';
-                ctx.lineWidth = 3;
-                for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, weapon.radius - 5, angle, angle + Math.PI / 6);
-                    ctx.stroke();
-                }
-
-                ctx.restore();
-            }
-
-            // Draw Tesla Coil chain lightning
-            if (weapon.type === 'teslaCoil' && weapon._teslaChain && weapon._teslaChainTime > 0) {
-                ctx.save();
-                const alpha = Math.min(1, weapon._teslaChainTime / 100);
-                const screenChain = weapon._teslaChain.map(p => this.worldToScreen(p.x, p.y));
-
-                // Draw chain from player to first, then between targets
-                let prevX = playerScreenX;
-                let prevY = playerScreenY;
-
-                for (let i = 0; i < screenChain.length; i++) {
-                    const p = screenChain[i];
-                    // Jagged lightning segments
-                    ctx.strokeStyle = `rgba(0, 255, 136, ${0.8 * alpha})`;
-                    ctx.lineWidth = 4 - i * 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(prevX, prevY);
-                    // 2 intermediate jagged points
-                    const mx1 = (prevX + p.x) / 2 + (Math.random() - 0.5) * 30;
-                    const my1 = (prevY + p.y) / 2 + (Math.random() - 0.5) * 30;
-                    ctx.lineTo(mx1, my1);
-                    ctx.lineTo(p.x, p.y);
-                    ctx.stroke();
-
-                    // Glow
-                    ctx.strokeStyle = `rgba(0, 255, 136, ${0.2 * alpha})`;
-                    ctx.lineWidth = 12 - i * 2;
-                    ctx.beginPath();
-                    ctx.moveTo(prevX, prevY);
-                    ctx.lineTo(mx1, my1);
-                    ctx.lineTo(p.x, p.y);
-                    ctx.stroke();
-
-                    // Impact spark
-                    ctx.fillStyle = `rgba(200, 255, 220, ${alpha})`;
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 6 - i, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    prevX = p.x;
-                    prevY = p.y;
-                }
-
-                ctx.restore();
-            }
-
-            // Draw Soul Drain beam
-            if (weapon.type === 'soulDrain' && weapon._soulTarget) {
-                const target = weapon._soulTarget;
-                const targetScreen = this.worldToScreen(target.x, target.y);
-
-                ctx.save();
-                const t = Date.now();
-                const pulse = 0.6 + Math.sin(t / 100) * 0.2;
-
-                // Outer glow
-                ctx.strokeStyle = `rgba(170, 0, 255, ${0.15 * pulse})`;
-                ctx.lineWidth = (weapon.width || 6) * 4;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(targetScreen.x, targetScreen.y);
-                ctx.stroke();
-
-                // Main beam
-                const beamGrad = ctx.createLinearGradient(
-                    playerScreenX, playerScreenY, targetScreen.x, targetScreen.y
-                );
-                beamGrad.addColorStop(0, `rgba(200, 50, 255, ${pulse})`);
-                beamGrad.addColorStop(0.5, `rgba(150, 0, 200, ${pulse})`);
-                beamGrad.addColorStop(1, `rgba(100, 0, 150, ${pulse * 0.6})`);
-                ctx.strokeStyle = beamGrad;
-                ctx.lineWidth = weapon.width || 6;
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(targetScreen.x, targetScreen.y);
-                ctx.stroke();
-
-                // Core
-                ctx.strokeStyle = `rgba(255, 200, 255, ${pulse})`;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(playerScreenX, playerScreenY);
-                ctx.lineTo(targetScreen.x, targetScreen.y);
-                ctx.stroke();
-
-                // Soul particles flowing from target to player
-                for (let i = 0; i < 5; i++) {
-                    const prog = ((t / 300 + i * 0.2) % 1);
-                    const px = targetScreen.x + (playerScreenX - targetScreen.x) * prog;
-                    const py = targetScreen.y + (playerScreenY - targetScreen.y) * prog;
-                    const wobble = Math.sin(t / 80 + i * 2) * 8;
-                    ctx.fillStyle = `rgba(200, 100, 255, ${0.6 * (1 - prog)})`;
-                    ctx.beginPath();
-                    ctx.arc(px + wobble, py + wobble, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                // Heal indicator at player
-                ctx.fillStyle = `rgba(100, 255, 100, ${pulse * 0.4})`;
-                ctx.beginPath();
-                ctx.arc(playerScreenX, playerScreenY, 15, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.restore();
-            }
         }
     }
 
-    /**
-     * Render AOE attack effect (charging or active)
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {Object} aoeData - {x, y, radius, damage, startTime, charging}
-     * @param {Object} enemy - The enemy performing the AOE (for charging effect)
-     */
+    drawSoulDrainVisuals(weapon, ctx, playerScreenX, playerScreenY) {
+        if (weapon.type === 'soulDrain' && weapon._soulTarget) {
+            const target = weapon._soulTarget;
+            const targetScreen = this.worldToScreen(target.x, target.y);
+
+            ctx.save();
+            const t = Date.now();
+            const pulse = 0.6 + Math.sin(t / 100) * 0.2;
+
+            // Outer glow
+            ctx.strokeStyle = `rgba(170, 0, 255, ${0.15 * pulse})`;
+            ctx.lineWidth = (weapon.width || 6) * 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(targetScreen.x, targetScreen.y);
+            ctx.stroke();
+
+            // Main beam
+            const beamGrad = ctx.createLinearGradient(
+                playerScreenX, playerScreenY, targetScreen.x, targetScreen.y
+            );
+            beamGrad.addColorStop(0, `rgba(200, 50, 255, ${pulse})`);
+            beamGrad.addColorStop(0.5, `rgba(150, 0, 200, ${pulse})`);
+            beamGrad.addColorStop(1, `rgba(100, 0, 150, ${pulse * 0.6})`);
+            ctx.strokeStyle = beamGrad;
+            ctx.lineWidth = weapon.width || 6;
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(targetScreen.x, targetScreen.y);
+            ctx.stroke();
+
+            // Core
+            ctx.strokeStyle = `rgba(255, 200, 255, ${pulse})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(targetScreen.x, targetScreen.y);
+            ctx.stroke();
+
+            // Soul particles flowing from target to player
+            for (let i = 0; i < 5; i++) {
+                const prog = ((t / 300 + i * 0.2) % 1);
+                const px = targetScreen.x + (playerScreenX - targetScreen.x) * prog;
+                const py = targetScreen.y + (playerScreenY - targetScreen.y) * prog;
+                const wobble = Math.sin(t / 80 + i * 2) * 8;
+                ctx.fillStyle = `rgba(200, 100, 255, ${0.6 * (1 - prog)})`;
+                ctx.beginPath();
+                ctx.arc(px + wobble, py + wobble, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Heal indicator at player
+            ctx.fillStyle = `rgba(100, 255, 100, ${pulse * 0.4})`;
+            ctx.beginPath();
+            ctx.arc(playerScreenX, playerScreenY, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
+    displayTeslaChainVisuals(weapon, ctx, playerScreenX, playerScreenY) {
+        if (weapon.type === 'teslaCoil' && weapon._teslaChain && weapon._teslaChainTime > 0) {
+            ctx.save();
+            const alpha = Math.min(1, weapon._teslaChainTime / 100);
+            const screenChain = weapon._teslaChain.map(p => this.worldToScreen(p.x, p.y));
+
+            // Draw chain from player to first, then between targets
+            let prevX = playerScreenX;
+            let prevY = playerScreenY;
+
+            for (let i = 0; i < screenChain.length; i++) {
+                const p = screenChain[i];
+                // Jagged lightning segments
+                ctx.strokeStyle = `rgba(0, 255, 136, ${0.8 * alpha})`;
+                ctx.lineWidth = 4 - i * 0.5;
+                ctx.beginPath();
+                ctx.moveTo(prevX, prevY);
+                // 2 intermediate jagged points
+                const mx1 = (prevX + p.x) / 2 + (Math.random() - 0.5) * 30;
+                const my1 = (prevY + p.y) / 2 + (Math.random() - 0.5) * 30;
+                ctx.lineTo(mx1, my1);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+
+                // Glow
+                ctx.strokeStyle = `rgba(0, 255, 136, ${0.2 * alpha})`;
+                ctx.lineWidth = 12 - i * 2;
+                ctx.beginPath();
+                ctx.moveTo(prevX, prevY);
+                ctx.lineTo(mx1, my1);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+
+                // Impact spark
+                ctx.fillStyle = `rgba(200, 255, 220, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 6 - i, 0, Math.PI * 2);
+                ctx.fill();
+
+                prevX = p.x;
+                prevY = p.y;
+            }
+
+            ctx.restore();
+        }
+    }
+
+    createForcefieldVisuals(weapon, ctx, playerScreenX, playerScreenY) {
+        if (weapon.type === 'forcefield') {
+            ctx.save();
+            ctx.translate(playerScreenX, playerScreenY);
+            ctx.rotate(weapon.rotation);
+
+            // Outer ring
+            ctx.strokeStyle = 'rgba(0, 191, 255, 0.6)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, weapon.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner glow
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, weapon.radius);
+            gradient.addColorStop(0, 'rgba(0, 191, 255, 0)');
+            gradient.addColorStop(0.6, 'rgba(0, 191, 255, 0.05)');
+            gradient.addColorStop(0.9, 'rgba(0, 191, 255, 0.15)');
+            gradient.addColorStop(1, 'rgba(0, 191, 255, 0.3)');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, weapon.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rotating segments
+            ctx.strokeStyle = '#00bfff';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i;
+                ctx.beginPath();
+                ctx.arc(0, 0, weapon.radius - 5, angle, angle + Math.PI / 6);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    }
+
+    displayLaserAnimation(weapon, playerScreenX, playerScreenY, ctx) {
+        if (weapon.type === 'laser' && weapon.laserFiring) {
+            const beamLength = weapon.range;
+            const endX = playerScreenX + Math.cos(weapon.laserAngle) * beamLength;
+            const endY = playerScreenY + Math.sin(weapon.laserAngle) * beamLength;
+
+            // Calculate beam intensity based on timer
+            const progress = weapon.laserTimer / CONFIG.WEAPONS.laser.beamDuration;
+            const intensity = Math.sin(progress * Math.PI); // Fade in and out
+            const beamWidth = weapon.width * (1 + (1 - progress) * 0.5); // Slight expand as it fades
+
+            ctx.save();
+
+            // Outer glow
+            ctx.strokeStyle = `rgba(0, 255, 255, ${0.15 * intensity})`;
+            ctx.lineWidth = beamWidth * 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Middle glow
+            ctx.strokeStyle = `rgba(100, 255, 255, ${0.3 * intensity})`;
+            ctx.lineWidth = beamWidth * 2;
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Core beam (bright white-cyan)
+            const gradient = ctx.createLinearGradient(
+                playerScreenX, playerScreenY, endX, endY
+            );
+            gradient.addColorStop(0, `rgba(255, 255, 255, ${intensity})`);
+            gradient.addColorStop(0.5, `rgba(0, 255, 255, ${intensity})`);
+            gradient.addColorStop(1, `rgba(255, 255, 255, ${0.5 * intensity})`);
+
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = beamWidth;
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Inner core (pure white)
+            ctx.strokeStyle = `rgba(255, 255, 255, ${intensity})`;
+            ctx.lineWidth = beamWidth * 0.4;
+            ctx.beginPath();
+            ctx.moveTo(playerScreenX, playerScreenY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            // Impact flash at end (smaller)
+            const impactSize = 15 + Math.random() * 10;
+            const impactGradient = ctx.createRadialGradient(endX, endY, 0, endX, endY, impactSize * intensity);
+            impactGradient.addColorStop(0, `rgba(255, 255, 255, ${intensity})`);
+            impactGradient.addColorStop(0.4, `rgba(0, 255, 255, ${0.6 * intensity})`);
+            impactGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+
+            ctx.fillStyle = impactGradient;
+            ctx.beginPath();
+            ctx.arc(endX, endY, impactSize * intensity, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Small muzzle flash
+            const muzzleGradient = ctx.createRadialGradient(playerScreenX, playerScreenY, 0, playerScreenX, playerScreenY, 20 * intensity);
+            muzzleGradient.addColorStop(0, `rgba(255, 255, 255, ${0.6 * intensity})`);
+            muzzleGradient.addColorStop(0.5, `rgba(0, 255, 255, ${0.3 * intensity})`);
+            muzzleGradient.addColorStop(1, 'rgba(0, 255, 255, 0)');
+
+            ctx.fillStyle = muzzleGradient;
+            ctx.beginPath();
+            ctx.arc(playerScreenX, playerScreenY, 20 * intensity, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
     renderAOE(ctx, aoeData, enemy = null, bossShape = null) {
         const screen = this.worldToScreen(aoeData.x, aoeData.y);
         if (!screen.visible) return;
@@ -2981,247 +3243,7 @@ class Game {
             const warningRadius = aoeData.radius * chargeProgress;
             const now = Date.now();
 
-            if (isVoid) {
-                // === VOID OVERLORD CHARGING ===
-                // Dark void rift opening
-                const voidGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
-                voidGrad.addColorStop(0, `rgba(20, 0, 40, ${0.5 * pulse})`);
-                voidGrad.addColorStop(0.5, `rgba(80, 0, 160, ${0.3 * pulse})`);
-                voidGrad.addColorStop(1, 'rgba(120, 0, 255, 0)');
-                ctx.fillStyle = voidGrad;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Purple lightning cracks converging
-                for (let i = 0; i < 8; i++) {
-                    const angle = (Math.PI * 2 / 8) * i + now * 0.001;
-                    const startDist = aoeData.radius * 1.2;
-                    const endDist = warningRadius * (1 - chargeProgress * 0.8);
-                    ctx.strokeStyle = `rgba(180, 80, 255, ${0.7 * pulse})`;
-                    ctx.lineWidth = 2 + chargeProgress * 2;
-                    ctx.beginPath();
-                    let px = screen.x + Math.cos(angle) * startDist;
-                    let py = screen.y + Math.sin(angle) * startDist;
-                    ctx.moveTo(px, py);
-                    // Jagged lightning path
-                    const segments = 5;
-                    for (let s = 1; s <= segments; s++) {
-                        const t = s / segments;
-                        const dist = startDist - (startDist - endDist) * t;
-                        const jitter = (Math.random() - 0.5) * 20 * (1 - t);
-                        px = screen.x + Math.cos(angle + jitter * 0.02) * dist + jitter;
-                        py = screen.y + Math.sin(angle + jitter * 0.02) * dist + jitter;
-                        ctx.lineTo(px, py);
-                    }
-                    ctx.stroke();
-                }
-
-                // Converging dark wisps (spiral inward)
-                for (let i = 0; i < 16; i++) {
-                    const angle = (Math.PI * 2 / 16) * i + now * 0.003 * (i % 2 === 0 ? 1 : -1);
-                    const dist = aoeData.radius * (1 - chargeProgress * 0.6) * (0.5 + Math.sin(now * 0.005 + i) * 0.3);
-                    const wx = screen.x + Math.cos(angle) * dist;
-                    const wy = screen.y + Math.sin(angle) * dist;
-                    const size = 3 + chargeProgress * 5;
-                    ctx.fillStyle = `rgba(100, 0, 200, ${0.6 * pulse})`;
-                    ctx.beginPath();
-                    ctx.arc(wx, wy, size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                // Pulsing void ring
-                ctx.strokeStyle = `rgba(150, 50, 255, ${0.8 * pulse})`;
-                ctx.lineWidth = 3 + chargeProgress * 3;
-                ctx.setLineDash([10, 8]);
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-            } else if (isCrystal) {
-                // === CRYOMANCER CHARGING ===
-                // Ice crystals forming ring
-                const iceGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
-                iceGrad.addColorStop(0, `rgba(200, 240, 255, ${0.3 * pulse})`);
-                iceGrad.addColorStop(0.6, `rgba(100, 180, 255, ${0.2 * pulse})`);
-                iceGrad.addColorStop(1, 'rgba(50, 100, 200, 0)');
-                ctx.fillStyle = iceGrad;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Frost crystals converging
-                for (let i = 0; i < 12; i++) {
-                    const angle = (Math.PI * 2 / 12) * i + now * 0.002;
-                    const dist = aoeData.radius * (1 - chargeProgress * 0.5);
-                    const cx = screen.x + Math.cos(angle) * dist;
-                    const cy = screen.y + Math.sin(angle) * dist;
-                    ctx.save();
-                    ctx.translate(cx, cy);
-                    ctx.rotate(angle + now * 0.003);
-                    ctx.fillStyle = `rgba(180, 220, 255, ${0.7 * pulse})`;
-                    // Diamond crystal shape
-                    ctx.beginPath();
-                    const cs = 4 + chargeProgress * 6;
-                    ctx.moveTo(0, -cs);
-                    ctx.lineTo(cs * 0.5, 0);
-                    ctx.lineTo(0, cs);
-                    ctx.lineTo(-cs * 0.5, 0);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
-                }
-
-                ctx.strokeStyle = `rgba(150, 200, 255, ${0.7 * pulse})`;
-                ctx.lineWidth = 3;
-                ctx.setLineDash([12, 8]);
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-            } else if (isLava) {
-                // === PYROCLASM CHARGING ===
-                const lavaGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
-                lavaGrad.addColorStop(0, `rgba(255, 80, 0, ${0.4 * pulse})`);
-                lavaGrad.addColorStop(0.5, `rgba(255, 40, 0, ${0.3 * pulse})`);
-                lavaGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');
-                ctx.fillStyle = lavaGrad;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Rising ember particles
-                for (let i = 0; i < 14; i++) {
-                    const angle = (Math.PI * 2 / 14) * i + now * 0.002;
-                    const dist = warningRadius * (0.3 + Math.sin(now * 0.004 + i * 0.7) * 0.4);
-                    const ex = screen.x + Math.cos(angle) * dist;
-                    const ey = screen.y + Math.sin(angle) * dist - Math.sin(now * 0.006 + i) * 10 * chargeProgress;
-                    ctx.fillStyle = `rgba(255, ${150 + Math.sin(now * 0.01 + i) * 100}, 0, ${0.8 * pulse})`;
-                    ctx.beginPath();
-                    ctx.arc(ex, ey, 3 + chargeProgress * 4, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                ctx.strokeStyle = `rgba(255, 100, 0, ${0.8 * pulse})`;
-                ctx.lineWidth = 4 + chargeProgress * 3;
-                ctx.setLineDash([15, 8]);
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-            } else if (isMech) {
-                // === OVERLOAD PRIME CHARGING ===
-                const mechGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
-                mechGrad.addColorStop(0, `rgba(0, 255, 255, ${0.3 * pulse})`);
-                mechGrad.addColorStop(0.5, `rgba(0, 150, 255, ${0.2 * pulse})`);
-                mechGrad.addColorStop(1, 'rgba(0, 80, 200, 0)');
-                ctx.fillStyle = mechGrad;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Scanning grid lines
-                ctx.strokeStyle = `rgba(0, 255, 200, ${0.4 * pulse})`;
-                ctx.lineWidth = 1;
-                const gridSize = 30;
-                const gridOffset = (now * 0.05) % gridSize;
-                ctx.beginPath();
-                for (let gx = -warningRadius; gx <= warningRadius; gx += gridSize) {
-                    ctx.moveTo(screen.x + gx + gridOffset, screen.y - warningRadius);
-                    ctx.lineTo(screen.x + gx + gridOffset, screen.y + warningRadius);
-                }
-                for (let gy = -warningRadius; gy <= warningRadius; gy += gridSize) {
-                    ctx.moveTo(screen.x - warningRadius, screen.y + gy + gridOffset);
-                    ctx.lineTo(screen.x + warningRadius, screen.y + gy + gridOffset);
-                }
-                ctx.stroke();
-
-                // Rotating hex ring
-                ctx.strokeStyle = `rgba(0, 200, 255, ${0.7 * pulse})`;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                for (let i = 0; i < 6; i++) {
-                    const a = (Math.PI * 2 / 6) * i + now * 0.002;
-                    const hx = screen.x + Math.cos(a) * warningRadius;
-                    const hy = screen.y + Math.sin(a) * warningRadius;
-                    if (i === 0) ctx.moveTo(hx, hy);
-                    else ctx.lineTo(hx, hy);
-                }
-                ctx.closePath();
-                ctx.stroke();
-
-            } else if (isEye) {
-                // === DEVOURER CHARGING ===
-                const eyeGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
-                eyeGrad.addColorStop(0, `rgba(0, 0, 0, ${0.6 * pulse})`);
-                eyeGrad.addColorStop(0.4, `rgba(40, 0, 60, ${0.4 * pulse})`);
-                eyeGrad.addColorStop(1, 'rgba(80, 0, 100, 0)');
-                ctx.fillStyle = eyeGrad;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Inward-spiraling shadow tendrils
-                for (let i = 0; i < 10; i++) {
-                    const angle = (Math.PI * 2 / 10) * i - now * 0.004;
-                    const dist = warningRadius * (1 - chargeProgress * 0.3);
-                    ctx.strokeStyle = `rgba(60, 0, 80, ${0.6 * pulse})`;
-                    ctx.lineWidth = 3 + chargeProgress * 3;
-                    ctx.beginPath();
-                    const sx = screen.x + Math.cos(angle) * dist;
-                    const sy = screen.y + Math.sin(angle) * dist;
-                    ctx.moveTo(sx, sy);
-                    const ex = screen.x + Math.cos(angle + 0.5) * dist * 0.3;
-                    const ey = screen.y + Math.sin(angle + 0.5) * dist * 0.3;
-                    ctx.quadraticCurveTo(
-                        screen.x + Math.cos(angle + 0.25) * dist * 0.7,
-                        screen.y + Math.sin(angle + 0.25) * dist * 0.7,
-                        ex, ey
-                    );
-                    ctx.stroke();
-                }
-
-                ctx.strokeStyle = `rgba(100, 0, 150, ${0.8 * pulse})`;
-                ctx.lineWidth = 3;
-                ctx.setLineDash([8, 6]);
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-            } else {
-                // === GENERIC / MINIBOSS CHARGING ===
-                ctx.strokeStyle = `rgba(255, 200, 0, ${0.6 * pulse})`;
-                ctx.lineWidth = 4 + chargeProgress * 4;
-                ctx.setLineDash([15, 10]);
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                const innerGradient = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
-                innerGradient.addColorStop(0, `rgba(255, 150, 0, ${0.2 * pulse})`);
-                innerGradient.addColorStop(0.7, `rgba(255, 100, 0, ${0.1 * pulse})`);
-                innerGradient.addColorStop(1, 'rgba(255, 50, 0, 0)');
-                ctx.fillStyle = innerGradient;
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
-                ctx.fill();
-
-                for (let i = 0; i < 12; i++) {
-                    const angle = (Math.PI * 2 / 12) * i + now * 0.002;
-                    const particleDist = aoeData.radius * (1 - chargeProgress * 0.7);
-                    const particleX = screen.x + Math.cos(angle) * particleDist;
-                    const particleY = screen.y + Math.sin(angle) * particleDist;
-                    ctx.fillStyle = `rgba(255, 200, 50, ${0.8 * pulse})`;
-                    ctx.beginPath();
-                    ctx.arc(particleX, particleY, 4 + chargeProgress * 4, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+            this.displayWarningEffect({ isVoid, ctx, screen, warningRadius, pulse, now, aoeData, chargeProgress, isCrystal, isLava, isMech, isEye });
 
             ctx.restore();
             return;
@@ -3238,240 +3260,533 @@ class Game {
         const pulseIntensity = Math.sin(progress * Math.PI);
         const now = Date.now();
 
-        if (isVoid) {
-            // === VOID OVERLORD ACTIVE ===
-            // Dark portal center
-            const voidCore = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
-            voidCore.addColorStop(0, `rgba(0, 0, 0, ${0.7 * pulseIntensity})`);
-            voidCore.addColorStop(0.3, `rgba(40, 0, 80, ${0.5 * pulseIntensity})`);
-            voidCore.addColorStop(0.7, `rgba(80, 0, 160, ${0.3 * pulseIntensity})`);
-            voidCore.addColorStop(1, 'rgba(120, 0, 255, 0)');
-            ctx.fillStyle = voidCore;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Void tentacle wisps spiraling outward
-            for (let i = 0; i < 6; i++) {
-                const baseAngle = (Math.PI * 2 / 6) * i + now * 0.003;
-                ctx.strokeStyle = `rgba(150, 50, 255, ${0.6 * pulseIntensity})`;
-                ctx.lineWidth = 4 + Math.sin(now * 0.005 + i) * 2;
-                ctx.beginPath();
-                for (let t = 0; t < 20; t++) {
-                    const frac = t / 20;
-                    const spiralAngle = baseAngle + frac * Math.PI * 1.5;
-                    const dist = frac * aoeData.radius * 0.9;
-                    const wobble = Math.sin(now * 0.008 + t * 0.5 + i) * 8;
-                    const tx = screen.x + Math.cos(spiralAngle) * dist + wobble;
-                    const ty = screen.y + Math.sin(spiralAngle) * dist + wobble;
-                    if (t === 0) ctx.moveTo(tx, ty);
-                    else ctx.lineTo(tx, ty);
-                }
-                ctx.stroke();
-            }
-
-            // Pulsing void ring
-            ctx.strokeStyle = `rgba(180, 80, 255, ${0.9 * pulseIntensity})`;
-            ctx.lineWidth = 5 + Math.sin(now * 0.01) * 2;
-            ctx.shadowColor = 'rgba(150, 0, 255, 0.5)';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-
-        } else if (isCrystal) {
-            // === CRYOMANCER ACTIVE ===
-            const iceGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
-            iceGrad.addColorStop(0, `rgba(200, 240, 255, ${0.4 * pulseIntensity})`);
-            iceGrad.addColorStop(0.5, `rgba(100, 180, 255, ${0.3 * pulseIntensity})`);
-            iceGrad.addColorStop(1, `rgba(50, 100, 200, ${0.5 * pulseIntensity})`);
-            ctx.fillStyle = iceGrad;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Frost shards radiating
-            for (let i = 0; i < 8; i++) {
-                const angle = (Math.PI * 2 / 8) * i + now * 0.002;
-                ctx.save();
-                ctx.translate(screen.x, screen.y);
-                ctx.rotate(angle);
-                ctx.fillStyle = `rgba(180, 230, 255, ${0.7 * pulseIntensity})`;
-                ctx.beginPath();
-                ctx.moveTo(0, -8);
-                ctx.lineTo(aoeData.radius * 0.8, 0);
-                ctx.lineTo(0, 8);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-            }
-
-            ctx.strokeStyle = `rgba(150, 220, 255, ${0.8 * pulseIntensity})`;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-        } else if (isLava) {
-            // === PYROCLASM ACTIVE ===
-            const lavaGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
-            lavaGrad.addColorStop(0, `rgba(255, 200, 50, ${0.5 * pulseIntensity})`);
-            lavaGrad.addColorStop(0.4, `rgba(255, 80, 0, ${0.4 * pulseIntensity})`);
-            lavaGrad.addColorStop(1, `rgba(200, 0, 0, ${0.5 * pulseIntensity})`);
-            ctx.fillStyle = lavaGrad;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Fire eruption pillars
-            for (let i = 0; i < 10; i++) {
-                const angle = (Math.PI * 2 / 10) * i + now * 0.001;
-                const dist = aoeData.radius * (0.3 + Math.random() * 0.5);
-                const fx = screen.x + Math.cos(angle) * dist;
-                const fy = screen.y + Math.sin(angle) * dist;
-                const flameH = 10 + Math.sin(now * 0.008 + i * 1.3) * 8;
-                ctx.fillStyle = `rgba(255, ${150 + Math.sin(now * 0.01 + i) * 100}, 0, ${0.7 * pulseIntensity})`;
-                ctx.beginPath();
-                ctx.moveTo(fx - 4, fy);
-                ctx.lineTo(fx, fy - flameH);
-                ctx.lineTo(fx + 4, fy);
-                ctx.closePath();
-                ctx.fill();
-            }
-
-            ctx.strokeStyle = `rgba(255, 50, 0, ${0.8 * pulseIntensity})`;
-            ctx.lineWidth = 5;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-        } else if (isMech) {
-            // === OVERLOAD PRIME ACTIVE ===
-            const empGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
-            empGrad.addColorStop(0, `rgba(0, 255, 255, ${0.3 * pulseIntensity})`);
-            empGrad.addColorStop(0.5, `rgba(0, 100, 255, ${0.2 * pulseIntensity})`);
-            empGrad.addColorStop(1, `rgba(0, 50, 200, ${0.4 * pulseIntensity})`);
-            ctx.fillStyle = empGrad;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Electric arcs
-            for (let i = 0; i < 6; i++) {
-                const angle = (Math.PI * 2 / 6) * i + now * 0.004;
-                ctx.strokeStyle = `rgba(0, 255, ${200 + Math.sin(now * 0.01 + i) * 55}, ${0.8 * pulseIntensity})`;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(screen.x, screen.y);
-                const segments = 8;
-                for (let s = 1; s <= segments; s++) {
-                    const frac = s / segments;
-                    const dist = frac * aoeData.radius * 0.9;
-                    const jitter = (Math.sin(now * 0.02 + s * 3 + i * 7) * 15);
-                    ctx.lineTo(
-                        screen.x + Math.cos(angle) * dist + jitter,
-                        screen.y + Math.sin(angle) * dist + jitter
-                    );
-                }
-                ctx.stroke();
-            }
-
-            // Hexagonal boundary
-            ctx.strokeStyle = `rgba(0, 200, 255, ${0.8 * pulseIntensity})`;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const a = (Math.PI * 2 / 6) * i + now * 0.001;
-                const hx = screen.x + Math.cos(a) * aoeData.radius;
-                const hy = screen.y + Math.sin(a) * aoeData.radius;
-                if (i === 0) ctx.moveTo(hx, hy);
-                else ctx.lineTo(hx, hy);
-            }
-            ctx.closePath();
-            ctx.stroke();
-
-        } else if (isEye) {
-            // === DEVOURER ACTIVE ===
-            const devourGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
-            devourGrad.addColorStop(0, `rgba(0, 0, 0, ${0.8 * pulseIntensity})`);
-            devourGrad.addColorStop(0.4, `rgba(30, 0, 50, ${0.5 * pulseIntensity})`);
-            devourGrad.addColorStop(1, `rgba(60, 0, 80, ${0.3 * pulseIntensity})`);
-            ctx.fillStyle = devourGrad;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Shadow tendrils reaching outward
-            for (let i = 0; i < 8; i++) {
-                const angle = (Math.PI * 2 / 8) * i - now * 0.002;
-                ctx.strokeStyle = `rgba(80, 0, 120, ${0.7 * pulseIntensity})`;
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(screen.x, screen.y);
-                for (let t = 0; t < 15; t++) {
-                    const frac = t / 15;
-                    const wobble = Math.sin(now * 0.006 + t * 0.8 + i * 2) * 12 * frac;
-                    ctx.lineTo(
-                        screen.x + Math.cos(angle + wobble * 0.01) * frac * aoeData.radius * 0.85 + wobble,
-                        screen.y + Math.sin(angle + wobble * 0.01) * frac * aoeData.radius * 0.85
-                    );
-                }
-                ctx.stroke();
-            }
-
-            ctx.strokeStyle = `rgba(100, 0, 150, ${0.8 * pulseIntensity})`;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-        } else {
-            // === GENERIC / MINIBOSS ACTIVE ===
-            const outerRadius = aoeData.radius * (0.5 + progress * 0.5);
-            ctx.strokeStyle = `rgba(255, 100, 0, ${pulseIntensity * 0.4})`;
-            ctx.lineWidth = 8;
-            ctx.setLineDash([20, 10]);
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, outerRadius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            const gradient = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
-            gradient.addColorStop(0, `rgba(255, 50, 0, ${0.3 * pulseIntensity})`);
-            gradient.addColorStop(0.5, `rgba(255, 100, 0, ${0.2 * pulseIntensity})`);
-            gradient.addColorStop(1, `rgba(255, 150, 0, ${0.4 * pulseIntensity})`);
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = `rgba(255, 0, 0, ${0.8 * pulseIntensity})`;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            // Rotating energy particles
-            for (let i = 0; i < 8; i++) {
-                const angle = (Math.PI * 2 / 8) * i + elapsed * 0.005;
-                const px = screen.x + Math.cos(angle) * (aoeData.radius * 0.7);
-                const py = screen.y + Math.sin(angle) * (aoeData.radius * 0.7);
-                ctx.fillStyle = `rgba(255, 200, 50, ${pulseIntensity})`;
-                ctx.beginPath();
-                ctx.arc(px, py, 5, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.executeAreaEffect({ isVoid, ctx, screen, aoeData, pulseIntensity, now, isCrystal, isLava, isMech, isEye, progress, elapsed });
 
         ctx.restore();
     }
 
-    /**
-     * Render the Cryomancer's freeze zone at its world position
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {Object} fz - freezeZoneData with x, y, radius, warning, warningTimer, warningTime
-     */
+    displayWarningEffect(options) {
+        const { isVoid, ctx, screen, warningRadius, pulse, now, aoeData, chargeProgress, isCrystal, isLava, isMech, isEye } = options;
+        if (isVoid) {
+            // === VOID OVERLORD CHARGING ===
+            // Dark void rift opening
+            this.displayVoidCharge(ctx, screen, warningRadius, pulse, now, aoeData, chargeProgress);
+
+        } else if (isCrystal) {
+            // === CRYOMANCER CHARGING ===
+            // Ice crystals forming ring
+            this.displayFrostWarning(ctx, screen, warningRadius, pulse, now, aoeData, chargeProgress);
+
+        } else if (isLava) {
+            // === PYROCLASM CHARGING ===
+            this.displayLavaWarning(ctx, screen, warningRadius, pulse, now, chargeProgress);
+
+        } else if (isMech) {
+            // === OVERLOAD PRIME CHARGING ===
+            this.displayMechWarning(ctx, screen, warningRadius, pulse, now);
+
+        } else if (isEye) {
+            // === DEVOURER CHARGING ===
+            this.displayEyeWarning(ctx, screen, warningRadius, pulse, now, chargeProgress);
+
+        } else {
+            // === GENERIC / MINIBOSS CHARGING ===
+            this.displayChargingWarning(ctx, pulse, chargeProgress, screen, warningRadius, now, aoeData);
+        }
+    }
+
+    displayChargingWarning(ctx, pulse, chargeProgress, screen, warningRadius, now, aoeData) {
+        ctx.strokeStyle = `rgba(255, 200, 0, ${0.6 * pulse})`;
+        ctx.lineWidth = 4 + chargeProgress * 4;
+        ctx.setLineDash([15, 10]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const innerGradient = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
+        innerGradient.addColorStop(0, `rgba(255, 150, 0, ${0.2 * pulse})`);
+        innerGradient.addColorStop(0.7, `rgba(255, 100, 0, ${0.1 * pulse})`);
+        innerGradient.addColorStop(1, 'rgba(255, 50, 0, 0)');
+        ctx.fillStyle = innerGradient;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let i = 0; i < 12; i++) {
+            const angle = (Math.PI * 2 / 12) * i + now * 0.002;
+            const particleDist = aoeData.radius * (1 - chargeProgress * 0.7);
+            const particleX = screen.x + Math.cos(angle) * particleDist;
+            const particleY = screen.y + Math.sin(angle) * particleDist;
+            ctx.fillStyle = `rgba(255, 200, 50, ${0.8 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, 4 + chargeProgress * 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    displayEyeWarning(ctx, screen, warningRadius, pulse, now, chargeProgress) {
+        const eyeGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
+        eyeGrad.addColorStop(0, `rgba(0, 0, 0, ${0.6 * pulse})`);
+        eyeGrad.addColorStop(0.4, `rgba(40, 0, 60, ${0.4 * pulse})`);
+        eyeGrad.addColorStop(1, 'rgba(80, 0, 100, 0)');
+        ctx.fillStyle = eyeGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Inward-spiraling shadow tendrils
+        for (let i = 0; i < 10; i++) {
+            const angle = (Math.PI * 2 / 10) * i - now * 0.004;
+            const dist = warningRadius * (1 - chargeProgress * 0.3);
+            ctx.strokeStyle = `rgba(60, 0, 80, ${0.6 * pulse})`;
+            ctx.lineWidth = 3 + chargeProgress * 3;
+            ctx.beginPath();
+            const sx = screen.x + Math.cos(angle) * dist;
+            const sy = screen.y + Math.sin(angle) * dist;
+            ctx.moveTo(sx, sy);
+            const ex = screen.x + Math.cos(angle + 0.5) * dist * 0.3;
+            const ey = screen.y + Math.sin(angle + 0.5) * dist * 0.3;
+            ctx.quadraticCurveTo(
+                screen.x + Math.cos(angle + 0.25) * dist * 0.7,
+                screen.y + Math.sin(angle + 0.25) * dist * 0.7,
+                ex, ey
+            );
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = `rgba(100, 0, 150, ${0.8 * pulse})`;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    displayMechWarning(ctx, screen, warningRadius, pulse, now) {
+        const mechGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
+        mechGrad.addColorStop(0, `rgba(0, 255, 255, ${0.3 * pulse})`);
+        mechGrad.addColorStop(0.5, `rgba(0, 150, 255, ${0.2 * pulse})`);
+        mechGrad.addColorStop(1, 'rgba(0, 80, 200, 0)');
+        ctx.fillStyle = mechGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Scanning grid lines
+        ctx.strokeStyle = `rgba(0, 255, 200, ${0.4 * pulse})`;
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        const gridOffset = (now * 0.05) % gridSize;
+        ctx.beginPath();
+        for (let gx = -warningRadius; gx <= warningRadius; gx += gridSize) {
+            ctx.moveTo(screen.x + gx + gridOffset, screen.y - warningRadius);
+            ctx.lineTo(screen.x + gx + gridOffset, screen.y + warningRadius);
+        }
+        for (let gy = -warningRadius; gy <= warningRadius; gy += gridSize) {
+            ctx.moveTo(screen.x - warningRadius, screen.y + gy + gridOffset);
+            ctx.lineTo(screen.x + warningRadius, screen.y + gy + gridOffset);
+        }
+        ctx.stroke();
+
+        // Rotating hex ring
+        ctx.strokeStyle = `rgba(0, 200, 255, ${0.7 * pulse})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = (Math.PI * 2 / 6) * i + now * 0.002;
+            const hx = screen.x + Math.cos(a) * warningRadius;
+            const hy = screen.y + Math.sin(a) * warningRadius;
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    displayLavaWarning(ctx, screen, warningRadius, pulse, now, chargeProgress) {
+        const lavaGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
+        lavaGrad.addColorStop(0, `rgba(255, 80, 0, ${0.4 * pulse})`);
+        lavaGrad.addColorStop(0.5, `rgba(255, 40, 0, ${0.3 * pulse})`);
+        lavaGrad.addColorStop(1, 'rgba(200, 0, 0, 0)');
+        ctx.fillStyle = lavaGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rising ember particles
+        for (let i = 0; i < 14; i++) {
+            const angle = (Math.PI * 2 / 14) * i + now * 0.002;
+            const dist = warningRadius * (0.3 + Math.sin(now * 0.004 + i * 0.7) * 0.4);
+            const ex = screen.x + Math.cos(angle) * dist;
+            const ey = screen.y + Math.sin(angle) * dist - Math.sin(now * 0.006 + i) * 10 * chargeProgress;
+            ctx.fillStyle = `rgba(255, ${150 + Math.sin(now * 0.01 + i) * 100}, 0, ${0.8 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(ex, ey, 3 + chargeProgress * 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.strokeStyle = `rgba(255, 100, 0, ${0.8 * pulse})`;
+        ctx.lineWidth = 4 + chargeProgress * 3;
+        ctx.setLineDash([15, 8]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    displayFrostWarning(ctx, screen, warningRadius, pulse, now, aoeData, chargeProgress) {
+        const iceGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
+        iceGrad.addColorStop(0, `rgba(200, 240, 255, ${0.3 * pulse})`);
+        iceGrad.addColorStop(0.6, `rgba(100, 180, 255, ${0.2 * pulse})`);
+        iceGrad.addColorStop(1, 'rgba(50, 100, 200, 0)');
+        ctx.fillStyle = iceGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Frost crystals converging
+        for (let i = 0; i < 12; i++) {
+            const angle = (Math.PI * 2 / 12) * i + now * 0.002;
+            const dist = aoeData.radius * (1 - chargeProgress * 0.5);
+            const cx = screen.x + Math.cos(angle) * dist;
+            const cy = screen.y + Math.sin(angle) * dist;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle + now * 0.003);
+            ctx.fillStyle = `rgba(180, 220, 255, ${0.7 * pulse})`;
+            // Diamond crystal shape
+            ctx.beginPath();
+            const cs = 4 + chargeProgress * 6;
+            ctx.moveTo(0, -cs);
+            ctx.lineTo(cs * 0.5, 0);
+            ctx.lineTo(0, cs);
+            ctx.lineTo(-cs * 0.5, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.strokeStyle = `rgba(150, 200, 255, ${0.7 * pulse})`;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 8]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    displayVoidCharge(ctx, screen, warningRadius, pulse, now, aoeData, chargeProgress) {
+        const voidGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, warningRadius);
+        voidGrad.addColorStop(0, `rgba(20, 0, 40, ${0.5 * pulse})`);
+        voidGrad.addColorStop(0.5, `rgba(80, 0, 160, ${0.3 * pulse})`);
+        voidGrad.addColorStop(1, 'rgba(120, 0, 255, 0)');
+        ctx.fillStyle = voidGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Purple lightning cracks converging
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i + now * 0.001;
+            const startDist = aoeData.radius * 1.2;
+            const endDist = warningRadius * (1 - chargeProgress * 0.8);
+            ctx.strokeStyle = `rgba(180, 80, 255, ${0.7 * pulse})`;
+            ctx.lineWidth = 2 + chargeProgress * 2;
+            ctx.beginPath();
+            let px = screen.x + Math.cos(angle) * startDist;
+            let py = screen.y + Math.sin(angle) * startDist;
+            ctx.moveTo(px, py);
+            // Jagged lightning path
+            const segments = 5;
+            for (let s = 1; s <= segments; s++) {
+                const t = s / segments;
+                const dist = startDist - (startDist - endDist) * t;
+                const jitter = (Math.random() - 0.5) * 20 * (1 - t);
+                px = screen.x + Math.cos(angle + jitter * 0.02) * dist + jitter;
+                py = screen.y + Math.sin(angle + jitter * 0.02) * dist + jitter;
+                ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        }
+
+        // Converging dark wisps (spiral inward)
+        for (let i = 0; i < 16; i++) {
+            const angle = (Math.PI * 2 / 16) * i + now * 0.003 * (i % 2 === 0 ? 1 : -1);
+            const dist = aoeData.radius * (1 - chargeProgress * 0.6) * (0.5 + Math.sin(now * 0.005 + i) * 0.3);
+            const wx = screen.x + Math.cos(angle) * dist;
+            const wy = screen.y + Math.sin(angle) * dist;
+            const size = 3 + chargeProgress * 5;
+            ctx.fillStyle = `rgba(100, 0, 200, ${0.6 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(wx, wy, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Pulsing void ring
+        ctx.strokeStyle = `rgba(150, 50, 255, ${0.8 * pulse})`;
+        ctx.lineWidth = 3 + chargeProgress * 3;
+        ctx.setLineDash([10, 8]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, warningRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    executeAreaEffect(options) {
+        const { isVoid, ctx, screen, aoeData, pulseIntensity, now, isCrystal, isLava, isMech, isEye, progress, elapsed } = options;
+        if (isVoid) {
+            // === VOID OVERLORD ACTIVE ===
+            // Dark portal center
+            this.generateVoidGradient(ctx, screen, aoeData, pulseIntensity, now);
+
+        } else if (isCrystal) {
+            // === CRYOMANCER ACTIVE ===
+            this.generateFrostShards(ctx, screen, aoeData, pulseIntensity, now);
+
+        } else if (isLava) {
+            // === PYROCLASM ACTIVE ===
+            this.generateLavaVisuals(ctx, screen, aoeData, pulseIntensity, now);
+
+        } else if (isMech) {
+            // === OVERLOAD PRIME ACTIVE ===
+            this.generateElectricArcEffect(ctx, screen, aoeData, pulseIntensity, now);
+
+        } else if (isEye) {
+            // === DEVOURER ACTIVE ===
+            this.generateDevourerEffect(ctx, screen, aoeData, pulseIntensity, now);
+
+        } else {
+            // === GENERIC / MINIBOSS ACTIVE ===
+            this.generateEffectVisuals(aoeData, progress, ctx, pulseIntensity, screen, elapsed);
+        }
+    }
+
+    generateEffectVisuals(aoeData, progress, ctx, pulseIntensity, screen, elapsed) {
+        const outerRadius = aoeData.radius * (0.5 + progress * 0.5);
+        ctx.strokeStyle = `rgba(255, 100, 0, ${pulseIntensity * 0.4})`;
+        ctx.lineWidth = 8;
+        ctx.setLineDash([20, 10]);
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, outerRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        const gradient = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
+        gradient.addColorStop(0, `rgba(255, 50, 0, ${0.3 * pulseIntensity})`);
+        gradient.addColorStop(0.5, `rgba(255, 100, 0, ${0.2 * pulseIntensity})`);
+        gradient.addColorStop(1, `rgba(255, 150, 0, ${0.4 * pulseIntensity})`);
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `rgba(255, 0, 0, ${0.8 * pulseIntensity})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Rotating energy particles
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i + elapsed * 0.005;
+            const px = screen.x + Math.cos(angle) * (aoeData.radius * 0.7);
+            const py = screen.y + Math.sin(angle) * (aoeData.radius * 0.7);
+            ctx.fillStyle = `rgba(255, 200, 50, ${pulseIntensity})`;
+            ctx.beginPath();
+            ctx.arc(px, py, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    generateDevourerEffect(ctx, screen, aoeData, pulseIntensity, now) {
+        const devourGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
+        devourGrad.addColorStop(0, `rgba(0, 0, 0, ${0.8 * pulseIntensity})`);
+        devourGrad.addColorStop(0.4, `rgba(30, 0, 50, ${0.5 * pulseIntensity})`);
+        devourGrad.addColorStop(1, `rgba(60, 0, 80, ${0.3 * pulseIntensity})`);
+        ctx.fillStyle = devourGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Shadow tendrils reaching outward
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i - now * 0.002;
+            ctx.strokeStyle = `rgba(80, 0, 120, ${0.7 * pulseIntensity})`;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(screen.x, screen.y);
+            for (let t = 0; t < 15; t++) {
+                const frac = t / 15;
+                const wobble = Math.sin(now * 0.006 + t * 0.8 + i * 2) * 12 * frac;
+                ctx.lineTo(
+                    screen.x + Math.cos(angle + wobble * 0.01) * frac * aoeData.radius * 0.85 + wobble,
+                    screen.y + Math.sin(angle + wobble * 0.01) * frac * aoeData.radius * 0.85
+                );
+            }
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = `rgba(100, 0, 150, ${0.8 * pulseIntensity})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    generateElectricArcEffect(ctx, screen, aoeData, pulseIntensity, now) {
+        const empGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
+        empGrad.addColorStop(0, `rgba(0, 255, 255, ${0.3 * pulseIntensity})`);
+        empGrad.addColorStop(0.5, `rgba(0, 100, 255, ${0.2 * pulseIntensity})`);
+        empGrad.addColorStop(1, `rgba(0, 50, 200, ${0.4 * pulseIntensity})`);
+        ctx.fillStyle = empGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Electric arcs
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 / 6) * i + now * 0.004;
+            ctx.strokeStyle = `rgba(0, 255, ${200 + Math.sin(now * 0.01 + i) * 55}, ${0.8 * pulseIntensity})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(screen.x, screen.y);
+            const segments = 8;
+            for (let s = 1; s <= segments; s++) {
+                const frac = s / segments;
+                const dist = frac * aoeData.radius * 0.9;
+                const jitter = (Math.sin(now * 0.02 + s * 3 + i * 7) * 15);
+                ctx.lineTo(
+                    screen.x + Math.cos(angle) * dist + jitter,
+                    screen.y + Math.sin(angle) * dist + jitter
+                );
+            }
+            ctx.stroke();
+        }
+
+        // Hexagonal boundary
+        ctx.strokeStyle = `rgba(0, 200, 255, ${0.8 * pulseIntensity})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+            const a = (Math.PI * 2 / 6) * i + now * 0.001;
+            const hx = screen.x + Math.cos(a) * aoeData.radius;
+            const hy = screen.y + Math.sin(a) * aoeData.radius;
+            if (i === 0) ctx.moveTo(hx, hy);
+            else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath();
+        ctx.stroke();
+    }
+
+    generateLavaVisuals(ctx, screen, aoeData, pulseIntensity, now) {
+        const lavaGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
+        lavaGrad.addColorStop(0, `rgba(255, 200, 50, ${0.5 * pulseIntensity})`);
+        lavaGrad.addColorStop(0.4, `rgba(255, 80, 0, ${0.4 * pulseIntensity})`);
+        lavaGrad.addColorStop(1, `rgba(200, 0, 0, ${0.5 * pulseIntensity})`);
+        ctx.fillStyle = lavaGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fire eruption pillars
+        for (let i = 0; i < 10; i++) {
+            const angle = (Math.PI * 2 / 10) * i + now * 0.001;
+            const dist = aoeData.radius * (0.3 + Math.random() * 0.5);
+            const fx = screen.x + Math.cos(angle) * dist;
+            const fy = screen.y + Math.sin(angle) * dist;
+            const flameH = 10 + Math.sin(now * 0.008 + i * 1.3) * 8;
+            ctx.fillStyle = `rgba(255, ${150 + Math.sin(now * 0.01 + i) * 100}, 0, ${0.7 * pulseIntensity})`;
+            ctx.beginPath();
+            ctx.moveTo(fx - 4, fy);
+            ctx.lineTo(fx, fy - flameH);
+            ctx.lineTo(fx + 4, fy);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        ctx.strokeStyle = `rgba(255, 50, 0, ${0.8 * pulseIntensity})`;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    generateFrostShards(ctx, screen, aoeData, pulseIntensity, now) {
+        const iceGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
+        iceGrad.addColorStop(0, `rgba(200, 240, 255, ${0.4 * pulseIntensity})`);
+        iceGrad.addColorStop(0.5, `rgba(100, 180, 255, ${0.3 * pulseIntensity})`);
+        iceGrad.addColorStop(1, `rgba(50, 100, 200, ${0.5 * pulseIntensity})`);
+        ctx.fillStyle = iceGrad;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Frost shards radiating
+        for (let i = 0; i < 8; i++) {
+            const angle = (Math.PI * 2 / 8) * i + now * 0.002;
+            ctx.save();
+            ctx.translate(screen.x, screen.y);
+            ctx.rotate(angle);
+            ctx.fillStyle = `rgba(180, 230, 255, ${0.7 * pulseIntensity})`;
+            ctx.beginPath();
+            ctx.moveTo(0, -8);
+            ctx.lineTo(aoeData.radius * 0.8, 0);
+            ctx.lineTo(0, 8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.strokeStyle = `rgba(150, 220, 255, ${0.8 * pulseIntensity})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    generateVoidGradient(ctx, screen, aoeData, pulseIntensity, now) {
+        const voidCore = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, aoeData.radius);
+        voidCore.addColorStop(0, `rgba(0, 0, 0, ${0.7 * pulseIntensity})`);
+        voidCore.addColorStop(0.3, `rgba(40, 0, 80, ${0.5 * pulseIntensity})`);
+        voidCore.addColorStop(0.7, `rgba(80, 0, 160, ${0.3 * pulseIntensity})`);
+        voidCore.addColorStop(1, 'rgba(120, 0, 255, 0)');
+        ctx.fillStyle = voidCore;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Void tentacle wisps spiraling outward
+        for (let i = 0; i < 6; i++) {
+            const baseAngle = (Math.PI * 2 / 6) * i + now * 0.003;
+            ctx.strokeStyle = `rgba(150, 50, 255, ${0.6 * pulseIntensity})`;
+            ctx.lineWidth = 4 + Math.sin(now * 0.005 + i) * 2;
+            ctx.beginPath();
+            for (let t = 0; t < 20; t++) {
+                const frac = t / 20;
+                const spiralAngle = baseAngle + frac * Math.PI * 1.5;
+                const dist = frac * aoeData.radius * 0.9;
+                const wobble = Math.sin(now * 0.008 + t * 0.5 + i) * 8;
+                const tx = screen.x + Math.cos(spiralAngle) * dist + wobble;
+                const ty = screen.y + Math.sin(spiralAngle) * dist + wobble;
+                if (t === 0) ctx.moveTo(tx, ty);
+                else ctx.lineTo(tx, ty);
+            }
+            ctx.stroke();
+        }
+
+        // Pulsing void ring
+        ctx.strokeStyle = `rgba(180, 80, 255, ${0.9 * pulseIntensity})`;
+        ctx.lineWidth = 5 + Math.sin(now * 0.01) * 2;
+        ctx.shadowColor = 'rgba(150, 0, 255, 0.5)';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(screen.x, screen.y, aoeData.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
     renderFreezeZone(ctx, fz) {
         const screen = this.worldToScreen(fz.x, fz.y);
         if (!screen.visible) return;
@@ -3483,7 +3798,7 @@ class Game {
         ctx.save();
 
         if (fz.warning) {
-            // WARNING PHASE â€” pulsing ring showing where freeze will appear
+            // WARNING PHASE  pulsing ring showing where freeze will appear
             const warnPulse = Math.sin(t / 80) * 0.3 + 0.5;
 
             // Pulsing fill
@@ -3501,7 +3816,7 @@ class Game {
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Warning icon â€” pulsing ice crystal at center
+            // Warning icon  pulsing ice crystal at center
             const iconSize = (8 + warnPulse * 4) * z;
             ctx.strokeStyle = `rgba(150, 230, 255, ${0.4 + warnPulse * 0.4})`;
             ctx.lineWidth = 2 * z;
@@ -3522,7 +3837,7 @@ class Game {
             ctx.arc(screen.x, screen.y, convergeR, 0, Math.PI * 2);
             ctx.stroke();
         } else {
-            // ACTIVE PHASE â€” full damage zone
+            // ACTIVE PHASE  full damage zone
             const fzGrad = ctx.createRadialGradient(screen.x, screen.y, 0, screen.x, screen.y, r);
             fzGrad.addColorStop(0, 'rgba(100, 220, 255, 0.3)');
             fzGrad.addColorStop(0.7, 'rgba(60, 180, 255, 0.15)');
@@ -3722,10 +4037,6 @@ class Game {
         }
     }
 
-    /**
-     * Update projectiles
-     * @param {number} deltaTime 
-     */
     updateProjectiles(deltaTime) {
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const proj = this.projectiles[i];
@@ -3747,164 +4058,24 @@ class Game {
         }
     }
 
-    /**
-     * Update enemies
-     * @param {number} deltaTime 
-     */
     updateEnemies(deltaTime) {
         const arena = { width: CONFIG.ARENA.WIDTH, height: CONFIG.ARENA.HEIGHT };
 
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.enemies[i];
-
-            // Set target if not set
-            if (!enemy.target) {
-                enemy.setTarget(this.player);
-            }
-
-            enemy.update(deltaTime, arena);
-
-            // Check enemy projectiles hitting player (ranged enemies)
-            if (enemy.projectiles) {
-                for (let j = enemy.projectiles.length - 1; j >= 0; j--) {
-                    const proj = enemy.projectiles[j];
-                    if (!proj.active) {
-                        enemy.projectiles.splice(j, 1);
-                        continue;
-                    }
-
-                    // Wrap projectile position
-                    proj.x = this.wrapCoordinate(proj.x, CONFIG.ARENA.WIDTH);
-                    proj.y = this.wrapCoordinate(proj.y, CONFIG.ARENA.HEIGHT);
-
-                    // Check collision with player
-                    const dist = this.getWrappedDistance(this.player.x, this.player.y, proj.x, proj.y).distance;
-                    if (dist < this.player.size + proj.size) {
-                        this.player.takeDamage(proj.damage);
-
-                        enemy.projectiles.splice(j, 1);
-                    }
-                }
-            }
-
-            // Handle exploder-type explosion (base + world exploders)
-            if (enemy.hasExploded && enemy.explosionRadius) {
-                // Damage player if in range
-                const dist = MathUtils.distance(this.player.x, this.player.y, enemy.x, enemy.y);
-                if (dist < enemy.explosionRadius) {
-                    this.player.takeDamage(enemy.damage * 2);
-
-                    
-                    // iceDetonator: freeze player on explosion
-                    if (enemy.type === 'iceDetonator') {
-                        this.applyPlayerSlow(0.3, 2000);
-                    }
-                    
-                    // emPulser: disable weapons temporarily
-                    if (enemy.type === 'emPulser') {
-                        this.disablePlayerWeapons(2500);
-                    }
-                    
-                    // voidMine: pull player toward explosion center
-                    if (enemy.type === 'voidMine') {
-                        const pullDx = enemy.x - this.player.x;
-                        const pullDy = enemy.y - this.player.y;
-                        const pullLen = Math.hypot(pullDx, pullDy) || 1;
-                        this.player.x += (pullDx / pullLen) * 60;
-                        this.player.y += (pullDy / pullLen) * 60;
-                    }
-                }
-
-                // World-specific explosion colors
-                const explosionColors = {
-                    'exploder': '#ff4400', 'pyroBlob': '#ff6600',
-                    'iceDetonator': '#00ccff', 'emPulser': '#00ff88', 'voidMine': '#8800cc'
-                };
-                this.particles.createExplosion(enemy.x, enemy.y, {
-                    color: explosionColors[enemy.type] || '#ff4400', count: 30
-                });
-                this.enemies.splice(i, 1);
-                continue;
-            }
-
-            // Flame Imp fire trail damage to player
-            if (enemy.type === 'flameImp' && enemy.fireTrails) {
-                for (const trail of enemy.fireTrails) {
-                    const d = this.getWrappedDistance(this.player.x, this.player.y, trail.x, trail.y).distance;
-                    if (d < trail.radius + this.player.size) {
-                        this.player.takeDamage(trail.damage * deltaTime * 3);
-
-                    }
-                }
-            }
-
-            // Frost Giant freeze zone damage + slow
-            if (enemy.type === 'frostGiant' && enemy.freezeActive) {
-                const d = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y).distance;
-                if (d < enemy.freezeRadius) {
-                    this.player.takeDamage(enemy.damage * 0.5 * deltaTime * 3);
-
-                    this.applyPlayerSlow(0.5, 600);
-                }
-            }
-
-            // Void Devourer gravity pull
-            if (enemy.type === 'voidDevourer' && enemy.pullRadius) {
-                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-                if (wrapped.distance < enemy.pullRadius && wrapped.distance > enemy.size) {
-                    const pullStr = (enemy.pullForce || 80) * deltaTime;
-                    const len = wrapped.distance || 1;
-                    this.player.x -= (wrapped.dx / len) * pullStr;
-                    this.player.y -= (wrapped.dy / len) * pullStr;
-                }
-            }
-
-            // Remove dead enemies
-            if (enemy.isDead()) {
-                this.handleEnemyDeath(enemy);
-                this.enemies.splice(i, 1);
-            }
-        }
+        this.updateActiveEnemies(deltaTime, arena);
 
         // Update mini-boss
-        if (this.miniBoss) {
-            if (!this.miniBoss.isDead()) {
-                // Set target if not set
-                if (!this.miniBoss.target) {
-                    this.miniBoss.setTarget(this.player);
-                }
-
-                this.miniBoss.update(deltaTime, arena);
-
-                // Handle abilities
-                if (this.miniBoss.summonEnemies) {
-                    this.miniBoss.summonEnemies = false;
-                    this.spawner.spawnSummonedEnemies(this.miniBoss.x, this.miniBoss.y, 3);
-                }
-
-                // Handle AOE attack
-                if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
-                    const aoe = this.miniBoss.aoeData;
-                    const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
-                    if (dist < aoe.radius) {
-                        this.player.takeDamage(aoe.damage * deltaTime * 5);
-
-                    }
-                }
-            }
-
-            // Check if miniboss died (separate check so it always runs)
-            if (this.miniBoss.isDead()) {
-                this.handleMiniBossDeath(this.miniBoss);
-            }
-        }
+        this.updateMiniBoss(deltaTime, arena);
 
         // Update all bosses
+        this.updateBosses(deltaTime, arena);
+    }
+
+    updateBosses(deltaTime, arena) {
         for (let i = this.bosses.length - 1; i >= 0; i--) {
             const boss = this.bosses[i];
             if (!boss || boss.isDead()) {
                 // Remove dead boss
-                if (boss && boss.isDead()) {
+                if (boss?.isDead()) {
                     this.handleBossDeath(boss);
                 }
                 this.bosses.splice(i, 1);
@@ -3919,149 +4090,67 @@ class Game {
             boss.update(deltaTime, arena);
 
             // Handle boss abilities
-            if (boss.summonEnemies) {
-                boss.summonEnemies = false;
-                this.spawner.spawnSummonedEnemies(boss.x, boss.y, 5);
-            }
+            this.handleBossSummoning(boss);
 
-            // Shadow clone spawn (The Devourer) â€” spawns weaker shadow copies
-            if (boss.shadowCloneSpawn) {
-                boss.shadowCloneSpawn = false;
-                this.spawner.spawnSummonedEnemies(boss.x, boss.y, 3);
-            }
+            // Shadow clone spawn (The Devourer)  spawns weaker shadow copies
+            this.triggerShadowCloneAbility(boss);
 
-            if (boss.shootProjectiles) {
-                boss.shootProjectiles = false;
-                this.spawnBossProjectiles(boss);
-            }
+            this.handleBossProjectileShooting(boss);
 
-            // Drone barrage burst (Overload Prime) â€” 8-direction projectile bursts
-            if (boss.droneBarrageShoot) {
-                boss.droneBarrageShoot = false;
-                const numDirs = 8;
-                const offset = boss.droneBarrageBursts * 0.4; // Rotate each burst
-                for (let i = 0; i < numDirs; i++) {
-                    const angle = (i / numDirs) * Math.PI * 2 + offset;
-                    const proj = new Projectile(
-                        boss.x, boss.y, angle,
-                        {
-                            damage: boss.damage * 0.2,
-                            projectileSpeed: 250,
-                            projectileSize: 8,
-                            projectileColor: '#00ff88',
-                            range: 400,
-                            pierce: 1
-                        }
-                    );
-                    proj.isEnemy = true;
-                    this.projectiles.push(proj);
-                }
-            }
+            // Drone barrage burst (Overload Prime)  8-direction projectile bursts
+            this.triggerBarrageProjectile(boss);
 
             // Handle AOE attack
-            if (boss.aoeActive && boss.aoeData) {
-                const aoe = boss.aoeData;
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
-                if (dist < aoe.radius) {
-                    this.player.takeDamage(aoe.damage * deltaTime * 5);
+            this.handleBossAoEDamage(boss, deltaTime);
 
-                }
-            }
+            // WorldBoss: fire ring  damages player inside ring
+            this.handleFireRingDamage(boss, deltaTime);
 
-            // WorldBoss: fire ring â€” damages player inside ring
-            if (boss.fireRingActive) {
-                const maxRadius = boss.size * 2.5;
-                const elapsed = Date.now() - (boss.fireRingStart || Date.now());
-                const expandProgress = Math.min(elapsed / 600, 1.0);
-                const ringRadius = maxRadius * expandProgress;
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
-                if (dist < ringRadius) {
-                    this.player.takeDamage(boss.damage * 0.3 * deltaTime * 5);
-
-                }
-            }
-
-            // Pyroclasm: eruption zones â€” ground eruptions near player
-            if (boss.eruptionZones && boss.eruptionZones.length > 0) {
-                for (const zone of boss.eruptionZones) {
-                    if (zone.active) {
-                        const dist = this.getWrappedDistance(this.player.x, this.player.y, zone.x, zone.y).distance;
-                        if (dist < zone.radius) {
-                            this.player.takeDamage(zone.damage * deltaTime * 5);
-
-                        }
-                    }
-                }
-            }
+            // Pyroclasm: eruption zones  ground eruptions near player
+            this.handleEruptionDamage(boss, deltaTime);
 
             // Pyroclasm: magma trail damage
-            if (boss.magmaTrails && boss.magmaTrails.length > 0) {
-                for (const trail of boss.magmaTrails) {
-                    const dist = this.getWrappedDistance(this.player.x, this.player.y, trail.x, trail.y).distance;
-                    if (dist < trail.radius) {
-                        this.player.takeDamage(trail.damage * deltaTime * 5);
+            this.handleMagmaTrailDamage(boss, deltaTime);
 
-                    }
-                }
+            // WorldBoss: ice storm  damages and slows player nearby
+            this.handleIceStormDamage(boss, deltaTime);
+
+            // Cryomancer: freeze zone  persistent frozen area, damages and slows
+            this.handleFreezeZoneEffects(boss, deltaTime);
+
+            // WorldBoss: laser sweep  damages player in the beam line
+            this.handleLaserSweepDamage(boss, deltaTime);
+
+            // WorldBoss: void pull  pulls player toward boss + damage
+            this.handleVoidPullDamage(boss, deltaTime);
+        }
+    }
+
+    handleVoidPullDamage(boss, deltaTime) {
+        if (boss.voidPullActive) {
+            const pullRadius = 300;
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
+            if (wrapped.distance < pullRadius && wrapped.distance > boss.size) {
+                const pullStrength = 180 * deltaTime;
+                const len = wrapped.distance || 1;
+                this.player.x -= (wrapped.dx / len) * pullStrength;
+                this.player.y -= (wrapped.dy / len) * pullStrength;
+                this.player.takeDamage(boss.damage * 0.5 * deltaTime * 5);
+
             }
+        }
+    }
 
-            // WorldBoss: ice storm â€” damages and slows player nearby
-            if (boss.iceStormActive) {
-                const stormRadius = boss.size * 2.5;
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
-                if (dist < stormRadius) {
-                    this.player.takeDamage(boss.damage * 0.4 * deltaTime * 5);
-
-                    this.applyPlayerSlow(0.5, 500);
-                }
-            }
-
-            // Cryomancer: freeze zone â€” persistent frozen area, damages and slows
-            if (boss.freezeZoneActive && boss.freezeZoneData) {
-                const fz = boss.freezeZoneData;
-                // Advance warning timer
-                if (fz.warning) {
-                    fz.warningTimer += deltaTime * 1000;
-                    if (fz.warningTimer >= fz.warningTime) {
-                        fz.warning = false; // Warning phase over, zone is now active
-                    }
-                }
-                // Only deal damage after warning phase
-                if (!fz.warning) {
-                    const dist = this.getWrappedDistance(this.player.x, this.player.y, fz.x, fz.y).distance;
-                    if (dist < fz.radius) {
-                        this.player.takeDamage(fz.damage * deltaTime * 5);
-
-                        this.applyPlayerSlow(fz.slowMult, fz.slowDuration);
-                    }
-                }
-            }
-
-            // WorldBoss: laser sweep â€” damages player in the beam line
-            if (boss.laserSweepActive) {
-                const sweepLen = 300;
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
-                if (dist < sweepLen) {
-                    const wrapped = this.getWrappedDistance(boss.x, boss.y, this.player.x, this.player.y);
-                    const playerAngle = Math.atan2(wrapped.dy, wrapped.dx);
-                    let angleDiff = Math.abs(playerAngle - boss.laserSweepAngle);
-                    if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
-                    if (angleDiff < 0.25) {
-                        this.player.takeDamage(boss.damage * 0.5 * deltaTime * 5);
-
-                    }
-                }
-            }
-
-            // WorldBoss: void pull â€” pulls player toward boss + damage
-            if (boss.voidPullActive) {
-                const pullRadius = 300;
-                const wrapped = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y);
-                if (wrapped.distance < pullRadius && wrapped.distance > boss.size) {
-                    const pullStrength = 180 * deltaTime;
-                    const len = wrapped.distance || 1;
-                    this.player.x -= (wrapped.dx / len) * pullStrength;
-                    this.player.y -= (wrapped.dy / len) * pullStrength;
+    handleLaserSweepDamage(boss, deltaTime) {
+        if (boss.laserSweepActive) {
+            const sweepLen = 300;
+            const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
+            if (dist < sweepLen) {
+                const wrapped = this.getWrappedDistance(boss.x, boss.y, this.player.x, this.player.y);
+                const playerAngle = Math.atan2(wrapped.dy, wrapped.dx);
+                let angleDiff = Math.abs(playerAngle - boss.laserSweepAngle);
+                if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+                if (angleDiff < 0.25) {
                     this.player.takeDamage(boss.damage * 0.5 * deltaTime * 5);
 
                 }
@@ -4069,10 +4158,308 @@ class Game {
         }
     }
 
-    /**
-     * Spawn boss projectiles in pattern
-     * @param {Boss} boss - The boss spawning projectiles
-     */
+    handleFreezeZoneEffects(boss, deltaTime) {
+        if (boss.freezeZoneActive && boss.freezeZoneData) {
+            const fz = boss.freezeZoneData;
+            // Advance warning timer
+            if (fz.warning) {
+                fz.warningTimer += deltaTime * 1000;
+                if (fz.warningTimer >= fz.warningTime) {
+                    fz.warning = false; // Warning phase over, zone is now active
+                }
+            }
+            // Only deal damage after warning phase
+            if (!fz.warning) {
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, fz.x, fz.y).distance;
+                if (dist < fz.radius) {
+                    this.player.takeDamage(fz.damage * deltaTime * 5);
+
+                    this.applyPlayerSlow(fz.slowMult, fz.slowDuration);
+                }
+            }
+        }
+    }
+
+    handleIceStormDamage(boss, deltaTime) {
+        if (boss.iceStormActive) {
+            const stormRadius = boss.size * 2.5;
+            const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
+            if (dist < stormRadius) {
+                this.player.takeDamage(boss.damage * 0.4 * deltaTime * 5);
+
+                this.applyPlayerSlow(0.5, 500);
+            }
+        }
+    }
+
+    handleMagmaTrailDamage(boss, deltaTime) {
+        if (boss.magmaTrails && boss.magmaTrails.length > 0) {
+            for (const trail of boss.magmaTrails) {
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, trail.x, trail.y).distance;
+                if (dist < trail.radius) {
+                    this.player.takeDamage(trail.damage * deltaTime * 5);
+
+                }
+            }
+        }
+    }
+
+    handleEruptionDamage(boss, deltaTime) {
+        if (boss.eruptionZones && boss.eruptionZones.length > 0) {
+            for (const zone of boss.eruptionZones) {
+                if (zone.active) {
+                    const dist = this.getWrappedDistance(this.player.x, this.player.y, zone.x, zone.y).distance;
+                    if (dist < zone.radius) {
+                        this.player.takeDamage(zone.damage * deltaTime * 5);
+
+                    }
+                }
+            }
+        }
+    }
+
+    handleFireRingDamage(boss, deltaTime) {
+        if (boss.fireRingActive) {
+            const maxRadius = boss.size * 2.5;
+            const elapsed = Date.now() - (boss.fireRingStart || Date.now());
+            const expandProgress = Math.min(elapsed / 600, 1);
+            const ringRadius = maxRadius * expandProgress;
+            const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
+            if (dist < ringRadius) {
+                this.player.takeDamage(boss.damage * 0.3 * deltaTime * 5);
+
+            }
+        }
+    }
+
+    handleBossAoEDamage(boss, deltaTime) {
+        if (boss.aoeActive && boss.aoeData) {
+            const aoe = boss.aoeData;
+            const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
+            if (dist < aoe.radius) {
+                this.player.takeDamage(aoe.damage * deltaTime * 5);
+
+            }
+        }
+    }
+
+    triggerBarrageProjectile(boss) {
+        if (boss.droneBarrageShoot) {
+            boss.droneBarrageShoot = false;
+            const numDirs = 8;
+            const offset = boss.droneBarrageBursts * 0.4; // Rotate each burst
+            for (let i = 0; i < numDirs; i++) {
+                const angle = (i / numDirs) * Math.PI * 2 + offset;
+                const proj = new Projectile(
+                    boss.x, boss.y, angle,
+                    {
+                        damage: boss.damage * 0.2,
+                        projectileSpeed: 250,
+                        projectileSize: 8,
+                        projectileColor: '#00ff88',
+                        range: 400,
+                        pierce: 1
+                    }
+                );
+                proj.isEnemy = true;
+                this.projectiles.push(proj);
+            }
+        }
+    }
+
+    handleBossProjectileShooting(boss) {
+        if (boss.shootProjectiles) {
+            boss.shootProjectiles = false;
+            this.spawnBossProjectiles(boss);
+        }
+    }
+
+    triggerShadowCloneAbility(boss) {
+        if (boss.shadowCloneSpawn) {
+            boss.shadowCloneSpawn = false;
+            this.spawner.spawnSummonedEnemies(boss.x, boss.y, 3);
+        }
+    }
+
+    handleBossSummoning(boss) {
+        if (boss.summonEnemies) {
+            boss.summonEnemies = false;
+            this.spawner.spawnSummonedEnemies(boss.x, boss.y, 5);
+        }
+    }
+
+    updateMiniBoss(deltaTime, arena) {
+        if (this.miniBoss) {
+            this.updateMiniBossBehavior(deltaTime, arena);
+
+            // Check if miniboss died (separate check so it always runs)
+            if (this.miniBoss.isDead()) {
+                this.handleMiniBossDeath(this.miniBoss);
+            }
+        }
+    }
+
+    updateMiniBossBehavior(deltaTime, arena) {
+        if (!this.miniBoss.isDead()) {
+            // Set target if not set
+            if (!this.miniBoss.target) {
+                this.miniBoss.setTarget(this.player);
+            }
+
+            this.miniBoss.update(deltaTime, arena);
+
+            // Handle abilities
+            if (this.miniBoss.summonEnemies) {
+                this.miniBoss.summonEnemies = false;
+                this.spawner.spawnSummonedEnemies(this.miniBoss.x, this.miniBoss.y, 3);
+            }
+
+            // Handle AOE attack
+            if (this.miniBoss.aoeActive && this.miniBoss.aoeData) {
+                const aoe = this.miniBoss.aoeData;
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, aoe.x, aoe.y).distance;
+                if (dist < aoe.radius) {
+                    this.player.takeDamage(aoe.damage * deltaTime * 5);
+
+                }
+            }
+        }
+    }
+
+    updateActiveEnemies(deltaTime, arena) {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+
+            // Set target if not set
+            if (!enemy.target) {
+                enemy.setTarget(this.player);
+            }
+
+            enemy.update(deltaTime, arena);
+
+            // Check enemy projectiles hitting player (ranged enemies)
+            this.checkProjectilesCollision(enemy);
+
+            // Handle exploder-type explosion (base + world exploders)
+            if (enemy.hasExploded && enemy.explosionRadius) {
+                // Damage player if in range
+                const dist = MathUtils.distance(this.player.x, this.player.y, enemy.x, enemy.y);
+                this.processExplosionDamage(dist, enemy);
+
+                // World-specific explosion colors
+                const explosionColors = {
+                    'exploder': '#ff4400', 'pyroBlob': '#ff6600',
+                    'iceDetonator': '#00ccff', 'emPulser': '#00ff88', 'voidMine': '#8800cc'
+                };
+                this.particles.createExplosion(enemy.x, enemy.y, {
+                    color: explosionColors[enemy.type] || '#ff4400', count: 30
+                });
+                this.enemies.splice(i, 1);
+                continue;
+            }
+
+            // Flame Imp fire trail damage to player
+            this.processFlameImpTrails(enemy, deltaTime);
+
+            // Frost Giant freeze zone damage + slow
+            this.handleFrostGiantFreeze(enemy, deltaTime);
+
+            // Void Devourer gravity pull
+            this.handleGravityPull(enemy, deltaTime);
+
+            // Remove dead enemies
+            if (enemy.isDead()) {
+                this.handleEnemyDeath(enemy);
+                this.enemies.splice(i, 1);
+            }
+        }
+    }
+
+    processExplosionDamage(dist, enemy) {
+        if (dist < enemy.explosionRadius) {
+            this.player.takeDamage(enemy.damage * 2);
+
+
+            // iceDetonator: freeze player on explosion
+            if (enemy.type === 'iceDetonator') {
+                this.applyPlayerSlow(0.3, 2000);
+            }
+
+            // emPulser: disable weapons temporarily
+            if (enemy.type === 'emPulser') {
+                this.disablePlayerWeapons(2500);
+            }
+
+            // voidMine: pull player toward explosion center
+            if (enemy.type === 'voidMine') {
+                const pullDx = enemy.x - this.player.x;
+                const pullDy = enemy.y - this.player.y;
+                const pullLen = Math.hypot(pullDx, pullDy) || 1;
+                this.player.x += (pullDx / pullLen) * 60;
+                this.player.y += (pullDy / pullLen) * 60;
+            }
+        }
+    }
+
+    handleGravityPull(enemy, deltaTime) {
+        if (enemy.type === 'voidDevourer' && enemy.pullRadius) {
+            const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (wrapped.distance < enemy.pullRadius && wrapped.distance > enemy.size) {
+                const pullStr = (enemy.pullForce || 80) * deltaTime;
+                const len = wrapped.distance || 1;
+                this.player.x -= (wrapped.dx / len) * pullStr;
+                this.player.y -= (wrapped.dy / len) * pullStr;
+            }
+        }
+    }
+
+    handleFrostGiantFreeze(enemy, deltaTime) {
+        if (enemy.type === 'frostGiant' && enemy.freezeActive) {
+            const d = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y).distance;
+            if (d < enemy.freezeRadius) {
+                this.player.takeDamage(enemy.damage * 0.5 * deltaTime * 3);
+
+                this.applyPlayerSlow(0.5, 600);
+            }
+        }
+    }
+
+    processFlameImpTrails(enemy, deltaTime) {
+        if (enemy.type === 'flameImp' && enemy.fireTrails) {
+            for (const trail of enemy.fireTrails) {
+                const d = this.getWrappedDistance(this.player.x, this.player.y, trail.x, trail.y).distance;
+                if (d < trail.radius + this.player.size) {
+                    this.player.takeDamage(trail.damage * deltaTime * 3);
+
+                }
+            }
+        }
+    }
+
+    checkProjectilesCollision(enemy) {
+        if (enemy.projectiles) {
+            for (let j = enemy.projectiles.length - 1; j >= 0; j--) {
+                const proj = enemy.projectiles[j];
+                if (!proj.active) {
+                    enemy.projectiles.splice(j, 1);
+                    continue;
+                }
+
+                // Wrap projectile position
+                proj.x = this.wrapCoordinate(proj.x, CONFIG.ARENA.WIDTH);
+                proj.y = this.wrapCoordinate(proj.y, CONFIG.ARENA.HEIGHT);
+
+                // Check collision with player
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, proj.x, proj.y).distance;
+                if (dist < this.player.size + proj.size) {
+                    this.player.takeDamage(proj.damage);
+
+                    enemy.projectiles.splice(j, 1);
+                }
+            }
+        }
+    }
+
     spawnBossProjectiles(boss) {
         // Spiral burst pattern — projectiles spawn in a rotating spiral
         const numProjectiles = 24;
@@ -4100,10 +4487,6 @@ class Game {
         }
     }
 
-    /**
-     * Update pickups
-     * @param {number} deltaTime 
-     */
     updatePickups(deltaTime) {
         for (let i = this.pickups.length - 1; i >= 0; i--) {
             const pickup = this.pickups[i];
@@ -4136,10 +4519,6 @@ class Game {
         }
     }
 
-    /**
-     * Update drones
-     * @param {number} deltaTime 
-     */
     updateDrones(deltaTime) {
         for (const drone of this.drones) {
             // Pass enemies array to drone update
@@ -4148,220 +4527,71 @@ class Game {
             // Drone handles its own firing and projectiles internally
             // Check for hits from drone projectiles (using wrapped distance)
             for (const proj of drone.projectilePool) {
-                if (!proj.active) continue;
-
-                for (const enemy of this.enemies) {
-                    if (!enemy.active) continue;
-
-                    const dist = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y).distance;
-                    if (dist < proj.radius + enemy.radius) {
-                        const hit = this.calcPlayerDamage(proj.damage);
-                        enemy.takeDamage(hit.damage);
-                        if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                        proj.onHitEnemy(enemy);
-
-                        if (enemy.isDead()) {
-                            this.handleEnemyDeath(enemy);
-                        }
+                if (proj.active) {
+                    for (const enemy of this.enemies) {
+                        this.resolveEnemyHit(enemy, proj);
                     }
                 }
             }
         }
     }
 
-    /**
-     * Check all collisions (using wrapped distances for seamless toroidal world)
-     */
+    resolveEnemyHit(enemy, proj) {
+        if (enemy.active) {
+            const dist = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y).distance;
+            if (dist < proj.radius + enemy.radius) {
+                this.resolveProjectileImpact(proj, enemy);
+            }
+        }
+    }
+
+    resolveProjectileImpact(proj, enemy) {
+        const hit = this.calcPlayerDamage(proj.damage);
+        enemy.takeDamage(hit.damage);
+        if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+        proj.onHitEnemy(enemy);
+        if (enemy.isDead()) {
+            this.handleEnemyDeath(enemy);
+        }
+    }
+
     checkCollisions() {
         // Projectile vs Enemy
-        for (let i = this.projectiles.length - 1; i >= 0; i--) {
-            const proj = this.projectiles[i];
+        this.handleProjectileInteractions();
 
-            // Enemy projectiles hit player
-            if (proj.isEnemy) {
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, proj.x, proj.y).distance;
-                if (dist < this.player.radius + proj.radius) {
-                    this.player.takeDamage(proj.damage);
+        // Enemy vs Player (contact damage)
+        this.handleEnemyPlayerCollision();
 
-                    this.projectiles.splice(i, 1);
-                    continue;
-                }
-            }
+        // Mini-boss vs Player
+        this.handleMiniBossCollision();
 
-            // Player projectiles hit enemies
-            if (!proj.isEnemy) {
-                let hitSomething = false;
-                let hitEntity = null;
+        // Boss vs Player (check all bosses)
+        this.checkBossCollisions();
+    }
 
-                // Check regular enemies
-                for (const enemy of this.enemies) {
-                    const dist = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y).distance;
-                    if (dist < enemy.radius + proj.radius) {
-                        // Skip if this projectile already hit this enemy (boomerang/pierce tracking)
-                        if (proj.hitEnemies && proj.hitEnemies.has(enemy)) continue;
+    checkBossCollisions() {
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead()) {
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
+                if (dist < this.player.radius + boss.radius) {
+                    this.player.takeDamage(boss.damage * 0.5);
 
-                        const hit = this.calcPlayerDamage(proj.damage);
-                        enemy.takeDamage(hit.damage);
-                        if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                        this.particles.createHitEffect(proj.x, proj.y, '#ffffff');
-                        hitSomething = true;
-                        hitEntity = enemy;
-
-                        // Ice shard slow effect
-                        if (proj.weaponType === 'iceShard') {
-                            this.applyEnemySlow(enemy, 0.35, 1200);
-                        }
-
-                        if (!proj.onHitEnemy(enemy)) {
-                            proj.shouldRemove = true;
-                        }
-                        break;
-                    }
-                }
-
-                // Check mini-boss (only if projectile can still pierce)
-                if (!proj.shouldRemove && this.miniBoss && !this.miniBoss.isDead()) {
-                    const dist = this.getWrappedDistance(proj.x, proj.y, this.miniBoss.x, this.miniBoss.y).distance;
-                    if (dist < this.miniBoss.radius + proj.radius) {
-                        if (!(proj.hitEnemies && proj.hitEnemies.has(this.miniBoss))) {
-                        const hit = this.calcPlayerDamage(proj.damage);
-                        this.miniBoss.takeDamage(hit.damage);
-                        if (hit.isCrit) this.particles.createDamageNumber(this.miniBoss.x, this.miniBoss.y, Math.round(hit.damage), true);
-                        this.particles.createHitEffect(proj.x, proj.y, '#ff8800');
-                        hitSomething = true;
-                        hitEntity = this.miniBoss;
-
-                        if (!proj.onHitEnemy(this.miniBoss)) {
-                            proj.shouldRemove = true;
-                        }
-                        }
-                    }
-                }
-
-                // Check all bosses (only if projectile can still pierce)
-                if (!proj.shouldRemove) {
-                for (const boss of this.bosses) {
-                    if (boss && !boss.isDead()) {
-                        const dist = this.getWrappedDistance(proj.x, proj.y, boss.x, boss.y).distance;
-                        if (dist < boss.radius + proj.radius) {
-                            if (proj.hitEnemies && proj.hitEnemies.has(boss)) break;
-
-                            const hit = this.calcPlayerDamage(proj.damage);
-                            boss.takeDamage(hit.damage);
-                            if (hit.isCrit) this.particles.createDamageNumber(boss.x, boss.y, Math.round(hit.damage), true);
-                            this.particles.createHitEffect(proj.x, proj.y, '#ff0000');
-                            hitSomething = true;
-                            hitEntity = boss;
-
-                            if (!proj.onHitEnemy(boss)) {
-                                proj.shouldRemove = true;
-                            }
-                            break;
-                        }
-                    }
-                }
-                }
-
-                // AoE explosion - splash damage + knockback
-                if (hitSomething && proj.explosionRadius > 0) {
-                    const aoeDmg = proj.damage * this.player.stats.damageMultiplier * 0.4;
-                    // AoE uses base multiplier, no crit (already applied on direct hit)
-                    const isKnockbackWeapon = proj.weaponType === 'plasmaCannon' || proj.weaponType === 'meteorStaff';
-                    const isIceGrenade = proj.weaponType === 'iceGrenade';
-                    const knockbackForce = isKnockbackWeapon
-                        ? (proj.weaponType === 'meteorStaff' ? 650 : 500)
-                        : isIceGrenade ? 150 : 300;
-
-                    // Damage + knockback nearby enemies (skip the directly-hit one)
-                    for (const enemy of this.enemies) {
-                        if (enemy === hitEntity) continue;
-                        const wrapped = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y);
-                        if (wrapped.distance < proj.explosionRadius) {
-                            enemy.takeDamage(aoeDmg);
-                            if (isIceGrenade) {
-                                this.applyEnemyFreeze(enemy, proj.freezeDuration || 2500);
-                            }
-                            if (wrapped.distance > 0) {
-                                const falloff = 1 - (wrapped.distance / proj.explosionRadius);
-                                enemy.knockbackVelocity.set(
-                                    wrapped.dx / wrapped.distance * knockbackForce * falloff,
-                                    wrapped.dy / wrapped.distance * knockbackForce * falloff
-                                );
-                            }
-                        }
-                    }
-                    // Freeze the directly-hit enemy too
-                    if (isIceGrenade && hitEntity && hitEntity.active) {
-                        this.applyEnemyFreeze(hitEntity, proj.freezeDuration || 2500);
-                    }
-                    // Knockback the directly-hit enemy too
-                    if (hitEntity && hitEntity.knockbackVelocity) {
-                        const hitW = this.getWrappedDistance(proj.x, proj.y, hitEntity.x, hitEntity.y);
-                        if (hitW.distance > 0) {
-                            hitEntity.knockbackVelocity.set(
-                                hitW.dx / hitW.distance * knockbackForce,
-                                hitW.dy / hitW.distance * knockbackForce
-                            );
-                        } else {
-                            const toEnemy = this.getWrappedDistance(this.player.x, this.player.y, hitEntity.x, hitEntity.y);
-                            if (toEnemy.distance > 0) {
-                                hitEntity.knockbackVelocity.set(
-                                    toEnemy.dx / toEnemy.distance * knockbackForce,
-                                    toEnemy.dy / toEnemy.distance * knockbackForce
-                                );
-                            }
-                        }
-                    }
-                    // Damage mini-boss if in range
-                    if (this.miniBoss && !this.miniBoss.isDead() && this.miniBoss !== hitEntity) {
-                        const wrapped = this.getWrappedDistance(proj.x, proj.y, this.miniBoss.x, this.miniBoss.y);
-                        if (wrapped.distance < proj.explosionRadius) {
-                            this.miniBoss.takeDamage(aoeDmg);
-                            if (wrapped.distance > 0) {
-                                this.miniBoss.knockbackVelocity.set(
-                                    wrapped.dx / wrapped.distance * knockbackForce * 0.4,
-                                    wrapped.dy / wrapped.distance * knockbackForce * 0.4
-                                );
-                            }
-                        }
-                    }
-                    // Damage bosses if in range
-                    for (const boss of this.bosses) {
-                        if (boss && !boss.isDead() && boss !== hitEntity) {
-                            const wrapped = this.getWrappedDistance(proj.x, proj.y, boss.x, boss.y);
-                            if (wrapped.distance < proj.explosionRadius) {
-                                boss.takeDamage(aoeDmg);
-                                if (boss.knockbackVelocity && wrapped.distance > 0) {
-                                    boss.knockbackVelocity.set(
-                                        wrapped.dx / wrapped.distance * knockbackForce * 0.2,
-                                        wrapped.dy / wrapped.distance * knockbackForce * 0.2
-                                    );
-                                }
-                            }
-                        }
-                    }
-                    // Explosion visual + particle effect
-                    const expColors = {
-                        rocket: '#ff4400', meteorStaff: '#ff6600', plasmaCannon: '#00ffcc', iceGrenade: '#88ddff'
-                    };
-                    const expColor = expColors[proj.weaponType] || '#ff8800';
-                    this.particles.createAoEImpact(proj.x, proj.y, proj.weaponType, proj.explosionRadius);
-                    proj._alreadyExploded = true;
-                    // Store explosion for rendering shockwave ring + flash
-                    if (!this._activeExplosions) this._activeExplosions = [];
-                    this._activeExplosions.push({
-                        x: proj.x, y: proj.y,
-                        radius: proj.explosionRadius,
-                        time: Date.now(),
-                        color: expColor,
-                        hasKnockback: true,
-                        weaponType: proj.weaponType
-                    });
                 }
             }
         }
+    }
 
-        // Enemy vs Player (contact damage)
+    handleMiniBossCollision() {
+        if (this.miniBoss && !this.miniBoss.isDead()) {
+            const dist = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y).distance;
+            if (dist < this.player.radius + this.miniBoss.radius) {
+                this.player.takeDamage(this.miniBoss.damage * 0.5);
+
+            }
+        }
+    }
+
+    handleEnemyPlayerCollision() {
         for (const enemy of this.enemies) {
             const wrapped = this.getWrappedDistance(this.player.x, this.player.y, enemy.x, enemy.y);
             if (wrapped.distance < this.player.radius + enemy.radius) {
@@ -4383,32 +4613,244 @@ class Game {
                 enemy.y = this.wrapCoordinate(enemy.y, CONFIG.ARENA.HEIGHT);
             }
         }
+    }
 
-        // Mini-boss vs Player
-        if (this.miniBoss && !this.miniBoss.isDead()) {
-            const dist = this.getWrappedDistance(this.player.x, this.player.y, this.miniBoss.x, this.miniBoss.y).distance;
-            if (dist < this.player.radius + this.miniBoss.radius) {
-                this.player.takeDamage(this.miniBoss.damage * 0.5);
+    handleProjectileInteractions() {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const proj = this.projectiles[i];
 
+            // Enemy projectiles hit player
+            if (proj.isEnemy) {
+                const dist = this.getWrappedDistance(this.player.x, this.player.y, proj.x, proj.y).distance;
+                if (dist < this.player.radius + proj.radius) {
+                    this.player.takeDamage(proj.damage);
+
+                    this.projectiles.splice(i, 1);
+                    continue;
+                }
+            }
+
+            // Player projectiles hit enemies
+            this.handleProjectileCollision(proj);
+        }
+    }
+
+    handleProjectileCollision(proj) {
+        if (!proj.isEnemy) {
+            let hitSomething = false;
+            let hitEntity = null;
+
+            // Check regular enemies
+            ({ hitSomething, hitEntity } = this.detectEnemyImpact(proj, hitSomething, hitEntity));
+
+            // Check mini-boss (only if projectile can still pierce)
+            ({ hitSomething, hitEntity } = this.evaluateMiniBossInteraction(proj, hitSomething, hitEntity));
+
+            // Check all bosses (only if projectile can still pierce)
+            ({ hitSomething, hitEntity } = this.manageBossDamage(proj, hitSomething, hitEntity));
+
+            // AoE explosion - splash damage + knockback
+            this.handleAreaOfEffectDamage(hitSomething, proj, hitEntity);
+        }
+    }
+
+    detectEnemyImpact(proj, hitSomething, hitEntity) {
+        for (const enemy of this.enemies) {
+            const dist = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y).distance;
+            if (dist < enemy.radius + proj.radius) {
+                // Skip if this projectile already hit this enemy (boomerang/pierce tracking)
+                if (proj.hitEnemies?.has(enemy))
+                    continue;
+
+                const hit = this.calcPlayerDamage(proj.damage);
+                enemy.takeDamage(hit.damage);
+
+                if (hit.isCrit)
+                    this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+
+                this.particles.createHitEffect(proj.x, proj.y, '#ffffff');
+                hitSomething = true;
+                hitEntity = enemy;
+
+                // Ice shard slow effect
+                if (proj.weaponType === 'iceShard') {
+                    this.applyEnemySlow(enemy, 0.35, 1200);
+                }
+
+                if (!proj.onHitEnemy(enemy)) {
+                    proj.shouldRemove = true;
+                }
+                break;
             }
         }
+        return { hitSomething, hitEntity };
+    }
 
-        // Boss vs Player (check all bosses)
-        for (const boss of this.bosses) {
-            if (boss && !boss.isDead()) {
-                const dist = this.getWrappedDistance(this.player.x, this.player.y, boss.x, boss.y).distance;
-                if (dist < this.player.radius + boss.radius) {
-                    this.player.takeDamage(boss.damage * 0.5);
+    handleAreaOfEffectDamage(hitSomething, proj, hitEntity) {
+        if (hitSomething && proj.explosionRadius > 0) {
+            const aoeDmg = proj.damage * this.player.stats.damageMultiplier * 0.4;
+            // AoE uses base multiplier, no crit (already applied on direct hit)
+            const isKnockbackWeapon = proj.weaponType === 'plasmaCannon' || proj.weaponType === 'meteorStaff';
+            const isIceGrenade = proj.weaponType === 'iceGrenade';
+            const condA = (proj.weaponType === 'meteorStaff' ? 650 : 500);
+            const condB = isIceGrenade ? 150 : 300;
+            const knockbackForce = isKnockbackWeapon ? condA : condB;
 
+            // Damage + knockback nearby enemies (skip the directly-hit one)
+            this.executeAoEImpact(hitEntity, proj, aoeDmg, isIceGrenade, knockbackForce);
+            // Freeze the directly-hit enemy too
+            if (isIceGrenade && hitEntity?.active) {
+                this.applyEnemyFreeze(hitEntity, proj.freezeDuration || 2500);
+            }
+            // Knockback the directly-hit enemy too
+            this.setKnockbackForEntity(hitEntity, proj, knockbackForce);
+            // Damage mini-boss if in range
+            this.processMiniBossKnockback(hitEntity, proj, aoeDmg, knockbackForce);
+            // Damage bosses if in range
+            this.applyAoEDamageToBosses(hitEntity, proj, aoeDmg, knockbackForce);
+            // Explosion visual + particle effect
+            const expColors = {
+                rocket: '#ff4400', meteorStaff: '#ff6600', plasmaCannon: '#00ffcc', iceGrenade: '#88ddff'
+            };
+            const expColor = expColors[proj.weaponType] || '#ff8800';
+            this.particles.createAoEImpact(proj.x, proj.y, proj.weaponType, proj.explosionRadius);
+            proj._alreadyExploded = true;
+            // Store explosion for rendering shockwave ring + flash
+            if (!this._activeExplosions) this._activeExplosions = [];
+            this._activeExplosions.push({
+                x: proj.x, y: proj.y,
+                radius: proj.explosionRadius,
+                time: Date.now(),
+                color: expColor,
+                hasKnockback: true,
+                weaponType: proj.weaponType
+            });
+        }
+    }
+
+    processMiniBossKnockback(hitEntity, proj, aoeDmg, knockbackForce) {
+        if (this.miniBoss && !this.miniBoss.isDead() && this.miniBoss !== hitEntity) {
+            const wrapped = this.getWrappedDistance(proj.x, proj.y, this.miniBoss.x, this.miniBoss.y);
+            if (wrapped.distance < proj.explosionRadius) {
+                this.miniBoss.takeDamage(aoeDmg);
+                if (wrapped.distance > 0) {
+                    this.miniBoss.knockbackVelocity.set(
+                        wrapped.dx / wrapped.distance * knockbackForce * 0.4,
+                        wrapped.dy / wrapped.distance * knockbackForce * 0.4
+                    );
                 }
             }
         }
     }
 
-    /**
-     * Collect a pickup
-     * @param {Pickup} pickup 
-     */
+    setKnockbackForEntity(hitEntity, proj, knockbackForce) {
+        if (hitEntity?.knockbackVelocity) {
+            const hitW = this.getWrappedDistance(proj.x, proj.y, hitEntity.x, hitEntity.y);
+            if (hitW.distance > 0) {
+                hitEntity.knockbackVelocity.set(
+                    hitW.dx / hitW.distance * knockbackForce,
+                    hitW.dy / hitW.distance * knockbackForce
+                );
+            } else {
+                const toEnemy = this.getWrappedDistance(this.player.x, this.player.y, hitEntity.x, hitEntity.y);
+                if (toEnemy.distance > 0) {
+                    hitEntity.knockbackVelocity.set(
+                        toEnemy.dx / toEnemy.distance * knockbackForce,
+                        toEnemy.dy / toEnemy.distance * knockbackForce
+                    );
+                }
+            }
+        }
+    }
+
+    applyAoEDamageToBosses(hitEntity, proj, aoeDmg, knockbackForce) {
+        for (const boss of this.bosses) {
+            if (boss && !boss.isDead() && boss !== hitEntity) {
+                const wrapped = this.getWrappedDistance(proj.x, proj.y, boss.x, boss.y);
+                if (wrapped.distance < proj.explosionRadius) {
+                    boss.takeDamage(aoeDmg);
+                    if (boss.knockbackVelocity && wrapped.distance > 0) {
+                        boss.knockbackVelocity.set(
+                            wrapped.dx / wrapped.distance * knockbackForce * 0.2,
+                            wrapped.dy / wrapped.distance * knockbackForce * 0.2
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    executeAoEImpact(hitEntity, proj, aoeDmg, isIceGrenade, knockbackForce) {
+        for (const enemy of this.enemies) {
+            if (enemy === hitEntity) continue;
+            const wrapped = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y);
+            if (wrapped.distance < proj.explosionRadius) {
+                enemy.takeDamage(aoeDmg);
+                if (isIceGrenade) {
+                    this.applyEnemyFreeze(enemy, proj.freezeDuration || 2500);
+                }
+                if (wrapped.distance > 0) {
+                    const falloff = 1 - (wrapped.distance / proj.explosionRadius);
+                    enemy.knockbackVelocity.set(
+                        wrapped.dx / wrapped.distance * knockbackForce * falloff,
+                        wrapped.dy / wrapped.distance * knockbackForce * falloff
+                    );
+                }
+            }
+        }
+    }
+
+    manageBossDamage(proj, hitSomething, hitEntity) {
+        if (proj.shouldRemove) return { hitSomething, hitEntity };
+
+        for (const boss of this.bosses) {
+            if (!boss || boss.isDead()) continue;
+
+            const dist = this.getWrappedDistance(proj.x, proj.y, boss.x, boss.y).distance;
+            if (dist >= boss.radius + proj.radius) continue;
+
+            if (proj.hitEnemies?.has(boss)) break;
+
+            const hit = this.calcPlayerDamage(proj.damage);
+            boss.takeDamage(hit.damage);
+
+            if (hit.isCrit)
+                this.particles.createDamageNumber(boss.x, boss.y, Math.round(hit.damage), true);
+
+            this.particles.createHitEffect(proj.x, proj.y, '#ff0000');
+            hitSomething = true;
+            hitEntity = boss;
+
+            if (!proj.onHitEnemy(boss))
+                proj.shouldRemove = true;
+
+            break;
+        }
+
+        return { hitSomething, hitEntity };
+    }
+
+    evaluateMiniBossInteraction(proj, hitSomething, hitEntity) {
+        if (!proj.shouldRemove && this.miniBoss && !this.miniBoss.isDead()) {
+            const dist = this.getWrappedDistance(proj.x, proj.y, this.miniBoss.x, this.miniBoss.y).distance;
+            if (dist < this.miniBoss.radius + proj.radius) {
+                if (!(proj.hitEnemies?.has(this.miniBoss))) {
+                    const hit = this.calcPlayerDamage(proj.damage);
+                    this.miniBoss.takeDamage(hit.damage);
+                    if (hit.isCrit) this.particles.createDamageNumber(this.miniBoss.x, this.miniBoss.y, Math.round(hit.damage), true);
+                    this.particles.createHitEffect(proj.x, proj.y, '#ff8800');
+                    hitSomething = true;
+                    hitEntity = this.miniBoss;
+
+                    if (!proj.onHitEnemy(this.miniBoss)) {
+                        proj.shouldRemove = true;
+                    }
+                }
+            }
+        }
+        return { hitSomething, hitEntity };
+    }
+
     collectPickup(pickup) {
         switch (pickup.type) {
             case 'xp':
@@ -4434,9 +4876,6 @@ class Game {
         }
     }
 
-    /**
-     * Activate magnet pickup - attract all XP with increased speed
-     */
     activateMagnet() {
         for (const pickup of this.pickups) {
             if (pickup.type === 'xp' || pickup.type === 'xpOrb') {
@@ -4447,26 +4886,11 @@ class Game {
         }
     }
 
-    /**
-     * Trigger AoE explosion at projectile position (when it expires without hitting)
-     */
     triggerAoEExplosionOnExpiry(proj) {
         const aoeDmg = proj.damage * this.player.stats.damageMultiplier * 0.4;
         const knockbackForces = { meteorStaff: 650, plasmaCannon: 500, rocket: 300, iceGrenade: 0 };
         const knockbackForce = knockbackForces[proj.weaponType] || 300;
-        for (const enemy of this.enemies) {
-            const wrapped = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y);
-            if (wrapped.distance < proj.explosionRadius) {
-                enemy.takeDamage(aoeDmg);
-                if (proj.weaponType === 'iceGrenade') {
-                    this.applyEnemyFreeze(enemy, proj.freezeDuration || 2500);
-                }
-                if (knockbackForce > 0 && wrapped.distance > 0) {
-                    enemy.x += (wrapped.dx / wrapped.distance) * knockbackForce * 0.15;
-                    enemy.y += (wrapped.dy / wrapped.distance) * knockbackForce * 0.15;
-                }
-            }
-        }
+        this.applyDamageAndKnockback(proj, aoeDmg, knockbackForce);
         // Also damage bosses in range
         for (const boss of this.bosses) {
             if (boss && !boss.isDead()) {
@@ -4490,11 +4914,25 @@ class Game {
         });
     }
 
-    /**
-     * Freeze an enemy completely (speed = 0) for a duration
-     */
+    applyDamageAndKnockback(proj, aoeDmg, knockbackForce) {
+        for (const enemy of this.enemies) {
+            const wrapped = this.getWrappedDistance(proj.x, proj.y, enemy.x, enemy.y);
+            if (wrapped.distance < proj.explosionRadius) {
+                enemy.takeDamage(aoeDmg);
+                if (proj.weaponType === 'iceGrenade') {
+                    this.applyEnemyFreeze(enemy, proj.freezeDuration || 2500);
+                }
+                if (knockbackForce > 0 && wrapped.distance > 0) {
+                    enemy.x += (wrapped.dx / wrapped.distance) * knockbackForce * 0.15;
+                    enemy.y += (wrapped.dy / wrapped.distance) * knockbackForce * 0.15;
+                }
+            }
+        }
+    }
+
     applyEnemyFreeze(enemy, duration) {
-        if (!enemy || !enemy.active) return;
+        if (!enemy?.active)
+            return;
         if (enemy._frozen) {
             clearTimeout(enemy._freezeTimeout);
         } else {
@@ -4510,21 +4948,15 @@ class Game {
         }, duration);
     }
 
-    /**
-     * Calculate player damage with damageMultiplier and critChance
-     * @returns {{ damage: number, isCrit: boolean }}
-     */
     calcPlayerDamage(baseDmg) {
         const dmg = baseDmg * this.player.stats.damageMultiplier;
         const isCrit = Math.random() < this.player.stats.critChance;
         return { damage: isCrit ? dmg * 2 : dmg, isCrit };
     }
 
-    /**
-     * Apply a slow effect to an enemy
-     */
     applyEnemySlow(enemy, multiplier, duration) {
-        if (!enemy || !enemy.active) return;
+        if (!enemy?.active)
+            return;
         if (enemy._iceSlowed) {
             clearTimeout(enemy._iceSlowTimeout);
         } else {
@@ -4540,15 +4972,10 @@ class Game {
         }, duration);
     }
 
-    /**
-     * Apply a slow effect to the player (unified, non-stacking)
-     * @param {number} multiplier - Speed multiplier (e.g. 0.5 = 50% speed)
-     * @param {number} duration - Duration in ms
-     */
     applyPlayerSlow(multiplier, duration) {
         if (!this.player) return;
         if (this.player._slowActive) {
-            // Already slowed â€” just extend the timer, don't re-apply
+            // Already slowed  just extend the timer, don't re-apply
             clearTimeout(this.player._slowTimeout);
             this.player._slowTimeout = setTimeout(() => {
                 this.player.stats.speed = this.player._slowOrigSpeed;
@@ -4567,10 +4994,6 @@ class Game {
         }, duration);
     }
 
-    /**
-     * Temporarily disable player weapons (EMP effect)
-     * @param {number} duration - Duration in ms
-     */
     disablePlayerWeapons(duration) {
         if (!this.player) return;
         if (this.player._weaponsDisabled) {
@@ -4582,11 +5005,6 @@ class Game {
         }, duration);
     }
 
-    /**
-     * Activate bomb pickup - kill nearby enemies
-     * @param {number} x 
-     * @param {number} y 
-     */
     activateBomb(x, y) {
         const radius = 200;
 
@@ -4605,10 +5023,6 @@ class Game {
         // Sound removed - too frequent
     }
 
-    /**
-     * Handle enemy death
-     * @param {Enemy} enemy 
-     */
     handleEnemyDeath(enemy) {
         if (enemy._deathHandled) return;
         enemy._deathHandled = true;
@@ -4660,10 +5074,6 @@ class Game {
         // Sound removed - too frequent
     }
 
-    /**
-     * Handle mini-boss death
-     * @param {MiniBoss} miniBoss 
-     */
     handleMiniBossDeath(miniBoss) {
         this.kills++;
         this.addScore(500);
@@ -4677,15 +5087,11 @@ class Game {
         this.miniBoss = null;
 
         // Spawn portal after miniboss death
-        if (!this.portal || !this.portal.active) {
+        if (!this.portal?.active) {
             this.spawnPortal(miniBoss.x, miniBoss.y);
         }
     }
 
-    /**
-     * Handle boss death
-     * @param {Boss} boss 
-     */
     handleBossDeath(boss) {
         this.kills++;
         this.addScore(CONFIG.SCORING.BOSS_KILL);
@@ -4698,8 +5104,7 @@ class Game {
         }
 
         // Guaranteed drops
-        this.pickups.push(new HealthPack(boss.x - 30, boss.y));
-        this.pickups.push(new HealthPack(boss.x + 30, boss.y));
+        this.pickups.push(new HealthPack(boss.x - 30, boss.y), new HealthPack(boss.x + 30, boss.y));
 
         this.particles.createBossDeathEffect(boss.x, boss.y);
         this.ui.triggerScreenShake(15, 500);
@@ -4714,9 +5119,6 @@ class Game {
         }
     }
 
-    /**
-     * Activate a temporary boss drop weapon based on current world
-     */
     activateTempBossWeapon(worldId) {
         worldId = worldId || this.currentWorld || 'voidAbyss';
         const config = BOSS_DROP_WEAPONS[worldId];
@@ -4737,9 +5139,6 @@ class Game {
         this.ui.showTempWeaponHUD(config);
     }
 
-    /**
-     * Update the temporary boss weapon
-     */
     updateTempBossWeapon(deltaTime) {
         if (!this.tempBossWeapon) return;
 
@@ -4786,21 +5185,19 @@ class Game {
         }
     }
 
-    // --- Void Lightning: Direct bolts from player to enemies ---
     _updateVoidLightningWeapon(tw, cfg, targets, px, py, deltaTime) {
         if (!tw._arcs) tw._arcs = [];
         if (!tw._arcCooldown) tw._arcCooldown = 0;
         tw._arcCooldown -= deltaTime * 1000;
 
         // Decay existing arcs
-        for (let i = tw._arcs.length - 1; i >= 0; i--) {
-            tw._arcs[i].lifetime -= deltaTime * 1000;
-            if (tw._arcs[i].lifetime <= 0) {
-                tw._arcs.splice(i, 1);
-            }
-        }
+        this.manageArcDurations(tw, deltaTime);
 
         // Fire new bolt volley
+        this.dispatchDamageChains(tw, targets, cfg, px, py);
+    }
+
+    dispatchDamageChains(tw, targets, cfg, px, py) {
         if (tw._arcCooldown <= 0 && targets.length > 0) {
             tw._arcCooldown = cfg.arcInterval;
 
@@ -4817,35 +5214,7 @@ class Game {
             // Fire direct bolts to up to maxArcs enemies
             const boltCount = Math.min(cfg.maxArcs, inRange.length);
 
-            for (let a = 0; a < boltCount; a++) {
-                const target = inRange[a].enemy;
-
-                // Direct bolt: player -> enemy
-                const chain = [{ x: px, y: py }, { x: target.x, y: target.y }];
-
-                // Damage target
-                const hit = this.calcPlayerDamage(cfg.damage);
-                target.takeDamage(hit.damage);
-                if (hit.isCrit) this.particles.createDamageNumber(target.x, target.y, Math.round(hit.damage), true);
-                this.particles.createHitEffect(target.x, target.y, '#aa44ff');
-                if (target.isDead()) this.handleEnemyDeath(target);
-
-                // Randomize jagged offsets for visual
-                const segJags = [];
-                for (let j = 0; j < 4; j++) {
-                    segJags.push({
-                        perpOff: (Math.random() - 0.5) * 30,
-                        frac: (j + 1) / 5
-                    });
-                }
-
-                tw._arcs.push({
-                    chain: chain,
-                    jags: [segJags],
-                    lifetime: cfg.arcLifetime,
-                    maxLifetime: cfg.arcLifetime
-                });
-            }
+            this.triggerDamageBolts(boltCount, inRange, px, py, cfg, tw);
 
             // Screen shake on volley
             if (boltCount > 0) {
@@ -4854,7 +5223,47 @@ class Game {
         }
     }
 
-    // --- Inferno Storm: Fire Nova waves + flame ring ---
+    triggerDamageBolts(boltCount, inRange, px, py, cfg, tw) {
+        for (let a = 0; a < boltCount; a++) {
+            const target = inRange[a].enemy;
+
+            // Direct bolt: player -> enemy
+            const chain = [{ x: px, y: py }, { x: target.x, y: target.y }];
+
+            // Damage target
+            const hit = this.calcPlayerDamage(cfg.damage);
+            target.takeDamage(hit.damage);
+            if (hit.isCrit) this.particles.createDamageNumber(target.x, target.y, Math.round(hit.damage), true);
+            this.particles.createHitEffect(target.x, target.y, '#aa44ff');
+            if (target.isDead()) this.handleEnemyDeath(target);
+
+            // Randomize jagged offsets for visual
+            const segJags = [];
+            for (let j = 0; j < 4; j++) {
+                segJags.push({
+                    perpOff: (Math.random() - 0.5) * 30,
+                    frac: (j + 1) / 5
+                });
+            }
+
+            tw._arcs.push({
+                chain: chain,
+                jags: [segJags],
+                lifetime: cfg.arcLifetime,
+                maxLifetime: cfg.arcLifetime
+            });
+        }
+    }
+
+    manageArcDurations(tw, deltaTime) {
+        for (let i = tw._arcs.length - 1; i >= 0; i--) {
+            tw._arcs[i].lifetime -= deltaTime * 1000;
+            if (tw._arcs[i].lifetime <= 0) {
+                tw._arcs.splice(i, 1);
+            }
+        }
+    }
+
     _updateFireNovaWeapon(tw, cfg, targets, px, py, deltaTime) {
         if (!tw._novas) tw._novas = [];
         if (!tw._novaCooldown) tw._novaCooldown = 0;
@@ -4864,43 +5273,10 @@ class Game {
         tw._ringCooldown -= deltaTime * 1000;
 
         // Fire nova wave
-        if (tw._novaCooldown <= 0) {
-            tw._novaCooldown = cfg.novaInterval;
-            tw._novaFlash = 1.0;
-            this.ui.triggerScreenShake(8, 300);
-            tw._novas.push({
-                radius: 30,
-                maxRadius: cfg.radius,
-                speed: cfg.novaSpeed,
-                alpha: 1,
-                hitEnemies: new Set()
-            });
-        }
+        this.initiateNovaAttack(tw, cfg);
 
         // Update novas
-        for (let i = tw._novas.length - 1; i >= 0; i--) {
-            const nova = tw._novas[i];
-            nova.radius += nova.speed * deltaTime;
-            nova.alpha = Math.max(0, 1 - nova.radius / nova.maxRadius);
-
-            // Damage enemies at the wave front
-            for (const enemy of targets) {
-                if (nova.hitEnemies.has(enemy)) continue;
-                const wrapped = this.getWrappedDistance(px, py, enemy.x, enemy.y);
-                if (Math.abs(wrapped.distance - nova.radius) < 30 + enemy.size) {
-                    nova.hitEnemies.add(enemy);
-                    const hit = this.calcPlayerDamage(cfg.damage);
-                    enemy.takeDamage(hit.damage);
-                    if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                    this.particles.createHitEffect(enemy.x, enemy.y, '#ff6600');
-                    if (enemy.isDead()) this.handleEnemyDeath(enemy);
-                }
-            }
-
-            if (nova.radius >= nova.maxRadius) {
-                tw._novas.splice(i, 1);
-            }
-        }
+        this.updateNovaEffects(tw, deltaTime, targets, px, py, cfg);
 
         // Persistent flame ring damage
         if (tw._ringCooldown <= 0) {
@@ -4920,10 +5296,65 @@ class Game {
         if (tw._novaFlash > 0) tw._novaFlash -= deltaTime * 3;
     }
 
-    // --- Absolute Zero: Ice Storm (stalactites + blizzard) ---
+    updateNovaEffects(tw, deltaTime, targets, px, py, cfg) {
+        for (let i = tw._novas.length - 1; i >= 0; i--) {
+            const nova = this.calculateNovaImpact(tw, i, deltaTime, targets, px, py, cfg);
+
+            if (nova.radius >= nova.maxRadius) {
+                tw._novas.splice(i, 1);
+            }
+        }
+    }
+
+    calculateNovaImpact(tw, i, deltaTime, targets, px, py, cfg) {
+        const nova = tw._novas[i];
+        nova.radius += nova.speed * deltaTime;
+        nova.alpha = Math.max(0, 1 - nova.radius / nova.maxRadius);
+
+        // Damage enemies at the wave front
+        for (const enemy of targets) {
+            if (!nova.hitEnemies.has(enemy)) {
+                const wrapped = this.getWrappedDistance(px, py, enemy.x, enemy.y);
+                if (Math.abs(wrapped.distance - nova.radius) < 30 + enemy.size) {
+                    nova.hitEnemies.add(enemy);
+                    const hit = this.calcPlayerDamage(cfg.damage);
+                    enemy.takeDamage(hit.damage);
+
+                    if (hit.isCrit)
+                        this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+
+                    this.particles.createHitEffect(enemy.x, enemy.y, '#ff6600');
+
+                    if (enemy.isDead())
+                        this.handleEnemyDeath(enemy);
+                }
+            }
+        }
+        return nova;
+    }
+
+    initiateNovaAttack(tw, cfg) {
+        if (tw._novaCooldown <= 0) {
+            tw._novaCooldown = cfg.novaInterval;
+            tw._novaFlash = 1;
+            this.ui.triggerScreenShake(8, 300);
+            tw._novas.push({
+                radius: 30,
+                maxRadius: cfg.radius,
+                speed: cfg.novaSpeed,
+                alpha: 1,
+                hitEnemies: new Set()
+            });
+        }
+    }
+
     _updateIceStormWeapon(tw, cfg, targets, px, py, deltaTime) {
-        if (!tw._stalactites) tw._stalactites = [];
-        if (!tw._stalCooldown) tw._stalCooldown = 0;
+        if (!tw._stalactites)
+            tw._stalactites = [];
+
+        if (!tw._stalCooldown)
+            tw._stalCooldown = 0;
+
         tw._stalCooldown -= deltaTime * 1000;
         tw.rotation += deltaTime * 2;
 
@@ -4936,6 +5367,59 @@ class Game {
         }
 
         // Spawn stalactites
+        this.activateStalactiteDrop(tw, cfg, targets, px, py);
+
+        // Update stalactites
+        this.updateStalactiteStates(tw, deltaTime, targets, cfg);
+    }
+
+    updateStalactiteStates(tw, deltaTime, targets, cfg) {
+        for (let i = tw._stalactites.length - 1; i >= 0; i--) {
+            const s = tw._stalactites[i];
+
+            if (s.phase === 0) {
+                s.fallTimer += deltaTime * 1000;
+                if (s.fallTimer >= s.fallDuration) {
+                    s.phase = 1;
+                    this._applyStalactiteImpact(s, targets, cfg);
+                    this.ui.triggerScreenShake(3, 100);
+                }
+            } else if (s.phase === 1) {
+                s.impactTimer += deltaTime * 1000;
+                if (s.impactTimer >= s.impactDuration)
+                    s.phase = 2;
+            }
+
+            if (s.phase === 2)
+                tw._stalactites.splice(i, 1);
+        }
+    }
+
+    _applyStalactiteImpact(s, targets, cfg) {
+        for (const enemy of targets) {
+            const wrapped = this.getWrappedDistance(s.x, s.y, enemy.x, enemy.y);
+            if (wrapped.distance >= cfg.impactRadius) continue;
+
+            const hit = this.calcPlayerDamage(cfg.damage);
+            enemy.takeDamage(hit.damage);
+
+            if (hit.isCrit)
+                this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+
+            this.particles.createHitEffect(enemy.x, enemy.y, '#88ddff');
+
+            if (Math.random() < cfg.freezeChance) {
+                if (typeof this.applyEnemyFreeze === 'function')
+                    this.applyEnemyFreeze(enemy, cfg.freezeDuration);
+                else
+                    this.applyEnemySlow(enemy, 0.1, cfg.freezeDuration);
+            }
+
+            if (enemy.isDead()) this.handleEnemyDeath(enemy);
+        }
+    }
+
+    activateStalactiteDrop(tw, cfg, targets, px, py) {
         if (tw._stalCooldown <= 0) {
             tw._stalCooldown = cfg.stalactiteRate;
             // Target near enemies
@@ -4968,89 +5452,61 @@ class Game {
                 size: MathUtils.randomRange(0.8, 1.3)
             });
         }
-
-        // Update stalactites
-        for (let i = tw._stalactites.length - 1; i >= 0; i--) {
-            const s = tw._stalactites[i];
-            if (s.phase === 0) {
-                s.fallTimer += deltaTime * 1000;
-                if (s.fallTimer >= s.fallDuration) {
-                    s.phase = 1;
-                    // Impact damage
-                    for (const enemy of targets) {
-                        const wrapped = this.getWrappedDistance(s.x, s.y, enemy.x, enemy.y);
-                        if (wrapped.distance < cfg.impactRadius) {
-                            const hit = this.calcPlayerDamage(cfg.damage);
-                            enemy.takeDamage(hit.damage);
-                            if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                            this.particles.createHitEffect(enemy.x, enemy.y, '#88ddff');
-                            // Chance to freeze
-                            if (Math.random() < cfg.freezeChance) {
-                                if (typeof this.applyEnemyFreeze === 'function') {
-                                    this.applyEnemyFreeze(enemy, cfg.freezeDuration);
-                                } else {
-                                    this.applyEnemySlow(enemy, 0.1, cfg.freezeDuration);
-                                }
-                            }
-                            if (enemy.isDead()) this.handleEnemyDeath(enemy);
-                        }
-                    }
-                    this.ui.triggerScreenShake(3, 100);
-                }
-            } else if (s.phase === 1) {
-                s.impactTimer += deltaTime * 1000;
-                if (s.impactTimer >= s.impactDuration) {
-                    s.phase = 2;
-                }
-            }
-            if (s.phase === 2) {
-                tw._stalactites.splice(i, 1);
-            }
-        }
     }
 
-    // --- Laser Grid: Rotating laser beams ---
     _updateLaserGridWeapon(tw, cfg, targets, px, py, deltaTime) {
         tw.rotation += cfg.rotationSpeed * deltaTime;
         tw.cooldown -= deltaTime * 1000;
         const now = performance.now();
 
+        this.handleLaserBeamAttack(tw, cfg, targets, px, py, now);
+    }
+
+    handleLaserBeamAttack(tw, cfg, targets, px, py, now) {
         if (tw.cooldown <= 0) {
             tw.cooldown = cfg.tickRate;
 
-            for (let i = 0; i < cfg.beamCount; i++) {
-                const beamAngle = tw.rotation + (Math.PI * 2 / cfg.beamCount) * i;
-                const bx = Math.cos(beamAngle);
-                const by = Math.sin(beamAngle);
-
-                for (const enemy of targets) {
-                    const wrapped = this.getWrappedDistance(px, py, enemy.x, enemy.y);
-                    if (wrapped.distance > cfg.beamLength || wrapped.distance < 15) continue;
-
-                    // Per-enemy cooldown
-                    const key = enemy.id || enemy;
-                    const lastHit = tw.hitCooldowns.get(key) || 0;
-                    if (now - lastHit < cfg.hitCooldown) continue;
-
-                    // Check if enemy is near the beam line
-                    const dot = wrapped.dx * bx + wrapped.dy * by;
-                    if (dot < 0) continue; // Behind the beam origin
-                    const perpDist = Math.abs(wrapped.dx * by - wrapped.dy * bx);
-
-                    if (perpDist < enemy.size + cfg.beamWidth * 0.5) {
-                        tw.hitCooldowns.set(key, now);
-                        const hit = this.calcPlayerDamage(cfg.damage);
-                        enemy.takeDamage(hit.damage);
-                        if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                        this.particles.createHitEffect(enemy.x, enemy.y, '#00ff88');
-                        if (enemy.isDead()) this.handleEnemyDeath(enemy);
-                    }
-                }
-            }
+            this.executeLaserBeamAttack(cfg, tw, targets, px, py, now);
         }
     }
 
-    // --- Death's Harvest: Soul Burst ---
+    executeLaserBeamAttack(cfg, tw, targets, px, py, now) {
+        for (let i = 0; i < cfg.beamCount; i++) {
+            const beamAngle = tw.rotation + (Math.PI * 2 / cfg.beamCount) * i;
+            const bx = Math.cos(beamAngle);
+            const by = Math.sin(beamAngle);
+
+            for (const enemy of targets)
+                this._applyLaserBeamHit({ cfg, tw, enemy, px, py, bx, by, now });
+        }
+    }
+
+    _applyLaserBeamHit(options) {
+        const { cfg, tw, enemy, px, py, bx, by, now } = options;
+        const wrapped = this.getWrappedDistance(px, py, enemy.x, enemy.y);
+        if (wrapped.distance > cfg.beamLength || wrapped.distance < 15) return;
+
+        const key = enemy.id || enemy;
+        const lastHit = tw.hitCooldowns.get(key) || 0;
+        if (now - lastHit < cfg.hitCooldown) return;
+
+        const dot = wrapped.dx * bx + wrapped.dy * by;
+        if (dot < 0) return; // Behind the beam origin
+
+        const perpDist = Math.abs(wrapped.dx * by - wrapped.dy * bx);
+        if (perpDist >= enemy.size + cfg.beamWidth * 0.5) return;
+
+        tw.hitCooldowns.set(key, now);
+        const hit = this.calcPlayerDamage(cfg.damage);
+        enemy.takeDamage(hit.damage);
+
+        if (hit.isCrit)
+            this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+
+        this.particles.createHitEffect(enemy.x, enemy.y, '#00ff88');
+        if (enemy.isDead()) this.handleEnemyDeath(enemy);
+    }
+
     _updateSoulBurstWeapon(tw, cfg, targets, px, py, deltaTime) {
         if (!tw._souls) tw._souls = [];
         if (!tw._burstCooldown) tw._burstCooldown = 0;
@@ -5058,9 +5514,95 @@ class Game {
         tw.rotation += deltaTime * 2;
 
         // Burst: release souls in all directions
+        this.initializeSoulBurst(tw, cfg, px, py);
+
+        // Update souls
+        this.updateSoulMovement(tw, deltaTime, px, py, targets, cfg);
+
+        if (tw._burstFlash > 0) tw._burstFlash -= deltaTime * 3;
+    }
+
+    updateSoulMovement(tw, deltaTime, px, py, targets, cfg) {
+        for (let i = tw._souls.length - 1; i >= 0; i--) {
+            const soul = tw._souls[i];
+            const dt = deltaTime;
+
+            if (soul.phase === 0) {
+                // Moving outward
+                this.updateSoulPosition(soul, dt, px, py, targets, cfg);
+            } else {
+                // Returning
+                this.updateSoulReturnPath({ soul, dt, px, py, targets, cfg, tw, i });
+            }
+
+            // Decay trail
+            for (const t of soul.trail) {
+                t.alpha -= deltaTime * 4;
+            }
+        }
+    }
+
+    updateSoulReturnPath(options) {
+        const { soul, dt, px, py, targets, cfg, tw, i } = options;
+        soul.dist -= soul.speed * 1.3 * dt;
+        soul.x = px + Math.cos(soul.angle) * soul.dist;
+        soul.y = py + Math.sin(soul.angle) * soul.dist;
+
+        soul.trail.push({ x: soul.x, y: soul.y, alpha: 1 });
+        if (soul.trail.length > 8) soul.trail.shift();
+
+        // Hit enemies on return
+        for (const enemy of targets) {
+            if (soul.hitReturn.has(enemy)) continue;
+            const wrapped = this.getWrappedDistance(soul.x, soul.y, enemy.x, enemy.y);
+            if (wrapped.distance < enemy.size + soul.size) {
+                soul.hitReturn.add(enemy);
+                const hit = this.calcPlayerDamage(cfg.returnDamage);
+                enemy.takeDamage(hit.damage);
+                this.particles.createHitEffect(enemy.x, enemy.y, '#ff44ff');
+                if (enemy.isDead()) this.handleEnemyDeath(enemy);
+            }
+        }
+
+        if (soul.dist <= 0) {
+            tw._souls.splice(i, 1);
+        }
+    }
+
+    updateSoulPosition(options) {
+        const { soul, dt, px, py, targets, cfg } = options;
+        soul.dist += soul.speed * dt;
+        soul.x = px + Math.cos(soul.angle) * soul.dist;
+        soul.y = py + Math.sin(soul.angle) * soul.dist;
+
+        // Trail
+        soul.trail.push({ x: soul.x, y: soul.y, alpha: 1 });
+        if (soul.trail.length > 8) soul.trail.shift();
+
+        // Hit enemies outward
+        for (const enemy of targets) {
+            if (soul.hitOut.has(enemy)) continue;
+            const wrapped = this.getWrappedDistance(soul.x, soul.y, enemy.x, enemy.y);
+            if (wrapped.distance < enemy.size + soul.size) {
+                soul.hitOut.add(enemy);
+                const hit = this.calcPlayerDamage(cfg.damage);
+                enemy.takeDamage(hit.damage);
+                if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
+                this.particles.createHitEffect(enemy.x, enemy.y, '#cc00ff');
+                if (enemy.isDead()) this.handleEnemyDeath(enemy);
+            }
+        }
+
+        if (soul.dist >= soul.maxDist) {
+            soul.phase = 1;
+            soul.dist = soul.maxDist;
+        }
+    }
+
+    initializeSoulBurst(tw, cfg, px, py) {
         if (tw._burstCooldown <= 0) {
             tw._burstCooldown = cfg.burstInterval;
-            tw._burstFlash = 1.0;
+            tw._burstFlash = 1;
             this.ui.triggerScreenShake(5, 200);
 
             for (let i = 0; i < cfg.soulCount; i++) {
@@ -5079,79 +5621,8 @@ class Game {
                 });
             }
         }
-
-        // Update souls
-        for (let i = tw._souls.length - 1; i >= 0; i--) {
-            const soul = tw._souls[i];
-            const dt = deltaTime;
-
-            if (soul.phase === 0) {
-                // Moving outward
-                soul.dist += soul.speed * dt;
-                soul.x = px + Math.cos(soul.angle) * soul.dist;
-                soul.y = py + Math.sin(soul.angle) * soul.dist;
-
-                // Trail
-                soul.trail.push({ x: soul.x, y: soul.y, alpha: 1 });
-                if (soul.trail.length > 8) soul.trail.shift();
-
-                // Hit enemies outward
-                for (const enemy of targets) {
-                    if (soul.hitOut.has(enemy)) continue;
-                    const wrapped = this.getWrappedDistance(soul.x, soul.y, enemy.x, enemy.y);
-                    if (wrapped.distance < enemy.size + soul.size) {
-                        soul.hitOut.add(enemy);
-                        const hit = this.calcPlayerDamage(cfg.damage);
-                        enemy.takeDamage(hit.damage);
-                        if (hit.isCrit) this.particles.createDamageNumber(enemy.x, enemy.y, Math.round(hit.damage), true);
-                        this.particles.createHitEffect(enemy.x, enemy.y, '#cc00ff');
-                        if (enemy.isDead()) this.handleEnemyDeath(enemy);
-                    }
-                }
-
-                if (soul.dist >= soul.maxDist) {
-                    soul.phase = 1;
-                    soul.dist = soul.maxDist;
-                }
-            } else {
-                // Returning
-                soul.dist -= soul.speed * 1.3 * dt;
-                soul.x = px + Math.cos(soul.angle) * soul.dist;
-                soul.y = py + Math.sin(soul.angle) * soul.dist;
-
-                soul.trail.push({ x: soul.x, y: soul.y, alpha: 1 });
-                if (soul.trail.length > 8) soul.trail.shift();
-
-                // Hit enemies on return
-                for (const enemy of targets) {
-                    if (soul.hitReturn.has(enemy)) continue;
-                    const wrapped = this.getWrappedDistance(soul.x, soul.y, enemy.x, enemy.y);
-                    if (wrapped.distance < enemy.size + soul.size) {
-                        soul.hitReturn.add(enemy);
-                        const hit = this.calcPlayerDamage(cfg.returnDamage);
-                        enemy.takeDamage(hit.damage);
-                        this.particles.createHitEffect(enemy.x, enemy.y, '#ff44ff');
-                        if (enemy.isDead()) this.handleEnemyDeath(enemy);
-                    }
-                }
-
-                if (soul.dist <= 0) {
-                    tw._souls.splice(i, 1);
-                }
-            }
-
-            // Decay trail
-            for (const t of soul.trail) {
-                t.alpha -= deltaTime * 4;
-            }
-        }
-
-        if (tw._burstFlash > 0) tw._burstFlash -= deltaTime * 3;
     }
 
-    /**
-     * Render temporary boss weapon visual effects
-     */
     renderTempBossWeapon(ctx) {
         if (!this.tempBossWeapon) return;
 
@@ -5202,6 +5673,142 @@ class Game {
         ctx.fill();
 
         // Electric crackle around player body — constant mini-arcs
+        this.generateLightningPath(t, cx, cy, ctx);
+
+        // Orbiting energy orbs
+        this.generateOrbitalVisuals(t, cx, cy, ctx);
+
+        // Render active lightning arcs with enhanced visuals
+        this.drawElectricChains(tw, cx, px, cy, py, t, ctx);
+
+        // Subtle range indicator
+        ctx.strokeStyle = `rgba(150, 80, 255, ${0.05 + Math.sin(t * 2) * 0.02})`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 10]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, cfg.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    drawElectricChains(tw, cx, px, cy, py, t, ctx) {
+        for (const arc of tw._arcs) {
+            const alpha = Math.max(0, arc.lifetime / arc.maxLifetime);
+
+            this.visualizeArcSegments({ arc, cx, px, cy, py, t, alpha, ctx });
+        }
+    }
+
+    visualizeArcSegments(options) {
+        const { arc, cx, px, cy, py, t, alpha, ctx } = options;
+        for (let s = 0; s < arc.chain.length - 1; s++) {
+            const p1 = arc.chain[s];
+            const p2 = arc.chain[s + 1];
+            const x1 = (s === 0) ? cx : cx + (p1.x - px);
+            const y1 = (s === 0) ? cy : cy + (p1.y - py);
+            const x2 = cx + (p2.x - px);
+            const y2 = cy + (p2.y - py);
+
+            const segJags = arc.jags[s];
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.hypot(dx, dy);
+            if (len < 1) continue;
+            const nx = -dy / len;
+            const ny = dx / len;
+
+            // Build jagged path with time-varying jitter
+            const points = [{ x: x1, y: y1 }];
+            this.generateJaggedPoints({ segJags, t, s, points, x1, dx, nx, y1, dy, ny });
+            points.push({ x: x2, y: y2 });
+
+            // Draw 4 layers: wide glow → mid → core → white
+            const layers = [
+                { w: 12, r: 120, g: 50, b: 255, a: alpha * 0.15 },
+                { w: 6, r: 160, g: 100, b: 255, a: alpha * 0.4 },
+                { w: 3, r: 210, g: 180, b: 255, a: alpha * 0.75 },
+                { w: 1.2, r: 255, g: 255, b: 255, a: alpha * 0.6 }
+            ];
+            this.renderJagdSegments(layers, ctx, points);
+
+            // Branch arcs — small forks off main bolt
+            this.generateArcForks(s, points, dy, dx, t, ctx, alpha);
+
+            // Impact flash at each hit point
+            const impactR = 18 + Math.sin(t * 12 + s) * 4;
+            const impGrad = ctx.createRadialGradient(x2, y2, 0, x2, y2, impactR);
+            impGrad.addColorStop(0, `rgba(220, 180, 255, ${alpha * 0.5})`);
+            impGrad.addColorStop(0.5, `rgba(150, 80, 255, ${alpha * 0.2})`);
+            impGrad.addColorStop(1, 'rgba(100, 30, 200, 0)');
+            ctx.fillStyle = impGrad;
+            ctx.beginPath();
+            ctx.arc(x2, y2, impactR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    generateArcForks(s, points, dy, dx, t, ctx, alpha) {
+        if (s === 0 && points.length > 2) {
+            const branchPt = points[2];
+            const bAngle = Math.atan2(dy, dx) + (Math.sin(t * 10 + s) > 0 ? 0.6 : -0.6);
+            const bLen = 25 + Math.sin(t * 8) * 10;
+            const bEnd = { x: branchPt.x + Math.cos(bAngle) * bLen, y: branchPt.y + Math.sin(bAngle) * bLen };
+            const bMid = {
+                x: (branchPt.x + bEnd.x) / 2 + Math.sin(t * 18) * 8,
+                y: (branchPt.y + bEnd.y) / 2 + Math.cos(t * 16) * 8
+            };
+            ctx.strokeStyle = `rgba(180, 130, 255, ${alpha * 0.3})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(branchPt.x, branchPt.y);
+            ctx.lineTo(bMid.x, bMid.y);
+            ctx.lineTo(bEnd.x, bEnd.y);
+            ctx.stroke();
+            ctx.strokeStyle = `rgba(230, 210, 255, ${alpha * 0.2})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+        }
+    }
+
+    renderJagdSegments(layers, ctx, points) {
+        for (const l of layers) {
+            ctx.strokeStyle = `rgba(${l.r}, ${l.g}, ${l.b}, ${l.a})`;
+            ctx.lineWidth = l.w;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let j = 1; j < points.length; j++) ctx.lineTo(points[j].x, points[j].y);
+            ctx.stroke();
+        }
+    }
+
+    generateJaggedPoints(options) {
+        const { segJags, t, s, points, x1, dx, nx, y1, dy, ny } = options;
+        for (const jag of segJags) {
+            const jitter = 0.7 + Math.sin(t * 25 + s * 3 + jag.frac * 10) * 0.5;
+            points.push({
+                x: x1 + dx * jag.frac + nx * jag.perpOff * jitter,
+                y: y1 + dy * jag.frac + ny * jag.perpOff * jitter
+            });
+        }
+    }
+
+    generateOrbitalVisuals(t, cx, cy, ctx) {
+        for (let i = 0; i < 4; i++) {
+            const orbA = t * 3 + i * Math.PI / 2;
+            const orbR = 20 + Math.sin(t * 2 + i) * 4;
+            const ox = cx + Math.cos(orbA) * orbR;
+            const oy = cy + Math.sin(orbA) * orbR;
+            const orbGrad = ctx.createRadialGradient(ox, oy, 0, ox, oy, 5);
+            orbGrad.addColorStop(0, `rgba(220, 180, 255, ${0.7 + Math.sin(t * 8 + i) * 0.2})`);
+            orbGrad.addColorStop(1, 'rgba(150, 50, 255, 0)');
+            ctx.fillStyle = orbGrad;
+            ctx.beginPath();
+            ctx.arc(ox, oy, 5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    generateLightningPath(t, cx, cy, ctx) {
         for (let i = 0; i < 8; i++) {
             const baseA = t * 5 + i * Math.PI / 4;
             const r1 = 14 + Math.sin(t * 8 + i * 3) * 4;
@@ -5233,112 +5840,6 @@ class Game {
                 ctx.stroke();
             }
         }
-
-        // Orbiting energy orbs
-        for (let i = 0; i < 4; i++) {
-            const orbA = t * 3 + i * Math.PI / 2;
-            const orbR = 20 + Math.sin(t * 2 + i) * 4;
-            const ox = cx + Math.cos(orbA) * orbR;
-            const oy = cy + Math.sin(orbA) * orbR;
-            const orbGrad = ctx.createRadialGradient(ox, oy, 0, ox, oy, 5);
-            orbGrad.addColorStop(0, `rgba(220, 180, 255, ${0.7 + Math.sin(t * 8 + i) * 0.2})`);
-            orbGrad.addColorStop(1, 'rgba(150, 50, 255, 0)');
-            ctx.fillStyle = orbGrad;
-            ctx.beginPath();
-            ctx.arc(ox, oy, 5, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Render active lightning arcs with enhanced visuals
-        for (const arc of tw._arcs) {
-            const alpha = Math.max(0, arc.lifetime / arc.maxLifetime);
-
-            for (let s = 0; s < arc.chain.length - 1; s++) {
-                const p1 = arc.chain[s];
-                const p2 = arc.chain[s + 1];
-                const x1 = (s === 0) ? cx : cx + (p1.x - px);
-                const y1 = (s === 0) ? cy : cy + (p1.y - py);
-                const x2 = cx + (p2.x - px);
-                const y2 = cy + (p2.y - py);
-
-                const segJags = arc.jags[s];
-                const dx = x2 - x1;
-                const dy = y2 - y1;
-                const len = Math.hypot(dx, dy);
-                if (len < 1) continue;
-                const nx = -dy / len;
-                const ny = dx / len;
-
-                // Build jagged path with time-varying jitter
-                const points = [{ x: x1, y: y1 }];
-                for (const jag of segJags) {
-                    const jitter = 0.7 + Math.sin(t * 25 + s * 3 + jag.frac * 10) * 0.5;
-                    points.push({
-                        x: x1 + dx * jag.frac + nx * jag.perpOff * jitter,
-                        y: y1 + dy * jag.frac + ny * jag.perpOff * jitter
-                    });
-                }
-                points.push({ x: x2, y: y2 });
-
-                // Draw 4 layers: wide glow → mid → core → white
-                const layers = [
-                    { w: 12, r: 120, g: 50, b: 255, a: alpha * 0.15 },
-                    { w: 6, r: 160, g: 100, b: 255, a: alpha * 0.4 },
-                    { w: 3, r: 210, g: 180, b: 255, a: alpha * 0.75 },
-                    { w: 1.2, r: 255, g: 255, b: 255, a: alpha * 0.6 }
-                ];
-                for (const l of layers) {
-                    ctx.strokeStyle = `rgba(${l.r}, ${l.g}, ${l.b}, ${l.a})`;
-                    ctx.lineWidth = l.w;
-                    ctx.beginPath();
-                    ctx.moveTo(points[0].x, points[0].y);
-                    for (let j = 1; j < points.length; j++) ctx.lineTo(points[j].x, points[j].y);
-                    ctx.stroke();
-                }
-
-                // Branch arcs — small forks off main bolt
-                if (s === 0 && points.length > 2) {
-                    const branchPt = points[2];
-                    const bAngle = Math.atan2(dy, dx) + (Math.sin(t * 10 + s) > 0 ? 0.6 : -0.6);
-                    const bLen = 25 + Math.sin(t * 8) * 10;
-                    const bEnd = { x: branchPt.x + Math.cos(bAngle) * bLen, y: branchPt.y + Math.sin(bAngle) * bLen };
-                    const bMid = {
-                        x: (branchPt.x + bEnd.x) / 2 + Math.sin(t * 18) * 8,
-                        y: (branchPt.y + bEnd.y) / 2 + Math.cos(t * 16) * 8
-                    };
-                    ctx.strokeStyle = `rgba(180, 130, 255, ${alpha * 0.3})`;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(branchPt.x, branchPt.y);
-                    ctx.lineTo(bMid.x, bMid.y);
-                    ctx.lineTo(bEnd.x, bEnd.y);
-                    ctx.stroke();
-                    ctx.strokeStyle = `rgba(230, 210, 255, ${alpha * 0.2})`;
-                    ctx.lineWidth = 0.8;
-                    ctx.stroke();
-                }
-
-                // Impact flash at each hit point
-                const impactR = 18 + Math.sin(t * 12 + s) * 4;
-                const impGrad = ctx.createRadialGradient(x2, y2, 0, x2, y2, impactR);
-                impGrad.addColorStop(0, `rgba(220, 180, 255, ${alpha * 0.5})`);
-                impGrad.addColorStop(0.5, `rgba(150, 80, 255, ${alpha * 0.2})`);
-                impGrad.addColorStop(1, 'rgba(100, 30, 200, 0)');
-                ctx.fillStyle = impGrad;
-                ctx.beginPath();
-                ctx.arc(x2, y2, impactR, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        // Subtle range indicator
-        ctx.strokeStyle = `rgba(150, 80, 255, ${0.05 + Math.sin(t * 2) * 0.02})`;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([6, 10]);
-        ctx.beginPath();
-        ctx.arc(cx, cy, cfg.radius, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
     }
 
     _renderFireNova(ctx, tw, cfg, cx, cy) {
@@ -5652,25 +6153,7 @@ class Game {
         const bc = cfg.beamCount;
 
         // Spinning energy vortex around player
-        ctx.save();
-        ctx.translate(cx, cy);
-        for (let ring = 0; ring < 3; ring++) {
-            const rr = 18 + ring * 10;
-            const segments = 20;
-            ctx.rotate(t * (3 - ring) * (ring % 2 === 0 ? 1 : -1));
-            ctx.strokeStyle = `rgba(0, 255, ${180 + ring * 30}, ${0.15 - ring * 0.03 + Math.sin(t * 6 + ring) * 0.05})`;
-            ctx.lineWidth = 2 - ring * 0.4;
-            ctx.beginPath();
-            for (let s = 0; s <= segments; s++) {
-                const sa = (s / segments) * Math.PI * 2;
-                const wobble = Math.sin(sa * 5 + t * 8 + ring * 2) * (3 + ring);
-                const sx = Math.cos(sa) * (rr + wobble);
-                const sy = Math.sin(sa) * (rr + wobble);
-                s === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
-            }
-            ctx.stroke();
-        }
-        ctx.restore();
+        this.renderEnergyVortex(ctx, cx, cy, t);
 
         // Core energy orb (pulsing)
         const coreR = 8 + Math.sin(t * 8) * 3;
@@ -5684,157 +6167,33 @@ class Game {
         ctx.fill();
 
         // Calculate beam data
-        const beams = [];
-        for (let i = 0; i < bc; i++) {
-            const beamAngle = tw.rotation + (Math.PI * 2 / bc) * i;
-            beams.push({
-                angle: beamAngle,
-                endX: cx + Math.cos(beamAngle) * cfg.beamLength,
-                endY: cy + Math.sin(beamAngle) * cfg.beamLength
-            });
-        }
-
-        // Render each beam as a flowing, electric, animated laser
-        for (let i = 0; i < bc; i++) {
-            const beam = beams[i];
-            const pulse = 0.8 + Math.sin(t * 14 + i * 2.1) * 0.2;
-            const dx = beam.endX - cx;
-            const dy = beam.endY - cy;
-            const len = cfg.beamLength;
-
-            // --- Beam rendered as animated zigzag lightning segments ---
-            const segCount = 12;
-            const perpX = -dy / len;
-            const perpY = dx / len;
-
-            // Generate animated control points along the beam
-            const points = [{ x: cx, y: cy }];
-            for (let s = 1; s < segCount; s++) {
-                const frac = s / segCount;
-                const baseX = cx + dx * frac;
-                const baseY = cy + dy * frac;
-                // Animate the zigzag offset per segment
-                const wave1 = Math.sin(t * 10 + s * 1.8 + i * 3.7) * (8 + s * 0.5);
-                const wave2 = Math.cos(t * 13 + s * 2.3 + i * 1.9) * 4;
-                const offset = wave1 + wave2;
-                points.push({
-                    x: baseX + perpX * offset,
-                    y: baseY + perpY * offset
-                });
-            }
-            points.push({ x: beam.endX, y: beam.endY });
-
-            // Draw multiple layers of the zigzag beam
-            const layers = [
-                { width: cfg.beamWidth * 4, color: `rgba(0, 180, 255, ${0.06 * pulse})` },
-                { width: cfg.beamWidth * 2.5, color: `rgba(0, 255, 200, ${0.12 * pulse})` },
-                { width: cfg.beamWidth * 1.2, color: `rgba(0, 255, 230, ${0.4 * pulse})` },
-                { width: cfg.beamWidth * 0.5, color: `rgba(180, 255, 250, ${0.85 * pulse})` },
-                { width: 2, color: `rgba(255, 255, 255, ${0.8 * pulse})` }
-            ];
-
-            for (const layer of layers) {
-                ctx.strokeStyle = layer.color;
-                ctx.lineWidth = layer.width;
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(points[0].x, points[0].y);
-                for (let p = 1; p < points.length; p++) {
-                    ctx.lineTo(points[p].x, points[p].y);
-                }
-                ctx.stroke();
-            }
-
-            // Bright energy nodes at zigzag joints
-            for (let s = 1; s < points.length - 1; s++) {
-                const nodeAlpha = 0.3 + Math.sin(t * 15 + s * 2 + i) * 0.2;
-                const nodeR = 2.5 + Math.sin(t * 12 + s * 3 + i * 1.5) * 1;
-                ctx.fillStyle = `rgba(200, 255, 250, ${nodeAlpha * pulse})`;
-                ctx.beginPath();
-                ctx.arc(points[s].x, points[s].y, nodeR, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Traveling energy orb along zigzag path
-            const orbFrac = ((t * 3 + i * 0.5) % 1);
-            const orbIdx = orbFrac * (points.length - 1);
-            const orbI = Math.floor(orbIdx);
-            const orbT = orbIdx - orbI;
-            if (orbI < points.length - 1) {
-                const orbX = points[orbI].x + (points[orbI + 1].x - points[orbI].x) * orbT;
-                const orbY = points[orbI].y + (points[orbI + 1].y - points[orbI].y) * orbT;
-                const orbR = 7 + Math.sin(t * 10) * 2;
-                const orbGrad = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, orbR);
-                orbGrad.addColorStop(0, `rgba(255, 255, 255, ${0.9 * pulse})`);
-                orbGrad.addColorStop(0.4, `rgba(0, 255, 220, ${0.5 * pulse})`);
-                orbGrad.addColorStop(1, 'rgba(0, 200, 255, 0)');
-                ctx.fillStyle = orbGrad;
-                ctx.beginPath();
-                ctx.arc(orbX, orbY, orbR, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Second orb traveling in reverse
-            const orb2Frac = ((t * 2.3 + i * 0.7 + 0.5) % 1);
-            const orb2Idx = (1 - orb2Frac) * (points.length - 1);
-            const orb2I = Math.floor(orb2Idx);
-            const orb2T = orb2Idx - orb2I;
-            if (orb2I < points.length - 1) {
-                const o2x = points[orb2I].x + (points[orb2I + 1].x - points[orb2I].x) * orb2T;
-                const o2y = points[orb2I].y + (points[orb2I + 1].y - points[orb2I].y) * orb2T;
-                ctx.fillStyle = `rgba(0, 255, 200, ${0.5 * pulse})`;
-                ctx.beginPath();
-                ctx.arc(o2x, o2y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Endpoint: electric explosion with forking mini-arcs
-            const epx = beam.endX;
-            const epy = beam.endY;
-
-            // Glowing endpoint orb
-            const epR = 14 + Math.sin(t * 9 + i * 2.5) * 5;
-            const epGrad = ctx.createRadialGradient(epx, epy, 0, epx, epy, epR);
-            epGrad.addColorStop(0, `rgba(255, 255, 255, ${0.8 * pulse})`);
-            epGrad.addColorStop(0.25, `rgba(0, 255, 220, ${0.5 * pulse})`);
-            epGrad.addColorStop(0.6, `rgba(0, 200, 255, ${0.15 * pulse})`);
-            epGrad.addColorStop(1, 'rgba(0, 120, 255, 0)');
-            ctx.fillStyle = epGrad;
-            ctx.beginPath();
-            ctx.arc(epx, epy, epR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Forking mini lightning arcs from endpoint
-            for (let f = 0; f < 5; f++) {
-                const forkAngle = t * 7 + f * Math.PI * 2 / 5 + i * 1.3;
-                const forkLen = 15 + Math.sin(t * 11 + f * 3 + i) * 8;
-                const midForkX = epx + Math.cos(forkAngle) * forkLen * 0.5 + Math.sin(t * 16 + f) * 4;
-                const midForkY = epy + Math.sin(forkAngle) * forkLen * 0.5 + Math.cos(t * 14 + f) * 4;
-                const tipX = epx + Math.cos(forkAngle) * forkLen;
-                const tipY = epy + Math.sin(forkAngle) * forkLen;
-                const forkAlpha = 0.4 + Math.sin(t * 18 + f * 2 + i) * 0.25;
-
-                // Fork glow
-                ctx.strokeStyle = `rgba(0, 255, 220, ${forkAlpha * 0.4 * pulse})`;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(epx, epy);
-                ctx.lineTo(midForkX, midForkY);
-                ctx.lineTo(tipX, tipY);
-                ctx.stroke();
-                // Fork core
-                ctx.strokeStyle = `rgba(200, 255, 250, ${forkAlpha * pulse})`;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.moveTo(epx, epy);
-                ctx.lineTo(midForkX, midForkY);
-                ctx.lineTo(tipX, tipY);
-                ctx.stroke();
-            }
-        }
+        const beams = this.generateBeamEffects(bc, tw, cx, cfg, cy, t, ctx);
 
         // Electric arcs connecting adjacent beam endpoints
+        this.createConnectionEffects(bc, beams, ctx, t, cx, cy);
+
+        // Ambient electric particles floating around
+        this.drawDynamicParticles(t, cfg, cx, cy, ctx);
+    }
+
+    drawDynamicParticles(t, cfg, cx, cy, ctx) {
+        for (let i = 0; i < 20; i++) {
+            const seed = i * 61.7;
+            const pa = (t * 0.6 + seed * 0.1) % (Math.PI * 2);
+            const pd = 30 + ((seed * 0.37 + t * 30) % (cfg.beamLength * 0.85));
+            const ppx = cx + Math.cos(pa) * pd;
+            const ppy = cy + Math.sin(pa) * pd;
+            const pSize = 1 + Math.sin(t * 6 + seed) * 0.5;
+            // Flickering particles
+            const flicker = Math.sin(t * 20 + seed * 3) > 0.3 ? 1 : 0.2;
+            ctx.fillStyle = `rgba(0, 255, 220, ${(0.25 + Math.sin(t * 5 + seed) * 0.1) * flicker})`;
+            ctx.beginPath();
+            ctx.arc(ppx, ppy, pSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    createConnectionEffects(bc, beams, ctx, t, cx, cy) {
         for (let i = 0; i < bc; i++) {
             const next = (i + 1) % bc;
             const e1 = beams[i];
@@ -5865,94 +6224,441 @@ class Game {
             ctx.lineTo(e2.endX, e2.endY);
             ctx.stroke();
         }
+    }
 
-        // Ambient electric particles floating around
-        for (let i = 0; i < 20; i++) {
-            const seed = i * 61.7;
-            const pa = (t * 0.6 + seed * 0.1) % (Math.PI * 2);
-            const pd = 30 + ((seed * 0.37 + t * 30) % (cfg.beamLength * 0.85));
-            const ppx = cx + Math.cos(pa) * pd;
-            const ppy = cy + Math.sin(pa) * pd;
-            const pSize = 1 + Math.sin(t * 6 + seed) * 0.5;
-            // Flickering particles
-            const flicker = Math.sin(t * 20 + seed * 3) > 0.3 ? 1 : 0.2;
-            ctx.fillStyle = `rgba(0, 255, 220, ${(0.25 + Math.sin(t * 5 + seed) * 0.1) * flicker})`;
+    generateBeamEffects(bc, tw, cx, cfg, cy, t, ctx) {
+        const beams = [];
+        for (let i = 0; i < bc; i++) {
+            const beamAngle = tw.rotation + (Math.PI * 2 / bc) * i;
+            beams.push({
+                angle: beamAngle,
+                endX: cx + Math.cos(beamAngle) * cfg.beamLength,
+                endY: cy + Math.sin(beamAngle) * cfg.beamLength
+            });
+        }
+
+        // Render each beam as a flowing, electric, animated laser
+        this.createBeamVisuals(bc, beams, t, cx, cy, cfg, ctx);
+        return beams;
+    }
+
+    createBeamVisuals(bc, beams, t, cx, cy, cfg, ctx) {
+        for (let i = 0; i < bc; i++) {
+            const beam = beams[i];
+            const pulse = 0.8 + Math.sin(t * 14 + i * 2.1) * 0.2;
+            const dx = beam.endX - cx;
+            const dy = beam.endY - cy;
+            const len = cfg.beamLength;
+
+            // --- Beam rendered as animated zigzag lightning segments ---
+            const segCount = 12;
+            const perpX = -dy / len;
+            const perpY = dx / len;
+
+            // Generate animated control points along the beam
+            const points = this.buildAnimatedTrajectory({ cx, cy, segCount, dx, dy, t, i, perpX, perpY, beam });
+
+            // Draw multiple layers of the zigzag beam
+            this.strokeBeamVisuals(cfg, pulse, ctx, points);
+
+            // Bright energy nodes at zigzag joints
+            this.generateNodeEffects(points, t, i, ctx, pulse);
+
+            // Traveling energy orb along zigzag path
+            this.renderEnergyOrb(t, i, points, ctx, pulse);
+
+            // Second orb traveling in reverse
+            this.drawTrailingEnergyOrb(t, i, points, ctx, pulse);
+
+            // Endpoint: electric explosion with forking mini-arcs
+            const { epx, epy } = this.calculateEndpointProperties(beam, t, i, ctx, pulse);
+
+            // Forking mini lightning arcs from endpoint
+            this.createForkingEffects(t, i, epx, epy, ctx, pulse);
+        }
+    }
+
+    createForkingEffects(t, i, epx, epy, ctx, pulse) {
+        for (let f = 0; f < 5; f++) {
+            const forkAngle = t * 7 + f * Math.PI * 2 / 5 + i * 1.3;
+            const forkLen = 15 + Math.sin(t * 11 + f * 3 + i) * 8;
+            const midForkX = epx + Math.cos(forkAngle) * forkLen * 0.5 + Math.sin(t * 16 + f) * 4;
+            const midForkY = epy + Math.sin(forkAngle) * forkLen * 0.5 + Math.cos(t * 14 + f) * 4;
+            const tipX = epx + Math.cos(forkAngle) * forkLen;
+            const tipY = epy + Math.sin(forkAngle) * forkLen;
+            const forkAlpha = 0.4 + Math.sin(t * 18 + f * 2 + i) * 0.25;
+
+            // Fork glow
+            ctx.strokeStyle = `rgba(0, 255, 220, ${forkAlpha * 0.4 * pulse})`;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.arc(ppx, ppy, pSize, 0, Math.PI * 2);
+            ctx.moveTo(epx, epy);
+            ctx.lineTo(midForkX, midForkY);
+            ctx.lineTo(tipX, tipY);
+            ctx.stroke();
+            // Fork core
+            ctx.strokeStyle = `rgba(200, 255, 250, ${forkAlpha * pulse})`;
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(epx, epy);
+            ctx.lineTo(midForkX, midForkY);
+            ctx.lineTo(tipX, tipY);
+            ctx.stroke();
+        }
+    }
+
+    calculateEndpointProperties(beam, t, i, ctx, pulse) {
+        const epx = beam.endX;
+        const epy = beam.endY;
+
+        // Glowing endpoint orb
+        const epR = 14 + Math.sin(t * 9 + i * 2.5) * 5;
+        const epGrad = ctx.createRadialGradient(epx, epy, 0, epx, epy, epR);
+        epGrad.addColorStop(0, `rgba(255, 255, 255, ${0.8 * pulse})`);
+        epGrad.addColorStop(0.25, `rgba(0, 255, 220, ${0.5 * pulse})`);
+        epGrad.addColorStop(0.6, `rgba(0, 200, 255, ${0.15 * pulse})`);
+        epGrad.addColorStop(1, 'rgba(0, 120, 255, 0)');
+        ctx.fillStyle = epGrad;
+        ctx.beginPath();
+        ctx.arc(epx, epy, epR, 0, Math.PI * 2);
+        ctx.fill();
+        return { epx, epy };
+    }
+
+    drawTrailingEnergyOrb(t, i, points, ctx, pulse) {
+        const orb2Frac = ((t * 2.3 + i * 0.7 + 0.5) % 1);
+        const orb2Idx = (1 - orb2Frac) * (points.length - 1);
+        const orb2I = Math.floor(orb2Idx);
+        const orb2T = orb2Idx - orb2I;
+        if (orb2I < points.length - 1) {
+            const o2x = points[orb2I].x + (points[orb2I + 1].x - points[orb2I].x) * orb2T;
+            const o2y = points[orb2I].y + (points[orb2I + 1].y - points[orb2I].y) * orb2T;
+            ctx.fillStyle = `rgba(0, 255, 200, ${0.5 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(o2x, o2y, 4, 0, Math.PI * 2);
             ctx.fill();
         }
+    }
+
+    renderEnergyOrb(t, i, points, ctx, pulse) {
+        const orbFrac = ((t * 3 + i * 0.5) % 1);
+        const orbIdx = orbFrac * (points.length - 1);
+        const orbI = Math.floor(orbIdx);
+        const orbT = orbIdx - orbI;
+        if (orbI < points.length - 1) {
+            const orbX = points[orbI].x + (points[orbI + 1].x - points[orbI].x) * orbT;
+            const orbY = points[orbI].y + (points[orbI + 1].y - points[orbI].y) * orbT;
+            const orbR = 7 + Math.sin(t * 10) * 2;
+            const orbGrad = ctx.createRadialGradient(orbX, orbY, 0, orbX, orbY, orbR);
+            orbGrad.addColorStop(0, `rgba(255, 255, 255, ${0.9 * pulse})`);
+            orbGrad.addColorStop(0.4, `rgba(0, 255, 220, ${0.5 * pulse})`);
+            orbGrad.addColorStop(1, 'rgba(0, 200, 255, 0)');
+            ctx.fillStyle = orbGrad;
+            ctx.beginPath();
+            ctx.arc(orbX, orbY, orbR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    generateNodeEffects(points, t, i, ctx, pulse) {
+        for (let s = 1; s < points.length - 1; s++) {
+            const nodeAlpha = 0.3 + Math.sin(t * 15 + s * 2 + i) * 0.2;
+            const nodeR = 2.5 + Math.sin(t * 12 + s * 3 + i * 1.5) * 1;
+            ctx.fillStyle = `rgba(200, 255, 250, ${nodeAlpha * pulse})`;
+            ctx.beginPath();
+            ctx.arc(points[s].x, points[s].y, nodeR, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    strokeBeamVisuals(cfg, pulse, ctx, points) {
+        const layers = [
+            { width: cfg.beamWidth * 4, color: `rgba(0, 180, 255, ${0.06 * pulse})` },
+            { width: cfg.beamWidth * 2.5, color: `rgba(0, 255, 200, ${0.12 * pulse})` },
+            { width: cfg.beamWidth * 1.2, color: `rgba(0, 255, 230, ${0.4 * pulse})` },
+            { width: cfg.beamWidth * 0.5, color: `rgba(180, 255, 250, ${0.85 * pulse})` },
+            { width: 2, color: `rgba(255, 255, 255, ${0.8 * pulse})` }
+        ];
+
+        for (const layer of layers) {
+            ctx.strokeStyle = layer.color;
+            ctx.lineWidth = layer.width;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let p = 1; p < points.length; p++) {
+                ctx.lineTo(points[p].x, points[p].y);
+            }
+            ctx.stroke();
+        }
+    }
+
+    buildAnimatedTrajectory(options) {
+        const { cx, cy, segCount, dx, dy, t, i, perpX, perpY, beam } = options;
+        const points = [{ x: cx, y: cy }];
+        for (let s = 1; s < segCount; s++) {
+            const frac = s / segCount;
+            const baseX = cx + dx * frac;
+            const baseY = cy + dy * frac;
+            // Animate the zigzag offset per segment
+            const wave1 = Math.sin(t * 10 + s * 1.8 + i * 3.7) * (8 + s * 0.5);
+            const wave2 = Math.cos(t * 13 + s * 2.3 + i * 1.9) * 4;
+            const offset = wave1 + wave2;
+            points.push({
+                x: baseX + perpX * offset,
+                y: baseY + perpY * offset
+            });
+        }
+        points.push({ x: beam.endX, y: beam.endY });
+        return points;
+    }
+
+    renderEnergyVortex(ctx, cx, cy, t) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        for (let ring = 0; ring < 3; ring++) {
+            const rr = 18 + ring * 10;
+            const segments = 20;
+            ctx.rotate(t * (3 - ring) * (ring % 2 === 0 ? 1 : -1));
+            ctx.strokeStyle = `rgba(0, 255, ${180 + ring * 30}, ${0.15 - ring * 0.03 + Math.sin(t * 6 + ring) * 0.05})`;
+            ctx.lineWidth = 2 - ring * 0.4;
+            ctx.beginPath();
+            for (let s = 0; s <= segments; s++) {
+                const sa = (s / segments) * Math.PI * 2;
+                const wobble = Math.sin(sa * 5 + t * 8 + ring * 2) * (3 + ring);
+                const sx = Math.cos(sa) * (rr + wobble);
+                const sy = Math.sin(sa) * (rr + wobble);
+                s === 0 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+            }
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
     _renderSoulBurst(ctx, tw, cfg, cx, cy) {
         const t = performance.now() / 1000;
 
         // Dark vortex swirl around player
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(t * -1.5);
-        for (let i = 0; i < 5; i++) {
-            const spiralA = i * Math.PI * 2 / 5;
-            const spiralR = 20 + Math.sin(t * 3 + i * 1.7) * 8;
-            ctx.strokeStyle = `rgba(80, 0, 120, ${0.15 + Math.sin(t * 4 + i) * 0.06})`;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(0, 0, spiralR, spiralA, spiralA + Math.PI * 0.6);
-            ctx.stroke();
-        }
-        ctx.restore();
+        this.animateSpiralMotion(ctx, cx, cy, t);
 
         // Spectral aura with dark inner void
-        const auraR = 55 + Math.sin(t * 4) * 8;
-        const auraGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, auraR);
-        auraGrad.addColorStop(0, `rgba(40, 0, 60, ${0.12 + Math.sin(t * 3) * 0.04})`);
-        auraGrad.addColorStop(0.3, `rgba(120, 0, 200, ${0.15 + Math.sin(t * 5) * 0.05})`);
-        auraGrad.addColorStop(0.7, `rgba(180, 50, 255, ${0.08 + Math.sin(t * 4) * 0.03})`);
-        auraGrad.addColorStop(1, 'rgba(100, 0, 180, 0)');
-        ctx.fillStyle = auraGrad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
-        ctx.fill();
+        this.generateDynamicAura(t, ctx, cx, cy);
 
         // Orbiting rune symbols (small rotating glyphs)
-        for (let i = 0; i < 4; i++) {
-            const runeA = t * 2 + i * Math.PI / 2;
-            const runeR = 28 + Math.sin(t * 3 + i * 2) * 4;
-            const rx = cx + Math.cos(runeA) * runeR;
-            const ry = cy + Math.sin(runeA) * runeR;
-            ctx.save();
-            ctx.translate(rx, ry);
-            ctx.rotate(t * 4 + i);
-            ctx.strokeStyle = `rgba(200, 100, 255, ${0.4 + Math.sin(t * 6 + i * 2) * 0.2})`;
-            ctx.lineWidth = 1.5;
-            // Diamond glyph
-            const gs = 4;
-            ctx.beginPath();
-            ctx.moveTo(0, -gs); ctx.lineTo(gs, 0); ctx.lineTo(0, gs); ctx.lineTo(-gs, 0);
-            ctx.closePath();
-            ctx.stroke();
-            // Cross inside
-            ctx.beginPath();
-            ctx.moveTo(0, -gs * 0.5); ctx.lineTo(0, gs * 0.5);
-            ctx.moveTo(-gs * 0.5, 0); ctx.lineTo(gs * 0.5, 0);
-            ctx.stroke();
-            ctx.restore();
-        }
+        this.createRuneVisuals(t, cx, cy, ctx);
 
         // Pulsing death ring
-        const deathRingR = 45 + Math.sin(t * 5) * 5;
-        ctx.strokeStyle = `rgba(180, 0, 255, ${0.2 + Math.sin(t * 6) * 0.1})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(cx, cy, deathRingR, 0, Math.PI * 2);
-        ctx.stroke();
+        const deathRingR = this.drawDeathRing(t, ctx, cx, cy);
         // Inner death ring
-        ctx.strokeStyle = `rgba(220, 100, 255, ${0.12 + Math.sin(t * 7) * 0.06})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(cx, cy, deathRingR - 6, 0, Math.PI * 2);
-        ctx.stroke();
+        this.visualizeDeathRingEffect(ctx, t, cx, cy, deathRingR);
 
         // Burst flash (dramatic expanding ring)
+        this.generateSpectralBurst(tw, ctx, cx, cy);
+
+        // Render each soul
+        this.visualizeSoulInteractions(tw, cx, cy, ctx, t);
+
+        // Floating spectral particles in wider area
+        this.emitDynamicParticles(t, cfg, cx, cy, ctx);
+
+        // Shadow tendrils reaching out from player
+        this.visualizeShadowExtensions(t, cx, cy, ctx);
+    }
+
+    visualizeShadowExtensions(t, cx, cy, ctx) {
+        for (let i = 0; i < 6; i++) {
+            const ta = t * 0.8 + i * Math.PI / 3;
+            const tLen = 35 + Math.sin(t * 2.5 + i * 1.8) * 15;
+            const tx = cx + Math.cos(ta) * tLen;
+            const ty = cy + Math.sin(ta) * tLen;
+            ctx.strokeStyle = `rgba(100, 0, 150, ${0.12 + Math.sin(t * 3 + i * 2) * 0.05})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            const ctrlX = (cx + tx) / 2 + Math.sin(t * 4 + i) * 12;
+            const ctrlY = (cy + ty) / 2 + Math.cos(t * 4 + i) * 12;
+            ctx.quadraticCurveTo(ctrlX, ctrlY, tx, ty);
+            ctx.stroke();
+        }
+    }
+
+    emitDynamicParticles(t, cfg, cx, cy, ctx) {
+        for (let i = 0; i < 16; i++) {
+            const seed = i * 73.41;
+            const a = (t * 1.2 + seed * 0.1) % (Math.PI * 2);
+            const dist = 25 + ((seed * 0.23 + t * 20) % (cfg.burstRadius * 0.5));
+            const px = cx + Math.cos(a) * dist;
+            const py = cy + Math.sin(a) * dist - Math.sin(t * 4 + seed) * 5;
+            const pSize = 1.5 + Math.sin(t * 5 + seed) * 0.7;
+            // Some particles are darker (shadow), some brighter (spectral)
+            if (i % 3 === 0) {
+                ctx.fillStyle = `rgba(60, 0, 80, ${0.2 + Math.sin(t * 3 + seed) * 0.08})`;
+            } else {
+                ctx.fillStyle = `rgba(180, 100, 255, ${0.2 + Math.sin(t * 3 + seed) * 0.08})`;
+            }
+            ctx.beginPath();
+            ctx.arc(px, py, pSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    visualizeSoulInteractions(tw, cx, cy, ctx, t) {
+        for (const soul of tw._souls) {
+            const screenX = cx + (soul.x - this.player.x);
+            const screenY = cy + (soul.y - this.player.y);
+            const returning = soul.phase === 1;
+
+            // Long flowing trail with gradient
+            this.createSoulGlow(soul, cx, cy, ctx, returning);
+
+            // Soul outer glow (large)
+            this.applySoulGlow(soul, ctx, screenX, screenY, returning);
+
+            // Ghost face shape on soul
+            const faceScale = this.drawGhostFace(ctx, screenX, screenY, soul, returning, t);
+
+            // Eyes (dark hollow)
+            this.drawSoulFeatures(ctx, returning, faceScale, t);
+
+            // Spectral wisps / tendrils streaming off soul
+            this.generateWispTrails(t, soul, screenX, screenY, ctx, returning);
+        }
+    }
+
+    generateWispTrails(t, soul, screenX, screenY, ctx, returning) {
+        for (let w = 0; w < 5; w++) {
+            const wa = t * 5 + w * Math.PI * 2 / 5 + soul.angle;
+            const wd = soul.size * (2 + Math.sin(t * 7 + w * 1.3) * 1);
+            const wx = screenX + Math.cos(wa) * wd;
+            const wy = screenY + Math.sin(wa) * wd;
+            // Wisp line
+            ctx.strokeStyle = returning
+                ? `rgba(255, 150, 255, ${0.25 + Math.sin(t * 9 + w) * 0.1})`
+                : `rgba(180, 120, 255, ${0.25 + Math.sin(t * 9 + w) * 0.1})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(screenX, screenY);
+            const ctrlX = (screenX + wx) / 2 + Math.sin(t * 6 + w * 2) * 8;
+            const ctrlY = (screenY + wy) / 2 + Math.cos(t * 6 + w * 2) * 8;
+            ctx.quadraticCurveTo(ctrlX, ctrlY, wx, wy);
+            ctx.stroke();
+            // Wisp tip
+            ctx.fillStyle = returning
+                ? `rgba(255, 180, 255, ${0.3 + Math.sin(t * 8 + w) * 0.15})`
+                : `rgba(200, 150, 255, ${0.3 + Math.sin(t * 8 + w) * 0.15})`;
+            ctx.beginPath();
+            ctx.arc(wx, wy, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawSoulFeatures(ctx, returning, faceScale, t) {
+        ctx.fillStyle = returning ? 'rgba(100, 0, 100, 0.8)' : 'rgba(60, 0, 80, 0.8)';
+        const eyeY = -faceScale * 0.2;
+        const eyeSpacing = faceScale * 0.35;
+        ctx.beginPath();
+        ctx.ellipse(-eyeSpacing, eyeY, faceScale * 0.15, faceScale * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(eyeSpacing, eyeY, faceScale * 0.15, faceScale * 0.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eye glow
+        ctx.fillStyle = returning ? `rgba(255, 100, 255, ${0.5 + Math.sin(t * 10) * 0.3})` : `rgba(180, 80, 255, ${0.5 + Math.sin(t * 10) * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(-eyeSpacing, eyeY, faceScale * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(eyeSpacing, eyeY, faceScale * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Mouth (open oval)
+        ctx.fillStyle = returning ? 'rgba(80, 0, 80, 0.6)' : 'rgba(40, 0, 60, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(0, faceScale * 0.15, faceScale * 0.15, faceScale * 0.1 + Math.sin(t * 6) * faceScale * 0.05, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    drawGhostFace(ctx, screenX, screenY, soul, returning, t) {
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        const faceScale = soul.size * 0.6;
+        // Ghost body (rounded top, wavy bottom)
+        ctx.fillStyle = returning ? 'rgba(255, 200, 255, 0.7)' : 'rgba(220, 180, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(0, -faceScale * 0.3, faceScale, Math.PI, 0); // rounded top
+
+
+        // Wavy bottom
+        const waveY = faceScale * 0.7;
+        ctx.lineTo(faceScale, waveY);
+        for (let w = 0; w < 3; w++) {
+            const wx1 = faceScale - (w * 2 + 1) * faceScale / 3;
+            const wx2 = faceScale - (w * 2 + 2) * faceScale / 3;
+            ctx.quadraticCurveTo(wx1, waveY + faceScale * 0.3 * Math.sin(t * 8 + w), wx2, waveY);
+        }
+        ctx.closePath();
+        ctx.fill();
+        return faceScale;
+    }
+
+    applySoulGlow(soul, ctx, screenX, screenY, returning) {
+        const glowR = soul.size * 4;
+        const glowGrad = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, glowR);
+        if (returning) {
+            glowGrad.addColorStop(0, 'rgba(255, 120, 255, 0.45)');
+            glowGrad.addColorStop(0.4, 'rgba(255, 50, 200, 0.15)');
+            glowGrad.addColorStop(1, 'rgba(200, 0, 150, 0)');
+        } else {
+            glowGrad.addColorStop(0, 'rgba(200, 120, 255, 0.45)');
+            glowGrad.addColorStop(0.4, 'rgba(150, 50, 255, 0.15)');
+            glowGrad.addColorStop(1, 'rgba(100, 0, 200, 0)');
+        }
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, glowR, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    createSoulGlow(soul, cx, cy, ctx, returning) {
+        for (let i = 0; i < soul.trail.length; i++) {
+            const tr = soul.trail[i];
+            if (tr.alpha <= 0) continue;
+            const trX = cx + (tr.x - this.player.x);
+            const trY = cy + (tr.y - this.player.y);
+            const trFrac = i / soul.trail.length;
+            const trSize = soul.size * trFrac * 1.2;
+            const trAlpha = tr.alpha * 0.6;
+
+            // Trail glow
+            if (trSize > 1) {
+                const trGrad = ctx.createRadialGradient(trX, trY, 0, trX, trY, trSize * 2.5);
+                if (returning) {
+                    trGrad.addColorStop(0, `rgba(255, 80, 255, ${trAlpha * 0.5})`);
+                    trGrad.addColorStop(1, 'rgba(200, 0, 200, 0)');
+                } else {
+                    trGrad.addColorStop(0, `rgba(180, 80, 255, ${trAlpha * 0.5})`);
+                    trGrad.addColorStop(1, 'rgba(100, 0, 200, 0)');
+                }
+                ctx.fillStyle = trGrad;
+                ctx.beginPath();
+                ctx.arc(trX, trY, trSize * 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Trail core dots
+            ctx.fillStyle = returning
+                ? `rgba(255, 150, 255, ${trAlpha})`
+                : `rgba(200, 120, 255, ${trAlpha})`;
+            ctx.beginPath();
+            ctx.arc(trX, trY, trSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    generateSpectralBurst(tw, ctx, cx, cy) {
         if (tw._burstFlash > 0) {
             const bf = tw._burstFlash;
             const flashR = 100 * (1 - bf * 0.4);
@@ -5986,177 +6692,81 @@ class Game {
                 ctx.stroke();
             }
         }
+    }
 
-        // Render each soul
-        for (const soul of tw._souls) {
-            const screenX = cx + (soul.x - this.player.x);
-            const screenY = cy + (soul.y - this.player.y);
-            const returning = soul.phase === 1;
+    visualizeDeathRingEffect(ctx, t, cx, cy, deathRingR) {
+        ctx.strokeStyle = `rgba(220, 100, 255, ${0.12 + Math.sin(t * 7) * 0.06})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, deathRingR - 6, 0, Math.PI * 2);
+        ctx.stroke();
+    }
 
-            // Long flowing trail with gradient
-            for (let i = 0; i < soul.trail.length; i++) {
-                const tr = soul.trail[i];
-                if (tr.alpha <= 0) continue;
-                const trX = cx + (tr.x - this.player.x);
-                const trY = cy + (tr.y - this.player.y);
-                const trFrac = i / soul.trail.length;
-                const trSize = soul.size * trFrac * 1.2;
-                const trAlpha = tr.alpha * 0.6;
+    drawDeathRing(t, ctx, cx, cy) {
+        const deathRingR = 45 + Math.sin(t * 5) * 5;
+        ctx.strokeStyle = `rgba(180, 0, 255, ${0.2 + Math.sin(t * 6) * 0.1})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, deathRingR, 0, Math.PI * 2);
+        ctx.stroke();
+        return deathRingR;
+    }
 
-                // Trail glow
-                if (trSize > 1) {
-                    const trGrad = ctx.createRadialGradient(trX, trY, 0, trX, trY, trSize * 2.5);
-                    if (returning) {
-                        trGrad.addColorStop(0, `rgba(255, 80, 255, ${trAlpha * 0.5})`);
-                        trGrad.addColorStop(1, 'rgba(200, 0, 200, 0)');
-                    } else {
-                        trGrad.addColorStop(0, `rgba(180, 80, 255, ${trAlpha * 0.5})`);
-                        trGrad.addColorStop(1, 'rgba(100, 0, 200, 0)');
-                    }
-                    ctx.fillStyle = trGrad;
-                    ctx.beginPath();
-                    ctx.arc(trX, trY, trSize * 2.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                // Trail core dots
-                ctx.fillStyle = returning
-                    ? `rgba(255, 150, 255, ${trAlpha})`
-                    : `rgba(200, 120, 255, ${trAlpha})`;
-                ctx.beginPath();
-                ctx.arc(trX, trY, trSize, 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            // Soul outer glow (large)
-            const glowR = soul.size * 4;
-            const glowGrad = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, glowR);
-            if (returning) {
-                glowGrad.addColorStop(0, 'rgba(255, 120, 255, 0.45)');
-                glowGrad.addColorStop(0.4, 'rgba(255, 50, 200, 0.15)');
-                glowGrad.addColorStop(1, 'rgba(200, 0, 150, 0)');
-            } else {
-                glowGrad.addColorStop(0, 'rgba(200, 120, 255, 0.45)');
-                glowGrad.addColorStop(0.4, 'rgba(150, 50, 255, 0.15)');
-                glowGrad.addColorStop(1, 'rgba(100, 0, 200, 0)');
-            }
-            ctx.fillStyle = glowGrad;
-            ctx.beginPath();
-            ctx.arc(screenX, screenY, glowR, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Ghost face shape on soul
+    createRuneVisuals(t, cx, cy, ctx) {
+        for (let i = 0; i < 4; i++) {
+            const runeA = t * 2 + i * Math.PI / 2;
+            const runeR = 28 + Math.sin(t * 3 + i * 2) * 4;
+            const rx = cx + Math.cos(runeA) * runeR;
+            const ry = cy + Math.sin(runeA) * runeR;
             ctx.save();
-            ctx.translate(screenX, screenY);
-            const faceScale = soul.size * 0.6;
-            // Ghost body (rounded top, wavy bottom)
-            ctx.fillStyle = returning ? 'rgba(255, 200, 255, 0.7)' : 'rgba(220, 180, 255, 0.7)';
+            ctx.translate(rx, ry);
+            ctx.rotate(t * 4 + i);
+            ctx.strokeStyle = `rgba(200, 100, 255, ${0.4 + Math.sin(t * 6 + i * 2) * 0.2})`;
+            ctx.lineWidth = 1.5;
+            // Diamond glyph
+            const gs = 4;
             ctx.beginPath();
-            ctx.arc(0, -faceScale * 0.3, faceScale, Math.PI, 0); // rounded top
-            // Wavy bottom
-            const waveY = faceScale * 0.7;
-            ctx.lineTo(faceScale, waveY);
-            for (let w = 0; w < 3; w++) {
-                const wx1 = faceScale - (w * 2 + 1) * faceScale / 3;
-                const wx2 = faceScale - (w * 2 + 2) * faceScale / 3;
-                ctx.quadraticCurveTo(wx1, waveY + faceScale * 0.3 * Math.sin(t * 8 + w), wx2, waveY);
-            }
+            ctx.moveTo(0, -gs); ctx.lineTo(gs, 0); ctx.lineTo(0, gs); ctx.lineTo(-gs, 0);
             ctx.closePath();
-            ctx.fill();
-
-            // Eyes (dark hollow)
-            ctx.fillStyle = returning ? 'rgba(100, 0, 100, 0.8)' : 'rgba(60, 0, 80, 0.8)';
-            const eyeY = -faceScale * 0.2;
-            const eyeSpacing = faceScale * 0.35;
-            ctx.beginPath();
-            ctx.ellipse(-eyeSpacing, eyeY, faceScale * 0.15, faceScale * 0.2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(eyeSpacing, eyeY, faceScale * 0.15, faceScale * 0.2, 0, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Eye glow
-            ctx.fillStyle = returning ? `rgba(255, 100, 255, ${0.5 + Math.sin(t * 10) * 0.3})` : `rgba(180, 80, 255, ${0.5 + Math.sin(t * 10) * 0.3})`;
-            ctx.beginPath();
-            ctx.arc(-eyeSpacing, eyeY, faceScale * 0.07, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(eyeSpacing, eyeY, faceScale * 0.07, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Mouth (open oval)
-            ctx.fillStyle = returning ? 'rgba(80, 0, 80, 0.6)' : 'rgba(40, 0, 60, 0.6)';
-            ctx.beginPath();
-            ctx.ellipse(0, faceScale * 0.15, faceScale * 0.15, faceScale * 0.1 + Math.sin(t * 6) * faceScale * 0.05, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            // Spectral wisps / tendrils streaming off soul
-            for (let w = 0; w < 5; w++) {
-                const wa = t * 5 + w * Math.PI * 2 / 5 + soul.angle;
-                const wd = soul.size * (2 + Math.sin(t * 7 + w * 1.3) * 1);
-                const wx = screenX + Math.cos(wa) * wd;
-                const wy = screenY + Math.sin(wa) * wd;
-                // Wisp line
-                ctx.strokeStyle = returning
-                    ? `rgba(255, 150, 255, ${0.25 + Math.sin(t * 9 + w) * 0.1})`
-                    : `rgba(180, 120, 255, ${0.25 + Math.sin(t * 9 + w) * 0.1})`;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(screenX, screenY);
-                const ctrlX = (screenX + wx) / 2 + Math.sin(t * 6 + w * 2) * 8;
-                const ctrlY = (screenY + wy) / 2 + Math.cos(t * 6 + w * 2) * 8;
-                ctx.quadraticCurveTo(ctrlX, ctrlY, wx, wy);
-                ctx.stroke();
-                // Wisp tip
-                ctx.fillStyle = returning
-                    ? `rgba(255, 180, 255, ${0.3 + Math.sin(t * 8 + w) * 0.15})`
-                    : `rgba(200, 150, 255, ${0.3 + Math.sin(t * 8 + w) * 0.15})`;
-                ctx.beginPath();
-                ctx.arc(wx, wy, 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-
-        // Floating spectral particles in wider area
-        for (let i = 0; i < 16; i++) {
-            const seed = i * 73.41;
-            const a = (t * 1.2 + seed * 0.1) % (Math.PI * 2);
-            const dist = 25 + ((seed * 0.23 + t * 20) % (cfg.burstRadius * 0.5));
-            const px = cx + Math.cos(a) * dist;
-            const py = cy + Math.sin(a) * dist - Math.sin(t * 4 + seed) * 5;
-            const pSize = 1.5 + Math.sin(t * 5 + seed) * 0.7;
-            // Some particles are darker (shadow), some brighter (spectral)
-            if (i % 3 === 0) {
-                ctx.fillStyle = `rgba(60, 0, 80, ${0.2 + Math.sin(t * 3 + seed) * 0.08})`;
-            } else {
-                ctx.fillStyle = `rgba(180, 100, 255, ${0.2 + Math.sin(t * 3 + seed) * 0.08})`;
-            }
-            ctx.beginPath();
-            ctx.arc(px, py, pSize, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        // Shadow tendrils reaching out from player
-        for (let i = 0; i < 6; i++) {
-            const ta = t * 0.8 + i * Math.PI / 3;
-            const tLen = 35 + Math.sin(t * 2.5 + i * 1.8) * 15;
-            const tx = cx + Math.cos(ta) * tLen;
-            const ty = cy + Math.sin(ta) * tLen;
-            ctx.strokeStyle = `rgba(100, 0, 150, ${0.12 + Math.sin(t * 3 + i * 2) * 0.05})`;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(cx, cy);
-            const ctrlX = (cx + tx) / 2 + Math.sin(t * 4 + i) * 12;
-            const ctrlY = (cy + ty) / 2 + Math.cos(t * 4 + i) * 12;
-            ctx.quadraticCurveTo(ctrlX, ctrlY, tx, ty);
             ctx.stroke();
+            // Cross inside
+            ctx.beginPath();
+            ctx.moveTo(0, -gs * 0.5); ctx.lineTo(0, gs * 0.5);
+            ctx.moveTo(-gs * 0.5, 0); ctx.lineTo(gs * 0.5, 0);
+            ctx.stroke();
+            ctx.restore();
         }
     }
 
-    /**
-     * Spawn a dimensional portal at the boss death location
-     */
+    generateDynamicAura(t, ctx, cx, cy) {
+        const auraR = 55 + Math.sin(t * 4) * 8;
+        const auraGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, auraR);
+        auraGrad.addColorStop(0, `rgba(40, 0, 60, ${0.12 + Math.sin(t * 3) * 0.04})`);
+        auraGrad.addColorStop(0.3, `rgba(120, 0, 200, ${0.15 + Math.sin(t * 5) * 0.05})`);
+        auraGrad.addColorStop(0.7, `rgba(180, 50, 255, ${0.08 + Math.sin(t * 4) * 0.03})`);
+        auraGrad.addColorStop(1, 'rgba(100, 0, 180, 0)');
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, auraR, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    animateSpiralMotion(ctx, cx, cy, t) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t * -1.5);
+        for (let i = 0; i < 5; i++) {
+            const spiralA = i * Math.PI * 2 / 5;
+            const spiralR = 20 + Math.sin(t * 3 + i * 1.7) * 8;
+            ctx.strokeStyle = `rgba(80, 0, 120, ${0.15 + Math.sin(t * 4 + i) * 0.06})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, spiralR, spiralA, spiralA + Math.PI * 0.6);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
     spawnPortal(x, y) {
         const availableWorlds = WORLD_ORDER.filter(id => id !== this.currentWorld);
         if (availableWorlds.length === 0) return;
@@ -6167,11 +6777,8 @@ class Game {
         this.ui.showPortalNotification();
     }
 
-    /**
-     * Update portal state
-     */
     updatePortal(deltaTime) {
-        if (!this.portal || !this.portal.active) return;
+        if (!this.portal?.active) return;
 
         this.portal.update(deltaTime);
 
@@ -6192,9 +6799,6 @@ class Game {
         }
     }
 
-    /**
-     * Show portal choice modal - sacrifice a weapon or enter as-is
-     */
     showPortalChoice() {
         this.portalChoiceActive = true;
         this.state = GAME_STATE.PAUSED;
@@ -6227,9 +6831,6 @@ class Game {
         });
     }
 
-    /**
-     * Transition to a new world with teleport animation
-     */
     transitionToWorld(worldId) {
         const world = WORLDS[worldId];
         if (!world) {
@@ -6258,7 +6859,7 @@ class Game {
             this.miniBoss = null;
 
             // Recreate drones based on player's drone weapon level
-            const droneWeapon = this.player.weapons.find(w => w && w.type === 'drone');
+            const droneWeapon = this.player.weapons.find(w => w?.type === 'drone');
             if (droneWeapon) {
                 for (let i = 0; i < droneWeapon.level; i++) {
                     this.addDrone();
@@ -6276,9 +6877,6 @@ class Game {
         });
     }
 
-    /**
-     * Handle player level up
-     */
     handleLevelUp() {
         this.state = GAME_STATE.LEVEL_UP;
         this.audio.play('levelUp');
@@ -6293,35 +6891,64 @@ class Game {
         });
     }
 
-    /**
-     * Generate upgrade options
-     * @returns {Array}
-     */
     generateUpgradeOptions() {
         const options = [];
-        const playerWeaponTypes = this.player.weapons.map(w => w?.type);
+        const playerWeaponTypes = new Set(this.player.weapons.map(w => w?.type));
 
         // Available weapons: ONLY the current world's weapon list
-        let allAvailable = [];
-        if (this.currentWorld && WORLDS[this.currentWorld]) {
-            const worldWeaponList = WORLDS[this.currentWorld].weapons || [];
-            allAvailable = worldWeaponList.filter(wType => {
-                const cfg = CONFIG.WEAPONS[wType] || WORLD_WEAPONS[wType];
-                if (!cfg) return false;
-                if (cfg.requiresLevel && this.player.level < cfg.requiresLevel) return false;
-                return true;
-            });
-        } else {
-            // Home world (voidAbyss): base weapons only
-            allAvailable = Object.keys(CONFIG.WEAPONS).filter(type => {
-                const config = CONFIG.WEAPONS[type];
-                return !config.requiresLevel || this.player.level >= config.requiresLevel;
-            });
-        }
+        let allAvailable = this.getAvailableWeapons();
 
         // Can get new weapon?
+        this.suggestNewWeapons(allAvailable, playerWeaponTypes, options);
+
+        // Weapon upgrades
+        this.addWeaponUpgrades(options);
+
+        // Passive upgrades
+        this.generatePassiveOptions(options);
+
+        return options.slice(0, 3);
+    }
+
+    generatePassiveOptions(options) {
+        const passives = [
+            { type: 'maxHealth', icon: '❤️', name: 'Max Health', description: '+20 Max Health', rarity: 'common' },
+            { type: 'moveSpeed', icon: '👟', name: 'Speed Boost', description: '+10% Movement Speed', rarity: 'common' },
+            { type: 'damage', icon: '⚔️', name: 'Power Up', description: '+15% Damage', rarity: 'rare' },
+            { type: 'critChance', icon: '💥', name: 'Critical Eye', description: '+5% Crit Chance', rarity: 'rare' },
+            { type: 'xpBonus', icon: '⭐', name: 'XP Boost', description: '+20% XP Gain', rarity: 'common' },
+            { type: 'pickupRadius', icon: '🧲', name: 'Magnetism', description: '+30% Pickup Range', rarity: 'common' }
+        ];
+
+        // Shuffle and add passives
+        const shuffled = passives.toSorted(() => Math.random() - 0.5);
+        while (options.length < 3 && shuffled.length > 0) {
+            options.push(shuffled.pop());
+        }
+    }
+
+    addWeaponUpgrades(options) {
+        for (const weapon of this.player.weapons) {
+            if (weapon && weapon.level < 5 && options.length < 4) {
+                const config = CONFIG.WEAPONS[weapon.type] || WORLD_WEAPONS[weapon.type];
+                if (!config)
+                    continue;
+                const a = weapon.level >= 2 ? 'rare' : 'common';
+                options.push({
+                    type: 'upgradeWeapon',
+                    weaponType: weapon.type,
+                    icon: config.icon,
+                    name: `${config.name} Lv.${weapon.level + 1}`,
+                    description: `Upgrade damage and effects`,
+                    rarity: weapon.level >= 4 ? 'legendary' : a
+                });
+            }
+        }
+    }
+
+    suggestNewWeapons(allAvailable, playerWeaponTypes, options) {
         if (this.player.weapons.length < 4) {
-            const newWeaponOptions = allAvailable.filter(type => !playerWeaponTypes.includes(type));
+            const newWeaponOptions = allAvailable.filter(type => !playerWeaponTypes.has(type));
 
             if (newWeaponOptions.length > 0) {
                 let type = newWeaponOptions[Math.floor(Math.random() * newWeaponOptions.length)];
@@ -6354,46 +6981,28 @@ class Game {
                 }
             }
         }
-
-        // Weapon upgrades
-        for (const weapon of this.player.weapons) {
-            if (weapon && weapon.level < 5 && options.length < 4) {
-                const config = CONFIG.WEAPONS[weapon.type] || WORLD_WEAPONS[weapon.type];
-                if (!config) continue;
-                options.push({
-                    type: 'upgradeWeapon',
-                    weaponType: weapon.type,
-                    icon: config.icon,
-                    name: `${config.name} Lv.${weapon.level + 1}`,
-                    description: `Upgrade damage and effects`,
-                    rarity: weapon.level >= 4 ? 'legendary' : weapon.level >= 2 ? 'rare' : 'common'
-                });
-            }
-        }
-
-        // Passive upgrades
-        const passives = [
-            { type: 'maxHealth', icon: '❤️', name: 'Max Health', description: '+20 Max Health', rarity: 'common' },
-            { type: 'moveSpeed', icon: '👟', name: 'Speed Boost', description: '+10% Movement Speed', rarity: 'common' },
-            { type: 'damage', icon: '⚔️', name: 'Power Up', description: '+15% Damage', rarity: 'rare' },
-            { type: 'critChance', icon: '💥', name: 'Critical Eye', description: '+5% Crit Chance', rarity: 'rare' },
-            { type: 'xpBonus', icon: '⭐', name: 'XP Boost', description: '+20% XP Gain', rarity: 'common' },
-            { type: 'pickupRadius', icon: '🧲', name: 'Magnetism', description: '+30% Pickup Range', rarity: 'common' }
-        ];
-
-        // Shuffle and add passives
-        const shuffled = passives.sort(() => Math.random() - 0.5);
-        while (options.length < 3 && shuffled.length > 0) {
-            options.push(shuffled.pop());
-        }
-
-        return options.slice(0, 3);
     }
 
-    /**
-     * Apply selected upgrade
-     * @param {Object} upgrade 
-     */
+    getAvailableWeapons() {
+        let allAvailable = [];
+        if (this.currentWorld && WORLDS[this.currentWorld]) {
+            const worldWeaponList = WORLDS[this.currentWorld].weapons || [];
+            allAvailable = worldWeaponList.filter(wType => {
+                const cfg = CONFIG.WEAPONS[wType] || WORLD_WEAPONS[wType];
+                if (!cfg) return false;
+                if (cfg.requiresLevel && this.player.level < cfg.requiresLevel) return false;
+                return true;
+            });
+        } else {
+            // Home world (voidAbyss): base weapons only
+            allAvailable = Object.keys(CONFIG.WEAPONS).filter(type => {
+                const config = CONFIG.WEAPONS[type];
+                return !config.requiresLevel || this.player.level >= config.requiresLevel;
+            });
+        }
+        return allAvailable;
+    }
+
     applyUpgrade(upgrade) {
         switch (upgrade.type) {
             case 'newWeapon':
@@ -6444,25 +7053,15 @@ class Game {
         this.ui.updateWeapons(this.player.weapons);
     }
 
-    /**
-     * Add a drone
-     */
     addDrone() {
         const droneCount = this.drones.length;
         this.drones.push(new Drone(this.player, droneCount));
     }
 
-    /**
-     * Add to score
-     * @param {number} points 
-     */
     addScore(points) {
         this.score += points;
     }
 
-    /**
-     * Update UI elements
-     */
     updateUI() {
         this.ui.updateTimer(Math.floor(this.gameTime));
         this.ui.updateKills(this.kills);
@@ -6472,71 +7071,85 @@ class Game {
         this.ui.updateWeapons(this.player.weapons);
     }
 
-    /**
-     * Pause game - shows settings popup
-     */
     pauseGame() {
         if (this.state === GAME_STATE.PLAYING) {
             this.state = GAME_STATE.PAUSED;
 
             // Show settings popup
-            const settingsPopup = document.getElementById('settings-popup');
-            if (settingsPopup) {
-                settingsPopup.classList.remove('hidden');
-            }
+            this.revealSettingsOverlay();
 
             // Pause music
-            if (this.audio) {
-                this.audio.pauseBackgroundMusic();
-            }
+            this.pauseBackgroundMusic();
 
             // Update Music toggle button state
-            const musicToggle = document.getElementById('music-toggle');
-            if (musicToggle && this.audio) {
-                if (this.audio.isMusicMuted()) {
-                    musicToggle.classList.remove('on');
-                    musicToggle.classList.add('off');
-                    musicToggle.textContent = 'OFF';
-                } else {
-                    musicToggle.classList.remove('off');
-                    musicToggle.classList.add('on');
-                    musicToggle.textContent = 'ON';
-                }
-            }
+            this.setMusicToggle();
 
             // Update SFX toggle button state
-            const sfxToggle = document.getElementById('sfx-toggle');
-            if (sfxToggle && this.audio) {
-                if (this.audio.isSfxMuted()) {
-                    sfxToggle.classList.remove('on');
-                    sfxToggle.classList.add('off');
-                    sfxToggle.textContent = 'OFF';
-                } else {
-                    sfxToggle.classList.remove('off');
-                    sfxToggle.classList.add('on');
-                    sfxToggle.textContent = 'ON';
-                }
-            }
+            this.updateSfxToggleState();
 
             // Update track buttons state
-            const trackButtons = document.querySelectorAll('.track-btn');
-            if (trackButtons.length > 0 && this.audio) {
-                const currentTrack = this.audio.getCurrentTrackIndex();
-                trackButtons.forEach(btn => {
-                    const trackIdx = Number.parseInt(btn.dataset.track, 10);
-                    if (trackIdx === currentTrack) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
-                });
+            this.updateTrackButtonStates();
+        }
+    }
+
+    updateTrackButtonStates() {
+        const trackButtons = document.querySelectorAll('.track-btn');
+        if (trackButtons.length > 0 && this.audio) {
+            const currentTrack = this.audio.getCurrentTrackIndex();
+            trackButtons.forEach(btn => {
+                const trackIdx = Number.parseInt(btn.dataset.track, 10);
+                if (trackIdx === currentTrack) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    updateSfxToggleState() {
+        const sfxToggle = document.getElementById('sfx-toggle');
+        if (sfxToggle && this.audio) {
+            if (this.audio.isSfxMuted()) {
+                sfxToggle.classList.remove('on');
+                sfxToggle.classList.add('off');
+                sfxToggle.textContent = 'OFF';
+            } else {
+                sfxToggle.classList.remove('off');
+                sfxToggle.classList.add('on');
+                sfxToggle.textContent = 'ON';
             }
         }
     }
 
-    /**
-     * Resume game - hides settings popup
-     */
+    setMusicToggle() {
+        const musicToggle = document.getElementById('music-toggle');
+        if (musicToggle && this.audio) {
+            if (this.audio.isMusicMuted()) {
+                musicToggle.classList.remove('on');
+                musicToggle.classList.add('off');
+                musicToggle.textContent = 'OFF';
+            } else {
+                musicToggle.classList.remove('off');
+                musicToggle.classList.add('on');
+                musicToggle.textContent = 'ON';
+            }
+        }
+    }
+
+    pauseBackgroundMusic() {
+        if (this.audio) {
+            this.audio.pauseBackgroundMusic();
+        }
+    }
+
+    revealSettingsOverlay() {
+        const settingsPopup = document.getElementById('settings-popup');
+        if (settingsPopup) {
+            settingsPopup.classList.remove('hidden');
+        }
+    }
+
     resumeGame() {
         if (this.state === GAME_STATE.PAUSED) {
             this.state = GAME_STATE.PLAYING;
@@ -6555,9 +7168,6 @@ class Game {
         }
     }
 
-    /**
-     * Quit to menu
-     */
     quitGame() {
         // Hide settings popup
         const settingsPopup = document.getElementById('settings-popup');
@@ -6574,9 +7184,6 @@ class Game {
         this.showMenu();
     }
 
-    /**
-     * Game over
-     */
     gameOver() {
         console.log('[Game] Game Over!');
 
@@ -6601,9 +7208,6 @@ class Game {
         this.sendGameOver(this.score);
     }
 
-    /**
-     * Stop game loop
-     */
     stopGame() {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
@@ -6611,9 +7215,6 @@ class Game {
         }
     }
 
-    /**
-     * Handle canvas resize
-     */
     handleResize() {
         const gameUI = document.getElementById('gameUI');
         const weaponSlots = document.querySelector('.weapon-slots');
@@ -6623,132 +7224,135 @@ class Game {
         // Su desktop, mantieni sempre aspect ratio mobile (9:16)
         // Il fullscreen Ã¨ gestito dalla piattaforma (iframe parent), quindi
         // non possiamo usare document.fullscreenElement
-        if (!this.isMobile()) {
+        const isDesktop = !this.isMobile();
+        if (isDesktop) {
             // Desktop: forza aspect ratio mobile (9:16)
-            const screenHeight = window.innerHeight;
-            const screenWidth = window.innerWidth;
-
-            // Calcola dimensioni con aspect ratio 9:16
-            let width, height;
-            const targetRatio = 9 / 16;
-            const screenRatio = screenWidth / screenHeight;
-
-            if (screenRatio > targetRatio) {
-                // Schermo piÃ¹ largo: limita per altezza
-                height = screenHeight;
-                width = Math.floor(height * targetRatio);
-            } else {
-                // Schermo piÃ¹ stretto: limita per larghezza
-                width = screenWidth;
-                height = Math.floor(width / targetRatio);
-            }
-
-            // Imposta risoluzione canvas
-            this.canvas.width = width;
-            this.canvas.height = height;
-
-            // Imposta dimensioni CSS (sovrascrive width:100% height:100%)
-            this.canvas.style.width = width + 'px';
-            this.canvas.style.height = height + 'px';
-
-            // Centra il canvas
-            this.canvas.style.position = 'fixed';
-            this.canvas.style.left = '50%';
-            this.canvas.style.top = '50%';
-            this.canvas.style.transform = 'translate(-50%, -50%)';
-
-            // Sfondo nero per le barre laterali
-            document.body.classList.add('desktop-mode');
-
-            // Posiziona UI dentro l'area del canvas
-            const left = (screenWidth - width) / 2;
-            const top = (screenHeight - height) / 2;
-
-            // Salva le dimensioni per uso globale (per i modal che appaiono dopo)
-            this.desktopBounds = { left, top, width, height };
-
-            if (gameUI) {
-                gameUI.style.left = left + 'px';
-                gameUI.style.top = top + 'px';
-                gameUI.style.width = width + 'px';
-                gameUI.style.height = height + 'px';
-            }
-
-            if (weaponSlots) {
-                weaponSlots.style.left = (left + 10) + 'px';
-                weaponSlots.style.top = (top + 130) + 'px';
-            }
-
-            if (healthContainer) {
-                healthContainer.style.left = left + 'px';
-                healthContainer.style.width = width + 'px';
-            }
-
-            // Posiziona i modal nell'area del canvas
-            modals.forEach(modal => {
-                modal.style.left = left + 'px';
-                modal.style.top = top + 'px';
-                modal.style.width = width + 'px';
-                modal.style.height = height + 'px';
-            });
+            this.configureDesktopUI(gameUI, weaponSlots, healthContainer, modals);
         } else {
             // Mobile: usa tutto lo schermo
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
-
-            // Reset stili canvas
-            this.canvas.style.width = '100%';
-            this.canvas.style.height = '100%';
-            this.canvas.style.position = 'fixed';
-            this.canvas.style.left = '0';
-            this.canvas.style.top = '0';
-            this.canvas.style.transform = '';
-
-            // Reset sfondo (rimuovi desktop mode)
-            document.body.classList.remove('desktop-mode');
-
-            // Clear desktop bounds
-            this.desktopBounds = null;
-
-            // Reset UI positioning
-            if (gameUI) {
-                gameUI.style.left = '0';
-                gameUI.style.top = '0';
-                gameUI.style.width = '100%';
-                gameUI.style.height = '100%';
-            }
-
-            if (weaponSlots) {
-                weaponSlots.style.left = '';
-                weaponSlots.style.top = '';
-            }
-
-            if (healthContainer) {
-                healthContainer.style.left = '';
-                healthContainer.style.width = '';
-            }
-
-            // Reset modal positioning
-            modals.forEach(modal => {
-                modal.style.left = '0';
-                modal.style.top = '0';
-                modal.style.width = '100%';
-                modal.style.height = '100%';
-            });
+            this.configureMobileUI(gameUI, weaponSlots, healthContainer, modals);
         }
     }
 
-    /**
-     * Check if device is mobile
-     */
+    configureMobileUI(gameUI, weaponSlots, healthContainer, modals) {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+
+        // Reset stili canvas
+        this.canvas.style.width = '100%';
+        this.canvas.style.height = '100%';
+        this.canvas.style.position = 'fixed';
+        this.canvas.style.left = '0';
+        this.canvas.style.top = '0';
+        this.canvas.style.transform = '';
+
+        // Reset sfondo (rimuovi desktop mode)
+        document.body.classList.remove('desktop-mode');
+
+        // Clear desktop bounds
+        this.desktopBounds = null;
+
+        // Reset UI positioning
+        if (gameUI) {
+            gameUI.style.left = '0';
+            gameUI.style.top = '0';
+            gameUI.style.width = '100%';
+            gameUI.style.height = '100%';
+        }
+
+        if (weaponSlots) {
+            weaponSlots.style.left = '';
+            weaponSlots.style.top = '';
+        }
+
+        if (healthContainer) {
+            healthContainer.style.left = '';
+            healthContainer.style.width = '';
+        }
+
+        // Reset modal positioning
+        modals.forEach(modal => {
+            modal.style.left = '0';
+            modal.style.top = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+        });
+    }
+
+    configureDesktopUI(gameUI, weaponSlots, healthContainer, modals) {
+        const screenHeight = window.innerHeight;
+        const screenWidth = window.innerWidth;
+
+        // Calcola dimensioni con aspect ratio 9:16
+        let width, height;
+        const targetRatio = 9 / 16;
+        const screenRatio = screenWidth / screenHeight;
+
+        if (screenRatio > targetRatio) {
+            // Schermo piÃ¹ largo: limita per altezza
+            height = screenHeight;
+            width = Math.floor(height * targetRatio);
+        } else {
+            // Schermo piÃ¹ stretto: limita per larghezza
+            width = screenWidth;
+            height = Math.floor(width / targetRatio);
+        }
+
+        // Imposta risoluzione canvas
+        this.canvas.width = width;
+        this.canvas.height = height;
+
+        // Imposta dimensioni CSS (sovrascrive width:100% height:100%)
+        this.canvas.style.width = width + 'px';
+        this.canvas.style.height = height + 'px';
+
+        // Centra il canvas
+        this.canvas.style.position = 'fixed';
+        this.canvas.style.left = '50%';
+        this.canvas.style.top = '50%';
+        this.canvas.style.transform = 'translate(-50%, -50%)';
+
+        // Sfondo nero per le barre laterali
+        document.body.classList.add('desktop-mode');
+
+        // Posiziona UI dentro l'area del canvas
+        const left = (screenWidth - width) / 2;
+        const top = (screenHeight - height) / 2;
+
+        // Salva le dimensioni per uso globale (per i modal che appaiono dopo)
+        this.desktopBounds = { left, top, width, height };
+
+        if (gameUI) {
+            gameUI.style.left = left + 'px';
+            gameUI.style.top = top + 'px';
+            gameUI.style.width = width + 'px';
+            gameUI.style.height = height + 'px';
+        }
+
+        if (weaponSlots) {
+            weaponSlots.style.left = (left + 10) + 'px';
+            weaponSlots.style.top = (top + 130) + 'px';
+        }
+
+        if (healthContainer) {
+            healthContainer.style.left = left + 'px';
+            healthContainer.style.width = width + 'px';
+        }
+
+        // Posiziona i modal nell'area del canvas
+        modals.forEach(modal => {
+            modal.style.left = left + 'px';
+            modal.style.top = top + 'px';
+            modal.style.width = width + 'px';
+            modal.style.height = height + 'px';
+        });
+    }
+
     isMobile() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
             (window.innerWidth <= 768);
     }
 
-    /**
-     * Handle fullscreen change event
-     */
     handleFullscreenChange() {
         const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
 
@@ -6763,14 +7367,11 @@ class Game {
         this.handleResize();
     }
 
-    /**
-     * Setup input handlers
-     */
     setupInput() {
         // Keyboard input
         const keys = {};
 
-        window.addEventListener('keydown', (e) => {
+        globalThis.addEventListener('keydown', (e) => {
             keys[e.key.toLowerCase()] = true;
 
             // Pause on Escape
@@ -6783,7 +7384,7 @@ class Game {
             }
         });
 
-        window.addEventListener('keyup', (e) => {
+        globalThis.addEventListener('keyup', (e) => {
             keys[e.key.toLowerCase()] = false;
         });
 
@@ -6816,9 +7417,6 @@ class Game {
         this.setupJoystick();
     }
 
-    /**
-     * Setup virtual joystick (floating - appears where user touches)
-     */
     setupJoystick() {
         // Create touch zone for capturing touches anywhere on screen
         // Must be inside game-container for fullscreen compatibility
@@ -6844,7 +7442,7 @@ class Game {
             // Don't capture touches on UI elements (pause button, etc.)
             const touch = e.changedTouches ? e.changedTouches[0] : e;
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            if (target && target.closest('button, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #pauseBtn, #gameUI button')) {
+            if (target?.closest('button, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #pauseBtn, #gameUI button')) {
                 return; // Let the button handle the touch
             }
 
@@ -6909,13 +7507,10 @@ class Game {
 
         // Mouse support for testing (on joystick element for desktop)
         joystick.addEventListener('mousedown', handleStart);
-        window.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
+        globalThis.addEventListener('mousemove', handleMove);
+        globalThis.addEventListener('mouseup', handleEnd);
     }
 
-    /**
-     * Setup game events
-     */
     setupEvents() {
         this.events.on('enemyDeath', (enemy) => this.handleEnemyDeath(enemy));
         this.events.on('bossSpawn', () => {
@@ -6924,9 +7519,6 @@ class Game {
         });
     }
 
-    /**
-     * Setup UI button callbacks
-     */
     setupUICallbacks() {
         // Start button
         if (this.ui.elements.startButton) {
@@ -6975,9 +7567,6 @@ class Game {
         this.setupSettingsHandlers();
     }
 
-    /**
-     * Update the current character display on the start screen
-     */
     updateCharacterDisplay() {
         const char = this.characterManager.getSelected();
         const nameEl = document.getElementById('currentCharName');
@@ -6995,9 +7584,6 @@ class Game {
         }
     }
 
-    /**
-     * Setup settings popup event handlers
-     */
     setupSettingsHandlers() {
         const resumeButton = document.getElementById('resume-button');
         const quitButton = document.getElementById('quit-button');
@@ -7094,13 +7680,6 @@ class Game {
         });
     }
 
-    // ==========================================
-    // Platform SDK Integration
-    // ==========================================
-
-    /**
-     * Send game started notification to platform
-     */
     sendGameStarted() {
         if (this.gameStartSent) return;
         this.gameStartSent = true;
@@ -7113,7 +7692,7 @@ class Game {
                     payload: {},
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
-                },  targetOrigin);
+                }, targetOrigin);
                 console.log('[Game] Game started notification sent');
             }
         } catch (error) {
@@ -7121,10 +7700,6 @@ class Game {
         }
     }
 
-    /**
-     * Send game over with score to platform
-     * @param {number} score 
-     */
     sendGameOver(score) {
         try {
             if (typeof PlatformSDK !== 'undefined') {

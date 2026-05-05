@@ -18,15 +18,15 @@ class Player extends LivingEntity {
      */
     constructor(x, y) {
         super(x, y, CONFIG.PLAYER.SIZE, CONFIG.PLAYER.BASE_HEALTH);
-        
+
         this.color = CONFIG.PLAYER.COLOR;
         this.speed = CONFIG.PLAYER.BASE_SPEED;
         this.baseSpeed = CONFIG.PLAYER.BASE_SPEED;
-        
+
         // Movement input
         this.moveDirection = new Vector2(0, 0);
         this.facingDirection = new Vector2(0, -1); // Start facing up
-        
+
         // Sprite system
         this.sprite = spriteManager.createSprite('player');
         if (this.sprite) {
@@ -34,7 +34,7 @@ class Player extends LivingEntity {
         }
         this.isMoving = false;
         this.spriteScale = this.size * 2.5; // Scale for rendering
-        
+
         // Stats that can be upgraded
         this.stats = {
             maxHealth: CONFIG.PLAYER.BASE_HEALTH,
@@ -46,32 +46,32 @@ class Player extends LivingEntity {
             damageMultiplier: 1,    // Damage bonus
             critChance: 0.05        // Critical hit chance
         };
-        
+
         // Level & XP
         this.level = 1;
         this.xp = 0;
         this.xpToNextLevel = CONFIG.LEVELING.BASE_XP_REQUIRED;
         this.pendingLevelUp = false; // Flag for game to check
-        
+
         // Weapons (array of weapon instances)
         this.weapons = [];
-        
+
         // Dodge ability
         this.isDodging = false;
         this.dodgeCooldown = 0;
         this.dodgeTimer = 0;
         this.dodgeDirection = new Vector2(0, 0);
-        
+
         // Invincibility frames (after taking damage)
         this.invincibilityTimer = 0;
-        
+
         // Health regen timer
         this.regenTimer = 0;
-        
+
         // Combo tracking
         this.combo = 0;
         this.comboTimer = 0;
-        
+
         // Kill tracking for this session
         this.kills = 0;
     }
@@ -83,7 +83,7 @@ class Player extends LivingEntity {
      */
     setMoveDirection(dx, dy) {
         this.moveDirection.set(dx, dy);
-        
+
         // Update facing direction if moving
         if (dx !== 0 || dy !== 0) {
             this.facingDirection.set(dx, dy).normalize();
@@ -97,22 +97,7 @@ class Player extends LivingEntity {
      */
     update(deltaTime, arena) {
         // Handle dodge
-        if (this.isDodging) {
-            this.updateDodge(deltaTime);
-        } else {
-            // Normal movement
-            const moveSpeed = this.stats.speed * deltaTime;
-            
-            if (this.moveDirection.magnitudeSquared() > 0) {
-                const normalizedDir = this.moveDirection.clone().normalize();
-                this.velocity.set(
-                    normalizedDir.x * this.stats.speed,
-                    normalizedDir.y * this.stats.speed
-                );
-            } else {
-                this.velocity.set(0, 0);
-            }
-        }
+        this.handleMovement(deltaTime);
 
         // Apply movement
         super.update(deltaTime);
@@ -153,14 +138,34 @@ class Player extends LivingEntity {
         if (this.sprite) {
             const wasMoving = this.isMoving;
             this.isMoving = this.moveDirection.magnitudeSquared() > 0.1;
-            
+
             if (this.isMoving && !wasMoving) {
                 this.sprite.play('walk');
             } else if (!this.isMoving && wasMoving) {
                 this.sprite.play('idle');
             }
-            
+
             this.sprite.update(deltaTime);
+        }
+    }
+
+    handleMovement(deltaTime) {
+        const notDodging = !this.isDodging;
+        if (notDodging) {
+            if (this.moveDirection.magnitudeSquared() > 0) {
+                const normalizedDir = this.moveDirection.clone().normalize();
+                this.velocity.set(
+                    normalizedDir.x * this.stats.speed,
+                    normalizedDir.y * this.stats.speed
+                );
+            } else {
+                this.velocity.set(0, 0);
+            }
+        } else {
+
+            this.updateDodge(deltaTime);
+
+
         }
     }
 
@@ -170,7 +175,7 @@ class Player extends LivingEntity {
      */
     updateDodge(deltaTime) {
         this.dodgeTimer -= deltaTime * 1000;
-        
+
         if (this.dodgeTimer <= 0) {
             this.isDodging = false;
             this.invincible = false;
@@ -221,16 +226,16 @@ class Player extends LivingEntity {
         // Apply armor reduction
         const reducedDamage = amount * (1 - this.stats.armor);
         const result = super.takeDamage(reducedDamage, source);
-        
+
         // Apply invincibility frames after taking damage (500ms)
         if (result && !this.isDead()) {
             this.invincible = true;
             this.invincibilityTimer = 500; // 500ms of invincibility
         }
-        
+
         return result;
     }
-    
+
     /**
      * Update invincibility timer
      * @param {number} deltaTime
@@ -272,10 +277,10 @@ class Player extends LivingEntity {
         this.xp -= this.xpToNextLevel;
         this.level++;
         this.xpToNextLevel = Math.floor(
-            CONFIG.LEVELING.BASE_XP_REQUIRED * 
+            CONFIG.LEVELING.BASE_XP_REQUIRED *
             Math.pow(CONFIG.LEVELING.XP_GROWTH_RATE, this.level - 1)
         );
-        
+
         this.pendingLevelUp = true;
 
         // Keep excess XP
@@ -286,7 +291,7 @@ class Player extends LivingEntity {
 
         return true;
     }
-    
+
     /**
      * Check if there's a pending level up
      * @returns {boolean}
@@ -430,7 +435,7 @@ class Player extends LivingEntity {
         const eyeOffset = this.size * 0.35;
         const eyeSize = this.size * 0.2;
         const eyeAngle = Math.atan2(this.facingDirection.y, this.facingDirection.x);
-        
+
         const leftEyeAngle = eyeAngle - 0.4;
         const rightEyeAngle = eyeAngle + 0.4;
 
@@ -491,7 +496,7 @@ class Player extends LivingEntity {
         ctx.save();
 
         // Damage flash or invincibility effect
-        let opacity = 1.0;
+        let opacity = 1;
         if (this.damageFlash > 0) {
             opacity = 0.7;
         } else if (this.invincible && Math.floor(Date.now() / 80) % 2 === 0) {
@@ -506,38 +511,10 @@ class Player extends LivingEntity {
 
         // Use sprite system if available
         if (this.sprite) {
-            ctx.save();
-            
-            // Flip sprite based on facing direction
-            const facingAngle = Math.atan2(this.facingDirection.y, this.facingDirection.x);
-            const flipX = this.facingDirection.x < -0.1;
-            
-            this.sprite.render(ctx, this.x, this.y, this.spriteScale, {
-                opacity: opacity,
-                flipX: flipX,
-                tint: this.damageFlash > 0 ? '#ff2222' : null
-            });
-            
-            ctx.restore();
+            this.applySpriteRendering(ctx, opacity);
         } else {
             // Fallback to basic rendering
-            ctx.globalAlpha = opacity;
-            
-            const gradient = ctx.createRadialGradient(
-                this.x - this.size * 0.3, this.y - this.size * 0.3, 0,
-                this.x, this.y, this.size
-            );
-            gradient.addColorStop(0, this.damageFlash > 0 ? '#ff4444' : '#66d9ff');
-            gradient.addColorStop(1, this.damageFlash > 0 ? '#cc0000' : this.color);
-
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            this.renderPlayerGradient(ctx, opacity);
         }
 
         ctx.restore();
@@ -612,6 +589,41 @@ class Player extends LivingEntity {
         }
     }
 
+    renderPlayerGradient(ctx, opacity) {
+        ctx.globalAlpha = opacity;
+
+        const gradient = ctx.createRadialGradient(
+            this.x - this.size * 0.3, this.y - this.size * 0.3, 0,
+            this.x, this.y, this.size
+        );
+        gradient.addColorStop(0, this.damageFlash > 0 ? '#ff4444' : '#66d9ff');
+        gradient.addColorStop(1, this.damageFlash > 0 ? '#cc0000' : this.color);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
+    applySpriteRendering(ctx, opacity) {
+        ctx.save();
+
+        // Flip sprite based on facing direction
+        const flipX = this.facingDirection.x < -0.1;
+
+        this.sprite.render(ctx, this.x, this.y, this.spriteScale, {
+            opacity: opacity,
+            flipX: flipX,
+            tint: this.damageFlash > 0 ? '#ff2222' : null
+        });
+
+        ctx.restore();
+    }
+
     /**
      * Reset player for new game
      * @param {number} x 
@@ -619,14 +631,14 @@ class Player extends LivingEntity {
      */
     reset(x, y) {
         super.reset(x, y);
-        
+
         this.level = 1;
         this.xp = 0;
         this.xpToNextLevel = CONFIG.LEVELING.BASE_XP_REQUIRED;
         this.kills = 0;
         this.combo = 0;
         this.comboTimer = 0;
-        
+
         // Reset stats
         this.stats = {
             maxHealth: CONFIG.PLAYER.BASE_HEALTH,
@@ -636,18 +648,18 @@ class Player extends LivingEntity {
             pickupRange: 100,
             xpMultiplier: 1
         };
-        
+
         this.maxHealth = this.stats.maxHealth;
         this.health = this.maxHealth;
-        
+
         // Clear weapons
         this.weapons = [];
-        
+
         // Reset dodge
         this.isDodging = false;
         this.dodgeCooldown = 0;
         this.dodgeTimer = 0;
-        
+
         this.moveDirection.set(0, 0);
         this.facingDirection.set(0, -1);
     }

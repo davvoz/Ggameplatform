@@ -352,6 +352,31 @@ async def create_post(
             "weight": 500
         }]
 
+        # Lookup referrer from join.cur8.fun and add as extra beneficiary if present
+        if stats.get('steem_username'):
+            try:
+                join_api_url = os.getenv("JOIN_CUR8_API_URL", "https://join.cur8.fun")
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    ref_resp = await client.get(
+                        f"{join_api_url}/api/referral/lookup",
+                        params={"steem": stats['steem_username']}
+                    )
+                if ref_resp.status_code == 200:
+                    ref_data = ref_resp.json()
+                    referrer = ref_data.get("referrer")
+                    beneficiary_pct = ref_data.get("beneficiary_pct")
+                    if referrer and beneficiary_pct and beneficiary_pct > 0:
+                        # weight is in hundredths of percent (10000 = 100%)
+                        ref_weight = int(round(beneficiary_pct * 100))
+                        beneficiaries.append({"account": referrer, "weight": ref_weight})
+            except Exception as e:
+                # Non-blocking: if lookup fails, proceed with only micro.cur8
+                import logging
+                logging.getLogger(__name__).warning(f"Referral lookup failed for {stats['steem_username']}: {e}")
+
+        # Beneficiaries must be sorted alphabetically by account name (Steem protocol requirement)
+        beneficiaries.sort(key=lambda b: b["account"])
+
         # Prepare metadata for post (include useful tracking)
         metadata = post_service.prepare_post_metadata(
             username=stats['username'],

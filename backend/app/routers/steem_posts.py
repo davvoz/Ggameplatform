@@ -674,7 +674,28 @@ async def publish_with_key(
     
     # Generate permlink
     permlink = _generate_permlink(title)
-    
+
+    # Lookup referrer from join.cur8.fun to add as extra beneficiary
+    extra_beneficiaries = []
+    try:
+        join_api_url = os.getenv("JOIN_CUR8_API_URL", "https://join.cur8.fun")
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            ref_resp = await client.get(
+                f"{join_api_url}/api/referral/lookup",
+                params={"steem": username}
+            )
+        if ref_resp.status_code == 200:
+            ref_data = ref_resp.json()
+            referrer = ref_data.get("referrer")
+            beneficiary_pct = ref_data.get("beneficiary_pct")
+            if referrer and beneficiary_pct and beneficiary_pct > 0:
+                extra_beneficiaries.append({"account": referrer, "weight": int(round(beneficiary_pct * 100))})
+    except Exception as e:
+        logger.warning(f"Referral lookup failed for {username}: {e}")
+
+    # Inject extra beneficiaries into request so _get_beneficiaries can use them
+    request["_extra_beneficiaries"] = extra_beneficiaries
+
     # Publish using beem
     post_url = _publish_to_steem(username, posting_key, title, body, tags, metadata, permlink, request)
     
@@ -708,12 +729,14 @@ def _generate_permlink(title: str) -> str:
     return f"{permlink}-{random_suffix}"
 
 
-def _get_beneficiaries(request: dict) -> List[Dict[str, Any]]:
-    """Get beneficiaries: always micro.cur8 at 5% (weight 500)"""
-    return [{
-        "account": "micro.cur8",
-        "weight": 500
-    }]
+def _get_beneficiaries(request: dict, extra_beneficiaries: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """Get beneficiaries: always micro.cur8 at 5% (weight 500), plus any extras (e.g. referrer)"""
+    beneficiaries = [{"account": "micro.cur8", "weight": 500}]
+    if extra_beneficiaries:
+        beneficiaries.extend(extra_beneficiaries)
+    # Steem protocol requires beneficiaries sorted alphabetically
+    beneficiaries.sort(key=lambda b: b["account"])
+    return beneficiaries
 
 
 import logging
@@ -968,9 +991,9 @@ def _publish_to_steem(
         permlink=permlink,
         tags=tags,
         json_metadata={'tags': tags, **metadata},
-        beneficiaries=_get_beneficiaries(request)
+        beneficiaries=_get_beneficiaries(request, request.get("_extra_beneficiaries", []))
     )
-    
+
     return _steem_publisher.publish(post_data)
 
 

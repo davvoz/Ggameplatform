@@ -1,8 +1,17 @@
 {
-  "version": "5.1.13",
-  "timestamp": "2026-05-05T13:18:59.293Z",
-  "buildNumber": 546,
+  "version": "5.2.0",
+  "timestamp": "2026-05-06T16:24:21.007Z",
+  "buildNumber": 547,
   "changelog": [
+    {
+      "version": "5.2.0",
+      "date": "2026-05-06",
+      "type": "minor",
+      "changes": [
+        "feat: add referral lookup from join.cur8.fun API for additional beneficiaries",
+        "🔖 Bump version to 5.1.13 [skip-version]"
+      ]
+    },
     {
       "version": "5.1.13",
       "date": "2026-05-05",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[DC] mobile",
         "🔖 Bump version to 5.1.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.1.4",
-      "date": "2026-04-29",
-      "type": "patch",
-      "changes": [
-        "fix: [DC] massive refractor , animations , music , levels",
-        "🔖 Bump version to 5.1.3 [skip-version]"
       ]
     }
   ]

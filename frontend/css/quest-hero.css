@@ -13,10 +13,7 @@ main:has(.quests) {
     padding: 0;
 }
 
-/* Quests container with max-width constraint */
-main:has(.quests) .quests {
-    max-width: 1000px;
-}
+
 
 /* Hero Section */
 .quests-hero {

@@ -69,7 +69,17 @@ const POOL_MAP = [
 ];
 
 export function getLevelData(level) {
-    // Survivor (W5) — virtual level 121+. No campaign data; SurvivorMode drives spawn.
+    // Blitz Run (W6) — virtual level 151+. BlitzMode drives spawn.
+    if (level >= 151) {
+        return {
+            name: 'BLITZ RUN',
+            description: 'Blitz Run',
+            speedMult: 1,
+            boss: null,
+            waves: []
+        };
+    }
+    // Survivor (W5) — virtual level 121-150. No campaign data; SurvivorMode drives spawn.
     // Returning a stub keeps HUD/UI consumers safe.
     if (level >= 121) {
         return {

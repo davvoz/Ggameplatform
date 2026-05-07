@@ -1,6 +1,7 @@
 import { C_WHITE, C_GOLD } from '../entities/LevelsThemes.js';
 import { getLevelData } from '../LevelDataFacade.js';
 import { ui, mono } from '../FontConfig.js';
+import { BLITZ_MAX_CYCLES } from '../entities/worlds/blitz/BlitzConfig.js';
 
 class HUDRenderer {
     constructor(game) {
@@ -31,19 +32,7 @@ class HUDRenderer {
 
         ctx.fillStyle = '#88ff88';
         ctx.textAlign = 'center';
-        if (g.gameMode === 'survivor' && g.survivorMode) {
-            const sm = g.survivorMode;
-            const sp = sm.getStepProgress();
-            const phaseLabel = `PHASE ${sm.getPhase() + 1}/4`;
-            const bossLabel = `\u2620 ${sm.bossesDefeated}/4`;
-            const stepLabel = sm.isMilestoneActive()
-                ? '\u26A1 BOSS FIGHT'
-                : `\u2694 ${sp.current}/${sp.target}`;
-            ctx.fillText(`${phaseLabel}   ${bossLabel}   ${stepLabel}`, w / 2, 24);
-        } else {
-            const levelData = getLevelData(g.levelManager.currentLevel);
-            ctx.fillText(`LV.${g.levelManager.currentLevel} - ${levelData?.name || ''}`, w / 2, 24);
-        }
+        this.renderLevelInformation(g, ctx, w);
 
         ctx.textAlign = 'right';
         const hpBarW = 80;
@@ -66,13 +55,41 @@ class HUDRenderer {
 
         this.renderWeaponLevelIndicators(hpBarY, hpBarH, ctx, fs, player, hpBarX);
 
-        this.renderComboMessage(g, ctx, fs, w);
+        if (g.gameMode === 'blitz' && g.blitzMode) {
+            this.renderBlitzHUD(g, ctx, fs, w);
+        } else {
+            this.renderComboMessage(g, ctx, fs, w);
+        }
+        this.renderActivePerks(g, ctx, fs);
 
         this.renderUltimateBar(player, w, g, ctx, fs);
 
-        this.renderActivePerks(g, ctx, fs);
-
         ctx.restore();
+    }
+
+    renderLevelInformation(g, ctx, w) {
+        if (g.gameMode === 'survivor' && g.survivorMode) {
+            const sm = g.survivorMode;
+            const sp = sm.getStepProgress();
+            const phaseLabel = `PHASE ${sm.getPhase() + 1}/4`;
+            const bossLabel = `\u2620 ${sm.bossesDefeated}/4`;
+            const stepLabel = sm.isMilestoneActive()
+                ? '\u26A1 BOSS FIGHT'
+                : `\u2694 ${sp.current}/${sp.target}`;
+            ctx.fillText(`${phaseLabel}   ${bossLabel}   ${stepLabel}`, w / 2, 24);
+        } else if (g.gameMode === 'blitz' && g.blitzMode) {
+            const bm = g.blitzMode;
+            const mult = bm.multiplier ?? 0;
+            const phase = (bm.getPhase?.() ?? 0) + 1;
+            const cycle = (bm.cycle ?? 0) + 1;
+            const condA = mult >= 10 ? '#ffd700' : '#ff8c28';
+            ctx.fillStyle = mult >= 25 ? '#ffffc8' : condA;
+            const milestoneLabel = bm.milestoneActive ? '  ⚠ FIGHT' : `  P${phase}/4`;
+            ctx.fillText(`⚡ ×${mult} CHAIN   CYCLE ${cycle}/${BLITZ_MAX_CYCLES}${milestoneLabel}`, w / 2, 24);
+        } else {
+            const levelData = getLevelData(g.levelManager.currentLevel);
+            ctx.fillText(`LV.${g.levelManager.currentLevel} - ${levelData?.name || ''}`, w / 2, 24);
+        }
     }
 
     renderWeaponLevelIndicators(hpBarY, hpBarH, ctx, fs, player, hpBarX) {
@@ -92,6 +109,255 @@ class HUDRenderer {
             ctx.fillText('★', starX, wpnY + 2);
         }
         ctx.shadowBlur = 0;
+    }
+
+    /**
+     * Blitz Run HUD overlay:
+     *  - Large pulsing chain multiplier when chain > 1
+     *  - Draining chain timer bar
+     *  - Unbanked score (bottom-center, flashes red on chain-break)
+     *  - Bank hint when canBank
+     *  - BANKED splash animation
+     *  - Cycle progress bar (kills toward next milestone)
+     */
+    renderBlitzHUD(g, ctx, fs, w) {
+        const bm = g.blitzMode;
+        const h = g.logicalHeight;
+
+        // ── Chain multiplier (large, center) ──────────────────
+        this.renderChainMultiplier(bm, fs, ctx, w, h);
+
+        // ── Chain timer bar ────────────────────────────────────
+        this.renderChainProgressBar(bm, fs, w, h, ctx);
+
+        // ── Cycle / milestone progress (top-left) ─────────────
+        this.renderCycleProgress(bm, ctx, fs, w);
+
+        // ── Unbanked score (bottom-center) ────────────────────
+        this.renderUnbankedScore(bm, fs, ctx, w, h);
+
+        // ── Bank hint ─────────────────────────────────────────
+        this.renderBankHint(bm, ctx, fs, w, h);
+
+        // ── BANKED splash ─────────────────────────────────────
+        if (bm.bankAnim.timer > 0) this.renderBankAnimation(bm, ctx, fs, w, h);
+    }
+
+    /**
+     * Thin gold progress bar (top-right) showing kill progress within the
+     * current blitz cycle. Flashes red when a milestone (boss/miniboss) is active.
+     */
+    renderCycleProgress(bm, ctx, fs, w) {
+        // Resolve next event threshold from hardcoded milestones
+        const events = [75, 150, 200];
+        let nextThreshold = 200;
+        for (const t of events) {
+            if (bm.cycleKills < t) { nextThreshold = t; break; }
+        }
+
+        const barW = Math.round(w * 0.2);
+        const barH = Math.round(4 * fs);
+        const barX = w - barW - Math.round(8 * fs);
+        const barY = Math.round(32 * fs);
+        const progress = Math.min(bm.cycleKills / nextThreshold, 1);
+
+        // Background
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        ctx.fillStyle = '#222';
+        ctx.fillRect(barX, barY, barW, barH);
+
+        // Fill
+        ctx.globalAlpha = bm.milestoneActive ? (0.6 + 0.4 * Math.sin(Date.now() / 120)) : 0.85;
+        ctx.fillStyle = bm.milestoneActive ? '#ff4444' : '#ffd700';
+        ctx.fillRect(barX, barY, Math.round(barW * progress), barH);
+        ctx.restore();
+
+        // Label
+        ctx.font = ui(7 * fs);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = bm.milestoneActive ? '#ff6666' : 'rgba(255,215,0,0.8)';
+        const label = bm.milestoneActive ? '⚠ FIGHT' : `${bm.cycleKills}/${nextThreshold}`;
+        ctx.fillText(label, w - Math.round(8 * fs), barY - Math.round(3 * fs));
+    }
+
+    renderBankHint(bm, ctx, fs, w, h) {
+        if (bm.canBank && !this.game.input.isMobile) {
+            ctx.font = ui(9 * fs);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(200,255,200,0.7)';
+            ctx.fillText('[E] BANK NOW', w / 2, h - 28);
+        }
+    }
+
+    /**
+     * Full-screen gold burst + "BANKED +X,XXX" text that scales in and floats up.
+     *
+     * Timeline (t = 0 → 1, normalised from duration → 0):
+     *   0.0 – 0.2  scale-in  (overshoot punch)
+     *   0.2 – 0.7  hold + float up
+     *   0.7 – 1.0  fade out
+     */
+    renderBankAnimation(bm, ctx, fs, w, h) {
+        const { timer, duration, amount } = bm.bankAnim;
+        // t goes 1 → 0 as timer counts down
+        const t = timer / duration;
+        const elapsed = 1 - t;   // 0 → 1
+
+        // ── Burst rays (only first 40% of animation) ──────────
+        if (elapsed < 0.4) {
+            const burstAlpha = (1 - elapsed / 0.4) * 0.35;
+            const RAY_COUNT = 16;
+            const cx = w / 2;
+            const cy = h / 2;
+            const maxLen = Math.max(w, h) * 0.65;
+            ctx.save();
+            ctx.globalAlpha = burstAlpha;
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2 * fs;
+            for (let i = 0; i < RAY_COUNT; i++) {
+                const angle = (i / RAY_COUNT) * Math.PI * 2;
+                const len = maxLen * (0.5 + 0.5 * Math.sin(i * 1.3));
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * len, cy + Math.sin(angle) * len);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // ── Scale-in punch then float ─────────────────────────
+        let scale, alpha, offsetY;
+        if (elapsed < 0.15) {
+            // punch scale-in: 0 → 1.3
+            scale = (elapsed / 0.15) * 1.3;
+            alpha = 1;
+            offsetY = 0;
+        } else if (elapsed < 0.7) {
+            // hold + slight scale-back + float up
+            const hold = (elapsed - 0.15) / 0.55;
+            scale = 1.3 - hold * 0.2;   // 1.3 → 1.1
+            alpha = 1;
+            offsetY = -hold * h * 0.12;
+        } else {
+            // fade out while continuing to float
+            const fade = (elapsed - 0.7) / 0.3;
+            scale = 1.1;
+            alpha = 1 - fade;
+            offsetY = -h * 0.12 - fade * h * 0.06;
+        }
+
+        if (alpha <= 0) return;
+
+        const cx = w / 2;
+        const cy = h / 2 + offsetY;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // ── Gold background pill ──────────────────────────────
+        const pillW = 260 * fs * scale;
+        const pillH = 60 * fs * scale;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.beginPath();
+        ctx.roundRect(cx - pillW / 2, cy - pillH / 2, pillW, pillH, pillH / 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+        ctx.lineWidth = 2.5 * fs * scale;
+        ctx.beginPath();
+        ctx.roundRect(cx - pillW / 2, cy - pillH / 2, pillW, pillH, pillH / 2);
+        ctx.stroke();
+
+        // ── "🏦 BANKED" label ──────────────────────────────────
+        const fsLabel = Math.round(12 * fs * scale);
+        ctx.font = `700 ${fsLabel}px Orbitron, sans-serif`;
+        ctx.fillStyle = `rgba(255, 240, 150, ${alpha})`;
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 12 * scale;
+        ctx.fillText('🏦  BANKED', cx, cy - fsLabel * 0.6);
+
+        // ── "+X,XXX" amount ────────────────────────────────────
+        const fsAmt = Math.round(20 * fs * scale);
+        ctx.font = `900 ${fsAmt}px Orbitron, sans-serif`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 20 * scale;
+        ctx.fillText(`+${amount.toLocaleString()}`, cx, cy + fsAmt * 0.55);
+
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
+    renderUnbankedScore(bm, fs, ctx, w, h) {
+        const unbanked = bm.unbankedScore;
+        if (unbanked > 0 || bm.isChainBroke) {
+            const flashRed = bm.isChainBroke;
+            const condA = (bm.isBankFlash ? '#aaffaa' : '#ffd700');
+            const unbankedColor = flashRed ? '#ff3333' : condA;
+            const boxW = 200 * fs;
+            const boxH = 20 * fs;
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(w / 2 - boxW / 2, h - 58, boxW, boxH);
+            ctx.font = ui(11 * fs, 'bold');
+            ctx.textAlign = 'center';
+            ctx.fillStyle = unbankedColor;
+            ctx.shadowColor = unbankedColor;
+            ctx.shadowBlur = flashRed ? 10 : 4;
+            const brokeAmt = bm.chainBrokeAmount;
+            const valA = brokeAmt > 0 ? ` \u2212${brokeAmt.toLocaleString()}` : '';
+            const label = flashRed
+                ? `\u274C CHAIN BROKE!${valA}`
+                : `\uD83C\uDFE6 UNBANKED: ${unbanked.toLocaleString()}`;
+            ctx.fillText(label, w / 2, h - 44);
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    renderChainProgressBar(bm, fs, w, h, ctx) {
+        if (bm.multiplier > 1 || bm.isChainBroke) {
+            const barW = 180 * fs;
+            const barH = 6 * fs;
+            const barX = w / 2 - barW / 2;
+            const barY = h / 2;
+            const progress = bm.chainProgress;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(barX, barY, barW, barH);
+
+            const condA = progress > 0.15 ? '#ff8800' : '#ff2222';
+            const barColor = progress > 0.4 ? '#ffd700' : condA;
+            ctx.fillStyle = barColor;
+            ctx.fillRect(barX, barY, barW * progress, barH);
+
+            ctx.strokeStyle = '#ffffff33';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(barX, barY, barW, barH);
+        }
+    }
+
+    renderChainMultiplier(bm, fs, ctx, w, h) {
+        if (bm.multiplier > 1) {
+            const pulse = 0.85 + 0.15 * Math.sin(performance.now() * 0.008);
+            const fontSize = Math.min(48, 14 + bm.multiplier * 0.6) * fs * pulse;
+            ctx.font = `bold ${fontSize}px monospace`;
+            ctx.textAlign = 'center';
+
+            const intensity = bm.chainProgress;
+            let chainColor;
+            if (bm.isChainBroke) chainColor = '#ff2222';
+            else if (intensity >= 0.6) chainColor = '#ffffc8';
+            else if (intensity >= 0.3) chainColor = '#ffd700';
+            else chainColor = '#ff6600';
+
+            ctx.fillStyle = chainColor;
+            ctx.shadowColor = chainColor;
+            ctx.shadowBlur = 18;
+            ctx.fillText(`\u26A1 \xD7${bm.multiplier}`, w / 2, h / 2 - 20);
+            ctx.shadowBlur = 0;
+        }
     }
 
     renderComboMessage(g, ctx, fs, w) {

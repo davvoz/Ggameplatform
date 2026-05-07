@@ -18,16 +18,24 @@ export class Slingshot {
         this.ax = ax; this.ay = ay; this.bx = bx; this.by = by;
         this.nx = nx; this.ny = ny;
         this.flash = 0;
+        this._hitCooldown = 0;  // prevents multi-kick/score when ball grazes at shallow angle
         this.score = C.SLING_SCORE;
         this.onHit = null;
     }
 
-    update(dt) { if (this.flash > 0) this.flash = Math.max(0, this.flash - dt); }
+    update(dt) {
+        if (this.flash > 0)        this.flash        = Math.max(0, this.flash        - dt);
+        if (this._hitCooldown > 0) this._hitCooldown = Math.max(0, this._hitCooldown - dt);
+    }
 
     resolve(ball) {
         const hit = Collisions.circleVsSegment(ball, this.ax, this.ay, this.bx, this.by, C.BALL_RESTITUTION_SLING);
         if (!hit) return false;
-        // Real slingshot impulse along the outward normal
+        // Slingshot kick fires once per contact. Without the cooldown a ball
+        // grazing at a shallow angle would re-detect every substep (ball centre
+        // stays within surfaceR + WALL_SKIN) and accumulate unbounded impulse + score.
+        if (this._hitCooldown > 0) return true;
+        this._hitCooldown = 0.12;
         ball.vel.x += this.nx * C.SLING_KICK;
         ball.vel.y += this.ny * C.SLING_KICK;
         this.flash = 0.15;

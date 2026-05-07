@@ -1,0 +1,773 @@
+﻿{
+    "meta":  {
+                 "edition":  8,
+                 "date":  "05 maggio 2026",
+                 "time":  "15:59",
+                 "isoDate":  "2026-05-05",
+                 "slug":  "2026-05-05-1559",
+                 "project":  "davvoz_Ggameplatform",
+                 "org":  "davvoz",
+                 "qgGate":  "gamesgate (custom, default)",
+                 "analysisCount":  11,
+                 "type":  "feature"
+             },
+    "narrative":  {
+                      "headline":  "Debito tecnico in forte calo: -29h di lavoro risparmiato",
+                      "subtitle":  "Edizione del 05 maggio 2026 ore 15:59 - 230.761 righe di codice, debito tecnico 95h, 914 smell aperti",
+                      "overview":  "Il codebase di Ggameplatform conta 230.761 linee di codice effettive distribuite su 932 file - un progetto molto esteso. L\u0027architettura comprende 13.125 funzioni e 1024 classi con 115.193 istruzioni totali. La copertura commenti del 12.6% indica una documentazione inline sufficiente. Il Technical Debt Ratio dello 0.1% (circa 95 ore di lavoro stimato) colloca il progetto in posizione ottima sul fronte della manutenibilita\u0027.",
+                      "delta":  "Rispetto all\u0027edizione precedente si registrano: una riduzione di 100 code smell, 29h in meno di debito tecnico, 22.453 linee aggiunte. L\u0027andamento complessivo e\u0027 positivo, confermando la traiettoria di miglioramento.",
+                      "issues":  "Nessun bug ne\u0027 vulnerabilita\u0027 - le issues sono esclusivamente code smell. La distribuzione per severita\u0027 conta 463 MINOR (51%), 364 MAJOR (40%), 87 CRITICAL (10%). La regola piu\u0027 violata e\u0027 javascript:S7748 con 243 occorrenze (Unnecessary use of optional chaining), seguita da python:S3457 (85) e javascript:S6582 (81). I file piu\u0027 critici sono sprite-system.js (71 issues) e enemies.js (62 issues). Sul fronte dei contributori, ginopaoli80sete detiene il 71% delle segnalazioni (649 issues), mentre ing.casaert il 29% (265).",
+                      "complexity":  "La complessita\u0027 ciclomatica totale raggiunge 35.301, con una complessita\u0027 cognitiva significativa di 25.155. Le 72 violazioni della regola S3776 (Cognitive Complexity) identificano funzioni troppo complesse che richiedono decomposizione e refactoring mirato.",
+                      "duplications":  "Il tasso di duplicazione del 1.8% rimane al di sotto della soglia del 3%, con 253 blocchi duplicati su 86 file e 5.291 linee duplicate. Il caso piu\u0027 critico e\u0027 altitude/js/main.js con il 41.7% di duplicazione.",
+                      "security":  "Tutti i 43 security hotspot sono stati revisionati e classificati come safe - nessun rischio aperto. La categoria predominante e\u0027 \u0027others\u0027 con 16 occorrenze (HTML external resources, CI/CD configs, vari).",
+                      "trends":  "In 11 analisi SonarCloud, i code smell sono stati ridotti del 87.1% (da 7.071 a 914) e il debito tecnico del 83.1% (da 562h a 95h). Una traiettoria di miglioramento costante che evidenzia l\u0027efficacia del processo di quality engineering adottato.",
+                      "executive":  "Ggameplatform supera il Quality Gate con rating A/A/A (Maintainability/Reliability/Security). La priorita\u0027 e\u0027 il refactoring di sprite-system.js (71 issues). Con 87 issues CRITICAL da valutare e un debito residuo di 95 ore, il team dispone di metriche chiare per pianificare i prossimi sprint di refactoring."
+                  },
+    "qualityGate":  {
+                        "status":  "PASSED",
+                        "conditions":  [
+                                           {
+                                               "metric":  "New Reliability Rating",
+                                               "threshold":  "\u003c= A",
+                                               "value":  "A",
+                                               "status":  "OK"
+                                           },
+                                           {
+                                               "metric":  "New Security Rating",
+                                               "threshold":  "\u003c= A",
+                                               "value":  "A",
+                                               "status":  "OK"
+                                           },
+                                           {
+                                               "metric":  "New Maintainability Rating",
+                                               "threshold":  "\u003c= A",
+                                               "value":  "A",
+                                               "status":  "OK"
+                                           },
+                                           {
+                                               "metric":  "New Duplicated Lines Density",
+                                               "threshold":  "\u003c= 3%",
+                                               "value":  "1.5%",
+                                               "status":  "OK"
+                                           },
+                                           {
+                                               "metric":  "New Security Hotspots Reviewed",
+                                               "threshold":  "= 100%",
+                                               "value":  "100.0%",
+                                               "status":  "OK"
+                                           }
+                                       ]
+                    },
+    "metrics":  {
+                    "linesTotal":  302336,
+                    "ncloc":  230761,
+                    "files":  932,
+                    "functions":  13125,
+                    "classes":  1024,
+                    "statements":  115193,
+                    "commentsPct":  12.6
+                },
+    "ratings":  {
+                    "maintainability":  "A",
+                    "reliability":  "A",
+                    "security":  "A"
+                },
+    "issues":  {
+                   "bugs":  0,
+                   "vulnerabilities":  0,
+                   "codeSmells":  914,
+                   "hotspotsTotal":  43,
+                   "hotspotsOpen":  0
+               },
+    "debt":  {
+                 "minutes":  5696,
+                 "hours":  95,
+                 "days":  12,
+                 "ratio":  0.1
+             },
+    "complexity":  {
+                       "cyclomatic":  35301,
+                       "cognitive":  25155
+                   },
+    "duplications":  {
+                         "lines":  5291,
+                         "pct":  1.8,
+                         "blocks":  253,
+                         "files":  86
+                     },
+    "severity":  {
+                     "minor":  463,
+                     "major":  364,
+                     "critical":  87
+                 },
+    "cleanCode":  {
+                      "intentional":  402,
+                      "consistent":  426,
+                      "adaptable":  81,
+                      "responsible":  5
+                  },
+    "topRules":  [
+                     {
+                         "rule":  "javascript:S7748",
+                         "count":  243,
+                         "desc":  "Unnecessary use of optional chaining"
+                     },
+                     {
+                         "rule":  "python:S3457",
+                         "count":  85,
+                         "desc":  "Python-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S6582",
+                         "count":  81,
+                         "desc":  "Prefer optional chaining"
+                     },
+                     {
+                         "rule":  "javascript:S7764",
+                         "count":  79,
+                         "desc":  "Prefer globalThis over window"
+                     },
+                     {
+                         "rule":  "javascript:S3776",
+                         "count":  58,
+                         "desc":  "Cognitive complexity too high"
+                     },
+                     {
+                         "rule":  "python:S8415",
+                         "count":  43,
+                         "desc":  "Python-specific issue"
+                     },
+                     {
+                         "rule":  "css:S7924",
+                         "count":  34,
+                         "desc":  "Text contrast insufficient"
+                     },
+                     {
+                         "rule":  "python:S112",
+                         "count":  34,
+                         "desc":  "Broad exception handling"
+                     },
+                     {
+                         "rule":  "javascript:S1854",
+                         "count":  22,
+                         "desc":  "Unused assignments"
+                     },
+                     {
+                         "rule":  "javascript:S2486",
+                         "count":  18,
+                         "desc":  "Empty catch blocks"
+                     },
+                     {
+                         "rule":  "javascript:S1481",
+                         "count":  17,
+                         "desc":  "Unused variables"
+                     },
+                     {
+                         "rule":  "javascript:S3358",
+                         "count":  15,
+                         "desc":  "Ternary operators should not be nested"
+                     },
+                     {
+                         "rule":  "javascript:S7735",
+                         "count":  15,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "python:S117",
+                         "count":  14,
+                         "desc":  "Python-specific issue"
+                     },
+                     {
+                         "rule":  "python:S1481",
+                         "count":  14,
+                         "desc":  "Python-specific issue"
+                     },
+                     {
+                         "rule":  "python:S3776",
+                         "count":  14,
+                         "desc":  "Python-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S7778",
+                         "count":  11,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S7741",
+                         "count":  11,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S7755",
+                         "count":  11,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "python:S1192",
+                         "count":  8,
+                         "desc":  "String literals duplicated"
+                     },
+                     {
+                         "rule":  "javascript:S4165",
+                         "count":  6,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S3863",
+                         "count":  6,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S6836",
+                         "count":  6,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S7762",
+                         "count":  5,
+                         "desc":  "JS-specific issue"
+                     },
+                     {
+                         "rule":  "javascript:S1874",
+                         "count":  5,
+                         "desc":  "JS-specific issue"
+                     }
+                 ],
+    "topFiles":  [
+                     {
+                         "count":  71,
+                         "file":  "backend/app/games/survivor-arena/js/sprite-system.js"
+                     },
+                     {
+                         "count":  62,
+                         "file":  "backend/app/games/survivor-arena/js/enemies.js"
+                     },
+                     {
+                         "count":  53,
+                         "file":  "backend/app/games/blocky-road/js/models.js"
+                     },
+                     {
+                         "count":  48,
+                         "file":  "backend/app/steem_post_service.py"
+                     },
+                     {
+                         "count":  47,
+                         "file":  "backend/app/games/survivor-arena/js/config.js"
+                     },
+                     {
+                         "count":  41,
+                         "file":  "backend/app/games/survivor-arena/js/main.js"
+                     },
+                     {
+                         "count":  38,
+                         "file":  "backend/app/games/sky-tower/game.js"
+                     },
+                     {
+                         "count":  37,
+                         "file":  "backend/app/games/blocky-road/js/game.js"
+                     },
+                     {
+                         "count":  35,
+                         "file":  "backend/app/games/blocky-road/js/obstacles.js"
+                     },
+                     {
+                         "count":  35,
+                         "file":  "backend/app/repositories.py"
+                     },
+                     {
+                         "count":  34,
+                         "file":  "backend/app/games/blocky-road/js/terrain.js"
+                     },
+                     {
+                         "count":  22,
+                         "file":  "backend/app/games/blackjack/main.js"
+                     },
+                     {
+                         "count":  21,
+                         "file":  "backend/app/games/yatzi_3d_by_luciogiolli/main.js"
+                     },
+                     {
+                         "count":  20,
+                         "file":  "backend/app/games/prediction-market/main.js"
+                     },
+                     {
+                         "count":  20,
+                         "file":  "backend/app/games/blocky-road/js/player.js"
+                     },
+                     {
+                         "count":  18,
+                         "file":  "backend/app/games/survivor-arena/js/characters.js"
+                     },
+                     {
+                         "count":  18,
+                         "file":  "backend/app/routers/games.py"
+                     },
+                     {
+                         "count":  18,
+                         "file":  "backend/app/games/survivor-arena/css/styles.css"
+                     },
+                     {
+                         "count":  18,
+                         "file":  "backend/app/games/blocky-road/js/themes.js"
+                     },
+                     {
+                         "count":  17,
+                         "file":  "backend/app/games/survivor-arena/js/weapons.js"
+                     },
+                     {
+                         "count":  14,
+                         "file":  "backend/app/games/blocky-road/index.html"
+                     },
+                     {
+                         "count":  13,
+                         "file":  "backend/app/routers/quests.py"
+                     },
+                     {
+                         "count":  13,
+                         "file":  "backend/app/routers/private_messages.py"
+                     },
+                     {
+                         "count":  10,
+                         "file":  "backend/app/games/rainbow_rush_be/scripts/diagnose_luciojolly.py"
+                     },
+                     {
+                         "count":  10,
+                         "file":  "backend/app/games/survivor-arena/js/audio.js"
+                     }
+                 ],
+    "topDupFiles":  [
+                        {
+                            "file":  "altitude/js/main.js",
+                            "dupPct":  41.7,
+                            "lines":  90,
+                            "blocks":  4
+                        },
+                        {
+                            "file":  "space_shooter_2/js/PerkSystem.js",
+                            "dupPct":  40.2,
+                            "lines":  322,
+                            "blocks":  12
+                        },
+                        {
+                            "file":  "modern_pong/js/states/MultiCharSelectState.js",
+                            "dupPct":  34.4,
+                            "lines":  171,
+                            "blocks":  9
+                        },
+                        {
+                            "file":  "space_shooter_2/js/entities/fx/JungleFx.js",
+                            "dupPct":  33.1,
+                            "lines":  127,
+                            "blocks":  5
+                        },
+                        {
+                            "file":  "modern_pong/js/rendering/BackgroundRenderer.js",
+                            "dupPct":  30.5,
+                            "lines":  47,
+                            "blocks":  2
+                        },
+                        {
+                            "file":  "modern_pong/js/states/CharacterSelectState.js",
+                            "dupPct":  26.6,
+                            "lines":  171,
+                            "blocks":  9
+                        },
+                        {
+                            "file":  "space_shooter/js/main.js",
+                            "dupPct":  26.6,
+                            "lines":  146,
+                            "blocks":  3
+                        },
+                        {
+                            "file":  "survivor-arena/js/main.js",
+                            "dupPct":  26.5,
+                            "lines":  177,
+                            "blocks":  5
+                        },
+                        {
+                            "file":  "space_shooter_2/js/entities/fx/DesertFx.js",
+                            "dupPct":  23.2,
+                            "lines":  114,
+                            "blocks":  4
+                        },
+                        {
+                            "file":  "setteemezzo/js/graphics/ParticleSystem.js",
+                            "dupPct":  20.4,
+                            "lines":  21,
+                            "blocks":  1
+                        }
+                    ],
+    "authors":  [
+                    {
+                        "email":  "ginopaoli80sete@gmail.com",
+                        "count":  649,
+                        "pct":  71
+                    },
+                    {
+                        "email":  "ing.casaert@gmail.com",
+                        "count":  265,
+                        "pct":  29
+                    }
+                ],
+    "hotspotCategories":  [
+                              {
+                                  "category":  "others",
+                                  "count":  16,
+                                  "desc":  "HTML external resources, CI/CD configs, vari"
+                              },
+                              {
+                                  "category":  "weak-cryptography",
+                                  "count":  16,
+                                  "desc":  "Uso di generatori pseudo-random"
+                              },
+                              {
+                                  "category":  "dos",
+                                  "count":  4,
+                                  "desc":  "Regex vulnerabili a backtracking (ReDoS)"
+                              },
+                              {
+                                  "category":  "permission",
+                                  "count":  4,
+                                  "desc":  "Docker: copia ricorsiva e utenti root"
+                              },
+                              {
+                                  "category":  "encrypt-data",
+                                  "count":  3,
+                                  "desc":  "Trasporto dati"
+                              }
+                          ],
+    "pullRequests":  [
+
+                     ],
+    "executive":  {
+                      "strengths":  [
+                                        "Zero bugs",
+                                        "Zero vulnerabilita\u0027",
+                                        "Rating A in Maintainability, Reliability e Security",
+                                        "Quality Gate: PASSED",
+                                        "Tutti i Security Hotspots revisionati (43/43 = 100%)",
+                                        "Technical Debt Ratio: 0.1%",
+                                        "Duplicazione codice: 1.8%",
+                                        "Code smells ridotti del 87.1% dal picco iniziale (7.071 -\u003e 914)"
+                                    ],
+                      "warnings":  [
+                                       "914 Code Smells aperti",
+                                       "Technical Debt ~95 ore",
+                                       "87 issues CRITICAL da valutare (9.5% del campione)",
+                                       "sprite-system.js con 71 issues",
+                                       "enemies.js con 62 issues",
+                                       "models.js con 53 issues",
+                                       "steem_post_service.py con 48 issues",
+                                       "config.js con 47 issues",
+                                       "Cognitive Complexity elevata (58 violazioni S3776)"
+                                   ],
+                      "recommendations":  [
+                                              "Refactoring backend/app/games/survivor-arena/js/sprite-system.js (71 issues)",
+                                              "Refactoring backend/app/games/survivor-arena/js/enemies.js (62 issues)",
+                                              "Refactoring backend/app/games/blocky-road/js/models.js (53 issues)",
+                                              "Ridurre complessita\u0027 cognitiva (58 violazioni S3776)",
+                                              "Risolvere regola javascript:S7748 (243 violazioni)"
+                                          ]
+                  },
+    "reductions":  {
+                       "smellsPct":  87.1,
+                       "smellsPeak":  7071,
+                       "smellsCurrent":  914,
+                       "debtPct":  83.1,
+                       "debtPeakH":  562,
+                       "debtCurrentH":  95
+                   },
+    "delta":  {
+                  "codeSmells":  -100,
+                  "debtHours":  -29,
+                  "bugs":  0,
+                  "vulns":  0,
+                  "ncloc":  22453,
+                  "files":  134,
+                  "hotspots":  13
+              },
+    "history":  [
+                    {
+                        "date":  "2026-03-19",
+                        "qg":  "N/A",
+                        "bugs":  34,
+                        "vulns":  48,
+                        "codeSmells":  7071,
+                        "debtMin":  33748,
+                        "debtH":  562,
+                        "secRating":  5,
+                        "relRating":  4,
+                        "maintRating":  1,
+                        "hotspots":  2294,
+                        "ncloc":  195356,
+                        "files":  747,
+                        "dupPct":  3.1,
+                        "cognitive":  24326,
+                        "cyclomatic":  27379
+                    },
+                    {
+                        "date":  "2026-04-06",
+                        "qg":  "FAILED",
+                        "bugs":  3,
+                        "vulns":  0,
+                        "codeSmells":  5881,
+                        "debtMin":  35816,
+                        "debtH":  597,
+                        "secRating":  1,
+                        "relRating":  3,
+                        "maintRating":  1,
+                        "hotspots":  11,
+                        "ncloc":  213351,
+                        "files":  705,
+                        "dupPct":  2.7,
+                        "cognitive":  26934,
+                        "cyclomatic":  31718
+                    },
+                    {
+                        "date":  "2026-04-12",
+                        "qg":  "PASSED",
+                        "bugs":  0,
+                        "vulns":  0,
+                        "codeSmells":  2203,
+                        "debtMin":  17561,
+                        "debtH":  293,
+                        "secRating":  1,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  0,
+                        "ncloc":  214147,
+                        "files":  769,
+                        "dupPct":  1.9,
+                        "cognitive":  25598,
+                        "cyclomatic":  31747
+                    },
+                    {
+                        "date":  "2026-04-20",
+                        "qg":  "PASSED",
+                        "bugs":  0,
+                        "vulns":  0,
+                        "codeSmells":  1014,
+                        "debtMin":  7448,
+                        "debtH":  124,
+                        "secRating":  1,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  0,
+                        "ncloc":  208308,
+                        "files":  798,
+                        "dupPct":  2,
+                        "cognitive":  23949,
+                        "cyclomatic":  31944
+                    },
+                    {
+                        "date":  "2026-04-28",
+                        "qg":  "FAILED",
+                        "bugs":  0,
+                        "vulns":  3,
+                        "codeSmells":  1036,
+                        "debtMin":  7605,
+                        "debtH":  127,
+                        "secRating":  5,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  12,
+                        "ncloc":  224289,
+                        "files":  894,
+                        "dupPct":  1.9,
+                        "cognitive":  25181,
+                        "cyclomatic":  33967
+                    },
+                    {
+                        "date":  "2026-04-29",
+                        "qg":  "FAILED",
+                        "bugs":  0,
+                        "vulns":  0,
+                        "codeSmells":  1036,
+                        "debtMin":  7605,
+                        "debtH":  127,
+                        "secRating":  1,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  1,
+                        "ncloc":  226151,
+                        "files":  893,
+                        "dupPct":  1.8,
+                        "cognitive":  25360,
+                        "cyclomatic":  34273
+                    },
+                    {
+                        "date":  "2026-04-30",
+                        "qg":  "PASSED",
+                        "bugs":  0,
+                        "vulns":  0,
+                        "codeSmells":  1035,
+                        "debtMin":  7545,
+                        "debtH":  126,
+                        "secRating":  1,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  0,
+                        "ncloc":  226447,
+                        "files":  903,
+                        "dupPct":  1.8,
+                        "cognitive":  25369,
+                        "cyclomatic":  34376
+                    },
+                    {
+                        "date":  "2026-05-01",
+                        "qg":  "FAILED",
+                        "bugs":  0,
+                        "vulns":  1,
+                        "codeSmells":  989,
+                        "debtMin":  7318,
+                        "debtH":  122,
+                        "secRating":  2,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  0,
+                        "ncloc":  229619,
+                        "files":  930,
+                        "dupPct":  1.8,
+                        "cognitive":  25711,
+                        "cyclomatic":  34974
+                    },
+                    {
+                        "date":  "2026-05-03",
+                        "qg":  "PASSED",
+                        "bugs":  0,
+                        "vulns":  0,
+                        "codeSmells":  989,
+                        "debtMin":  7318,
+                        "debtH":  122,
+                        "secRating":  1,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  0,
+                        "ncloc":  230025,
+                        "files":  930,
+                        "dupPct":  1.8,
+                        "cognitive":  25772,
+                        "cyclomatic":  35073
+                    },
+                    {
+                        "date":  "2026-05-05",
+                        "qg":  "PASSED",
+                        "bugs":  0,
+                        "vulns":  0,
+                        "codeSmells":  914,
+                        "debtMin":  5696,
+                        "debtH":  95,
+                        "secRating":  1,
+                        "relRating":  1,
+                        "maintRating":  1,
+                        "hotspots":  0,
+                        "ncloc":  230761,
+                        "files":  932,
+                        "dupPct":  1.8,
+                        "cognitive":  25155,
+                        "cyclomatic":  35301
+                    }
+                ],
+    "featureArticle":  {
+                           "title":  "Lucio Giolli e la Grande Architettura: Come si Costruisce un Platform di Giochi da Zero",
+                           "author":  "Quality Chronicle — Redazione Tecnica",
+                           "date":  "5 maggio 2026",
+                           "kicker":  "INTERVISTA \u0026 ANALISI TECNICA",
+                           "abstract":  "In meno di due mesi, Lucio Giolli ha trasformato un codebase da 7.071 code smell a 1.014, portando il Technical Debt Ratio allo 0.1%. Questo articolo ripercorre i principali interventi architetturali che hanno reso possibile questa evoluzione straordinaria.",
+                           "sections":  [
+                                            {
+                                                "title":  "Il punto di partenza: 562 ore di debito tecnico",
+                                                "icon":  "📊",
+                                                "body":  "Il 19 marzo 2026 il codebase di Ggameplatform presentava 7.071 code smell, 34 bug, 48 vulnerabilita\u0027, e 2.294 security hotspot aperti. Il Technical Debt era di 562 ore — l\u0027equivalente di oltre 14 settimane di lavoro a tempo pieno per ripagarlo. I rating SonarCloud erano: Security E, Reliability D, Maintainability A. Una situazione che molti team avrebbero affrontato con un rewrite completo. Giolli ha scelto la strada del refactoring incrementale, guidato da dati oggettivi e pattern architetturali documentati.",
+                                                "highlight":  null
+                                            },
+                                            {
+                                                "title":  "Devil Crash Pinball: la riscrittura del motore fisico",
+                                                "icon":  "🎯",
+                                                "body":  "Il primo grande intervento ha riguardato Devil Crash Pinball, il gioco di flipper della piattaforma. Il motore fisico originale era un monolite con gestione degli stati implicita e fallback silenziosi ovunque. La riscrittura ha introdotto un\u0027architettura fail-loud con invarianti verificate a costruzione: Vec2.js immutabile, Collisions.js con quattro metodi narrow-phase distinti, Ball.js con enum STATE esplicito, e PhysicsWorld.js che lancia eccezione se viene violato l\u0027invariante anti-tunneling (2.200 × 0.05 / 16 = 6.875px \u003c raggio 10px). Il principio guida: \u0027mai un fallback silenzioso in un sistema fisico\u0027.",
+                                                "highlight":  "Tunneling invariant: 2200 × 0.05 / 16 = 6.875px \u003c radius 10 ✓ — verificato a compile time"
+                                            },
+                                            {
+                                                "title":  "InputManager: event queue + held state",
+                                                "icon":  "🎮",
+                                                "body":  "Parallelamente alla fisica, il sistema di input di Devil Crash e\u0027 stato completamente riscritto. Il vecchio approccio — flag booleani sparsi nel codice, consumati a mano con pattern arm/disarm — e\u0027 stato sostituito da un InputManager con coda eventi (poll/drain) e stato held dedicato. L\u0027enum InputAction definisce TAP, LAUNCH_KEY, ESC e TILT come valori espliciti. La cognitive complexity di Game._processInputEvents() e\u0027 scesa sotto 15 grazie alla decomposizione in _routeInputEvent() e _dispatchHud(). Risultato: zero flag impliciti, zero race condition tra input e stati di gioco.",
+                                                "highlight":  null
+                                            },
+                                            {
+                                                "title":  "TheEnemy: da God Object a Strategy Pattern",
+                                                "icon":  "🧬",
+                                                "body":  "L\u0027intervento piu\u0027 significativo dal punto di vista architetturale ha riguardato TheEnemy.js — un file da 838 righe che gestiva direttamente stealth, spawning, split-on-death, rendering, e i comportamenti specializzati delle Wave 3 e Wave 4. Il refactoring del 19 aprile 2026 ha decompose questo God Object in una gerarchia Strategy Pattern. La classe base EnemyBehavior definisce update/render/onDeath/modifyDamage. BehaviorFactory mappa le flag di configurazione in istanze di behavior. I comportamenti specifici — StealthBehavior, SpawnerBehavior, SplitOnDeathBehavior, W3Behaviors (Blinker, Phaser, Beacon, Shielder, Mirror, Fragmenter), W4Behaviors (Triplet, Oscillator, Forcelink, Massfield, Antimatter, Chain) — vivono in moduli separati. EnemyRenderer estrae tutta la logica di rendering (glow, sprite, health bar, status effects). EmergenceAnimator gestisce le quattro tipologie di animazione spawn di Wave 4.",
+                                                "highlight":  "838 righe → 11 file separati — ogni behavior ha esattamente una responsabilita\u0027"
+                                            },
+                                            {
+                                                "title":  "Pixel Arena Pong: Story Mode e networking server-authoritative",
+                                                "icon":  "🏓",
+                                                "body":  "Modern Pong (Pixel Arena Pong) ha ricevuto due aggiornamenti architetturali maggiori. Il primo: la Story Mode, con StoryModeConfig.js (6 livelli, temi THEMES, layout ostacoli), la classe Obstacle con AABB collision detection circle-vs-AABB, BackgroundRenderer per il rendering del campo tematico, e due nuovi stati StoryIntroState e StoryCompleteState. Il secondo, e piu\u0027 complesso: la trasformazione da peer-to-peer a modello server-authoritative. Il backend Python (FastAPI) esegue ora la simulazione completa a 20Hz. I client inviano solo input (dx, dy) e ricevono snapshot autoritativi. Client-side prediction con blending 0.15 per il proprio personaggio, interpolazione completa per avversario e palla. Il risultato e\u0027 una partita multiplayer deterministica, immune agli hack client-side.",
+                                                "highlight":  "Tick rate 20Hz — server runs complete GameSimulation: physics, collisions, scoring, power-ups, super shots"
+                                            },
+                                            {
+                                                "title":  "Survivor Arena: il God Object da 7.723 righe",
+                                                "icon":  "⚔️",
+                                                "body":  "Il commit del 5 maggio 2026 porta la firma piu pesante del ciclo: game.js di Survivor Arena, 7.723 righe, il file con il maggior numero di issues aperte sulla piattaforma. Il refactoring ha applicato una pulizia sistematica di tutte le violazioni SonarCloud: nomi di variabili espliciti, funzioni decomposte sotto soglia di complessita, rimozione dei magic number, eliminazione dei nested ternary. Stessa operazione su player.js (162 righe modificate). Il risultato e il piu grande cleanup singolo dell\u0027intera storia del progetto: -100 code smell e -29h di debito tecnico in un solo commit.",
+                                                "highlight":  "-100 smells in un commit -- record assoluto del progetto"
+                                            },
+                                            {
+                                                "title":  "Il metodo: metriche prima, codice dopo",
+                                                "icon":  "📈",
+                                                "body":  "Cio\u0027 che distingue il lavoro di Giolli non e\u0027 solo la qualita\u0027 tecnica degli interventi, ma il metodo. Ogni ciclo di refactoring inizia da una analisi SonarCloud aggiornata: quali sono le regole piu\u0027 violate? Quali file hanno il maggior numero di issues? Quale e\u0027 la cognitive complexity nei hot spot? Solo dopo questa analisi si decide quale pattern applicare e in quale file intervenire. Il Quality Chronicle — il sistema di reportistica che state leggendo — e\u0027 uno strumento creato internamente proprio per rendere questo ciclo misurabile e comunicabile. Ogni edizione documenta il delta rispetto alla precedente, trasformando i dati SonarCloud in una narrativa comprensibile da tutto il team.",
+                                                "highlight":  "85.7% di riduzione code smell in 47 giorni — non e\u0027 fortuna, e\u0027 metodo"
+                                            },
+                                            {
+                                                "title":  "Il prossimo capitolo",
+                                                "icon":  "🚀",
+                                                "body":  "Con il codebase stabilizzato a rating A/A/A e un Technical Debt Ratio dello 0.1%, il team si prepara alla fase di scaling. I prossimi obiettivi tecnici sono chiari: refactoring di sprite-system.js (71 issues) seguendo il pattern Strategy gia\u0027 collaudato su enemies.js; riduzione delle 248 violazioni S7748 (optional chaining) con trasformazioni automatizzate via AST; deduplication di PerkSystem.js . La piattaforma e\u0027 pronta per accogliere nuovi titoli con la solidita\u0027 architetturale che il lavoro di questi due mesi ha costruito.",
+                                                "highlight":  null
+                                            }
+                                        ],
+                           "sidebar":  {
+                                           "title":  "I numeri di Lucio Giolli",
+                                           "stats":  [
+                                                         {
+                                                             "label":  "Code Smells eliminati",
+                                                             "value":  "6.157",
+                                                             "sub":  "da 7071 a 914 code smells"
+                                                         },
+                                                         {
+                                                             "label":  "Riduzione debito tecnico",
+                                                             "value":  "-83.1%",
+                                                             "sub":  "da 562h a 95h di debito"
+                                                         },
+                                                         {
+                                                             "label":  "Bug rimossi",
+                                                             "value":  "34",
+                                                             "sub":  "da D a A in Reliability"
+                                                         },
+                                                         {
+                                                             "label":  "Vulnerabilita\u0027 chiuse",
+                                                             "value":  "48",
+                                                             "sub":  "da E a A in Security"
+                                                         },
+                                                         {
+                                                             "label":  "Hotspot revisionati",
+                                                             "value":  "2.294",
+                                                             "sub":  "tutti classificati SAFE"
+                                                         },
+                                                         {
+                                                             "label":  "File refactored (TheEnemy)",
+                                                             "value":  "1 → 11",
+                                                             "sub":  "Strategy Pattern + Renderer"
+                                                         },
+                                                         {
+                                                             "label":  "Games sulla piattaforma",
+                                                             "value":  "11+",
+                                                             "sub":  "JS + Python backend"
+                                                         },
+                                                         {
+                                                             "label":  "Giorni per trasformare il codebase",
+                                                             "value":  "47",
+                                                             "sub":  "19 marzo → 5 maggio 2026"
+                                                         }
+                                                     ]
+                                       }
+                       }
+}

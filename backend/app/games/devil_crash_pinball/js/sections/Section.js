@@ -113,18 +113,27 @@ export class Section {
     resolve(ball, dt = 0) {
         if (this._resolveInterceptors(ball)) return;
 
-        const prevY = ball.pos.y - ball.vel.y * (1 / 60);
+        const prevY = ball.pos.y - ball.vel.y * (dt > 0 ? dt : 1 / 60);
 
         // Environmental forces (boss wind etc.) — applied before collisions
         // so the resolved velocity already accounts for the push this substep.
         if (this.boss?.applyWindToBall) this.boss.applyWindToBall(ball, dt);
 
-        // Walls (static lines)
+        // ── Phase 1: positional constraints ────────────────────────────────────
+        // Walls, curves, and constraint entities (flippers, springs, launchSprings)
+        // all push ball position. LaunchSprings MUST resolve here — before corridors
+        // — so the corridors see the post-spring ball position and contain it naturally.
+        // Resolving launchSprings after corridors was the root cause of mobile
+        // launch-tunnel escapes.
         this.resolveWallCollisions(ball);
         for (const c of this.curves) c.resolve(ball);
+        this._resolveConstraintEntities(ball);
         this._resolveCorridors(ball);
 
-        this._resolveDynamicEntities(ball);
+        // ── Phase 2: impulse entities ─────────────────────────────────────────────
+        // Bumpers, slings, kickers add velocity only — they never need corridor
+        // re-containment because they don't displace the ball by more than a substep.
+        this._resolveImpulseEntities(ball);
 
         // One-way gates physically block the wrong-direction crossing
         for (const g of this.gates) g.block(ball);
@@ -152,17 +161,29 @@ export class Section {
         for (const cc of this.curvedCorridors) cc.resolve(ball);
     }
 
-    /** Resolve dynamic (moving/reactive) entity collisions. */
-    _resolveDynamicEntities(ball) {
-        for (const f  of this.flippers)  f.resolve(ball);
+    /**
+     * Phase 1 — positional constraints: entities that push ball position.
+     * Must run before corridor containment so the corridors see the post-constraint
+     * ball centre and contain it in the same substep.
+     */
+    _resolveConstraintEntities(ball) {
+        for (const f  of this.flippers)      f.resolve(ball);
+        for (const sp of this.springs)       sp.resolve(ball);
+        for (const ls of this.launchSprings) ls.resolve(ball);
+    }
+
+    /**
+     * Phase 2 — impulse entities: entities that add velocity only.
+     * Run after corridor containment; their velocity additions stay within the
+     * BALL_MAX_SPEED clamp and cannot displace the ball across a wall in one substep.
+     */
+    _resolveImpulseEntities(ball) {
         for (const s  of this.slings)    s.resolve(ball);
         for (const b  of this.bumpers)   b.resolve(ball);
         for (const g  of this.gears)     g.resolve(ball);
         for (const pd of this.pendulums) pd.resolve(ball);
         for (const t  of this.targets)   t.resolve(ball);
         for (const k  of this.kickers)   k.resolve(ball);
-        for (const sp of this.springs)      sp.resolve(ball);
-        for (const ls of this.launchSprings) ls.resolve(ball);
     }
 
     /**

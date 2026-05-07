@@ -13,6 +13,7 @@ import LevelIntroCinematic      from './cinematics/LevelIntroCinematic.js';
 import LevelOutroCinematic      from './cinematics/LevelOutroCinematic.js';
 import DeathCinematic           from './cinematics/DeathCinematic.js';
 import SurvivorOpeningCinematic from './cinematics/SurvivorOpeningCinematic.js';
+import BlitzOpeningCinematic    from './cinematics/BlitzOpeningCinematic.js';
 
 export default class CinematicManager {
 
@@ -24,6 +25,7 @@ export default class CinematicManager {
         this._levelOutro = new LevelOutroCinematic(game);
         this._death      = new DeathCinematic(game);
         this._survivorOpening = new SurvivorOpeningCinematic(game);
+        this._blitzOpening    = new BlitzOpeningCinematic(game);
     }
 
     // ───────────────────────────────────────────────────
@@ -34,6 +36,7 @@ export default class CinematicManager {
     get cinematic() {
         if (this._opening.active) return this._opening;
         if (this._survivorOpening.active) return this._survivorOpening;
+        if (this._blitzOpening.active) return this._blitzOpening;
         return null;
     }
     get levelIntro()       { return this._levelIntro.active ? this._levelIntro : null; }
@@ -56,6 +59,10 @@ export default class CinematicManager {
         const g = this.game;
         if (worldNum === 5) {
             this.startSurvivorCinematic(onComplete);
+            return;
+        }
+        if (worldNum === 6) {
+            this.startBlitzCinematic(onComplete);
             return;
         }
         this._opening.begin({
@@ -85,12 +92,30 @@ export default class CinematicManager {
         g.sound.playCinematicIntro();
     }
 
+    /**
+     * Blitz Run (World 6) opening cinematic. Gold/red chain-kill theme.
+     * Skippable after 1 second.
+     */
+    startBlitzCinematic(onComplete) {
+        const g = this.game;
+        this._blitzOpening.begin({
+            onFinish: () => { if (onComplete) onComplete(); },
+            skippable: true,
+            skipDelay: 1
+        });
+        g.state = 'cinematic';
+        g.uiManager.hideHudButtons();
+        g.sound.playCinematicIntro();
+    }
+
     updateCinematic(dt) {
         if (this._survivorOpening.active) this._survivorOpening.update(dt);
+        else if (this._blitzOpening.active) this._blitzOpening.update(dt);
         else this._opening.update(dt);
     }
     renderCinematic(ctx, w, h) {
         if (this._survivorOpening.active) this._survivorOpening.render(ctx, w, h);
+        else if (this._blitzOpening.active) this._blitzOpening.render(ctx, w, h);
         else this._opening.render(ctx, w, h);
     }
 
@@ -169,6 +194,12 @@ export default class CinematicManager {
 
     beginDeathCinematic(deathX, deathY) {
         const g = this.game;
+
+        // Blitz Run: recover 10% of unbanked score on death before game over.
+        if (g.gameMode === 'blitz' && g.blitzMode) {
+            g.blitzMode.onRunEnd();
+        }
+
         this._death.begin({
             deathX, deathY,
             onFinish: () => {

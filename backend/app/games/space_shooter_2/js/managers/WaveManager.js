@@ -178,6 +178,11 @@ class WaveManager {
     onEnemyKilled(enemy) {
         this.game.scoreManager.onEnemyKilled(enemy);
 
+        // Blitz Run: notify BlitzMode for chain logic.
+        if (this.game.gameMode === 'blitz' && this.game.blitzMode) {
+            this.game.blitzMode.onEnemyKilled(enemy);
+        }
+
         const perks = this.game.perkSystem;
         if (!perks) return;
 
@@ -186,8 +191,9 @@ class WaveManager {
             perks.entropyShieldKills++;
         }
 
-        // Data Leech: chance for double score
-        if (perks.getDataLeechChance() > 0 && Math.random() < perks.getDataLeechChance()) {
+        // Data Leech: chance for double score (blitz uses unbanked scoring, skip)
+        if (this.game.gameMode !== 'blitz' &&
+            perks.getDataLeechChance() > 0 && Math.random() < perks.getDataLeechChance()) {
             this.game.scoreManager.onEnemyKilled(enemy); // extra score credit
         }
 

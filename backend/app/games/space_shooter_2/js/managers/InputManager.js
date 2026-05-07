@@ -11,10 +11,15 @@ class InputManager extends BaseInputManager {
         super(game);
 
         this.touch.ultimate = false;
+        this.touch.bank = false;
 
         this.ultimateButtonPressed = false;
         this.ultimateButtonTouchId = null;
         this.ultimateButtonPos = { x: 0, y: 0, size: 55 };
+
+        this.bankButtonPressed = false;
+        this.bankButtonTouchId = null;
+        this.bankButtonPos = { x: 0, y: 0, size: 55 };
 
         this.ultimateJustPressed = false;
         this._ultimatePrevState = false;
@@ -31,12 +36,24 @@ class InputManager extends BaseInputManager {
             y: this.fireButtonPos.y - this.fireButtonPos.radius - abilityGap - abilitySize,
             size: abilitySize
         };
+
+        // Bank button: to the left of the fire button (only visible in blitz mode)
+        this.bankButtonPos = {
+            x: this.fireButtonPos.x - this.fireButtonPos.radius - abilityGap - abilitySize,
+            y: this.fireButtonPos.y - abilitySize / 2,
+            size: abilitySize
+        };
     }
 
     // ── Extra button hit test ────────────────────────────────────
 
     _isInUltimateButton(x, y) {
         const b = this.ultimateButtonPos;
+        return x >= b.x && x <= b.x + b.size && y >= b.y && y <= b.y + b.size;
+    }
+
+    _isInBankButton(x, y) {
+        const b = this.bankButtonPos;
         return x >= b.x && x <= b.x + b.size && y >= b.y && y <= b.y + b.size;
     }
 
@@ -50,6 +67,15 @@ class InputManager extends BaseInputManager {
             this.touch.ultimate = true;
             return true;
         }
+        // Bank button (blitz mode only)
+        if (this.game?.gameMode === 'blitz' &&
+            this.bankButtonTouchId === null && this._isInBankButton(coords.x, coords.y)) {
+            e.preventDefault();
+            this.bankButtonTouchId = touch.identifier;
+            this.bankButtonPressed = true;
+            this.touch.bank = true;
+            return true;
+        }
         return false;
     }
 
@@ -58,6 +84,11 @@ class InputManager extends BaseInputManager {
             this.ultimateButtonTouchId = null;
             this.ultimateButtonPressed = false;
             this.touch.ultimate = false;
+        }
+        if (touch.identifier === this.bankButtonTouchId) {
+            this.bankButtonTouchId = null;
+            this.bankButtonPressed = false;
+            this.touch.bank = false;
         }
     }
 
@@ -77,6 +108,18 @@ class InputManager extends BaseInputManager {
 
     clearPauseKey() {
         this.keys.set('Escape', false);
+    }
+
+    /**
+     * Returns true once per press of [E] or touch bank button — Blitz Run bank action.
+     */
+    isBankJustPressed() {
+        const current = this.touch.bank || this.isKeyPressed('KeyE');
+        const just = current && !this._bankPrevState;
+        this._bankPrevState = current;
+        // Reset touch flag after consuming — one-shot
+        if (just) this.touch.bank = false;
+        return just;
     }
 
     // ── Rendering ────────────────────────────────────────────────
@@ -166,6 +209,35 @@ class InputManager extends BaseInputManager {
         ctx.font = ui(11, 'bold');
         ctx.fillStyle = '#fff';
         ctx.fillText('ULT', ultCx, ultCy);
+
+        // Bank button — only in blitz mode
+        if (this.game?.gameMode === 'blitz' && this.game?.blitzMode?.canBank) {
+            const btn = this.bankButtonPos;
+            const cx = btn.x + btn.size / 2;
+            const cy = btn.y + btn.size / 2;
+            const r  = btn.size / 2;
+            const pulse = 0.55 + 0.2 * Math.sin(performance.now() * 0.006);
+
+            ctx.globalAlpha = this.bankButtonPressed ? 0.9 : pulse;
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.85)';
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = 0.9;
+            ctx.strokeStyle = '#fff8b0';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.globalAlpha = 1;
+            ctx.font = ui(13, 'bold');
+            ctx.fillStyle = '#1a0800';
+            ctx.fillText('🏦', cx, cy - 6);
+            ctx.font = ui(9, 'bold');
+            ctx.fillText('BANK', cx, cy + 10);
+        }
 
         ctx.restore();
     }

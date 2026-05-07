@@ -25,6 +25,8 @@ import PlatformCoinService from './managers/PlatformCoinService.js';
 import SaveManager from './managers/SaveManager.js';
 import SurvivorMode from './survivor/SurvivorMode.js';
 import SurvivorPerkPicker from './survivor/SurvivorPerkPicker.js';
+import BlitzMode from './entities/worlds/blitz/BlitzMode.js';
+import { BLITZ_VIRTUAL_LEVEL } from './entities/worlds/blitz/BlitzConfig.js';
 
 
 
@@ -111,9 +113,12 @@ class Game {
         this.saveManager = new SaveManager(this);
 
         // ── Survivor (World 5) — alternative game mode ──
-        this.gameMode = 'campaign';            // 'campaign' | 'survivor'
+        this.gameMode = 'campaign';            // 'campaign' | 'survivor' | 'blitz'
         this.survivorMode = new SurvivorMode(this);
         this.survivorPicker = new SurvivorPerkPicker(this);
+
+        // ── Blitz Run (World 6) — chain kill mode ──
+        this.blitzMode = new BlitzMode(this);
 
         // Reference needed by loadSavedGame()
         this._difficultyConfig = DIFFICULTY_CONFIG;
@@ -308,8 +313,23 @@ class Game {
         // Campaign uses WaveManager (LEVEL_DATA-driven).
         // Survivor uses SurvivorMode (timeline-driven); WaveManager spawn API
         // is still invoked from inside SurvivorMode for actual entity creation.
+        this.updateGameMode(deltaTime);
+    }
+
+    updateGameMode(deltaTime) {
         if (this.gameMode === 'survivor') {
             this.survivorMode.update(deltaTime);
+        } else if (this.gameMode === 'blitz') {
+            this.blitzMode.update(deltaTime);
+            // Bank action via keyboard [E] or touch
+            if (this.input.isBankJustPressed()) {
+                this.blitzMode.bank();
+            }
+            // Perk screen awarded after N banks
+            if (this.blitzMode.perkPending) {
+                this.blitzMode.consumePerk();
+                this.uiManager.showPerkScreen(null);
+            }
         } else {
             this.waveManager.updateWaves(deltaTime);
         }
@@ -367,7 +387,11 @@ class Game {
         // Reset survivor state and exit survivor mode by default.
         this.gameMode = 'campaign';
         this.survivorMode.reset();
-        if (this.backgroundFacade) this.backgroundFacade.setSurvivorMode(false);
+        this.blitzMode.reset();
+        if (this.backgroundFacade) {
+            this.backgroundFacade.setSurvivorMode(false);
+            this.backgroundFacade.setBlitzMode(false);
+        }
 
         this.timeScale = 1;
         this.bulletTimeActive = false;
@@ -896,6 +920,51 @@ class Game {
         this.state = 'playing';
         this.uiManager.showHudButtons();
         this.survivorMode.start();
+    }
+
+    /**
+     * Begin a Blitz Run (World 6).
+     * No pre-run perk selection — pure chain-kill mode.
+     *
+     * @param {string} shipId
+     * @param {string} ultimateId
+     * @param {string} difficultyId
+     */
+    startBlitzRun(shipId, ultimateId, difficultyId) {
+        this.selectedShipId = shipId;
+        this.selectedUltimateId = ultimateId;
+        this.difficulty = DIFFICULTY_CONFIG[difficultyId] || DIFFICULTY_CONFIG.boring;
+
+        this._resetSystems();
+
+        // Switch to blitz mode (after _resetSystems which resets gameMode to 'campaign').
+        this.gameMode = 'blitz';
+        this.blitzMode.reset();
+        if (this.backgroundFacade) this.backgroundFacade.setBlitzMode(true);
+
+        // Virtual level slot so campaign lookups don't collide.
+        this.levelManager.currentLevel = BLITZ_VIRTUAL_LEVEL;
+        this.sessionStartLevel = BLITZ_VIRTUAL_LEVEL;
+        this.levelManager.levelStartTime = performance.now();
+
+        this.entityManager.player = new Player(
+            this.logicalWidth / 2 - 32,
+            this.logicalHeight - 100,
+            shipId,
+            ultimateId
+        );
+
+        if (globalThis.startGameSession) globalThis.startGameSession();
+
+        this.sound.resume();
+        if (this.sound.musicBuffers.length > 0) {
+            this.sound.playGameMusic();
+        }
+
+        this.state = 'playing';
+        this.uiManager.showHudButtons();
+        this.uiManager.showBlitzBankButton();
+        this.blitzMode.start();
     }
 
     get currentLevel() {

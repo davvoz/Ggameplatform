@@ -69,6 +69,19 @@ const WORLDS = [
         miniBossIds: [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15],
         planets: null,
         mode: 'survivor'
+    },
+    {
+        // World 6 — Blitz Run. No campaign bosses — pure chain-kill loop.
+        // See BlitzConfig.js and BlitzMode.js for game mechanics.
+        id: 6,
+        name: 'Blitz Run',
+        subtitle: 'CHAIN · BANK · SURVIVE',
+        icon: '⚡',
+        themeColor: '#ffd700',
+        bossIds: [],
+        miniBossIds: [],
+        planets: null,
+        mode: 'blitz'
     }
 ];
 

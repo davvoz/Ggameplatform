@@ -373,6 +373,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // New game clears any existing save
         game.saveManager.deleteSave();
+
+        if (selectedWorld === 6) {
+            // Blitz Run: no perk pre-selection — jump straight in.
+            game.startBlitzRun(selectedShip, selectedUltimate, selectedDifficulty);
+            return;
+        }
+
         game.startGame(selectedShip, selectedUltimate, selectedDifficulty, selectedWorld);
     });
 

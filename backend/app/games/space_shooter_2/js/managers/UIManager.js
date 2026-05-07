@@ -139,6 +139,18 @@ class UIManager {
         const perks = g.perkSystem.getRandomSelection(3, currentWorld);
 
         this._renderPerkCards(perks);
+
+        // Apply blitz title styling
+        const titleEl = screen.querySelector('.perk-title');
+        const subEl   = screen.querySelector('.perk-subtitle');
+        if (g.gameMode === 'blitz') {
+            if (titleEl) { titleEl.textContent = '⚡ BANK REWARD'; titleEl.classList.add('perk-title--blitz'); }
+            if (subEl)   { subEl.textContent = 'Choose a perk — spend safe score for more options'; subEl.classList.add('perk-subtitle--blitz'); }
+        } else {
+            if (titleEl) { titleEl.textContent = 'CHOOSE YOUR UPGRADE'; titleEl.classList.remove('perk-title--blitz'); }
+            if (subEl)   { subEl.textContent = 'Select one perk to enhance your build'; subEl.classList.remove('perk-subtitle--blitz'); }
+        }
+
         // Await so coin elements exist in the DOM before we stagger
         await this._renderCoinActions();
 
@@ -279,6 +291,12 @@ class UIManager {
         const wrapper = document.getElementById('perk-coin-actions');
         if (!wrapper) return;
 
+        // In Blitz mode use safe score as currency instead of platform coins
+        if (this.game.gameMode === 'blitz') {
+            this._renderBlitzScoreActions(wrapper);
+            return;
+        }
+
         const coinService = this.game.coinService;
         if (!coinService?.isAvailable()) {
             wrapper.classList.add('hidden');
@@ -326,6 +344,108 @@ class UIManager {
         for (const action of UIManager.COIN_ACTIONS) {
             const btn = document.querySelector(`.coin-action-btn[data-action-id="${action.id}"]`);
             if (btn) btn.disabled = newBalance < action.cost;
+        }
+    }
+
+    // ──────────────────────────────────────────
+    //  Blitz score-based perk shop
+    // ──────────────────────────────────────────
+
+    /**
+     * Renders the perk-coin-actions wrapper using safe (banked) score as currency.
+     * Called instead of the platform-coin path when gameMode === 'blitz'.
+     * @param {HTMLElement} wrapper
+     */
+    _renderBlitzScoreActions(wrapper) {
+        const g = this.game;
+        const safeScore = g.scoreManager?.score ?? 0;
+        const costs = g.blitzMode.perkCosts;
+
+        wrapper.classList.remove('hidden');
+        wrapper.innerHTML = '';
+
+        // Balance badge — safe score instead of platform coins
+        const balEl = document.createElement('div');
+        balEl.className = 'coin-balance-badge';
+        balEl.id = 'perk-coin-balance';
+        balEl.innerHTML = `<span class="coin-icon">⚡</span> <span class="coin-amount">${safeScore.toLocaleString()}</span> <span style="font-size:.75em;opacity:.65">safe score</span>`;
+        wrapper.appendChild(balEl);
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'coin-action-row';
+
+        const actions = [
+            { id: 'reroll',     cost: costs.reroll,     label: 'Reroll',    icon: '🔄', desc: '3 new random perks' },
+            { id: 'rare',       cost: costs.rare,       label: 'Rare pack', icon: '💎', desc: '3 rare+ perks' },
+            { id: 'epic',       cost: costs.epic,       label: 'Epic pack', icon: '🔮', desc: '3 epic+ perks' },
+            { id: 'choose_any', cost: costs.choose_any, label: 'Free pick', icon: '⭐', desc: 'Choose any perk' }
+        ];
+
+        for (const action of actions) {
+            const btn = document.createElement('button');
+            btn.className = 'coin-action-btn';
+            btn.disabled = safeScore < action.cost;
+            btn.dataset.actionId = action.id;
+            btn.innerHTML = `
+                <span class="coin-action-icon">${action.icon}</span>
+                <span class="coin-action-label">${action.label}</span>
+                <span class="coin-action-cost">⚡ ${action.cost.toLocaleString()}</span>
+            `;
+            btn.title = action.desc;
+            btn.addEventListener('click', () => this._handleBlitzScoreAction(action));
+            btnRow.appendChild(btn);
+        }
+
+        wrapper.appendChild(btnRow);
+    }
+
+    /** Handle a perk-shop action paid with blitz safe score. */
+    _handleBlitzScoreAction(action) {
+        const g = this.game;
+        const safeScore = g.scoreManager?.score ?? 0;
+        if (safeScore < action.cost) return;
+
+        // Deduct from safe score
+        g.scoreManager.score -= action.cost;
+        if (g.scoreManager.totalPoints != null) {
+            g.scoreManager.totalPoints = Math.max(0, g.scoreManager.totalPoints - action.cost);
+        }
+
+        g.sound.playPowerUp();
+        g.postProcessing.flash({ r: 255, g: 215, b: 0 }, 0.12);
+
+        const currentWorld = 6;
+        switch (action.id) {
+            case 'reroll':
+                this._renderPerkCards(g.perkSystem.getRandomSelection(3, currentWorld));
+                break;
+            case 'rare':
+                this._renderPerkCards(g.perkSystem.getSelectionByMinRarity('rare', 3, currentWorld));
+                break;
+            case 'epic':
+                this._renderPerkCards(g.perkSystem.getSelectionByMinRarity('epic', 3, currentWorld));
+                break;
+            case 'choose_any':
+                this._showFullCatalog(currentWorld);
+                break;
+        }
+
+        this._refreshBlitzScoreUI(g.scoreManager.score);
+    }
+
+    /** Update the score balance display and button states in blitz mode. */
+    _refreshBlitzScoreUI(newScore) {
+        const amountEl = document.querySelector('#perk-coin-balance .coin-amount');
+        if (amountEl) amountEl.textContent = newScore.toLocaleString();
+
+        const costs = this.game.blitzMode.perkCosts;
+        const costMap = {
+            reroll: costs.reroll, rare: costs.rare,
+            epic: costs.epic, choose_any: costs.choose_any
+        };
+        for (const [id, cost] of Object.entries(costMap)) {
+            const btn = document.querySelector(`.coin-action-btn[data-action-id="${id}"]`);
+            if (btn) btn.disabled = newScore < cost;
         }
     }
 
@@ -476,7 +596,13 @@ class UIManager {
         g.postProcessing.flash({ r: 100, g: 255, b: 200 }, 0.15);
 
         this.hidePerkScreen();
-        g.levelManager.startNextLevel();
+
+        if (g.gameMode === 'blitz') {
+            // Resume blitz — no level transition
+            g.state = 'playing';
+        } else {
+            g.levelManager.startNextLevel();
+        }
     }
 
     showGameOverScreen() {
@@ -504,8 +630,8 @@ class UIManager {
         const section = document.getElementById('go-continue-section');
         if (!section) return;
 
-        // Survivor (W5) is no-continue by design — a death ends the run.
-        if (this.game.gameMode === 'survivor') {
+        // Survivor (W5) and Blitz Run (W6) are no-continue by design.
+        if (this.game.gameMode === 'survivor' || this.game.gameMode === 'blitz') {
             section.classList.add('hidden');
             return;
         }
@@ -995,9 +1121,25 @@ class UIManager {
         document.getElementById('hud-ship-btn')?.classList.remove('hidden');
     }
 
+    showBlitzBankButton() {
+        const btn = document.getElementById('hud-bank-btn');
+        if (!btn) return;
+        btn.classList.remove('hidden');
+        // Wire click if not already wired
+        if (!btn._blitzWired) {
+            btn._blitzWired = true;
+            btn.addEventListener('click', () => {
+                if (this.game.gameMode === 'blitz' && this.game.blitzMode) {
+                    this.game.blitzMode.bank();
+                }
+            });
+        }
+    }
+
     hideHudButtons() {
         document.getElementById('hud-settings-btn')?.classList.add('hidden');
         document.getElementById('hud-ship-btn')?.classList.add('hidden');
+        document.getElementById('hud-bank-btn')?.classList.add('hidden');
     }
 }
 

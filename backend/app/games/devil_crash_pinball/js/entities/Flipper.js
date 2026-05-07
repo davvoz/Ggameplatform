@@ -71,8 +71,11 @@ export class Flipper {
         };
         const hit = Collisions.circleVsCapsule(ball, cap, 0.55);
         if (hit && this.active) {
-            // Extra impulse upward when actively flipping
-            ball.vel.y -= C.FLIPPER_IMPULSE * 0.0035 * Math.abs(this.omega);
+            // Extra impulse upward when actively flipping.
+            // omega is mathematically bounded by FLIPPER_SPEED but we clamp
+            // explicitly to guard against any future dt edge cases.
+            const clampedOmega = Math.min(Math.abs(this.omega), C.FLIPPER_SPEED);
+            ball.vel.y -= C.FLIPPER_IMPULSE * 0.0035 * clampedOmega;
         }
         return hit;
     }

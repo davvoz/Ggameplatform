@@ -2132,6 +2132,20 @@ body.game-fullscreen #game-container {
     font-size: 0.85em;
 }
 
+/* Blitz perk screen theming */
+#perk-select-screen .screen-content:has(.perk-title--blitz) {
+    border-color: rgba(255, 215, 0, 0.3);
+}
+.perk-title--blitz {
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+    letter-spacing: 3px;
+}
+.perk-subtitle--blitz {
+    color: #e0c060;
+    font-size: 0.85em;
+}
+
 .survivor-toolbar {
     display: flex;
     justify-content: space-between;

@@ -5,6 +5,7 @@ import { PlanetWorldRenderer } from "./worlds/PlanetWorldRenderer.js";
 import { SimulationWorldRenderer } from "./worlds/SimulationWorldRenderer.js";
 import { QuantumWorldRenderer } from "./worlds/QuantumWorldRenderer.js";
 import { SurvivorWorldRenderer } from "./worlds/SurvivorWorldRenderer.js";
+import { BlitzWorldRenderer } from "./worlds/blitz/BlitzWorldRenderer.js";
 
 // ═════════════════════════════════════════════════════════════
 //  BackgroundFacade — thin orchestrator that delegates to WorldRenderers
@@ -45,11 +46,12 @@ export class BackgroundFacade {
          * Add new worlds here.
          */
         this.worlds = [
-            new SpaceWorldRenderer(canvasWidth, canvasHeight, quality),   // World 1 (1-30)
-            new PlanetWorldRenderer(canvasWidth, canvasHeight, quality),  // World 2 (31-60)
-            new SimulationWorldRenderer(canvasWidth, canvasHeight, quality), // World 3 (61-90)
+            new SpaceWorldRenderer(canvasWidth, canvasHeight, quality),       // World 1 (1-30)
+            new PlanetWorldRenderer(canvasWidth, canvasHeight, quality),      // World 2 (31-60)
+            new SimulationWorldRenderer(canvasWidth, canvasHeight, quality),  // World 3 (61-90)
             new QuantumWorldRenderer(canvasWidth, canvasHeight, quality),     // World 4 (91-120)
             new SurvivorWorldRenderer(canvasWidth, canvasHeight, quality),    // World 5 (custom survivor)
+            new BlitzWorldRenderer(canvasWidth, canvasHeight, quality),       // World 6 (blitz run)
         ];
 
         /** Currently active world renderer. */
@@ -75,11 +77,33 @@ export class BackgroundFacade {
      * @param {boolean} active
      */
     setSurvivorMode(active) {
-        const newIdx = active ? this.worlds.length - 1 : null;
+        const newIdx = active ? (this.worlds.length - 2) : null;
         if (this._forcedWorldIdx === newIdx) return;
         this._forcedWorldIdx = newIdx;
         // Force rebuild with current theme to re-bind active world
         this._buildForTheme(this.currentTheme || getThemeForLevel(this.currentLevel || 1), this.currentLevel);
+    }
+
+    /**
+     * Force the blitz (World 6) renderer regardless of currentLevel.
+     * Pass `false` to release the override.
+     * @param {boolean} active
+     */
+    setBlitzMode(active) {
+        const newIdx = active ? (this.worlds.length - 1) : null;
+        if (this._forcedWorldIdx === newIdx) return;
+        this._forcedWorldIdx = newIdx;
+        this._buildForTheme(this.currentTheme || getThemeForLevel(this.currentLevel || 1), this.currentLevel);
+    }
+
+    /**
+     * Forward chain intensity to the active BlitzWorldRenderer (no-op for other worlds).
+     * @param {number} t  0-1
+     */
+    setBlitzIntensity(t) {
+        if (this._activeWorld && typeof this._activeWorld.setIntensity === 'function') {
+            this._activeWorld.setIntensity(t);
+        }
     }
 
     /** Change quality setting and rebuild. */

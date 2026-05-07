@@ -13,6 +13,9 @@ class ScoreManager {
     }
 
     addScore(points) {
+        // Blitz Run handles all scoring via BlitzMode — bypass normal flow.
+        if (this.game.gameMode === 'blitz') return;
+
         const adjusted = Math.round(points * this.game.difficulty.scoreMultiplier);
         this.score += adjusted;
         this.totalPoints += adjusted;

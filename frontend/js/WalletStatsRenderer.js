@@ -4,6 +4,7 @@
  * Follows SOLID principles - Single Responsibility: Statistics visualization only
  */
 
+
 class WalletStatsRenderer {
     animationDuration = 1500;
     chartColors = {

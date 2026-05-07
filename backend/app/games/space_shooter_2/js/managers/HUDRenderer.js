@@ -183,10 +183,17 @@ class HUDRenderer {
 
     renderBankHint(bm, ctx, fs, w, h) {
         if (bm.canBank && !this.game.input.isMobile) {
-            ctx.font = ui(9 * fs);
+            const pulse = 0.7 + 0.3 * Math.sin(performance.now() * 0.005);
+            const fontSize = 11 * fs;
+            ctx.font = ui(fontSize, 'bold');
             ctx.textAlign = 'center';
-            ctx.fillStyle = 'rgba(200,255,200,0.7)';
-            ctx.fillText('[E] BANK NOW', w / 2, h - 28);
+            ctx.globalAlpha = pulse;
+            ctx.fillStyle = '#ffd700';
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 10;
+            ctx.fillText('[E]  BANK NOW  ⚡', w / 2, h - 72);
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
         }
     }
 
@@ -373,6 +380,8 @@ class HUDRenderer {
     }
 
     renderUltimateBar(player, w, g, ctx, fs) {
+        // On mobile the ultimate button already shows charge state — skip the bar.
+        if (g.input.isMobile) return;
         if (player.ultimateData) {
             const ultBarW = 120;
             const ultBarH = 8;

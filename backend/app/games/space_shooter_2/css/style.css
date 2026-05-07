@@ -1611,25 +1611,30 @@ body.game-fullscreen #game-container {
 
 @media (max-width: 480px) {
     .perk-cards {
-        flex-direction: column;
-        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        justify-items: stretch;
     }
     .perk-card {
-        max-width: 260px;
+        max-width: unset;
         width: 100%;
-        padding: 14px 12px 12px;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 4px 10px;
+        padding: 12px 10px 10px;
+        flex-direction: column;
+        gap: 4px;
     }
     .perk-icon-wrap {
-        width: 42px;
-        height: 42px;
+        width: 38px;
+        height: 38px;
     }
     .perk-icon {
-        font-size: 20px;
+        font-size: 18px;
+    }
+    .perk-name {
+        font-size: 11px;
     }
     .perk-desc {
+        font-size: 10px;
         width: 100%;
     }
 }

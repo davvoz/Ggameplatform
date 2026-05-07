@@ -1122,24 +1122,13 @@ class UIManager {
     }
 
     showBlitzBankButton() {
-        const btn = document.getElementById('hud-bank-btn');
-        if (!btn) return;
-        btn.classList.remove('hidden');
-        // Wire click if not already wired
-        if (!btn._blitzWired) {
-            btn._blitzWired = true;
-            btn.addEventListener('click', () => {
-                if (this.game.gameMode === 'blitz' && this.game.blitzMode) {
-                    this.game.blitzMode.bank();
-                }
-            });
-        }
+        // Bank action is handled by [E] key and the canvas touch button — no HTML button needed.
     }
 
     hideHudButtons() {
         document.getElementById('hud-settings-btn')?.classList.add('hidden');
         document.getElementById('hud-ship-btn')?.classList.add('hidden');
-        document.getElementById('hud-bank-btn')?.classList.add('hidden');
+
     }
 }
 

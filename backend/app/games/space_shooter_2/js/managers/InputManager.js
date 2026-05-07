@@ -96,7 +96,7 @@ class InputManager extends BaseInputManager {
 
     isUltimatePressed() {
         const current = this.touch.ultimate || this.ultimateButtonPressed ||
-                        this.isKeyPressed('KeyQ') || this.isKeyPressed('KeyE');
+                        this.isKeyPressed('KeyQ');
         const justPressed = current && !this._ultimatePrevState;
         this._ultimatePrevState = current;
         return justPressed;

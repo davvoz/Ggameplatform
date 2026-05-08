@@ -144,16 +144,6 @@ document.getElementById('btn-export').addEventListener('click', async () => {
     URL.revokeObjectURL(url);
 });
 
-document.getElementById('btn-copy').addEventListener('click', async () => {
-    if (!await gateExport('Copy current section JSON')) return;
-    const json = editor.exportJson();
-    await navigator.clipboard.writeText(json);
-    const copyBtn = document.getElementById('btn-copy');
-    const orig = copyBtn.textContent;
-    copyBtn.textContent = '✓ Copied!';
-    setTimeout(() => { copyBtn.textContent = orig; }, 1500);
-});
-
 // ── Export All (every section + board.json) ───────────────────────────────────
 document.getElementById('btn-export-board').addEventListener('click', async () => {
     if (!await gateExport('Export ALL sections + board.json')) return;
@@ -165,6 +155,55 @@ document.getElementById('btn-export-board').addEventListener('click', async () =
         a.click();
         URL.revokeObjectURL(url);
     }
+});
+
+// ── Import JSON ───────────────────────────────────────────────────────────────
+document.getElementById('btn-import').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type   = 'file';
+    input.accept = '.json,application/json';
+    input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        let text;
+        try {
+            text = await file.text();
+        } catch {
+            _toast('Could not read file.', 'error');
+            return;
+        }
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch {
+            _toast('Invalid JSON file.', 'error');
+            return;
+        }
+
+        // Detect format:
+        //  A) section file  → has no `sections` object-of-objects at top level
+        //  B) board export  → has { sections: { key: cfg, … } } or { board, sections }
+        const isBoardExport =
+            parsed.sections &&
+            typeof parsed.sections === 'object' &&
+            !Array.isArray(parsed.sections) &&
+            Object.values(parsed.sections).every(v => v && typeof v === 'object' && !Array.isArray(v));
+
+        try {
+            if (isBoardExport) {
+                // Full board — replace all matching sections
+                editor.importBoardJson(text);
+                _toast('Board imported.', 'success');
+            } else {
+                // Single section — target the current active section
+                editor.importJson(editor.currentLevel, text);
+                _toast(`Section "${editor.currentLevel}" imported.`, 'success');
+            }
+        } catch (err) {
+            _toast(err.message, 'error');
+        }
+    });
+    input.click();
 });
 
 // ── New Section dialog ────────────────────────────────────────────────────────
@@ -240,6 +279,8 @@ newSectionForm.addEventListener('submit', (e) => {
 new Toolbar(document.getElementById('toolbar-panel'), editor);
 new LevelCanvas(document.getElementById('level-canvas'), editor);
 new EntityInspector(document.getElementById('inspector-panel'), editor);
+
+editor.on('clipboardChange', () => _toast('Copied!', 'success'));
 
 // ── Board Order dialog ─────────────────────────────────────────────────────────
 const boardOrderDialog = document.getElementById('board-order-dialog');
@@ -500,34 +541,41 @@ document.getElementById('btn-my-boards').addEventListener('click', async () => {
 const saveDialog   = document.getElementById('save-online-dialog');
 const saveForm     = document.getElementById('save-online-form');
 const saveName     = document.getElementById('so-name');
-const saveMode     = document.getElementById('so-mode');
 const saveExisting = document.getElementById('so-existing');
-const saveExistingLabel = document.getElementById('so-existing-label');
 
-async function _populateExisting() {
-    saveExisting.replaceChildren();
+/** Rebuild the <select> options: first entry is always "new board", then existing boards. */
+async function _populateSaveSelect() {
+    // Keep only the "— New board —" sentinel option (index 0)
+    while (saveExisting.options.length > 1) saveExisting.remove(1);
     try {
         const items = await _api.listMine();
-        if (!items?.length) {
+        for (const it of (items ?? [])) {
             const opt = document.createElement('option');
-            opt.value = '';
-            opt.textContent = '(no saved boards)';
-            saveExisting.append(opt);
-            return;
-        }
-        for (const it of items) {
-            const opt = document.createElement('option');
-            opt.value = String(it.board_id);
-            opt.textContent = `${it.name} (♥ ${it.like_count ?? 0})`;
+            opt.value        = String(it.board_id);
+            opt.textContent  = it.name;
+            opt.dataset.name = it.name;
             saveExisting.append(opt);
         }
     } catch (err) {
         const opt = document.createElement('option');
-        opt.value = '';
+        opt.value    = '';
+        opt.disabled = true;
         opt.textContent = err.status === 401 ? '(login required)' : `(error: ${err.message})`;
         saveExisting.append(opt);
     }
 }
+
+/** When the user picks a board, auto-fill the name field. */
+saveExisting.addEventListener('change', () => {
+    const selected = saveExisting.selectedOptions[0];
+    if (selected?.value) {
+        saveName.value    = selected.dataset.name ?? selected.textContent;
+        saveName.required = false;  // name auto-filled, still editable
+    } else {
+        saveName.value    = '';
+        saveName.required = true;
+    }
+});
 
 document.getElementById('btn-save-online').addEventListener('click', async () => {
     try {
@@ -536,29 +584,23 @@ document.getElementById('btn-save-online').addEventListener('click', async () =>
         _toast(err.message);
         return;
     }
-    saveName.value = '';
-    if (REMOTE_BOARD_ID === null) {
-        saveMode.value = 'new';
-        saveExisting.hidden = true;
-        saveExistingLabel.hidden = true;
+    await _populateSaveSelect();
+    // Pre-select the currently-loaded remote board (if any) and auto-fill its name
+    const condA = REMOTE_BOARD_ID !== null;
+    const remoteOpt = condA
+        ? [...saveExisting.options].find(o => o.value === String(REMOTE_BOARD_ID))
+        : null;
+    if (remoteOpt) {
+        saveExisting.value = String(REMOTE_BOARD_ID);
+        saveName.value     = remoteOpt.dataset.name ?? remoteOpt.textContent;
+        saveName.required  = false;
     } else {
-        saveMode.value = 'overwrite';
-        saveExisting.hidden = false;
-        saveExistingLabel.hidden = false;
-        await _populateExisting();
-        // Pre-select the currently-loaded remote board
-        if ([...saveExisting.options].some(o => o.value === String(REMOTE_BOARD_ID))) {
-            saveExisting.value = String(REMOTE_BOARD_ID);
-        }
+        saveExisting.value = '';
+        saveName.value     = '';
+        saveName.required  = true;
     }
     saveDialog.showModal();
-});
-
-saveMode.addEventListener('change', async () => {
-    const overwrite = saveMode.value === 'overwrite';
-    saveExisting.hidden = !overwrite;
-    saveExistingLabel.hidden = !overwrite;
-    if (overwrite) await _populateExisting();
+    saveName.focus();
 });
 
 document.getElementById('so-cancel').addEventListener('click', () => saveDialog.close());
@@ -570,12 +612,12 @@ saveForm.addEventListener('submit', async (e) => {
     catch (err) { _toast(err.message); return; }
 
     const name = saveName.value.trim();
-    if (!name) return;
+    if (!name) { saveName.focus(); return; }
 
     const submitBtn = document.getElementById('so-save');
     submitBtn.disabled = true;
     try {
-        if (saveMode.value === 'overwrite' && saveExisting.value) {
+        if (saveExisting.value) {
             await _api.updateBoard(saveExisting.value, name, payload);
         } else {
             await _api.createBoard(name, payload);
@@ -595,6 +637,6 @@ saveForm.addEventListener('submit', async (e) => {
 
 function _saveErrorHint(err) {
     if (err.status === 401) return ' (login required)';
-    if (err.status === 409) return ' (max 10 boards reached — overwrite one instead)';
+    if (err.status === 409) return ' (max 10 boards reached — delete one first)';
     return '';
 }

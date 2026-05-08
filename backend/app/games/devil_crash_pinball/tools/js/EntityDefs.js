@@ -394,6 +394,7 @@ export const EntityDefs = {
         ],
         defaults: () => ({ x: 240, y: 200 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
+        getSelectionCenter: (e) => ({ x: e.x + 13, y: e.y + 5 }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest: (e, px, py) => Math.abs(px - e.x) < 16 && Math.abs(py - e.y) < 10,
         render(ctx, e, sel) {
@@ -425,6 +426,7 @@ export const EntityDefs = {
         ],
         defaults: () => ({ x: 210, y: 200, w: 60, h: 16, angleDeg: 0, dirX: 0, dirY: -1, power: 1100, cooldown: 0.3 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
+        getSelectionCenter: (e) => ({ x: e.x + (e.w ?? 60) / 2, y: e.y + (e.h ?? 16) / 2 }),
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest: (e, px, py) => Math.hypot(px - e.x, py - e.y) < Math.max((e.w ?? 60), (e.h ?? 16)) / 2 + 8,
         render(ctx, e, sel) {
@@ -511,6 +513,50 @@ export const EntityDefs = {
             ctx.globalAlpha = 1;
             ctx.restore();
         },
+        handles: {
+            get(e) {
+                const w     = e.w ?? 60;
+                const h     = e.h ?? 16;
+                const angle = (e.angleDeg ?? 0) * Math.PI / 180;
+                const cx    = e.x + w / 2;
+                const cy    = e.y + h / 2;
+                const cos   = Math.cos(angle);
+                const sin   = Math.sin(angle);
+                return [
+                    // Right-edge midpoint → controls width
+                    { id: 'w',   label: 'W', x: cx + cos * w / 2,        y: cy + sin * w / 2        },
+                    // Bottom-edge midpoint → controls height
+                    { id: 'h',   label: 'H', x: cx - sin * h / 2,        y: cy + cos * h / 2        },
+                    // Above center (local -Y) → controls rotation
+                    { id: 'rot', label: '↺', x: cx + sin * (h / 2 + 16), y: cy - cos * (h / 2 + 16) },
+                ];
+            },
+            move(e, id, x, y) {
+                const w     = e.w ?? 60;
+                const h     = e.h ?? 16;
+                const angle = (e.angleDeg ?? 0) * Math.PI / 180;
+                const cx    = e.x + w / 2;
+                const cy    = e.y + h / 2;
+                const cos   = Math.cos(angle);
+                const sin   = Math.sin(angle);
+                const dx    = x - cx;
+                const dy    = y - cy;
+                if (id === 'w') {
+                    // Project mouse onto local X axis → new half-width
+                    const newW = Math.max(10, Math.round((cos * dx + sin * dy) * 2));
+                    e.x = Math.round(cx - newW / 2);
+                    e.w = newW;
+                } else if (id === 'h') {
+                    // Project mouse onto local Y axis → new half-height
+                    const newH = Math.max(8, Math.round((-sin * dx + cos * dy) * 2));
+                    e.y = Math.round(cy - newH / 2);
+                    e.h = newH;
+                } else if (id === 'rot') {
+                    // Handle sits at local (0, -h/2-16); atan2 + 90° = housing angle
+                    e.angleDeg = Math.round((Math.atan2(dy, dx) + Math.PI / 2) * 180 / Math.PI);
+                }
+            },
+        },
     },
 
     spring: {
@@ -526,6 +572,13 @@ export const EntityDefs = {
         ],
         defaults: () => ({ x: 240, y: 300, radius: 20, angleDeg: 270, power: 1300, cooldown: 0.4 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
+        getSelectionCenter: (e) => {
+            const D2R = Math.PI / 180;
+            const r   = e.radius ?? 20;
+            const dx  = Math.cos((e.angleDeg ?? 270) * D2R);
+            const dy  = Math.sin((e.angleDeg ?? 270) * D2R);
+            return { x: e.x - dx * r * 1.25, y: e.y - dy * r * 1.25 };
+        },
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest(e, px, py) {
             const r       = e.radius ?? 20;
@@ -636,6 +689,13 @@ export const EntityDefs = {
         ],
         defaults: () => ({ x: 240, y: 600, radius: 20, angleDeg: 270, maxPower: 2000, chargeTime: 1.2, maxExtension: 80 }),
         getCenter: (e) => ({ x: e.x, y: e.y }),
+        getSelectionCenter: (e) => {
+            const D2R = Math.PI / 180;
+            const ext = e.maxExtension ?? 80;
+            const dx  = Math.cos((e.angleDeg ?? 270) * D2R);
+            const dy  = Math.sin((e.angleDeg ?? 270) * D2R);
+            return { x: e.x + dx * ext * 0.5, y: e.y + dy * ext * 0.5 };
+        },
         setCenter: (e, x, y, g) => { e.x = snap(x, g); e.y = snap(y, g); },
         hitTest(e, px, py) {
             const r   = e.radius ?? 20;
@@ -839,7 +899,7 @@ export const EntityDefs = {
         fields: [
             { name: 'x', type: 'number' },
             { name: 'y', type: 'number' },
-            { name: 'colorKey', type: 'text' },
+            { name: 'colorKey', type: 'colorkey' },
             { name: 'radius', type: 'number', step: 0.5 },
             { name: 'cycleSpeed', type: 'number', step: 0.1 },
             { name: 'on', type: 'checkbox' },
@@ -871,7 +931,7 @@ export const EntityDefs = {
             { name: 'cy', type: 'number' },
             { name: 'radius', type: 'number' },
             { name: 'count', type: 'number' },
-            { name: 'colorKey', type: 'text' },
+            { name: 'colorKey', type: 'colorkey' },
             { name: 'lightRadius', type: 'number', step: 0.5 },
             { name: 'cycleSpeed', type: 'number', step: 0.1 },
             { name: 'on', type: 'checkbox' },

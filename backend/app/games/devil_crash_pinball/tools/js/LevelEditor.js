@@ -528,4 +528,56 @@ export class LevelEditor {
         files['board.json'] = this.exportBoardJson();
         return files;
     }
+
+    // ─── Import ───────────────────────────────────────────────────────────────
+
+    /**
+     * Replace the config of an existing section with the parsed content of a
+     * section JSON file. Saves undo history before applying.
+     * @param {string} key        section key (must already exist)
+     * @param {string} jsonString raw JSON text
+     * @throws {Error} if key is unknown or JSON is invalid
+     */
+    importJson(key, jsonString) {
+        if (!this.#levelKeys.includes(key)) {
+            throw new Error(`Section '${key}' is not loaded — cannot import.`);
+        }
+        const parsed = JSON.parse(jsonString);          // throws on malformed JSON
+        this.#history.push(this.#snapshot());
+        this.#configs[key] = structuredClone(parsed);
+        if (this.#currentLevel === key) {
+            this.#selection = null;
+            this.#emit('selectionChange', null);
+        }
+        this.#emit('levelChange', this.#currentLevel);
+        this.#emit('historyChange');
+    }
+
+    /**
+     * Replace ALL sections from a board export (object mapping section key →
+     * config object, optionally accompanied by a "board" key that carries the
+     * sections order). Any key not present in the export is left untouched.
+     * Saves undo history before applying.
+     * @param {string} jsonString  raw JSON — either a board export
+     *   (`{ board: { sections }, sections: { key: cfg } }`) or a flat map
+     *   (`{ key: cfg, … }`).
+     */
+    importBoardJson(jsonString) {
+        const raw = JSON.parse(jsonString);
+
+        // Support both the "board export" format and a flat section map.
+        const sectionMap = raw.sections && typeof Object.values(raw.sections)[0] === 'object'
+            ? raw.sections
+            : raw;
+
+        this.#history.push(this.#snapshot());
+        for (const [key, cfg] of Object.entries(sectionMap)) {
+            if (!this.#levelKeys.includes(key)) continue;   // ignore unknown keys
+            this.#configs[key] = structuredClone(cfg);
+        }
+        this.#selection = null;
+        this.#emit('selectionChange', null);
+        this.#emit('levelChange', this.#currentLevel);
+        this.#emit('historyChange');
+    }
 }

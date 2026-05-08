@@ -1,219 +1,1 @@
-/* ─── Top-bar separator ─────────────────────────────────────────────────────── */
-#topbar-actions .topbar-sep {
-    display: inline-block;
-    width: 1px;
-    height: 20px;
-    background: #444;
-    margin: 0 4px;
-    vertical-align: middle;
-}
-#btn-test-online,
-#btn-save-online,
-#btn-my-boards {
-    background: #2d3038;
-    border: 1px solid #4a5060;
-}
-#btn-test-online { color: #7ce47c; }
-#btn-save-online { color: #ffd24a; }
-#btn-my-boards   { color: #79c0ff; }
-
-/* ─── Toast notifications ────────────────────────────────────────────────────── */
-.editor-toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    max-width: min(480px, 90vw);
-    padding: 10px 18px;
-    border-radius: 6px;
-    font: 600 13px/1.4 'Segoe UI', sans-serif;
-    opacity: 0;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    pointer-events: none;
-    z-index: 99999;
-    white-space: pre-wrap;
-}
-.editor-toast--visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-.editor-toast--error   { background: #4a1010; border: 1px solid #c03030; color: #ffa8a8; }
-.editor-toast--success { background: #103020; border: 1px solid #30a060; color: #a8ffc8; }
-.editor-toast--info    { background: #102040; border: 1px solid #3070c0; color: #a8d8ff; }
-
-/* ─── Confirm dialog ─────────────────────────────────────────────────────────── */
-.editor-confirm-dialog {
-    background: #1e2028;
-    border: 1px solid #4a5060;
-    border-radius: 8px;
-    color: #d0d8e8;
-    font: 14px/1.5 'Segoe UI', sans-serif;
-    padding: 20px 24px;
-    max-width: min(400px, 90vw);
-}
-.editor-confirm-dialog p {
-    margin: 0 0 16px;
-    white-space: pre-wrap;
-}
-.editor-confirm-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-.editor-confirm-ok,
-.editor-confirm-cancel {
-    padding: 6px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font: 600 13px 'Segoe UI', sans-serif;
-}
-.editor-confirm-ok     { background: #c03030; border: 1px solid #ff5050; color: #fff; }
-.editor-confirm-cancel { background: #2d3038; border: 1px solid #4a5060; color: #d0d8e8; }
-.editor-confirm-ok:hover     { background: #e03030; }
-.editor-confirm-cancel:hover { background: #3a3f4a; }
-
-/* ─── Test modal (iframe) ───────────────────────────────────────────────────── */
-.editor-test-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-.editor-test-inner {
-    width: min(420px, 100%);
-    height: min(760px, 100%);
-    display: flex;
-    flex-direction: column;
-    background: #000;
-    border: 2px solid #ff3a3a;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 0 32px rgba(255, 60, 60, 0.4);
-}
-.editor-test-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 10px;
-    background: #1a0008;
-    color: #ffd24a;
-    font: 600 13px/1 'Segoe UI', sans-serif;
-}
-.editor-test-bar button {
-    background: transparent;
-    border: 1px solid #ff8a4a;
-    color: #ffb8a8;
-    border-radius: 4px;
-    padding: 2px 8px;
-    cursor: pointer;
-}
-.editor-test-bar button:hover { color: #fff; }
-.editor-test-iframe {
-    flex: 1 1 auto;
-    width: 100%;
-    border: 0;
-    background: #000;
-}
-
-/* ─── My Boards / Save Online dialogs ───────────────────────────────────────── */
-.editor-online-dialog {
-    min-width: min(480px, 90vw);
-    max-width: 90vw;
-    border: 1px solid #4a5060;
-    background: #1a1d24;
-    color: #d8d8d8;
-    border-radius: 8px;
-    padding: 16px 20px;
-}
-.editor-online-dialog::backdrop { background: rgba(0,0,0,0.65); }
-.editor-online-dialog h2 {
-    margin: 0 0 12px;
-    font-size: 18px;
-    color: #ffd24a;
-}
-.mb-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 60vh;
-    overflow-y: auto;
-    margin-bottom: 12px;
-}
-.mb-row {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    background: #23262e;
-    border: 1px solid #353944;
-    border-radius: 6px;
-}
-.mb-info { min-width: 0; }
-.mb-name {
-    font-weight: 600;
-    color: #ffd24a;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.mb-meta {
-    font-size: 12px;
-    color: #888;
-    margin-top: 2px;
-}
-.mb-row button {
-    background: #2d3038;
-    border: 1px solid #4a5060;
-    color: #d8d8d8;
-    padding: 4px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-}
-.mb-row button:hover { background: #3a3e48; }
-.mb-row .mb-danger:hover {
-    background: #5a1010;
-    border-color: #ff5050;
-    color: #ffaaaa;
-}
-
-#save-online-dialog {
-    min-width: min(420px, 90vw);
-    border: 1px solid #4a5060;
-    background: #1a1d24;
-    color: #d8d8d8;
-    border-radius: 8px;
-    padding: 16px 20px;
-}
-#save-online-dialog::backdrop { background: rgba(0,0,0,0.65); }
-#save-online-dialog h2 {
-    margin: 0 0 4px;
-    font-size: 18px;
-    color: #ffd24a;
-}
-#save-online-dialog .hint {
-    margin: 0 0 12px;
-    font-size: 12px;
-    color: #888;
-}
-#save-online-dialog label {
-    display: block;
-    margin: 8px 0 4px;
-    font-size: 13px;
-    color: #b0b0b0;
-}
-#save-online-dialog input,
-#save-online-dialog select {
-    width: 100%;
-    padding: 6px 8px;
-    background: #23262e;
-    border: 1px solid #4a5060;
-    color: #d8d8d8;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
+/* ─── Top-bar separator ─────────────────────────────────────────────────────── */#topbar-actions .topbar-sep {    display: inline-block;    width: 1px;    height: 18px;    background: var(--border);    margin: 0 4px;    vertical-align: middle;}#btn-test-online,#btn-save-online,#btn-my-boards {    background: var(--surface2);    border: 1px solid var(--border);}#btn-test-online { color: #4ec94e; }#btn-save-online { color: #ffd700; }#btn-my-boards   { color: var(--accent-hl); }#btn-test-online:hover  { background: var(--surface3); border-color: #4ec94e; }#btn-save-online:hover  { background: var(--surface3); border-color: #ffd700; }#btn-my-boards:hover    { background: var(--surface3); border-color: var(--accent-hl); }/* ─── Toast notifications ────────────────────────────────────────────────────── */.editor-toast {    position: fixed;    bottom: 24px;    left: 50%;    transform: translateX(-50%) translateY(12px);    max-width: min(480px, 90vw);    padding: 8px 16px;    border-radius: 2px;    font: 600 12px/1.4 var(--font-ui);    opacity: 0;    transition: opacity 0.15s ease, transform 0.15s ease;    pointer-events: none;    z-index: 99999;    white-space: pre-wrap;}.editor-toast--visible {    opacity: 1;    transform: translateX(-50%) translateY(0);}.editor-toast--error   { background: #3a1010; border: 1px solid #c03030; color: #ffaaaa; }.editor-toast--success { background: #0d2a1a; border: 1px solid #1e7a40; color: #80ffb0; }.editor-toast--info    { background: #0d1e34; border: 1px solid #1a5090; color: #80c8ff; }/* ─── Confirm dialog ─────────────────────────────────────────────────────────── */.editor-confirm-dialog {    background: var(--surface);    border: 1px solid var(--border);    border-radius: 4px;    color: var(--text);    font: 13px/1.5 var(--font-ui);    padding: 18px 22px;    max-width: min(380px, 90vw);}.editor-confirm-dialog p {    margin: 0 0 14px;    white-space: pre-wrap;}.editor-confirm-actions {    display: flex;    justify-content: flex-end;    gap: 8px;}.editor-confirm-ok,.editor-confirm-cancel {    padding: 5px 14px;    border-radius: 2px;    cursor: pointer;    font: 600 12px var(--font-ui);}.editor-confirm-ok     { background: var(--red); border: 1px solid var(--red); color: #fff; }.editor-confirm-cancel { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }.editor-confirm-ok:hover     { background: #c03030; }.editor-confirm-cancel:hover { background: var(--surface3); }/* ─── Test modal (iframe) ───────────────────────────────────────────────────── */.editor-test-modal {    position: fixed;    inset: 0;    background: rgba(0, 0, 0, 0.85);    z-index: 9999;    display: flex;    align-items: center;    justify-content: center;    padding: 20px;}.editor-test-inner {    width: min(420px, 100%);    height: min(760px, 100%);    display: flex;    flex-direction: column;    background: #000;    border: 1px solid var(--border);    border-radius: 4px;    overflow: hidden;    box-shadow: 0 8px 32px rgba(0,0,0,0.6);}.editor-test-bar {    display: flex;    justify-content: space-between;    align-items: center;    padding: 6px 10px;    background: var(--surface2);    border-bottom: 1px solid var(--border);    color: var(--text-dim);    font: 12px/1 var(--font-ui);}.editor-test-bar button {    background: transparent;    border: 1px solid var(--border);    color: var(--text);    border-radius: 2px;    padding: 2px 8px;    cursor: pointer;    font: 12px var(--font-ui);}.editor-test-bar button:hover { border-color: var(--border-hl); color: #fff; }.editor-test-iframe {    flex: 1 1 auto;    width: 100%;    border: 0;    background: #000;}/* ─── My Boards / Save Online dialogs ───────────────────────────────────────── */.editor-online-dialog {    min-width: min(460px, 90vw);    max-width: 90vw;    border: 1px solid var(--border);    background: var(--surface);    color: var(--text);    border-radius: 4px;    padding: 16px 20px;    font: 13px/1.5 var(--font-ui);}.editor-online-dialog::backdrop { background: rgba(0,0,0,0.7); }.editor-online-dialog h2 {    margin: 0 0 12px;    font-size: 15px;    font-weight: 600;    color: var(--text);}.mb-list {    display: flex;    flex-direction: column;    gap: 4px;    max-height: 60vh;    overflow-y: auto;    margin-bottom: 12px;}.mb-row {    display: grid;    grid-template-columns: 1fr auto auto;    align-items: center;    gap: 8px;    padding: 8px 10px;    background: var(--surface2);    border: 1px solid var(--border);    border-radius: 2px;    transition: border-color .1s;}.mb-row:hover { border-color: var(--border-hl); }.mb-info { min-width: 0; }.mb-name {    font-weight: 600;    font-size: 13px;    overflow: hidden;    text-overflow: ellipsis;    white-space: nowrap;}.mb-meta {    font-size: 11px;    color: var(--text-dim);    margin-top: 2px;}.mb-row button {    background: var(--surface2);    border: 1px solid var(--border);    color: var(--text);    padding: 3px 10px;    border-radius: 2px;    cursor: pointer;    font: 12px var(--font-ui);    transition: background .1s;}.mb-row button:hover { background: var(--surface3); border-color: var(--border-hl); }.mb-row .mb-danger:hover {    background: rgba(231, 72, 86, 0.2);    border-color: var(--red);    color: var(--red);}#save-online-dialog {    min-width: min(380px, 90vw);    border: 1px solid var(--border);    background: var(--surface);    color: var(--text);    border-radius: 4px;    padding: 16px 20px;    font: 13px/1.5 var(--font-ui);}#save-online-dialog::backdrop { background: rgba(0,0,0,0.7); }#save-online-dialog h2 {    margin: 0 0 4px;    font-size: 15px;    font-weight: 600;    color: var(--text);}#save-online-dialog .hint {    margin: 0 0 12px;    font-size: 11px;    color: var(--text-dim);}#save-online-dialog label {    display: block;    margin: 8px 0 4px;    font-size: 11px;    color: var(--text-dim);    text-transform: uppercase;    letter-spacing: 0.08em;}#save-online-dialog input,#save-online-dialog select {    width: 100%;    padding: 6px 8px;    background: var(--surface2);    border: 1px solid var(--border);    color: var(--text);    border-radius: 2px;    font: 13px var(--font-ui);    box-sizing: border-box;    transition: border-color .1s;}#save-online-dialog input:focus,#save-online-dialog select:focus {    outline: none;    border-color: var(--accent);}

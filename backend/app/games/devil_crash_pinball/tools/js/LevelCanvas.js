@@ -311,7 +311,7 @@ export class LevelCanvas {
             ctx.arc(arc.cx, arc.cy, arc.r, arc.sA, arc.eA, ccw);
             ctx.stroke();
         } else {
-            const c = def.getCenter?.(entity);
+            const c = def.getSelectionCenter?.(entity) ?? def.getCenter?.(entity);
             if (c) {
                 const r = this.#selectionRingRadius(def, entity);
                 ctx.beginPath();
@@ -542,7 +542,10 @@ export class LevelCanvas {
         }
         this.#editor.select(hit.type, hit.index);
         this.#editor.snapshotBeforeDrag();
-        this.#drag = { mode: 'move', snapshotted: true };
+        const _selEntity = this.#editor.getSelectedEntity();
+        const _selDef    = EntityDefs[hit.type];
+        const _center    = (_selDef?.getCenter?.(_selEntity)) ?? { x, y };
+        this.#drag = { mode: 'move', snapshotted: true, offsetX: x - _center.x, offsetY: y - _center.y };
     }
 
     #onMouseMove(e) {
@@ -583,7 +586,7 @@ export class LevelCanvas {
         } else if (this.#drag.mode === 'handle') {
             this.#editor.moveHandleRaw(this.#drag.handleId, fx, fy);
         } else {
-            this.#editor.moveSelectedRaw(fx, fy);
+            this.#editor.moveSelectedRaw(fx - this.#drag.offsetX, fy - this.#drag.offsetY);
         }
     }
 

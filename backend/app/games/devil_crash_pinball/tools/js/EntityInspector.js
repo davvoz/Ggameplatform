@@ -321,6 +321,19 @@ export class EntityInspector {
         // Fallback values for fields missing on legacy entities (e.g. radius
         // added after the JSON was authored). We read them from the def's
         // defaults() so the inspector always shows an editable value.
+        this.populateEntityForm(def, entity, form);
+
+        this.#panel.appendChild(form);
+        if (sel.type === 'warp') {
+            const cfg      = this.#editor.getConfig();
+            const warpCfg  = cfg.warps?.[sel.index];
+            const warpName = warpCfg?.name ?? sel.index;
+            this.#renderWarpExitsPanel(warpName, cfg.section ?? this.#editor.currentLevel);
+        }
+        this.#renderLevelMeta();
+    }
+
+    populateEntityForm(def, entity, form) {
         const defaults = (typeof def.defaults === 'function') ? def.defaults() : {};
 
         for (const fieldDef of def.fields) {
@@ -338,55 +351,85 @@ export class EntityInspector {
             label.htmlFor = `f_${name}`;
             row.appendChild(label);
 
-            let input;
-            if (type === 'checkbox') {
+            let input = this.createInputElement(type, name, value, options, step, row);
+            if (type === 'colorkey') {
+                const palette = this.#editor.getConfig()?.palette ?? {};
+                const swatch = document.createElement('span');
+                swatch.className = 'colorkey-swatch';
+                const syncSwatch = () => { swatch.style.background = palette[input.value] ?? 'transparent'; };
+                syncSwatch();
+                input.addEventListener('change', syncSwatch);
+                row.appendChild(swatch);
+            }
+            form.appendChild(row);
+        }
+    }
+
+    createInputElement(type, name, value, options, step, row) {
+        let input;
+
+        switch (type) {
+            case 'checkbox': {
                 input = document.createElement('input');
-                input.type = 'checkbox';
-                input.id = `f_${name}`;
+                input.type    = 'checkbox';
+                input.id      = `f_${name}`;
                 input.checked = Boolean(value);
                 input.addEventListener('change', () => {
                     this.#editor.updateField(name, input.checked);
                 });
-            } else if (type === 'select') {
-                input = document.createElement('select');
+                break;
+            }
+            case 'select': {
+                input    = document.createElement('select');
                 input.id = `f_${name}`;
                 (options ?? []).forEach(opt => {
                     const o = document.createElement('option');
-                    o.value = opt;
+                    o.value       = opt;
                     o.textContent = opt;
                     if (String(value) === String(opt)) o.selected = true;
                     input.appendChild(o);
                 });
                 input.addEventListener('change', () => {
                     // Preserve original type (number vs string)
-                    const raw = input.value;
+                    const raw    = input.value;
                     const parsed = Number(raw);
-                    const coerced = Number.isNaN(parsed) ? raw : parsed;
-                    this.#editor.updateField(name, coerced);
+                    this.#editor.updateField(name, Number.isNaN(parsed) ? raw : parsed);
                 });
-            } else {
-                input = document.createElement('input');
-                input.type = 'number';
-                input.id = `f_${name}`;
-                input.value = value;
-                input.step = step ?? 1;
+                break;
+            }
+            case 'colorkey': {
+                const palette = this.#editor.getConfig()?.palette ?? {};
+                const isColor = (v) => /^#|^rgba?\(|^hsl/.test(String(v ?? ''));
+                input             = document.createElement('select');
+                input.id          = `f_${name}`;
+                input.style.width = '90px';
+                for (const [k, v] of Object.entries(palette)) {
+                    if (!isColor(v)) continue;
+                    const o = document.createElement('option');
+                    o.value       = k;
+                    o.textContent = k;
+                    if (String(value) === k) o.selected = true;
+                    input.appendChild(o);
+                }
+                input.addEventListener('change', () => {
+                    this.#editor.updateField(name, input.value);
+                });
+                break;
+            }
+            default: {
+                input           = document.createElement('input');
+                input.type      = 'number';
+                input.id        = `f_${name}`;
+                input.value     = value;
+                input.step      = step ?? 1;
                 input.addEventListener('change', () => {
                     this.#editor.updateField(name, Number(input.value));
                 });
             }
-
-            row.appendChild(input);
-            form.appendChild(row);
         }
 
-        this.#panel.appendChild(form);
-        if (sel.type === 'warp') {
-            const cfg      = this.#editor.getConfig();
-            const warpCfg  = cfg.warps?.[sel.index];
-            const warpName = warpCfg?.name ?? sel.index;
-            this.#renderWarpExitsPanel(warpName, cfg.section ?? this.#editor.currentLevel);
-        }
-        this.#renderLevelMeta();
+        row.appendChild(input);
+        return input;
     }
 
     /**

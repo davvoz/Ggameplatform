@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Devil Crash Pinball — Level Editor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap" crossorigin>
     <link rel="stylesheet" href="css/editor.css">
     <link rel="stylesheet" href="css/editor-online.css">
 </head>
@@ -18,7 +20,7 @@
         <button id="btn-new-section"  title="Create new section">＋ Section</button>
         <button id="btn-export"       title="Download current section JSON">⬇ Export</button>
         <button id="btn-export-board" title="Download all sections + board.json as separate files">⬇ Export All</button>
-        <button id="btn-copy"         title="Copy current section JSON to clipboard">📋 Copy</button>
+        <button id="btn-import"       title="Import a section JSON or a full board export">⬆ Import</button>
         <button id="btn-board-order"  title="Configure board section order">⬆⬇ Board</button>
         <span class="topbar-sep" aria-hidden="true"></span>
         <button id="btn-test-online"  title="Play this board now (unsaved test)">▶ Test</button>
@@ -43,19 +45,15 @@
 <dialog id="save-online-dialog">
     <form id="save-online-form" method="dialog">
         <h2>Save Online</h2>
-        <p class="hint">Boards are public. You can save up to 10. Already-saved boards can be overwritten.</p>
+        <p class="hint">Boards are public. You can save up to 10.<br>Select an existing board to overwrite it, or choose <em>New board</em> to create one.</p>
 
-        <label for="so-name">Board name</label>
-        <input id="so-name" type="text" maxlength="60" placeholder="My infernal masterpiece" required>
-
-        <label for="so-mode">Mode</label>
-        <select id="so-mode">
-            <option value="new">Create new</option>
-            <option value="overwrite">Overwrite existing…</option>
+        <label for="so-existing">Board</label>
+        <select id="so-existing">
+            <option value="">— New board —</option>
         </select>
 
-        <label for="so-existing" id="so-existing-label" hidden>Overwrite which one?</label>
-        <select id="so-existing" hidden></select>
+        <label for="so-name">Name</label>
+        <input id="so-name" type="text" maxlength="60" placeholder="My infernal masterpiece" required>
 
         <div class="ns-actions">
             <button type="button" id="so-cancel">Cancel</button>

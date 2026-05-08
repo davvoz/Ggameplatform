@@ -1,8 +1,17 @@
 {
-  "version": "5.3.4",
-  "timestamp": "2026-05-08T11:15:39.234Z",
-  "buildNumber": 552,
+  "version": "5.3.5",
+  "timestamp": "2026-05-08T22:20:03.426Z",
+  "buildNumber": 553,
   "changelog": [
+    {
+      "version": "5.3.5",
+      "date": "2026-05-08",
+      "type": "patch",
+      "changes": [
+        "fix:add invite friend , [SS2] fix unlock worlds ,[DBW] fix modify game stat",
+        "🔖 Bump version to 5.3.4 [skip-version]"
+      ]
+    },
     {
       "version": "5.3.4",
       "date": "2026-05-08",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[SS2] implement victory outro cinematic [SS]modals",
         "🔖 Bump version to 5.1.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.1.10",
-      "date": "2026-05-03",
-      "type": "patch",
-      "changes": [
-        "fix:[DC]upgrade levels",
-        "🔖 Bump version to 5.1.9 [skip-version]"
       ]
     }
   ]

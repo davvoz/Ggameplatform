@@ -83,11 +83,14 @@ class LevelManager {
         this.currentLevel++;
 
         if (this.currentLevel > getTotalLevels()) {
-            // Final world completed — save progress
+            // Final world completed — clear checkpoint then unlock next world.
+            // IMPORTANT: deleteSave does a read-modify-write. If saveWorldProgress fires
+            // first (async) and deleteSave reads stale DB data, it can overwrite
+            // worlds_unlocked back to the old value. Chain them so the unlock always
+            // fires after the delete finishes.
             const completedWorld = Math.ceil(prevLevel / LEVELS_PER_WORLD);
-            if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(completedWorld);
-            // Clear checkpoint save (game completed!)
-            g.saveManager.deleteSave();
+            const doUnlock = () => { if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(completedWorld); };
+            g.saveManager.deleteSave().then(doUnlock, doUnlock);
             g.state = 'victory';
             g.uiManager.showVictoryScreen();
             return;

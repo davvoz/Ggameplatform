@@ -2336,7 +2336,10 @@ async def update_game_progress(progress_id: int, request: Request, db: DbSession
         
         for field in ["user_id", "game_id", "progress_data"]:
             if field in data:
-                setattr(progress, field, data[field])
+                value = data[field]
+                if field == "progress_data" and isinstance(value, dict):
+                    value = json.dumps(value)
+                setattr(progress, field, value)
         
         db.commit()
         db.refresh(progress)

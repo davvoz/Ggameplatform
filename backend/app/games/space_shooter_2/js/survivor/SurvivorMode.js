@@ -221,8 +221,10 @@ export default class SurvivorMode {
         const g = this.game;
         this.stop();
         g.cinematicManager.beginVictoryOutro(() => {
-            if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(5);
-            g.saveManager?.deleteSave?.();
+            // deleteSave does a read-modify-write on the DB. Fire saveWorldProgress(5)
+            // AFTER it completes so the worlds_unlocked: 6 write is never overwritten.
+            const doUnlock = () => { if (globalThis.saveWorldProgress) globalThis.saveWorldProgress(5); };
+            (g.saveManager?.deleteSave?.() ?? Promise.resolve()).then(doUnlock, doUnlock);
             g.state = 'victory';
             g.uiManager.showVictoryScreen();
         });

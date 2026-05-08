@@ -554,6 +554,7 @@
     display: flex;
     gap: var(--spacing-md);
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .stat-badge {
@@ -591,6 +592,48 @@
     gap: 4px;
 }
 
+/* ── Invite Friends Button ─────────────────────── */
+
+.btn-invite-friend {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.12), rgba(255, 107, 0, 0.12));
+    border: 1px solid rgba(0, 217, 255, 0.40);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.btn-invite-friend::before {
+    content: '🤝';
+    font-size: 1rem;
+}
+
+.btn-invite-friend:hover {
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.22), rgba(255, 107, 0, 0.22));
+    border-color: rgba(0, 217, 255, 0.6);
+    box-shadow: 0 4px 16px rgba(0, 217, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-invite-friend:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .btn-invite-friend {
+        width: 100%;
+        justify-content: center;
+        order: 3;
+    }
+}
+
 /* Pulse animation for available rewards */
 @keyframes pulse {
     0%, 100% {
@@ -611,7 +654,7 @@
         width: 100%;
         gap: var(--spacing-sm);
     }
-    
+
     .stat-badge {
         min-width: 0;
         min-height: 90px;
@@ -622,20 +665,20 @@
         justify-content: center;
         box-sizing: border-box;
     }
-    
+
     .stat-badge .stat-label {
         font-size: 0.8rem;
         white-space: normal;
         text-align: center;
         width: 100%;
     }
-    
+
     .stat-badge .stat-value {
         font-size: 1.4rem;
     }
-    
+
     #dailyRewardsBadge {
-        order: -1; /* Show daily rewards first on mobile */
+        order: -1;
     }
 }
 

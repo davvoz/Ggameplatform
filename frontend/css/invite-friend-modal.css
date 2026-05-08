@@ -1,0 +1,219 @@
+/* ================================================
+   Invite Friend Modal – Cur8 Platform
+   ================================================ */
+
+/* ── Overlay ─────────────────────────────────── */
+
+.invite-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.invite-modal--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ── Backdrop ──────────────────────────────────── */
+
+.invite-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* ── Dialog ────────────────────────────────────── */
+
+.invite-modal__dialog {
+    position: relative;
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    width: 92%;
+    max-width: 480px;
+    overflow: hidden;
+    box-shadow: var(--shadow-xl), 0 0 80px rgba(0, 217, 255, 0.10);
+    transform: scale(0.92) translateY(12px);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.invite-modal--visible .invite-modal__dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* ── Banner ────────────────────────────────────── */
+
+.invite-modal__banner {
+    position: relative;
+    width: 100%;
+    line-height: 0;
+}
+
+.invite-modal__banner-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+/* ── Close Button (floats over banner) ─────────── */
+
+.invite-modal__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 20px;
+    transition: background 0.2s ease, transform 0.15s ease;
+    line-height: 1;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1;
+}
+
+.invite-modal__close:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.08);
+}
+
+/* ── Body ──────────────────────────────────────── */
+
+.invite-modal__body {
+    padding: 22px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* ── Feature List ──────────────────────────────── */
+
+.invite-modal__features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.invite-modal__feature {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    padding: 9px 13px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--primary-color);
+    line-height: 1.45;
+}
+
+/* ── Link Section ──────────────────────────────── */
+
+.invite-modal__link-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.invite-modal__link-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0;
+}
+
+.invite-modal__link-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--background);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 4px 4px 4px 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.invite-modal__link-row:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.12);
+}
+
+.invite-modal__link-box {
+    flex: 1;
+    font-size: 0.82rem;
+    color: var(--primary-color);
+    font-family: 'Courier New', Courier, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: all;
+    cursor: text;
+}
+
+.invite-modal__copy-btn {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: var(--background);
+    border: none;
+    padding: 9px 20px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.invite-modal__copy-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 217, 255, 0.35);
+}
+
+.invite-modal__copy-btn:active {
+    transform: translateY(0);
+}
+
+.invite-modal__copy-btn--copied {
+    background: linear-gradient(135deg, var(--success), #34d399);
+    color: #0a0e17;
+    box-shadow: 0 4px 14px rgba(105, 240, 174, 0.35);
+}
+
+.invite-modal__copy-btn--copied:hover {
+    box-shadow: 0 6px 18px rgba(105, 240, 174, 0.4);
+}
+
+/* ── Responsive ────────────────────────────────── */
+
+@media (max-width: 480px) {
+    .invite-modal__dialog {
+        width: 96%;
+        border-radius: 16px;
+    }
+
+    .invite-modal__body {
+        padding: 16px 16px 20px;
+        gap: 14px;
+    }
+
+    .invite-modal__copy-btn {
+        padding: 9px 14px;
+        font-size: 0.8rem;
+    }
+}
+

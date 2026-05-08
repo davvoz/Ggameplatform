@@ -6,6 +6,7 @@ import SteemPostAPI from './SteemPostAPI.js';
 import { buildLevelCardElement } from './level-widget.js';
 import CoinAPI from './coinAPI.js';
 import SteemPostModal from './SteemPostModal.js';
+import InviteFriendModal from './InviteFriendModal.js';
 
 // Module-level lazy-initialized instances
 let steemPostAPI = null;
@@ -288,6 +289,9 @@ class ProfileRenderer {
 
         // Initialize Steem post button
         this.initializeSteemPostButton(user);
+
+        // Initialize invite friend button
+        this._initializeInviteFriendButton(user);
 
         // Initialize sticky hero navbar
         this._initStickyHero(user);
@@ -1920,6 +1924,25 @@ class ProfileRenderer {
 
         const user = this.authManager.getUser?.();
         return Boolean(user?.votes_cur8_witness);
+    }
+
+    _initializeInviteFriendButton(user) {
+        const btn = document.getElementById('inviteFriendBtn');
+        if (!btn) {
+            return;
+        }
+
+        if (user.is_anonymous) {
+            return;
+        }
+
+        const username = this.extractSteemUsername(user) || user.username;
+        if (!username) {
+            return;
+        }
+
+        btn.style.display = '';
+        btn.addEventListener('click', () => InviteFriendModal.show(username));
     }
 
     initializeSteemPostButton(user) {

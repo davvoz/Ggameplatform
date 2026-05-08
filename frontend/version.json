@@ -1,8 +1,17 @@
 {
-  "version": "5.3.3",
-  "timestamp": "2026-05-07T20:01:21.574Z",
-  "buildNumber": 551,
+  "version": "5.3.4",
+  "timestamp": "2026-05-08T11:15:39.234Z",
+  "buildNumber": 552,
   "changelog": [
+    {
+      "version": "5.3.4",
+      "date": "2026-05-08",
+      "type": "patch",
+      "changes": [
+        "fix:[DC] editor- add selection center calculations and entity handles for resizing and rotation",
+        "🔖 Bump version to 5.3.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.3.3",
       "date": "2026-05-07",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[DC]upgrade levels",
         "🔖 Bump version to 5.1.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.1.9",
-      "date": "2026-05-03",
-      "type": "patch",
-      "changes": [
-        "fix:[CD] demon nrg , tools curves",
-        "🔖 Bump version to 5.1.8 [skip-version]"
       ]
     }
   ]

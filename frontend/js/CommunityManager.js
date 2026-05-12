@@ -646,6 +646,7 @@ class CommunityManager {
             this.elements.chatInput.value = '';
             this._removeMediaPreview();
             this._clearReplyTo();
+            this._scrollToBottom();
         } else {
             this._showNotification('Message queued - waiting for connection', 'warning');
         }

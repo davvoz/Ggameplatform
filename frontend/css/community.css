@@ -410,6 +410,8 @@
     padding: 8px 14px;
     position: relative;
     transition: background 0.15s ease;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .message-bubble:hover {
@@ -449,6 +451,7 @@
     color: var(--text-primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .message-text a {

@@ -1,8 +1,17 @@
 {
-  "version": "5.3.8",
-  "timestamp": "2026-05-12T13:56:27.281Z",
-  "buildNumber": 556,
+  "version": "5.3.9",
+  "timestamp": "2026-05-12T20:24:42.743Z",
+  "buildNumber": 557,
   "changelog": [
+    {
+      "version": "5.3.9",
+      "date": "2026-05-12",
+      "type": "patch",
+      "changes": [
+        "fix: update Steem profile and post URLs to remove '/app' path",
+        "🔖 Bump version to 5.3.8 [skip-version]"
+      ]
+    },
     {
       "version": "5.3.8",
       "date": "2026-05-12",
@@ -84,15 +93,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "feat: add referral lookup for extra beneficiaries in post publishing",
         "🔖 Bump version to 5.2.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.2.0",
-      "date": "2026-05-06",
-      "type": "minor",
-      "changes": [
-        "feat: add referral lookup from join.cur8.fun API for additional beneficiaries",
-        "🔖 Bump version to 5.1.13 [skip-version]"
       ]
     }
   ]

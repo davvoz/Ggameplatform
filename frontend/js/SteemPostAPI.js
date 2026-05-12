@@ -195,7 +195,7 @@ class SteemPostAPI {
                         resolve({
                             success: true,
                             permlink: permlink,
-                            post_url: `https://www.cur8.fun/app/@${steemUsername}/${permlink}`,
+                            post_url: `https://www.cur8.fun/@${steemUsername}/${permlink}`,
                             post_title: title,
                             transaction_id: response.result?.id
                         });
@@ -253,7 +253,7 @@ class SteemPostAPI {
                         resolve({
                             success: true,
                             permlink: permlink,
-                            post_url: `https://www.cur8.fun/app/@${steemUsername}/${permlink}`,
+                            post_url: `https://www.cur8.fun/@${steemUsername}/${permlink}`,
                             transaction_id: response.result?.id
                         });
                     } else {

@@ -351,7 +351,7 @@ class UserProfileRenderer {
                         <h2 class="profile-username">${this.escapeHTML(displayName)}</h2>
                         <p class="profile-type">${userType}</p>
                         ${steemUsername ? `
-                        <a class="steem-profile-link visible" href="https://www.cur8.fun/app/@${this.escapeHTML(steemUsername)}" target="_blank" rel="noopener noreferrer">
+                        <a class="steem-profile-link visible" href="https://www.cur8.fun/@${this.escapeHTML(steemUsername)}" target="_blank" rel="noopener noreferrer">
                             <div class="steem-profile-link-logos">
                                 <img src="./icons/icon-72x72.png" alt="Cur8" class="steem-profile-link-cur8">
                                 <span class="steem-profile-link-x">\u00d7</span>

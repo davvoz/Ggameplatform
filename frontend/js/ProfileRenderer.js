@@ -651,7 +651,7 @@ class ProfileRenderer {
         const steemUsername = this.extractSteemUsername(user);
         const steemLink = content.querySelector('#steemProfileLink') || content.getElementById('steemProfileLink');
         if (steemLink && steemUsername) {
-            const profileUrl = `https://www.cur8.fun/app/@${steemUsername}`;
+            const profileUrl = `https://www.cur8.fun/@${steemUsername}`;
             steemLink.href = profileUrl;
             const urlLabel = steemLink.querySelector('.steem-profile-link-url');
             if (urlLabel) urlLabel.textContent = `cur8.fun/@${steemUsername}`;

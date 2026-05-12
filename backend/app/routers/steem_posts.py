@@ -767,7 +767,7 @@ class SteemPostData:
     
     def get_post_url(self) -> str:
         """Generate the post URL after successful publication."""
-        return f"https://www.cur8.fun/app/@{self.username}/{self.permlink}"
+        return f"https://www.cur8.fun/@{self.username}/{self.permlink}"
     
     def log_summary(self) -> None:
         """Log a summary of the post data for debugging."""

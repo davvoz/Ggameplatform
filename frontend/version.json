@@ -1,8 +1,17 @@
 {
-  "version": "5.3.7",
-  "timestamp": "2026-05-12T13:03:21.624Z",
-  "buildNumber": 555,
+  "version": "5.3.8",
+  "timestamp": "2026-05-12T13:56:27.281Z",
+  "buildNumber": 556,
   "changelog": [
+    {
+      "version": "5.3.8",
+      "date": "2026-05-12",
+      "type": "patch",
+      "changes": [
+        "fix:  update iframe sandbox attributes",
+        "🔖 Bump version to 5.3.7 [skip-version]"
+      ]
+    },
     {
       "version": "5.3.7",
       "date": "2026-05-12",
@@ -84,15 +93,6 @@
       "changes": [
         "feat: add referral lookup from join.cur8.fun API for additional beneficiaries",
         "🔖 Bump version to 5.1.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.1.13",
-      "date": "2026-05-05",
-      "type": "patch",
-      "changes": [
-        "fix:[SA]refractor Sonar [DC] fix no UTF-8 character",
-        "🔖 Bump version to 5.1.12 [skip-version]"
       ]
     }
   ]

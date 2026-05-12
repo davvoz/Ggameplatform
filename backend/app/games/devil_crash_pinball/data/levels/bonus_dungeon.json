@@ -35,13 +35,6 @@
       "bx": 90,
       "by": 480,
       "thickness": 15
-    },
-    {
-      "ax": 30,
-      "ay": 720,
-      "bx": 80,
-      "by": 710,
-      "thickness": 16
     }
   ],
   "bumpers": [

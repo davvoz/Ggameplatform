@@ -20,6 +20,12 @@ from app.models import PrivateMessage
 
 logger = logging.getLogger(__name__)
 
+_STATUS_PENDING = "pending"
+_STATUS_ACCEPTED = "accepted"
+_MSG_CONNECTION_NOT_FOUND = "Connection not found"
+_UNKNOWN_USERNAME = "Unknown"
+_KEY_REQUESTER_USERNAME = "requester_username"
+
 # REST router for connections and message history
 rest_router = APIRouter(prefix="/api/private-messages", tags=["private-messages"])
 
@@ -41,6 +47,9 @@ class PMMessage:
     timestamp: int
     is_edited: bool = False
     edited_at: Optional[int] = None
+    reply_to_id: Optional[str] = None
+    reply_to_username: Optional[str] = None
+    reply_to_text: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -126,14 +135,14 @@ class ConnectionValidator:
         """Return True if the two users have an accepted connection."""
         repo = UserConnectionRepository(db)
         conn = repo.find_connection(user_a, user_b)
-        return conn is not None and conn.status == "accepted"
+        return conn is not None and conn.status == _STATUS_ACCEPTED
 
 
 # =============================================================================
 # REST Endpoints — Connections
 # =============================================================================
 
-@rest_router.post("/connections/request")
+@rest_router.post("/connections/request", responses={400: {"description": "Cannot connect to yourself"}, 409: {"description": "Already connected or request pending"}})
 async def request_connection(
     requester_id: Annotated[str, Query(..., min_length=1)],
     receiver_id: Annotated[str, Query(..., min_length=1)],
@@ -147,14 +156,14 @@ async def request_connection(
     existing = repo.find_connection(requester_id, receiver_id)
 
     if existing:
-        if existing.status == "accepted":
+        if existing.status == _STATUS_ACCEPTED:
             raise HTTPException(status_code=409, detail="Already connected")
-        if existing.status == "pending":
+        if existing.status == _STATUS_PENDING:
             raise HTTPException(status_code=409, detail="Connection request already pending")
         if existing.status == "rejected":
             # Allow re-requesting after a rejection
             now = datetime.now(timezone.utc).isoformat()
-            existing.status = "pending"
+            existing.status = _STATUS_PENDING
             existing.requester_id = requester_id
             existing.receiver_id = receiver_id
             existing.updated_at = now
@@ -167,7 +176,7 @@ async def request_connection(
     connection = UserConnection(
         requester_id=requester_id,
         receiver_id=receiver_id,
-        status="pending",
+        status=_STATUS_PENDING,
         created_at=now,
         updated_at=now,
     )
@@ -187,12 +196,12 @@ async def _notify_connection_request(connection, requester_id: str) -> None:
     try:
         with get_db_session() as db:
             requester = UserRepository(db).get_by_id(requester_id)
-            requester_username = requester.username if requester else "Unknown"
+            requester_username = requester.username if requester else _UNKNOWN_USERNAME
         payload = {
             "type": "connection_request",
             "connection": {
                 **connection.to_dict(),
-                "requester_username": requester_username,
+                _KEY_REQUESTER_USERNAME: requester_username,
             },
         }
         await pm_manager.send_to_user(receiver_id, payload)
@@ -200,7 +209,7 @@ async def _notify_connection_request(connection, requester_id: str) -> None:
         logger.exception("Error notifying connection request to %s", receiver_id)
 
 
-@rest_router.post("/connections/{connection_id}/accept")
+@rest_router.post("/connections/{connection_id}/accept", responses={404: {"description": _MSG_CONNECTION_NOT_FOUND}, 403: {"description": "Only the receiver can accept"}, 400: {"description": "Connection is not pending"}})
 def accept_connection(
     connection_id: int,
     user_id: Annotated[str, Query(..., min_length=1)],
@@ -211,18 +220,18 @@ def accept_connection(
     conn = repo.get_by_id(connection_id)
 
     if not conn:
-        raise HTTPException(status_code=404, detail="Connection not found")
+        raise HTTPException(status_code=404, detail=_MSG_CONNECTION_NOT_FOUND)
     if conn.receiver_id != user_id:
         raise HTTPException(status_code=403, detail="Only the receiver can accept")
-    if conn.status != "pending":
+    if conn.status != _STATUS_PENDING:
         raise HTTPException(status_code=400, detail=f"Connection is already {conn.status}")
 
     now = datetime.now(timezone.utc).isoformat()
-    updated = repo.update_status(connection_id, "accepted", now)
+    updated = repo.update_status(connection_id, _STATUS_ACCEPTED, now)
     return updated.to_dict()
 
 
-@rest_router.post("/connections/{connection_id}/reject")
+@rest_router.post("/connections/{connection_id}/reject", responses={404: {"description": _MSG_CONNECTION_NOT_FOUND}, 403: {"description": "Only the receiver can reject"}, 400: {"description": "Connection is not pending"}})
 def reject_connection(
     connection_id: int,
     user_id: Annotated[str, Query(..., min_length=1)],
@@ -233,10 +242,10 @@ def reject_connection(
     conn = repo.get_by_id(connection_id)
 
     if not conn:
-        raise HTTPException(status_code=404, detail="Connection not found")
+        raise HTTPException(status_code=404, detail=_MSG_CONNECTION_NOT_FOUND)
     if conn.receiver_id != user_id:
         raise HTTPException(status_code=403, detail="Only the receiver can reject")
-    if conn.status != "pending":
+    if conn.status != _STATUS_PENDING:
         raise HTTPException(status_code=400, detail=f"Connection is already {conn.status}")
 
     now = datetime.now(timezone.utc).isoformat()
@@ -244,7 +253,7 @@ def reject_connection(
     return updated.to_dict()
 
 
-@rest_router.delete("/connections/{connection_id}")
+@rest_router.delete("/connections/{connection_id}", responses={404: {"description": _MSG_CONNECTION_NOT_FOUND}, 403: {"description": "Not part of this connection"}})
 def disconnect_connection(
     connection_id: int,
     user_id: Annotated[str, Query(..., min_length=1)],
@@ -255,7 +264,7 @@ def disconnect_connection(
     conn = repo.get_by_id(connection_id)
 
     if not conn:
-        raise HTTPException(status_code=404, detail="Connection not found")
+        raise HTTPException(status_code=404, detail=_MSG_CONNECTION_NOT_FOUND)
     if conn.requester_id != user_id and conn.receiver_id != user_id:
         raise HTTPException(status_code=403, detail="Not part of this connection")
 
@@ -280,7 +289,7 @@ def get_connections(
     for conn in connections:
         peer_id = conn.receiver_id if conn.requester_id == user_id else conn.requester_id
         peer = user_repo.get_by_id(peer_id)
-        peer_username = peer.username if peer else "Unknown"
+        peer_username = peer.username if peer else _UNKNOWN_USERNAME
         entry = conn.to_dict()
         entry["peer_id"] = peer_id
         entry["peer_username"] = peer_username
@@ -303,9 +312,9 @@ def get_pending_connections(
     result = []
     for conn in pending:
         requester = user_repo.get_by_id(conn.requester_id)
-        requester_username = requester.username if requester else "Unknown"
+        requester_username = requester.username if requester else _UNKNOWN_USERNAME
         entry = conn.to_dict()
-        entry["requester_username"] = requester_username
+        entry[_KEY_REQUESTER_USERNAME] = requester_username
         result.append(entry)
 
     return result
@@ -331,7 +340,7 @@ def get_connection_status(
 # REST Endpoints — Messages
 # =============================================================================
 
-@rest_router.get("/conversation")
+@rest_router.get("/conversation", responses={403: {"description": "Users are not connected"}})
 def get_conversation(
     user_id: Annotated[str, Query(..., min_length=1)],
     peer_id: Annotated[str, Query(..., min_length=1)],
@@ -454,7 +463,7 @@ async def _send_pending_requests(websocket: WebSocket, user_id: str) -> None:
                     "type": "connection_request",
                     "connection": {
                         **conn.to_dict(),
-                        "requester_username": requester.username if requester else "Unknown",
+                        _KEY_REQUESTER_USERNAME: requester.username if requester else _UNKNOWN_USERNAME,
                     },
                 })
     except Exception:
@@ -516,7 +525,27 @@ async def _handle_private_message(sender_id: str, data: dict) -> None:
         timestamp=int(datetime.now(timezone.utc).timestamp() * 1000),
     )
 
+    _resolve_reply_to(message, data)
+
     await pm_manager.deliver_message(message)
+
+
+def _resolve_reply_to(message: PMMessage, data: dict) -> None:
+    """Resolve reply-to information for a private message if provided."""
+    reply_to_id = (data.get("reply_to_id") or "").strip() or None
+    if not reply_to_id:
+        return
+    try:
+        with get_db_session() as db:
+            ref = db.query(PrivateMessage).filter(PrivateMessage.message_id == reply_to_id).first()
+            if ref:
+                user_repo = UserRepository(db)
+                ref_sender = user_repo.get_by_id(ref.sender_id)
+                message.reply_to_id = reply_to_id
+                message.reply_to_username = ref_sender.username if ref_sender else ref.sender_id
+                message.reply_to_text = (ref.text or "")[:100]
+    except Exception:
+        logger.exception("Error resolving reply_to for PM %s", reply_to_id)
 
 
 def _handle_mark_read(user_id: str, data: dict) -> None:

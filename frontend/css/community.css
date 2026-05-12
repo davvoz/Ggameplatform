@@ -1078,3 +1078,137 @@
         }
     }
 }
+
+/* ========== Reply-to Feature ========== */
+
+/* Bar above the input shown when replying */
+.reply-preview-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(14, 165, 233, 0.08);
+    border-left: 3px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    gap: 8px;
+    animation: slideDown 0.2s ease;
+}
+
+.reply-preview-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 1px;
+}
+
+.reply-preview-username {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0ea5e9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reply-preview-text {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reply-preview-cancel {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.945);
+    color: #000000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: background 0.15s ease;
+}
+
+.reply-preview-cancel:hover {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+/* Quoted block inside a message bubble */
+.reply-quote {
+    background: rgba(0, 0, 0, 0.15);
+    border-left: 3px solid #0ea5e9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    transition: background 0.15s ease;
+}
+
+.reply-quote:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.reply-quote-username {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.reply-quote-text {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+}
+
+.chat-message.own-message .reply-quote {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.chat-message.own-message .reply-quote:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Reply button – hidden until the bubble is hovered */
+.message-reply-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.45);
+    transition: color 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.message-bubble:hover .message-reply-btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+.message-reply-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.15);
+}
+
+/* Highlight flash when jumping to a quoted message */
+.message-highlighted {
+    animation: msgHighlight 1.5s ease;
+}
+
+@keyframes msgHighlight {
+    0%   { background: rgba(14, 165, 233, 0.25); }
+    100% { background: transparent; }
+}

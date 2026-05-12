@@ -50,6 +50,9 @@ class ChatMessage:
     level: Optional[int] = None
     is_edited: bool = False
     edited_at: Optional[int] = None
+    reply_to_id: Optional[str] = None
+    reply_to_username: Optional[str] = None
+    reply_to_text: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -204,65 +207,71 @@ class CommunityChatManager:
 
         logger.debug("[CommunityChat] Message %s edited by %s", message_id, user_id)
     
+    def _validate_chat_message(self, text: str, image_url, gif_url) -> Optional[str]:
+        """Validate chat message content. Returns error string or None if valid."""
+        if not text and not bool(image_url or gif_url):
+            return "Message cannot be empty"
+        if text and len(text) > 500:
+            return "Message too long (max 500 characters)"
+        if image_url and not self._is_valid_media_url(image_url):
+            return "Invalid image URL"
+        if gif_url and not self._is_valid_media_url(gif_url):
+            return "Invalid GIF URL"
+        return None
+
+    def _resolve_reply_info(self, reply_to_id: Optional[str]):
+        """Resolve reply-to preview from in-memory messages."""
+        if not reply_to_id:
+            return None, None, None
+        ref = next((m for m in self.messages if m.id == reply_to_id), None)
+        if ref:
+            return reply_to_id, ref.username, (ref.text or "")[:100]
+        return None, None, None
+
     async def _handle_chat_message(self, user_id: str, data: dict):
         """Process and broadcast a chat message"""
         if user_id not in self.connections:
             return
-        
+
         user = self.connections[user_id]
         text = data.get("text", "").strip()
         image_url = data.get("image_url")
         gif_url = data.get("gif_url")
-        
-        # Validate message - must have text OR media
-        has_media = bool(image_url or gif_url)
-        
-        if not text and not has_media:
-            await self._send_error(user_id, "Message cannot be empty")
+
+        error = self._validate_chat_message(text, image_url, gif_url)
+        if error:
+            await self._send_error(user_id, error)
             return
-        
-        if text and len(text) > 500:
-            await self._send_error(user_id, "Message too long (max 500 characters)")
-            return
-        
-        # Validate URLs if present (basic security check)
-        if image_url and not self._is_valid_media_url(image_url):
-            await self._send_error(user_id, "Invalid image URL")
-            return
-        
-        if gif_url and not self._is_valid_media_url(gif_url):
-            await self._send_error(user_id, "Invalid GIF URL")
-            return
-        
-        # Create message
+
         self.message_counter += 1
+        reply_to_id, reply_to_username, reply_to_text = self._resolve_reply_info(
+            data.get("reply_to_id") or None
+        )
+
         message = ChatMessage(
             id=f"msg_{self.message_counter}_{int(datetime.now(timezone.utc).timestamp())}",
             user_id=user_id,
             username=user.username,
             text=text,
             timestamp=int(datetime.now(timezone.utc).timestamp() * 1000),
-            image_url=data.get("image_url"),
-            gif_url=data.get("gif_url"),
-            level=data.get("level")
+            image_url=image_url,
+            gif_url=gif_url,
+            level=data.get("level"),
+            reply_to_id=reply_to_id,
+            reply_to_username=reply_to_username,
+            reply_to_text=reply_to_text,
         )
-        
-        # Store message (keep only last 100)
+
         self.messages.append(message)
         if len(self.messages) > self.max_messages:
             self.messages = self.messages[-self.max_messages:]
-        
+
         logger.debug(f"[CommunityChat] Message from {user.username}: {text[:50]}...")
-        
-        # Persist to database (trim to MAX_MESSAGES is handled inside)
+
         self._persist_message(message)
-
-        # Broadcast to all connected users
         await self._broadcast_message(message)
-
-        # Send push notifications to users who are NOT currently connected
         self._send_push_to_offline_users(message)
-    
+
     async def _handle_history_request(self, user_id: str, data: dict):
         """Handle request for message history"""
         if user_id not in self.connections:
@@ -390,6 +399,9 @@ class CommunityChatManager:
                         level=row.level,
                         is_edited=bool(row.is_edited),
                         edited_at=row.edited_at_ms,
+                        reply_to_id=getattr(row, 'reply_to_id', None),
+                        reply_to_username=getattr(row, 'reply_to_username', None),
+                        reply_to_text=getattr(row, 'reply_to_text', None),
                     )
                     for row in rows
                 ]
@@ -560,8 +572,14 @@ chat_manager = CommunityChatManager()
 # REST Endpoints - Image Upload & GIPHY
 # =============================================================================
 
-@rest_router.post("/upload")
-async def upload_media(file:Annotated[UploadFile , File()]):
+@rest_router.post(
+    "/upload",
+    responses={
+        400: {"description": "Invalid file type or file too large"},
+        500: {"description": "Failed to save file"},
+    },
+)
+async def upload_media(file: Annotated[UploadFile, File()]):
     """
     Upload an image or GIF for chat.
     Max size: 5MB

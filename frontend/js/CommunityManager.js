@@ -67,6 +67,9 @@ class CommunityManager {
         this._editingMessageId = null;
         this._editingOriginalText = null;
         this._editingElement = null;
+
+        // Reply-to state
+        this._replyTo = null; // { id, username, text } | null
     }
 
     /**
@@ -198,7 +201,13 @@ class CommunityManager {
             mediaPreviewBar: document.getElementById('mediaPreviewBar'),
             mediaPreviewImg: document.getElementById('mediaPreviewImg'),
             mediaPreviewName: document.getElementById('mediaPreviewName'),
-            mediaPreviewRemove: document.getElementById('mediaPreviewRemove')
+            mediaPreviewRemove: document.getElementById('mediaPreviewRemove'),
+
+            // Reply preview
+            replyPreviewBar: document.getElementById('replyPreviewBar'),
+            replyPreviewUsername: document.getElementById('replyPreviewUsername'),
+            replyPreviewText: document.getElementById('replyPreviewText'),
+            replyPreviewCancel: document.getElementById('replyPreviewCancel')
         };
     }
 
@@ -260,6 +269,13 @@ class CommunityManager {
         if (this.elements.mediaPreviewRemove) {
             this.elements.mediaPreviewRemove.addEventListener('click', () => {
                 this._removeMediaPreview();
+            });
+        }
+
+        // Reply preview cancel button
+        if (this.elements.replyPreviewCancel) {
+            this.elements.replyPreviewCancel.addEventListener('click', () => {
+                this._clearReplyTo();
             });
         }
 
@@ -622,12 +638,14 @@ class CommunityManager {
         // Send through API
         const sent = this.communityAPI.sendMessage(text, {
             imageUrl: isGif ? null : mediaUrl,
-            gifUrl: isGif ? mediaUrl : null
+            gifUrl: isGif ? mediaUrl : null,
+            replyToId: this._replyTo?.id || null
         });
 
         if (sent) {
             this.elements.chatInput.value = '';
             this._removeMediaPreview();
+            this._clearReplyTo();
         } else {
             this._showNotification('Message queued - waiting for connection', 'warning');
         }
@@ -643,20 +661,22 @@ class CommunityManager {
     _renderMessage(message, index) {
         const user = this.authManager?.getUser();
         const isOwnMessage = message.user_id === user?.user_id;
+        const username = message.username || 'Anonymous';
+        const userId = message.user_id || '';
 
         const messageEl = document.createElement('div');
         messageEl.className = `chat-message ${isOwnMessage ? 'own-message' : ''}`;
         messageEl.dataset.msgId = message.id;
 
-        // Steem avatar URL
+        messageEl.appendChild(this._buildMessageAvatar(message, username, userId));
+        messageEl.appendChild(this._buildMessageBubble(message, isOwnMessage, username));
+        this._bindMessageEvents(messageEl, message, username, isOwnMessage);
+
+        return messageEl;
+    }
+
+    _buildMessageAvatar(message, username, userId) {
         const steemAvatarUrl = `https://steemitimages.com/u/${encodeURIComponent(message.username || 'anonymous')}/avatar/small`;
-
-        // Format timestamp
-        const time = this._formatTime(message.timestamp || message.created_at);
-
-        // Build avatar
-        const username = message.username || 'Anonymous';
-        const userId = message.user_id || '';
 
         const avatarDiv = document.createElement('div');
         avatarDiv.className = 'message-avatar message-avatar--clickable';
@@ -675,9 +695,12 @@ class CommunityManager {
         avatarTooltip.textContent = username;
         avatarDiv.appendChild(avatarTooltip);
 
-        messageEl.appendChild(avatarDiv);
+        return avatarDiv;
+    }
 
-        // Build bubble
+    _buildMessageBubble(message, isOwnMessage, username) {
+        const time = this._formatTime(message.timestamp || message.created_at);
+
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
 
@@ -689,7 +712,9 @@ class CommunityManager {
         header.appendChild(usernameSpan);
         bubble.appendChild(header);
 
-        // Process message text (links, etc.)
+        const replyQuote = this._buildReplyQuote(message);
+        if (replyQuote) bubble.appendChild(replyQuote);
+
         if (message.text) {
             const textDiv = document.createElement('div');
             textDiv.className = 'message-text';
@@ -697,7 +722,6 @@ class CommunityManager {
             bubble.appendChild(textDiv);
         }
 
-        // Build media elements
         if (message.image_url) {
             const img = document.createElement('img');
             img.className = 'message-image';
@@ -707,6 +731,7 @@ class CommunityManager {
             img.dataset.lightbox = 'true';
             bubble.appendChild(img);
         }
+
         if (message.gif_url) {
             const gif = document.createElement('img');
             gif.className = 'message-gif';
@@ -717,9 +742,52 @@ class CommunityManager {
             bubble.appendChild(gif);
         }
 
-        // Build footer
+        bubble.appendChild(this._buildMessageFooter(message, isOwnMessage, time));
+        return bubble;
+    }
+
+    _buildReplyQuote(message) {
+        if (!message.reply_to_id || !message.reply_to_username) return null;
+
+        const replyQuote = document.createElement('div');
+        replyQuote.className = 'reply-quote';
+
+        const replyQuoteUsername = document.createElement('span');
+        replyQuoteUsername.className = 'reply-quote-username';
+        replyQuoteUsername.textContent = message.reply_to_username;
+        replyQuote.appendChild(replyQuoteUsername);
+
+        if (message.reply_to_text) {
+            const replyQuoteText = document.createElement('span');
+            replyQuoteText.className = 'reply-quote-text';
+            replyQuoteText.textContent = message.reply_to_text.length > 80
+                ? message.reply_to_text.slice(0, 80) + '…'
+                : message.reply_to_text;
+            replyQuote.appendChild(replyQuoteText);
+        }
+
+        replyQuote.addEventListener('click', () => {
+            const target = this.elements.chatMessages?.querySelector(`[data-msg-id="${String(message.reply_to_id)}"]`);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.classList.add('message-highlighted');
+                setTimeout(() => target.classList.remove('message-highlighted'), 1500);
+            }
+        });
+
+        return replyQuote;
+    }
+
+    _buildMessageFooter(message, isOwnMessage, time) {
         const footer = document.createElement('div');
         footer.className = 'message-footer';
+
+        const replyBtnEl = document.createElement('button');
+        replyBtnEl.className = 'message-reply-btn';
+        replyBtnEl.title = 'Reply';
+        replyBtnEl.setAttribute('aria-label', 'Reply to message');
+        replyBtnEl.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>';
+        footer.appendChild(replyBtnEl);
 
         if (isOwnMessage && message.text) {
             const editBtnEl = document.createElement('button');
@@ -742,16 +810,15 @@ class CommunityManager {
         timeSpan.textContent = time;
         footer.appendChild(timeSpan);
 
-        bubble.appendChild(footer);
-        messageEl.appendChild(bubble);
+        return footer;
+    }
 
-        // Bind avatar click → navigate to user profile
+    _bindMessageEvents(messageEl, message, username, isOwnMessage) {
         const avatarEl = messageEl.querySelector('.message-avatar--clickable');
         if (avatarEl) {
             this._bindAvatarNavigation(avatarEl);
         }
 
-        // Bind edit button
         if (isOwnMessage && message.text) {
             const btn = messageEl.querySelector('.message-edit-btn');
             btn?.addEventListener('click', (e) => {
@@ -760,13 +827,41 @@ class CommunityManager {
             });
         }
 
-        // Add click handlers for images
+        const replyBtn = messageEl.querySelector('.message-reply-btn');
+        replyBtn?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this._setReplyTo({ id: message.id, username, text: message.text || '' });
+        });
+
         const images = messageEl.querySelectorAll('[data-lightbox="true"]');
         images.forEach(img => {
             img.addEventListener('click', () => this._openLightbox(img.src));
         });
+    }
 
-        return messageEl;
+    // ========================================================================
+    // Reply-to
+    // ========================================================================
+
+    _setReplyTo({ id, username, text }) {
+        this._replyTo = { id, username, text };
+        if (this.elements.replyPreviewUsername) {
+            this.elements.replyPreviewUsername.textContent = username;
+        }
+        if (this.elements.replyPreviewText) {
+            this.elements.replyPreviewText.textContent = text.length > 80 ? text.slice(0, 80) + '…' : text;
+        }
+        if (this.elements.replyPreviewBar) {
+            this.elements.replyPreviewBar.style.display = 'flex';
+        }
+        this.elements.chatInput?.focus();
+    }
+
+    _clearReplyTo() {
+        this._replyTo = null;
+        if (this.elements.replyPreviewBar) {
+            this.elements.replyPreviewBar.style.display = 'none';
+        }
     }
 
     // ========================================================================

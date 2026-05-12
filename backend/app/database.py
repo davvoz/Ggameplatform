@@ -62,10 +62,44 @@ def _migrate_private_messages_edit_columns():
     except Exception as e:
         print(f"⚠️  PM edit columns migration: {e}")
 
+def _migrate_community_reply_columns():
+    """Add reply_to_* columns to community_messages if missing."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(community_messages)"))
+            cols = {row[1] for row in result}
+            if "reply_to_id" not in cols:
+                conn.execute(text("ALTER TABLE community_messages ADD COLUMN reply_to_id VARCHAR(100)"))
+            if "reply_to_username" not in cols:
+                conn.execute(text("ALTER TABLE community_messages ADD COLUMN reply_to_username VARCHAR(255)"))
+            if "reply_to_text" not in cols:
+                conn.execute(text("ALTER TABLE community_messages ADD COLUMN reply_to_text TEXT"))
+            conn.commit()
+    except Exception as e:
+        print(f"⚠️  Community reply columns migration: {e}")
+
+def _migrate_private_messages_reply_columns():
+    """Add reply_to_* columns to private_messages if missing."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(private_messages)"))
+            cols = {row[1] for row in result}
+            if "reply_to_id" not in cols:
+                conn.execute(text("ALTER TABLE private_messages ADD COLUMN reply_to_id VARCHAR(100)"))
+            if "reply_to_username" not in cols:
+                conn.execute(text("ALTER TABLE private_messages ADD COLUMN reply_to_username VARCHAR(255)"))
+            if "reply_to_text" not in cols:
+                conn.execute(text("ALTER TABLE private_messages ADD COLUMN reply_to_text TEXT"))
+            conn.commit()
+    except Exception as e:
+        print(f"⚠️  PM reply columns migration: {e}")
+
 def init_db():
     """Initialize the database with required tables."""
     Base.metadata.create_all(bind=engine)
     _migrate_private_messages_edit_columns()
+    _migrate_community_reply_columns()
+    _migrate_private_messages_reply_columns()
     setup_leaderboard_triggers()
     
     # Setup quest triggers for automatic quest progress updates

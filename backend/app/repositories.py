@@ -68,7 +68,7 @@ class BaseRepository(IRepository[ModelType]):
             return obj
         except SQLAlchemyError as e:
             self.db_session.rollback()
-            raise Exception(f"Error creating {self.model.__name__}: {str(e)}")
+            raise RuntimeError(f"Error creating {self.model.__name__}: {str(e)}") from e
     
     def get_by_id(self, id_value: Any) -> Optional[ModelType]:
         """Retrieve a record by its ID"""
@@ -77,14 +77,14 @@ class BaseRepository(IRepository[ModelType]):
                 getattr(self.model, self.id_field) == id_value
             ).first()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching {self.model.__name__}: {str(e)}")
+            raise RuntimeError(f"Error fetching {self.model.__name__}: {str(e)}") from e
     
     def get_all(self, skip: int = 0, limit: int = 100) -> List[ModelType]:
         """Retrieve all records with pagination"""
         try:
             return self.db_session.query(self.model).offset(skip).limit(limit).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching all {self.model.__name__}: {str(e)}")
+            raise RuntimeError(f"Error fetching all {self.model.__name__}: {str(e)}") from e
     
     def update(self, id_value: Any, data: Dict[str, Any]) -> Optional[ModelType]:
         """Update a record with new data"""
@@ -102,7 +102,7 @@ class BaseRepository(IRepository[ModelType]):
             return obj
         except SQLAlchemyError as e:
             self.db_session.rollback()
-            raise Exception(f"Error updating {self.model.__name__}: {str(e)}")
+            raise RuntimeError(f"Error updating {self.model.__name__}: {str(e)}") from e
     
     def delete(self, id_value: Any) -> bool:
         """Delete a record by ID"""
@@ -116,7 +116,7 @@ class BaseRepository(IRepository[ModelType]):
             return True
         except SQLAlchemyError as e:
             self.db_session.rollback()
-            raise Exception(f"Error deleting {self.model.__name__}: {str(e)}")
+            raise RuntimeError(f"Error deleting {self.model.__name__}: {str(e)}") from e
     
     def filter_by(self, **filters) -> List[ModelType]:
         """Filter records by given criteria"""
@@ -127,7 +127,7 @@ class BaseRepository(IRepository[ModelType]):
                     query = query.filter(getattr(self.model, key) == value)
             return query.all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error filtering {self.model.__name__}: {str(e)}")
+            raise RuntimeError(f"Error filtering {self.model.__name__}: {str(e)}") from e
 
 
 class GameRepository(BaseRepository[Game]):
@@ -187,7 +187,7 @@ class GameSessionRepository(BaseRepository[GameSession]):
                 GameSession.ended_at.is_(None)
             ).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching open sessions: {str(e)}")
+            raise RuntimeError(f"Error fetching open sessions: {str(e)}") from e
 
 
 class LeaderboardRepository(BaseRepository[Leaderboard]):
@@ -206,7 +206,7 @@ class LeaderboardRepository(BaseRepository[Leaderboard]):
                 Leaderboard.created_at.asc()
             ).limit(limit).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching leaderboard: {str(e)}")
+            raise RuntimeError(f"Error fetching leaderboard: {str(e)}") from e
     
     def get_by_user(self, user_id: str) -> List[Leaderboard]:
         """Get leaderboard entries for a specific user"""
@@ -226,7 +226,7 @@ class XPRuleRepository(BaseRepository[XPRule]):
                 XPRule.game_id == game_id
             ).order_by(XPRule.priority.desc()).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching XP rules: {str(e)}")
+            raise RuntimeError(f"Error fetching XP rules: {str(e)}") from e
     
     def get_active_rules(self, game_id: str) -> List[XPRule]:
         """Get active XP rules for a specific game"""
@@ -236,7 +236,7 @@ class XPRuleRepository(BaseRepository[XPRule]):
                 XPRule.is_active == 1
             ).order_by(XPRule.priority.desc()).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching active XP rules: {str(e)}")
+            raise RuntimeError(f"Error fetching active XP rules: {str(e)}") from e
 
 
 class QuestRepository(BaseRepository[Quest]):
@@ -281,7 +281,7 @@ class UserQuestRepository(BaseRepository[UserQuest]):
                 UserQuest.is_claimed == 0
             ).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching unclaimed quests: {str(e)}")
+            raise RuntimeError(f"Error fetching unclaimed quests: {str(e)}") from e
 
 
 class GameStatusRepository(BaseRepository[GameStatus]):
@@ -302,7 +302,7 @@ class GameStatusRepository(BaseRepository[GameStatus]):
                 GameStatus.is_active == 1
             ).order_by(GameStatus.display_order).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching active statuses: {str(e)}")
+            raise RuntimeError(f"Error fetching active statuses: {str(e)}") from e
     
     def get_all_ordered(self) -> List[GameStatus]:
         """Get all statuses ordered by display_order"""
@@ -311,7 +311,7 @@ class GameStatusRepository(BaseRepository[GameStatus]):
                 GameStatus.display_order
             ).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching ordered statuses: {str(e)}")
+            raise RuntimeError(f"Error fetching ordered statuses: {str(e)}") from e
 
 
 class UserCoinsRepository(BaseRepository[UserCoins]):
@@ -375,7 +375,7 @@ class CoinTransactionRepository(BaseRepository[CoinTransaction]):
                 CoinTransaction.user_id == user_id
             ).order_by(CoinTransaction.created_at.desc()).offset(offset).limit(limit).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching transactions: {str(e)}")
+            raise RuntimeError(f"Error fetching transactions: {str(e)}") from e
     
     def get_by_type(self, transaction_type: str) -> List[CoinTransaction]:
         """Get transactions by type"""
@@ -391,7 +391,7 @@ class CoinTransactionRepository(BaseRepository[CoinTransaction]):
             ).scalar()
             return result or 0
         except SQLAlchemyError as e:
-            raise Exception(f"Error calculating earnings: {str(e)}")
+            raise RuntimeError(f"Error calculating earnings: {str(e)}") from e
     
     def get_user_spendings(self, user_id: str) -> int:
         """Get total spendings for a user"""
@@ -403,7 +403,7 @@ class CoinTransactionRepository(BaseRepository[CoinTransaction]):
             ).scalar()
             return abs(result) if result else 0
         except SQLAlchemyError as e:
-            raise Exception(f"Error calculating spendings: {str(e)}")
+            raise RuntimeError(f"Error calculating spendings: {str(e)}") from e
 
 
 class CampaignRepository(BaseRepository[Campaign]):
@@ -424,7 +424,7 @@ class CampaignRepository(BaseRepository[Campaign]):
                 Campaign.end_date >= now
             ).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching active campaigns: {str(e)}")
+            raise RuntimeError(f"Error fetching active campaigns: {str(e)}") from e
     
     def get_all_active(self) -> List[Campaign]:
         """Get all currently active campaigns"""
@@ -437,7 +437,7 @@ class CampaignRepository(BaseRepository[Campaign]):
                 Campaign.end_date >= now
             ).all()
         except SQLAlchemyError as e:
-            raise Exception(f"Error fetching active campaigns: {str(e)}")
+            raise RuntimeError(f"Error fetching active campaigns: {str(e)}") from e
 
 
 class CommunityMessageRepository(BaseRepository[CommunityMessage]):
@@ -466,7 +466,7 @@ class CommunityMessageRepository(BaseRepository[CommunityMessage]):
             rows.reverse()
             return rows
         except SQLAlchemyError as exc:
-            raise Exception(f"Error fetching community messages: {str(exc)}")
+            raise RuntimeError(f"Error fetching community messages: {str(exc)}") from exc
 
     def save_message(self, message_dict: dict) -> CommunityMessage:
         """
@@ -486,6 +486,9 @@ class CommunityMessageRepository(BaseRepository[CommunityMessage]):
             level=message_dict.get("level"),
             timestamp_ms=message_dict["timestamp"],
             created_at=datetime.now(timezone.utc).isoformat(),
+            reply_to_id=message_dict.get("reply_to_id"),
+            reply_to_username=message_dict.get("reply_to_username"),
+            reply_to_text=message_dict.get("reply_to_text"),
         )
         try:
             self.db_session.add(record)
@@ -496,7 +499,7 @@ class CommunityMessageRepository(BaseRepository[CommunityMessage]):
             return record
         except SQLAlchemyError as exc:
             self.db_session.rollback()
-            raise Exception(f"Error saving community message: {str(exc)}")
+            raise RuntimeError(f"Error saving community message: {str(exc)}") from exc
 
     def update_message_text(self, message_id: str, new_text: str, edited_at_ms: int) -> Optional[CommunityMessage]:
         """Update the text of a persisted message and mark it as edited."""
@@ -516,7 +519,7 @@ class CommunityMessageRepository(BaseRepository[CommunityMessage]):
             return record
         except SQLAlchemyError as exc:
             self.db_session.rollback()
-            raise Exception(f"Error updating community message: {str(exc)}")
+            raise RuntimeError(f"Error updating community message: {str(exc)}") from exc
 
     def _trim_old_messages(self) -> None:
         """Delete the oldest rows so the table never exceeds MAX_MESSAGES."""
@@ -535,7 +538,7 @@ class CommunityMessageRepository(BaseRepository[CommunityMessage]):
                 CommunityMessage.id.in_(cutoff_ids)
             ).delete(synchronize_session=False)
         except SQLAlchemyError as exc:
-            raise Exception(f"Error trimming community messages: {str(exc)}")
+            raise RuntimeError(f"Error trimming community messages: {str(exc)}") from exc
 
 
 class UserConnectionRepository(BaseRepository["UserConnection"]):
@@ -556,7 +559,7 @@ class UserConnectionRepository(BaseRepository["UserConnection"]):
                 .first()
             )
         except SQLAlchemyError as exc:
-            raise Exception(f"Error finding connection: {str(exc)}")
+            raise RuntimeError(f"Error finding connection: {str(exc)}") from exc
 
     def get_pending_for_user(self, user_id: str) -> List[UserConnection]:
         """Return pending connection requests received by *user_id*."""
@@ -571,7 +574,7 @@ class UserConnectionRepository(BaseRepository["UserConnection"]):
                 .all()
             )
         except SQLAlchemyError as exc:
-            raise Exception(f"Error fetching pending connections: {str(exc)}")
+            raise RuntimeError(f"Error fetching pending connections: {str(exc)}") from exc
 
     def get_accepted_for_user(self, user_id: str) -> List[UserConnection]:
         """Return all accepted connections involving *user_id*."""
@@ -587,7 +590,7 @@ class UserConnectionRepository(BaseRepository["UserConnection"]):
                 .all()
             )
         except SQLAlchemyError as exc:
-            raise Exception(f"Error fetching accepted connections: {str(exc)}")
+            raise RuntimeError(f"Error fetching accepted connections: {str(exc)}") from exc
 
     def update_status(self, connection_id: int, new_status: str, now_iso: str) -> Optional[UserConnection]:
         """Update the status of a connection request."""
@@ -602,7 +605,7 @@ class UserConnectionRepository(BaseRepository["UserConnection"]):
             return conn
         except SQLAlchemyError as exc:
             self.db_session.rollback()
-            raise Exception(f"Error updating connection status: {str(exc)}")
+            raise RuntimeError(f"Error updating connection status: {str(exc)}") from exc
 
     def count_pending_for_user(self, user_id: str) -> int:
         """Count pending connection requests received by *user_id*."""
@@ -616,7 +619,7 @@ class UserConnectionRepository(BaseRepository["UserConnection"]):
                 .count()
             )
         except SQLAlchemyError as exc:
-            raise Exception(f"Error counting pending connections: {str(exc)}")
+            raise RuntimeError(f"Error counting pending connections: {str(exc)}") from exc
 
 
 class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
@@ -643,7 +646,7 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
             rows.reverse()
             return rows
         except SQLAlchemyError as exc:
-            raise Exception(f"Error fetching conversation: {str(exc)}")
+            raise RuntimeError(f"Error fetching conversation: {str(exc)}") from exc
 
     def save_message(self, message_dict: dict) -> PrivateMessage:
         """Persist a private message and trim the conversation to MAX_MESSAGES_PER_CONVERSATION."""
@@ -656,6 +659,9 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
             text=message_dict.get("text", ""),
             timestamp_ms=message_dict["timestamp"],
             created_at=datetime.now(timezone.utc).isoformat(),
+            reply_to_id=message_dict.get("reply_to_id"),
+            reply_to_username=message_dict.get("reply_to_username"),
+            reply_to_text=message_dict.get("reply_to_text"),
         )
         try:
             self.db_session.add(record)
@@ -666,7 +672,7 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
             return record
         except SQLAlchemyError as exc:
             self.db_session.rollback()
-            raise Exception(f"Error saving private message: {str(exc)}")
+            raise RuntimeError(f"Error saving private message: {str(exc)}") from exc
 
     def mark_as_read(self, receiver_id: str, sender_id: str) -> int:
         """Mark all unread messages in a conversation as read. Returns count updated."""
@@ -684,7 +690,7 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
             return count
         except SQLAlchemyError as exc:
             self.db_session.rollback()
-            raise Exception(f"Error marking messages as read: {str(exc)}")
+            raise RuntimeError(f"Error marking messages as read: {str(exc)}") from exc
 
     def count_unread_for_user(self, user_id: str) -> int:
         """Count total unread messages for a user across all conversations."""
@@ -698,7 +704,7 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
                 .count()
             )
         except SQLAlchemyError as exc:
-            raise Exception(f"Error counting unread messages: {str(exc)}")
+            raise RuntimeError(f"Error counting unread messages: {str(exc)}") from exc
 
     def count_unread_per_peer(self, user_id: str) -> Dict[str, int]:
         """Return a dict mapping sender_id -> unread count for the given user."""
@@ -716,9 +722,9 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
                 .group_by(PrivateMessage.sender_id)
                 .all()
             )
-            return {sender_id: count for sender_id, count in rows}
+            return dict(rows)
         except SQLAlchemyError as exc:
-            raise Exception(f"Error counting unread per peer: {str(exc)}")
+            raise RuntimeError(f"Error counting unread per peer: {str(exc)}") from exc
 
     def _trim_conversation(self, user_a: str, user_b: str) -> None:
         """Keep only the latest MAX_MESSAGES_PER_CONVERSATION messages in a conversation."""
@@ -748,7 +754,7 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
                 PrivateMessage.id.in_(cutoff_ids)
             ).delete(synchronize_session=False)
         except SQLAlchemyError as exc:
-            raise Exception(f"Error trimming private messages: {str(exc)}")
+            raise RuntimeError(f"Error trimming private messages: {str(exc)}") from exc
 
     def update_message_text(self, message_id: str, new_text: str, edited_at_ms: int) -> Optional[PrivateMessage]:
         """Update the text of a private message and mark it as edited."""
@@ -768,7 +774,7 @@ class PrivateMessageRepository(BaseRepository["PrivateMessage"]):
             return record
         except SQLAlchemyError as exc:
             self.db_session.rollback()
-            raise Exception(f"Error updating private message: {str(exc)}")
+            raise RuntimeError(f"Error updating private message: {str(exc)}") from exc
 
 
 class RepositoryFactory:

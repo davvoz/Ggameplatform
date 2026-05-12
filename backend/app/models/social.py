@@ -6,6 +6,8 @@ from sqlalchemy.orm import relationship
 
 from app.models.base import Base
 
+_USERS_USER_ID = 'users.user_id'
+
 
 class CommunityMessage(Base):
     """Persistent community chat message — keeps last 100 messages across restarts."""
@@ -23,6 +25,9 @@ class CommunityMessage(Base):
     is_edited = Column(Integer, default=0)
     edited_at_ms = Column(Integer, nullable=True)
     created_at = Column(String, nullable=False)
+    reply_to_id = Column(String(100), nullable=True)
+    reply_to_username = Column(String(255), nullable=True)
+    reply_to_text = Column(Text, nullable=True)
 
     __table_args__ = (
         Index('idx_community_msg_timestamp', 'timestamp_ms'),
@@ -45,6 +50,9 @@ class CommunityMessage(Base):
             "edited_at": self.edited_at_ms,
             "edited_at_ms": self.edited_at_ms,
             "created_at": self.created_at,
+            "reply_to_id": self.reply_to_id,
+            "reply_to_username": self.reply_to_username,
+            "reply_to_text": self.reply_to_text,
         }
 
     def __repr__(self) -> str:
@@ -56,8 +64,8 @@ class UserConnection(Base):
     __tablename__ = 'user_connections'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    requester_id = Column(String, ForeignKey('users.user_id'), nullable=False, index=True)
-    receiver_id = Column(String, ForeignKey('users.user_id'), nullable=False, index=True)
+    requester_id = Column(String, ForeignKey(_USERS_USER_ID), nullable=False, index=True)
+    receiver_id = Column(String, ForeignKey(_USERS_USER_ID), nullable=False, index=True)
     status = Column(String(20), nullable=False, default='pending')
     created_at = Column(String, nullable=False)
     updated_at = Column(String, nullable=False)
@@ -88,14 +96,17 @@ class PrivateMessage(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     message_id = Column(String(100), unique=True, nullable=False, index=True)
-    sender_id = Column(String, ForeignKey('users.user_id'), nullable=False)
-    receiver_id = Column(String, ForeignKey('users.user_id'), nullable=False)
+    sender_id = Column(String, ForeignKey(_USERS_USER_ID), nullable=False)
+    receiver_id = Column(String, ForeignKey(_USERS_USER_ID), nullable=False)
     text = Column(Text, default='')
     timestamp_ms = Column(Integer, nullable=False)
     is_read = Column(Integer, default=0)
     is_edited = Column(Integer, default=0)
     edited_at_ms = Column(Integer, nullable=True)
     created_at = Column(String, nullable=False)
+    reply_to_id = Column(String(100), nullable=True)
+    reply_to_username = Column(String(255), nullable=True)
+    reply_to_text = Column(Text, nullable=True)
 
     __table_args__ = (
         Index('idx_pm_conversation', 'sender_id', 'receiver_id'),
@@ -116,6 +127,9 @@ class PrivateMessage(Base):
             "is_edited": bool(self.is_edited),
             "edited_at": self.edited_at_ms,
             "created_at": self.created_at,
+            "reply_to_id": self.reply_to_id,
+            "reply_to_username": self.reply_to_username,
+            "reply_to_text": self.reply_to_text,
         }
 
     def __repr__(self) -> str:
@@ -127,7 +141,7 @@ class PushSubscription(Base):
     __tablename__ = 'push_subscriptions'
 
     subscription_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String, ForeignKey('users.user_id'), nullable=False, index=True)
+    user_id = Column(String, ForeignKey(_USERS_USER_ID), nullable=False, index=True)
     endpoint = Column(Text, nullable=False, unique=True)
     p256dh_key = Column(String(255), nullable=False)
     auth_key = Column(String(255), nullable=False)

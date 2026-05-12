@@ -270,6 +270,7 @@ class CommunityAPI {
             text: text.trim(),
             image_url: options.imageUrl || null,
             gif_url: options.gifUrl || null,
+            reply_to_id: options.replyToId || null,
             timestamp: Date.now()
         };
 

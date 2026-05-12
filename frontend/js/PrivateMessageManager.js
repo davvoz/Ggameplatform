@@ -84,12 +84,14 @@ class PrivateMessageAPI {
         this.isConnected = false;
     }
 
-    sendMessage(receiverId, text) {
-        this._send({
+    sendMessage(receiverId, text, { replyToId = null } = {}) {
+        const payload = {
             type: 'private_message',
             receiver_id: receiverId,
             text: text.trim(),
-        });
+        };
+        if (replyToId) payload.reply_to_id = replyToId;
+        this._send(payload);
     }
 
     markRead(senderId) {
@@ -705,6 +707,35 @@ class PrivateMessageManager {
         sendBtn.appendChild(svg);
         inputRow.appendChild(sendBtn);
 
+        // Reply preview bar (hidden by default)
+        const replyPreviewBar = document.createElement('div');
+        replyPreviewBar.className = 'pm-reply-preview-bar';
+        replyPreviewBar.id = 'pmReplyPreviewBar';
+        replyPreviewBar.style.display = 'none';
+
+        const replyPreviewInfo = document.createElement('div');
+        replyPreviewInfo.className = 'pm-reply-preview-info';
+
+        const replyPreviewUsername = document.createElement('span');
+        replyPreviewUsername.className = 'pm-reply-preview-username';
+        replyPreviewUsername.id = 'pmReplyPreviewUsername';
+        replyPreviewInfo.appendChild(replyPreviewUsername);
+
+        const replyPreviewText = document.createElement('span');
+        replyPreviewText.className = 'pm-reply-preview-text';
+        replyPreviewText.id = 'pmReplyPreviewText';
+        replyPreviewInfo.appendChild(replyPreviewText);
+
+        replyPreviewBar.appendChild(replyPreviewInfo);
+
+        const replyPreviewCancel = document.createElement('button');
+        replyPreviewCancel.className = 'pm-reply-preview-cancel';
+        replyPreviewCancel.id = 'pmReplyPreviewCancel';
+        replyPreviewCancel.title = 'Cancel reply';
+        replyPreviewCancel.textContent = '✕';
+        replyPreviewBar.appendChild(replyPreviewCancel);
+
+        inputArea.appendChild(replyPreviewBar);
         inputArea.appendChild(inputRow);
 
         chatArea.replaceChildren(header, messagesArea, inputArea);
@@ -720,9 +751,15 @@ class PrivateMessageManager {
         const msgDiv = document.createElement('div');
         msgDiv.className = `pm-message${isOwn ? ' pm-message--own' : ''}`;
         msgDiv.dataset.msgId = message.message_id;
+        msgDiv.dataset.senderUsername = isOwn
+            ? (AuthManager.getUser()?.username || '')
+            : (this.activePeerUsername || '');
 
         const bubble = document.createElement('div');
         bubble.className = 'pm-message-bubble';
+
+        const replyQuote = this._buildReplyQuote(message);
+        if (replyQuote) bubble.appendChild(replyQuote);
 
         const textDiv = document.createElement('div');
         textDiv.className = 'pm-message-text';
@@ -731,6 +768,13 @@ class PrivateMessageManager {
 
         const footer = document.createElement('div');
         footer.className = 'pm-message-footer';
+
+        const replyBtn = document.createElement('button');
+        replyBtn.className = 'pm-message-reply-btn';
+        replyBtn.title = 'Reply';
+        replyBtn.setAttribute('aria-label', 'Reply to message');
+        replyBtn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>';
+        footer.appendChild(replyBtn);
 
         if (message.is_edited) {
             const editedLabel = document.createElement('span');
@@ -755,6 +799,29 @@ class PrivateMessageManager {
         bubble.appendChild(footer);
         msgDiv.appendChild(bubble);
         return msgDiv;
+    }
+
+    _buildReplyQuote(message) {
+        if (!message.reply_to_id || !message.reply_to_username) return null;
+
+        const quote = document.createElement('div');
+        quote.className = 'pm-reply-quote';
+
+        const usernameSpan = document.createElement('span');
+        usernameSpan.className = 'pm-reply-quote-username';
+        usernameSpan.textContent = message.reply_to_username;
+        quote.appendChild(usernameSpan);
+
+        if (message.reply_to_text) {
+            const textSpan = document.createElement('span');
+            textSpan.className = 'pm-reply-quote-text';
+            textSpan.textContent = message.reply_to_text.length > 80
+                ? message.reply_to_text.slice(0, 80) + '…'
+                : message.reply_to_text;
+            quote.appendChild(textSpan);
+        }
+
+        return quote;
     }
 
     _bindChatEvents(chatArea) {
@@ -783,9 +850,21 @@ class PrivateMessageManager {
             this._toggleEmojiPicker();
         });
 
-        // Edit button delegation
+        // Edit + reply button delegation
         const messagesEl = chatArea.querySelector('#pmChatMessages');
         messagesEl?.addEventListener('click', (e) => {
+            const replyBtn = e.target.closest('.pm-message-reply-btn');
+            if (replyBtn) {
+                const msgEl = replyBtn.closest('.pm-message');
+                if (!msgEl) return;
+                const messageId = msgEl.dataset.msgId;
+                const senderUsername = msgEl.dataset.senderUsername || '';
+                const textEl = msgEl.querySelector('.pm-message-text');
+                const text = textEl?.textContent || '';
+                this._setReplyTo({ id: messageId, username: senderUsername, text });
+                return;
+            }
+
             const editBtn = e.target.closest('.pm-message-edit-btn');
             if (!editBtn) return;
             const msgEl = editBtn.closest('.pm-message');
@@ -795,6 +874,10 @@ class PrivateMessageManager {
             const currentText = textEl?.textContent || '';
             this._startEditMessage(msgEl, messageId, currentText);
         });
+
+        // Reply preview cancel
+        const replyCancel = chatArea.querySelector('#pmReplyPreviewCancel');
+        replyCancel?.addEventListener('click', () => this._clearReplyTo());
 
         input?.focus();
     }
@@ -833,8 +916,10 @@ class PrivateMessageManager {
         if (!text) {
             return;
         }
+        const replyToId = this._replyTo?.id || null;
         inputEl.value = '';
-        this.api.sendMessage(this.activePeerId, text);
+        this._clearReplyTo();
+        this.api.sendMessage(this.activePeerId, text, { replyToId });
     }
 
     _toggleEmojiPicker() {
@@ -896,6 +981,7 @@ class PrivateMessageManager {
     }
 
     _closeChat() {
+        this._replyTo = null;
         this.activePeerId = null;
         this.activePeerUsername = null;
         this.activeConnectionId = null;
@@ -922,6 +1008,25 @@ class PrivateMessageManager {
         if (messagesEl) {
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
+    }
+
+    _setReplyTo({ id, username, text }) {
+        this._replyTo = { id, username, text };
+        const bar = this.container.querySelector('#pmReplyPreviewBar');
+        if (bar) {
+            bar.style.display = 'flex';
+            const usernameEl = bar.querySelector('#pmReplyPreviewUsername');
+            if (usernameEl) usernameEl.textContent = username;
+            const textEl = bar.querySelector('#pmReplyPreviewText');
+            if (textEl) textEl.textContent = text.length > 80 ? text.slice(0, 80) + '…' : text;
+        }
+        this.container.querySelector('#pmChatInput')?.focus();
+    }
+
+    _clearReplyTo() {
+        this._replyTo = null;
+        const bar = this.container.querySelector('#pmReplyPreviewBar');
+        if (bar) bar.style.display = 'none';
     }
 
     // ─── Real-time Handlers ───

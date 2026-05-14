@@ -418,3 +418,6 @@ CHANGELOG_v5.1.1.md
 sonarqube_report.txt
 .github/agents/chirurgical-programmer.agent.md
 .github/agents/sonarqube-chirurgico.agent.md
+backend/app/games/minion_clash/assets/spritesheets/generate_sprites.py
+backend/app/games/minion_clash/assets/spritesheets/generate_font.py
+.github/agents/web-audio-sound-engineer.agent.md

@@ -1,0 +1,39 @@
+:root {
+  --bg: #07060f;
+  --ink: #e8e6ff;
+  --gold: #ffd166;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden; user-select: none; -webkit-user-select: none;
+  touch-action: none;
+}
+#stage {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #15102a 0%, #07060f 80%);
+}
+#game {
+  width: auto; height: 100vh;
+  max-width: 100vw; max-height: 100vh;
+  aspect-ratio: 480 / 800;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  background: #07060f;
+  display: block;
+  touch-action: none;
+}
+#fullscreen-btn {
+  position: fixed; top: 10px; right: 10px;
+  width: 36px; height: 36px;
+  background: rgba(0,0,0,0.55); color: var(--ink);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px; cursor: pointer;
+  font-size: 18px; line-height: 1;
+  z-index: 10;
+}
+#fullscreen-btn:hover { background: rgba(0,0,0,0.8); }

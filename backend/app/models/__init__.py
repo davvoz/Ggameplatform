@@ -12,6 +12,7 @@ from app.models.game import (
     GameStatus,
     GameSession,
     GameProgress,
+    UserGameDeck,
 )
 
 from app.models.user import (
@@ -65,6 +66,7 @@ __all__ = [
     "GameStatus",
     "GameSession",
     "GameProgress",
+    "UserGameDeck",
     # User
     "User",
     "AdminUser",

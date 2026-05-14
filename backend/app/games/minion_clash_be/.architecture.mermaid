@@ -1,0 +1,185 @@
+%% minion_clash_be — server-authoritative simulation architecture.
+%% Owns the canonical battle state for multiplayer matches.
+%% Frontend (RemoteBattleView) is a thin renderer; no client-side sim.
+
+%% ── Component diagram (allowed dependency directions, acyclic) ──
+graph TD
+  RT[router.py / MultiplayerRoom] --> BS[BattleSession]
+  RT --> MPK[mp_constants: MP_SUPPORTED_CARDS]
+  BS --> ARENA[arena: TICK_HZ, SNAPSHOT_HZ, BRIDGE_Y_CENTER, VIEW]
+  BS --> EM[EntityManager]
+  BS --> SI[SpatialIndex]
+  BS --> SPW[SpawnSystem]
+  BS --> MOV[MovementSystem]
+  BS --> CMB[CombatSystem]
+  BS --> SPL[SpellResolver]
+  BS --> TS[TeamState x2]
+  BS --> SNP[snapshot: build_state, build_event, mirror_*]
+  EM --> ENT[entities: Entity, Unit, Hero, Tower, Projectile]
+  SPW --> ENT
+  MOV --> ENT
+  MOV --> SI
+  CMB --> ENT
+  CMB --> SI
+  SPL --> ENT
+  SPL --> SI
+  TS --> DL[data_loader: DataRegistry]
+  SPW --> DL
+  SPL --> DL
+  SNP --> ENT
+  SNP --> TS
+
+%% ── Class diagram ──
+classDiagram
+  class BattleSession {
+    -room_id: str
+    -seats: dict
+    -broadcast: Callable
+    -registry: DataRegistry
+    -entities: EntityManager
+    -spatial: SpatialIndex
+    -spawn: SpawnSystem
+    -movement: MovementSystem
+    -combat: CombatSystem
+    -spells: SpellResolver
+    -teams: dict[seat, TeamState]
+    -match_time: float
+    -time_left: float
+    -_tick_task: Task
+    +start() void
+    +stop() async void
+    +request_play_card(seat, slot, card_id, x, y) tuple[bool, str]
+    -_tick_loop() async
+    -_step(dt) void
+    -_emit_snapshot() void
+    -_emit_event(event) void
+    -_finalize(result) void
+  }
+
+  class EntityManager {
+    -_by_id: dict[int, Entity]
+    -_next_id: int
+    +spawn(entity) int
+    +get(id) Entity
+    +remove(id) void
+    +alive() Iterable[Entity]
+    +by_team(team) Iterable[Entity]
+  }
+
+  class SpatialIndex {
+    -_cells: dict
+    -_cell_size: float
+    +rebuild(entities) void
+    +query_radius(x, y, r, team_filter) list[Entity]
+    +nearest_enemy(x, y, team) Entity
+  }
+
+  class SpawnSystem {
+    -registry: DataRegistry
+    -entities: EntityManager
+    +spawn_card(team, card_def, x, y) list[Entity]
+    +spawn_tower(team, x, y) Tower
+    +spawn_hero(team, hero_def, x, y) Hero
+  }
+
+  class MovementSystem {
+    +step(entities, spatial, dt) void
+  }
+
+  class CombatSystem {
+    +step(entities, spatial, dt, on_event) void
+  }
+
+  class SpellResolver {
+    -registry: DataRegistry
+    +cast(team, spell_def, x, y, on_event) void
+  }
+
+  class TeamState {
+    +seat: str
+    +tower_hp: float
+    +hero_hp: float
+    +hero_alive: bool
+    +_hero_respawn_t: float
+    +mana: float
+    +mana_max: float
+    +deck: list[str]
+    +hand: list[str]
+    +cooldowns: dict[str, float]
+    +tick(dt) void
+    +try_play(slot, card_id) tuple[bool, str]
+    +to_block() dict
+  }
+
+  class Entity {
+    +id: int
+    +team: str
+    +x: float
+    +y: float
+    +hp: float
+    +max_hp: float
+    +alive: bool
+    +to_snap() dict
+  }
+  Entity <|-- Unit
+  Entity <|-- Hero
+  Entity <|-- Tower
+  Entity <|-- Projectile
+
+  BattleSession *-- EntityManager
+  BattleSession *-- SpatialIndex
+  BattleSession *-- SpawnSystem
+  BattleSession *-- MovementSystem
+  BattleSession *-- CombatSystem
+  BattleSession *-- SpellResolver
+  BattleSession *-- "2" TeamState
+  EntityManager o-- Entity
+  SpawnSystem ..> Entity
+  MovementSystem ..> Entity
+  CombatSystem ..> Entity
+  SpellResolver ..> Entity
+
+%% ── Sequence: match lifecycle ──
+sequenceDiagram
+  participant R as Router
+  participant BS as BattleSession
+  participant EM as EntityManager
+  participant SYS as Systems (Move/Combat/Spell)
+  participant SNP as Snapshot
+  participant CL as Clients (host, guest)
+
+  R->>BS: new BattleSession(seats, broadcast)
+  R->>BS: start()
+  BS->>EM: spawn towers + heroes
+  BS->>CL: matchStart (via router)
+
+  loop every TICK_DT (20Hz)
+    BS->>BS: _step(dt)
+    BS->>SYS: movement.step / combat.step
+    SYS-->>BS: events (spellCast, death, …)
+    BS->>BS: teams.tick(dt) (mana, cooldowns, respawn)
+  end
+
+  loop every SNAPSHOT_DT (10Hz)
+    BS->>SNP: build_state(teams, entities)
+    SNP-->>BS: canonical state (host frame)
+    BS->>SNP: mirror_state_for(seat) per recipient
+    BS->>CL: broadcast 'state'
+  end
+
+  CL->>R: playCard(slot, cardId, x, y)
+  R->>BS: request_play_card(seat, slot, card_id, x, y)
+  BS->>BS: validate (hand slot, mana, cooldown, MP whitelist)
+  alt accepted
+    BS->>EM: spawn units / SpellResolver.cast
+    BS->>CL: broadcast 'event' (spellCast / unitsSpawned)
+  else rejected
+    BS-->>R: (False, reason)
+    R->>CL: 'playRejected'
+  end
+
+  alt match end (tower destroyed | timeout)
+    BS->>BS: _finalize(result)
+    BS->>CL: broadcast 'outcome' (win / lose / timeout) per seat
+    BS->>BS: stop()
+  end

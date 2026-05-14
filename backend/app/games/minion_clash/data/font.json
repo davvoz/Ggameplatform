@@ -1,0 +1,12 @@
+{
+  "_comment": "Bitmap font manifest. ASCII codes [firstChar..lastChar] map to a row-major grid of cellW x cellH cells in src.",
+  "src": "assets/spritesheets/font.png",
+  "cellW": 32,
+  "cellH": 32,
+  "cols": 16,
+  "rows": 6,
+  "firstChar": 32,
+  "lastChar": 126,
+  "glyphHeightPx": 22,
+  "advancePx": 18
+}

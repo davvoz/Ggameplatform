@@ -1,0 +1,19 @@
+{
+  "_comment": "Tower stats per side. Towers attack nearest enemy in range; destruction = lose for that side.",
+  "tower": {
+    "hp": 1500,
+    "attackDamage": 35,
+    "attackInterval": 1.0,
+    "attackRange": 170,
+    "attackKind": "ranged",
+    "projectileSpeed": 420,
+    "radius": 28,
+    "sprite": { "prefix": "tower", "scale": 1 },
+    "projectileSprite": { "prefix": "proj_orb", "scale": 1 }
+  },
+  "leader": {
+    "hp": 800,
+    "radius": 18,
+    "_comment": "Leader sits behind tower. Game-over also if leader dies. For now we treat tower destruction = main loss; leader is bonus second target sitting behind tower."
+  }
+}

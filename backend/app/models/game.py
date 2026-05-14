@@ -8,6 +8,8 @@ import json
 from app.models.base import Base
 
 _CASCADE_ALL_DELETE_ORPHAN = "all, delete-orphan"
+_FK_USERS_USER_ID = 'users.user_id'
+_FK_GAMES_GAME_ID = 'games.game_id'
 
 
 class GameStatus(Base):
@@ -104,8 +106,8 @@ class GameSession(Base):
     __tablename__ = 'game_sessions'
 
     session_id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
-    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    user_id = Column(String, ForeignKey(_FK_USERS_USER_ID), nullable=False)
+    game_id = Column(String, ForeignKey(_FK_GAMES_GAME_ID), nullable=False)
     score = Column(Integer, default=0)
     xp_earned = Column(Float, default=0.0)
     duration_seconds = Column(Integer, default=0)
@@ -140,8 +142,8 @@ class GameProgress(Base):
     __tablename__ = 'game_progress'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String, ForeignKey('users.user_id'), nullable=False)
-    game_id = Column(String, ForeignKey('games.game_id'), nullable=False)
+    user_id = Column(String, ForeignKey(_FK_USERS_USER_ID), nullable=False)
+    game_id = Column(String, ForeignKey(_FK_GAMES_GAME_ID), nullable=False)
     progress_data = Column(Text, default='{}')
     updated_at = Column(String, nullable=False)
 
@@ -160,3 +162,47 @@ class GameProgress(Base):
 
     def __repr__(self) -> str:
         return f"<GameProgress user={self.user_id} game={self.game_id}>"
+
+
+class UserGameDeck(Base):
+    """Per-user per-game deck slot (e.g. Minion Clash decks).
+
+    Generic deck storage reusable by any deck-building game.
+    Each (user, game) pair owns a fixed set of slots (numbered from 0).
+    The game-specific router enforces the maximum slot index and
+    payload schema (roster size, hero validation, etc.).
+    """
+    __tablename__ = 'user_game_decks'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey(_FK_USERS_USER_ID), nullable=False, index=True)
+    game_id = Column(String, ForeignKey(_FK_GAMES_GAME_ID), nullable=False, index=True)
+    slot = Column(Integer, nullable=False)
+    name = Column(String(64), default='')
+    # NOTE: legacy `hero_id` column may exist in older DBs; intentionally NOT
+    # mapped here. Decks are pure card lists; the hero is chosen per-run via
+    # HeroSelectState and never bound to a saved deck.
+    card_ids = Column(Text, default='[]')   # JSON-encoded list[str]
+    updated_at = Column(String, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'game_id', 'slot', name='uq_user_game_deck_slot'),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        try:
+            cards = json.loads(self.card_ids) if self.card_ids else []
+        except (ValueError, TypeError):
+            cards = []
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "game_id": self.game_id,
+            "slot": self.slot,
+            "name": self.name or "",
+            "card_ids": cards,
+            "updated_at": self.updated_at,
+        }
+
+    def __repr__(self) -> str:
+        return f"<UserGameDeck user={self.user_id} game={self.game_id} slot={self.slot}>"

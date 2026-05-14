@@ -1,0 +1,40 @@
+%% minion_clash — architecture reference
+%% Layer separation (component diagram). Arrows = allowed dependencies. Acyclic.
+%% Single-Player path uses BattleWorld (local sim).
+%% Multiplayer path uses RemoteBattleView (server-authoritative; thin renderer).
+
+graph TD
+  Game[Game] --> UI[States / UI]
+  Game --> RUN[RunContext]
+  Game --> DR[DataRegistry]
+  Game --> RDR[Renderer]
+  Game --> IN[InputManager]
+
+  UI --> RUN
+  UI --> DEF[Data Definitions]
+
+  %% Single-Player branch
+  UI -->|mode=singleplayer| BW[BattleWorld]
+  BW --> SYS[Systems: Spawn, Combat, Movement, Effect, Spell, WinCondition]
+  BW --> TC[TeamControllers: Player, Enemy]
+  TC --> RES[Mana / Hand / Deck]
+  SYS --> EN[Entities]
+  EN --> BEH[Behaviors / Attacks / Effects]
+  EN --> DEF
+  TC --> DEF
+  SYS --> DEF
+
+  %% Multiplayer branch (server-authoritative)
+  UI -->|mode=multiplayer| RBV[RemoteBattleView]
+  UI --> MPC[MultiplayerClient]
+  MPC -. ws .-> SRV[(minion_clash_be / BattleSession)]
+  RBV --> EN
+  RBV --> VFX[VFXManager]
+  MPC -->|state / event / outcome / playRejected| RBV
+  UI -->|playCard| MPC
+
+  %% MP card whitelist
+  UI --> MPS[MultiplayerSupport: MP_SUPPORTED_CARD_IDS]
+  MPS --> DEF
+
+  DR --> DEF

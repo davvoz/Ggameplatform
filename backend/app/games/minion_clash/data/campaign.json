@@ -1,0 +1,55 @@
+{
+  "_comment": "Campaign levels. Each level: enemy hero, enemy deck (10 cards), aiProfile (decision rate), modifiers (mana regen multipliers, hp scaling), unlockOrder.",
+  "levels": [
+    {
+      "id": "lvl_1_outpost",
+      "theme": "grassland",
+      "title": "1 — Outpost Skirmish",
+      "subtitle": "An easy warm-up. The enemy plays hesitantly.",
+      "enemyHeroId": "warrior",
+      "enemyDeck": ["skeleton_squad","goblin_pack","imp_trio","crossbowman","knight","fireball","heal_wave","archer_trio","bat_swarm","berserker"],
+      "aiProfile": { "playInterval": 4.5, "manaThreshold": 0.55, "aggression": 0.4 },
+      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.85, "enemyUnitHpMult": 0.9 }
+    },
+    {
+      "id": "lvl_2_forest",
+      "theme": "forest",
+      "title": "2 — Whispering Forest",
+      "subtitle": "Goblin scouts and fast wolves.",
+      "enemyHeroId": "archer",
+      "enemyDeck": ["goblin_pack","wolf_pair","imp_trio","archer_trio","frost_sniper","heal_wave","fireball","bat_swarm","plague_doctor","wyvern"],
+      "aiProfile": { "playInterval": 3.5, "manaThreshold": 0.45, "aggression": 0.55 },
+      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 }
+    },
+    {
+      "id": "lvl_3_arcanum",
+      "theme": "arcane",
+      "title": "3 — Arcanum Tower",
+      "subtitle": "A mage opponent loves spells.",
+      "enemyHeroId": "mage",
+      "enemyDeck": ["mage_apprentice","frost_sniper","fireball","frost_nova","lightning_bolt","heal_wave","skeleton_squad","crossbowman","time_witch","wyvern"],
+      "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.4, "aggression": 0.6 },
+      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.05, "enemyUnitHpMult": 1.0 }
+    },
+    {
+      "id": "lvl_4_iron",
+      "theme": "iron",
+      "title": "4 — Iron Bastion",
+      "subtitle": "Heavy units and siege.",
+      "enemyHeroId": "robot",
+      "enemyDeck": ["knight","iron_sentinel","stone_golem","cannon","crossbowman","heal_wave","fireball","shield_maiden","war_banner","drake"],
+      "aiProfile": { "playInterval": 2.8, "manaThreshold": 0.4, "aggression": 0.65 },
+      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.1, "enemyUnitHpMult": 1.05 }
+    },
+    {
+      "id": "lvl_5_final",
+      "theme": "infernal",
+      "title": "5 — The Dark Crown",
+      "subtitle": "The final boss plays an aggressive deck.",
+      "enemyHeroId": "warrior",
+      "enemyDeck": ["wolf_pair","berserker","assassin","stone_golem","drake","phoenix","fireball","frost_nova","lightning_bolt","necromancer"],
+      "aiProfile": { "playInterval": 2.2, "manaThreshold": 0.35, "aggression": 0.8 },
+      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.2, "enemyUnitHpMult": 1.15 }
+    }
+  ]
+}

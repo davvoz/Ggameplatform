@@ -58,6 +58,15 @@ export class PlatformBridge {
 
     resetGameOver() { this._gameOverSent = false; }
 
+    /**
+     * Notify the platform that a new match is starting.
+     * This triggers runtimeShell.startGameSession() → POST /users/sessions/start.
+     * Must be called once per match, before gameOver().
+     */
+    async resetSession() {
+        try { await this._sdk?.resetSession?.(); } catch (err) { console.warn('[minion_clash] resetSession failed', err); }
+    }
+
     // ── Identity ────────────────────────────────────────────────
 
     getUserId()       { return this._userId; }

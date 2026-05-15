@@ -18,8 +18,11 @@ html, body {
   background: radial-gradient(ellipse at center, #15102a 0%, #07060f 80%);
 }
 #game {
-  width: auto; height: 100vh;
-  max-width: 100vw; max-height: 100vh;
+  /* Portrait-first fit: width drives on narrow viewports, height drives on wide ones.
+     svh = Small Viewport Height (excludes mobile browser chrome) — prevents vertical stretch. */
+  width: min(100vw, calc(100svh * 480 / 800));
+  height: auto;
+  max-height: 100svh;
   aspect-ratio: 480 / 800;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;

@@ -39,6 +39,10 @@ export class BattleState {
         this._renderer = new BattleRenderer(this._world);
         if (isMp) this._wireMultiplayer();
         this._game.sound?.play(SoundEvent.BATTLE_START);
+
+        // Open platform session — runtimeShell creates the session on the backend,
+        // which is required for gameOver() to produce XP and the XP banner.
+        this._game.platform.resetSession();
     }
 
     exit() {
@@ -198,11 +202,9 @@ export class BattleState {
     }
 
     _computeScore(w) {
-        const win = w.outcome === 'win' ? 1000 : 0;
-        const towerHp = Math.round(w.player.tower.hp / w.player.tower.maxHp * 500);
-        const enemyDmg = Math.round((1 - w.enemy.tower.hp / w.enemy.tower.maxHp) * 500);
-        const kills = w.stats.unitsKilled * 5;
-        return win + towerHp + enemyDmg + kills;
+        if (w.outcome !== 'win') return 0;
+        const remaining = Math.max(0, GameConfig.BATTLE.MATCH_TIME_LIMIT - w.matchTime);
+        return Math.round(remaining * 10);
     }
 
     _quitToMenu() {

@@ -66,62 +66,17 @@ GAME_DATA = {
 
 NOW = datetime.now(timezone.utc).isoformat()
 
+# XP logic: score = 0 on loss; score = (MATCH_TIME_LIMIT - matchTime) * 10 on win.
+# Faster victory → higher score → more XP. Loss always yields 0 XP.
+# MATCH_TIME_LIMIT = 240 s  →  realistic score range ≈ 300 (slow win) … 2100 (very fast win).
 XP_RULES = [
     {
-        "rule_id": f"{GAME_ID}_participation",
+        "rule_id": f"{GAME_ID}_speed_victory",
         "game_id": GAME_ID,
-        "rule_name": "Participation Bonus",
-        "rule_type": "flat",
-        "parameters": json.dumps({"base_xp": 1.0}),
-        "priority": 5,
-        "is_active": 1,
-    },
-    {
-        "rule_id": f"{GAME_ID}_score_thresholds",
-        "game_id": GAME_ID,
-        "rule_name": "Score Thresholds",
-        "rule_type": "threshold",
-        "parameters": json.dumps({
-            "thresholds": [
-                {"score": 2500, "xp": 25.0},
-                {"score": 2000, "xp": 18.0},
-                {"score": 1500, "xp": 12.0},
-                {"score": 1000, "xp":  7.0},
-                {"score":  500, "xp":  3.0},
-                {"score":  100, "xp":  1.0},
-            ]
-        }),
-        "priority": 15,
-        "is_active": 1,
-    },
-    {
-        "rule_id": f"{GAME_ID}_score_multiplier",
-        "game_id": GAME_ID,
-        "rule_name": "Score Multiplier",
+        "rule_name": "Speed Victory",
         "rule_type": "score_multiplier",
-        "parameters": json.dumps({"multiplier": 0.01, "max_xp": 20.0}),
+        "parameters": json.dumps({"multiplier": 0.02, "max_xp": 50.0}),
         "priority": 10,
-        "is_active": 1,
-    },
-    {
-        "rule_id": f"{GAME_ID}_campaign_victory",
-        "game_id": GAME_ID,
-        "rule_name": "Campaign Victory",
-        "rule_type": "achievement",
-        "parameters": json.dumps({
-            "achievement_key": "campaign_victory",
-            "bonus_xp": 10.0,
-        }),
-        "priority": 20,
-        "is_active": 1,
-    },
-    {
-        "rule_id": f"{GAME_ID}_high_score_bonus",
-        "game_id": GAME_ID,
-        "rule_name": "High Score Bonus",
-        "rule_type": "high_score_bonus",
-        "parameters": json.dumps({"bonus_xp": 10.0}),
-        "priority": 25,
         "is_active": 1,
     },
 ]
@@ -163,7 +118,7 @@ QUESTS = [
     },
     {
         "title": "Minion Clash: Tactician",
-        "description": "Reach 1,000 points in a single match",
+        "description": "Win a match in under 140 seconds (score ≥ 1,000)",
         "quest_type": "score",
         "target_value": 1000,
         "xp_reward": 40,
@@ -179,9 +134,9 @@ QUESTS = [
     },
     {
         "title": "Minion Clash: Warlord",
-        "description": "Reach 2,000 points in a single match",
+        "description": "Win a match in under 80 seconds (score ≥ 1,600)",
         "quest_type": "score",
-        "target_value": 2000,
+        "target_value": 1600,
         "xp_reward": 80,
         "reward_coins": 20,
         "is_active": 1,
@@ -195,9 +150,9 @@ QUESTS = [
     },
     {
         "title": "Minion Clash: Champion",
-        "description": "Reach 2,500 points in a single match",
+        "description": "Win a match in under 40 seconds (score ≥ 2,000)",
         "quest_type": "score",
-        "target_value": 2500,
+        "target_value": 2000,
         "xp_reward": 150,
         "reward_coins": 40,
         "is_active": 1,

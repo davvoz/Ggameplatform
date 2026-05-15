@@ -329,23 +329,12 @@ window.addEventListener('message', handleMessage);
 
 /**
  * Register PlatformSDK event listeners
+ * Note: showXPBanner and showLevelUpModal are already handled by the window.addEventListener
+ * above (handleMessage). Do NOT register them here too — the SDK fires triggerEvent
+ * after the window listener already ran, which would show the notifications twice.
  */
 function registerPlatformSDKListeners() {
     if (typeof PlatformSDK !== 'undefined') {
-        PlatformSDK.on('showXPBanner', (payload) => {
-            console.log('🎁 [PlatformSDK] Received showXPBanner event:', payload);
-            if (payload && payload.xp_earned !== undefined) {
-                showXPBanner(payload.xp_earned, payload);
-            }
-        });
-        
-        PlatformSDK.on('showLevelUpModal', (payload) => {
-            console.log('🎉 [PlatformSDK] Received showLevelUpModal event:', payload);
-            if (payload) {
-                showLevelUpNotification(payload);
-            }
-        });
-        
         console.log('[Main] PlatformSDK event listeners registered');
     }
 }

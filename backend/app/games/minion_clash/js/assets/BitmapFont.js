@@ -57,51 +57,87 @@ export class BitmapFont {
      * @param {string} str
      * @param {number} x
      * @param {number} y
-     * @param {{scale?:number,color?:string|null,align?:'left'|'center'|'right',baseline?:'top'|'middle'|'alphabetic'}} [opts]
+     * @param {{
+     *   scale?:number,
+     *   color?:string|null,
+     *   align?:'left'|'center'|'right',
+     *   baseline?:'top'|'middle'|'alphabetic',
+     *   outline?:{color?:string,width?:number}|null
+     * }} [opts]
      */
     draw(ctx, str, x, y, opts = {}) {
-        const scale = opts.scale ?? 1;
-        const align = opts.align ?? 'left';
+        const scale    = opts.scale    ?? 1;
+        const align    = opts.align    ?? 'left';
         const baseline = opts.baseline ?? 'top';
-        const color = opts.color ?? null;
+        const color    = opts.color    ?? null;
+        const outline  = opts.outline  ?? null;
         const w = this.measure(str, scale).w;
         const h = this.cellH * scale;
 
-        let dx = x;
-        if (align === 'center') dx = x - w / 2;
-        else if (align === 'right') dx = x - w;
+        let startX = x;
+        if (align === 'center') startX = x - w / 2;
+        else if (align === 'right') startX = x - w;
 
         let dy = y;
         if (baseline === 'middle') dy = y - h / 2;
         else if (baseline === 'alphabetic') dy = y - this._glyphHeightPx * scale;
 
-        const sheet = color ? this._getTinted(color) : this._image;
         const advance = this._advancePx * scale;
-        const drawW = Math.round(this.cellW * scale);
-        const drawH = Math.round(this.cellH * scale);
+        const drawW   = Math.round(this.cellW * scale);
+        const drawH   = Math.round(this.cellH * scale);
+        const baseY   = Math.round(dy);
 
-        // Snap baseline to integer to keep glyphs pixel-aligned (kills blur).
-        const baseY = Math.round(dy);
-
-        // Disable smoothing so glyphs stay crisp when downscaled to small UI sizes.
-        const prevSmoothing = ctx.imageSmoothingEnabled;
-        ctx.imageSmoothingEnabled = false;
-
+        // Pre-compute glyph source/dest positions once (used for both passes).
+        const glyphs = [];
+        let dx = startX;
         for (let i = 0; i < str.length; i++) {
             const code = str.codePointAt(i);
-            if (code < this._firstChar || code > this._lastChar) {
-                dx += advance;
-                continue;
+            if (code >= this._firstChar && code <= this._lastChar) {
+                const idx = code - this._firstChar;
+                glyphs.push({
+                    sx: (idx % this._cols) * this.cellW,
+                    sy: Math.floor(idx / this._cols) * this.cellH,
+                    dx: Math.round(dx)
+                });
             }
-            const idx = code - this._firstChar;
-            const sx = (idx % this._cols) * this.cellW;
-            const sy = Math.floor(idx / this._cols) * this.cellH;
-            ctx.drawImage(sheet, sx, sy, this.cellW, this.cellH,
-                          Math.round(dx), baseY, drawW, drawH);
             dx += advance;
         }
 
+        const prevSmoothing = ctx.imageSmoothingEnabled;
+        ctx.imageSmoothingEnabled = false;
+
+        // Outline pass: stamp each glyph at 8 offsets using a tinted sheet.
+        if (outline) {
+            this._drawOutline(ctx, glyphs, outline, drawW, drawH, baseY);
+        }
+
+        // Main pass — draws the actual glyph art on top.
+        const sheet = color ? this._getTinted(color) : this._image;
+        for (const g of glyphs) {
+            ctx.drawImage(sheet,
+                g.sx, g.sy, this.cellW, this.cellH,
+                g.dx, baseY, drawW, drawH);
+        }
+
         ctx.imageSmoothingEnabled = prevSmoothing;
+    }
+
+    /** Renders each glyph at 8 surrounding offsets in the outline colour. */
+    _drawOutline(ctx, glyphs, outline, drawW, drawH, baseY) {
+        const outColor = outline.color ?? 'rgba(0,0,0,0.95)';
+        const outOff   = Math.max(1, Math.round(outline.width ?? 1));
+        const outSheet = this._getTinted(outColor);
+        const offsets  = [
+            [-outOff, 0], [outOff, 0], [0, -outOff], [0, outOff],
+            [-outOff, -outOff], [outOff, -outOff], [-outOff, outOff], [outOff, outOff]
+        ];
+        for (const [ox, oy] of offsets) {
+            for (const g of glyphs) {
+                ctx.drawImage(outSheet,
+                    g.sx, g.sy, this.cellW, this.cellH,
+                    g.dx + ox, baseY + oy, drawW, drawH);
+            }
+        }
     }
 
     _getTinted(color) {

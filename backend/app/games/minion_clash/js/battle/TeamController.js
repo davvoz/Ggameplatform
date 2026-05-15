@@ -44,7 +44,11 @@ export class TeamController {
     }
 
     update(dt, _world) {
-        this.mana.update(dt);
+        const timeLeft = this.world?.timeLeft ?? _world?.timeLeft;
+        const manaRushMult = (timeLeft != null && timeLeft <= 60)
+            ? 1 + 2 * (1 - timeLeft / 60)
+            : 1;
+        this.mana.update(dt, manaRushMult);
         this.cooldowns.update(dt);
         this.hand.update();
         this._tickHeroRespawn(dt);
@@ -92,7 +96,7 @@ export class TeamController {
         if (card.kind === 'summon') {
             this.world.spawn.enqueueFromCard(card, this.team, x, y);
         } else if (card.kind === 'spell') {
-            this.world.spells.cast(card, x, y, this.team);
+            this.world.spells.cast(card, x, y, this.team, this.world);
         } else {
             throw new Error(`TeamController: unknown card kind "${card.kind}"`);
         }

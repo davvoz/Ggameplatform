@@ -286,7 +286,7 @@ class Unit(Entity):
 
     def _attack(self, target: Entity, world: "SimWorld") -> None:
         dmg = self._effective_damage()
-        if self._atk_kind == "melee":
+        if self._atk_kind in ("melee", "cleave"):
             target.take_damage(dmg, world)
             world.events.append({
                 "type": "meleeHit",
@@ -295,6 +295,17 @@ class Unit(Entity):
                 "targetId": target.id,
             })
             self._apply_on_hit(target, world)
+            # Cleave: apply splash damage to other nearby enemies.
+            if self._atk_kind == "cleave":
+                splash_r = float(self.def_dict.get("splashRadius", 40) or 40)
+                splash_mult = float(self.def_dict.get("splashDamageMult", 0.5) or 0.5)
+                splash_dmg = dmg * splash_mult
+                nearby = world.spatial.query_by_team(
+                    self.x, self.y, splash_r, target.team
+                )
+                for e in nearby:
+                    if e is not target and not e.is_dead():
+                        e.take_damage(splash_dmg, world)
         elif self._atk_kind == "ranged":
             world.combat.fire_projectile(
                 team=self.team,

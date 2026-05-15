@@ -9,7 +9,7 @@ import { MP_SUPPORTED_CARD_IDS } from '../platform/MultiplayerSupport.js';
 
 /**
  * Pick exactly ROSTER_SIZE cards from the catalog. Toggle by tap.
- * Scrollable list (3 columns).
+ * Scrollable list (2 columns).
  */
 export class DeckBuilderState {
     constructor(game) {
@@ -269,9 +269,9 @@ export class DeckBuilderState {
         ctx.rect(lr.x, lr.y, lr.w, lr.h);
         ctx.clip();
 
-        const cols = 3, gap = 8;
+        const cols = 2, gap = 8;
         const cardW = (lr.w - (cols + 1) * gap) / cols;
-        const cardH = 110;
+        const cardH = 140;
         this._cardRects = [];
         for (let i = 0; i < this._allCards.length; i++) {
             const card = this._allCards[i];
@@ -302,7 +302,7 @@ export class DeckBuilderState {
         });
 
         // Portrait top-left (sprite for summons, fxColor disc for spells)
-        const portraitSize = 48;
+        const portraitSize = 72;
         const px = rect.x + 6;
         const py = rect.y + 6;
         UIPainter.panel(ctx, px, py, portraitSize, portraitSize, {
@@ -326,23 +326,26 @@ export class DeckBuilderState {
         // Right column: name + kind, full width
         const tx = px + portraitSize + 6;
         const tw = rect.x + rect.w - tx - 4;
-        UIPainter.text(ctx, this._fitText(card.name, tw, 9), tx, py + 8,
-            { font: 'bold 11px system-ui', align: 'left', color: GameConfig.COLOR.TEXT });
-        UIPainter.text(ctx, card.kind.toUpperCase(), tx, py + 26,
-            { font: '9px system-ui', color: rarity.stroke, align: 'left' });
+        UIPainter.text(ctx, this._fitText(card.name, tw, 10), tx, py + 10,
+            { font: 'bold 14px system-ui', align: 'left', color: GameConfig.COLOR.TEXT,
+              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
+        UIPainter.text(ctx, card.kind.toUpperCase(), tx, py + 30,
+            { font: '11px system-ui', color: rarity.stroke, align: 'left',
+              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
 
         // Description below the portrait, 3 lines max
-        const lines = this._wrap(card.description ?? '', Math.floor(rect.w / 7) - 1, 3);
-        let y = py + portraitSize + 8;
+        const lines = this._wrap(card.description ?? '', Math.floor(rect.w / 9) - 1, 3);
+        let y = py + portraitSize + 10;
         for (const ln of lines) {
             UIPainter.text(ctx, ln, rect.x + rect.w / 2, y,
-                { font: '9px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
-            y += 11;
+                { font: 'bold 12px system-ui', align: 'center', color: GameConfig.COLOR.TEXT,
+              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
+            y += 13;
         }
     }
 
     _drawCostGem(ctx, x, y, cost) {
-        const r = 10;
+        const r = 12;
         const cx = x + r;
         const cy = y + r;
         ctx.save();
@@ -354,8 +357,9 @@ export class DeckBuilderState {
         ctx.fill();
         ctx.stroke();
         ctx.restore();
-        UIPainter.text(ctx, `${cost}`, cx, cy + 4,
-            { font: 'bold 12px system-ui', color: '#fff', align: 'center' });
+        UIPainter.text(ctx, `${cost}`, cx, cy + 5,
+            { font: 'bold 14px system-ui', color: '#fff', align: 'center',
+              outline: { color: 'rgba(0,0,0,0.9)', width: 1 } });
     }
 
     _fitText(s, maxWidthPx, charPx) {

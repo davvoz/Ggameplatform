@@ -9,9 +9,9 @@ export class ManaPool {
         this._regen = regenPerSec;
         this._value = start;
     }
-    update(dt) {
+    update(dt, mult = 1) {
         if (this._value < this._max) {
-            this._value = Math.min(this._max, this._value + this._regen * dt);
+            this._value = Math.min(this._max, this._value + this._regen * mult * dt);
         }
     }
     get value() { return this._value; }

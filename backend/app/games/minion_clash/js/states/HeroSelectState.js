@@ -21,7 +21,7 @@ export class HeroSelectState {
 
     enter() {
         this._heroes = this._game.data.getAllHeroes();
-        const w = 200, h = 180, gap = 20;
+        const w = 220, h = 200, gap = 16;
         const cols = 2;
         const totalW = cols * w + (cols - 1) * gap;
         const startX = (GameConfig.VIEW_WIDTH - totalW) / 2;
@@ -93,7 +93,7 @@ export class HeroSelectState {
         }
 
         // Portrait area: tinted plaque + sprite
-        const portraitH = 100;
+        const portraitH = 115;
         const px = card.x + 10;
         const py = card.y + 10;
         const pw = card.w - 20;
@@ -110,20 +110,22 @@ export class HeroSelectState {
             ctx.fill();
         }
 
-        UIPainter.text(ctx, card.hero.name, card.x + card.w / 2, card.y + portraitH + 32,
-            { font: 'bold 18px system-ui', align: 'center',
-              color: isSel ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT });
+        UIPainter.text(ctx, card.hero.name, card.x + card.w / 2, card.y + portraitH + 26,
+            { font: 'bold 20px system-ui', align: 'center',
+              color: isSel ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT,
+              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
         const h = card.hero;
         const stats = [
             `HP ${h.hp}   Regen ${h.hpRegen}/s`,
             `DMG ${h.attackDamage} every ${h.attackInterval.toFixed(2)}s`,
             `Range ${h.attackRange}   Speed ${h.moveSpeed}`
         ];
-        let y = card.y + portraitH + 50;
+        let y = card.y + portraitH + 46;
         for (const s of stats) {
             UIPainter.text(ctx, s, card.x + card.w / 2, y,
-                { font: '11px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
-            y += 14;
+                { font: '13px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center',
+                  outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
+            y += 15;
         }
     }
 

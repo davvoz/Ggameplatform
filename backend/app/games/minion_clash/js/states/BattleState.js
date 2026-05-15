@@ -57,8 +57,8 @@ export class BattleState {
         return {
             id: '__multiplayer__',
             enemyHeroId: mp.opponentHeroId,
-            enemyDeck:   mp.opponentDeckIds,
-            aiProfile:   null,
+            enemyDeck: mp.opponentDeckIds,
+            aiProfile: null,
             modifiers: {
                 enemyUnitHpMult: 1, playerUnitHpMult: 1,
                 enemyManaRegenMult: 1, playerManaRegenMult: 1,
@@ -69,11 +69,11 @@ export class BattleState {
     _wireMultiplayer() {
         const cli = this._game.run.mpClient;
         if (!cli) return;
-        cli.on('state',                (m) => this._world?.applySnapshot(m));
+        cli.on('state', (m) => this._world?.applySnapshot(m));
         // Server wraps events as {type:'event', tick, event:{...}}; unwrap before dispatch.
-        cli.on('event',                (m) => this._world?.applyEvent(m?.event));
-        cli.on('outcome',              (m) => this._world?.applyOutcome(m));
-        cli.on('playRejected',         (m) => this._onPlayRejected(m));
+        cli.on('event', (m) => this._world?.applyEvent(m?.event));
+        cli.on('outcome', (m) => this._world?.applyOutcome(m));
+        cli.on('playRejected', (m) => this._onPlayRejected(m));
         cli.on('opponentDisconnected', () => this._onOpponentLeft());
     }
 
@@ -94,8 +94,8 @@ export class BattleState {
         switch (ev.type) {
             case 'down': this._onDown(ev); break;
             case 'move': this._onMove(ev); break;
-            case 'up':   this._onUp(ev);   break;
-            case 'key':  this._onKey(ev);  break;
+            case 'up': this._onUp(ev); break;
+            case 'key': this._onKey(ev); break;
             case 'blur': this._cancelDrag(); break;
             default: break;
         }
@@ -177,16 +177,20 @@ export class BattleState {
     _finalizeRun() {
         const w = this._world;
         const score = this._computeScore(w);
+        const levelNum = Number.parseInt(w.level.id.match(/\d+/)?.[0] ?? '0', 10);
         const meta = {
             timePlayed: w.matchTime,
-            level: w.level.id,
+            level: levelNum,
             heroId: this._game.run.heroId,
             outcome: w.outcome
         };
-        try { this._game.platform.sendScore(score, meta); } catch {}
-        try { this._game.platform.gameOver(score, meta); } catch {}
+        try { this._game.platform.sendScore(score, meta); } catch {// Ignore if platform doesn't support score submission.}
+        }
+        try { this._game.platform.gameOver(score, meta); } catch { // Ignore if platform doesn't support gameOver.}
+        }
         if (w.outcome === 'win' && w.level.id !== '__multiplayer__') {
-            try { this._game.platform.levelCompleted(w.level.id, { stars: 3, perfectClear: false }); } catch {}
+            try { this._game.platform.levelCompleted(levelNum, { stars: 3, perfectClear: false }); } catch { // Ignore if platform doesn't support levelCompleted.  }
+            }
         }
         // MP outcome is server-authoritative — no client message needed.
         this._game.run.outcome = w.outcome;
@@ -209,7 +213,9 @@ export class BattleState {
     render(ctx) {
         if (!this._renderer) return;
         this._renderer.render(ctx, this._drag);
-        UIPainter.button(ctx, { ...this._pauseBtn, label: '⏸',
-            fill: 'rgba(0,0,0,0.5)', stroke: 'rgba(255,255,255,0.3)', radius: 6, font: '16px system-ui' });
+        UIPainter.button(ctx, {
+            ...this._pauseBtn, label: '⏸',
+            fill: 'rgba(0,0,0,0.5)', stroke: 'rgba(255,255,255,0.3)', radius: 6, font: '16px system-ui'
+        });
     }
 }

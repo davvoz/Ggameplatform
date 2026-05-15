@@ -4,6 +4,14 @@ import { UIPainter } from '../ui/UIPainter.js';
 import { CardArt } from '../ui/CardArt.js';
 import { ArenaTheme } from './ArenaTheme.js';
 
+/** Visual config for each aura type — drawn beneath all sprites in a dedicated pass. */
+const AURA_STYLES = Object.freeze({
+    heal: { fill: 'rgba(160,230,100,0.05)', stroke: 'rgba(160,230,100,0.50)', freq: 0.8 },
+    buff: { fill: 'rgba(255,200, 60,0.06)', stroke: 'rgba(255,215, 60,0.60)', freq: 0.7 },
+    slow: { fill: 'rgba(170,140,255,0.05)', stroke: 'rgba(170,140,255,0.50)', freq: 0.6 },
+    dot:  { fill: 'rgba(100,185, 60,0.06)', stroke: 'rgba(100,185, 60,0.52)', freq: 1.1 },
+});
+
 /**
  * Renders the battle: arena, entities, projectiles, VFX, and the bottom HUD
  * (mana bar + 4-card hand + tower HP). Pure draw — no game logic.
@@ -30,6 +38,10 @@ export class BattleRenderer {
 
     _drawEntities(ctx) {
         const list = this._world.entityManager.list();
+        // Pass 0: aura rings beneath everything.
+        for (const e of list) {
+            if (e.kind === EntityKind.UNIT) this._drawAura(ctx, e);
+        }
         // Draw in z-order: towers, units/heroes, projectiles.
         for (const e of list) {
             if (e.kind === EntityKind.TOWER) this._drawTower(ctx, e);
@@ -41,6 +53,25 @@ export class BattleRenderer {
         for (const e of list) {
             if (e.kind === EntityKind.PROJECTILE) this._drawProjectile(ctx, e);
         }
+    }
+
+    _drawAura(ctx, e) {
+        const aura = e.def?.auraEffect;
+        if (!aura || e.isDead()) return;
+        const style = AURA_STYLES[aura.type];
+        if (!style) return;
+        const t = performance.now() / 1000;
+        const pulse = 1 + 0.04 * Math.sin(t * style.freq * Math.PI * 2);
+        const r = aura.radius * pulse;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = style.fill;
+        ctx.fill();
+        ctx.strokeStyle = style.stroke;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
     }
 
     _teamColor(team) {
@@ -131,7 +162,11 @@ export class BattleRenderer {
         const w = width;
         const h = 4;
         const x = e.x - w / 2;
-        const y = e.y - e.radius - 10;
+        // Anchor above the sprite's actual top edge when present; fall back to
+        // the entity radius for primitive (non-sprite) rendering. Without this,
+        // the bar sits over the sprite's face because radius << sprite height.
+        const topOffset = e.sprite ? e.sprite.halfHeight() : e.radius;
+        const y = e.y - topOffset - 6;
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.fillRect(x, y, w, h);
         ctx.fillStyle = ratio > 0.4 ? GameConfig.COLOR.HP_GOOD : GameConfig.COLOR.HP_BAD;
@@ -168,11 +203,12 @@ export class BattleRenderer {
         UIPainter.text(ctx, `Tower ${Math.ceil(w.enemy.tower.hp)}/${w.enemy.tower.maxHp}`, 12, 56,
             { font: '11px system-ui', color: GameConfig.COLOR.TEXT_DIM });
 
-        // Timer (center)
+        // Timer (center) — turns orange in last rush window, red in last half
         const t = Math.max(0, w.timeLeft);
-        const mm = Math.floor(t / 60); const ss = Math.floor(t % 60).toString().padStart(2, '0');
+        const mm = Math.floor(t / 60);
+        const ss = Math.floor(t % 60).toString().padStart(2, '0');
         UIPainter.text(ctx, `${mm}:${ss}`, GameConfig.VIEW_WIDTH / 2, 36,
-            { font: 'bold 22px system-ui', color: GameConfig.COLOR.GOLD, align: 'center' });
+            { font: 'bold 22px system-ui', color: BattleRenderer._timerColor(t), align: 'center' });
 
         // Player info (right side of top bar)
         const px = GameConfig.VIEW_WIDTH - 152;
@@ -186,16 +222,39 @@ export class BattleRenderer {
             { font: '11px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'right' });
     }
 
+    static _timerColor(t) {
+        const rush = GameConfig.ARENA.MANA_RUSH_THRESHOLD;
+        if (t <= rush / 2) return GameConfig.COLOR.MANA_RUSH_RED;
+        if (t <= rush)     return GameConfig.COLOR.MANA_RUSH;
+        return GameConfig.COLOR.GOLD;
+    }
+
+    static _manaBarColor(tLeft) {
+        const rush = GameConfig.ARENA.MANA_RUSH_THRESHOLD;
+        if (tLeft > rush)      return GameConfig.COLOR.MANA;
+        if (tLeft <= rush / 2) return GameConfig.COLOR.MANA_RUSH_RED;
+        return GameConfig.COLOR.MANA_RUSH;
+    }
+
     _drawHand(ctx, drag) {
         const u = GameConfig.UI;
-        // Mana bar
+        // Mana bar — accelerated in last 60s, visual feedback on color and label
         const mp = this._world.player.mana;
+        const tLeft = this._world.timeLeft ?? Infinity;
+        const inRush = tLeft <= GameConfig.ARENA.MANA_RUSH_THRESHOLD;
+        const manaColor = BattleRenderer._manaBarColor(tLeft);
         UIPainter.bar(ctx,
             { x: 12, y: u.MANA_BAR_Y, w: GameConfig.VIEW_WIDTH - 24, h: u.MANA_BAR_HEIGHT },
-            mp.value / mp.max, GameConfig.COLOR.MANA);
-        UIPainter.text(ctx, `${mp.value.toFixed(1)} / ${mp.max} mana`,
+            mp.value / mp.max, manaColor);
+        const manaLabel = inRush
+            ? `⚡ ${mp.value.toFixed(1)} / ${mp.max} MANA RUSH!`
+            : `${mp.value.toFixed(1)} / ${mp.max} mana`;
+        UIPainter.text(ctx, manaLabel,
             GameConfig.VIEW_WIDTH / 2, u.MANA_BAR_Y - 2,
-            { font: '10px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
+            {
+                font: inRush ? 'bold 10px system-ui' : '10px system-ui',
+                color: inRush ? manaColor : GameConfig.COLOR.TEXT_DIM, align: 'center'
+            });
 
         // Hand panel background
         ctx.fillStyle = 'rgba(7,6,15,0.75)';
@@ -245,11 +304,14 @@ export class BattleRenderer {
         const portraitY = rect.y + 3;
         this._paintCardPortrait(ctx, card, portraitX, portraitY, portraitSize, portraitSize, enabled);
 
-        // Name strip across the full card width
+        // Name strip across the full card width — outlined for readability
         const nameColor = enabled ? GameConfig.COLOR.TEXT : GameConfig.COLOR.TEXT_DIM;
         UIPainter.text(ctx, this._fitName(card.name, rect.w - 6),
             rect.x + rect.w / 2, rect.y + rect.h - 4,
-            { font: 'bold 10px system-ui', align: 'center', color: nameColor });
+            {
+                font: 'bold 10px system-ui', align: 'center', color: nameColor,
+                outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
+            });
 
         // Cost gem: top-left corner, slightly overlapping the portrait
         this._paintCostGem(ctx, rect.x + 11, rect.y + 11, card.cost, enabled);
@@ -293,7 +355,10 @@ export class BattleRenderer {
         ctx.stroke();
         ctx.restore();
         UIPainter.text(ctx, `${cost}`, cx, cy + 4,
-            { font: 'bold 12px system-ui', color: '#fff', align: 'center' });
+            {
+                font: 'bold 12px system-ui', color: '#fff', align: 'center',
+                outline: { color: 'rgba(0,0,0,0.9)', width: 1 }
+            });
     }
 
     /** Truncates name with ellipsis when too long for the available width. */
@@ -312,12 +377,12 @@ export class BattleRenderer {
         ctx.save();
         ctx.fillStyle = 'rgba(95,168,255,0.06)';
         ctx.fillRect(a.SUMMON_ZONE_LEFT, a.SUMMON_ZONE_TOP,
-                     a.SUMMON_ZONE_RIGHT - a.SUMMON_ZONE_LEFT, a.SUMMON_ZONE_BOTTOM - a.SUMMON_ZONE_TOP);
+            a.SUMMON_ZONE_RIGHT - a.SUMMON_ZONE_LEFT, a.SUMMON_ZONE_BOTTOM - a.SUMMON_ZONE_TOP);
         ctx.strokeStyle = valid ? GameConfig.COLOR.GOLD : 'rgba(255,80,80,0.6)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 4]);
         ctx.strokeRect(a.SUMMON_ZONE_LEFT + 1, a.SUMMON_ZONE_TOP + 1,
-                       a.SUMMON_ZONE_RIGHT - a.SUMMON_ZONE_LEFT - 2, a.SUMMON_ZONE_BOTTOM - a.SUMMON_ZONE_TOP - 2);
+            a.SUMMON_ZONE_RIGHT - a.SUMMON_ZONE_LEFT - 2, a.SUMMON_ZONE_BOTTOM - a.SUMMON_ZONE_TOP - 2);
         ctx.setLineDash([]);
         ctx.restore();
         // Cursor marker
@@ -338,7 +403,10 @@ export class BattleRenderer {
             UIPainter.spriteFrame(ctx, sheet, 0, drag.x - 28, drag.y - 28, 56, 56);
 
             UIPainter.text(ctx, card.name, drag.x, drag.y - 38,
-                { font: 'bold 12px system-ui', color: GameConfig.COLOR.TEXT, align: 'center' });
+                {
+                    font: 'bold 12px system-ui', color: GameConfig.COLOR.TEXT, align: 'center',
+                    outline: { color: 'rgba(0,0,0,0.95)', width: 3 }
+                });
         }
     }
 }

@@ -22,6 +22,29 @@ export class MeleeAttack {
     }
 }
 
+/**
+ * CleaveAttack — like MeleeAttack but also damages all enemies within
+ * `splashRadius` around the attacker for `splashDamageMult` of full damage.
+ * Makes expensive tanks genuinely counter swarms.
+ */
+export class CleaveAttack {
+    get soundKey() { return SoundEvent.UNIT_ATTACK_MELEE; }
+    perform(owner, target, world) {
+        const primaryDmg = effectiveDamage(owner);
+        target.takeDamage(primaryDmg, world, owner);
+        if (!world?.spatial) return;
+        const splashR = owner.def.splashRadius ?? 40;
+        const splashMult = owner.def.splashDamageMult ?? 0.5;
+        const splashDmg = primaryDmg * splashMult;
+        const nearby = world.spatial.queryByTeam(owner.x, owner.y, splashR, target.team);
+        for (const e of nearby) {
+            if (e !== target && !e.isDead()) {
+                e.takeDamage(splashDmg, world, owner);
+            }
+        }
+    }
+}
+
 export class RangedAttack {
     get soundKey() { return SoundEvent.UNIT_ATTACK_RANGED; }
     perform(owner, target, world) {
@@ -68,6 +91,7 @@ export class AttackController {
 
 export function buildAttackStrategy(def) {
     if (def.attackKind === 'melee') return new MeleeAttack();
+    if (def.attackKind === 'cleave') return new CleaveAttack();
     if (def.attackKind === 'ranged') return new RangedAttack();
     if (def.attackKind === 'support') return new NullAttack();
     throw new Error(`buildAttackStrategy: unknown attackKind "${def.attackKind}"`);

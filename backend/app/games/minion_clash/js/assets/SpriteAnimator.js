@@ -80,6 +80,20 @@ export class SpriteAnimator {
     isCompleted() { return this._completed; }
     get currentClip() { return this._currentName; }
 
+    /**
+     * Half the rendered frame height (in pixels), used by the renderer to anchor
+     * overlays (e.g. HP bar) above the sprite's actual top edge instead of above
+     * the entity's collision radius (which is much smaller than the sprite).
+     * Returns 0 if the sheet has not loaded yet.
+     */
+    halfHeight() {
+        const def = this._currentDef;
+        if (!def) return 0;
+        const sheet = this._assets.peekSheet(def.sheetId);
+        if (!sheet) return 0;
+        return (sheet.frameH * this._scale) / 2;
+    }
+
     /** Draw the current frame centered at (x,y), respecting facingX (-1 flips horizontally) and optional rotation (radians). */
     draw(ctx, x, y, facingX, rotation) {
         const def = this._currentDef;

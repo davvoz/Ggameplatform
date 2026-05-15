@@ -25,7 +25,8 @@ export const GameConfig = Object.freeze({
         SUMMON_ZONE_TOP: 410,    // bottom edge of bridge
         SUMMON_ZONE_BOTTOM: 700,
         SUMMON_ZONE_LEFT: 20,
-        SUMMON_ZONE_RIGHT: 460
+        SUMMON_ZONE_RIGHT: 460,
+        MANA_RUSH_THRESHOLD: 120   // seconds remaining when mana regen accelerates
     }),
 
     UI: Object.freeze({
@@ -75,6 +76,8 @@ export const GameConfig = Object.freeze({
         MANA: '#5fa9ff',
         HP_GOOD: '#7be37b',
         HP_BAD: '#ff6a6a',
+        MANA_RUSH: '#ff9a3c',
+        MANA_RUSH_RED: '#ec0303',
         OVERLAY: 'rgba(7,6,15,0.78)'
     }),
 

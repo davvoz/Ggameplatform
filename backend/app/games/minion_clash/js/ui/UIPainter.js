@@ -47,15 +47,24 @@ export const UIPainter = Object.freeze({
                 scale,
                 color: explicitColor,
                 align: opts.align ?? 'left',
-                baseline: _bitmapBaselineFromCss(opts.baseline ?? 'alphabetic')
+                baseline: _bitmapBaselineFromCss(opts.baseline ?? 'alphabetic'),
+                outline: opts.outline ?? null
             });
             return;
         }
+        // Native canvas fallback — supports outline via strokeText when bitmap
+        // font has not been loaded yet.
         ctx.save();
-        ctx.fillStyle = opts.color ?? GameConfig.COLOR.TEXT;
         ctx.font = opts.font ?? '18px system-ui';
         ctx.textAlign = opts.align ?? 'left';
         ctx.textBaseline = opts.baseline ?? 'alphabetic';
+        if (opts.outline) {
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = opts.outline.width ?? 2.5;
+            ctx.strokeStyle = opts.outline.color ?? 'rgba(0,0,0,0.95)';
+            ctx.strokeText(str, x, y);
+        }
+        ctx.fillStyle = opts.color ?? GameConfig.COLOR.TEXT;
         ctx.fillText(str, x, y);
         ctx.restore();
     },

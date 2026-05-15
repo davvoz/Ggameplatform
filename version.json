@@ -1,8 +1,17 @@
 {
-  "version": "5.4.2",
-  "timestamp": "2026-05-15T17:35:01.284Z",
-  "buildNumber": 560,
+  "version": "5.4.3",
+  "timestamp": "2026-05-15T21:35:55.184Z",
+  "buildNumber": 561,
   "changelog": [
+    {
+      "version": "5.4.3",
+      "date": "2026-05-15",
+      "type": "patch",
+      "changes": [
+        "fix:[BJ,YATZI,MC]Sonar",
+        "🔖 Bump version to 5.4.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.2",
       "date": "2026-05-15",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[DC] editor- add selection center calculations and entity handles for resizing and rotation",
         "🔖 Bump version to 5.3.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.3.3",
-      "date": "2026-05-07",
-      "type": "patch",
-      "changes": [
-        "fix: remove max-width",
-        "🔖 Bump version to 5.3.2 [skip-version]"
       ]
     }
   ]

@@ -18,9 +18,6 @@ let bet = 10;
 let busy = false;
 let parentOrigin = null; // Validated parent origin for secure postMessage
 
-// Track rendered cards so we only add new ones
-let renderedDealerCards = [];
-let renderedPlayerCards = [];
 let dealerRevealed = false;
 
 // ─── DOM Refs ──────────────────────────────────────────────────────
@@ -44,7 +41,7 @@ const $rulesClose = document.getElementById('rulesClose');
 
 // ─── Platform SDK ──────────────────────────────────────────────────
 async function initSDK() {
-    if (!window.PlatformSDK) {
+    if (!globalThis.PlatformSDK) {
         console.warn('PlatformSDK not found');
         userId = 'test_user';
         fetchBalance();
@@ -52,17 +49,17 @@ async function initSDK() {
     }
     try {
         // userId comes from the 'config' event, NOT from init callbacks
-        window.PlatformSDK.on('config', (cfg) => {
+        globalThis.PlatformSDK.on('config', (cfg) => {
             if (cfg?.userId) userId = cfg.userId;
         });
-        await window.PlatformSDK.init({
+        await globalThis.PlatformSDK.init({
             onPause() { },
             onResume() { },
             onExit() { },
         });
         // Fallback: check platformConfig or localStorage
         if (!userId) {
-            userId = window.platformConfig?.userId
+            userId = globalThis.platformConfig?.userId
                 || localStorage.getItem('platformUserId')
                 || null;
         }
@@ -78,22 +75,22 @@ async function initSDK() {
     window.addEventListener('message', (event) => {
         try {
             const msg = event.data;
-            if (!msg || !msg.type) return;
-            
+            if (!msg?.type) return;
+
             // Validate protocol version to ensure it's a valid platform message
             if (msg.protocolVersion !== '1.0.0') return;
-            
+
             // Verify origin: once parent origin is established, reject messages from other origins
             if (parentOrigin && event.origin !== parentOrigin) {
                 console.warn('[BJ] Rejected message from untrusted origin:', event.origin);
                 return;
             }
-            
+
             // Store parent origin from first valid message
             if (!parentOrigin && event.origin) {
                 parentOrigin = event.origin;
             }
-            
+
             if (msg.type === 'showXPBanner' && msg.payload) {
                 showXPBanner(msg.payload.xp_earned, msg.payload);
             }
@@ -161,28 +158,28 @@ function buildCardEl(card, animate = true) {
         const sym = SUIT_SYMBOL[card.suit] || card.suit;
         el.classList.add('card-face', color);
         el.dataset.key = cardKey(card);
-        
+
         // Create corner elements safely without innerHTML
         const cornerTop = document.createElement('div');
         cornerTop.className = 'card-corner';
         cornerTop.textContent = card.rank;
         cornerTop.appendChild(document.createElement('br'));
         cornerTop.appendChild(document.createTextNode(sym));
-        
+
         const rankSpan = document.createElement('span');
         rankSpan.className = 'card-rank';
         rankSpan.textContent = card.rank;
-        
+
         const suitSpan = document.createElement('span');
         suitSpan.className = 'card-suit';
         suitSpan.textContent = sym;
-        
+
         const cornerBr = document.createElement('div');
         cornerBr.className = 'card-corner-br';
         cornerBr.textContent = card.rank;
         cornerBr.appendChild(document.createElement('br'));
         cornerBr.appendChild(document.createTextNode(sym));
-        
+
         el.appendChild(cornerTop);
         el.appendChild(rankSpan);
         el.appendChild(suitSpan);
@@ -200,7 +197,6 @@ function buildCardEl(card, animate = true) {
 // ─── Incremental card sync ─────────────────────────────────────────
 // Compares previous vs new card arrays and only adds/flips/removes changed cards
 function syncCards(container, prevCards, newCards, staggerBase = 0) {
-    const addedKeys = [];
     let delay = staggerBase;
 
     // 1. If hidden card is now revealed → flip it in place
@@ -210,9 +206,7 @@ function syncCards(container, prevCards, newCards, staggerBase = 0) {
         // Find the hidden element and replace with revealed card
         const hiddenEl = container.querySelector('.card-back');
         if (hiddenEl) {
-            const revealedCard = newCards.find(c => !prevCards.slice(0, -1).some(
-                p => p.rank !== 'hidden' && cardKey(p) === cardKey(c)
-            ));
+
             // Actually the hidden card is the 2nd dealer card usually
             // Replace hidden → revealed with flip
             const idx = Array.from(container.children).indexOf(hiddenEl);
@@ -245,12 +239,10 @@ function clearTable() {
         cards.forEach(c => c.classList.add('card-deal-out'));
         setTimeout(() => {
             // Clear elements safely without innerHTML
-            while ($dealerCards.firstChild) $dealerCards.removeChild($dealerCards.firstChild);
-            while ($playerCards.firstChild) $playerCards.removeChild($playerCards.firstChild);
-            while ($splitHands.firstChild) $splitHands.removeChild($splitHands.firstChild);
+            while ($dealerCards.firstChild) $dealerCards.firstChild.remove();
+            while ($playerCards.firstChild) $playerCards.firstChild.remove();
+            while ($splitHands.firstChild) $splitHands.firstChild.remove();
             $splitHands.style.display = 'none';
-            renderedDealerCards = [];
-            renderedPlayerCards = [];
             dealerRevealed = false;
             resolve();
         }, 220);
@@ -353,23 +345,23 @@ function showXPBanner(xpAmount, payload) {
     }
     const banner = document.createElement('div');
     banner.className = 'game-xp-banner';
-    
+
     const badge = document.createElement('div');
     badge.className = 'game-xp-badge';
-    
+
     const icon = document.createElement('span');
     icon.className = 'game-xp-icon';
     icon.textContent = '⭐';
-    
+
     const amount = document.createElement('span');
     amount.className = 'game-xp-amount';
     amount.textContent = `+${Number(xpAmount).toFixed(2)} XP`;
-    
+
     badge.appendChild(icon);
     badge.appendChild(amount);
     banner.appendChild(badge);
     document.body.appendChild(banner);
-    
+
     setTimeout(() => { banner.classList.add('hiding'); setTimeout(() => banner.remove(), 500); }, 2500);
 }
 
@@ -471,16 +463,14 @@ function showLevelUpModal(data) {
 // ─── Update UI from game state ─────────────────────────────────────
 // ─── Game State Manager (Single Responsibility) ─────────────────
 class GameState {
-    constructor() {
-        this.dealer = null;
-        this.hands = [];
-        this.status = null;
-        this.availableActions = [];
-        this.totalPayout = 0;
-        this.initialBet = 0;
-        this.balance = 0;
-        this.isSplit = false;
-    }
+    dealer = null;
+    hands = [];
+    status = null;
+    availableActions = [];
+    totalPayout = 0;
+    initialBet = 0;
+    balance = 0;
+    isSplit = false;
 
     update(state) {
         this.dealer = state.dealer;
@@ -604,8 +594,8 @@ class CardRenderer {
     renderPlayerCards(gameState, isNewDeal) {
         const hand = gameState.getPrimaryHand();
         const newPlayerCards = hand.cards;
-
-        if (!gameState.isSplit) {
+        const notSplit = !gameState.isSplit;
+        if (notSplit) {
             this.$splitHands.style.display = 'none';
 
             if (isNewDeal) {
@@ -706,7 +696,9 @@ class CardRenderer {
 
     _clearContainer(container) {
         while (container.firstChild) {
-            container.removeChild(container.firstChild);
+           // container.removeChild(container.firstChild);
+           //DOM nodes should be removed using "remove()" instead of "removeChild()" (javascript:S7762)
+              container.firstChild.remove();
         }
     }
 }
@@ -760,7 +752,7 @@ class ResultHandler {
         const allPush = results.every(r => r === 'push');
 
         const statusConfig = this._getStatusConfig(results, anyWin, anyLose, allPush, gameState.totalPayout);
-        
+
         this.$gameStatus.textContent = statusConfig.text;
         this.$gameStatus.className = statusConfig.className;
 
@@ -876,16 +868,18 @@ class UICoordinator {
     }
 
     _notifyPlatform() {
-        if (window.PlatformSDK) {
+        if (globalThis.PlatformSDK) {
             try {
-                window.PlatformSDK.gameOver(this.gameState.totalPayout, {
+                globalThis.PlatformSDK.gameOver(this.gameState.totalPayout, {
                     extra_data: {
                         hands: this.gameState.hands.length,
                         bet: this.gameState.initialBet,
                         won: this.gameState.totalPayout > 0,
                     },
                 });
-            } catch (_) { }
+            } catch (_) {
+                console.warn('PlatformSDK.gameOver failed', _);
+            }
         }
     }
 
@@ -995,15 +989,17 @@ async function apiDeal() {
         // Notify platform
         try {
             const targetOrigin = parentOrigin || (document.referrer ? new URL(document.referrer).origin : null);
-            if (targetOrigin && window.parent && window.parent !== window.self) {
-                window.parent.postMessage({
+            if (targetOrigin && globalThis.parent && globalThis.parent !== globalThis.self) {
+                globalThis.parent.postMessage({
                     type: 'gameStarted',
                     payload: {},
                     timestamp: Date.now(),
                     protocolVersion: '1.0.0'
                 }, targetOrigin);
             }
-        } catch (_) { }
+        } catch (_) {
+            console.warn('Failed to post gameStarted message to parent', _);
+        }
 
         updateUI(state, true);
     } catch (e) {
@@ -1107,5 +1103,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ─── Init ──────────────────────────────────────────────────────────
-
-initSDK();
+await initSDK();

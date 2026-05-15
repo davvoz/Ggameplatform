@@ -66,12 +66,13 @@ function showXPBanner(xpAmount, payload) {
 
 function showLevelUpNotification(data) {
     const { old_level, new_level, title = '' } = data;
+    const titleHtml = title ? '<div style="margin-top:4px;font-size:.9em;opacity:.8">' + title + '</div>' : '';
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10001;background:#1a1a2e;border:2px solid #ffd700;border-radius:16px;padding:32px 40px;text-align:center;color:#fff;font-family:system-ui,sans-serif;pointer-events:none;';
     modal.innerHTML = `<div style="font-size:2em;margin-bottom:8px">🎉</div>
         <div style="font-size:1.4em;font-weight:700;color:#ffd700">Level Up!</div>
         <div style="margin-top:8px;font-size:1.1em">${old_level} → ${new_level}</div>
-        ${title ? `<div style="margin-top:4px;font-size:.9em;opacity:.8">${title}</div>` : ''}`;
+        ${titleHtml}`;
     document.body.appendChild(modal);
     setTimeout(() => modal.remove(), 3000);
 }

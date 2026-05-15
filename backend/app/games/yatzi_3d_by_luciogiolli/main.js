@@ -74,22 +74,15 @@ const CAMERA_TARGET_Y = -2;
 
 // SDK Integration
 async function initSDK() {
-  if (typeof PlatformSDK !== 'undefined') {
-    try {
-      await PlatformSDK.init({
-        onStart: () => {
-
-        },
-        onPause: () => {
-
-        }
-      });
-
-    } catch (error) {
-
-    }
-  } else {
-
+  if (typeof PlatformSDK === 'undefined') return;
+  try {
+    await PlatformSDK.init({
+      onStart: () => { /* no-op */ },
+      onPause: () => { /* no-op */ }
+    });
+  } catch (_error) {
+    // SDK init errors are non-fatal
+    console.warn('PlatformSDK initialization failed:', _error);
   }
 }
 
@@ -99,7 +92,7 @@ function startGameSession() {
   
   if (typeof PlatformSDK !== 'undefined' && parentOrigin) {
     try {
-      window.parent.postMessage({
+      globalThis.parent.postMessage({
         type: 'gameStarted',
         payload: {},
         timestamp: Date.now(),
@@ -115,17 +108,25 @@ function startGameSession() {
 function sendScoreToPlatform(playerScore, aiScore) {
   if (typeof PlatformSDK !== 'undefined') {
     try {
+      let winner;
+      if (playerScore > aiScore) {
+        winner = 'player';
+      } else if (playerScore < aiScore) {
+        winner = 'ai';
+      } else {
+        winner = 'tie';
+      }
       // Send gameOver with achievements for quest tracking
       PlatformSDK.gameOver(playerScore, {
         extra_data: {
           ai_score: aiScore,
-          winner: playerScore > aiScore ? 'player' : (playerScore < aiScore ? 'ai' : 'tie'),
+          winner,
           rounds_played: gameState.maxRounds,
           // Quest-specific achievements
-          roll_yatzi: gameState.achievements?.roll_yatzi || false,
-          full_house: gameState.achievements?.full_house || false,
-          large_straight: gameState.achievements?.large_straight || false,
-          upper_bonus: gameState.achievements?.upper_bonus || false
+          roll_yatzi: gameState.achievements.roll_yatzi || false,
+          full_house: gameState.achievements.full_house || false,
+          large_straight: gameState.achievements.large_straight || false,
+          upper_bonus: gameState.achievements.upper_bonus || false
         }
       });
 
@@ -136,13 +137,11 @@ function sendScoreToPlatform(playerScore, aiScore) {
 }
 
 function getDifficultyLabel(value) {
-  return DIFFICULTY_LABEL[value] || DIFFICULTY_LABEL.medium;
+  return DIFFICULTY_LABEL[value] ?? DIFFICULTY_LABEL.medium;
 }
 
 function closeDifficultyPanel() {
-  if (difficultyPanel) {
-    difficultyPanel.classList.add("hidden");
-  }
+  difficultyPanel?.classList.add("hidden");
 }
 
 function setDifficulty(newDifficulty, options = {}) {
@@ -199,7 +198,7 @@ function initThree() {
   const ambient = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
   scene.add(ambient);
 
-  const dir = new THREE.DirectionalLight(0xffffff, 1.0);
+  const dir = new THREE.DirectionalLight(0xffffff, 1);
   dir.position.set(4, 10, 4);
   dir.castShadow = true;
   dir.shadow.mapSize.set(1024, 1024);
@@ -211,7 +210,7 @@ function initThree() {
   const planeMat = new THREE.MeshStandardMaterial({
     color: 0x175c2a,
     roughness: 0.9,
-    metalness: 0.0
+    metalness: 0
   });
   const plane = new THREE.Mesh(planeGeo, planeMat);
   plane.rotation.x = -Math.PI / 2;
@@ -220,7 +219,7 @@ function initThree() {
 
   diceMgr = new DiceManager(scene);
 
-  window.addEventListener("resize", onResize);
+  globalThis.addEventListener("resize", onResize);
   renderer.domElement.addEventListener("pointerdown", onPointerDown);
 }
 
@@ -296,7 +295,7 @@ function resetGameState() {
 }
 
 function isPlayerTurn() {
-  return gameState && gameState.currentPlayer === "player";
+  return gameState?.currentPlayer === "player";
 }
 
 function updateScoreLists() {
@@ -331,15 +330,8 @@ function updateScoreLists() {
       hintScore = scoreCategory(cat, diceMgr.values.slice());
     }
 
-    if (pScore != null) {
-      pScoreEl.textContent = pScore;
-    } else if (hintScore != null) {
-      pScoreEl.textContent = hintScore;
-    } else {
-      pScoreEl.textContent = "-";
-    }
-
-    aScoreEl.textContent = aScore == null ? "-" : aScore;
+    pScoreEl.textContent = pScore ?? hintScore ?? "-";
+    aScoreEl.textContent = aScore ?? "-";
 
     if (pUsed) {
       playerRow.classList.add("taken");
@@ -550,6 +542,23 @@ function getBestAvailableScore(dice, scoreState) {
   return best;
 }
 
+function aiApplyHoldStrategy(r, keepMask) {
+  const keptCount = keepMask.filter(Boolean).length;
+  if (keptCount < 5 || r === 0) {
+    diceMgr.setHeldMask(keepMask);
+    return;
+  }
+  const currentBestScore = getBestAvailableScore(diceMgr.values.slice(), gameState.aiScores);
+  if (currentBestScore >= 25) {
+    diceMgr.setHeldMask(keepMask);
+  } else {
+    const modifiedMask = keepMask.slice();
+    const randomIdx = Math.floor(Math.random() * 5);
+    modifiedMask[randomIdx] = false;
+    diceMgr.setHeldMask(modifiedMask);
+  }
+}
+
 async function aiTurnStart() {
   if (gameState.gameOver) return;
   gameState.rollsUsed = 0;
@@ -582,25 +591,7 @@ async function aiTurnStart() {
         r + 1,
         aiDifficulty
       );
-      // Only apply the mask if not all dice are kept (to allow third roll)
-      const keptCount = keepMask.filter(k => k).length;
-      if (keptCount < 5 || r === 0) {
-        diceMgr.setHeldMask(keepMask);
-      } else {
-        // After roll 2, if AI wants to keep all, let it try the third roll anyway
-        // unless the score is already very good
-        const currentBestScore = getBestAvailableScore(diceMgr.values.slice(), gameState.aiScores);
-        if (currentBestScore >= 25) {
-          // Good enough, keep all
-          diceMgr.setHeldMask(keepMask);
-        } else {
-          // Not great, might as well try again - keep most but not all
-          const modifiedMask = keepMask.slice();
-          const randomIdx = Math.floor(Math.random() * 5);
-          modifiedMask[randomIdx] = false;
-          diceMgr.setHeldMask(modifiedMask);
-        }
-      }
+      aiApplyHoldStrategy(r, keepMask);
       await waitMs(300);
     }
   }
@@ -634,10 +625,34 @@ function animate() {
 }
 
 // ===== FULLSCREEN FUNCTIONALITY =====
+function enterNativeFullscreen(elem) {
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen();
+  } else {
+    // Fallback to iOS method
+    toggleIOSFullscreen();
+  }
+  document.body.classList.add('game-fullscreen');
+}
+
+function exitNativeFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
+  }
+  document.body.classList.remove('game-fullscreen');
+}
+
 function toggleFullscreen() {
-  // Use Platform SDK if available (works on iOS!)
-  if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
-    window.PlatformSDK.toggleFullscreen();
+  if (typeof globalThis.PlatformSDK?.toggleFullscreen === 'function') {
+    globalThis.PlatformSDK?.toggleFullscreen();
     return;
   }
   
@@ -645,7 +660,7 @@ function toggleFullscreen() {
   const elem = document.documentElement;
   
   // iOS/iPadOS detection
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
   const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
   
@@ -656,28 +671,9 @@ function toggleFullscreen() {
   }
   
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    // Enter fullscreen
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) {
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      elem.msRequestFullscreen();
-    } else {
-      // Fallback to iOS method
-      toggleIOSFullscreen();
-    }
-    document.body.classList.add('game-fullscreen');
+    enterNativeFullscreen(elem);
   } else {
-    // Exit fullscreen
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
-    document.body.classList.remove('game-fullscreen');
+    exitNativeFullscreen();
   }
 }
 
@@ -687,19 +683,16 @@ function toggleIOSFullscreen() {
   
   if (isFullscreen) {
     // Exit fullscreen
-    document.body.classList.remove('ios-game-fullscreen');
-    document.body.classList.remove('game-fullscreen');
+    document.body.classList.remove('ios-game-fullscreen', 'game-fullscreen');
     document.body.style.overflow = '';
-    const exitBtn = document.getElementById('ios-fs-exit');
-    if (exitBtn) exitBtn.remove();
+    document.getElementById('ios-fs-exit')?.remove();
   } else {
     // Enter fullscreen
     injectIOSFullscreenStyles();
-    document.body.classList.add('ios-game-fullscreen');
-    document.body.classList.add('game-fullscreen');
+    document.body.classList.add('ios-game-fullscreen', 'game-fullscreen');
     document.body.style.overflow = 'hidden';
     createIOSExitButton();
-    setTimeout(() => window.scrollTo(0, 1), 100);
+    setTimeout(() => globalThis.scrollTo(0, 1), 100);
   }
 }
 
@@ -810,7 +803,7 @@ function animateCamera(target) {
   const duration = 400;
   const startTime = performance.now();
   
-  function animate() {
+  function step() {
     const elapsed = performance.now() - startTime;
     const progress = Math.min(elapsed / duration, 1);
     
@@ -824,11 +817,11 @@ function animateCamera(target) {
     camera.lookAt(0, CAMERA_TARGET_Y, 0);
     
     if (progress < 1) {
-      requestAnimationFrame(animate);
+      requestAnimationFrame(step);
     }
   }
   
-  animate();
+  step();
 }
 
 // ===== GAME OVER OVERLAY =====
@@ -875,9 +868,7 @@ function handleRestart() {
   aiDifficulty = null;
   diceMgr.resetHeld();
   diceMgr.resetValues();
-  if (difficultyPanel) {
-    difficultyPanel.classList.remove("hidden");
-  }
+  difficultyPanel?.classList.remove("hidden");
   statusLine.textContent = "Choose difficulty";
   rollBtn.disabled = true;
   endTurnBtn.disabled = true;
@@ -898,13 +889,13 @@ function initDifficultySelector() {
   difficultyCards.forEach(btn => {
     btn.addEventListener("click", () => {
       const next = btn.dataset.difficulty;
-      if (!gameStarted) {
-        // First selection: start game
-        setDifficulty(next, { announce: true, startGame: true });
-      } else {
+      if (gameStarted) {
         // Subsequent selections: change difficulty and reset
         if (next === aiDifficulty) return;
         setDifficulty(next, { announce: true, startGame: false });
+      } else {
+        // First selection: start game
+        setDifficulty(next, { announce: true, startGame: true });
       }
     });
   });
@@ -916,19 +907,13 @@ function initEvents() {
   scoreWrapperEl.addEventListener("click", handleCategoryClick);
   
   // Fullscreen button
-  if (fullscreenBtn) {
-    fullscreenBtn.addEventListener("click", toggleFullscreen);
-  }
+  fullscreenBtn?.addEventListener("click", toggleFullscreen);
   
   // Zoom button
-  if (zoomBtn) {
-    zoomBtn.addEventListener("click", toggleZoom);
-  }
+  zoomBtn?.addEventListener("click", toggleZoom);
   
   // Restart button
-  if (restartBtn) {
-    restartBtn.addEventListener("click", handleRestart);
-  }
+  restartBtn?.addEventListener("click", handleRestart);
   
   // Fullscreen change listeners
   document.addEventListener('fullscreenchange', updateFullscreenIcon);
@@ -952,4 +937,4 @@ async function init() {
   hideLoadingScreen();
 }
 
-init();
+await init();

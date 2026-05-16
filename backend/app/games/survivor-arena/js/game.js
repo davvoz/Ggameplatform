@@ -5529,7 +5529,7 @@ class Game {
 
             if (soul.phase === 0) {
                 // Moving outward
-                this.updateSoulPosition(soul, dt, px, py, targets, cfg);
+                this.updateSoulPosition({ soul, dt, px, py, targets, cfg });
             } else {
                 // Returning
                 this.updateSoulReturnPath({ soul, dt, px, py, targets, cfg, tw, i });

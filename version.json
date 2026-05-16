@@ -1,8 +1,17 @@
 {
-  "version": "5.4.3",
-  "timestamp": "2026-05-15T21:35:55.184Z",
-  "buildNumber": 561,
+  "version": "5.4.4",
+  "timestamp": "2026-05-16T08:28:34.875Z",
+  "buildNumber": 562,
   "changelog": [
+    {
+      "version": "5.4.4",
+      "date": "2026-05-16",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2]ultimate instuctions",
+        "🔖 Bump version to 5.4.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.3",
       "date": "2026-05-15",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:add invite friend , [SS2] fix unlock worlds ,[DBW] fix modify game stat",
         "🔖 Bump version to 5.3.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.3.4",
-      "date": "2026-05-08",
-      "type": "patch",
-      "changes": [
-        "fix:[DC] editor- add selection center calculations and entity handles for resizing and rotation",
-        "🔖 Bump version to 5.3.3 [skip-version]"
       ]
     }
   ]

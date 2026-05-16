@@ -1,8 +1,17 @@
 {
-  "version": "5.4.4",
-  "timestamp": "2026-05-16T08:28:34.875Z",
-  "buildNumber": 562,
+  "version": "5.4.5",
+  "timestamp": "2026-05-16T20:20:31.972Z",
+  "buildNumber": 563,
   "changelog": [
+    {
+      "version": "5.4.5",
+      "date": "2026-05-16",
+      "type": "patch",
+      "changes": [
+        "fix: [SA]update parameters for soul position and return path functions",
+        "🔖 Bump version to 5.4.4 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.4",
       "date": "2026-05-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Implement reply-to feature in community and private messaging",
         "🔖 Bump version to 5.3.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.3.5",
-      "date": "2026-05-08",
-      "type": "patch",
-      "changes": [
-        "fix:add invite friend , [SS2] fix unlock worlds ,[DBW] fix modify game stat",
-        "🔖 Bump version to 5.3.4 [skip-version]"
       ]
     }
   ]

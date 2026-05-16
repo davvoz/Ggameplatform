@@ -40,6 +40,13 @@ const REFERENCE_WIDTH = _isMobileDevice ? 310 : 410;
 
 class Game {
     constructor(canvas) {
+        if(_isMobileDevice) {
+            //sottotitoloDesktop non si deve vedere su mobile
+            const el = document.querySelector('.sottotitoloDesktop');
+            if (el) {   
+                el.style.display = 'none';
+            }
+        }
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
 

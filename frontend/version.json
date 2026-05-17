@@ -1,8 +1,17 @@
 {
-  "version": "5.4.5",
-  "timestamp": "2026-05-16T20:20:31.972Z",
-  "buildNumber": 563,
+  "version": "5.4.6",
+  "timestamp": "2026-05-17T08:06:07.183Z",
+  "buildNumber": 564,
   "changelog": [
+    {
+      "version": "5.4.6",
+      "date": "2026-05-17",
+      "type": "patch",
+      "changes": [
+        "fix:[MC] font outlines",
+        "🔖 Bump version to 5.4.5 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.5",
       "date": "2026-05-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: Enhance message bubble styling and add auto-scroll to chat",
         "🔖 Bump version to 5.3.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.3.6",
-      "date": "2026-05-12",
-      "type": "patch",
-      "changes": [
-        "fix: Implement reply-to feature in community and private messaging",
-        "🔖 Bump version to 5.3.5 [skip-version]"
       ]
     }
   ]

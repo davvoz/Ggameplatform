@@ -121,6 +121,11 @@ const game = new Game(canvas);
 try {
     await game.init();
     game.start();
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.classList.add('fade-out');
+        setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+    }
 } catch (err) {
     console.error('[minion_clash] boot failed', err);
     const ctx = canvas.getContext('2d');

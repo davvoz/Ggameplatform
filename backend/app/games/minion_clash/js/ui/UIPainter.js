@@ -97,9 +97,26 @@ export const UIPainter = Object.freeze({
         });
         if (btn.subLabel) {
             UIPainter.text(ctx, btn.subLabel, btn.x + btn.w / 2, btn.y + btn.h - 8, {
-                font: '11px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center'
+                font: '11px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center',
             });
         }
+    },
+
+    /** Like button() but draws no label — calls drawFn(ctx, btn) instead so the
+     *  caller can render arbitrary content (emoji, sprites, shapes) bypassing
+     *  the bitmap font. drawFn receives a clipped/saved context centered on btn. */
+    buttonCustom(ctx, btn, drawFn) {
+        const enabled = btn.enabled !== false;
+        const fill = enabled
+            ? (btn.fill ?? 'rgba(95,168,255,0.20)')
+            : 'rgba(80,80,100,0.30)';
+        const stroke = enabled
+            ? (btn.stroke ?? GameConfig.COLOR.PLAYER_TINT)
+            : 'rgba(140,140,160,0.5)';
+        UIPainter.panel(ctx, btn.x, btn.y, btn.w, btn.h, { fill, stroke, radius: btn.radius ?? 10 });
+        ctx.save();
+        drawFn(ctx, btn);
+        ctx.restore();
     },
 
     isInside(p, rect) {

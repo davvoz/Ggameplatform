@@ -78,7 +78,8 @@ export const GameConfig = Object.freeze({
         HP_BAD: '#ff6a6a',
         MANA_RUSH: '#ff9a3c',
         MANA_RUSH_RED: '#ec0303',
-        OVERLAY: 'rgba(7,6,15,0.78)'
+        OVERLAY: 'rgba(7,6,15,0.78)',
+        TITLE_OUTLINE : 'rgba(243, 62, 62, 0.95)'
     }),
 
     AUDIO: Object.freeze({

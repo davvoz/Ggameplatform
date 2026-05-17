@@ -215,9 +215,14 @@ export class BattleState {
     render(ctx) {
         if (!this._renderer) return;
         this._renderer.render(ctx, this._drag);
-        UIPainter.button(ctx, {
-            ...this._pauseBtn, label: '⏸',
-            fill: 'rgba(0,0,0,0.5)', stroke: 'rgba(255,255,255,0.3)', radius: 6, font: '16px system-ui'
+        UIPainter.buttonCustom(ctx, {
+            ...this._pauseBtn,
+            fill: 'rgba(0,0,0,0.5)', stroke: 'rgba(255,255,255,0.3)', radius: 6,
+        }, (ctx, btn) => {
+            ctx.font = '18px system-ui';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🏳️', btn.x + btn.w / 2, btn.y + btn.h / 2);
         });
     }
 }

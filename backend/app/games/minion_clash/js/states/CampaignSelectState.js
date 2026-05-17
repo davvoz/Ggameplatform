@@ -49,7 +49,9 @@ export class CampaignSelectState {
     render(ctx) {
         UIPainter.button(ctx, this._backBtn);
         UIPainter.text(ctx, 'CAMPAIGN', GameConfig.VIEW_WIDTH / 2, 60,
-            { font: 'bold 22px system-ui', color: GameConfig.COLOR.GOLD, align: 'center' });
+            { font: 'bold 22px system-ui', color: GameConfig.COLOR.GOLD, align: 'center',
+                    outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 }
+             });
         for (const it of this._items) this._drawLevel(ctx, it);
     }
 
@@ -58,9 +60,10 @@ export class CampaignSelectState {
             fill: 'rgba(20,16,40,0.85)', stroke: 'rgba(255,255,255,0.18)'
         });
         UIPainter.text(ctx, it.level.title, it.x + 16, it.y + 30,
-            { font: 'bold 16px system-ui', color: GameConfig.COLOR.TEXT });
+            { font: 'bold 18px system-ui', color: GameConfig.COLOR.TEXT });
         UIPainter.text(ctx, it.level.subtitle ?? '', it.x + 16, it.y + 54,
-            { font: '12px system-ui', color: GameConfig.COLOR.TEXT_DIM });
+            { font: '15px system-ui', color: GameConfig.COLOR.TEXT_DIM ,
+                  outline: { color: 'rgba(243, 239, 239, 0.95)', width: 1 }});
         const enemyName = this._game.data.getHero(it.level.enemyHeroId).name;
         UIPainter.text(ctx, `Enemy: ${enemyName}`, it.x + 16, it.y + 76,
             { font: '12px system-ui', color: GameConfig.COLOR.ENEMY_TINT });

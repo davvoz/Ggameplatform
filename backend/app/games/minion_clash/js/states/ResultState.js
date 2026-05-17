@@ -53,8 +53,11 @@ export class ResultState {
         const isWin = r.outcome === 'win';
         const title = this._titleFor(r.outcome);
         const titleColor = isWin ? GameConfig.COLOR.GOLD : GameConfig.COLOR.ENEMY_TINT;
+        const titleOutline = isWin ? GameConfig.COLOR.TITLE_OUTLINE : GameConfig.COLOR.GOLD;
         UIPainter.text(ctx, title, GameConfig.VIEW_WIDTH / 2, 200,
-            { font: 'bold 48px system-ui', color: titleColor, align: 'center' });
+            { font: 'bold 48px system-ui', color: titleColor, align: 'center',
+                    outline: { color: titleOutline, width: 3 }
+             });
 
         const stats = r.matchStats ?? { score: 0, durationSec: 0, unitsKilled: 0 };
         const lines = [

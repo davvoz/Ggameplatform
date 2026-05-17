@@ -66,7 +66,9 @@ export class HeroSelectState {
     render(ctx) {
         UIPainter.button(ctx, this._backBtn);
         UIPainter.text(ctx, 'CHOOSE YOUR HERO', GameConfig.VIEW_WIDTH / 2, 70,
-            { font: 'bold 22px system-ui', color: GameConfig.COLOR.GOLD, align: 'center' });
+            { font: 'bold 22px system-ui', color: GameConfig.COLOR.GOLD, align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 } 
+             });
 
         for (const c of this._cards) this._drawHeroCard(ctx, c);
         UIPainter.button(ctx, this._confirmBtn);

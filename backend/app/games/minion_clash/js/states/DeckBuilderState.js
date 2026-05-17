@@ -60,14 +60,16 @@ export class DeckBuilderState {
 
         // Action buttons row
         const actY = 146, actH = 30;
-        this._saveBtn   = { id: 'save',   label: 'SAVE',   x: W / 2 - 134, y: actY, w: 80, h: actH, enabled: false };
-        this._loadBtn   = { id: 'load',   label: 'LOAD',   x: W / 2 -  44, y: actY, w: 80, h: actH, enabled: false };
-        this._deleteBtn = { id: 'delete', label: 'DELETE', x: W / 2 +  46, y: actY, w: 88, h: actH, enabled: false };
+        this._saveBtn = { id: 'save', label: 'SAVE', x: W / 2 - 134, y: actY, w: 80, h: actH, enabled: false };
+        this._loadBtn = { id: 'load', label: 'LOAD', x: W / 2 - 44, y: actY, w: 80, h: actH, enabled: false };
+        this._deleteBtn = { id: 'delete', label: 'DELETE', x: W / 2 + 46, y: actY, w: 88, h: actH, enabled: false };
 
         // Card list shifted down to make room
         this._listRect = { x: 12, y: 192, w: W - 24, h: 478 };
-        this._nextBtn = { id: 'next', label: 'START MATCH',
-            x: W / 2 - 110, y: 730, w: 220, h: 50, enabled: false };
+        this._nextBtn = {
+            id: 'next', label: 'START MATCH',
+            x: W / 2 - 110, y: 730, w: 220, h: 50, enabled: false
+        };
 
         // Async fetch saved slots from backend (idempotent — UI stays usable while pending)
         this._fetchSlots();
@@ -95,8 +97,8 @@ export class DeckBuilderState {
         const slot = this._slots[this._activeSlot];
         const slotFilled = !!slot;
         const authed = !!this._game.platform?.isAuthenticated?.();
-        this._saveBtn.enabled   = authed && hasFullDeck;
-        this._loadBtn.enabled   = authed && slotFilled;
+        this._saveBtn.enabled = authed && hasFullDeck;
+        this._loadBtn.enabled = authed && slotFilled;
         this._deleteBtn.enabled = authed && slotFilled;
     }
 
@@ -133,23 +135,33 @@ export class DeckBuilderState {
     _dispatchTap(t) {
         const click = () => this._game.sound?.play(SoundEvent.UI_CLICK);
         const handlers = [
-            { rect: this._backBtn,   guard: () => true,
-              run: () => { click(); this._game.transitionTo(new HeroSelectState(this._game)); } },
-            { rect: this._saveBtn,   guard: () => this._saveBtn.enabled,
-              run: () => { click(); this._onSave(); } },
-            { rect: this._loadBtn,   guard: () => this._loadBtn.enabled,
-              run: () => { click(); this._onLoad(); } },
-            { rect: this._deleteBtn, guard: () => this._deleteBtn.enabled,
-              run: () => { click(); this._onDelete(); } },
-            { rect: this._nextBtn,   guard: () => this._nextBtn.enabled,
-              run: () => {
-                  click();
-                  this._game.run.deckIds = Array.from(this._selected);
-                  const next = this._game.run.mode === 'multiplayer'
-                      ? new MultiplayerLobbyState(this._game)
-                      : new CampaignSelectState(this._game);
-                  this._game.transitionTo(next);
-              } },
+            {
+                rect: this._backBtn, guard: () => true,
+                run: () => { click(); this._game.transitionTo(new HeroSelectState(this._game)); }
+            },
+            {
+                rect: this._saveBtn, guard: () => this._saveBtn.enabled,
+                run: () => { click(); this._onSave(); }
+            },
+            {
+                rect: this._loadBtn, guard: () => this._loadBtn.enabled,
+                run: () => { click(); this._onLoad(); }
+            },
+            {
+                rect: this._deleteBtn, guard: () => this._deleteBtn.enabled,
+                run: () => { click(); this._onDelete(); }
+            },
+            {
+                rect: this._nextBtn, guard: () => this._nextBtn.enabled,
+                run: () => {
+                    click();
+                    this._game.run.deckIds = Array.from(this._selected);
+                    const next = this._game.run.mode === 'multiplayer'
+                        ? new MultiplayerLobbyState(this._game)
+                        : new CampaignSelectState(this._game);
+                    this._game.transitionTo(next);
+                }
+            },
         ];
         for (const h of handlers) {
             if (h.guard() && UIPainter.isInside(t, h.rect)) { h.run(); return; }
@@ -225,12 +237,18 @@ export class DeckBuilderState {
     render(ctx) {
         UIPainter.button(ctx, this._backBtn);
         UIPainter.text(ctx, 'BUILD YOUR DECK', GameConfig.VIEW_WIDTH / 2, 50,
-            { font: 'bold 20px system-ui', color: GameConfig.COLOR.GOLD, align: 'center' });
+            {
+                font: 'bold 20px system-ui', color: GameConfig.COLOR.GOLD, align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 }
+            });
         const counter = `${this._selected.size}/${GameConfig.BATTLE.ROSTER_SIZE} cards`;
         UIPainter.text(ctx, counter, GameConfig.VIEW_WIDTH / 2, 80,
-            { font: '14px system-ui',
-              color: this._selected.size === GameConfig.BATTLE.ROSTER_SIZE ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT_DIM,
-              align: 'center' });
+            {
+                font: '14px system-ui',
+                color: this._selected.size === GameConfig.BATTLE.ROSTER_SIZE ?
+                    GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT_DIM,
+                align: 'center'
+            });
 
         this._renderSlotRow(ctx);
         UIPainter.button(ctx, this._saveBtn);
@@ -257,8 +275,10 @@ export class DeckBuilderState {
             UIPainter.text(ctx, `Slot ${r.slot + 1}`, r.x + r.w / 2, r.y + 14,
                 { font: 'bold 11px system-ui', align: 'center', color: GameConfig.COLOR.TEXT });
             UIPainter.text(ctx, filled ? '● saved' : 'empty', r.x + r.w / 2, r.y + 28,
-                { font: '10px system-ui', align: 'center',
-                  color: filled ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT_DIM });
+                {
+                    font: '10px system-ui', align: 'center',
+                    color: filled ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT_DIM
+                });
         }
     }
 
@@ -327,19 +347,25 @@ export class DeckBuilderState {
         const tx = px + portraitSize + 6;
         const tw = rect.x + rect.w - tx - 4;
         UIPainter.text(ctx, this._fitText(card.name, tw, 10), tx, py + 10,
-            { font: 'bold 14px system-ui', align: 'left', color: GameConfig.COLOR.TEXT,
-              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
+            {
+                font: 'bold 14px system-ui', align: 'left', color: GameConfig.COLOR.TEXT,
+                outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
+            });
         UIPainter.text(ctx, card.kind.toUpperCase(), tx, py + 30,
-            { font: '11px system-ui', color: rarity.stroke, align: 'left',
-              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
+            {
+                font: '11px system-ui', color: rarity.stroke, align: 'left',
+                outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
+            });
 
         // Description below the portrait, 3 lines max
         const lines = this._wrap(card.description ?? '', Math.floor(rect.w / 9) - 1, 3);
         let y = py + portraitSize + 10;
         for (const ln of lines) {
             UIPainter.text(ctx, ln, rect.x + rect.w / 2, y,
-                { font: 'bold 12px system-ui', align: 'center', color: GameConfig.COLOR.TEXT,
-              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
+                {
+                    font: 'bold 12px system-ui', align: 'center', color: GameConfig.COLOR.TEXT,
+                    outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
+                });
             y += 13;
         }
     }
@@ -358,8 +384,10 @@ export class DeckBuilderState {
         ctx.stroke();
         ctx.restore();
         UIPainter.text(ctx, `${cost}`, cx, cy + 5,
-            { font: 'bold 14px system-ui', color: '#fff', align: 'center',
-              outline: { color: 'rgba(0,0,0,0.9)', width: 1 } });
+            {
+                font: 'bold 14px system-ui', color: '#fff', align: 'center',
+                outline: { color: 'rgba(0,0,0,0.9)', width: 1 }
+            });
     }
 
     _fitText(s, maxWidthPx, charPx) {

@@ -540,6 +540,7 @@ class Game {
         this.worldsVisited = [];
         this.portalChoiceActive = false;
         this.tempBossWeapon = null; // Active temporary boss drop weapon
+        this.ui.hideTempWeaponHUD(); // Clear any lingering event HUD from previous session
         this.particles.clear();
 
         // Create player at center

@@ -1,5 +1,4 @@
-import { Vector2 } from './utils.js';
-import { MathUtils } from './utils.js';
+import { MathUtils ,Vector2} from './utils.js';
 
 /**
  * Survivor Arena - Base Entity Class

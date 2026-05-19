@@ -698,13 +698,14 @@ class ParticleSystem {
     createBossDeathEffect(x, y) {
         // Multiple waves of explosions
         for (let wave = 0; wave < 3; wave++) {
+            const condA = wave === 1 ? '#e91e63' : '#ffd700';
             setTimeout(() => {
                 this.createExplosion(
                     x + MathUtils.randomRange(-50, 50),
                     y + MathUtils.randomRange(-50, 50),
                     {
                         count: 40,
-                        color: wave === 0 ? '#9c27b0' : wave === 1 ? '#e91e63' : '#ffd700',
+                        color: wave === 0 ? '#9c27b0' : condA,
                         speed: 300,
                         size: 10
                     }

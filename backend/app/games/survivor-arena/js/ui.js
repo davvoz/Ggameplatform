@@ -1,6 +1,5 @@
-import { formatTime } from './utils.js';
-import { MathUtils } from './utils.js';
-import { CONFIG, WORLDS } from './config.js';
+import { MathUtils ,formatTime} from './utils.js';
+import { CONFIG } from './config.js';
 /**
  * Survivor Arena - UI Manager
  * @fileoverview Handles all UI updates and interactions
@@ -19,22 +18,22 @@ class UIManager {
             startButton: document.getElementById('startButton'),
             gameOverScreen: document.getElementById('gameOverScreen'),
             restartButton: document.getElementById('restartButton'),
-            
+
             // Game UI
             gameUI: document.getElementById('gameUI'),
             gameTimer: document.getElementById('gameTimer'),
             killCount: document.getElementById('killCount'),
             scoreDisplay: document.getElementById('scoreDisplay'),
             pauseButton: document.getElementById('pauseButton'),
-            
+
             // XP & Level
             xpProgress: document.getElementById('xpProgress'),
             levelDisplay: document.getElementById('levelDisplay'),
-            
+
             // Health
             healthProgress: document.getElementById('healthProgress'),
             healthText: document.getElementById('healthText'),
-            
+
             // Weapon slots
             weaponSlots: [
                 document.getElementById('weaponSlot1'),
@@ -42,7 +41,7 @@ class UIManager {
                 document.getElementById('weaponSlot3'),
                 document.getElementById('weaponSlot4')
             ],
-            
+
             // Modals
             upgradeModal: document.getElementById('upgradeModal'),
             newLevelText: document.getElementById('newLevelText'),
@@ -50,25 +49,25 @@ class UIManager {
             pauseModal: document.getElementById('pauseModal'),
             resumeButton: document.getElementById('resumeButton'),
             quitButton: document.getElementById('quitButton'),
-            
+
             // Boss warning
             bossWarning: document.getElementById('bossWarning'),
-            
+
             // Final stats
             finalScore: document.getElementById('finalScore'),
             finalTime: document.getElementById('finalTime'),
             finalKills: document.getElementById('finalKills'),
             finalLevel: document.getElementById('finalLevel'),
-            
+
             // Joystick
             joystickContainer: document.getElementById('joystickContainer'),
             joystickBase: document.getElementById('joystickBase'),
             joystickThumb: document.getElementById('joystickThumb')
         };
-        
+
         // Floating damage numbers
         this.floatingNumbers = [];
-        
+
         // Screen shake
         this.shakeIntensity = 0;
         this.shakeDuration = 0;
@@ -94,7 +93,7 @@ class UIManager {
         this.elements.startScreen?.classList.add('hidden');
         this.elements.gameOverScreen?.classList.add('hidden');
         this.elements.gameUI?.classList.add('hidden');
-        
+
         // Show requested screen
         switch (screenName) {
             case 'loading':
@@ -167,7 +166,7 @@ class UIManager {
         if (this.elements.healthProgress) {
             const percent = (current / max) * 100;
             this.elements.healthProgress.style.width = `${percent}%`;
-            
+
             // Color based on health
             if (percent <= 25) {
                 this.elements.healthProgress.style.background = 'linear-gradient(90deg, #ff0000, #ff4444)';
@@ -190,37 +189,44 @@ class UIManager {
         for (let i = 0; i < 4; i++) {
             const slot = this.elements.weaponSlots[i];
             if (!slot) continue;
-            
+
             const weapon = weapons[i];
             const iconEl = slot.querySelector('.weapon-icon');
             const levelEl = slot.querySelector('.weapon-level');
             const cooldownEl = slot.querySelector('.weapon-cooldown');
-            
+
             if (weapon) {
-                slot.classList.add('active');
-                if (iconEl) iconEl.textContent = weapon.icon;
-                if (levelEl) {
-                    levelEl.textContent = weapon.level;
-                    levelEl.style.display = 'flex';
-                }
-                
-                // Update cooldown indicator
-                if (cooldownEl) {
-                    const cooldownPercent = Math.max(0, weapon.cooldown / weapon.fireRate);
-                    if (cooldownPercent > 0) {
-                        slot.classList.remove('ready');
-                        cooldownEl.style.height = `${cooldownPercent * 100}%`;
-                    } else {
-                        slot.classList.add('ready');
-                        cooldownEl.style.height = '0%';
-                    }
-                }
+                this.updateWeaponSlot(slot, iconEl, weapon, levelEl, cooldownEl);
             } else {
-                slot.classList.remove('active');
+                this.resetWeaponSlot(slot, iconEl, levelEl, cooldownEl);
+            }
+        }
+    }
+
+    resetWeaponSlot(slot, iconEl, levelEl, cooldownEl) {
+        slot.classList.remove('active', 'ready');
+        if (iconEl) iconEl.textContent = '➕';
+        if (levelEl) levelEl.style.display = 'none';
+        if (cooldownEl) cooldownEl.style.height = '0%';
+    }
+
+    updateWeaponSlot(slot, iconEl, weapon, levelEl, cooldownEl) {
+        slot.classList.add('active');
+        if (iconEl) iconEl.textContent = weapon.icon;
+        if (levelEl) {
+            levelEl.textContent = weapon.level;
+            levelEl.style.display = 'flex';
+        }
+
+        // Update cooldown indicator
+        if (cooldownEl) {
+            const cooldownPercent = Math.max(0, weapon.cooldown / weapon.fireRate);
+            if (cooldownPercent > 0) {
                 slot.classList.remove('ready');
-                if (iconEl) iconEl.textContent = '➕';
-                if (levelEl) levelEl.style.display = 'none';
-                if (cooldownEl) cooldownEl.style.height = '0%';
+                cooldownEl.style.height = `${cooldownPercent * 100}%`;
+            } else {
+                slot.classList.add('ready');
+                cooldownEl.style.height = '0%';
             }
         }
     }
@@ -235,10 +241,10 @@ class UIManager {
         if (this.elements.newLevelText) {
             this.elements.newLevelText.textContent = `Level ${newLevel}`;
         }
-        
+
         if (this.elements.upgradeOptions) {
             this.elements.upgradeOptions.innerHTML = '';
-            
+
             for (const option of options) {
                 const optionEl = document.createElement('div');
                 optionEl.className = 'upgrade-option';
@@ -250,16 +256,16 @@ class UIManager {
                     </div>
                     <span class="upgrade-rarity ${option.rarity}">${option.rarity}</span>
                 `;
-                
+
                 optionEl.addEventListener('click', () => {
                     onSelect(option);
                     this.hideUpgradeModal();
                 });
-                
+
                 this.elements.upgradeOptions.appendChild(optionEl);
             }
         }
-        
+
         this.elements.upgradeModal?.classList.remove('hidden');
     }
 
@@ -277,11 +283,11 @@ class UIManager {
      */
     showPauseModal(onResume, onQuit) {
         this.elements.pauseModal?.classList.remove('hidden');
-        
+
         // Remove old listeners
         const resumeBtn = this.elements.resumeButton;
         const quitBtn = this.elements.quitButton;
-        
+
         if (resumeBtn) {
             const newResumeBtn = resumeBtn.cloneNode(true);
             resumeBtn.parentNode?.replaceChild(newResumeBtn, resumeBtn);
@@ -291,7 +297,7 @@ class UIManager {
                 onResume();
             });
         }
-        
+
         if (quitBtn) {
             const newQuitBtn = quitBtn.cloneNode(true);
             quitBtn.parentNode?.replaceChild(newQuitBtn, quitBtn);
@@ -323,7 +329,7 @@ class UIManager {
     hideBossWarning() {
         this.elements.bossWarning?.classList.add('hidden');
     }
-    
+
     /**
      * Show wave announcement
      * @param {string} title 
@@ -354,16 +360,16 @@ class UIManager {
             const container = document.getElementById('game-container') || document.body;
             container.appendChild(announcement);
         }
-        
+
         announcement.innerHTML = `
             <div style="animation: pulse 0.5s infinite">${title}</div>
             <div style="font-size: 18px; color: #fff; margin-top: 5px;">x${count} enemies incoming!</div>
         `;
         announcement.style.opacity = '1';
-        
+
         // Trigger screen shake
         this.triggerScreenShake(8, 300);
-        
+
         // Hide after 2 seconds
         setTimeout(() => {
             announcement.style.opacity = '0';
@@ -402,16 +408,16 @@ class UIManager {
         el.className = 'floating-damage';
         if (isCrit) el.classList.add('crit');
         if (isHeal) el.classList.add('heal');
-        
+
         el.textContent = isHeal ? `+${Math.round(damage)}` : `-${Math.round(damage)}`;
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
         el.style.zIndex = '1000001';
-        
+
         // Append to game-container for fullscreen compatibility
         const container = document.getElementById('game-container') || document.body;
         container.appendChild(el);
-        
+
         // Remove after animation
         setTimeout(() => el.remove(), 1000);
     }
@@ -427,11 +433,11 @@ class UIManager {
         const flash = document.createElement('div');
         flash.className = 'damage-flash';
         flash.style.zIndex = '1000001';
-        
+
         // Append to game-container for fullscreen compatibility
         const container = document.getElementById('game-container') || document.body;
         container.appendChild(flash);
-        
+
         setTimeout(() => {
             flash.remove();
             this._damageFlashActive = false;
@@ -457,12 +463,12 @@ class UIManager {
         if (this.shakeDuration <= 0) {
             return { x: 0, y: 0 };
         }
-        
+
         this.shakeDuration -= deltaTime * 1000;
-        
+
         const progress = this.shakeDuration / CONFIG.EFFECTS.SCREEN_SHAKE_DURATION;
         const currentIntensity = this.shakeIntensity * progress;
-        
+
         return {
             x: MathUtils.randomRange(-currentIntensity, currentIntensity),
             y: MathUtils.randomRange(-currentIntensity, currentIntensity)
@@ -476,11 +482,11 @@ class UIManager {
      */
     updateJoystick(dx, dy) {
         if (!this.elements.joystickThumb) return;
-        
+
         const maxOffset = 35; // Half of base size minus half of thumb size
         const offsetX = dx * maxOffset;
         const offsetY = dy * maxOffset;
-        
+
         this.elements.joystickThumb.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
     }
 
@@ -500,7 +506,7 @@ class UIManager {
      */
     showJoystickAt(x, y) {
         if (!this.elements.joystickContainer) return;
-        
+
         // Position joystick centered on touch point
         this.elements.joystickContainer.style.left = `${x - 70}px`;
         this.elements.joystickContainer.style.top = `${y - 70}px`;
@@ -533,11 +539,11 @@ class UIManager {
             </div>
         `;
         banner.style.zIndex = '1000001';
-        
+
         // Append to game-container for fullscreen compatibility
         const container = document.getElementById('game-container') || document.body;
         container.appendChild(banner);
-        
+
         setTimeout(() => {
             banner.classList.add('hiding');
             setTimeout(() => banner.remove(), 500);

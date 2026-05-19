@@ -60,7 +60,7 @@ class Spawner {
             weights[type] = config.spawnWeight || 0;
         }
         // World enemies start with 0 weight (activated when in that world)
-        for (const [type, config] of Object.entries(WORLD_ENEMIES)) {
+        for (const [type] of Object.entries(WORLD_ENEMIES)) {
             weights[type] = 0;
         }
         return weights;
@@ -110,7 +110,7 @@ class Spawner {
         // If in a world, spawn ONLY that world's enemies (each world has its own set)
         if (this.currentWorld && this.currentWorld !== 'voidAbyss') {
             const world = WORLDS[this.currentWorld];
-            if (world && world.enemyTypes) {
+            if (world?.enemyTypes) {
                 // Zero out base enemies - worlds have their own
                 this.enemyWeights.basic = 0;
                 this.enemyWeights.fast = 0;
@@ -226,7 +226,7 @@ class Spawner {
     getWorldEnemyType(baseType) {
         if (!this.currentWorld || this.currentWorld === 'voidAbyss') return baseType;
         const world = WORLDS[this.currentWorld];
-        if (!world || !world.enemyTypes) return baseType;
+        if (!world?.enemyTypes) return baseType;
 
         // Map base archetypes to world equivalents by role
         const roleMap = {
@@ -339,7 +339,8 @@ class Spawner {
             let weight = data.weight;
 
             // Increase rare enemy chances over time
-            if (rarity !== 'common') {
+            const rare = rarity !== 'common';
+            if (rare) {
                 weight *= (1 + timeFactor * 2);
                 if (boosted) weight *= 2;
             } else {

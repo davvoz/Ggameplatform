@@ -12,34 +12,34 @@ let game = null;
  * Initialize Platform SDK
  */
 async function initSDK() {
-    if (typeof PlatformSDK !== 'undefined') {
-        try {
-            await PlatformSDK.init({
-                onStart: () => {
-                    console.log('[SDK] Platform started');
-                },
-                onPause: () => {
-                    console.log('[SDK] Platform paused');
-                    if (game && game.state === 'playing') {
-                        game.pauseGame();
-                    }
-                },
-                onResume: () => {
-                    console.log('[SDK] Platform resumed');
-                    if (game && game.state === 'paused') {
-                        game.resumeGame();
-                    }
-                }
-            });
-            console.log('[SDK] Platform SDK initialized');
-            
-            // Register event listeners after SDK is initialized
-            registerPlatformSDKListeners();
-        } catch (error) {
-            console.warn('[SDK] Failed to initialize Platform SDK:', error);
-        }
-    } else {
+    if (typeof PlatformSDK === 'undefined') {
         console.log('[SDK] Platform SDK not available');
+        return;
+    }
+    try {
+        await PlatformSDK.init({
+            onStart: () => {
+                console.log('[SDK] Platform started');
+            },
+            onPause: () => {
+                console.log('[SDK] Platform paused');
+                if (game?.state === 'playing') {
+                    game.pauseGame();
+                }
+            },
+            onResume: () => {
+                console.log('[SDK] Platform resumed');
+                if (game?.state === 'paused') {
+                    game.resumeGame();
+                }
+            }
+        });
+        console.log('[SDK] Platform SDK initialized');
+
+        // Register event listeners after SDK is initialized
+        registerPlatformSDKListeners();
+    } catch (error) {
+        console.warn('[SDK] Failed to initialize Platform SDK:', error);
     }
 }
 
@@ -56,7 +56,7 @@ async function initGame() {
     // Create game instance
     try {
         game = new Game();
-        window.game = game; // debug access
+        globalThis.game = game; // debug access
         console.log('[Main] Game instance created successfully');
         await game.init();
     } catch (error) {
@@ -119,58 +119,29 @@ let parentOrigin = document.referrer ? new URL(document.referrer).origin : null;
 /**
  * Handle messages from parent frame (platform)
  */
-function handleMessage(event) {
-    const data = event.data;
-    
-    if (!data || typeof data !== 'object') return;
-
-    // Verify origin: reject messages from untrusted origins
-    if (parentOrigin && event.origin !== parentOrigin) {
-        console.warn('[SurvivorArena] Rejected message from untrusted origin:', event.origin);
-        return;
-    }
-
-    // Pin parent origin from first valid message if referrer wasn't available
-    if (!parentOrigin && event.origin) {
-        parentOrigin = event.origin;
-    }
-    
+function dispatchPlatformMessage(data) {
     switch (data.type) {
         case 'platformReady':
             onPlatformReady();
             break;
-            
         case 'pause':
-            if (game && game.state === 'playing') {
-                game.pauseGame();
-            }
+            if (game?.state === 'playing') game.pauseGame();
             break;
-            
         case 'resume':
-            if (game && game.state === 'paused') {
-                game.resumeGame();
-            }
+            if (game?.state === 'paused') game.resumeGame();
             break;
-            
         case 'mute':
-            if (game && game.audio) {
-                game.audio.mute();
-            }
+            game?.audio?.mute();
             break;
-            
         case 'unmute':
-            if (game && game.audio) {
-                game.audio.unmute();
-            }
+            game?.audio?.unmute();
             break;
-            
         case 'showXPBanner':
             if (data.payload && game) {
                 console.log('🎁 [Window Message] Showing XP banner:', data.payload);
                 showXPBanner(data.payload.xp_earned, data.payload);
             }
             break;
-            
         case 'showLevelUpModal':
             if (data.payload && game) {
                 console.log('🎉 [Window Message] Showing level-up:', data.payload);
@@ -178,6 +149,21 @@ function handleMessage(event) {
             }
             break;
     }
+}
+
+function handleMessage(event) {
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+    // Verify origin: reject messages from untrusted origins
+    if (parentOrigin && event.origin !== parentOrigin) {
+        console.warn('[SurvivorArena] Rejected message from untrusted origin:', event.origin);
+        return;
+    }
+    // Pin parent origin from first valid message if referrer wasn't available
+    if (!parentOrigin && event.origin) {
+        parentOrigin = event.origin;
+    }
+    dispatchPlatformMessage(data);
 }
 
 // Show XP banner (exposed globally for platform)
@@ -321,8 +307,8 @@ function showLevelUpNotification(levelUpData) {
 }
 
 // Expose globally
-window.showXPBanner = showXPBanner;
-window.showLevelUpNotification = showLevelUpNotification;
+globalThis.showXPBanner = showXPBanner;
+globalThis.showLevelUpNotification = showLevelUpNotification;
 
 // Listen for platform messages
 window.addEventListener('message', handleMessage);
@@ -340,55 +326,35 @@ function registerPlatformSDKListeners() {
 }
 
 // Initialize when DOM is ready
+function setupTouchListeners() {
+    document.body.addEventListener('touchstart', (e) => {
+        if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
+            return;
+        }
+        if (e.target.closest('#game-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    document.body.addEventListener('touchmove', (e) => {
+        if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
+            return;
+        }
+        if (e.target.closest('#game-container')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        // Prevent default touch behaviors (exclude buttons and interactive elements)
-        document.body.addEventListener('touchstart', (e) => {
-            // Don't prevent on buttons, inputs, or interactive elements
-            if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
-                return;
-            }
-            if (e.target.closest('#game-container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        document.body.addEventListener('touchmove', (e) => {
-            // Don't prevent on buttons or interactive elements
-            if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
-                return;
-            }
-            if (e.target.closest('#game-container')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        initGame();
+    document.addEventListener('DOMContentLoaded', async () => {
+        setupTouchListeners();
+        await initGame();
         setupFullscreen();
     });
 } else {
-    // Prevent default touch behaviors (exclude buttons and interactive elements)
-    document.body.addEventListener('touchstart', (e) => {
-        // Don't prevent on buttons, inputs, or interactive elements
-        if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
-            return;
-        }
-        if (e.target.closest('#game-container')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    document.body.addEventListener('touchmove', (e) => {
-        // Don't prevent on buttons or interactive elements
-        if (e.target.closest('button, input, .btn-primary, .btn-secondary, .upgrade-option, .modal, .screen, #fullscreen-btn, #settings-popup, .toggle-btn')) {
-            return;
-        }
-        if (e.target.closest('#game-container')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    initGame();
+    setupTouchListeners();
+    await initGame();
     setupFullscreen();
 }
 
@@ -415,100 +381,100 @@ function setupFullscreen() {
     updateFullscreenIcon();
 }
 
-function toggleFullscreen() {
-    console.log('[Fullscreen] toggleFullscreen called');
-    
-    // Prefer Platform SDK if available (works on iOS!)
-    if (window.PlatformSDK && typeof window.PlatformSDK.toggleFullscreen === 'function') {
-        window.PlatformSDK.toggleFullscreen();
-        return;
-    }
-    
-    // Use game-container for Android compatibility
-    const elem = document.getElementById('game-container') || document.documentElement;
-    
-    // iOS/iPadOS detection
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
-    const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-    
-    if ((isIOS || isIPadOS) && !fullscreenSupported) {
-        // iOS doesn't support Fullscreen API - use CSS workaround
+function enterNativeFullscreen(elem) {
+    const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
+    if (!requestFs) {
         toggleIOSFullscreen();
         return;
     }
-    
+    const promise = requestFs.call(elem);
+    if (promise?.then) {
+        promise.then(() => {
+            document.body.classList.add('game-fullscreen');
+            setTimeout(() => game?.handleResize(), 100);
+            updateFullscreenIcon();
+        }).catch((err) => {
+            console.warn('Fullscreen request failed:', err);
+            toggleIOSFullscreen();
+        });
+    } else {
+        document.body.classList.add('game-fullscreen');
+        setTimeout(() => game?.handleResize(), 100);
+    }
+}
+
+function exitNativeFullscreen() {
+    const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+    if (!exitFs) return;
+    const promise = exitFs.call(document);
+    if (promise?.then) {
+        promise.then(() => {
+            document.body.classList.remove('game-fullscreen');
+            setTimeout(() => game?.handleResize(), 100);
+            updateFullscreenIcon();
+        }).catch(() => { /* intentionally ignored */ });
+    } else {
+        document.body.classList.remove('game-fullscreen');
+        setTimeout(() => game?.handleResize(), 100);
+    }
+}
+
+function toggleFullscreen() {
+    console.log('[Fullscreen] toggleFullscreen called');
+
+    // Prefer Platform SDK if available (works on iOS!)
+    if (globalThis.PlatformSDK && typeof globalThis.PlatformSDK.toggleFullscreen === 'function') {
+        globalThis.PlatformSDK.toggleFullscreen();
+        return;
+    }
+
+    // Use game-container for Android compatibility
+    const elem = document.getElementById('game-container') || document.documentElement;
+
+    // iOS/iPadOS detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !globalThis.MSStream;
+    const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const fullscreenSupported = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+
+    if ((isIOS || isIPadOS) && !fullscreenSupported) {
+        toggleIOSFullscreen();
+        return;
+    }
+
     const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
 
-    if (!fsElement) {
-        // Enter fullscreen
-        const requestFs = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
-        if (requestFs) {
-            const promise = requestFs.call(elem);
-            if (promise && promise.then) {
-                promise.then(() => {
-                    document.body.classList.add('game-fullscreen');
-                    setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
-                    updateFullscreenIcon();
-                }).catch((err) => {
-                    console.warn('Fullscreen request failed:', err);
-                    // Fallback to iOS method if native fails
-                    toggleIOSFullscreen();
-                });
-            } else {
-                document.body.classList.add('game-fullscreen');
-                setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
-            }
-        } else {
-            // Fallback to iOS method
-            toggleIOSFullscreen();
-        }
+    if (fsElement) {
+        exitNativeFullscreen();
     } else {
-        // Exit fullscreen
-        const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
-        if (exitFs) {
-            const promise = exitFs.call(document);
-            if (promise && promise.then) {
-                promise.then(() => {
-                    document.body.classList.remove('game-fullscreen');
-                    setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
-                    updateFullscreenIcon();
-                }).catch(() => {});
-            } else {
-                document.body.classList.remove('game-fullscreen');
-                setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
-            }
-        }
+        enterNativeFullscreen(elem);
     }
 }
 
 // iOS Fullscreen CSS workaround
 function toggleIOSFullscreen() {
     const isFullscreen = document.body.classList.contains('ios-game-fullscreen');
-    
+
     if (isFullscreen) {
         // Exit fullscreen
         document.documentElement.classList.remove('ios-game-fullscreen');
-        document.body.classList.remove('ios-game-fullscreen');
-        document.body.classList.remove('game-fullscreen');
+        document.body.classList.remove('ios-game-fullscreen', 'game-fullscreen');
         document.body.style.overflow = '';
         const exitBtn = document.getElementById('ios-fs-exit');
         if (exitBtn) exitBtn.remove();
         updateFullscreenIcon();
-        setTimeout(() => { try { game && game.handleResize(); } catch(e){} }, 100);
+        setTimeout(() => game?.handleResize(), 100);
     } else {
         // Enter fullscreen
         injectIOSFullscreenStyles();
         document.documentElement.classList.add('ios-game-fullscreen');
-        document.body.classList.add('ios-game-fullscreen');
-        document.body.classList.add('game-fullscreen');
+        document.body.classList.add('ios-game-fullscreen', 'game-fullscreen');
         document.body.style.overflow = 'hidden';
         createIOSExitButton();
         updateFullscreenIcon();
         // Scroll to hide address bar on iOS
         setTimeout(() => {
             window.scrollTo(0, 1);
-            try { game && game.handleResize(); } catch(e){}
+            game?.handleResize();
         }, 100);
         // Try again after a short delay
         setTimeout(() => {
@@ -625,12 +591,12 @@ function updateFullscreenIcon() {
 
 // Notify parent that game frame is ready
 window.addEventListener('load', () => {
-    if (window.parent !== window) {
-        const targetOrigin = document.referrer ? new URL(document.referrer).origin : null;
-        window.parent.postMessage({
+    if (globalThis.parent != globalThis) {
+        const targetOrigin = document.referrer ? new URL(document.referrer).origin : '*';
+        globalThis.parent.postMessage({
             type: 'gameReady',
             game: 'survivor-arena'
-        }, null);
+        }, targetOrigin);
     }
 });
 
@@ -643,13 +609,13 @@ document.addEventListener('contextmenu', (e) => {
 
 // Handle visibility change (pause when tab hidden)
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden && game && game.state === 'playing') {
+    if (document.hidden && game?.state === 'playing') {
         game.pauseGame();
     }
 });
 
 // Export for debugging
-window.survivorArena = {
+globalThis.survivorArena = {
     getGame: () => game,
     restart: () => game?.startGame(),
     pause: () => game?.pauseGame(),

@@ -340,7 +340,7 @@ const MathUtils = {
                 return item;
             }
         }
-        return items[items.length - 1];
+       return items.at(-1);
     }
 };
 

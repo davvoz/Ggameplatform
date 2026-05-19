@@ -7,13 +7,14 @@ import { CONFIG } from './config.js';
 
 
 class AudioManager {
+    context = null;
+    masterGain = null;
+    sfxGain = null;
+    musicGain = null;
+    sounds = new Map();
+    initialized = false;
+
     constructor() {
-        this.context = null;
-        this.masterGain = null;
-        this.sfxGain = null;
-        this.musicGain = null;
-        this.sounds = new Map();
-        this.initialized = false;
         
         // iOS detection
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
@@ -52,7 +53,7 @@ class AudioManager {
         if (this.initialized) return;
 
         try {
-            this.context = new (window.AudioContext || window.webkitAudioContext)();
+            this.context = new (globalThis.AudioContext || globalThis.webkitAudioContext)();
             
             // Master gain
             this.masterGain = this.context.createGain();
@@ -101,7 +102,7 @@ class AudioManager {
         if (this.unlocked) return;
         
         try {
-            if (this.context && this.context.state === 'suspended') {
+            if (this.context?.state === 'suspended') {
                 await this.context.resume();
             }
             
@@ -177,6 +178,7 @@ class AudioManager {
                     .then(resolve)
                     .catch(reject);
             } catch (e) {
+                console.warn('⚠️ decodeAudioData failed, trying callback fallback:', e);
                 this.context.decodeAudioData(
                     arrayBuffer,
                     (buffer) => resolve(buffer),
@@ -240,7 +242,7 @@ class AudioManager {
             }
             
             // Ensure AudioContext is active
-            if (this.context && this.context.state === 'suspended') {
+            if (this.context?.state === 'suspended') {
                 await this.context.resume();
             }
             
@@ -287,7 +289,7 @@ class AudioManager {
                 this.bgMusicSource.stop();
                 this.bgMusicSource.disconnect();
             } catch (e) {
-                // Ignore if already stopped
+                console.warn('⚠️ Error stopping background music:', e);
             }
             this.bgMusicSource = null;
         }
@@ -384,7 +386,7 @@ class AudioManager {
 
         try {
             // Resume suspended context
-            if (this.context && this.context.state === 'suspended') {
+            if (this.context?.state === 'suspended') {
                 this.context.resume();
             }
             
@@ -408,7 +410,7 @@ class AudioManager {
      * Resume audio context
      */
     resume() {
-        if (this.context && this.context.state === 'suspended') {
+        if (this.context?.state === 'suspended') {
             this.context.resume();
         }
     }

@@ -20,14 +20,14 @@ export const CHARACTERS = {
         gradientColors: ['#00e5ff', '#1a237e'],
         // Stats (base = 1.0, values are multipliers)
         stats: {
-            health: 1.0,        // 150 HP
-            speed: 1.0,         // 220
-            damage: 1.0,        // 1x
+            health: 1,        // 150 HP
+            speed: 1,         // 220
+            damage: 1,        // 1x
             armor: 0,           // 0
-            healthRegen: 1.0,   // 1 HP/s
+            healthRegen: 1,   // 1 HP/s
             critChance: 0.05,
-            xpMultiplier: 1.0,
-            pickupRadius: 1.0   // 100
+            xpMultiplier: 1,
+            pickupRadius: 1    // 100
         }
     },
     fire_warrior: {
@@ -70,10 +70,10 @@ export const CHARACTERS = {
             speed: 0.8,         // 176
             damage: 0.85,       // -15% damage
             armor: 0.2,         // 20% damage reduction
-            healthRegen: 2.0,   // 2 HP/s
+            healthRegen: 2,   // 2 HP/s
             critChance: 0.03,
             xpMultiplier: 1.1,
-            pickupRadius: 1.0
+            pickupRadius: 1
         }
     },
     shadow_assassin: {
@@ -172,6 +172,11 @@ export class CharacterManager {
             }
             return;
         }
+        await this.syncUserPurchases(userId);
+    }
+
+
+    async syncUserPurchases(userId) {
         try {
             const response = await fetch(`/api/coins/${encodeURIComponent(userId)}/purchases/survivorarena`);
             if (response.ok) {
@@ -218,12 +223,14 @@ export class CharacterManager {
             const checkResp = await fetch(`/api/coins/${encodeURIComponent(userId)}/purchases/survivorarena`);
             if (checkResp.ok) {
                 const checkData = await checkResp.json();
-                if (checkData.purchased_themes && checkData.purchased_themes.includes(charId)) {
+                if (checkData.purchased_themes?.includes(charId)) {
                     this.unlockCharacter(charId);
                     return { success: true, reason: 'already_owned_server' };
                 }
             }
-        } catch (e) { /* continue */ }
+        } catch (e) { /* continue */
+            console.warn('[CharacterManager] Failed to verify purchase before buying:', e);
+         }
 
         // Spend coins
         try {
@@ -281,8 +288,8 @@ export class CharacterManager {
     }
 
     _getUserId() {
-        if (typeof window !== 'undefined' && window.platformConfig && window.platformConfig.userId) {
-            return window.platformConfig.userId;
+        if (typeof globalThis !== 'undefined' && globalThis.platformConfig?.userId) {
+            return globalThis.platformConfig.userId;
         }
         return null;
     }
@@ -310,13 +317,18 @@ export class CharacterManager {
         if (balanceEl) balanceEl.textContent = `${balance}`;
 
         const characters = this.getAllCharacters();
+        this.renderCharacterCards(characters, balance, containerId, grid);
+    }
+
+    renderCharacterCards(characters, balance, containerId, grid) {
         for (const char of characters) {
             const isOwned = this.isUnlocked(char.id);
             const isSelected = this.currentCharacter.id === char.id;
             const canAfford = balance >= char.price;
 
             const card = document.createElement('div');
-            card.className = 'char-card' + (isSelected ? ' selected' : '') + (!isOwned ? ' locked' : '');
+            const isOrphan = !isOwned;
+            card.className = 'char-card' + (isSelected ? ' selected' : '') + (isOrphan ? ' locked' : '');
 
             // Preview canvas - larger
             const previewSize = 110;

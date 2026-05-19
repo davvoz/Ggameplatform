@@ -75,7 +75,7 @@ const CONFIG = Object.freeze({
         TIME_SURVIVED: 10,          // Points per minute survived
         POINTS_PER_SECOND: 1,       // Survival time bonus
         COMBO_MULTIPLIER: 0.1,      // Extra % per combo hit
-        MAX_COMBO_MULT: 3.0
+        MAX_COMBO_MULT: 3
     },
 
     // Enemy Types Configuration
@@ -419,11 +419,11 @@ const CONFIG = Object.freeze({
         
         // Rarity system (higher = more rare)
         RARITY: {
-            common: { weight: 75, healthMult: 1.0, damageMult: 1.0, color: null, xpMult: 1.0 },
+            common: { weight: 75, healthMult: 1, damageMult: 1, color: null, xpMult: 1 },
             uncommon: { weight: 18, healthMult: 1.3, damageMult: 1.1, color: '#4fc3f7', xpMult: 1.5 },
-            rare: { weight: 5, healthMult: 1.8, damageMult: 1.3, color: '#ab47bc', xpMult: 2.0 },
-            epic: { weight: 1.5, healthMult: 2.5, damageMult: 1.6, color: '#ffa726', xpMult: 3.0 },
-            legendary: { weight: 0.5, healthMult: 4.0, damageMult: 2.0, color: '#ef5350', xpMult: 5.0 }
+            rare: { weight: 5, healthMult: 1.8, damageMult: 1.3, color: '#ab47bc', xpMult: 2 },
+            epic: { weight: 1.5, healthMult: 2.5, damageMult: 1.6, color: '#ffa726', xpMult: 3 },
+            legendary: { weight: 0.5, healthMult: 4, damageMult: 2, color: '#ef5350', xpMult: 5 }
         }
     },
 
@@ -446,38 +446,38 @@ const CONFIG = Object.freeze({
 // Difficulty scaling based on game time (spread over 60 minutes / 1 hour)
 const DIFFICULTY_SCALING = Object.freeze({
     // Time in seconds -> multipliers (every 2 minutes)
-    0:    { enemyHealth: 1.0, enemyDamage: 1.0, enemySpeed: 1.0, spawnRate: 1.0 },
+    0:    { enemyHealth: 1, enemyDamage: 1, enemySpeed: 1, spawnRate: 1 },
     120:  { enemyHealth: 1.1, enemyDamage: 1.1, enemySpeed: 1.05, spawnRate: 1.1 },
     240:  { enemyHealth: 1.2, enemyDamage: 1.15, enemySpeed: 1.08, spawnRate: 1.2 },
     360:  { enemyHealth: 1.3, enemyDamage: 1.2, enemySpeed: 1.1, spawnRate: 1.3 },
     480:  { enemyHealth: 1.4, enemyDamage: 1.25, enemySpeed: 1.12, spawnRate: 1.4 },
     600:  { enemyHealth: 1.5, enemyDamage: 1.3, enemySpeed: 1.15, spawnRate: 1.5 },
     720:  { enemyHealth: 1.8, enemyDamage: 1.5, enemySpeed: 1.2, spawnRate: 1.8 },
-    840:  { enemyHealth: 2.0, enemyDamage: 1.6, enemySpeed: 1.22, spawnRate: 1.9 },
-    960:  { enemyHealth: 2.2, enemyDamage: 1.7, enemySpeed: 1.25, spawnRate: 2.0 },
+    840:  { enemyHealth: 2, enemyDamage: 1.6, enemySpeed: 1.22, spawnRate: 1.9 },
+    960:  { enemyHealth: 2.2, enemyDamage: 1.7, enemySpeed: 1.25, spawnRate: 2 },
     1080: { enemyHealth: 2.5, enemyDamage: 1.9, enemySpeed: 1.27, spawnRate: 2.2 },
-    1200: { enemyHealth: 2.8, enemyDamage: 2.0, enemySpeed: 1.3, spawnRate: 2.5 },
+    1200: { enemyHealth: 2.8, enemyDamage: 2, enemySpeed: 1.3, spawnRate: 2.5 },
     1320: { enemyHealth: 3.2, enemyDamage: 2.3, enemySpeed: 1.32, spawnRate: 2.8 },
-    1440: { enemyHealth: 3.5, enemyDamage: 2.5, enemySpeed: 1.35, spawnRate: 3.0 },
-    1560: { enemyHealth: 4.0, enemyDamage: 2.7, enemySpeed: 1.37, spawnRate: 3.2 },
-    1680: { enemyHealth: 4.5, enemyDamage: 3.0, enemySpeed: 1.4, spawnRate: 3.5 },
-    1800: { enemyHealth: 5.0, enemyDamage: 3.5, enemySpeed: 1.45, spawnRate: 4.0 },
+    1440: { enemyHealth: 3.5, enemyDamage: 2.5, enemySpeed: 1.35, spawnRate: 3 },
+    1560: { enemyHealth: 4, enemyDamage: 2.7, enemySpeed: 1.37, spawnRate: 3.2 },
+    1680: { enemyHealth: 4.5, enemyDamage: 3, enemySpeed: 1.4, spawnRate: 3.5 },
+    1800: { enemyHealth: 5, enemyDamage: 3.5, enemySpeed: 1.45, spawnRate: 4 },
     // Extended to 60 minutes
     1920: { enemyHealth: 5.5, enemyDamage: 3.8, enemySpeed: 1.47, spawnRate: 4.3 },
-    2040: { enemyHealth: 6.0, enemyDamage: 4.0, enemySpeed: 1.5, spawnRate: 4.6 },
-    2160: { enemyHealth: 6.5, enemyDamage: 4.3, enemySpeed: 1.52, spawnRate: 5.0 },
-    2280: { enemyHealth: 7.0, enemyDamage: 4.6, enemySpeed: 1.55, spawnRate: 5.4 },
-    2400: { enemyHealth: 7.5, enemyDamage: 5.0, enemySpeed: 1.57, spawnRate: 5.8 },
-    2520: { enemyHealth: 8.0, enemyDamage: 5.3, enemySpeed: 1.6, spawnRate: 6.2 },
+    2040: { enemyHealth: 6, enemyDamage: 4, enemySpeed: 1.5, spawnRate: 4.6 },
+    2160: { enemyHealth: 6.5, enemyDamage: 4.3, enemySpeed: 1.52, spawnRate: 5 },
+    2280: { enemyHealth: 7, enemyDamage: 4.6, enemySpeed: 1.55, spawnRate: 5.4 },
+    2400: { enemyHealth: 7.5, enemyDamage: 5, enemySpeed: 1.57, spawnRate: 5.8 },
+    2520: { enemyHealth: 8, enemyDamage: 5.3, enemySpeed: 1.6, spawnRate: 6.2 },
     2640: { enemyHealth: 8.5, enemyDamage: 5.7, enemySpeed: 1.62, spawnRate: 6.6 },
-    2760: { enemyHealth: 9.0, enemyDamage: 6.0, enemySpeed: 1.65, spawnRate: 7.0 },
+    2760: { enemyHealth: 9, enemyDamage: 6, enemySpeed: 1.65, spawnRate: 7 },
     2880: { enemyHealth: 9.5, enemyDamage: 6.5, enemySpeed: 1.67, spawnRate: 7.5 },
-    3000: { enemyHealth: 10.0, enemyDamage: 7.0, enemySpeed: 1.7, spawnRate: 8.0 },
-    3120: { enemyHealth: 11.0, enemyDamage: 7.5, enemySpeed: 1.72, spawnRate: 8.5 },
-    3240: { enemyHealth: 12.0, enemyDamage: 8.0, enemySpeed: 1.75, spawnRate: 9.0 },
-    3360: { enemyHealth: 13.0, enemyDamage: 8.5, enemySpeed: 1.77, spawnRate: 9.5 },
-    3480: { enemyHealth: 14.0, enemyDamage: 9.0, enemySpeed: 1.8, spawnRate: 10.0 },
-    3600: { enemyHealth: 15.0, enemyDamage: 10.0, enemySpeed: 1.85, spawnRate: 11.0 }
+    3000: { enemyHealth: 10, enemyDamage: 7, enemySpeed: 1.7, spawnRate: 8 },
+    3120: { enemyHealth: 11, enemyDamage: 7.5, enemySpeed: 1.72, spawnRate: 8.5 },
+    3240: { enemyHealth: 12, enemyDamage: 8, enemySpeed: 1.75, spawnRate: 9 },
+    3360: { enemyHealth: 13, enemyDamage: 8.5, enemySpeed: 1.77, spawnRate: 9.5 },
+    3480: { enemyHealth: 14, enemyDamage: 9, enemySpeed: 1.8, spawnRate: 10 },
+    3600: { enemyHealth: 15, enemyDamage: 10, enemySpeed: 1.85, spawnRate: 11 }
 });
 
 // ============================================================
@@ -507,8 +507,8 @@ const WORLDS = Object.freeze({
             color: '#9c27b0',
             auraColor: '#ce93d8',
             size: 100,
-            healthMult: 1.0,
-            speedMult: 1.0,
+            healthMult: 1,
+            speedMult: 1,
             abilities: ['charge', 'summon', 'aoe', 'shoot'],
             shape: 'crown'
         }
@@ -594,7 +594,7 @@ const WORLDS = Object.freeze({
             color: '#00ff88',
             auraColor: '#80ffcc',
             size: 90,
-            healthMult: 1.0,
+            healthMult: 1,
             speedMult: 1.3,
             abilities: ['charge', 'droneBarrage', 'laserSweep', 'summon'],
             shape: 'mech'

@@ -65,7 +65,7 @@ class SpritePart {
         this.pivotX = pivotX;
         this.pivotY = pivotY;
         this.visible = true;
-        this.opacity = 1.0;
+        this.opacity = 1;
         this.tint = null;
         this.zOrder = zOrder;
         this.baseTransform = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
@@ -169,7 +169,7 @@ class MultiPartSprite {
         this.animations = new Map();
         this.currentAnimation = null;
         this.animationTime = 0;
-        this.playbackSpeed = 1.0;
+        this.playbackSpeed = 1;
         this.playing = false;
         this.rootTransform = new Transform2D();
         this.onAnimationComplete = null;
@@ -259,7 +259,7 @@ class MultiPartSprite {
         ctx.translate(world.x * size, world.y * size);
         ctx.rotate(world.rotation);
         ctx.scale(world.scaleX, world.scaleY);
-        ctx.globalAlpha = part.opacity * (options.opacity || 1.0);
+        ctx.globalAlpha = part.opacity * (options.opacity || 1);
 
         const geometries = Array.isArray(part.geometry) ? part.geometry : [part.geometry];
         const tint = part.tint || options.tint;
@@ -537,7 +537,7 @@ const SpriteFactory = {
         idle.addTrack('head', [
             { time: 0, transform: { y: 0, rotation: 0 } },
             { time: 0.5, transform: { y: -0.008, rotation: 0.02 } },
-            { time: 1.0, transform: { y: -0.012, rotation: 0 } },
+            { time: 1, transform: { y: -0.012, rotation: 0 } },
             { time: 1.5, transform: { y: 0, rotation: 0 } }
         ]);
         idle.addTrack('leftArm', [
@@ -606,17 +606,17 @@ const SpriteFactory = {
         // Jets flare while walking
         walk.addTrack('jetL', [
             { time: 0, transform: { scaleY: 1.5 } },
-            { time: 0.125, transform: { scaleY: 1.0 } },
+            { time: 0.125, transform: { scaleY: 1} },
             { time: 0.25, transform: { scaleY: 1.5 } },
-            { time: 0.375, transform: { scaleY: 1.0 } },
+            { time: 0.375, transform: { scaleY: 1} },
             { time: 0.5, transform: { scaleY: 1.5 } }
         ]);
         walk.addTrack('jetR', [
-            { time: 0, transform: { scaleY: 1.0 } },
+            { time: 0, transform: { scaleY: 1} },
             { time: 0.125, transform: { scaleY: 1.5 } },
-            { time: 0.25, transform: { scaleY: 1.0 } },
+            { time: 0.25, transform: { scaleY: 1} },
             { time: 0.375, transform: { scaleY: 1.5 } },
-            { time: 0.5, transform: { scaleY: 1.0 } }
+            { time: 0.5, transform: { scaleY: 1} }
         ]);
         sprite.addAnimation(walk);
 
@@ -784,7 +784,7 @@ const SpriteFactory = {
             { time: 0.4, transform: { scaleY: 0.8, scaleX: 1.1 } },
             { time: 0.6, transform: { scaleY: 1.4, scaleX: 0.85 } },
             { time: 0.8, transform: { scaleY: 0.9, scaleX: 1.05 } },
-            { time: 1.0, transform: { scaleY: 1.2, scaleX: 0.95 } },
+            { time: 1, transform: { scaleY: 1.2, scaleX: 0.95 } },
             { time: 1.2, transform: { scaleY: 1, scaleX: 1 } }
         ]);
         sprite.addAnimation(idle);
@@ -830,7 +830,7 @@ const SpriteFactory = {
             { time: 0, transform: { scaleY: 1.5, scaleX: 0.9 } },
             { time: 0.15, transform: { scaleY: 0.9, scaleX: 1.2 } },
             { time: 0.3, transform: { scaleY: 1.6, scaleX: 0.85 } },
-            { time: 0.45, transform: { scaleY: 1.0, scaleX: 1.15 } },
+            { time: 0.45, transform: { scaleY: 1, scaleX: 1.15 } },
             { time: 0.6, transform: { scaleY: 1.5, scaleX: 0.9 } }
         ]);
         sprite.addAnimation(walk);
@@ -862,7 +862,7 @@ const SpriteFactory = {
         ]);
         attack.addTrack('flameAura', [
             { time: 0, transform: { scaleY: 1 } },
-            { time: 0.12, transform: { scaleY: 2.0 } },
+            { time: 0.12, transform: { scaleY: 2} },
             { time: 0.25, transform: { scaleY: 1 } }
         ]);
         sprite.addAnimation(attack);
@@ -979,42 +979,42 @@ const SpriteFactory = {
 
     addIceSentinelAnimations(sprite) {
         // Idle - stoic fortress with crystal shimmer
-        const idle = new AnimationClip('idle', 2.0, true);
+        const idle = new AnimationClip('idle', 2, true);
         idle.addTrack('body', [
             { time: 0, transform: { scaleY: 1 } },
-            { time: 1.0, transform: { scaleY: 1.02 } },
-            { time: 2.0, transform: { scaleY: 1 } }
+            { time: 1, transform: { scaleY: 1.02 } },
+            { time: 2, transform: { scaleY: 1 } }
         ]);
         idle.addTrack('head', [
             { time: 0, transform: { y: 0 } },
-            { time: 1.0, transform: { y: -0.005 } },
-            { time: 2.0, transform: { y: 0 } }
+            { time: 1, transform: { y: -0.005 } },
+            { time: 2, transform: { y: 0 } }
         ]);
         // Shield arm micro-raise (guard stance)
         idle.addTrack('leftArm', [
             { time: 0, transform: { rotation: 0 } },
             { time: 0.8, transform: { rotation: -0.08 } },
             { time: 1.6, transform: { rotation: 0.04 } },
-            { time: 2.0, transform: { rotation: 0 } }
+            { time: 2, transform: { rotation: 0 } }
         ]);
         // Crystal shoulders oscillate
         idle.addTrack('crystalL', [
             { time: 0, transform: { scaleY: 1, y: 0 } },
             { time: 0.7, transform: { scaleY: 1.15, y: -0.02 } },
             { time: 1.4, transform: { scaleY: 0.9, y: 0.01 } },
-            { time: 2.0, transform: { scaleY: 1, y: 0 } }
+            { time: 2, transform: { scaleY: 1, y: 0 } }
         ]);
         idle.addTrack('crystalR', [
             { time: 0, transform: { scaleY: 1, y: 0 } },
             { time: 0.7, transform: { scaleY: 0.9, y: 0.01 } },
             { time: 1.4, transform: { scaleY: 1.15, y: -0.02 } },
-            { time: 2.0, transform: { scaleY: 1, y: 0 } }
+            { time: 2, transform: { scaleY: 1, y: 0 } }
         ]);
         // Frost ring pulses
         idle.addTrack('frostRing', [
             { time: 0, transform: { scaleX: 1 } },
-            { time: 1.0, transform: { scaleX: 1.2 } },
-            { time: 2.0, transform: { scaleX: 1 } }
+            { time: 1, transform: { scaleX: 1.2 } },
+            { time: 2, transform: { scaleX: 1 } }
         ]);
         sprite.addAnimation(idle);
 
@@ -1169,33 +1169,33 @@ const SpriteFactory = {
 
     addShadowAssassinAnimations(sprite) {
         // Idle - ninja breathing with cape flutter and shadow pulse
-        const idle = new AnimationClip('idle', 1.0, true);
+        const idle = new AnimationClip('idle', 1, true);
         idle.addTrack('body', [
             { time: 0, transform: { rotation: 0, y: 0 } },
             { time: 0.25, transform: { rotation: 0.02, y: -0.01 } },
             { time: 0.5, transform: { rotation: 0.03, y: -0.015 } },
             { time: 0.75, transform: { rotation: 0.01, y: -0.005 } },
-            { time: 1.0, transform: { rotation: 0, y: 0 } }
+            { time: 1, transform: { rotation: 0, y: 0 } }
         ]);
         idle.addTrack('cape', [
             { time: 0, transform: { rotation: 0, scaleY: 1, scaleX: 1 } },
             { time: 0.25, transform: { rotation: 0.06, scaleY: 1.04, scaleX: 0.97 } },
             { time: 0.5, transform: { rotation: 0.03, scaleY: 1.08, scaleX: 0.95 } },
             { time: 0.75, transform: { rotation: -0.02, scaleY: 1.02, scaleX: 0.98 } },
-            { time: 1.0, transform: { rotation: 0, scaleY: 1, scaleX: 1 } }
+            { time: 1, transform: { rotation: 0, scaleY: 1, scaleX: 1 } }
         ]);
         idle.addTrack('head', [
             { time: 0, transform: { rotation: 0, y: 0 } },
             { time: 0.3, transform: { rotation: -0.05, y: -0.005 } },
             { time: 0.7, transform: { rotation: 0.03, y: -0.008 } },
-            { time: 1.0, transform: { rotation: 0, y: 0 } }
+            { time: 1, transform: { rotation: 0, y: 0 } }
         ]);
         // Shadow trail pulse
         idle.addTrack('shadowTrail', [
             { time: 0, transform: { scaleX: 1, scaleY: 1 } },
             { time: 0.3, transform: { scaleX: 1.3, scaleY: 0.7 } },
             { time: 0.6, transform: { scaleX: 0.8, scaleY: 1.2 } },
-            { time: 1.0, transform: { scaleX: 1, scaleY: 1 } }
+            { time: 1, transform: { scaleX: 1, scaleY: 1 } }
         ]);
         sprite.addAnimation(idle);
 
@@ -1325,12 +1325,6 @@ const SpriteFactory = {
         ], 0.5, 0, 0);
         rightLeg.setBaseTransform(0.1, 0.26);
 
-        // Orbiting data particle
-        const dataOrb = sprite.addPart('dataOrb', [
-            { type: 'circle', radius: 0.03, color: c.accentColor, x: 0, y: 0 },
-            { type: 'circle', radius: 0.015, color: '#ffffff', x: 0, y: 0 }
-        ], 0.5, 0.5, 3);
-
         const shield = sprite.addPart('shield', [
             { type: 'circle', radius: 0.55, color: c.accentColor, fill: false, stroke: true, strokeWidth: 0.03 }
         ], 0.5, 0.5, 3);
@@ -1370,7 +1364,7 @@ const SpriteFactory = {
         ]);
         idle.addTrack('rightArm', [
             { time: 0, transform: { scaleX: 1 } },
-            { time: 1.0, transform: { scaleX: 1.05 } },
+            { time: 1, transform: { scaleX: 1.05 } },
             { time: 1.2, transform: { scaleX: 0.97 } },
             { time: 1.8, transform: { scaleX: 1 } }
         ]);
@@ -1560,70 +1554,70 @@ const SpriteFactory = {
 
     addVoidWalkerAnimations(sprite) {
         // Idle - ethereal levitation with dual orb orbits
-        const idle = new AnimationClip('idle', 2.0, true);
+        const idle = new AnimationClip('idle', 2, true);
         idle.addTrack('body', [
             { time: 0, transform: { y: 0, scaleX: 1 } },
             { time: 0.5, transform: { y: -0.02, scaleX: 1.02 } },
-            { time: 1.0, transform: { y: -0.045, scaleX: 0.98 } },
+            { time: 1, transform: { y: -0.045, scaleX: 0.98 } },
             { time: 1.5, transform: { y: -0.02, scaleX: 1.01 } },
-            { time: 2.0, transform: { y: 0, scaleX: 1 } }
+            { time: 2, transform: { y: 0, scaleX: 1 } }
         ]);
         idle.addTrack('head', [
             { time: 0, transform: { y: 0, rotation: 0 } },
             { time: 0.7, transform: { y: -0.02, rotation: -0.03 } },
             { time: 1.4, transform: { y: -0.025, rotation: 0.02 } },
-            { time: 2.0, transform: { y: 0, rotation: 0 } }
+            { time: 2, transform: { y: 0, rotation: 0 } }
         ]);
         idle.addTrack('leftArm', [
             { time: 0, transform: { rotation: -0.1, y: 0 } },
             { time: 0.5, transform: { rotation: 0.05, y: -0.015 } },
-            { time: 1.0, transform: { rotation: 0.1, y: -0.02 } },
+            { time: 1, transform: { rotation: 0.1, y: -0.02 } },
             { time: 1.5, transform: { rotation: -0.05, y: -0.01 } },
-            { time: 2.0, transform: { rotation: -0.1, y: 0 } }
+            { time: 2, transform: { rotation: -0.1, y: 0 } }
         ]);
         idle.addTrack('rightArm', [
             { time: 0, transform: { rotation: 0.1, y: 0 } },
             { time: 0.5, transform: { rotation: -0.05, y: -0.015 } },
-            { time: 1.0, transform: { rotation: -0.1, y: -0.02 } },
+            { time: 1, transform: { rotation: -0.1, y: -0.02 } },
             { time: 1.5, transform: { rotation: 0.05, y: -0.01 } },
-            { time: 2.0, transform: { rotation: 0.1, y: 0 } }
+            { time: 2, transform: { rotation: 0.1, y: 0 } }
         ]);
         // Orb 1 orbiting
         idle.addTrack('orb1', [
             { time: 0, transform: { x: 0.3, y: 0 } },
             { time: 0.5, transform: { x: 0, y: -0.22 } },
-            { time: 1.0, transform: { x: -0.3, y: 0 } },
+            { time: 1, transform: { x: -0.3, y: 0 } },
             { time: 1.5, transform: { x: 0, y: 0.22 } },
-            { time: 2.0, transform: { x: 0.3, y: 0 } }
+            { time: 2, transform: { x: 0.3, y: 0 } }
         ]);
         // Orb 2 opposite orbit
         idle.addTrack('orb2', [
             { time: 0, transform: { x: -0.25, y: 0 } },
             { time: 0.5, transform: { x: 0, y: 0.18 } },
-            { time: 1.0, transform: { x: 0.25, y: 0 } },
+            { time: 1, transform: { x: 0.25, y: 0 } },
             { time: 1.5, transform: { x: 0, y: -0.18 } },
-            { time: 2.0, transform: { x: -0.25, y: 0 } }
+            { time: 2, transform: { x: -0.25, y: 0 } }
         ]);
         // Energy trail pulses
         idle.addTrack('leftLeg', [
             { time: 0, transform: { scaleY: 1 } },
             { time: 0.7, transform: { scaleY: 1.4 } },
             { time: 1.4, transform: { scaleY: 0.8 } },
-            { time: 2.0, transform: { scaleY: 1 } }
+            { time: 2, transform: { scaleY: 1 } }
         ]);
         idle.addTrack('rightLeg', [
             { time: 0, transform: { scaleY: 1 } },
             { time: 0.7, transform: { scaleY: 0.8 } },
             { time: 1.4, transform: { scaleY: 1.4 } },
-            { time: 2.0, transform: { scaleY: 1 } }
+            { time: 2, transform: { scaleY: 1 } }
         ]);
         // Void mist breathing
         idle.addTrack('voidMist', [
             { time: 0, transform: { scaleX: 1, scaleY: 1 } },
             { time: 0.5, transform: { scaleX: 1.3, scaleY: 0.8 } },
-            { time: 1.0, transform: { scaleX: 0.8, scaleY: 1.3 } },
+            { time: 1, transform: { scaleX: 0.8, scaleY: 1.3 } },
             { time: 1.5, transform: { scaleX: 1.2, scaleY: 0.9 } },
-            { time: 2.0, transform: { scaleX: 1, scaleY: 1 } }
+            { time: 2, transform: { scaleX: 1, scaleY: 1 } }
         ]);
         sprite.addAnimation(idle);
 
@@ -1669,7 +1663,7 @@ const SpriteFactory = {
         // Void mist trail expands while gliding
         walk.addTrack('voidMist', [
             { time: 0, transform: { scaleX: 1.4 } },
-            { time: 0.25, transform: { scaleX: 1.0 } },
+            { time: 0.25, transform: { scaleX: 1} },
             { time: 0.5, transform: { scaleX: 1.4 } }
         ]);
         sprite.addAnimation(walk);
@@ -1959,33 +1953,33 @@ const SpriteFactory = {
 
     addTankAnimations(sprite) {
         // Heavy stomp walk
-        const walk = new AnimationClip('walk', 1.0, true);
+        const walk = new AnimationClip('walk', 1, true);
         walk.addTrack('body', [
             { time: 0, transform: { y: 0 } },
             { time: 0.25, transform: { y: -0.02 } },
             { time: 0.5, transform: { y: 0.02 } },
             { time: 0.75, transform: { y: -0.02 } },
-            { time: 1.0, transform: { y: 0 } }
+            { time: 1, transform: { y: 0 } }
         ]);
         walk.addTrack('leftArm', [
             { time: 0, transform: { rotation: 0.15 } },
             { time: 0.5, transform: { rotation: -0.15 } },
-            { time: 1.0, transform: { rotation: 0.15 } }
+            { time: 1, transform: { rotation: 0.15 } }
         ]);
         walk.addTrack('rightArm', [
             { time: 0, transform: { rotation: -0.15 } },
             { time: 0.5, transform: { rotation: 0.15 } },
-            { time: 1.0, transform: { rotation: -0.15 } }
+            { time: 1, transform: { rotation: -0.15 } }
         ]);
         walk.addTrack('leftLeg', [
             { time: 0, transform: { rotation: -0.2 } },
             { time: 0.5, transform: { rotation: 0.2 } },
-            { time: 1.0, transform: { rotation: -0.2 } }
+            { time: 1, transform: { rotation: -0.2 } }
         ]);
         walk.addTrack('rightLeg', [
             { time: 0, transform: { rotation: 0.2 } },
             { time: 0.5, transform: { rotation: -0.2 } },
-            { time: 1.0, transform: { rotation: 0.2 } }
+            { time: 1, transform: { rotation: 0.2 } }
         ]);
         sprite.addAnimation(walk);
 
@@ -2338,7 +2332,7 @@ const SpriteFactory = {
 
         // Massive core body
         sprite.addPart('body', [
-            { type: 'ellipse', width: 1.0, height: 1.1, color: '#1a1a2e' },
+            { type: 'ellipse', width: 1, height: 1.1, color: '#1a1a2e' },
             // Outer shell
             { type: 'circle', radius: 0.45, color: '#16213e', fill: false, stroke: true, strokeWidth: 0.08 },
             // Inner armor
@@ -2420,56 +2414,56 @@ const SpriteFactory = {
 
     addBossAnimations(sprite) {
         // Menacing idle
-        const idle = new AnimationClip('idle', 2.0, true);
+        const idle = new AnimationClip('idle', 2, true);
         idle.addTrack('body', [
             { time: 0, transform: { scaleX: 1, scaleY: 1 } },
-            { time: 1.0, transform: { scaleX: 1.02, scaleY: 1.02 } },
-            { time: 2.0, transform: { scaleX: 1, scaleY: 1 } }
+            { time: 1, transform: { scaleX: 1.02, scaleY: 1.02 } },
+            { time: 2, transform: { scaleX: 1, scaleY: 1 } }
         ]);
         idle.addTrack('leftWing', [
             { time: 0, transform: { rotation: 0 } },
             { time: 0.5, transform: { rotation: -0.1 } },
-            { time: 1.0, transform: { rotation: 0 } },
+            { time: 1, transform: { rotation: 0 } },
             { time: 1.5, transform: { rotation: 0.1 } },
-            { time: 2.0, transform: { rotation: 0 } }
+            { time: 2, transform: { rotation: 0 } }
         ]);
         idle.addTrack('rightWing', [
             { time: 0, transform: { rotation: 0 } },
             { time: 0.5, transform: { rotation: 0.1 } },
-            { time: 1.0, transform: { rotation: 0 } },
+            { time: 1, transform: { rotation: 0 } },
             { time: 1.5, transform: { rotation: -0.1 } },
-            { time: 2.0, transform: { rotation: 0 } }
+            { time: 2, transform: { rotation: 0 } }
         ]);
         sprite.addAnimation(idle);
 
         // Walk
-        const walk = new AnimationClip('walk', 1.0, true);
+        const walk = new AnimationClip('walk', 1, true);
         walk.addTrack('body', [
             { time: 0, transform: { y: 0 } },
             { time: 0.25, transform: { y: -0.02 } },
             { time: 0.5, transform: { y: 0 } },
             { time: 0.75, transform: { y: -0.02 } },
-            { time: 1.0, transform: { y: 0 } }
+            { time: 1, transform: { y: 0 } }
         ]);
         walk.addTrack('leftArm', [
             { time: 0, transform: { rotation: 0.15 } },
             { time: 0.5, transform: { rotation: -0.15 } },
-            { time: 1.0, transform: { rotation: 0.15 } }
+            { time: 1, transform: { rotation: 0.15 } }
         ]);
         walk.addTrack('rightArm', [
             { time: 0, transform: { rotation: -0.15 } },
             { time: 0.5, transform: { rotation: 0.15 } },
-            { time: 1.0, transform: { rotation: -0.15 } }
+            { time: 1, transform: { rotation: -0.15 } }
         ]);
         walk.addTrack('leftLeg', [
             { time: 0, transform: { rotation: -0.2 } },
             { time: 0.5, transform: { rotation: 0.2 } },
-            { time: 1.0, transform: { rotation: -0.2 } }
+            { time: 1, transform: { rotation: -0.2 } }
         ]);
         walk.addTrack('rightLeg', [
             { time: 0, transform: { rotation: 0.2 } },
             { time: 0.5, transform: { rotation: -0.2 } },
-            { time: 1.0, transform: { rotation: 0.2 } }
+            { time: 1, transform: { rotation: 0.2 } }
         ]);
         sprite.addAnimation(walk);
 
@@ -2477,14 +2471,14 @@ const SpriteFactory = {
         const attack = new AnimationClip('attack', 0.6, false);
         attack.addTrack('leftArm', [
             { time: 0, transform: { rotation: 0 } },
-            { time: 0.2, transform: { rotation: -2.0 } },
-            { time: 0.4, transform: { rotation: 1.0 } },
+            { time: 0.2, transform: { rotation: -2} },
+            { time: 0.4, transform: { rotation: 1} },
             { time: 0.6, transform: { rotation: 0 } }
         ]);
         attack.addTrack('rightArm', [
             { time: 0, transform: { rotation: 0 } },
-            { time: 0.2, transform: { rotation: 2.0 } },
-            { time: 0.4, transform: { rotation: -1.0 } },
+            { time: 0.2, transform: { rotation: 2} },
+            { time: 0.4, transform: { rotation: -1} },
             { time: 0.6, transform: { rotation: 0 } }
         ]);
         attack.addTrack('body', [

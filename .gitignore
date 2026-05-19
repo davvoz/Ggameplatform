@@ -422,3 +422,4 @@ backend/app/games/minion_clash/assets/spritesheets/generate_sprites.py
 backend/app/games/minion_clash/assets/spritesheets/generate_font.py
 .github/agents/web-audio-sound-engineer.agent.md
 .github/agents/gaming-font-artist.agent.md
+fix_sonar_unnecessary_zero.bat

@@ -106,7 +106,7 @@ class Pickup extends Entity {
         if (player) {
             const wrapped = this.getWrappedDirectionTo(player);
             const dist = wrapped.distance;
-            const magnetRange = (player.stats && player.stats.pickupRange) ? player.stats.pickupRange : 100;
+            const magnetRange = (player.stats?.pickupRange) ? player.stats.pickupRange : 100;
             
             // If already attracted (magnet pickup) or within range, move towards player
             if (this.isAttracted || dist < magnetRange) {
@@ -654,7 +654,6 @@ class BombPickup extends Pickup {
         ctx.stroke();
 
         // Animated spark/flame on fuse
-        const sparkPhase = (Date.now() / 50) % 1;
         const sparkSize = 5 + Math.sin(Date.now() / 30) * 3;
         
         // Flame colors

@@ -1,8 +1,17 @@
 {
-  "version": "5.4.7",
-  "timestamp": "2026-05-17T08:19:33.680Z",
-  "buildNumber": 565,
+  "version": "5.4.8",
+  "timestamp": "2026-05-19T18:22:02.660Z",
+  "buildNumber": 566,
   "changelog": [
+    {
+      "version": "5.4.8",
+      "date": "2026-05-19",
+      "type": "patch",
+      "changes": [
+        "fix:[SA]Sonar",
+        "🔖 Bump version to 5.4.7 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.7",
       "date": "2026-05-17",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: update Steem profile and post URLs to remove '/app' path",
         "🔖 Bump version to 5.3.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.3.8",
-      "date": "2026-05-12",
-      "type": "patch",
-      "changes": [
-        "fix:  update iframe sandbox attributes",
-        "🔖 Bump version to 5.3.7 [skip-version]"
       ]
     }
   ]

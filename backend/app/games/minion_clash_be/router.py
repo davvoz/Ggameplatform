@@ -601,11 +601,23 @@ async def _mp_rematch(websocket: WebSocket, player_id: str, data: dict,
 
 async def _mp_leave(websocket: WebSocket, player_id: str, data: dict,
                     current_room: Optional[MultiplayerRoom]) -> Optional[MultiplayerRoom]:
-    if current_room:
-        await current_room.stop_session()
-        await current_room.broadcast({"type": "opponentDisconnected"}, exclude=player_id)
-        _mp_manager.remove_room(current_room.room_code)
-    return None
+    """Forfeit during a match. Stops the running session and emits an
+    authoritative 'outcome' (lose for leaver, win for opponent) — same code
+    path as a natural match end — so both peers land in ResultState with the
+    room intact and rematch handshake usable. The room is NOT destroyed:
+    that only happens on real WebSocket disconnect."""
+    if not current_room:
+        return current_room
+    await current_room.stop_session()
+    opp_id = current_room.opponent_of(player_id)
+    await current_room.send_to(player_id, {
+        "type": "outcome", "result": "lose", "reason": "forfeit",
+    })
+    if opp_id is not None:
+        await current_room.send_to(opp_id, {
+            "type": "outcome", "result": "win", "reason": "opponent_forfeit",
+        })
+    return current_room
 
 
 async def _mp_ping(websocket: WebSocket, player_id: str, data: dict,

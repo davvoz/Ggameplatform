@@ -4,6 +4,7 @@ import { ModeSelectState } from './ModeSelectState.js';
 import { BattleState } from './BattleState.js';
 import { SoundEvent } from '../audio/SoundEvent.js';
 import { MultiplayerClient } from '../platform/MultiplayerClient.js';
+import { RematchHandshake } from '../platform/RematchHandshake.js';
 
 // Charset must match backend ROOM_CODE_CHARS in minion_clash_be/router.py.
 const CODE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -83,38 +84,68 @@ export class MultiplayerLobbyState {
     }
 
     exit() {
-        // Only tear down if we're not handing the client over to BattleState.
+        // Detach LOBBY-scoped listeners only, never wipe the whole map:
+        // the session-scoped RematchHandshake (created in _onMatchStart) has
+        // also subscribed to 'matchStart' / 'rematchRequested' on this client
+        // and must survive into BattleState and ResultState.
+        this._detachLobbyListeners();
         if (this._phase !== 'matching') {
             this._client?.disconnect();
             this._client = null;
         }
     }
 
+    _detachLobbyListeners() {
+        const cli = this._client;
+        if (!cli) return;
+        cli.off('roomCreated',          this._onRoomCreatedBound);
+        cli.off('matchStart',           this._onMatchStartBound);
+        cli.off('error',                this._onErrorBound);
+        cli.off('opponentDisconnected', this._onOpponentDisconnectedBound);
+        cli.off('close',                this._onCloseBound);
+    }
+
     async _connect() {
         const url = this._game.platform._wsBase() + '/ws/minion-clash';
         this._client = new MultiplayerClient();
-        this._client.on('roomCreated', (m) => this._onRoomCreated(m));
-        this._client.on('matchStart', (m) => this._onMatchStart(m));
-        this._client.on('error', (m) => {
-            this._statusMsg = m?.message ?? 'connection error';
-            this._phase = 'menu';
-        });
-        this._client.on('opponentDisconnected', () => {
-            this._statusMsg = 'Opponent disconnected';
-            this._phase = 'menu';
-        });
-        this._client.on('close', () => {
-            if (this._phase !== 'matching') {
-                this._statusMsg = 'Disconnected';
-                this._phase = 'menu';
-            }
-        });
+        this._bindLobbyHandlers();
+        const cli = this._client;
+        cli.on('roomCreated',          this._onRoomCreatedBound);
+        cli.on('matchStart',           this._onMatchStartBound);
+        cli.on('error',                this._onErrorBound);
+        cli.on('opponentDisconnected', this._onOpponentDisconnectedBound);
+        cli.on('close',                this._onCloseBound);
         try {
-            await this._client.connect(url);
+            await cli.connect(url);
             this._statusMsg = 'Connected';
         } catch (err) {
             this._statusMsg = `Connection failed: ${err?.message ?? err}`;
             this._phase = 'error';
+        }
+    }
+
+    _bindLobbyHandlers() {
+        this._onRoomCreatedBound          = (m) => this._onRoomCreated(m);
+        this._onMatchStartBound           = (m) => this._onMatchStart(m);
+        this._onErrorBound                = (m) => this._onLobbyError(m);
+        this._onOpponentDisconnectedBound = ()  => this._onOpponentDisconnected();
+        this._onCloseBound                = ()  => this._onLobbyClose();
+    }
+
+    _onLobbyError(m) {
+        this._statusMsg = m?.message ?? 'connection error';
+        this._phase = 'menu';
+    }
+
+    _onOpponentDisconnected() {
+        this._statusMsg = 'Opponent disconnected';
+        this._phase = 'menu';
+    }
+
+    _onLobbyClose() {
+        if (this._phase !== 'matching') {
+            this._statusMsg = 'Disconnected';
+            this._phase = 'menu';
         }
     }
 
@@ -133,10 +164,14 @@ export class MultiplayerLobbyState {
             opponentHeroId:  m.opponentHero    ?? null,
             opponentDeckIds: m.opponentDeck    ?? [],
             seed: m.seed ?? 0,
+            // Session-scoped handshake owner: survives state transitions and
+            // buffers rematchRequested / matchStart so no event is dropped
+            // while the FSM is between states.
+            handshake: new RematchHandshake(this._client),
         };
         run.mpClient = this._client;
         run.levelId = '__multiplayer__';
-        this._game.transitionTo(new BattleState(this._game));
+        this._game.transitionTo(BattleState.create(this._game));
     }
 
     handleInput(ev) {

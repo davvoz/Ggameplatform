@@ -6,100 +6,77 @@ import { UIPainter } from '../ui/UIPainter.js';
 import { SoundEvent } from '../audio/SoundEvent.js';
 import { ResultState } from './ResultState.js';
 
+// Layout constants for the pause/forfeit button.
+const PAUSE_BTN_OFFSET_X = 44;
+const PAUSE_BTN_Y = 80;
+const PAUSE_BTN_SIZE = 32;
+
+// Score-bonus tuning. Time bonus scales remaining seconds; kill bonus is flat per kill.
+const TIME_BONUS_MULT = 10;
+const KILL_BONUS_PER_KILL = 30;
+const WIN_STARS = 3;
+
+// Sentinel level id used for multiplayer matches (not a real campaign level).
+const MP_LEVEL_ID = '__multiplayer__';
+
+const NEUTRAL_MODIFIERS = Object.freeze({
+    enemyUnitHpMult: 1, playerUnitHpMult: 1,
+    enemyManaRegenMult: 1, playerManaRegenMult: 1,
+});
+
 /**
- * BattleState: drives the BattleWorld update/render and translates input
- * (drag-and-drop card play, ESC=quit) into player commands.
+ * BaseBattleState: drives the BattleWorld update/render and translates input
+ * (drag-and-drop card play, ESC=quit) into player commands. Mode-specific
+ * behavior (world construction, play commit, lifecycle hooks) is delegated
+ * to subclasses via the Template Method pattern — no `if (isMp)` here.
  */
-export class BattleState {
+class BaseBattleState {
     constructor(game) {
         this._game = game;
         this._world = null;
         this._renderer = null;
         this._drag = { active: false, slotIndex: -1, previewCardId: null, x: null, y: null };
         this._endHandled = false;
-        this._pauseBtn = { id: 'pause', label: '⏸', x: GameConfig.VIEW_WIDTH - 44, y: 80, w: 32, h: 32 };
+        this._pauseBtn = this._buildPauseBtn();
         this._tap = null;
     }
 
-    enter() {
-        const isMp = !!this._game.run.mpRoom;
-        const level = isMp ? this._buildMpLevel() : this._game.data.getLevel(this._game.run.levelId);
-        if (isMp) {
-            this._world = new RemoteBattleView({
-                data: this._game.data, level, runContext: this._game.run,
-                assets: this._game.assets, sound: this._game.sound ?? null,
-                mpRoom: this._game.run.mpRoom,
-            });
-        } else {
-            this._world = new BattleWorld({
-                data: this._game.data, level, runContext: this._game.run,
-                assets: this._game.assets, sound: this._game.sound ?? null,
-            });
-        }
-        this._renderer = new BattleRenderer(this._world);
-        if (isMp) this._wireMultiplayer();
-        this._game.sound?.play(SoundEvent.BATTLE_START);
+    _buildPauseBtn() {
+        return {
+            id: 'pause', label: '⏸',
+            x: GameConfig.VIEW_WIDTH - PAUSE_BTN_OFFSET_X,
+            y: PAUSE_BTN_Y, w: PAUSE_BTN_SIZE, h: PAUSE_BTN_SIZE,
+        };
+    }
 
+    enter() {
+        this._world = this._createWorld();
+        this._renderer = new BattleRenderer(this._world);
+        this._onEnterMode();
+        this._game.sound?.play(SoundEvent.BATTLE_START);
         // Open platform session — runtimeShell creates the session on the backend,
         // which is required for gameOver() to produce XP and the XP banner.
         this._game.platform.resetSession();
     }
 
-    exit() {
-        // Drop any MP listeners and close the transport on match end.
-        const cli = this._game.run.mpClient;
-        if (cli) {
-            try { cli.disconnect(); }
-            catch (err) { console.debug('[minion_clash] mp disconnect ignored', err); }
-        }
-        this._game.run.mpClient = null;
-        this._game.run.mpRoom = null;
-    }
+    exit() { this._onExitMode(); }
 
-    _buildMpLevel() {
-        const mp = this._game.run.mpRoom;
-        return {
-            id: '__multiplayer__',
-            enemyHeroId: mp.opponentHeroId,
-            enemyDeck: mp.opponentDeckIds,
-            aiProfile: null,
-            modifiers: {
-                enemyUnitHpMult: 1, playerUnitHpMult: 1,
-                enemyManaRegenMult: 1, playerManaRegenMult: 1,
-            },
-        };
-    }
-
-    _wireMultiplayer() {
-        const cli = this._game.run.mpClient;
-        if (!cli) return;
-        cli.on('state', (m) => this._world?.applySnapshot(m));
-        // Server wraps events as {type:'event', tick, event:{...}}; unwrap before dispatch.
-        cli.on('event', (m) => this._world?.applyEvent(m?.event));
-        cli.on('outcome', (m) => this._world?.applyOutcome(m));
-        cli.on('playRejected', (m) => this._onPlayRejected(m));
-        cli.on('opponentDisconnected', () => this._onOpponentLeft());
-    }
-
-    _onPlayRejected(m) {
-        // Server refused the play. Surface a discreet log; the next snapshot
-        // will keep the UI in sync (mana/cooldown weren't actually consumed).
-        console.debug('[minion_clash] play rejected', m?.code, m?.cardId);
-    }
-
-    _onOpponentLeft() {
-        if (!this._world || this._world.outcome) return;
-        // Forfeit: local player wins by default.
-        this._world.outcome = 'win';
-    }
+    // ── Abstract hooks (subclasses implement) ─────────────────────────────
+    _createWorld() { throw new Error('BaseBattleState._createWorld is abstract'); }
+    _commitPlay(_slot, _cardId, _x, _y) { throw new Error('BaseBattleState._commitPlay is abstract'); }
+    // ── Optional hooks (default noop) ─────────────────────────────────────
+    _onEnterMode() { /* mode-specific wiring */ }
+    _onExitMode()  { /* mode-specific teardown */ }
+    _onQuitExtra() { /* extra side-effect on quit (e.g. notify server) */ }
+    _isMatchTrackedAsLevel() { return false; }
 
     handleInput(ev) {
         if (this._world?.outcome) return;
         switch (ev.type) {
             case 'down': this._onDown(ev); break;
             case 'move': this._onMove(ev); break;
-            case 'up': this._onUp(ev); break;
-            case 'key': this._onKey(ev); break;
+            case 'up':   this._onUp(ev);   break;
+            case 'key':  this._onKey(ev);  break;
             case 'blur': this._cancelDrag(); break;
             default: break;
         }
@@ -133,17 +110,8 @@ export class BattleState {
     _onUp(ev) {
         if (this._tap?.kind === 'pause') { this._tap = null; this._quitToMenu(); return; }
         if (!this._drag.active) return;
-        const slot = this._drag.slotIndex;
-        const cardId = this._drag.previewCardId;
-        const isMp = !!this._game.run.mpRoom;
-        if (isMp) {
-            // Server-authoritative: just send intent. The next snapshot will
-            // reflect mana/hand/spawn. No local mutation.
-            const cli = this._game.run.mpClient;
-            cli?.sendCardPlay(slot, cardId, ev.x, ev.y);
-        } else {
-            this._world.player.playCardFromHand(slot, ev.x, ev.y);
-        }
+        const { slotIndex: slot, previewCardId: cardId } = this._drag;
+        this._commitPlay(slot, cardId, ev.x, ev.y);
         this._cancelDrag();
     }
 
@@ -174,41 +142,69 @@ export class BattleState {
             const snd = this._world.outcome === 'win' ? SoundEvent.BATTLE_WIN : SoundEvent.BATTLE_LOSE;
             this._game.sound?.play(snd);
             this._finalizeRun();
-            this._game.transitionTo(new ResultState(this._game));
+            this._game.transitionTo(ResultState.create(this._game));
         }
     }
 
     _finalizeRun() {
         const w = this._world;
-        const score = this._computeScore(w);
-        const levelNum = Number.parseInt(w.level.id.match(/\d+/)?.[0] ?? '0', 10);
-        const meta = {
+        const scoreData = this._computeScore(w);
+        const levelNum = this._extractLevelNum(w.level.id);
+        const meta = this._buildMeta(w, levelNum);
+        this._reportScore(scoreData.total, meta);
+        this._reportGameOver(scoreData.total, meta);
+        this._reportLevelCompletion(w, levelNum);
+        this._stashRunStats(w, scoreData);
+    }
+
+    _extractLevelNum(levelId) {
+        return Number.parseInt(levelId.match(/\d+/)?.[0] ?? '0', 10);
+    }
+
+    _buildMeta(w, levelNum) {
+        return {
             timePlayed: w.matchTime,
             level: levelNum,
             heroId: this._game.run.heroId,
-            outcome: w.outcome
+            outcome: w.outcome,
         };
-        try { this._game.platform.sendScore(score, meta); } catch {// Ignore if platform doesn't support score submission.}
-        }
-        try { this._game.platform.gameOver(score, meta); } catch { // Ignore if platform doesn't support gameOver.}
-        }
-        if (w.outcome === 'win' && w.level.id !== '__multiplayer__') {
-            try { this._game.platform.levelCompleted(levelNum, { stars: 3, perfectClear: false }); } catch { // Ignore if platform doesn't support levelCompleted.  }
-            }
-        }
-        // MP outcome is server-authoritative — no client message needed.
+    }
+
+    _reportScore(total, meta) {
+        try { this._game.platform.sendScore(total, meta); }
+        catch { /* platform may not implement sendScore */ }
+    }
+
+    _reportGameOver(total, meta) {
+        try { this._game.platform.gameOver(total, meta); }
+        catch { /* platform may not implement gameOver */ }
+    }
+
+    _reportLevelCompletion(w, levelNum) {
+        if (w.outcome !== 'win' || !this._isMatchTrackedAsLevel()) return;
+        try { this._game.platform.levelCompleted(levelNum, { stars: WIN_STARS, perfectClear: false }); }
+        catch { /* platform may not implement levelCompleted */ }
+    }
+
+    _stashRunStats(w, sd) {
         this._game.run.outcome = w.outcome;
-        this._game.run.matchStats = { score, durationSec: w.matchTime, unitsKilled: w.stats.unitsKilled };
+        this._game.run.matchStats = {
+            score: sd.total, timeBonus: sd.timeBonus, killBonus: sd.killBonus,
+            durationSec: w.matchTime, unitsKilled: w.stats.unitsKilled,
+        };
     }
 
     _computeScore(w) {
-        if (w.outcome !== 'win') return 0;
+        if (w.outcome !== 'win') return { total: 0, timeBonus: 0, killBonus: 0 };
         const remaining = Math.max(0, GameConfig.BATTLE.MATCH_TIME_LIMIT - w.matchTime);
-        return Math.round(remaining * 10);
+        const timeBonus = Math.round(remaining * TIME_BONUS_MULT);
+        const killBonus = w.stats.unitsKilled * KILL_BONUS_PER_KILL;
+        return { total: timeBonus + killBonus, timeBonus, killBonus };
     }
 
     _quitToMenu() {
         if (!this._world) return;
+        this._onQuitExtra();
         this._world.outcome = 'lose';
     }
 
@@ -218,11 +214,135 @@ export class BattleState {
         UIPainter.buttonCustom(ctx, {
             ...this._pauseBtn,
             fill: 'rgba(0,0,0,0.5)', stroke: 'rgba(255,255,255,0.3)', radius: 6,
-        }, (ctx, btn) => {
-            ctx.font = '18px system-ui';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🏳️', btn.x + btn.w / 2, btn.y + btn.h / 2);
+        }, (c, btn) => {
+            c.font = '18px system-ui';
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.fillText('🏳️', btn.x + btn.w / 2, btn.y + btn.h / 2);
         });
+    }
+}
+
+/**
+ * Single-player battle: local authoritative simulation, plays land instantly,
+ * level completion is reported to the platform.
+ */
+class SinglePlayerBattleState extends BaseBattleState {
+    _createWorld() {
+        const level = this._game.data.getLevel(this._game.run.levelId);
+        return new BattleWorld({
+            data: this._game.data, level, runContext: this._game.run,
+            assets: this._game.assets, sound: this._game.sound ?? null,
+        });
+    }
+
+    _commitPlay(slot, _cardId, x, y) {
+        this._world.player.playCardFromHand(slot, x, y);
+    }
+
+    _isMatchTrackedAsLevel() { return true; }
+}
+
+/**
+ * Multiplayer battle: server-authoritative simulation. Plays are sent as
+ * intents and reconciled by the next snapshot. Owns the per-battle WS
+ * listener lifecycle; the socket itself is owned by ResultState.
+ */
+class MultiplayerBattleState extends BaseBattleState {
+    constructor(game) {
+        super(game);
+        // Bind once so .off() can find the exact same reference at exit time.
+        // Each handler is a thin arrow that defers to the world / instance.
+        this._onStateMsg     = (m) => this._world?.applySnapshot(m);
+        // Server wraps events as {type:'event', tick, event:{...}}; unwrap.
+        this._onEventMsg     = (m) => this._world?.applyEvent(m?.event);
+        this._onOutcomeMsg   = (m) => this._world?.applyOutcome(m);
+        this._onPlayRejected = this._onPlayRejected.bind(this);
+        this._onOpponentLeft = this._onOpponentLeft.bind(this);
+    }
+
+    _createWorld() {
+        return new RemoteBattleView({
+            data: this._game.data,
+            level: this._buildMpLevel(),
+            runContext: this._game.run,
+            assets: this._game.assets,
+            sound: this._game.sound ?? null,
+            mpRoom: this._game.run.mpRoom,
+        });
+    }
+
+    _buildMpLevel() {
+        const mp = this._game.run.mpRoom;
+        return {
+            id: MP_LEVEL_ID,
+            enemyHeroId: mp.opponentHeroId,
+            enemyDeck: mp.opponentDeckIds,
+            aiProfile: null,
+            modifiers: { ...NEUTRAL_MODIFIERS },
+        };
+    }
+
+    _onEnterMode() {
+        const cli = this._game.run.mpClient;
+        if (!cli) return;
+        cli.on('state',                this._onStateMsg);
+        cli.on('event',                this._onEventMsg);
+        cli.on('outcome',              this._onOutcomeMsg);
+        cli.on('playRejected',         this._onPlayRejected);
+        cli.on('opponentDisconnected', this._onOpponentLeft);
+        // New battle starting: drop any stale handshake buffer from the
+        // previous match so the next ResultState begins from a clean slate.
+        this._game.run.mpRoom?.handshake?.reset();
+    }
+
+    _onExitMode() {
+        // Targeted teardown: only the listeners THIS state added. Session-
+        // scoped subscribers (RematchHandshake) survive the transition so
+        // 'rematchRequested' / 'matchStart' are never dropped mid-swap.
+        const cli = this._game.run.mpClient;
+        if (!cli) return;
+        cli.off('state',                this._onStateMsg);
+        cli.off('event',                this._onEventMsg);
+        cli.off('outcome',              this._onOutcomeMsg);
+        cli.off('playRejected',         this._onPlayRejected);
+        cli.off('opponentDisconnected', this._onOpponentLeft);
+    }
+
+    _commitPlay(slot, cardId, x, y) {
+        // Server-authoritative: send intent only; next snapshot will reflect
+        // mana/hand/spawn. No local mutation.
+        this._game.run.mpClient?.sendCardPlay(slot, cardId, x, y);
+    }
+
+    _onQuitExtra() {
+        this._game.run.mpClient?.sendLeave();
+    }
+
+    _onPlayRejected(m) {
+        // Server refused the play. Surface a discreet log; the next snapshot
+        // will keep the UI in sync (mana/cooldown weren't actually consumed).
+        console.debug('[minion_clash] play rejected', m?.code, m?.cardId);
+    }
+
+    _onOpponentLeft() {
+        // Safety net for true TCP disconnect (WebSocketDisconnect on server).
+        // Voluntary forfeit travels via 'outcome' instead — same code path
+        // as a natural match end — so this only fires when the server itself
+        // emits 'opponentDisconnected', i.e. the peer's socket actually died.
+        if (!this._world || this._world.outcome) return;
+        this._world.outcome = 'win';
+    }
+}
+
+/**
+ * Public façade. The decision SP vs MP is made ONCE here, at the boundary.
+ * From that point on, polymorphism handles everything else.
+ */
+export class BattleState {
+    static create(game) {
+        return game.run.mpRoom
+            ? new MultiplayerBattleState(game)
+            : new SinglePlayerBattleState(game);
     }
 }

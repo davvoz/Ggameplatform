@@ -10,6 +10,7 @@ import { VFXManager } from './VFXManager.js';
 import { PlayerTeamController } from './PlayerTeamController.js';
 import { EnemyTeamController } from './EnemyTeamController.js';
 import { GameConfig } from '../config/GameConfig.js';
+import { EntityKind } from '../entities/Entity.js';
 
 /**
  * BattleWorld: the live match. Orchestrates entity update order and exposes
@@ -84,8 +85,12 @@ export class BattleWorld {
 
         this.movement.update(this.entityManager, dt);
 
-        const removed = this.entityManager.cullDead();
-        if (removed > 0) this.stats.unitsKilled += removed;
+        const killed = this.entityManager.list().filter(
+            e => e.isDead() && e.team === 'enemy' &&
+                 (e.kind === EntityKind.UNIT || e.kind === EntityKind.HERO)
+        ).length;
+        this.entityManager.cullDead();
+        if (killed > 0) this.stats.unitsKilled += killed;
 
         this.vfx.update(dt);
 

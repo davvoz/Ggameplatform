@@ -71,6 +71,10 @@ export class MultiplayerClient {
         this._listeners.get(type)?.delete(cb);
     }
 
+    clearListeners() {
+        this._listeners.clear();
+    }
+
     _emit(type, data) {
         const set = this._listeners.get(type);
         if (!set) return;

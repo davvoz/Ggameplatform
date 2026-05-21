@@ -48,7 +48,7 @@ PROJECTILE_MAX_LIFETIME = 4.0
 # ─── Server tick (NOT in client config) ──────────────────────────────
 TICK_HZ = 20
 TICK_DT = 1.0 / TICK_HZ
-SNAPSHOT_EVERY_N_TICKS = 2        # 10 Hz snapshots
+SNAPSHOT_EVERY_N_TICKS = 1        # 20 Hz snapshots
 
 
 def is_in_team_half(team: str, _x: float, y: float) -> bool:

@@ -40,7 +40,7 @@ export class CampaignSelectState {
             if (UIPainter.isInside(t, it)) {
                 this._game.sound?.play(SoundEvent.UI_CLICK);
                 this._game.run.levelId = it.level.id;
-                this._game.transitionTo(new BattleState(this._game));
+                this._game.transitionTo(BattleState.create(this._game));
                 return;
             }
         }

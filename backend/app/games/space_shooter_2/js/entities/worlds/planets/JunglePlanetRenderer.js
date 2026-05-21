@@ -22,6 +22,40 @@ export class JunglePlanetRenderer extends PlanetRenderer {
         this._riverScrollY = 0;
         const riverCount = jcfg ? (jcfg.riverCount || 0) : 1;
         const rw = jcfg ? jcfg.riverW : [16, 24];
+        this.createRiverPath(riverCount, W, rw, H);
+        this._riverSpeed = 22;
+
+        // Edge tree tops
+        this._edgeTrees = [];
+        const baseCount = jcfg ? jcfg.edgeN : 14;
+        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
+        const eR = jcfg ? jcfg.edgeReach : [25, 45];
+        const eH = jcfg?.edgeHue ? jcfg.edgeHue : [108, 138];
+        const eL = jcfg?.edgeLit ? jcfg.edgeLit : [14, 22];
+        const positions = this._distributeEdgeElements(count, W, H);
+        this.generateEdgeTreeElements(count, positions, eR, eH, eL);
+
+        this._vigRGB = jcfg ? jcfg.vigCol : '20,14,8';
+    }
+
+    generateEdgeTreeElements(count, positions, eR, eH, eL) {
+        for (let i = 0; i < count; i++) {
+            const pos = positions[i];
+            const shape = [];
+            for (let s = 0; s < 6; s++) shape.push(0.7 + Math.random() * 0.35);
+            this._edgeTrees.push({
+                ...pos, shape,
+                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
+                height: 30 + Math.random() * 50,
+                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
+                sat: 45 + Math.random() * 20,
+                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
+                alpha: 0.65 + Math.random() * 0.3
+            });
+        }
+    }
+
+    createRiverPath(riverCount, W, rw, H) {
         for (let r = 0; r < riverCount; r++) {
             let baseX;
             if (riverCount === 1) {
@@ -51,32 +85,6 @@ export class JunglePlanetRenderer extends PlanetRenderer {
             const light = 16 + Math.random() * 8;
             this._rivers.push({ baseX, width, points, totalH: totalRiverH, hue, sat, light });
         }
-        this._riverSpeed = 22;
-
-        // Edge tree tops
-        this._edgeTrees = [];
-        const baseCount = jcfg ? jcfg.edgeN : 14;
-        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
-        const eR = jcfg ? jcfg.edgeReach : [25, 45];
-        const eH = jcfg?.edgeHue ? jcfg.edgeHue : [108, 138];
-        const eL = jcfg?.edgeLit ? jcfg.edgeLit : [14, 22];
-        const positions = this._distributeEdgeElements(count, W, H);
-        for (let i = 0; i < count; i++) {
-            const pos = positions[i];
-            const shape = [];
-            for (let s = 0; s < 6; s++) shape.push(0.7 + Math.random() * 0.35);
-            this._edgeTrees.push({
-                ...pos, shape,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 30 + Math.random() * 50,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: 45 + Math.random() * 20,
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.65 + Math.random() * 0.3
-            });
-        }
-
-        this._vigRGB = jcfg ? jcfg.vigCol : '20,14,8';
     }
 
     // ── update ────────────────────────────────────
@@ -103,64 +111,76 @@ export class JunglePlanetRenderer extends PlanetRenderer {
         this._renderEdgeVignette(ctx, this._vigRGB || '20,14,8', 0.35);
 
         // Edge tree tops (cartoon round blobs)
-        if (this._edgeTrees) {
-            for (const et of this._edgeTrees) {
-                let cx, cy, rx, ry;
-                if (et.side === 'left' || et.side === 'right') {
-                    const dir = et.side === 'left' ? 1 : -1;
-                    cx = et.x + et.reach * 0.45 * dir;
-                    cy = et.y; rx = et.reach; ry = et.height * 0.5;
-                } else {
-                    const dir = et.side === 'top' ? 1 : -1;
-                    cx = et.x; cy = et.y + et.reach * 0.45 * dir;
-                    rx = et.height * 0.5; ry = et.reach;
-                }
-                const n = et.shape.length;
-
-                // Shadow
-                ctx.globalAlpha = et.alpha * 0.3;
-                ctx.fillStyle = 'rgba(6,3,1,0.6)';
-                ctx.beginPath();
-                for (let i = 0; i < n; i++) {
-                    const a = (Math.PI * 2 / n) * i;
-                    const px = cx + 3 + Math.cos(a) * rx * et.shape[i] * 0.9;
-                    const py = cy + 3 + Math.sin(a) * ry * et.shape[i] * 0.9;
-                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                }
-                ctx.closePath(); ctx.fill();
-
-                // Main body with smooth curves
-                ctx.globalAlpha = et.alpha;
-                ctx.fillStyle = `hsl(${et.hue},${et.sat}%,${et.lightness}%)`;
-                ctx.beginPath();
-                for (let i = 0; i < n; i++) {
-                    const a0 = (Math.PI * 2 / n) * i;
-                    const a1 = (Math.PI * 2 / n) * ((i + 1) % n);
-                    const r0x = rx * et.shape[i], r0y = ry * et.shape[i];
-                    const r1x = rx * et.shape[(i + 1) % n], r1y = ry * et.shape[(i + 1) % n];
-                    const px = cx + Math.cos(a0) * r0x;
-                    const py = cy + Math.sin(a0) * r0y;
-                    if (i === 0) ctx.moveTo(px, py);
-                    const aMid = (a0 + a1) * 0.5;
-                    ctx.quadraticCurveTo(
-                        cx + Math.cos(aMid) * (r0x + r1x) * 0.55,
-                        cy + Math.sin(aMid) * (r0y + r1y) * 0.55,
-                        cx + Math.cos(a1) * r1x,
-                        cy + Math.sin(a1) * r1y
-                    );
-                }
-                ctx.closePath(); ctx.fill();
-
-                // Highlight
-                ctx.globalAlpha = et.alpha * 0.4;
-                ctx.fillStyle = `hsl(${et.hue - 5},${et.sat + 8}%,${et.lightness + 10}%)`;
-                ctx.beginPath();
-                ctx.ellipse(cx - rx * 0.1, cy - ry * 0.1, rx * 0.4, ry * 0.35, -0.3, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+        this.renderEdgeTrees(ctx);
 
         ctx.restore();
+    }
+
+    renderEdgeTrees(ctx) {
+        if (this._edgeTrees) {
+            this.renderEdgeTreeShadows(ctx);
+        }
+    }
+
+    renderEdgeTreeShadows(ctx) {
+        for (const et of this._edgeTrees) {
+            this.renderEdgeTreeShadow(et, ctx);
+        }
+    }
+
+    renderEdgeTreeShadow(et, ctx) {
+        let cx, cy, rx, ry;
+        if (et.side === 'left' || et.side === 'right') {
+            const dir = et.side === 'left' ? 1 : -1;
+            cx = et.x + et.reach * 0.45 * dir;
+            cy = et.y; rx = et.reach; ry = et.height * 0.5;
+        } else {
+            const dir = et.side === 'top' ? 1 : -1;
+            cx = et.x; cy = et.y + et.reach * 0.45 * dir;
+            rx = et.height * 0.5; ry = et.reach;
+        }
+        const n = et.shape.length;
+
+        // Shadow
+        ctx.globalAlpha = et.alpha * 0.3;
+        ctx.fillStyle = 'rgba(6,3,1,0.6)';
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const a = (Math.PI * 2 / n) * i;
+            const px = cx + 3 + Math.cos(a) * rx * et.shape[i] * 0.9;
+            const py = cy + 3 + Math.sin(a) * ry * et.shape[i] * 0.9;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.fill();
+
+        // Main body with smooth curves
+        ctx.globalAlpha = et.alpha;
+        ctx.fillStyle = `hsl(${et.hue},${et.sat}%,${et.lightness}%)`;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const a0 = (Math.PI * 2 / n) * i;
+            const a1 = (Math.PI * 2 / n) * ((i + 1) % n);
+            const r0x = rx * et.shape[i], r0y = ry * et.shape[i];
+            const r1x = rx * et.shape[(i + 1) % n], r1y = ry * et.shape[(i + 1) % n];
+            const px = cx + Math.cos(a0) * r0x;
+            const py = cy + Math.sin(a0) * r0y;
+            if (i === 0) ctx.moveTo(px, py);
+            const aMid = (a0 + a1) * 0.5;
+            ctx.quadraticCurveTo(
+                cx + Math.cos(aMid) * (r0x + r1x) * 0.55,
+                cy + Math.sin(aMid) * (r0y + r1y) * 0.55,
+                cx + Math.cos(a1) * r1x,
+                cy + Math.sin(a1) * r1y
+            );
+        }
+        ctx.closePath(); ctx.fill();
+
+        // Highlight
+        ctx.globalAlpha = et.alpha * 0.4;
+        ctx.fillStyle = `hsl(${et.hue - 5},${et.sat + 8}%,${et.lightness + 10}%)`;
+        ctx.beginPath();
+        ctx.ellipse(cx - rx * 0.1, cy - ry * 0.1, rx * 0.4, ry * 0.35, -0.3, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     // ── private helpers ───────────────────────────

@@ -24,51 +24,143 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         this._acidRiverScrollY = 0;
         const riverCount = tcfg ? (tcfg.acidRiverCount || 1) : 1;
         const rw = tcfg ? tcfg.acidRiverW : [14, 24];
-        for (let r = 0; r < riverCount; r++) {
-            let baseX;
-            if (riverCount === 1) {
-                baseX = W * 0.25 + Math.random() * W * 0.5;
-            } else {
-                const slot = (r + 0.5) / riverCount;
-                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
-            }
-            const width = rw[0] + Math.random() * (rw[1] - rw[0]);
-            const tileH = H * 3;
-            const segH = 50 + Math.random() * 30;
-            const segs = Math.ceil(tileH / segH);
-            const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (Math.random() - 0.5) * 12;
-            for (let i = 0; i < segs; i++) {
-                drift += (Math.random() - 0.5) * 18;
-                drift = Math.max(-30, Math.min(30, drift));
-                cx += drift;
-                cx = Math.max(-W * 0.2, Math.min(W * 0.2, cx));
-                points.push({ x: cx, y: (i + 1) * segH });
-            }
-            const totalRiverH = points.at(-1).y;
-            const hue = 90 + Math.random() * 30;
-            const sat = 55 + Math.random() * 25;
-            const light = 22 + Math.random() * 12;
-            // Generate bubble positions along the river edges
-            const bubbles = [];
-            const bubbleCount = this.quality === 'high' ? 15 : 7;
-            for (let b = 0; b < bubbleCount; b++) {
-                bubbles.push({
-                    t: Math.random(),  // position along river (0-1)
-                    side: Math.random() < 0.5 ? -1 : 1,
-                    offset: 0.3 + Math.random() * 0.5,
-                    size: 1.5 + Math.random() * 3,
-                    phase: Math.random() * Math.PI * 2
-                });
-            }
-            this._acidRivers.push({ baseX, width, points, totalH: totalRiverH, hue, sat, light, bubbles });
-        }
+        this.generateAcidRivers(riverCount, W, rw, H);
         this._acidRiverSpeed = 22;
 
         // ─── Toxic blob pools (organic irregular shapes with sub-blobs) ───
         this._toxicPools = [];
         this._toxicPoolScrollY = 0;
         const poolCount = tcfg ? (tcfg.toxicPools || 0) : 0;
+        this.generateToxicPools(poolCount, H, W);
+
+        // ─── Pool bubble particles (rising from pools) ───
+        this._poolBubbles = [];
+        const bubbleTotal = this.quality === 'high' ? poolCount * 4 : poolCount * 2;
+        this.generateBubbleParticles(bubbleTotal, poolCount);
+
+        // ─── Dripping edge formations (organic blobs with tendrils) ───
+        this._edgeToxic = [];
+        const baseCount = tcfg ? tcfg.edgeN : 12;
+        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
+        const eR = tcfg ? tcfg.edgeReach : [25, 45];
+        const eH = tcfg?.edgeHue ? tcfg.edgeHue : [80, 120];
+        const eL = tcfg?.edgeLit ? tcfg.edgeLit : [12, 22];
+        const eS = tcfg?.edgeSat ? tcfg.edgeSat : [30, 55];
+        const positions = this._distributeEdgeElements(count, W, H);
+        this.generateToxicEdgeFormations(count, positions, eR, eH, eS, eL);
+
+        // ─── Layered toxic fog (drifting semi-transparent gradients) ───
+        this._toxicFog = [];
+        const fogCount = this.quality === 'high' ? 4 : 2;
+        this.generateToxicFog(fogCount, W, H);
+
+        // ─── Acid rain + toxic spore particles ───
+        this._acidRainDrops = [];
+        this._toxicSpores = [];
+        this.generateAcidRainAndSpores(tcfg, W, H);
+
+        this._vigRGB = tcfg ? tcfg.vigCol : '15,30,5';
+    }
+
+    generateAcidRainAndSpores(tcfg, W, H) {
+        if (tcfg?.acidRain) {
+            const rainCount = this.quality === 'high'
+                ? (tcfg.acidRainCount || 30)
+                : Math.max(10, Math.round((tcfg.acidRainCount || 30) * 0.45));
+            for (let i = 0; i < rainCount; i++) {
+                this._acidRainDrops.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    length: 4 + Math.random() * 10,
+                    speed: 35 + Math.random() * 30,
+                    drift: -3 - Math.random() * 5,
+                    alpha: 0.15 + Math.random() * 0.35,
+                    hue: 90 + Math.random() * 30,
+                    sat: 60 + Math.random() * 20,
+                    light: 40 + Math.random() * 20
+                });
+            }
+            // Add spores (glowing drifting particles)
+            const sporeCount = this.quality === 'high' ? 15 : 6;
+            for (let i = 0; i < sporeCount; i++) {
+                this._toxicSpores.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    size: 1.5 + Math.random() * 3,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: -2 + Math.random() * 4,
+                    driftPhase: Math.random() * Math.PI * 2,
+                    alpha: 0.2 + Math.random() * 0.3,
+                    hue: 90 + Math.random() * 35,
+                    pulsePhase: Math.random() * Math.PI * 2
+                });
+            }
+        }
+    }
+
+    generateToxicFog(fogCount, W, H) {
+        for (let f = 0; f < fogCount; f++) {
+            this._toxicFog.push({
+                x: Math.random() * W,
+                y: H * 0.2 + Math.random() * H * 0.6,
+                radiusX: W * 0.3 + Math.random() * W * 0.3,
+                radiusY: H * 0.08 + Math.random() * H * 0.12,
+                hue: 85 + Math.random() * 35,
+                sat: 40 + Math.random() * 25,
+                light: 20 + Math.random() * 15,
+                alpha: 0.06 + Math.random() * 0.08,
+                driftSpeed: (Math.random() - 0.5) * 8,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    generateToxicEdgeFormations(count, positions, eR, eH, eS, eL) {
+        for (let i = 0; i < count; i++) {
+            const pos = positions[i];
+            const nPts = 6 + Math.floor(Math.random() * 3);
+            const shape = [];
+            for (let s = 0; s < nPts; s++) shape.push(0.55 + Math.random() * 0.5);
+            // Drip tendrils hanging from the formation
+            const dripCount = 1 + Math.floor(Math.random() * 3);
+            const drips = [];
+            for (let d = 0; d < dripCount; d++) {
+                drips.push({
+                    angle: Math.random() * Math.PI * 2,
+                    length: 8 + Math.random() * 18,
+                    width: 1.5 + Math.random() * 2,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+            this._edgeToxic.push({
+                ...pos, shape, drips,
+                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
+                height: 28 + Math.random() * 48,
+                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
+                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
+                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
+                alpha: 0.6 + Math.random() * 0.3,
+                hasGlow: Math.random() < 0.45,
+                glowHue: 100 + Math.random() * 25
+            });
+        }
+    }
+
+    generateBubbleParticles(bubbleTotal, poolCount) {
+        for (let i = 0; i < bubbleTotal; i++) {
+            this._poolBubbles.push({
+                poolIdx: Math.floor(Math.random() * Math.max(1, poolCount)),
+                dx: (Math.random() - 0.5) * 30,
+                dy: 0,
+                size: 1 + Math.random() * 2.5,
+                speed: -8 - Math.random() * 12,
+                life: Math.random() * 2,
+                maxLife: 1 + Math.random() * 2,
+                alpha: 0.3 + Math.random() * 0.3,
+                hue: 95 + Math.random() * 25
+            });
+        }
+    }
+
+    generateToxicPools(poolCount, H, W) {
         if (poolCount > 0) {
             const totalH = H * 3;
             const spacing = totalH / poolCount;
@@ -103,116 +195,48 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
             }
             this._toxicPoolSpeed = 22;
         }
+    }
 
-        // ─── Pool bubble particles (rising from pools) ───
-        this._poolBubbles = [];
-        const bubbleTotal = this.quality === 'high' ? poolCount * 4 : poolCount * 2;
-        for (let i = 0; i < bubbleTotal; i++) {
-            this._poolBubbles.push({
-                poolIdx: Math.floor(Math.random() * Math.max(1, poolCount)),
-                dx: (Math.random() - 0.5) * 30,
-                dy: 0,
-                size: 1 + Math.random() * 2.5,
-                speed: -8 - Math.random() * 12,
-                life: Math.random() * 2,
-                maxLife: 1 + Math.random() * 2,
-                alpha: 0.3 + Math.random() * 0.3,
-                hue: 95 + Math.random() * 25
-            });
-        }
-
-        // ─── Dripping edge formations (organic blobs with tendrils) ───
-        this._edgeToxic = [];
-        const baseCount = tcfg ? tcfg.edgeN : 12;
-        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
-        const eR = tcfg ? tcfg.edgeReach : [25, 45];
-        const eH = tcfg?.edgeHue ? tcfg.edgeHue : [80, 120];
-        const eL = tcfg?.edgeLit ? tcfg.edgeLit : [12, 22];
-        const eS = tcfg?.edgeSat ? tcfg.edgeSat : [30, 55];
-        const positions = this._distributeEdgeElements(count, W, H);
-        for (let i = 0; i < count; i++) {
-            const pos = positions[i];
-            const nPts = 6 + Math.floor(Math.random() * 3);
-            const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.55 + Math.random() * 0.5);
-            // Drip tendrils hanging from the formation
-            const dripCount = 1 + Math.floor(Math.random() * 3);
-            const drips = [];
-            for (let d = 0; d < dripCount; d++) {
-                drips.push({
-                    angle: Math.random() * Math.PI * 2,
-                    length: 8 + Math.random() * 18,
-                    width: 1.5 + Math.random() * 2,
+    generateAcidRivers(riverCount, W, rw, H) {
+        for (let r = 0; r < riverCount; r++) {
+            let baseX;
+            if (riverCount === 1) {
+                baseX = W * 0.25 + Math.random() * W * 0.5;
+            } else {
+                const slot = (r + 0.5) / riverCount;
+                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
+            }
+            const width = rw[0] + Math.random() * (rw[1] - rw[0]);
+            const tileH = H * 3;
+            const segH = 50 + Math.random() * 30;
+            const segs = Math.ceil(tileH / segH);
+            const points = [{ x: 0, y: 0 }];
+            let cx = 0, drift = (Math.random() - 0.5) * 12;
+            for (let i = 0; i < segs; i++) {
+                drift += (Math.random() - 0.5) * 18;
+                drift = Math.max(-30, Math.min(30, drift));
+                cx += drift;
+                cx = Math.max(-W * 0.2, Math.min(W * 0.2, cx));
+                points.push({ x: cx, y: (i + 1) * segH });
+            }
+            const totalRiverH = points.at(-1).y;
+            const hue = 90 + Math.random() * 30;
+            const sat = 55 + Math.random() * 25;
+            const light = 22 + Math.random() * 12;
+            // Generate bubble positions along the river edges
+            const bubbles = [];
+            const bubbleCount = this.quality === 'high' ? 15 : 7;
+            for (let b = 0; b < bubbleCount; b++) {
+                bubbles.push({
+                    t: Math.random(), // position along river (0-1)
+                    side: Math.random() < 0.5 ? -1 : 1,
+                    offset: 0.3 + Math.random() * 0.5,
+                    size: 1.5 + Math.random() * 3,
                     phase: Math.random() * Math.PI * 2
                 });
             }
-            this._edgeToxic.push({
-                ...pos, shape, drips,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 28 + Math.random() * 48,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.6 + Math.random() * 0.3,
-                hasGlow: Math.random() < 0.45,
-                glowHue: 100 + Math.random() * 25
-            });
+            this._acidRivers.push({ baseX, width, points, totalH: totalRiverH, hue, sat, light, bubbles });
         }
-
-        // ─── Layered toxic fog (drifting semi-transparent gradients) ───
-        this._toxicFog = [];
-        const fogCount = this.quality === 'high' ? 4 : 2;
-        for (let f = 0; f < fogCount; f++) {
-            this._toxicFog.push({
-                x: Math.random() * W,
-                y: H * 0.2 + Math.random() * H * 0.6,
-                radiusX: W * 0.3 + Math.random() * W * 0.3,
-                radiusY: H * 0.08 + Math.random() * H * 0.12,
-                hue: 85 + Math.random() * 35,
-                sat: 40 + Math.random() * 25,
-                light: 20 + Math.random() * 15,
-                alpha: 0.06 + Math.random() * 0.08,
-                driftSpeed: (Math.random() - 0.5) * 8,
-                phase: Math.random() * Math.PI * 2
-            });
-        }
-
-        // ─── Acid rain + toxic spore particles ───
-        this._acidRainDrops = [];
-        this._toxicSpores = [];
-        if (tcfg?.acidRain) {
-            const rainCount = this.quality === 'high'
-                ? (tcfg.acidRainCount || 30)
-                : Math.max(10, Math.round((tcfg.acidRainCount || 30) * 0.45));
-            for (let i = 0; i < rainCount; i++) {
-                this._acidRainDrops.push({
-                    x: Math.random() * W, y: Math.random() * H,
-                    length: 4 + Math.random() * 10,
-                    speed: 35 + Math.random() * 30,
-                    drift: -3 - Math.random() * 5,
-                    alpha: 0.15 + Math.random() * 0.35,
-                    hue: 90 + Math.random() * 30,
-                    sat: 60 + Math.random() * 20,
-                    light: 40 + Math.random() * 20
-                });
-            }
-            // Add spores (glowing drifting particles)
-            const sporeCount = this.quality === 'high' ? 15 : 6;
-            for (let i = 0; i < sporeCount; i++) {
-                this._toxicSpores.push({
-                    x: Math.random() * W, y: Math.random() * H,
-                    size: 1.5 + Math.random() * 3,
-                    vx: (Math.random() - 0.5) * 6,
-                    vy: -2 + Math.random() * 4,
-                    driftPhase: Math.random() * Math.PI * 2,
-                    alpha: 0.2 + Math.random() * 0.3,
-                    hue: 90 + Math.random() * 35,
-                    pulsePhase: Math.random() * Math.PI * 2
-                });
-            }
-        }
-
-        this._vigRGB = tcfg ? tcfg.vigCol : '15,30,5';
     }
 
     // ── update ────────────────────────────────────
@@ -220,20 +244,56 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
     update(dt) {
         const W = this.canvasWidth, H = this.canvasHeight;
         // Scroll acid rivers
-        if (this._acidRivers && this._acidRivers.length > 0) {
-            this._acidRiverScrollY += this._acidRiverSpeed * dt;
-            if (this._acidRivers[0] && this._acidRiverScrollY >= this._acidRivers[0].totalH) {
-                this._acidRiverScrollY -= this._acidRivers[0].totalH;
-            }
-        }
+        this.scrollAcidRivers(dt);
         // Scroll toxic pools
-        if (this._toxicPools && this._toxicPools.length > 0) {
-            this._toxicPoolScrollY += this._toxicPoolSpeed * dt;
-            if (this._toxicPools[0] && this._toxicPoolScrollY >= this._toxicPools[0].totalH) {
-                this._toxicPoolScrollY -= this._toxicPools[0].totalH;
+        this.scrollToxicPools(dt);
+        // Update pool bubbles
+        this.updatePoolBubbles(dt);
+        // Update toxic fog drift
+        this.updateToxicFogDrift(dt, W);
+        // Update acid rain
+        this.updateAcidRainDrops(dt, H, W);
+        // Update toxic spores (irregular drift)
+        this.updateToxicSpores(dt, W, H);
+    }
+
+    updateToxicSpores(dt, W, H) {
+        if (this._toxicSpores) {
+            const now = performance.now() * 0.001;
+            for (const sp of this._toxicSpores) {
+                sp.x += sp.vx * dt + Math.sin(sp.driftPhase + now * 0.7) * 3 * dt;
+                sp.y += sp.vy * dt + Math.cos(sp.driftPhase + now * 0.5) * 2 * dt;
+                if (sp.x < -10) sp.x = W + 5;
+                if (sp.x > W + 10) sp.x = -5;
+                if (sp.y < -10) sp.y = H + 5;
+                if (sp.y > H + 10) sp.y = -5;
             }
         }
-        // Update pool bubbles
+    }
+
+    updateAcidRainDrops(dt, H, W) {
+        if (this._acidRainDrops) {
+            for (const rd of this._acidRainDrops) {
+                rd.y += rd.speed * dt;
+                rd.x += rd.drift * dt;
+                if (rd.y > H + 15) { rd.y = -rd.length - 5; rd.x = Math.random() * W; }
+                if (rd.x < -15) rd.x = W + 5;
+                if (rd.x > W + 15) rd.x = -5;
+            }
+        }
+    }
+
+    updateToxicFogDrift(dt, W) {
+        if (this._toxicFog) {
+            for (const fog of this._toxicFog) {
+                fog.x += fog.driftSpeed * dt;
+                if (fog.x < -fog.radiusX) fog.x = W + fog.radiusX * 0.5;
+                if (fog.x > W + fog.radiusX) fog.x = -fog.radiusX * 0.5;
+            }
+        }
+    }
+
+    updatePoolBubbles(dt) {
         if (this._poolBubbles) {
             for (const pb of this._poolBubbles) {
                 pb.life += dt;
@@ -245,34 +305,22 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
                 }
             }
         }
-        // Update toxic fog drift
-        if (this._toxicFog) {
-            for (const fog of this._toxicFog) {
-                fog.x += fog.driftSpeed * dt;
-                if (fog.x < -fog.radiusX) fog.x = W + fog.radiusX * 0.5;
-                if (fog.x > W + fog.radiusX) fog.x = -fog.radiusX * 0.5;
+    }
+
+    scrollToxicPools(dt) {
+        if (this._toxicPools && this._toxicPools.length > 0) {
+            this._toxicPoolScrollY += this._toxicPoolSpeed * dt;
+            if (this._toxicPools[0] && this._toxicPoolScrollY >= this._toxicPools[0].totalH) {
+                this._toxicPoolScrollY -= this._toxicPools[0].totalH;
             }
         }
-        // Update acid rain
-        if (this._acidRainDrops) {
-            for (const rd of this._acidRainDrops) {
-                rd.y += rd.speed * dt;
-                rd.x += rd.drift * dt;
-                if (rd.y > H + 15) { rd.y = -rd.length - 5; rd.x = Math.random() * W; }
-                if (rd.x < -15) rd.x = W + 5;
-                if (rd.x > W + 15) rd.x = -5;
-            }
-        }
-        // Update toxic spores (irregular drift)
-        if (this._toxicSpores) {
-            const now = performance.now() * 0.001;
-            for (const sp of this._toxicSpores) {
-                sp.x += sp.vx * dt + Math.sin(sp.driftPhase + now * 0.7) * 3 * dt;
-                sp.y += sp.vy * dt + Math.cos(sp.driftPhase + now * 0.5) * 2 * dt;
-                if (sp.x < -10) sp.x = W + 5;
-                if (sp.x > W + 10) sp.x = -5;
-                if (sp.y < -10) sp.y = H + 5;
-                if (sp.y > H + 10) sp.y = -5;
+    }
+
+    scrollAcidRivers(dt) {
+        if (this._acidRivers && this._acidRivers.length > 0) {
+            this._acidRiverScrollY += this._acidRiverSpeed * dt;
+            if (this._acidRivers[0] && this._acidRiverScrollY >= this._acidRivers[0].totalH) {
+                this._acidRiverScrollY -= this._acidRivers[0].totalH;
             }
         }
     }
@@ -314,6 +362,11 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         const scrollY = this._acidRiverScrollY || 0;
         const now = typeof time === 'number' ? time : performance.now() * 0.001;
         ctx.save();
+        this.renderAcidRiverLayers(ctx, scrollY, H, now);
+        ctx.restore();
+    }
+
+    renderAcidRiverLayers(ctx, scrollY, H, now) {
         for (const rv of this._acidRivers) {
             const pts = rv.points, totalH = rv.totalH, w = rv.width;
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -357,41 +410,44 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
                 trace(-w * 0.1); ctx.stroke();
 
                 // ── Edge bubbles along the river ──
-                if (rv.bubbles) {
-                    for (const bub of rv.bubbles) {
-                        const segIdx = Math.floor(bub.t * (pts.length - 1));
-                        const segT = (bub.t * (pts.length - 1)) - segIdx;
-                        if (segIdx >= pts.length - 1) continue;
-                        const px = rv.baseX + pts[segIdx].x + (pts[segIdx + 1].x - pts[segIdx].x) * segT;
-                        const py = pts[segIdx].y + (pts[segIdx + 1].y - pts[segIdx].y) * segT + oY;
-                        const bobble = Math.sin(bub.phase + now * 2.5) * 2;
-                        const bx = px + bub.side * (w * bub.offset) + bobble;
-                        const by = py + Math.cos(bub.phase + now * 1.8) * 1.5;
-                        if (by < -10 || by > H + 10) continue;
-
-                        // Bubble glow
-                        ctx.globalAlpha = 0.2;
-                        ctx.fillStyle = `hsl(${rv.hue + 10},${rv.sat + 5}%,${rv.light + 20}%)`;
-                        ctx.beginPath();
-                        ctx.arc(bx, by, bub.size * 1.4, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Bubble body
-                        ctx.globalAlpha = 0.35;
-                        ctx.fillStyle = `hsl(${rv.hue + 5},${rv.sat}%,${rv.light + 10}%)`;
-                        ctx.beginPath();
-                        ctx.arc(bx, by, bub.size, 0, Math.PI * 2);
-                        ctx.fill();
-                        // Bright highlight
-                        ctx.globalAlpha = 0.25;
-                        ctx.fillStyle = `hsl(${rv.hue},${rv.sat + 10}%,${rv.light + 30}%)`;
-                        ctx.beginPath();
-                        ctx.arc(bx - bub.size * 0.2, by - bub.size * 0.2, bub.size * 0.35, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
+                this.renderBubbleParticles(rv, pts, oY, now, w, H, ctx);
             }
         }
-        ctx.restore();
+    }
+
+    renderBubbleParticles(rv, pts, oY, now, w, H, ctx) {
+        if (rv.bubbles) {
+            for (const bub of rv.bubbles) {
+                const segIdx = Math.floor(bub.t * (pts.length - 1));
+                const segT = (bub.t * (pts.length - 1)) - segIdx;
+                if (segIdx >= pts.length - 1) continue;
+                const px = rv.baseX + pts[segIdx].x + (pts[segIdx + 1].x - pts[segIdx].x) * segT;
+                const py = pts[segIdx].y + (pts[segIdx + 1].y - pts[segIdx].y) * segT + oY;
+                const bobble = Math.sin(bub.phase + now * 2.5) * 2;
+                const bx = px + bub.side * (w * bub.offset) + bobble;
+                const by = py + Math.cos(bub.phase + now * 1.8) * 1.5;
+                if (by < -10 || by > H + 10) continue;
+
+                // Bubble glow
+                ctx.globalAlpha = 0.2;
+                ctx.fillStyle = `hsl(${rv.hue + 10},${rv.sat + 5}%,${rv.light + 20}%)`;
+                ctx.beginPath();
+                ctx.arc(bx, by, bub.size * 1.4, 0, Math.PI * 2);
+                ctx.fill();
+                // Bubble body
+                ctx.globalAlpha = 0.35;
+                ctx.fillStyle = `hsl(${rv.hue + 5},${rv.sat}%,${rv.light + 10}%)`;
+                ctx.beginPath();
+                ctx.arc(bx, by, bub.size, 0, Math.PI * 2);
+                ctx.fill();
+                // Bright highlight
+                ctx.globalAlpha = 0.25;
+                ctx.fillStyle = `hsl(${rv.hue},${rv.sat + 10}%,${rv.light + 30}%)`;
+                ctx.beginPath();
+                ctx.arc(bx - bub.size * 0.2, by - bub.size * 0.2, bub.size * 0.35, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
     }
 
     _renderToxicPools(ctx, time) {
@@ -517,108 +573,112 @@ export class ToxicPlanetRenderer extends PlanetRenderer {
         const now = typeof time === 'number' ? time : performance.now() * 0.001;
 
         for (const et of this._edgeToxic) {
-            let cx, cy, rx, ry;
-            if (et.side === 'left' || et.side === 'right') {
-                const dir = et.side === 'left' ? 1 : -1;
-                cx = et.x + et.reach * 0.42 * dir;
-                cy = et.y; rx = et.reach; ry = et.height * 0.5;
-            } else {
-                const dir = et.side === 'top' ? 1 : -1;
-                cx = et.x; cy = et.y + et.reach * 0.42 * dir;
-                rx = et.height * 0.5; ry = et.reach;
-            }
-            const n = et.shape.length;
+            this.renderToxicBlob(et, ctx, now);
+        }
+    }
 
-            const drawBlobShape = (ox, oy, scale) => {
-                ctx.beginPath();
-                for (let i = 0; i < n; i++) {
-                    const a0 = (Math.PI * 2 / n) * i;
-                    const a1 = (Math.PI * 2 / n) * ((i + 1) % n);
-                    const r0x = rx * et.shape[i] * scale, r0y = ry * et.shape[i] * scale;
-                    const r1x = rx * et.shape[(i + 1) % n] * scale, r1y = ry * et.shape[(i + 1) % n] * scale;
-                    const px = cx + ox + Math.cos(a0) * r0x;
-                    const py = cy + oy + Math.sin(a0) * r0y;
-                    if (i === 0) ctx.moveTo(px, py);
-                    const aMid = (a0 + a1) * 0.5;
-                    ctx.quadraticCurveTo(
-                        cx + ox + Math.cos(aMid) * (r0x + r1x) * 0.55,
-                        cy + oy + Math.sin(aMid) * (r0y + r1y) * 0.55,
-                        cx + ox + Math.cos(a1) * r1x,
-                        cy + oy + Math.sin(a1) * r1y
-                    );
-                }
-                ctx.closePath();
-            };
+    renderToxicBlob(et, ctx, now) {
+        let cx, cy, rx, ry;
+        if (et.side === 'left' || et.side === 'right') {
+            const dir = et.side === 'left' ? 1 : -1;
+            cx = et.x + et.reach * 0.42 * dir;
+            cy = et.y; rx = et.reach; ry = et.height * 0.5;
+        } else {
+            const dir = et.side === 'top' ? 1 : -1;
+            cx = et.x; cy = et.y + et.reach * 0.42 * dir;
+            rx = et.height * 0.5; ry = et.reach;
+        }
+        const n = et.shape.length;
 
-            // Layer 1 — Dark shadow
-            ctx.globalAlpha = et.alpha * 0.3;
-            ctx.fillStyle = 'rgba(5,10,2,0.6)';
-            drawBlobShape(3, 3, 0.92);
-            ctx.fill();
-
-            // Layer 2 — Dark sludge undercoat
-            ctx.globalAlpha = et.alpha * 0.6;
-            ctx.fillStyle = `hsl(${et.hue - 10},${Math.max(15, et.sat - 12)}%,${Math.max(5, et.lightness - 6)}%)`;
-            drawBlobShape(0, 0, 1.04);
-            ctx.fill();
-
-            // Layer 3 — Main blob body
-            ctx.globalAlpha = et.alpha;
-            ctx.fillStyle = `hsl(${et.hue},${et.sat}%,${et.lightness}%)`;
-            drawBlobShape(0, 0, 1);
-            ctx.fill();
-
-            // Layer 4 — Toxic glow highlight
-            ctx.globalAlpha = et.alpha * 0.45;
-            ctx.fillStyle = `hsl(${et.hue},${Math.min(80, et.sat + 12)}%,${Math.min(55, et.lightness + 14)}%)`;
+        const drawBlobShape = (ox, oy, scale) => {
             ctx.beginPath();
-            ctx.ellipse(cx - rx * 0.08, cy - ry * 0.08, rx * 0.4, ry * 0.35, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Radial glow at base (acid drip light)
-            if (et.hasGlow) {
-                ctx.globalAlpha = et.alpha * 0.3;
-                const glowG = ctx.createRadialGradient(cx, cy + ry * 0.25, 0, cx, cy + ry * 0.25, rx * 0.5);
-                glowG.addColorStop(0, `hsla(${et.glowHue},80%,45%,0.6)`);
-                glowG.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = glowG;
-                ctx.beginPath();
-                ctx.arc(cx, cy + ry * 0.25, rx * 0.5, 0, Math.PI * 2);
-                ctx.fill();
+            for (let i = 0; i < n; i++) {
+                const a0 = (Math.PI * 2 / n) * i;
+                const a1 = (Math.PI * 2 / n) * ((i + 1) % n);
+                const r0x = rx * et.shape[i] * scale, r0y = ry * et.shape[i] * scale;
+                const r1x = rx * et.shape[(i + 1) % n] * scale, r1y = ry * et.shape[(i + 1) % n] * scale;
+                const px = cx + ox + Math.cos(a0) * r0x;
+                const py = cy + oy + Math.sin(a0) * r0y;
+                if (i === 0) ctx.moveTo(px, py);
+                const aMid = (a0 + a1) * 0.5;
+                ctx.quadraticCurveTo(
+                    cx + ox + Math.cos(aMid) * (r0x + r1x) * 0.55,
+                    cy + oy + Math.sin(aMid) * (r0y + r1y) * 0.55,
+                    cx + ox + Math.cos(a1) * r1x,
+                    cy + oy + Math.sin(a1) * r1y
+                );
             }
+            ctx.closePath();
+        };
 
-            // ── Drip tendrils (hanging ooze from the formation) ──
-            if (et.drips) {
-                for (const drip of et.drips) {
-                    const da = drip.angle;
-                    const startX = cx + Math.cos(da) * rx * 0.6;
-                    const startY = cy + Math.sin(da) * ry * 0.6;
-                    const dripSway = Math.sin(drip.phase + now * 1.5) * 3;
-                    const endX = startX + Math.cos(da) * drip.length * 0.5 + dripSway;
-                    const endY = startY + Math.sin(da) * drip.length + Math.abs(Math.sin(da)) * drip.length * 0.3;
+        // Layer 1 — Dark shadow
+        ctx.globalAlpha = et.alpha * 0.3;
+        ctx.fillStyle = 'rgba(5,10,2,0.6)';
+        drawBlobShape(3, 3, 0.92);
+        ctx.fill();
 
-                    // Drip tendril body
-                    ctx.globalAlpha = et.alpha * 0.6;
-                    ctx.strokeStyle = `hsl(${et.hue + 5},${et.sat + 5}%,${et.lightness + 5}%)`;
-                    ctx.lineWidth = drip.width;
-                    ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    ctx.moveTo(startX, startY);
-                    ctx.quadraticCurveTo(
-                        (startX + endX) * 0.5 + dripSway * 0.5,
-                        (startY + endY) * 0.5,
-                        endX, endY
-                    );
-                    ctx.stroke();
+        // Layer 2 — Dark sludge undercoat
+        ctx.globalAlpha = et.alpha * 0.6;
+        ctx.fillStyle = `hsl(${et.hue - 10},${Math.max(15, et.sat - 12)}%,${Math.max(5, et.lightness - 6)}%)`;
+        drawBlobShape(0, 0, 1.04);
+        ctx.fill();
 
-                    // Drip droplet at the tip
-                    const dropPulse = 0.5 + 0.5 * Math.sin(drip.phase + now * 2.5);
-                    ctx.globalAlpha = et.alpha * 0.5 * dropPulse;
-                    ctx.fillStyle = `hsl(${et.hue + 10},${et.sat + 10}%,${et.lightness + 12}%)`;
-                    ctx.beginPath();
-                    ctx.arc(endX, endY, drip.width * 0.8 + dropPulse, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+        // Layer 3 — Main blob body
+        ctx.globalAlpha = et.alpha;
+        ctx.fillStyle = `hsl(${et.hue},${et.sat}%,${et.lightness}%)`;
+        drawBlobShape(0, 0, 1);
+        ctx.fill();
+
+        // Layer 4 — Toxic glow highlight
+        ctx.globalAlpha = et.alpha * 0.45;
+        ctx.fillStyle = `hsl(${et.hue},${Math.min(80, et.sat + 12)}%,${Math.min(55, et.lightness + 14)}%)`;
+        ctx.beginPath();
+        ctx.ellipse(cx - rx * 0.08, cy - ry * 0.08, rx * 0.4, ry * 0.35, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Radial glow at base (acid drip light)
+        if (et.hasGlow) {
+            ctx.globalAlpha = et.alpha * 0.3;
+            const glowG = ctx.createRadialGradient(cx, cy + ry * 0.25, 0, cx, cy + ry * 0.25, rx * 0.5);
+            glowG.addColorStop(0, `hsla(${et.glowHue},80%,45%,0.6)`);
+            glowG.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = glowG;
+            ctx.beginPath();
+            ctx.arc(cx, cy + ry * 0.25, rx * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // ── Drip tendrils (hanging ooze from the formation) ──
+        if (et.drips) {
+            for (const drip of et.drips) {
+                const da = drip.angle;
+                const startX = cx + Math.cos(da) * rx * 0.6;
+                const startY = cy + Math.sin(da) * ry * 0.6;
+                const dripSway = Math.sin(drip.phase + now * 1.5) * 3;
+                const endX = startX + Math.cos(da) * drip.length * 0.5 + dripSway;
+                const endY = startY + Math.sin(da) * drip.length + Math.abs(Math.sin(da)) * drip.length * 0.3;
+
+                // Drip tendril body
+                ctx.globalAlpha = et.alpha * 0.6;
+                ctx.strokeStyle = `hsl(${et.hue + 5},${et.sat + 5}%,${et.lightness + 5}%)`;
+                ctx.lineWidth = drip.width;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.quadraticCurveTo(
+                    (startX + endX) * 0.5 + dripSway * 0.5,
+                    (startY + endY) * 0.5,
+                    endX, endY
+                );
+                ctx.stroke();
+
+                // Drip droplet at the tip
+                const dropPulse = 0.5 + 0.5 * Math.sin(drip.phase + now * 2.5);
+                ctx.globalAlpha = et.alpha * 0.5 * dropPulse;
+                ctx.fillStyle = `hsl(${et.hue + 10},${et.sat + 10}%,${et.lightness + 12}%)`;
+                ctx.beginPath();
+                ctx.arc(endX, endY, drip.width * 0.8 + dropPulse, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
     }

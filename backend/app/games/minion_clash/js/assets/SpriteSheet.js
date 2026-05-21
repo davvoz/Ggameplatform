@@ -6,7 +6,7 @@
  */
 export class SpriteSheet {
     constructor({ id, image, frameW, frameH, frameCount }) {
-        if (!image || !image.width || !image.height) {
+        if (!image?.width || !image.height) {
             throw new Error(`SpriteSheet "${id}": image not loaded`);
         }
         if (!Number.isFinite(frameW) || frameW <= 0) throw new Error(`SpriteSheet "${id}": frameW must be > 0`);

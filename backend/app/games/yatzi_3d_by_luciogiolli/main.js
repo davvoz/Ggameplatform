@@ -420,7 +420,7 @@ function handleRoll() {
   const unheld = diceMgr.getUnheldIndices();
   gameState.rollsUsed += 1;
   updateUI(); // immediately reflect that a roll was used
-  diceMgr.roll(unheld, 600, () => {
+  diceMgr.roll(unheld, () => {
     // when physics roll ends, refresh UI so buttons become active again
     updateUI();
   });
@@ -524,7 +524,7 @@ function handleEndTurn() {
 
 function rollDiceAsync(indices) {
   return new Promise(resolve => {
-    diceMgr.roll(indices, 600, () => {
+    diceMgr.roll(indices,  () => {
       resolve();
     });
   });

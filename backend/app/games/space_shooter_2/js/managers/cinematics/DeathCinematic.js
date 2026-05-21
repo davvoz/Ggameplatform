@@ -168,103 +168,65 @@ export default class DeathCinematic extends CinematicScene {
         }
 
         /* explosion rings */
-        ctx.save();
-        for (const ring of this.rings) {
-            if (ring.alpha <= 0.01 || ring.radius <= 0) continue;
-            ctx.strokeStyle = `hsla(${ring.hue},100%,50%,${(ring.alpha * 0.4).toFixed(3)})`;
-            ctx.lineWidth = 8;
-            ctx.shadowColor = `hsla(${ring.hue},100%,60%,0.6)`;
-            ctx.shadowBlur = 20;
-            ctx.beginPath(); ctx.arc(dx, dy, ring.radius, 0, Math.PI * 2); ctx.stroke();
-            ctx.strokeStyle = `hsla(${ring.hue},90%,65%,${ring.alpha.toFixed(3)})`;
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 15;
-            ctx.beginPath(); ctx.arc(dx, dy, ring.radius, 0, Math.PI * 2); ctx.stroke();
-        }
-        ctx.restore();
+        this.renderExplosionRings(ctx, dx, dy);
 
         /* debris pieces */
-        ctx.save();
-        for (const d of this.debris) {
-            ctx.globalAlpha = Math.max(0, d.life);
-            ctx.save();
-            ctx.translate(d.x, d.y);
-            ctx.rotate(d.rot);
-            ctx.fillStyle = `hsl(${d.hue},90%,55%)`;
-            ctx.shadowColor = `hsl(${d.hue},100%,70%)`;
-            ctx.shadowBlur = 6;
-            ctx.fillRect(-d.size / 2, -d.size / 2, d.size, d.size * 0.6);
-            ctx.restore();
-        }
-        ctx.restore();
-        const a = t > 4.5 ? Math.max(0, (5.2 - t) / 0.7) : 1;
-        /* cracks */
-        if (t > 0.2 && t < 5.2) {
-            const crackAlpha = t < 1 ? (t - 0.2) / 0.8
-                : a;
-            ctx.save();
-            ctx.strokeStyle = `rgba(255,80,40,${(crackAlpha * 0.7).toFixed(3)})`;
-            ctx.lineWidth = 2;
-            ctx.shadowColor = 'rgba(255,60,20,0.8)';
-            ctx.shadowBlur = 8;
-
-            for (const crack of this.cracks) {
-                const revealedSegs = Math.min(
-                    crack.segments.length,
-                    Math.floor((t - 0.2) * crack.revealSpeed)
-                );
-                if (revealedSegs <= 0) continue;
-                ctx.beginPath();
-                ctx.moveTo(dx, dy);
-                for (let i = 0; i < revealedSegs; i++) {
-                    ctx.lineTo(crack.segments[i].x, crack.segments[i].y);
-                }
-                ctx.stroke();
-                if (revealedSegs > 0 && t < 3.5) {
-                    const tip = crack.segments[revealedSegs - 1];
-                    ctx.fillStyle = `rgba(255,200,100,${(crackAlpha * 0.8).toFixed(3)})`;
-                    ctx.beginPath(); ctx.arc(tip.x, tip.y, 2.5, 0, Math.PI * 2); ctx.fill();
-                }
-            }
-            ctx.restore();
-        }
+        this.renderDebris(ctx);
+        this.renderCrackEffects(t, ctx, dx, dy);
 
         /* embers */
-        ctx.save();
-        for (const e of this.embers) {
-            const flick = 0.5 + 0.5 * Math.sin(e.flicker);
-            ctx.globalAlpha = Math.min(e.life, 1) * flick;
-            ctx.fillStyle = `hsl(${e.hue},100%,60%)`;
-            ctx.shadowColor = `hsl(${e.hue},100%,80%)`;
-            ctx.shadowBlur = 8;
-            ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.restore();
+        this.renderEmbers(ctx);
 
         /* static / noise */
-        if (t > 0.3 && t < 5.8) {
-            const staticAlpha = Math.min(0.12, (t - 0.3) * 0.06) *
-                (t > 5 ? Math.max(0, (5.8 - t) / 0.8) : 1);
-            ctx.save();
-            ctx.globalAlpha = staticAlpha;
-            for (let y = 0; y < h; y += 3) {
-                if (Math.random() < 0.35) {
-                    const br = Math.floor(Math.random() * 80 + 20);
-                    ctx.fillStyle = `rgb(${br},${Math.floor(br * 0.3)},${Math.floor(br * 0.3)})`;
-                    ctx.fillRect(0, y, w, 1);
-                }
-            }
-            if (Math.random() < 0.15) {
-                const bandY = Math.random() * h;
-                const bandH = Math.random() * 8 + 2;
-                ctx.globalAlpha = staticAlpha * 2;
-                ctx.fillStyle = 'rgba(255,30,30,0.15)';
-                ctx.fillRect(0, bandY, w, bandH);
-            }
-            ctx.restore();
-        }
+        this.renderStaticNoise(t, ctx, h, w);
 
         /* "GAME OVER" glitch text */
+        this.renderGameOverText(t, dur, ctx, h, w, g);
+
+        /* pulsing red border */
+        this.renderPulsingBorder(t, ctx, w, h);
+
+        /* final fade to black */
+        this.fadeToBlack(t, dur, ctx, w, h);
+
+        /* initial impact flash */
+        this.renderImpactFlash(t, ctx, w, h);
+    }
+
+    renderImpactFlash(t, ctx, w, h) {
+        if (t < 0.3) {
+            const flashAlpha = (1 - t / 0.3) * 0.5;
+            ctx.fillStyle = `rgba(255,100,50,${flashAlpha.toFixed(3)})`;
+            ctx.fillRect(0, 0, w, h);
+        }
+    }
+
+    fadeToBlack(t, dur, ctx, w, h) {
+        if (t > 5) {
+            const blackAlpha = Math.min(1, (t - 5) / (dur - 5));
+            ctx.fillStyle = `rgba(0,0,0,${blackAlpha.toFixed(3)})`;
+            ctx.fillRect(0, 0, w, h);
+        }
+    }
+
+    renderPulsingBorder(t, ctx, w, h) {
+        if (t > 0.5 && t < 5.5) {
+            const frameProg = Math.min(1, (t - 0.5) / 0.5);
+            const frameFade = t > 4.8 ? Math.max(0, (5.5 - t) / 0.7) : 1;
+            const pulse = 0.5 + 0.5 * Math.sin(t * 4);
+            const frameAlpha = frameProg * frameFade * pulse * 0.25;
+
+            ctx.save();
+            ctx.strokeStyle = `rgba(255,30,0,${frameAlpha.toFixed(3)})`;
+            ctx.lineWidth = 4;
+            ctx.shadowColor = 'rgba(255,0,0,0.6)';
+            ctx.shadowBlur = 20;
+            ctx.strokeRect(6, 6, w - 12, h - 12);
+            ctx.restore();
+        }
+    }
+
+    renderGameOverText(t, dur, ctx, h, w, g) {
         if (t > 1.8) {
             const textBaseStr = 'GAME OVER';
             const textAppear = Math.min(1, (t - 1.8) / 0.5);
@@ -280,15 +242,7 @@ export default class DeathCinematic extends CinematicScene {
             const glitchInt = Math.max(0, 1 - (t - 1.8) / 1);
 
             let displayText = '';
-            for (const char of textBaseStr) {
-                if (glitchInt > 0 && Math.random() < glitchInt * 0.7) {
-                    displayText += this.glitchChars[
-                        Math.floor(Math.random() * this.glitchChars.length)
-                    ];
-                } else {
-                    displayText += char;
-                }
-            }
+            displayText = this.generateGlitchedText(textBaseStr, glitchInt, displayText);
 
             const glitchOX = glitchInt > 0.1 ? (Math.random() - 0.5) * 12 * glitchInt : 0;
             const glitchOY = glitchInt > 0.2 ? (Math.random() - 0.5) * 6 * glitchInt : 0;
@@ -342,72 +296,165 @@ export default class DeathCinematic extends CinematicScene {
             ctx.restore();
 
             /* level + score sub-text */
-            if (t > 2.6 && t < 5.2) {
-                const subProg = Math.min(1, (t - 2.6) / 0.5);
-                const subFade = t > 4.6 ? Math.max(0, (5.2 - t) / 0.6) : 1;
-                const subEased = 1 - Math.pow(1 - subProg, 3);
-
-                ctx.save();
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                const subY = h * 0.54;
-                const subFS = Math.min(16, w * 0.038);
-                ctx.font = ui(subFS, 600);
-                ctx.globalAlpha = subEased * subFade;
-                ctx.fillStyle = '#aa6666';
-                ctx.shadowColor = 'rgba(255,50,50,0.4)';
-                ctx.shadowBlur = 8;
-
-                const ld = getLevelData(g.levelManager.currentLevel);
-                ctx.fillText(
-                    `LEVEL ${g.levelManager.currentLevel} — ${ld?.name?.toUpperCase() || 'SECTOR ' + g.levelManager.currentLevel}`,
-                    w / 2, subY
-                );
-
-                if (t > 3) {
-                    const scoreProg = Math.min(1, (t - 3) / 0.4);
-                    const scoreEased = 1 - Math.pow(1 - scoreProg, 2);
-                    ctx.globalAlpha = scoreEased * subFade;
-                    ctx.fillStyle = '#888888';
-                    ctx.font = ui(Math.min(13, w * 0.03));
-                    ctx.fillText(
-                        `SCORE: ${g.scoreManager.score.toLocaleString()}`,
-                        w / 2, subY + subFS * 1.8
-                    );
-                }
-                ctx.restore();
-            }
+            this.renderLevelAndScoreText(t, ctx, h, w, g);
         }
+    }
 
-        /* pulsing red border */
-        if (t > 0.5 && t < 5.5) {
-            const frameProg = Math.min(1, (t - 0.5) / 0.5);
-            const frameFade = t > 4.8 ? Math.max(0, (5.5 - t) / 0.7) : 1;
-            const pulse = 0.5 + 0.5 * Math.sin(t * 4);
-            const frameAlpha = frameProg * frameFade * pulse * 0.25;
+    renderLevelAndScoreText(t, ctx, h, w, g) {
+        if (t > 2.6 && t < 5.2) {
+            const subProg = Math.min(1, (t - 2.6) / 0.5);
+            const subFade = t > 4.6 ? Math.max(0, (5.2 - t) / 0.6) : 1;
+            const subEased = 1 - Math.pow(1 - subProg, 3);
 
             ctx.save();
-            ctx.strokeStyle = `rgba(255,30,0,${frameAlpha.toFixed(3)})`;
-            ctx.lineWidth = 4;
-            ctx.shadowColor = 'rgba(255,0,0,0.6)';
-            ctx.shadowBlur = 20;
-            ctx.strokeRect(6, 6, w - 12, h - 12);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const subY = h * 0.54;
+            const subFS = Math.min(16, w * 0.038);
+            ctx.font = ui(subFS, 600);
+            ctx.globalAlpha = subEased * subFade;
+            ctx.fillStyle = '#aa6666';
+            ctx.shadowColor = 'rgba(255,50,50,0.4)';
+            ctx.shadowBlur = 8;
+
+            const ld = getLevelData(g.levelManager.currentLevel);
+            ctx.fillText(
+                `LEVEL ${g.levelManager.currentLevel} — ${ld?.name?.toUpperCase() || 'SECTOR ' + g.levelManager.currentLevel}`,
+                w / 2, subY
+            );
+
+            if (t > 3) {
+                const scoreProg = Math.min(1, (t - 3) / 0.4);
+                const scoreEased = 1 - Math.pow(1 - scoreProg, 2);
+                ctx.globalAlpha = scoreEased * subFade;
+                ctx.fillStyle = '#888888';
+                ctx.font = ui(Math.min(13, w * 0.03));
+                ctx.fillText(
+                    `SCORE: ${g.scoreManager.score.toLocaleString()}`,
+                    w / 2, subY + subFS * 1.8
+                );
+            }
             ctx.restore();
         }
+    }
 
-        /* final fade to black */
-        if (t > 5) {
-            const blackAlpha = Math.min(1, (t - 5) / (dur - 5));
-            ctx.fillStyle = `rgba(0,0,0,${blackAlpha.toFixed(3)})`;
-            ctx.fillRect(0, 0, w, h);
+    generateGlitchedText(textBaseStr, glitchInt, displayText) {
+        for (const char of textBaseStr) {
+            if (glitchInt > 0 && Math.random() < glitchInt * 0.7) {
+                displayText += this.glitchChars[Math.floor(Math.random() * this.glitchChars.length)];
+            } else {
+                displayText += char;
+            }
         }
+        return displayText;
+    }
 
-        /* initial impact flash */
-        if (t < 0.3) {
-            const flashAlpha = (1 - t / 0.3) * 0.5;
-            ctx.fillStyle = `rgba(255,100,50,${flashAlpha.toFixed(3)})`;
-            ctx.fillRect(0, 0, w, h);
+    renderStaticNoise(t, ctx, h, w) {
+        if (t > 0.3 && t < 5.8) {
+            const staticAlpha = Math.min(0.12, (t - 0.3) * 0.06) *
+                (t > 5 ? Math.max(0, (5.8 - t) / 0.8) : 1);
+            ctx.save();
+            ctx.globalAlpha = staticAlpha;
+            for (let y = 0; y < h; y += 3) {
+                if (Math.random() < 0.35) {
+                    const br = Math.floor(Math.random() * 80 + 20);
+                    ctx.fillStyle = `rgb(${br},${Math.floor(br * 0.3)},${Math.floor(br * 0.3)})`;
+                    ctx.fillRect(0, y, w, 1);
+                }
+            }
+            if (Math.random() < 0.15) {
+                const bandY = Math.random() * h;
+                const bandH = Math.random() * 8 + 2;
+                ctx.globalAlpha = staticAlpha * 2;
+                ctx.fillStyle = 'rgba(255,30,30,0.15)';
+                ctx.fillRect(0, bandY, w, bandH);
+            }
+            ctx.restore();
         }
+    }
+
+    renderEmbers(ctx) {
+        ctx.save();
+        for (const e of this.embers) {
+            const flick = 0.5 + 0.5 * Math.sin(e.flicker);
+            ctx.globalAlpha = Math.min(e.life, 1) * flick;
+            ctx.fillStyle = `hsl(${e.hue},100%,60%)`;
+            ctx.shadowColor = `hsl(${e.hue},100%,80%)`;
+            ctx.shadowBlur = 8;
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    renderCrackEffects(t, ctx, dx, dy) {
+        const a = t > 4.5 ? Math.max(0, (5.2 - t) / 0.7) : 1;
+        /* cracks */
+        if (t > 0.2 && t < 5.2) {
+            const crackAlpha = t < 1 ? (t - 0.2) / 0.8
+                : a;
+            ctx.save();
+            ctx.strokeStyle = `rgba(255,80,40,${(crackAlpha * 0.7).toFixed(3)})`;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(255,60,20,0.8)';
+            ctx.shadowBlur = 8;
+
+            this.renderCrackSegments(t, ctx, dx, dy, crackAlpha);
+            ctx.restore();
+        }
+    }
+
+    renderCrackSegments(t, ctx, dx, dy, crackAlpha) {
+        for (const crack of this.cracks) {
+            const revealedSegs = Math.min(
+                crack.segments.length,
+                Math.floor((t - 0.2) * crack.revealSpeed)
+            );
+            if (revealedSegs <= 0) continue;
+            ctx.beginPath();
+            ctx.moveTo(dx, dy);
+            for (let i = 0; i < revealedSegs; i++) {
+                ctx.lineTo(crack.segments[i].x, crack.segments[i].y);
+            }
+            ctx.stroke();
+            if (revealedSegs > 0 && t < 3.5) {
+                const tip = crack.segments[revealedSegs - 1];
+                ctx.fillStyle = `rgba(255,200,100,${(crackAlpha * 0.8).toFixed(3)})`;
+                ctx.beginPath(); ctx.arc(tip.x, tip.y, 2.5, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+    }
+
+    renderDebris(ctx) {
+        ctx.save();
+        for (const d of this.debris) {
+            ctx.globalAlpha = Math.max(0, d.life);
+            ctx.save();
+            ctx.translate(d.x, d.y);
+            ctx.rotate(d.rot);
+            ctx.fillStyle = `hsl(${d.hue},90%,55%)`;
+            ctx.shadowColor = `hsl(${d.hue},100%,70%)`;
+            ctx.shadowBlur = 6;
+            ctx.fillRect(-d.size / 2, -d.size / 2, d.size, d.size * 0.6);
+            ctx.restore();
+        }
+        ctx.restore();
+    }
+
+    renderExplosionRings(ctx, dx, dy) {
+        ctx.save();
+        for (const ring of this.rings) {
+            if (ring.alpha <= 0.01 || ring.radius <= 0) continue;
+            ctx.strokeStyle = `hsla(${ring.hue},100%,50%,${(ring.alpha * 0.4).toFixed(3)})`;
+            ctx.lineWidth = 8;
+            ctx.shadowColor = `hsla(${ring.hue},100%,60%,0.6)`;
+            ctx.shadowBlur = 20;
+            ctx.beginPath(); ctx.arc(dx, dy, ring.radius, 0, Math.PI * 2); ctx.stroke();
+            ctx.strokeStyle = `hsla(${ring.hue},90%,65%,${ring.alpha.toFixed(3)})`;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.beginPath(); ctx.arc(dx, dy, ring.radius, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.restore();
     }
 }

@@ -69,6 +69,41 @@ export class TheKernelSector extends SimulationSectorRenderer {
         ctx.fillRect(0, 0, W, H);
 
         // Fractal geometry
+        this.renderFractalRings(ctx);
+
+        // Cosmic dust
+        this.renderCosmicDust(ctx);
+
+        // Connecting lines between nearby fractals
+        this.drawConnectingLines(ctx);
+    }
+
+    drawConnectingLines(ctx) {
+        ctx.save();
+        ctx.globalAlpha = 0.04;
+        ctx.strokeStyle = '#ff44aa';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < this.fractals.length; i++) {
+            const a = this.fractals[i];
+            for (let j = i + 1; j < this.fractals.length; j++) {
+                const b = this.fractals[j];
+                const dx = a.x - b.x, dy = a.y - b.y;
+                if (dx * dx + dy * dy < 25000) {
+                    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+                }
+            }
+        }
+        ctx.restore();
+    }
+
+    renderCosmicDust(ctx) {
+        for (const f of this.floaters) {
+            ctx.fillStyle = `hsla(${f.hue},60%,60%,${f.alpha})`;
+            ctx.beginPath(); ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+
+    renderFractalRings(ctx) {
         for (const f of this.fractals) {
             ctx.save();
             ctx.translate(f.x, f.y);
@@ -98,29 +133,6 @@ export class TheKernelSector extends SimulationSectorRenderer {
 
             ctx.restore();
         }
-
-        // Cosmic dust
-        for (const f of this.floaters) {
-            ctx.fillStyle = `hsla(${f.hue},60%,60%,${f.alpha})`;
-            ctx.beginPath(); ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // Connecting lines between nearby fractals
-        ctx.save();
-        ctx.globalAlpha = 0.04;
-        ctx.strokeStyle = '#ff44aa';
-        ctx.lineWidth = 0.5;
-        for (let i = 0; i < this.fractals.length; i++) {
-            const a = this.fractals[i];
-            for (let j = i + 1; j < this.fractals.length; j++) {
-                const b = this.fractals[j];
-                const dx = a.x - b.x, dy = a.y - b.y;
-                if (dx * dx + dy * dy < 25000) {
-                    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-                }
-            }
-        }
-        ctx.restore();
     }
 
     renderOverlay(ctx) {

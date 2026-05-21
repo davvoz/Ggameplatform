@@ -63,60 +63,71 @@ export function renderBossPartsAtPosition(ctx, options) {
     const order = ['arm', 'shield', 'turret', 'weakpoint', 'core'];
     for (const role of order) {
         for (const p of def.parts) {
-            if (p.role !== role) continue;
-
-            let ox = p.offsetX || 0;
-            let oy = p.offsetY || 0;
-
-            // Orbit
-            if (p.orbitRadius > 0) {
-                const angle = (p.orbitAngle || 0) + (p.orbitSpeed || 0) * time;
-                ox = Math.cos(angle) * p.orbitRadius;
-                oy = Math.sin(angle) * p.orbitRadius;
+            if (p.role === role) {
+                renderCinematicPart({ p, time, spread, scale, centerX, centerY, ctx, assets });
             }
 
-            // Bob
-            if (p.bobAmplitude > 0) {
-                oy += Math.sin(time * (p.bobSpeed || 1) + (p.offsetX || 0)) * p.bobAmplitude;
-            }
 
-            ox *= spread;
-            oy *= spread;
-
-            const pw = p.width * scale;
-            const ph = p.height * scale;
-            const px = centerX + ox * scale - pw / 2;
-            const py = centerY + oy * scale - ph / 2;
-
-            ctx.save();
-
-            const rot = (p.rotationSpeed || 0) * time;
-            if (rot !== 0) {
-                ctx.translate(px + pw / 2, py + ph / 2);
-                ctx.rotate(rot);
-                ctx.translate(-(px + pw / 2), -(py + ph / 2));
-            }
-
-            const sprite = p.spriteKey && assets ? assets.getSprite(p.spriteKey) : null;
-            if (sprite) {
-                ctx.drawImage(sprite, px - 2 * scale, py - 2 * scale, pw + 4 * scale, ph + 4 * scale);
-            } else {
-                const partCX = px + pw / 2;
-                const partCY = py + ph / 2;
-                const b = p.role === 'shield' ? C_MEDIUM_BLUE: '#cc6633'
-                const a = p.role === 'turret' ? '#ffaa33' : b;
-                ctx.fillStyle = p.role === 'core' ? '#ff2244': a;
-                ctx.beginPath();
-                ctx.arc(partCX, partCY, pw / 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#111';
-                ctx.lineWidth = 1.5 * scale;
-                ctx.stroke();
-            }
-
-            ctx.restore();
         }
     }
+}
+
+function renderCinematicPart(options) {
+    const { p, time, spread, scale, centerX, centerY, ctx, assets } = options;
+    let ox = p.offsetX || 0;
+    let oy = p.offsetY || 0;
+
+    // Orbit
+    if (p.orbitRadius > 0) {
+        const angle = (p.orbitAngle || 0) + (p.orbitSpeed || 0) * time;
+        ox = Math.cos(angle) * p.orbitRadius;
+        oy = Math.sin(angle) * p.orbitRadius;
+    }
+
+    // Bob
+    if (p.bobAmplitude > 0) {
+        oy += Math.sin(time * (p.bobSpeed || 1) + (p.offsetX || 0)) * p.bobAmplitude;
+    }
+
+    ox *= spread;
+    oy *= spread;
+
+    const pw = p.width * scale;
+    const ph = p.height * scale;
+    const px = centerX + ox * scale - pw / 2;
+    const py = centerY + oy * scale - ph / 2;
+
+    ctx.save();
+
+    const rot = (p.rotationSpeed || 0) * time;
+    if (rot !== 0) {
+        ctx.translate(px + pw / 2, py + ph / 2);
+        ctx.rotate(rot);
+        ctx.translate(-(px + pw / 2), -(py + ph / 2));
+    }
+
+    const sprite = p.spriteKey && assets ? assets.getSprite(p.spriteKey) : null;
+    if (sprite) {
+        ctx.drawImage(sprite, px - 2 * scale, py - 2 * scale, pw + 4 * scale, ph + 4 * scale);
+    } else {
+        drawCinematicPart(px, pw, py, ph, p, ctx, scale);
+    }
+
+    ctx.restore();
+}
+
+function drawCinematicPart(px, pw, py, ph, p, ctx, scale) {
+    const partCX = px + pw / 2;
+    const partCY = py + ph / 2;
+    const b = p.role === 'shield' ? C_MEDIUM_BLUE : '#cc6633';
+    const a = p.role === 'turret' ? '#ffaa33' : b;
+    ctx.fillStyle = p.role === 'core' ? '#ff2244' : a;
+    ctx.beginPath();
+    ctx.arc(partCX, partCY, pw / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 1.5 * scale;
+    ctx.stroke();
 }
 
 // ─── Overlay Helpers ──────────────────────────────────

@@ -166,8 +166,8 @@ export class DiceManager {
     });
   }
 
-  roll(unheldIndices, duration = 600, onComplete) {
-    if (this.isRolling) return;
+  roll(unheldIndices,  onComplete) {
+    if (this.isRolling) return; // default roll duration in ms
     this.isRolling = true;
     this.stillTime = 0;
     this.rollCompleteCallback = onComplete || null;
@@ -176,9 +176,9 @@ export class DiceManager {
     for (const i of unheldIndices) {
       const body = this.diceBodies[i];
 
-      const x = (i - 2) * 1.1 + (Math.random() - 0.5) * 1.0;
-      const z = (Math.random() - 0.5) * 2.0;
-      const y = 4 + Math.random() * 1.0;
+      const x = (i - 2) * 1.1 + (Math.random() - 0.5) * 1;
+      const z = (Math.random() - 0.5) * 2;
+      const y = 4 + Math.random() * 1;
 
       body.position.set(x, y, z);
       body.velocity.set(

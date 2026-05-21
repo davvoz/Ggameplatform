@@ -68,5 +68,7 @@ export class UnifiedFieldSector extends QuantumSectorRenderer {
         }
     }
 
-    renderBg(ctx) {}
+    renderBg(ctx) {
+        //nothing but the feynman diagrams, baby
+    }
 }

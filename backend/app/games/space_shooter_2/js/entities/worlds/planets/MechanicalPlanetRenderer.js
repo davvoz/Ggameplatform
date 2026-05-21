@@ -23,42 +23,126 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         this._conveyors = [];
         this._conveyorScrollY = 0;
         const beltCount = mcfg ? (mcfg.pipelineCount || 1) : 1;
-        const pw = mcfg && mcfg.pipeW ? mcfg.pipeW : [18, 34];
-        for (let b = 0; b < beltCount; b++) {
-            let baseX;
-            if (beltCount === 1) {
-                baseX = W * 0.25 + Math.random() * W * 0.5;
-            } else {
-                const slot = (b + 0.5) / beltCount;
-                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
-            }
-            const width = pw[0] + Math.random() * (pw[1] - pw[0]);
-            const tileH = H * 3;
-            const segH = 35 + Math.random() * 20;
-            const segs = Math.ceil(tileH / segH);
-            const points = [{ x: 0, y: 0 }];
-            let cx = 0, drift = (Math.random() - 0.5) * 6;
-            for (let i = 0; i < segs; i++) {
-                drift += (Math.random() - 0.5) * 10;
-                drift = Math.max(-18, Math.min(18, drift));
-                if (Math.random() < 0.3) drift = Math.round(drift / 8) * 8;
-                cx += drift;
-                cx = Math.max(-W * 0.18, Math.min(W * 0.18, cx));
-                points.push({ x: cx, y: (i + 1) * segH });
-            }
-            const totalH = points[points.length - 1].y;
-            const hue = 210 + Math.random() * 20;
-            const sat = 8 + Math.random() * 10;
-            const light = 22 + Math.random() * 10;
-            const chevronGap = 12 + Math.random() * 6;
-            this._conveyors.push({ baseX, width, points, totalH, hue, sat, light, chevronGap });
-        }
+        const pw = mcfg?.pipeW ? mcfg.pipeW : [18, 34];
+        this.createConveyorBelt(beltCount, W, pw, H);
         this._conveyorSpeed = 20;
 
         // ─── Gear wheels (rotating toothed mechanisms) ───
         this._gears = [];
         this._gearScrollY = 0;
         const gearCount = mcfg ? (mcfg.junctions || 0) : 0;
+        this.createGearWheels(gearCount, H, W);
+
+        // ─── Edge scaffolding (industrial structures with cross-bracing) ───
+        this._edgeMetal = [];
+        const baseCount = mcfg ? mcfg.edgeN : 12;
+        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
+        const eR = mcfg ? mcfg.edgeReach : [25, 45];
+        const eH = mcfg?.edgeHue ? mcfg.edgeHue : [200, 225];
+        const eL = mcfg?.edgeLit ? mcfg.edgeLit : [18, 28];
+        const eS = mcfg?.edgeSat ? mcfg.edgeSat : [5, 15];
+        const positions = this._distributeEdgeElements(count, W, H);
+        this.generateEdgeElements(count, positions, eR, eH, eS, eL);
+
+        // ─── Circuit-board traces (thin pulsing lines with nodes) ───
+        this._circuits = [];
+        const circuitCount = this.quality === 'high' ? 6 + Math.floor(Math.random() * 4) : 3;
+        this.generateCircuitTraces(circuitCount, W, H);
+
+        // ─── Steam vent particles ───
+        this._steamParticles = [];
+        this.generateSteamParticles(mcfg, W, H);
+
+        // ─── Welding spark particles ───
+        this._sparks = [];
+        const sparkCount = this.quality === 'high' ? 12 : 5;
+        this.generateWeldingSparks(sparkCount, W, H);
+
+        this._vigRGB = mcfg ? mcfg.vigCol : '20,25,35';
+    }
+
+    generateWeldingSparks(sparkCount, W, H) {
+        for (let i = 0; i < sparkCount; i++) {
+            this._sparks.push({
+                x: Math.random() * W, y: Math.random() * H,
+                vx: (Math.random() - 0.5) * 40,
+                vy: -15 - Math.random() * 25,
+                life: Math.random() * 1.2,
+                maxLife: 0.6 + Math.random() * 0.8,
+                size: 0.5 + Math.random() * 1.5,
+                hue: 30 + Math.random() * 25
+            });
+        }
+    }
+
+    generateSteamParticles(mcfg, W, H) {
+        if (mcfg?.steam) {
+            const steamCount = this.quality === 'high'
+                ? (mcfg.steamCount || 25)
+                : Math.max(8, Math.round((mcfg.steamCount || 25) * 0.45));
+            for (let i = 0; i < steamCount; i++) {
+                this._steamParticles.push({
+                    x: Math.random() * W, y: Math.random() * H,
+                    size: 2 + Math.random() * 5,
+                    speed: -10 - Math.random() * 14,
+                    drift: (Math.random() - 0.5) * 10,
+                    driftPhase: Math.random() * Math.PI * 2,
+                    alpha: 0.08 + Math.random() * 0.18,
+                    hue: 200 + Math.random() * 20,
+                    life: Math.random() * 3,
+                    maxLife: 2.5 + Math.random() * 3
+                });
+            }
+        }
+    }
+
+    generateCircuitTraces(circuitCount, W, H) {
+        for (let c = 0; c < circuitCount; c++) {
+            const branches = [];
+            const numBranches = 2 + Math.floor(Math.random() * 3);
+            for (let br = 0; br < numBranches; br++) {
+                const segCount = 3 + Math.floor(Math.random() * 4);
+                const pts = [{ x: 0, y: 0 }];
+                let bx = 0, by = 0;
+                for (let s = 0; s < segCount; s++) {
+                    if (Math.random() < 0.5) { bx += (Math.random() - 0.5) * 40; }
+                    else { by += (Math.random() - 0.5) * 40; }
+                    pts.push({ x: bx, y: by });
+                }
+                branches.push({ points: pts, hasNode: Math.random() < 0.6 });
+            }
+            this._circuits.push({
+                x: Math.random() * W, y: Math.random() * H,
+                branches,
+                hue: 185 + Math.random() * 30,
+                alpha: 0.15 + Math.random() * 0.2,
+                pulsePhase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    generateEdgeElements(count, positions, eR, eH, eS, eL) {
+        for (let i = 0; i < count; i++) {
+            const pos = positions[i];
+            const nPts = 5 + Math.floor(Math.random() * 3);
+            const shape = [];
+            for (let s = 0; s < nPts; s++) shape.push(0.5 + Math.random() * 0.55);
+            this._edgeMetal.push({
+                ...pos, shape,
+                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
+                height: 25 + Math.random() * 45,
+                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
+                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
+                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
+                alpha: 0.65 + Math.random() * 0.3,
+                hasWarning: Math.random() < 0.3,
+                hasGlow: Math.random() < 0.4,
+                glowHue: 30 + Math.random() * 20
+            });
+        }
+    }
+
+    createGearWheels(gearCount, H, W) {
         if (gearCount > 0) {
             const totalH = H * 3;
             const spacing = totalH / gearCount;
@@ -82,98 +166,39 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
             }
             this._gearSpeed = 20;
         }
+    }
 
-        // ─── Edge scaffolding (industrial structures with cross-bracing) ───
-        this._edgeMetal = [];
-        const baseCount = mcfg ? mcfg.edgeN : 12;
-        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
-        const eR = mcfg ? mcfg.edgeReach : [25, 45];
-        const eH = mcfg && mcfg.edgeHue ? mcfg.edgeHue : [200, 225];
-        const eL = mcfg && mcfg.edgeLit ? mcfg.edgeLit : [18, 28];
-        const eS = mcfg && mcfg.edgeSat ? mcfg.edgeSat : [5, 15];
-        const positions = this._distributeEdgeElements(count, W, H);
-        for (let i = 0; i < count; i++) {
-            const pos = positions[i];
-            const nPts = 5 + Math.floor(Math.random() * 3);
-            const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.5 + Math.random() * 0.55);
-            this._edgeMetal.push({
-                ...pos, shape,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 25 + Math.random() * 45,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: eS[0] + Math.random() * (eS[1] - eS[0]),
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.65 + Math.random() * 0.3,
-                hasWarning: Math.random() < 0.3,
-                hasGlow: Math.random() < 0.4,
-                glowHue: 30 + Math.random() * 20
-            });
-        }
-
-        // ─── Circuit-board traces (thin pulsing lines with nodes) ───
-        this._circuits = [];
-        const circuitCount = this.quality === 'high' ? 6 + Math.floor(Math.random() * 4) : 3;
-        for (let c = 0; c < circuitCount; c++) {
-            const branches = [];
-            const numBranches = 2 + Math.floor(Math.random() * 3);
-            for (let br = 0; br < numBranches; br++) {
-                const segCount = 3 + Math.floor(Math.random() * 4);
-                const pts = [{ x: 0, y: 0 }];
-                let bx = 0, by = 0;
-                for (let s = 0; s < segCount; s++) {
-                    if (Math.random() < 0.5) { bx += (Math.random() - 0.5) * 40; }
-                    else { by += (Math.random() - 0.5) * 40; }
-                    pts.push({ x: bx, y: by });
-                }
-                branches.push({ points: pts, hasNode: Math.random() < 0.6 });
+    createConveyorBelt(beltCount, W, pw, H) {
+        for (let b = 0; b < beltCount; b++) {
+            let baseX;
+            if (beltCount === 1) {
+                baseX = W * 0.25 + Math.random() * W * 0.5;
+            } else {
+                const slot = (b + 0.5) / beltCount;
+                baseX = W * (0.1 + slot * 0.8) + (Math.random() - 0.5) * W * 0.12;
             }
-            this._circuits.push({
-                x: Math.random() * W, y: Math.random() * H,
-                branches,
-                hue: 185 + Math.random() * 30,
-                alpha: 0.15 + Math.random() * 0.2,
-                pulsePhase: Math.random() * Math.PI * 2
-            });
-        }
-
-        // ─── Steam vent particles ───
-        this._steamParticles = [];
-        if (mcfg && mcfg.steam) {
-            const steamCount = this.quality === 'high'
-                ? (mcfg.steamCount || 25)
-                : Math.max(8, Math.round((mcfg.steamCount || 25) * 0.45));
-            for (let i = 0; i < steamCount; i++) {
-                this._steamParticles.push({
-                    x: Math.random() * W, y: Math.random() * H,
-                    size: 2 + Math.random() * 5,
-                    speed: -10 - Math.random() * 14,
-                    drift: (Math.random() - 0.5) * 10,
-                    driftPhase: Math.random() * Math.PI * 2,
-                    alpha: 0.08 + Math.random() * 0.18,
-                    hue: 200 + Math.random() * 20,
-                    life: Math.random() * 3,
-                    maxLife: 2.5 + Math.random() * 3
-                });
+            const width = pw[0] + Math.random() * (pw[1] - pw[0]);
+            const tileH = H * 3;
+            const segH = 35 + Math.random() * 20;
+            const segs = Math.ceil(tileH / segH);
+            const points = [{ x: 0, y: 0 }];
+            let cx = 0, drift = (Math.random() - 0.5) * 6;
+            for (let i = 0; i < segs; i++) {
+                drift += (Math.random() - 0.5) * 10;
+                drift = Math.max(-18, Math.min(18, drift));
+                if (Math.random() < 0.3) drift = Math.round(drift / 8) * 8;
+                cx += drift;
+                cx = Math.max(-W * 0.18, Math.min(W * 0.18, cx));
+                points.push({ x: cx, y: (i + 1) * segH });
             }
-        }
+            const totalH = points.at(-1).y;
 
-        // ─── Welding spark particles ───
-        this._sparks = [];
-        const sparkCount = this.quality === 'high' ? 12 : 5;
-        for (let i = 0; i < sparkCount; i++) {
-            this._sparks.push({
-                x: Math.random() * W, y: Math.random() * H,
-                vx: (Math.random() - 0.5) * 40,
-                vy: -15 - Math.random() * 25,
-                life: Math.random() * 1.2,
-                maxLife: 0.6 + Math.random() * 0.8,
-                size: 0.5 + Math.random() * 1.5,
-                hue: 30 + Math.random() * 25
-            });
+            const hue = 210 + Math.random() * 20;
+            const sat = 8 + Math.random() * 10;
+            const light = 22 + Math.random() * 10;
+            const chevronGap = 12 + Math.random() * 6;
+            this._conveyors.push({ baseX, width, points, totalH, hue, sat, light, chevronGap });
         }
-
-        this._vigRGB = mcfg ? mcfg.vigCol : '20,25,35';
     }
 
     // ── update ────────────────────────────────────
@@ -181,21 +206,34 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
     update(dt) {
         const W = this.canvasWidth, H = this.canvasHeight;
         // Scroll conveyor belts
-        if (this._conveyors && this._conveyors.length > 0) {
-            this._conveyorScrollY += this._conveyorSpeed * dt;
-            if (this._conveyors[0] && this._conveyorScrollY >= this._conveyors[0].totalH) {
-                this._conveyorScrollY -= this._conveyors[0].totalH;
-            }
-        }
+        this.updateConveyorBelt(dt);
         // Scroll & rotate gears
-        if (this._gears && this._gears.length > 0) {
-            this._gearScrollY += this._gearSpeed * dt;
-            if (this._gears[0] && this._gearScrollY >= this._gears[0].totalH) {
-                this._gearScrollY -= this._gears[0].totalH;
-            }
-            for (const g of this._gears) g.rot += g.rotSpeed * dt;
-        }
+        this.updateGearRotation(dt);
         // Update steam
+        this.updateSteamParticles(dt, H, W);
+        // Update sparks
+        this.updateSparks(dt, W, H);
+    }
+
+    updateSparks(dt, W, H) {
+        if (this._sparks) {
+            for (const sk of this._sparks) {
+                sk.life += dt;
+                sk.x += sk.vx * dt;
+                sk.y += sk.vy * dt;
+                sk.vy += 45 * dt;
+                if (sk.life > sk.maxLife) {
+                    sk.x = Math.random() * W;
+                    sk.y = Math.random() * H;
+                    sk.vx = (Math.random() - 0.5) * 40;
+                    sk.vy = -15 - Math.random() * 25;
+                    sk.life = 0;
+                }
+            }
+        }
+    }
+
+    updateSteamParticles(dt, H, W) {
         if (this._steamParticles) {
             const now = performance.now() * 0.001;
             for (const sp of this._steamParticles) {
@@ -213,20 +251,23 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
                 if (sp.x > W + 15) sp.x = -5;
             }
         }
-        // Update sparks
-        if (this._sparks) {
-            for (const sk of this._sparks) {
-                sk.life += dt;
-                sk.x += sk.vx * dt;
-                sk.y += sk.vy * dt;
-                sk.vy += 45 * dt;
-                if (sk.life > sk.maxLife) {
-                    sk.x = Math.random() * W;
-                    sk.y = Math.random() * H;
-                    sk.vx = (Math.random() - 0.5) * 40;
-                    sk.vy = -15 - Math.random() * 25;
-                    sk.life = 0;
-                }
+    }
+
+    updateGearRotation(dt) {
+        if (this._gears && this._gears.length > 0) {
+            this._gearScrollY += this._gearSpeed * dt;
+            if (this._gears[0] && this._gearScrollY >= this._gears[0].totalH) {
+                this._gearScrollY -= this._gears[0].totalH;
+            }
+            for (const g of this._gears) g.rot += g.rotSpeed * dt;
+        }
+    }
+
+    updateConveyorBelt(dt) {
+        if (this._conveyors && this._conveyors.length > 0) {
+            this._conveyorScrollY += this._conveyorSpeed * dt;
+            if (this._conveyors[0] && this._conveyorScrollY >= this._conveyors[0].totalH) {
+                this._conveyorScrollY -= this._conveyors[0].totalH;
             }
         }
     }
@@ -255,111 +296,127 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         const H = this.canvasHeight;
         const scrollY = this._conveyorScrollY || 0;
         ctx.save();
+        this.renderConveyorLayers(ctx, scrollY, H);
+        ctx.restore();
+    }
+
+    renderConveyorLayers(ctx, scrollY, H) {
         for (const cv of this._conveyors) {
             const pts = cv.points, totalH = cv.totalH, w = cv.width;
             ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
 
-            for (const tileOff of [0, totalH]) {
-                const oY = scrollY - tileOff;
-                if (oY + totalH < -50 || oY > H + 50) continue;
+            this.renderConveyorLayersDetail(totalH, scrollY, H, ctx, cv, pts, w);
+        }
+    }
 
-                const trace = (dx) => {
+    renderConveyorLayersDetail(totalH, scrollY, H, ctx, cv, pts, w) {
+        for (const tileOff of [0, totalH]) {
+            const oY = scrollY - tileOff;
+            if (oY + totalH < -50 || oY > H + 50) continue;
+
+            const trace = this.renderPlanetPath(ctx, cv, pts, oY);
+
+            // Layer 1 — Side-rail frame (dark outer casing)
+            ctx.globalAlpha = 0.45;
+            ctx.strokeStyle = `hsl(${cv.hue},${cv.sat - 3}%,${Math.max(3, cv.light - 14)}%)`;
+            ctx.lineWidth = w * 1.9;
+            trace(0); ctx.stroke();
+
+            // Layer 2 — Belt surface (main visible body)
+            ctx.globalAlpha = 0.75;
+            ctx.strokeStyle = `hsl(${cv.hue},${cv.sat}%,${cv.light}%)`;
+            ctx.lineWidth = w;
+            trace(0); ctx.stroke();
+
+            // Layer 3 — Metallic specular highlight ridge
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = `hsl(${cv.hue + 5},${cv.sat + 5}%,${cv.light + 16}%)`;
+            ctx.lineWidth = w * 0.22;
+            trace(-w * 0.18); ctx.stroke();
+
+            // Layer 4 — Dark center groove
+            ctx.globalAlpha = 0.22;
+            ctx.strokeStyle = `hsl(${cv.hue},${cv.sat}%,${Math.max(4, cv.light - 10)}%)`;
+            ctx.lineWidth = w * 0.06;
+            trace(0); ctx.stroke();
+
+            // ── Chevron segment markings (conveyor belt look) ──
+            ctx.globalAlpha = 0.18;
+            ctx.strokeStyle = `hsl(${cv.hue + 10},${cv.sat + 8}%,${cv.light + 20}%)`;
+            ctx.lineWidth = 1;
+            this.renderChevronSegments(cv, pts, oY, w, ctx);
+        }
+    }
+
+    renderChevronSegments(cv, pts, oY, w, ctx) {
+        const gap = cv.chevronGap;
+        let accDist = 0;
+        for (let i = 0; i < pts.length - 1; i++) {
+            const ax = cv.baseX + pts[i].x, ay = pts[i].y + oY;
+            const bx = cv.baseX + pts[i + 1].x, by = pts[i + 1].y + oY;
+            const dx = bx - ax, dy = by - ay;
+            const segLen = Math.hypot(dx, dy);
+            if (segLen < 1) { accDist += segLen; continue; }
+            const ux = dx / segLen, uy = dy / segLen;
+            const nx = -uy, ny = ux;
+            let d = gap - (accDist % gap);
+            while (d < segLen) {
+                const t = d / segLen;
+                const mx = ax + dx * t, my = ay + dy * t;
+                const hw = w * 0.35;
+                ctx.beginPath();
+                ctx.moveTo(mx - nx * hw, my - ny * hw);
+                ctx.lineTo(mx + ux * 3, my + uy * 3);
+                ctx.lineTo(mx + nx * hw, my + ny * hw);
+                ctx.stroke();
+                d += gap;
+            }
+            accDist += segLen;
+        }
+
+        // ── Side-rail bolts at wider intervals ──
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = `hsl(${cv.hue},${cv.sat + 4}%,${cv.light - 4}%)`;
+        const boltGap = gap * 3;
+        accDist = 0;
+        for (let i = 0; i < pts.length - 1; i++) {
+            const ax = cv.baseX + pts[i].x, ay = pts[i].y + oY;
+            const bx = cv.baseX + pts[i + 1].x, by = pts[i + 1].y + oY;
+            const dx = bx - ax, dy = by - ay;
+            const segLen = Math.hypot(dx, dy);
+            if (segLen < 1) { accDist += segLen; continue; }
+            const nx = -dy / segLen, ny = dx / segLen;
+            let d = boltGap - (accDist % boltGap);
+            while (d < segLen) {
+                const t = d / segLen;
+                const mx = ax + dx * t, my = ay + dy * t;
+                for (const side of [-1, 1]) {
                     ctx.beginPath();
-                    ctx.moveTo(cv.baseX + pts[0].x + dx, pts[0].y + oY);
-                    for (let i = 0; i < pts.length - 1; i++) {
-                        const nx = cv.baseX + pts[i + 1].x + dx;
-                        const ny = pts[i + 1].y + oY;
-                        if (i % 3 === 0) {
-                            ctx.lineTo(nx, ny);
-                        } else {
-                            const cpx = cv.baseX + (pts[i].x + pts[i + 1].x) * 0.5 + dx;
-                            const cpy = (pts[i].y + pts[i + 1].y) * 0.5 + oY;
-                            ctx.quadraticCurveTo(cpx, cpy, nx, ny);
-                        }
-                    }
-                };
-
-                // Layer 1 — Side-rail frame (dark outer casing)
-                ctx.globalAlpha = 0.45;
-                ctx.strokeStyle = `hsl(${cv.hue},${cv.sat - 3}%,${Math.max(3, cv.light - 14)}%)`;
-                ctx.lineWidth = w * 1.9;
-                trace(0); ctx.stroke();
-
-                // Layer 2 — Belt surface (main visible body)
-                ctx.globalAlpha = 0.75;
-                ctx.strokeStyle = `hsl(${cv.hue},${cv.sat}%,${cv.light}%)`;
-                ctx.lineWidth = w;
-                trace(0); ctx.stroke();
-
-                // Layer 3 — Metallic specular highlight ridge
-                ctx.globalAlpha = 0.3;
-                ctx.strokeStyle = `hsl(${cv.hue + 5},${cv.sat + 5}%,${cv.light + 16}%)`;
-                ctx.lineWidth = w * 0.22;
-                trace(-w * 0.18); ctx.stroke();
-
-                // Layer 4 — Dark center groove
-                ctx.globalAlpha = 0.22;
-                ctx.strokeStyle = `hsl(${cv.hue},${cv.sat}%,${Math.max(4, cv.light - 10)}%)`;
-                ctx.lineWidth = w * 0.06;
-                trace(0); ctx.stroke();
-
-                // ── Chevron segment markings (conveyor belt look) ──
-                ctx.globalAlpha = 0.18;
-                ctx.strokeStyle = `hsl(${cv.hue + 10},${cv.sat + 8}%,${cv.light + 20}%)`;
-                ctx.lineWidth = 1;
-                const gap = cv.chevronGap;
-                let accDist = 0;
-                for (let i = 0; i < pts.length - 1; i++) {
-                    const ax = cv.baseX + pts[i].x, ay = pts[i].y + oY;
-                    const bx = cv.baseX + pts[i + 1].x, by = pts[i + 1].y + oY;
-                    const dx = bx - ax, dy = by - ay;
-                    const segLen = Math.hypot(dx, dy);
-                    if (segLen < 1) { accDist += segLen; continue; }
-                    const ux = dx / segLen, uy = dy / segLen;
-                    const nx = -uy, ny = ux;
-                    let d = gap - (accDist % gap);
-                    while (d < segLen) {
-                        const t = d / segLen;
-                        const mx = ax + dx * t, my = ay + dy * t;
-                        const hw = w * 0.35;
-                        ctx.beginPath();
-                        ctx.moveTo(mx - nx * hw, my - ny * hw);
-                        ctx.lineTo(mx + ux * 3, my + uy * 3);
-                        ctx.lineTo(mx + nx * hw, my + ny * hw);
-                        ctx.stroke();
-                        d += gap;
-                    }
-                    accDist += segLen;
+                    ctx.arc(mx + nx * w * 0.44 * side, my + ny * w * 0.44 * side, 1.3, 0, Math.PI * 2);
+                    ctx.fill();
                 }
+                d += boltGap;
+            }
+            accDist += segLen;
+        }
+    }
 
-                // ── Side-rail bolts at wider intervals ──
-                ctx.globalAlpha = 0.22;
-                ctx.fillStyle = `hsl(${cv.hue},${cv.sat + 4}%,${cv.light - 4}%)`;
-                const boltGap = gap * 3;
-                accDist = 0;
-                for (let i = 0; i < pts.length - 1; i++) {
-                    const ax = cv.baseX + pts[i].x, ay = pts[i].y + oY;
-                    const bx = cv.baseX + pts[i + 1].x, by = pts[i + 1].y + oY;
-                    const dx = bx - ax, dy = by - ay;
-                    const segLen = Math.hypot(dx, dy);
-                    if (segLen < 1) { accDist += segLen; continue; }
-                    const nx = -dy / segLen, ny = dx / segLen;
-                    let d = boltGap - (accDist % boltGap);
-                    while (d < segLen) {
-                        const t = d / segLen;
-                        const mx = ax + dx * t, my = ay + dy * t;
-                        for (const side of [-1, 1]) {
-                            ctx.beginPath();
-                            ctx.arc(mx + nx * w * 0.44 * side, my + ny * w * 0.44 * side, 1.3, 0, Math.PI * 2);
-                            ctx.fill();
-                        }
-                        d += boltGap;
-                    }
-                    accDist += segLen;
+    renderPlanetPath(ctx, cv, pts, oY) {
+        return (dx) => {
+            ctx.beginPath();
+            ctx.moveTo(cv.baseX + pts[0].x + dx, pts[0].y + oY);
+            for (let i = 0; i < pts.length - 1; i++) {
+                const nx = cv.baseX + pts[i + 1].x + dx;
+                const ny = pts[i + 1].y + oY;
+                if (i % 3 === 0) {
+                    ctx.lineTo(nx, ny);
+                } else {
+                    const cpx = cv.baseX + (pts[i].x + pts[i + 1].x) * 0.5 + dx;
+                    const cpy = (pts[i].y + pts[i + 1].y) * 0.5 + oY;
+                    ctx.quadraticCurveTo(cpx, cpy, nx, ny);
                 }
             }
-        }
-        ctx.restore();
+        };
     }
 
     _renderGears(ctx) {
@@ -452,6 +509,10 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
         if (!this._edgeMetal) return;
         const now = typeof time === 'number' ? time : performance.now() * 0.001;
 
+        this.renderMetalLayer(ctx, now);
+    }
+
+    renderMetalLayer(ctx, now) {
         for (const em of this._edgeMetal) {
             let cx, cy, rx, ry;
             if (em.side === 'left' || em.side === 'right') {
@@ -505,69 +566,85 @@ export class MechanicalPlanetRenderer extends PlanetRenderer {
             ctx.globalAlpha = em.alpha * 0.25;
             ctx.strokeStyle = `hsl(${em.hue},${em.sat}%,${Math.max(5, em.lightness - 10)}%)`;
             ctx.lineWidth = 1;
-            for (let b = 0; b < Math.min(3, Math.floor(n / 2)); b++) {
-                const a1 = (Math.PI * 2 / n) * b;
-                const opp = (b + Math.floor(n / 2)) % n;
-                const a2 = (Math.PI * 2 / n) * opp;
-                ctx.beginPath();
-                ctx.moveTo(cx + Math.cos(a1) * rx * em.shape[b] * 0.8,
-                           cy + Math.sin(a1) * ry * em.shape[b] * 0.8);
-                ctx.lineTo(cx + Math.cos(a2) * rx * em.shape[opp] * 0.8,
-                           cy + Math.sin(a2) * ry * em.shape[opp] * 0.8);
-                ctx.stroke();
-            }
+            this.drawStructuralLines(n, ctx, cx, rx, em, cy, ry);
 
             // Rivet bolts at each angular vertex
             ctx.globalAlpha = em.alpha * 0.4;
             ctx.fillStyle = `hsl(${em.hue},${em.sat + 4}%,${em.lightness - 4}%)`;
-            for (let i = 0; i < n; i++) {
-                const a = (Math.PI * 2 / n) * i;
-                ctx.beginPath();
-                ctx.arc(cx + Math.cos(a) * rx * em.shape[i] * 0.7,
-                        cy + Math.sin(a) * ry * em.shape[i] * 0.7, 1.2, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            this.drawRivetBolts(n, ctx, cx, rx, em, cy, ry);
 
             // Warning hazard stripe plate (yellow/black)
-            if (em.hasWarning) {
-                ctx.save();
-                ctx.globalAlpha = em.alpha * 0.45;
-                ctx.translate(cx, cy);
-                const pw2 = 10, ph = 6;
-                ctx.fillStyle = 'hsl(50,85%,50%)';
-                ctx.fillRect(-pw2 / 2, -ph / 2, pw2, ph);
-                ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                for (let s = -2; s <= 3; s++) {
-                    ctx.moveTo(-pw2 / 2 + s * 3.5, -ph / 2);
-                    ctx.lineTo(-pw2 / 2 + s * 3.5 + ph, ph / 2);
-                }
-                ctx.stroke();
-                ctx.restore();
-            }
+            this.drawWarningStripe(em, ctx, cx, cy);
 
             // Pulsing indicator light
-            if (em.hasGlow) {
-                const glowX = cx - rx * 0.12;
-                const glowY = cy + ry * 0.12;
-                const pulse = 0.5 + 0.5 * Math.sin(now * 3 + em.glowHue);
-                ctx.globalAlpha = em.alpha * 0.55 * pulse;
-                const rg = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 6);
-                rg.addColorStop(0, `hsla(${em.glowHue},90%,60%,0.8)`);
-                rg.addColorStop(0.5, `hsla(${em.glowHue},80%,40%,0.3)`);
-                rg.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = rg;
-                ctx.beginPath();
-                ctx.arc(glowX, glowY, 6, 0, Math.PI * 2);
-                ctx.fill();
-                // Bright center dot
-                ctx.globalAlpha = em.alpha * 0.8 * pulse;
-                ctx.fillStyle = `hsl(${em.glowHue},95%,65%)`;
-                ctx.beginPath();
-                ctx.arc(glowX, glowY, 1.3, 0, Math.PI * 2);
-                ctx.fill();
+            this.renderGlowEffect(em, cx, rx, cy, ry, now, ctx);
+        }
+    }
+
+    renderGlowEffect(em, cx, rx, cy, ry, now, ctx) {
+        if (em.hasGlow) {
+            const glowX = cx - rx * 0.12;
+            const glowY = cy + ry * 0.12;
+            const pulse = 0.5 + 0.5 * Math.sin(now * 3 + em.glowHue);
+            ctx.globalAlpha = em.alpha * 0.55 * pulse;
+            const rg = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 6);
+            rg.addColorStop(0, `hsla(${em.glowHue},90%,60%,0.8)`);
+            rg.addColorStop(0.5, `hsla(${em.glowHue},80%,40%,0.3)`);
+            rg.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = rg;
+            ctx.beginPath();
+            ctx.arc(glowX, glowY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            // Bright center dot
+            ctx.globalAlpha = em.alpha * 0.8 * pulse;
+            ctx.fillStyle = `hsl(${em.glowHue},95%,65%)`;
+            ctx.beginPath();
+            ctx.arc(glowX, glowY, 1.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawWarningStripe(em, ctx, cx, cy) {
+        if (em.hasWarning) {
+            ctx.save();
+            ctx.globalAlpha = em.alpha * 0.45;
+            ctx.translate(cx, cy);
+            const pw2 = 10, ph = 6;
+            ctx.fillStyle = 'hsl(50,85%,50%)';
+            ctx.fillRect(-pw2 / 2, -ph / 2, pw2, ph);
+            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            for (let s = -2; s <= 3; s++) {
+                ctx.moveTo(-pw2 / 2 + s * 3.5, -ph / 2);
+                ctx.lineTo(-pw2 / 2 + s * 3.5 + ph, ph / 2);
             }
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    drawRivetBolts(n, ctx, cx, rx, em, cy, ry) {
+        for (let i = 0; i < n; i++) {
+            const a = (Math.PI * 2 / n) * i;
+            ctx.beginPath();
+            ctx.arc(cx + Math.cos(a) * rx * em.shape[i] * 0.7,
+                cy + Math.sin(a) * ry * em.shape[i] * 0.7, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawStructuralLines(n, ctx, cx, rx, em, cy, ry) {
+        for (let b = 0; b < Math.min(3, Math.floor(n / 2)); b++) {
+            const a1 = (Math.PI * 2 / n) * b;
+            const opp = (b + Math.floor(n / 2)) % n;
+            const a2 = (Math.PI * 2 / n) * opp;
+            ctx.beginPath();
+            ctx.moveTo(cx + Math.cos(a1) * rx * em.shape[b] * 0.8,
+                cy + Math.sin(a1) * ry * em.shape[b] * 0.8);
+            ctx.lineTo(cx + Math.cos(a2) * rx * em.shape[opp] * 0.8,
+                cy + Math.sin(a2) * ry * em.shape[opp] * 0.8);
+            ctx.stroke();
         }
     }
 

@@ -88,6 +88,10 @@ export class MatrixDecaySector extends SimulationSectorRenderer {
         }
 
         // Dissolving cubes
+        this.renderDissolvingCubes(ctx);
+    }
+
+    renderDissolvingCubes(ctx) {
         for (const f of this.floaters) {
             if (f.dissolve >= 1) continue;
             ctx.save();

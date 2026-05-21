@@ -33,29 +33,33 @@ export class HiggsVacuumSector extends QuantumSectorRenderer {
     update(dt) {
         const H = this.canvasHeight, W = this.canvasWidth;
         for (const w of this.massWells) {
-            w.y += w.scrollSpeed * dt;
-            if (w.y > H + w.radius + 20) {
-                w.y = -w.radius - 20;
-                w.x = (0.1 + Math.random() * 0.8) * W;
+            this.updateMassWell(w, dt, H, W);
+        }
+    }
+
+    updateMassWell(w, dt, H, W) {
+        w.y += w.scrollSpeed * dt;
+        if (w.y > H + w.radius + 20) {
+            w.y = -w.radius - 20;
+            w.x = (0.1 + Math.random() * 0.8) * W;
+        }
+        w.pulsePhase += w.pulseSpeed * dt;
+        const disactive = !w.isActive;
+        if (disactive) {
+            w.activeTimer -= dt;
+            if (w.activeTimer < 1.5 && w.activeTimer > 0) {
+                w.depth = 0.5 + 0.5 * Math.sin(w.activeTimer * 8);
             }
-            w.pulsePhase += w.pulseSpeed * dt;
-            const disactive = !w.isActive;
-            if (disactive) {
-                w.activeTimer -= dt;
-                if (w.activeTimer < 1.5 && w.activeTimer > 0) {
-                    w.depth = 0.5 + 0.5 * Math.sin(w.activeTimer * 8);
-                }
-                if (w.activeTimer <= 0) {
-                    w.isActive = true;
-                    w.activeDuration = 3 + Math.random() * 2;
-                    this.spawnZone(w.x, w.y, w.radius * 2.5);
-                }
-            } else {
-                w.activeDuration -= dt;
-                if (w.activeDuration <= 0) {
-                    w.isActive = false;
-                    w.activeTimer = this.cooldown(12, 18);
-                }
+            if (w.activeTimer <= 0) {
+                w.isActive = true;
+                w.activeDuration = 3 + Math.random() * 2;
+                this.spawnZone(w.x, w.y, w.radius * 2.5);
+            }
+        } else {
+            w.activeDuration -= dt;
+            if (w.activeDuration <= 0) {
+                w.isActive = false;
+                w.activeTimer = this.cooldown(12, 18);
             }
         }
     }

@@ -21,6 +21,43 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
         this._canyons = [];
         this._canyonScrollY = 0;
         const canyonCount = vcfg ? (vcfg.canyonCount || 0) : 1;
+        this.generateCanyons(canyonCount, W, H);
+        this._canyonSpeed = 22;
+
+        // Edge rock formations — angular dark ridges
+        this._edgeRocks = [];
+        const baseCount = vcfg ? vcfg.edgeN : 12;
+        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
+        const eR = vcfg ? vcfg.edgeReach : [25, 45];
+        const eH = vcfg?.edgeHue ? vcfg.edgeHue : [15, 30];
+        const eL = vcfg?.edgeLit ? vcfg.edgeLit : [12, 20];
+        const positions = this._distributeEdgeElements(count, W, H);
+        this.generateEdgeRockStructures(count, positions, eR, eH, eL);
+
+        this._vigRGB = vcfg ? vcfg.vigCol : '30,10,4';
+    }
+
+    generateEdgeRockStructures(count, positions, eR, eH, eL) {
+        for (let i = 0; i < count; i++) {
+            const pos = positions[i];
+            const nPts = 5 + Math.floor(Math.random() * 3);
+            const shape = [];
+            for (let s = 0; s < nPts; s++) shape.push(0.4 + Math.random() * 0.65);
+            this._edgeRocks.push({
+                ...pos, shape,
+                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
+                height: 25 + Math.random() * 45,
+                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
+                sat: 10 + Math.random() * 15,
+                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
+                alpha: 0.7 + Math.random() * 0.25,
+                hasGlow: Math.random() < 0.3,
+                glowHue: 15 + Math.random() * 20
+            });
+        }
+    }
+
+    generateCanyons(canyonCount, W, H) {
         for (let c = 0; c < canyonCount; c++) {
             let baseX;
             if (canyonCount === 1) {
@@ -50,35 +87,6 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
             const light = 30 + Math.random() * 15;
             this._canyons.push({ baseX, width, points, totalH: totalCanyonH, hue, sat, light });
         }
-        this._canyonSpeed = 22;
-
-        // Edge rock formations — angular dark ridges
-        this._edgeRocks = [];
-        const baseCount = vcfg ? vcfg.edgeN : 12;
-        const count = this.quality === 'high' ? baseCount : Math.max(3, Math.round(baseCount * 0.57));
-        const eR = vcfg ? vcfg.edgeReach : [25, 45];
-        const eH = vcfg?.edgeHue ? vcfg.edgeHue : [15, 30];
-        const eL = vcfg?.edgeLit ? vcfg.edgeLit : [12, 20];
-        const positions = this._distributeEdgeElements(count, W, H);
-        for (let i = 0; i < count; i++) {
-            const pos = positions[i];
-            const nPts = 5 + Math.floor(Math.random() * 3);
-            const shape = [];
-            for (let s = 0; s < nPts; s++) shape.push(0.4 + Math.random() * 0.65);
-            this._edgeRocks.push({
-                ...pos, shape,
-                reach: eR[0] + Math.random() * (eR[1] - eR[0]),
-                height: 25 + Math.random() * 45,
-                hue: eH[0] + Math.random() * (eH[1] - eH[0]),
-                sat: 10 + Math.random() * 15,
-                lightness: eL[0] + Math.random() * (eL[1] - eL[0]),
-                alpha: 0.7 + Math.random() * 0.25,
-                hasGlow: Math.random() < 0.3,
-                glowHue: 15 + Math.random() * 20
-            });
-        }
-
-        this._vigRGB = vcfg ? vcfg.vigCol : '30,10,4';
     }
 
     // ── update ────────────────────────────────────
@@ -106,65 +114,85 @@ export class VolcanicPlanetRenderer extends PlanetRenderer {
 
         // Edge rock formations (angular dark ridges)
         if (this._edgeRocks) {
-            for (const er of this._edgeRocks) {
-                let cx, cy, rx, ry;
-                if (er.side === 'left' || er.side === 'right') {
-                    const dir = er.side === 'left' ? 1 : -1;
-                    cx = er.x + er.reach * 0.4 * dir;
-                    cy = er.y; rx = er.reach; ry = er.height * 0.5;
-                } else {
-                    const dir = er.side === 'top' ? 1 : -1;
-                    cx = er.x; cy = er.y + er.reach * 0.4 * dir;
-                    rx = er.height * 0.5; ry = er.reach;
-                }
-                const n = er.shape.length;
-
-                // Shadow
-                ctx.globalAlpha = er.alpha * 0.35;
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                ctx.beginPath();
-                for (let i = 0; i < n; i++) {
-                    const a = (Math.PI * 2 / n) * i;
-                    const px = cx + 3 + Math.cos(a) * rx * er.shape[i] * 0.9;
-                    const py = cy + 3 + Math.sin(a) * ry * er.shape[i] * 0.9;
-                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                }
-                ctx.closePath(); ctx.fill();
-
-                // Rock body
-                ctx.globalAlpha = er.alpha;
-                ctx.fillStyle = `hsl(${er.hue},${er.sat}%,${er.lightness}%)`;
-                ctx.beginPath();
-                for (let i = 0; i < n; i++) {
-                    const a = (Math.PI * 2 / n) * i;
-                    const px = cx + Math.cos(a) * rx * er.shape[i];
-                    const py = cy + Math.sin(a) * ry * er.shape[i];
-                    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-                }
-                ctx.closePath(); ctx.fill();
-
-                // Subtle highlight
-                ctx.globalAlpha = er.alpha * 0.3;
-                ctx.fillStyle = `hsl(${er.hue},${er.sat - 3}%,${er.lightness + 8}%)`;
-                ctx.beginPath();
-                ctx.ellipse(cx - rx * 0.1, cy - ry * 0.1, rx * 0.35, ry * 0.3, -0.3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Lava glow at base
-                if (er.hasGlow) {
-                    ctx.globalAlpha = er.alpha * 0.25;
-                    const glowG = ctx.createRadialGradient(cx, cy + ry * 0.3, 0, cx, cy + ry * 0.3, rx * 0.5);
-                    glowG.addColorStop(0, `hsla(${er.glowHue},90%,45%,0.6)`);
-                    glowG.addColorStop(1, 'rgba(0,0,0,0)');
-                    ctx.fillStyle = glowG;
-                    ctx.beginPath();
-                    ctx.arc(cx, cy + ry * 0.3, rx * 0.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+            this.renderEdgeRocks(ctx);
         }
 
         ctx.restore();
+    }
+
+    renderEdgeRocks(ctx) {
+        for (const er of this._edgeRocks) {
+            let cx, cy, rx, ry;
+            if (er.side === 'left' || er.side === 'right') {
+                const dir = er.side === 'left' ? 1 : -1;
+                cx = er.x + er.reach * 0.4 * dir;
+                cy = er.y; rx = er.reach; ry = er.height * 0.5;
+            } else {
+                const dir = er.side === 'top' ? 1 : -1;
+                cx = er.x; cy = er.y + er.reach * 0.4 * dir;
+                rx = er.height * 0.5; ry = er.reach;
+            }
+            const n = er.shape.length;
+
+            // Shadow
+            this.renderShadow(ctx, er, n, cx, rx, cy, ry);
+
+            // Rock body
+            this.renderEdgeRockShape(ctx, er, n, cx, rx, cy, ry);
+
+            // Subtle highlight
+            this.renderHighlight(ctx, er, cx, rx, cy, ry);
+
+            // Lava glow at base
+            this.renderLavaGlow(er, ctx, cx, cy, ry, rx);
+        }
+    }
+
+    renderLavaGlow(er, ctx, cx, cy, ry, rx) {
+        if (er.hasGlow) {
+            ctx.globalAlpha = er.alpha * 0.25;
+            const glowG = ctx.createRadialGradient(cx, cy + ry * 0.3, 0, cx, cy + ry * 0.3, rx * 0.5);
+            glowG.addColorStop(0, `hsla(${er.glowHue},90%,45%,0.6)`);
+            glowG.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = glowG;
+            ctx.beginPath();
+            ctx.arc(cx, cy + ry * 0.3, rx * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    renderHighlight(ctx, er, cx, rx, cy, ry) {
+        ctx.globalAlpha = er.alpha * 0.3;
+        ctx.fillStyle = `hsl(${er.hue},${er.sat - 3}%,${er.lightness + 8}%)`;
+        ctx.beginPath();
+        ctx.ellipse(cx - rx * 0.1, cy - ry * 0.1, rx * 0.35, ry * 0.3, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    renderEdgeRockShape(ctx, er, n, cx, rx, cy, ry) {
+        ctx.globalAlpha = er.alpha;
+        ctx.fillStyle = `hsl(${er.hue},${er.sat}%,${er.lightness}%)`;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const a = (Math.PI * 2 / n) * i;
+            const px = cx + Math.cos(a) * rx * er.shape[i];
+            const py = cy + Math.sin(a) * ry * er.shape[i];
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.fill();
+    }
+
+    renderShadow(ctx, er, n, cx, rx, cy, ry) {
+        ctx.globalAlpha = er.alpha * 0.35;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const a = (Math.PI * 2 / n) * i;
+            const px = cx + 3 + Math.cos(a) * rx * er.shape[i] * 0.9;
+            const py = cy + 3 + Math.sin(a) * ry * er.shape[i] * 0.9;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.fill();
     }
 
     // ── private helpers ───────────────────────────

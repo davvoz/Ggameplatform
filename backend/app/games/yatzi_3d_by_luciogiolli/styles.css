@@ -271,7 +271,7 @@ body.game-fullscreen #app {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #e5e5e5;
+  color: #6d6c6c;
   display: flex;
   flex-direction: column;
   gap: 0;

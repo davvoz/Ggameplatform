@@ -71,8 +71,8 @@ export function scoreCategory(category, dice) {
       return 0;
     }
     case "Full": {
-      const has3 = counts.some(c => c === 3);
-      const has2 = counts.some(c => c === 2);
+      const has3 = counts.includes(3);//use includes instead of some to allow full with more than 5 dice
+      const has2 = counts.includes(2);
       return (has3 && has2) ? 25 : 0;
     }
     case "Scala corta": {
@@ -85,7 +85,7 @@ export function scoreCategory(category, dice) {
       return (uniq === "12345" || uniq === "23456") ? 40 : 0;
     }
     case "Yatzi": {
-      return counts.some(c => c === 5) ? 50 : 0;
+      return counts.includes(5) ? 50 : 0;
     }
     case "Chance": {
       return sum;

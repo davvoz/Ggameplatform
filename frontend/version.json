@@ -1,8 +1,17 @@
 {
-  "version": "5.4.9",
-  "timestamp": "2026-05-21T11:30:46.411Z",
-  "buildNumber": 567,
+  "version": "5.4.10",
+  "timestamp": "2026-05-21T16:02:19.036Z",
+  "buildNumber": 568,
   "changelog": [
+    {
+      "version": "5.4.10",
+      "date": "2026-05-21",
+      "type": "patch",
+      "changes": [
+        "fix:[SS2,YATZI,RR]Sonar",
+        "🔖 Bump version to 5.4.9 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.9",
       "date": "2026-05-21",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC] restyle sprites and GUI , balance logic",
         "🔖 Bump version to 5.4.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.0",
-      "date": "2026-05-14",
-      "type": "minor",
-      "changes": [
-        "feat:Add Minion Clash",
-        "🔖 Bump version to 5.3.9 [skip-version]"
       ]
     }
   ]

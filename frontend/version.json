@@ -1,8 +1,17 @@
 {
-  "version": "5.4.10",
-  "timestamp": "2026-05-21T16:02:19.036Z",
-  "buildNumber": 568,
+  "version": "5.4.11",
+  "timestamp": "2026-05-22T11:16:06.927Z",
+  "buildNumber": 569,
   "changelog": [
+    {
+      "version": "5.4.11",
+      "date": "2026-05-22",
+      "type": "patch",
+      "changes": [
+        "fix:[MC]better cards",
+        "🔖 Bump version to 5.4.10 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.10",
       "date": "2026-05-21",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC]xp banner",
         "🔖 Bump version to 5.4.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.1",
-      "date": "2026-05-15",
-      "type": "patch",
-      "changes": [
-        "fix:[MC] restyle sprites and GUI , balance logic",
-        "🔖 Bump version to 5.4.0 [skip-version]"
       ]
     }
   ]

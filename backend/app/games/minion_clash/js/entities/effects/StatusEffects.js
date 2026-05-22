@@ -22,7 +22,7 @@ export class DotEffect {
     }
     update(dt, target, world) {
         if (this._remaining <= 0) { this.expired = true; return; }
-        target.takeDamage(this._dps * dt, world, null);
+        target.takeDamage(this._dps * dt, world, null, true);
         this._remaining -= dt;
     }
 }

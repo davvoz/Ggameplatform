@@ -21,18 +21,17 @@ export class HeroSelectState {
 
     enter() {
         this._heroes = this._game.data.getAllHeroes();
-        const w = 220, h = 200, gap = 16;
-        const cols = 2;
-        const totalW = cols * w + (cols - 1) * gap;
-        const startX = (GameConfig.VIEW_WIDTH - totalW) / 2;
-        const startY = 110;
+        const w = 452, h = 155, gap = 10;
+        const cols = 1;
+        const startX = (GameConfig.VIEW_WIDTH - w) / 2;
+        const startY = 90;
         this._cards = this._heroes.map((hero, i) => {
             const c = i % cols, r = Math.floor(i / cols);
             return { hero, x: startX + c * (w + gap), y: startY + r * (h + gap), w, h };
         });
         this._confirmBtn = { id: 'confirm', label: 'NEXT: BUILD DECK',
-            x: GameConfig.VIEW_WIDTH / 2 - 130, y: 720, w: 260, h: 56, enabled: false };
-        this._backBtn = { id: 'back', label: '◀ BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
+            x: GameConfig.VIEW_WIDTH / 2 - 130, y: 750, w: 260, h: 50, enabled: false };
+        this._backBtn = { id: 'back', label: 'BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
     }
     exit() {
         //nothing to clean up
@@ -76,59 +75,156 @@ export class HeroSelectState {
 
     _drawHeroCard(ctx, card) {
         const isSel = this._selected === card.hero.id;
-        const tint = card.hero.color ?? '#5fa8ff';
+        const h = card.hero;
+        const tint = h.color ?? '#5fa8ff';
         const stroke = isSel ? GameConfig.COLOR.GOLD : tint;
+        const PP = 12;
+        const PS = 96;
 
-        // Outer glow when selected
-        if (isSel) {
-            ctx.save();
-            ctx.shadowColor = tint;
-            ctx.shadowBlur = 18;
-            UIPainter.panel(ctx, card.x, card.y, card.w, card.h, {
-                fill: 'rgba(20,16,40,0.95)', stroke, lineWidth: 2, radius: 12
-            });
-            ctx.restore();
-        } else {
-            UIPainter.panel(ctx, card.x, card.y, card.w, card.h, {
-                fill: 'rgba(20,16,40,0.85)', stroke, lineWidth: 1, radius: 12
-            });
-        }
-
-        // Portrait area: tinted plaque + sprite
-        const portraitH = 115;
-        const px = card.x + 10;
-        const py = card.y + 10;
-        const pw = card.w - 20;
-        UIPainter.panel(ctx, px, py, pw, portraitH, {
-            fill: this._mixTint(tint, 0.18), stroke: 'rgba(0,0,0,0.0)', radius: 8
+        // ── Background panel ──────────────────────────────────────────────────
+        ctx.save();
+        if (isSel) { ctx.shadowColor = tint; ctx.shadowBlur = 22; }
+        UIPainter.panel(ctx, card.x, card.y, card.w, card.h, {
+            fill: isSel ? 'rgba(255,209,102,0.12)' : 'rgba(20,16,40,0.92)',
+            stroke, lineWidth: isSel ? 2 : 1, radius: 10,
         });
-        const sheetId = CardArt.heroSheetId(card.hero);
+        ctx.restore();
+
+        // ── Tinted header band (clips to top rounded edge) ────────────────────
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(card.x, card.y, card.w, 30);
+        ctx.clip();
+        UIPainter.panel(ctx, card.x, card.y, card.w, card.h, {
+            fill: this._mixTint(tint, 0.3), stroke: 'rgba(0,0,0,0)', radius: 10,
+        });
+        ctx.restore();
+
+        // ── Portrait ──────────────────────────────────────────────────────────
+        const px = card.x + PP;
+        const py = card.y + PP;
+        UIPainter.panel(ctx, px, py, PS, PS, {
+            fill: 'rgba(0,0,0,0.38)', stroke: this._mixTint(tint, 0.45), lineWidth: 1, radius: 6,
+        });
+        const sheetId = CardArt.heroSheetId(h);
         const sheet = sheetId ? this._game.assets.peekSheet(sheetId) : null;
-        if (!UIPainter.spriteFrame(ctx, sheet, 0, px + 4, py + 4, pw - 8, portraitH - 8)) {
-            // Fallback: colored circle if sprite missing
+        if (!UIPainter.spriteFrame(ctx, sheet, 0, px + 2, py + 2, PS - 4, PS - 4)) {
+            ctx.save();
             ctx.fillStyle = tint;
             ctx.beginPath();
-            ctx.arc(card.x + card.w / 2, py + portraitH / 2, 26, 0, Math.PI * 2);
+            ctx.arc(px + PS / 2, py + PS / 2, 30, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
         }
 
-        UIPainter.text(ctx, card.hero.name, card.x + card.w / 2, card.y + portraitH + 26,
-            { font: 'bold 20px system-ui', align: 'center',
-              color: isSel ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT,
-              outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
-        const h = card.hero;
-        const stats = [
-            `HP ${h.hp}   Regen ${h.hpRegen}/s`,
-            `DMG ${h.attackDamage} every ${h.attackInterval.toFixed(2)}s`,
-            `Range ${h.attackRange}   Speed ${h.moveSpeed}`
-        ];
-        let y = card.y + portraitH + 46;
-        for (const s of stats) {
-            UIPainter.text(ctx, s, card.x + card.w / 2, y,
-                { font: '13px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center',
-                  outline: { color: 'rgba(0,0,0,0.95)', width: 1 } });
-            y += 15;
+        // ── Right column ──────────────────────────────────────────────────────
+        const tx = card.x + PP + PS + 10;  // x + 118
+
+        UIPainter.text(ctx, h.name.toUpperCase(), tx, card.y + 22, {
+            font: 'bold 16px system-ui', align: 'left',
+            color: isSel ? GameConfig.COLOR.GOLD : GameConfig.COLOR.TEXT,
+            outline: { color: 'rgba(0,0,0,0.95)', width: 1 },
+        });
+
+        this._heroBadge(ctx, tx, card.y + 28, h.attackKind, tint);
+
+        // Separator
+        ctx.save();
+        ctx.strokeStyle = this._mixTint(tint, 0.3);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(tx, card.y + 49);
+        ctx.lineTo(card.x + card.w - PP, card.y + 49);
+        ctx.stroke();
+        ctx.restore();
+
+        // Stats
+        const SH = 14;
+        const dps = (h.attackDamage / h.attackInterval).toFixed(1);
+        this._heroStat(ctx, tx, card.y + 57,          'HP',    `${h.hp}`,                     GameConfig.COLOR.HP_GOOD);
+        this._heroStat(ctx, tx, card.y + 57 + SH,     'REG', `${h.hpRegen}/s`,              GameConfig.COLOR.HP_GOOD);
+        this._heroStat(ctx, tx, card.y + 57 + SH * 2, 'ATK',   `${h.attackDamage}`,           '#ffb066');
+        this._heroStat(ctx, tx, card.y + 57 + SH * 3, 'DPS',   dps,                           '#ffb066');
+
+        // ── Full-width divider ────────────────────────────────────────────────
+        const divY = card.y + PP + PS + 8;  // y + 116
+        ctx.save();
+        ctx.strokeStyle = this._mixTint(tint, 0.22);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(card.x + PP, divY);
+        ctx.lineTo(card.x + card.w - PP, divY);
+        ctx.stroke();
+        ctx.restore();
+
+        // ── Bottom stat grid ──────────────────────────────────────────────────
+        const BOT_Y = divY + 10;
+        const half = (card.w / 2) - 2;
+        this._heroStat(ctx, card.x + PP,        BOT_Y,       'RNG', this._rangeLabel(h.attackRange, h.attackKind), GameConfig.COLOR.TEXT_DIM);
+        this._heroStat(ctx, card.x + PP + half, BOT_Y,       'INT', `${h.attackInterval.toFixed(2)}s`,            GameConfig.COLOR.TEXT_DIM);
+        this._heroStat(ctx, card.x + PP,        BOT_Y + SH,  'SPD', this._speedLabel(h.moveSpeed),               '#9be3ff');
+        this._heroStat(ctx, card.x + PP + half, BOT_Y + SH,  'RES', `${h.respawnDelay}s`,                        '#c97aff');
+    }
+
+    _heroStat(ctx, x, y, label, value, valueColor) {
+        UIPainter.text(ctx, `${label}:`, x, y, {
+            font: '12px system-ui', color: GameConfig.COLOR.TEXT, align: 'left',
+            outline: { color: 'rgba(0,0,0,0.9)', width: 1 },
+        });
+        UIPainter.text(ctx, `${value}`, x + 46, y, {
+            font: 'bold 12px system-ui', color: valueColor ?? GameConfig.COLOR.TEXT, align: 'left',
+            outline: { color: 'rgba(0,0,0,0.9)', width: 1 },
+        });
+    }
+
+    _heroBadge(ctx, x, y, kind, tint) {
+        const label = kind === 'melee' ? 'MELEE' : 'RANGED';
+        const bw = 66, bh = 16;
+        UIPainter.panel(ctx, x, y, bw, bh, {
+            fill: this._mixTint(tint, 0.35),
+            stroke: this._mixTint(tint, 0.7),
+            lineWidth: 1, radius: 3,
+        });
+        UIPainter.text(ctx, label, x + bw / 2, y + bh - 4, {
+            font: 'bold 11px system-ui', color: '#ffffff', align: 'center',
+        });
+    }
+
+    _wrapText(ctx, text, maxWidth, font) {
+        ctx.save();
+        ctx.font = font;
+        const words = text.split(' ');
+        const lines = [];
+        let current = '';
+        for (const word of words) {
+            const test = current ? `${current} ${word}` : word;
+            if (ctx.measureText(test).width > maxWidth && current) {
+                lines.push(current);
+                current = word;
+            } else {
+                current = test;
+            }
         }
+        if (current) lines.push(current);
+        ctx.restore();
+        return lines;
+    }
+
+    _speedLabel(spd) {
+        if (spd <= 0) return 'Static';
+        if (spd <= 45) return 'V.Slow';
+        if (spd <= 65) return 'Slow';
+        if (spd <= 85) return 'Normal';
+        if (spd <= 110) return 'Fast';
+        return 'V.Fast';
+    }
+
+    _rangeLabel(range, attackKind) {
+        if (attackKind === 'support' || range <= 0) return 'Aura';
+        if (range < 35) return 'Melee';
+        if (range < 100) return 'Short';
+        if (range < 180) return 'Long';
+        return 'Sniper';
     }
 
     /** Returns a translucent tint over a near-black backdrop (CSS rgba string). */

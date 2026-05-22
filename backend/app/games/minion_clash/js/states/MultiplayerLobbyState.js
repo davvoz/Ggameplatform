@@ -43,7 +43,7 @@ export class MultiplayerLobbyState {
 
     enter() {
         const cx = GameConfig.VIEW_WIDTH / 2;
-        this._backBtn = { id: 'back', label: '◀ BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
+        this._backBtn = { id: 'back', label: 'BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
         this._menuButtons = [
             { id: 'host', label: 'CREATE ROOM', subLabel: 'Wait for a friend',
               x: cx - 130, y: 380, w: 260, h: 70, enabled: true },

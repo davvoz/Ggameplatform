@@ -46,7 +46,7 @@ export class EffectSystem {
                 target.heal((aura.amountPerSecond ?? 0) * dt);
                 break;
             case 'dot':
-                target.takeDamage((aura.damagePerSecond ?? 0) * dt, null, null);
+                target.takeDamage((aura.damagePerSecond ?? 0) * dt, null, null, true);
                 break;
             case 'buff':
                 target._buffMult = Math.max(target._buffMult ?? 1, aura.damageMult ?? 1);

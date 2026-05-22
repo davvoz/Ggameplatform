@@ -1,6 +1,6 @@
 import { GameConfig } from '../config/GameConfig.js';
 import { UIPainter } from '../ui/UIPainter.js';
-import { CardArt } from '../ui/CardArt.js';
+import { CardDetailPainter } from '../ui/CardDetailPainter.js';
 import { HeroSelectState } from './HeroSelectState.js';
 import { CampaignSelectState } from './CampaignSelectState.js';
 import { MultiplayerLobbyState } from './MultiplayerLobbyState.js';
@@ -34,6 +34,7 @@ export class DeckBuilderState {
         this._deleteBtn = null;
         this._statusMsg = '';
         this._statusMsgUntil = 0;
+        this._detailPainter = null;
     }
 
     enter() {
@@ -44,7 +45,7 @@ export class DeckBuilderState {
             this._allCards = this._allCards.filter((c) => MP_SUPPORTED_CARD_IDS.has(c.id));
         }
         const W = GameConfig.VIEW_WIDTH;
-        this._backBtn = { id: 'back', label: '◀ BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
+        this._backBtn = { id: 'back', label: 'BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
 
         // Slot tabs row
         const slotW = 100, slotH = 36, gap = 8;
@@ -62,7 +63,7 @@ export class DeckBuilderState {
         const actY = 146, actH = 30;
         this._saveBtn = { id: 'save', label: 'SAVE', x: W / 2 - 134, y: actY, w: 80, h: actH, enabled: false };
         this._loadBtn = { id: 'load', label: 'LOAD', x: W / 2 - 44, y: actY, w: 80, h: actH, enabled: false };
-        this._deleteBtn = { id: 'delete', label: 'DELETE', x: W / 2 + 46, y: actY, w: 88, h: actH, enabled: false };
+        this._deleteBtn = { id: 'delete', label: 'CANC', x: W / 2 + 46, y: actY, w: 88, h: actH, enabled: false };
 
         // Card list shifted down to make room
         this._listRect = { x: 12, y: 192, w: W - 24, h: 478 };
@@ -70,6 +71,8 @@ export class DeckBuilderState {
             id: 'next', label: 'START MATCH',
             x: W / 2 - 110, y: 730, w: 220, h: 50, enabled: false
         };
+
+        this._detailPainter = new CardDetailPainter(this._game.assets, this._game.data);
 
         // Async fetch saved slots from backend (idempotent — UI stays usable while pending)
         this._fetchSlots();
@@ -291,7 +294,7 @@ export class DeckBuilderState {
 
         const cols = 2, gap = 8;
         const cardW = (lr.w - (cols + 1) * gap) / cols;
-        const cardH = 140;
+        const cardH = CardDetailPainter.CARD_H;
         this._cardRects = [];
         for (let i = 0; i < this._allCards.length; i++) {
             const card = this._allCards[i];
@@ -301,7 +304,7 @@ export class DeckBuilderState {
             const rect = { x, y, w: cardW, h: cardH, cardId: card.id };
             this._cardRects.push(rect);
             if (y + cardH < lr.y || y > lr.y + lr.h) continue; // cull
-            this._drawCardTile(ctx, rect, card);
+            this._detailPainter.drawCard(ctx, rect, card, this._selected.has(card.id));
         }
         const totalRows = Math.ceil(this._allCards.length / cols);
         const contentH = gap + totalRows * (cardH + gap);
@@ -312,104 +315,5 @@ export class DeckBuilderState {
         UIPainter.panel(ctx, lr.x, lr.y, lr.w, lr.h, { fill: 'rgba(0,0,0,0)', stroke: 'rgba(255,255,255,0.12)' });
     }
 
-    _drawCardTile(ctx, rect, card) {
-        const isSel = this._selected.has(card.id);
-        const rarity = CardArt.rarityStyle(card.rarity);
-        UIPainter.panel(ctx, rect.x, rect.y, rect.w, rect.h, {
-            fill: isSel ? 'rgba(255,209,102,0.18)' : 'rgba(28,22,52,0.92)',
-            stroke: isSel ? GameConfig.COLOR.GOLD : rarity.stroke,
-            lineWidth: isSel ? 2 : 1, radius: 6
-        });
-
-        // Portrait top-left (sprite for summons, fxColor disc for spells)
-        const portraitSize = 72;
-        const px = rect.x + 6;
-        const py = rect.y + 6;
-        UIPainter.panel(ctx, px, py, portraitSize, portraitSize, {
-            fill: 'rgba(0,0,0,0.35)', stroke: 'rgba(0,0,0,0)', radius: 5
-        });
-        const sheetId = CardArt.cardSheetId(card);
-        const sheet = sheetId ? this._game.assets.peekSheet(sheetId) : null;
-        if (!UIPainter.spriteFrame(ctx, sheet, 0, px + 1, py + 1, portraitSize - 2, portraitSize - 2)) {
-            const color = card.spell?.fxColor ?? '#9be3ff';
-            ctx.save();
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(px + portraitSize / 2, py + portraitSize / 2, portraitSize / 2 - 4, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-
-        // Mana gem on portrait top-left corner (frees the whole name row)
-        this._drawCostGem(ctx, px + 2, py + 2, card.cost);
-
-        // Right column: name + kind, full width
-        const tx = px + portraitSize + 6;
-        const tw = rect.x + rect.w - tx - 4;
-        UIPainter.text(ctx, this._fitText(card.name, tw, 10), tx, py + 10,
-            {
-                font: 'bold 14px system-ui', align: 'left', color: GameConfig.COLOR.TEXT,
-                outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
-            });
-        UIPainter.text(ctx, card.kind.toUpperCase(), tx, py + 30,
-            {
-                font: '11px system-ui', color: rarity.stroke, align: 'left',
-                outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
-            });
-
-        // Description below the portrait, 3 lines max
-        const lines = this._wrap(card.description ?? '', Math.floor(rect.w / 9) - 1, 3);
-        let y = py + portraitSize + 10;
-        for (const ln of lines) {
-            UIPainter.text(ctx, ln, rect.x + rect.w / 2, y,
-                {
-                    font: 'bold 12px system-ui', align: 'center', color: GameConfig.COLOR.TEXT,
-                    outline: { color: 'rgba(0,0,0,0.95)', width: 1 }
-                });
-            y += 13;
-        }
-    }
-
-    _drawCostGem(ctx, x, y, cost) {
-        const r = 12;
-        const cx = x + r;
-        const cy = y + r;
-        ctx.save();
-        ctx.fillStyle = GameConfig.COLOR.MANA;
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
-        UIPainter.text(ctx, `${cost}`, cx, cy + 5,
-            {
-                font: 'bold 14px system-ui', color: '#fff', align: 'center',
-                outline: { color: 'rgba(0,0,0,0.9)', width: 1 }
-            });
-    }
-
-    _fitText(s, maxWidthPx, charPx) {
-        const maxChars = Math.max(3, Math.floor(maxWidthPx / charPx));
-        return s.length <= maxChars ? s : s.slice(0, Math.max(1, maxChars - 1)) + '\u2026';
-    }
-
-    _wrap(text, maxChars, maxLines) {
-        const words = text.split(' ');
-        const lines = [];
-        let line = '';
-        for (const w of words) {
-            const test = line ? `${line} ${w}` : w;
-            if (test.length > maxChars) {
-                if (line) lines.push(line);
-                line = w;
-                if (lines.length >= maxLines) break;
-            } else {
-                line = test;
-            }
-        }
-        if (line && lines.length < maxLines) lines.push(line);
-        return lines.slice(0, maxLines);
-    }
 }
+

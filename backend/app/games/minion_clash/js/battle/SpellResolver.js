@@ -16,7 +16,7 @@ export class SpellResolver {
     cast(card, x, y, team, world) {
         const sp = card.spell;
         if (!sp) throw new Error(`SpellResolver: card "${card.id}" has no spell payload`);
-        if (this._vfx) this._vfx.add({ type: 'spell', x, y, radius: sp.radius ?? 30, color: sp.fxColor ?? '#fff' });
+        if (this._vfx) this._vfx.add({ type: 'spell', x, y, radius: sp.radius ?? 30, color: sp.fxColor ?? '#fff', cardId: card.id });
         this._sound?.play(SoundEvent.SPELL_AOE);
         switch (sp.type) {
             case 'aoe_damage':       return this._aoeDamage(sp, x, y, team, world);

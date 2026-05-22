@@ -38,10 +38,10 @@ export class Entity {
     isDead() { return this._dead; }
     markDead() { this._dead = true; }
 
-    takeDamage(amount, world, source) {
+    takeDamage(amount, world, source, skipFlash = false) {
         if (this._dead || amount <= 0) return;
         this.hp -= amount;
-        this.sprite?.flashHurt();
+        if (!skipFlash) this.sprite?.flashHurt();
         if (this.kind === EntityKind.TOWER) {
             world?.sound?.play(SoundEvent.TOWER_HIT);
         }
@@ -73,6 +73,11 @@ export class Entity {
             e.update(dt, this, world);
             if (e.expired) this._effects.splice(i, 1);
         }
+    }
+
+    /** True if at least one active DotEffect is running on this entity. */
+    hasDot() {
+        return this._effects.some(e => e._dps != null && !e.expired);
     }
 
     /** Combined slow factor from all active SlowEffects (min of factors). 1 = no slow. */

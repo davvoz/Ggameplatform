@@ -6,7 +6,8 @@ export class VFXManager {
     constructor() { this._items = []; }
 
     add(item) {
-        this._items.push({ life: 0, maxLife: 0.6, ...item });
+        const maxLife = item.type === 'spell' ? 0.9 : 0.6;
+        this._items.push({ life: 0, maxLife, ...item });
     }
 
     update(dt) {

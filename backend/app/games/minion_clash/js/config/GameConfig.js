@@ -71,7 +71,7 @@ export const GameConfig = Object.freeze({
         BRIDGE: '#3a3550',
         BRIDGE_EDGE: '#5a4f7a',
         TEXT: '#e8e6ff',
-        TEXT_DIM: '#9c9ab8',
+        TEXT_DIM: '#cfccfa',
         GOLD: '#ffd166',
         MANA: '#5fa9ff',
         HP_GOOD: '#7be37b',

@@ -107,6 +107,7 @@ export class BattleRenderer {
     _drawUnit(ctx, u) {
         if (u.sprite) {
             u.sprite.draw(ctx, u.x, u.y, u.facingX);
+            this._drawDotOverlay(ctx, u);
             this._hpBar(ctx, u, u.radius * 2 + 6);
             return;
         }
@@ -126,6 +127,7 @@ export class BattleRenderer {
     _drawHero(ctx, h) {
         if (h.sprite) {
             h.sprite.draw(ctx, h.x, h.y, h.facingX);
+            this._drawDotOverlay(ctx, h);
             this._hpBar(ctx, h, h.radius * 2 + 8);
             return;
         }
@@ -143,6 +145,24 @@ export class BattleRenderer {
         ctx.fill();
         ctx.restore();
         this._hpBar(ctx, h, h.radius * 2 + 8);
+    }
+
+    _drawDotOverlay(ctx, e) {
+        if (!e.hasDot()) return;
+        const t = performance.now() / 1000;
+        const pulse = 0.55 + 0.22 * Math.sin(t * 4);
+        const r = (e.sprite ? e.sprite.halfHeight() * 0.55 : e.radius) + 3;
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#5fdc28';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = pulse * 0.18;
+        ctx.fillStyle = '#5fdc28';
+        ctx.fill();
+        ctx.restore();
     }
 
     _drawProjectile(ctx, p) {
@@ -174,19 +194,54 @@ export class BattleRenderer {
     }
 
     _drawVfx(ctx) {
-        const items = this._world.vfx.list();
-        for (const it of items) {
-            const t = it.life / it.maxLife;
-            if (it.type === 'spell') {
-                ctx.save();
-                ctx.globalAlpha = (1 - t) * 0.7;
-                ctx.fillStyle = it.color;
-                ctx.beginPath();
-                ctx.arc(it.x, it.y, it.radius * (0.5 + t * 0.7), 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
+        for (const it of this._world.vfx.list()) {
+            if (it.type === 'spell') this._drawSpellVfx(ctx, it);
         }
+    }
+
+    _drawSpellVfx(ctx, it) {
+        const t = it.life / it.maxLife;
+        ctx.save();
+        this._drawSpellFill(ctx, it, t);
+        this._drawSpellRing(ctx, it, t);
+        this._drawSpellSymbol(ctx, it, t);
+        ctx.restore();
+    }
+
+    _drawSpellFill(ctx, it, t) {
+        const alpha = Math.max(0, 1 - t * 2) * 0.55;
+        if (alpha <= 0) return;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = it.color;
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, it.radius * (0.3 + t * 1.1), 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    _drawSpellRing(ctx, it, t) {
+        const alpha = Math.max(0, 1 - t * 1.4) * 0.85;
+        if (alpha <= 0) return;
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = it.color;
+        ctx.lineWidth = Math.max(1, 5 * (1 - t));
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, it.radius * (0.15 + t * 1.3), 0, Math.PI * 2);
+        ctx.stroke();
+    }
+
+    _drawSpellSymbol(ctx, it, t) {
+        if (!it.cardId) return;
+        const card  = this._world.data.getCard(it.cardId);
+        const sheet = this._world.assets?.peekSheet(CardArt.cardSheetId(card));
+        const symScale = 0.35 + Math.min(1, t * 3) * 0.65;
+        const alpha    = t < 0.35 ? 1 : Math.max(0, 1 - (t - 0.35) / 0.65);
+        if (alpha <= 0) return;
+        const size = Math.max(32, Math.round(it.radius * symScale * 0.9));
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = 'rgba(0,0,0,0.85)';
+        ctx.shadowBlur = 10;
+        UIPainter.spriteFrame(ctx, sheet, 0, it.x - size / 2, it.y - size / 2, size, size);
+        ctx.shadowBlur = 0;
     }
 
     _drawTopHud(ctx) {

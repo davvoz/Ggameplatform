@@ -17,10 +17,14 @@ export class ModeSelectState {
         this._game.run.reset();
         const cx = GameConfig.VIEW_WIDTH / 2;
         this._buttons = [
-            { id: 'campaign',    label: 'CAMPAIGN',    subLabel: '5 levels',
-              x: cx - 130, y: 380, w: 260, h: 70, enabled: true },
-            { id: 'multiplayer', label: 'MULTIPLAYER', subLabel: 'PVP',
-              x: cx - 130, y: 470, w: 260, h: 70, enabled: true }
+            {
+                id: 'campaign', label: 'CAMPAIGN', subLabel: '5 levels',
+                x: cx - 130, y: 380, w: 260, h: 70, enabled: true, custom: true, subLabelCustom: false
+            },
+            {
+                id: 'multiplayer', label: 'MULTIPLAYER', subLabel: 'PVP',
+                x: cx - 130, y: 470, w: 260, h: 70, enabled: true, custom: true, subLabelCustom: false
+            }
         ];
     }
 
@@ -44,13 +48,27 @@ export class ModeSelectState {
 
     render(ctx) {
         UIPainter.text(ctx, 'MINION CLASH', GameConfig.VIEW_WIDTH / 2, 180,
-            { font: 'bold 38px system-ui', color: GameConfig.COLOR.GOLD, align: 'center',
-                  outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 }
-             });
+            {
+                font: 'bold 38px system-ui',
+                color: GameConfig.COLOR.GOLD, align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 },
+                custom: true
+            });
         UIPainter.text(ctx, 'Tactical Card RTS', GameConfig.VIEW_WIDTH / 2, 220,
-            { font: '20px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
+            {
+                font: '20px system-ui',
+                color: GameConfig.COLOR.BG,
+                align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 1 },
+                custom: true
+            });
         UIPainter.text(ctx, 'Choose a mode', GameConfig.VIEW_WIDTH / 2, 320,
-            { font: '20px system-ui', color: GameConfig.COLOR.TEXT, align: 'center' });
-        for (const b of this._buttons) UIPainter.button(ctx, b);
+            {
+                font: '20px system-ui',
+                color: GameConfig.COLOR.TEXT,
+                align: 'center'
+            });
+        for (const b of this._buttons)
+            UIPainter.button(ctx, b);
     }
 }

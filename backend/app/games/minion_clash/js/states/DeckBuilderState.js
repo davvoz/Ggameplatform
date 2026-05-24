@@ -241,8 +241,11 @@ export class DeckBuilderState {
         UIPainter.button(ctx, this._backBtn);
         UIPainter.text(ctx, 'BUILD YOUR DECK', GameConfig.VIEW_WIDTH / 2, 50,
             {
-                font: 'bold 20px system-ui', color: GameConfig.COLOR.GOLD, align: 'center',
-                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 }
+                font: 'bold 20px system-ui',
+                color: GameConfig.COLOR.GOLD,
+                align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 },
+                custom: true
             });
         const counter = `${this._selected.size}/${GameConfig.BATTLE.ROSTER_SIZE} cards`;
         UIPainter.text(ctx, counter, GameConfig.VIEW_WIDTH / 2, 80,

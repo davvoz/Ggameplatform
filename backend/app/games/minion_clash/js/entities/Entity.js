@@ -38,21 +38,30 @@ export class Entity {
     isDead() { return this._dead; }
     markDead() { this._dead = true; }
 
+    static _hitSoundMap = new Map([
+        [EntityKind.TOWER, SoundEvent.TOWER_HIT],
+    ]);
+
+    static _deathSoundMap = new Map([
+        [EntityKind.TOWER, SoundEvent.TOWER_DESTROY],
+        [EntityKind.UNIT,  SoundEvent.UNIT_DEATH],
+        [EntityKind.HERO,  SoundEvent.HERO_DEATH],
+    ]);
+
     takeDamage(amount, world, source, skipFlash = false) {
         if (this._dead || amount <= 0) return;
+
         this.hp -= amount;
         if (!skipFlash) this.sprite?.flashHurt();
-        if (this.kind === EntityKind.TOWER) {
-            world?.sound?.play(SoundEvent.TOWER_HIT);
-        }
+
+        const hitSound = Entity._hitSoundMap.get(this.kind);
+        if (hitSound) world?.sound?.play(hitSound);
+
         if (this.hp <= 0) {
             this.hp = 0;
             this._dead = true;
-            if (world?.sound) {
-                if (this.kind === EntityKind.TOWER)      world.sound.play(SoundEvent.TOWER_DESTROY);
-                else if (this.kind === EntityKind.UNIT)  world.sound.play(SoundEvent.UNIT_DEATH);
-                else if (this.kind === EntityKind.HERO)  world.sound.play(SoundEvent.HERO_DEATH);
-            }
+            const deathSound = Entity._deathSoundMap.get(this.kind);
+            if (deathSound) world?.sound?.play(deathSound);
             this.onDeath?.(world, source);
         }
     }

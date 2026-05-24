@@ -29,8 +29,10 @@ export class HeroSelectState {
             const c = i % cols, r = Math.floor(i / cols);
             return { hero, x: startX + c * (w + gap), y: startY + r * (h + gap), w, h };
         });
-        this._confirmBtn = { id: 'confirm', label: 'NEXT: BUILD DECK',
-            x: GameConfig.VIEW_WIDTH / 2 - 130, y: 750, w: 260, h: 50, enabled: false };
+        this._confirmBtn = {
+            id: 'confirm', label: 'NEXT: BUILD DECK',
+            x: GameConfig.VIEW_WIDTH / 2 - 130, y: 750, w: 260, h: 50, enabled: false
+        };
         this._backBtn = { id: 'back', label: 'BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
     }
     exit() {
@@ -65,9 +67,13 @@ export class HeroSelectState {
     render(ctx) {
         UIPainter.button(ctx, this._backBtn);
         UIPainter.text(ctx, 'CHOOSE YOUR HERO', GameConfig.VIEW_WIDTH / 2, 70,
-            { font: 'bold 22px system-ui', color: GameConfig.COLOR.GOLD, align: 'center',
-                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 } 
-             });
+            {
+                font: 'bold 22px system-ui',
+                color: GameConfig.COLOR.GOLD,
+                align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 },
+                custom: true
+            });
 
         for (const c of this._cards) this._drawHeroCard(ctx, c);
         UIPainter.button(ctx, this._confirmBtn);
@@ -141,10 +147,10 @@ export class HeroSelectState {
         // Stats
         const SH = 14;
         const dps = (h.attackDamage / h.attackInterval).toFixed(1);
-        this._heroStat(ctx, tx, card.y + 57,          'HP',    `${h.hp}`,                     GameConfig.COLOR.HP_GOOD);
-        this._heroStat(ctx, tx, card.y + 57 + SH,     'REG', `${h.hpRegen}/s`,              GameConfig.COLOR.HP_GOOD);
-        this._heroStat(ctx, tx, card.y + 57 + SH * 2, 'ATK',   `${h.attackDamage}`,           '#ffb066');
-        this._heroStat(ctx, tx, card.y + 57 + SH * 3, 'DPS',   dps,                           '#ffb066');
+        this._heroStat(ctx, tx, card.y + 57, 'HP', `${h.hp}`, GameConfig.COLOR.HP_GOOD);
+        this._heroStat(ctx, tx, card.y + 57 + SH, 'REG', `${h.hpRegen}/s`, GameConfig.COLOR.HP_GOOD);
+        this._heroStat(ctx, tx, card.y + 57 + SH * 2, 'ATK', `${h.attackDamage}`, '#ffb066');
+        this._heroStat(ctx, tx, card.y + 57 + SH * 3, 'DPS', dps, '#ffb066');
 
         // ── Full-width divider ────────────────────────────────────────────────
         const divY = card.y + PP + PS + 8;  // y + 116
@@ -160,10 +166,10 @@ export class HeroSelectState {
         // ── Bottom stat grid ──────────────────────────────────────────────────
         const BOT_Y = divY + 10;
         const half = (card.w / 2) - 2;
-        this._heroStat(ctx, card.x + PP,        BOT_Y,       'RNG', this._rangeLabel(h.attackRange, h.attackKind), GameConfig.COLOR.TEXT_DIM);
-        this._heroStat(ctx, card.x + PP + half, BOT_Y,       'INT', `${h.attackInterval.toFixed(2)}s`,            GameConfig.COLOR.TEXT_DIM);
-        this._heroStat(ctx, card.x + PP,        BOT_Y + SH,  'SPD', this._speedLabel(h.moveSpeed),               '#9be3ff');
-        this._heroStat(ctx, card.x + PP + half, BOT_Y + SH,  'RES', `${h.respawnDelay}s`,                        '#c97aff');
+        this._heroStat(ctx, card.x + PP, BOT_Y, 'RNG', this._rangeLabel(h.attackRange, h.attackKind), GameConfig.COLOR.TEXT_DIM);
+        this._heroStat(ctx, card.x + PP + half, BOT_Y, 'INT', `${h.attackInterval.toFixed(2)}s`, GameConfig.COLOR.TEXT_DIM);
+        this._heroStat(ctx, card.x + PP, BOT_Y + SH, 'SPD', this._speedLabel(h.moveSpeed), '#9be3ff');
+        this._heroStat(ctx, card.x + PP + half, BOT_Y + SH, 'RES', `${h.respawnDelay}s`, '#c97aff');
     }
 
     _heroStat(ctx, x, y, label, value, valueColor) {

@@ -37,7 +37,7 @@ export const UIPainter = Object.freeze({
     },
 
     text(ctx, str, x, y, opts = {}) {
-        if (_bitmapFont) {
+        if (_bitmapFont && opts.custom) {
             const px = _parsePx(opts.font);
             const scale = _bitmapFont.scaleForPx(px);
             const explicitColor = opts.color && opts.color !== GameConfig.COLOR.TEXT
@@ -93,11 +93,13 @@ export const UIPainter = Object.freeze({
         UIPainter.text(ctx, btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2 + 6, {
             font: btn.font ?? '18px system-ui',
             color: enabled ? GameConfig.COLOR.TEXT : GameConfig.COLOR.TEXT_DIM,
-            align: 'center'
+            align: 'center',
+            custom: btn.custom
         });
         if (btn.subLabel) {
             UIPainter.text(ctx, btn.subLabel, btn.x + btn.w / 2, btn.y + btn.h - 8, {
                 font: '11px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center',
+                custom: btn.subLabelCustom
             });
         }
     },

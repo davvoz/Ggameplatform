@@ -92,6 +92,7 @@ class BaseResultState {
             color: titleColor,
             align: 'center',
             outline: { color: titleOutline, width: 3 },
+            custom: true
         });
     }
 
@@ -110,7 +111,7 @@ class BaseResultState {
         let y = STATS_START_Y;
         for (const { text, kind } of lines) {
             const { font, color, step } = LINE_STYLE[kind];
-            UIPainter.text(ctx, text, GameConfig.VIEW_WIDTH / 2, y, { font, color, align: 'center' });
+            UIPainter.text(ctx, text, GameConfig.VIEW_WIDTH / 2, y, { font, color, align: 'center', custom: true });
             y += step;
         }
     }

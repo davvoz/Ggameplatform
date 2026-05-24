@@ -48,9 +48,11 @@ export class Unit extends Entity {
         this.sprite?.update(dt);
         if (this.isDead()) return;
         // self regen
-        if (this.def.hpRegen > 0) this.heal(this.def.hpRegen * dt);
+        if (this.def.hpRegen > 0) 
+            this.heal(this.def.hpRegen * dt);
         // taunt: shield maiden pulls nearby enemies' targeting (best-effort soft taunt)
-        if (this.def.tags?.includes('taunt')) this._broadcastTaunt(world);
+        if (this.def.tags?.includes('taunt')) 
+            this._broadcastTaunt(world);
         this.behavior.update(this, dt, world);
         this._attackController.update(this, dt, world);
     }

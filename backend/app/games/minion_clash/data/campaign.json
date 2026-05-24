@@ -4,7 +4,7 @@
     {
       "id": "lvl_1_outpost",
       "theme": "grassland",
-      "title": "1 — Outpost Skirmish",
+      "title": "Outpost Skirmish",
       "subtitle": "An easy warm-up",
       "enemyHeroId": "warrior",
       "enemyDeck": ["skeleton_squad","goblin_pack","imp_trio","crossbowman","knight","fireball","heal_wave","archer_trio","bat_swarm","berserker"],
@@ -14,7 +14,7 @@
     {
       "id": "lvl_2_forest",
       "theme": "forest",
-      "title": "2 — Whispering Forest",
+      "title": "Whispering Forest",
       "subtitle": "Goblin scouts fast wolves",
       "enemyHeroId": "archer",
       "enemyDeck": ["goblin_pack","wolf_pair","imp_trio","archer_trio","frost_sniper","heal_wave","fireball","bat_swarm","plague_doctor","wyvern"],
@@ -24,7 +24,7 @@
     {
       "id": "lvl_3_arcanum",
       "theme": "arcane",
-      "title": "3 — Arcanum Tower",
+      "title": "Arcanum Tower",
       "subtitle": "A mage opponent loves spells",
       "enemyHeroId": "mage",
       "enemyDeck": ["mage_apprentice","frost_sniper","fireball","frost_nova","lightning_bolt","heal_wave","skeleton_squad","crossbowman","time_witch","wyvern"],
@@ -34,7 +34,7 @@
     {
       "id": "lvl_4_iron",
       "theme": "iron",
-      "title": "4 — Iron Bastion",
+      "title": "Iron Bastion",
       "subtitle": "Heavy units and siege",
       "enemyHeroId": "robot",
       "enemyDeck": ["knight","iron_sentinel","stone_golem","cannon","crossbowman","heal_wave","fireball","shield_maiden","war_banner","drake"],
@@ -44,7 +44,7 @@
     {
       "id": "lvl_5_final",
       "theme": "infernal",
-      "title": "5 — The Dark Crown",
+      "title": "The Dark Crown",
       "subtitle": "The final boss",
       "enemyHeroId": "warrior",
       "enemyDeck": ["wolf_pair","berserker","assassin","stone_golem","drake","phoenix","fireball","frost_nova","lightning_bolt","necromancer"],

@@ -45,10 +45,14 @@ export class MultiplayerLobbyState {
         const cx = GameConfig.VIEW_WIDTH / 2;
         this._backBtn = { id: 'back', label: 'BACK', x: 16, y: 16, w: 90, h: 36, enabled: true };
         this._menuButtons = [
-            { id: 'host', label: 'CREATE ROOM', subLabel: 'Wait for a friend',
-              x: cx - 130, y: 380, w: 260, h: 70, enabled: true },
-            { id: 'join', label: 'JOIN ROOM',   subLabel: 'Enter a 4-char code',
-              x: cx - 130, y: 470, w: 260, h: 70, enabled: true },
+            {
+                id: 'host', label: 'CREATE ROOM', subLabel: 'Wait for a friend',
+                x: cx - 130, y: 380, w: 260, h: 70, enabled: true
+            },
+            {
+                id: 'join', label: 'JOIN ROOM', subLabel: 'Enter a 4-char code',
+                x: cx - 130, y: 470, w: 260, h: 70, enabled: true
+            },
         ];
         this._buildKeypad();
         this._connect();
@@ -80,7 +84,7 @@ export class MultiplayerLobbyState {
         const cx = GameConfig.VIEW_WIDTH / 2;
         const btnY = y0 + rows * (kh + gap) + 18;
         this._delBtn = { id: 'del', label: 'DEL', x: cx - 140, y: btnY, w: 120, h: 50, enabled: true };
-        this._goBtn  = { id: 'go',  label: 'GO',  x: cx + 20,  y: btnY, w: 120, h: 50, enabled: true };
+        this._goBtn = { id: 'go', label: 'GO', x: cx + 20, y: btnY, w: 120, h: 50, enabled: true };
     }
 
     exit() {
@@ -98,11 +102,11 @@ export class MultiplayerLobbyState {
     _detachLobbyListeners() {
         const cli = this._client;
         if (!cli) return;
-        cli.off('roomCreated',          this._onRoomCreatedBound);
-        cli.off('matchStart',           this._onMatchStartBound);
-        cli.off('error',                this._onErrorBound);
+        cli.off('roomCreated', this._onRoomCreatedBound);
+        cli.off('matchStart', this._onMatchStartBound);
+        cli.off('error', this._onErrorBound);
         cli.off('opponentDisconnected', this._onOpponentDisconnectedBound);
-        cli.off('close',                this._onCloseBound);
+        cli.off('close', this._onCloseBound);
     }
 
     async _connect() {
@@ -110,11 +114,11 @@ export class MultiplayerLobbyState {
         this._client = new MultiplayerClient();
         this._bindLobbyHandlers();
         const cli = this._client;
-        cli.on('roomCreated',          this._onRoomCreatedBound);
-        cli.on('matchStart',           this._onMatchStartBound);
-        cli.on('error',                this._onErrorBound);
+        cli.on('roomCreated', this._onRoomCreatedBound);
+        cli.on('matchStart', this._onMatchStartBound);
+        cli.on('error', this._onErrorBound);
         cli.on('opponentDisconnected', this._onOpponentDisconnectedBound);
-        cli.on('close',                this._onCloseBound);
+        cli.on('close', this._onCloseBound);
         try {
             await cli.connect(url);
             this._statusMsg = 'Connected';
@@ -125,11 +129,11 @@ export class MultiplayerLobbyState {
     }
 
     _bindLobbyHandlers() {
-        this._onRoomCreatedBound          = (m) => this._onRoomCreated(m);
-        this._onMatchStartBound           = (m) => this._onMatchStart(m);
-        this._onErrorBound                = (m) => this._onLobbyError(m);
-        this._onOpponentDisconnectedBound = ()  => this._onOpponentDisconnected();
-        this._onCloseBound                = ()  => this._onLobbyClose();
+        this._onRoomCreatedBound = (m) => this._onRoomCreated(m);
+        this._onMatchStartBound = (m) => this._onMatchStart(m);
+        this._onErrorBound = (m) => this._onLobbyError(m);
+        this._onOpponentDisconnectedBound = () => this._onOpponentDisconnected();
+        this._onCloseBound = () => this._onLobbyClose();
     }
 
     _onLobbyError(m) {
@@ -160,9 +164,9 @@ export class MultiplayerLobbyState {
         const run = this._game.run;
         run.mpRoom = {
             roomCode: this._roomCode || m.roomCode || '',
-            opponentName:    m.opponentName    ?? 'Opponent',
-            opponentHeroId:  m.opponentHero    ?? null,
-            opponentDeckIds: m.opponentDeck    ?? [],
+            opponentName: m.opponentName ?? 'Opponent',
+            opponentHeroId: m.opponentHero ?? null,
+            opponentDeckIds: m.opponentDeck ?? [],
             seed: m.seed ?? 0,
             // Session-scoped handshake owner: survives state transitions and
             // buffers rematchRequested / matchStart so no event is dropped
@@ -258,26 +262,45 @@ export class MultiplayerLobbyState {
     render(ctx) {
         UIPainter.button(ctx, this._backBtn);
         UIPainter.text(ctx, 'MULTIPLAYER', GameConfig.VIEW_WIDTH / 2, 200,
-            { font: 'bold 32px system-ui', color: GameConfig.COLOR.GOLD, align: 'center' });
+            {
+                font: 'bold 32px system-ui',
+                color: GameConfig.COLOR.GOLD,
+                align: 'center',
+                outline: { color: GameConfig.COLOR.TITLE_OUTLINE, width: 2 },
+                custom: true
+            });
         UIPainter.text(ctx, '1v1 real-time match', GameConfig.VIEW_WIDTH / 2, 240,
-            { font: '14px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
+            {
+                font: '14px system-ui',
+                color: GameConfig.COLOR.BG,
+                align: 'center',
+                outline: { color: GameConfig.COLOR.TEXT, width: 1 },
 
-        if (this._phase === 'menu' || this._phase === 'error') {
-            for (const b of this._menuButtons) UIPainter.button(ctx, b);
-        } else if (this._phase === 'hosting') {
-            UIPainter.text(ctx, 'ROOM CODE', GameConfig.VIEW_WIDTH / 2, 380,
-                { font: '14px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
-            UIPainter.text(ctx, this._roomCode || '----', GameConfig.VIEW_WIDTH / 2, 450,
-                { font: 'bold 56px monospace', color: GameConfig.COLOR.GOLD, align: 'center' });
-            UIPainter.text(ctx, 'Share with a friend', GameConfig.VIEW_WIDTH / 2, 500,
-                { font: '12px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
-        } else if (this._phase === 'codeEntry') {
-            this._renderCodeEntry(ctx);
-        } else if (this._phase === 'joining' || this._phase === 'matching') {
-            UIPainter.text(ctx, this._phase === 'matching' ? 'Starting...' : 'Joining...',
-                GameConfig.VIEW_WIDTH / 2, 450,
-                { font: 'bold 24px system-ui', color: GameConfig.COLOR.TEXT, align: 'center' });
-        }
+            });
+
+        const phaseRenderers = {
+            menu: (ctx) => { for (const b of this._menuButtons) UIPainter.button(ctx, b); },
+            error: (ctx) => { for (const b of this._menuButtons) UIPainter.button(ctx, b); },
+            hosting: (ctx) => {
+                UIPainter.text(ctx, 'ROOM CODE', GameConfig.VIEW_WIDTH / 2, 380,
+                    { font: '14px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
+                UIPainter.text(ctx, this._roomCode || '----', GameConfig.VIEW_WIDTH / 2, 450,
+                    { font: 'bold 56px monospace', color: GameConfig.COLOR.GOLD, align: 'center' });
+                UIPainter.text(ctx, 'Share with a friend', GameConfig.VIEW_WIDTH / 2, 500,
+                    { font: '12px system-ui', color: GameConfig.COLOR.TEXT_DIM, align: 'center' });
+            },
+            codeEntry: (ctx) => { this._renderCodeEntry(ctx); },
+            joining: (ctx) => {
+                UIPainter.text(ctx, 'Joining...', GameConfig.VIEW_WIDTH / 2, 450,
+                    { font: 'bold 24px system-ui', color: GameConfig.COLOR.TEXT, align: 'center' });
+            },
+            matching: (ctx) => {
+                UIPainter.text(ctx, 'Starting...', GameConfig.VIEW_WIDTH / 2, 450,
+                    { font: 'bold 24px system-ui', color: GameConfig.COLOR.TEXT, align: 'center' });
+            },
+        };
+
+        phaseRenderers[this._phase]?.(ctx);
 
         if (this._statusMsg) {
             UIPainter.text(ctx, this._statusMsg, GameConfig.VIEW_WIDTH / 2, 760,

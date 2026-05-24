@@ -1,8 +1,17 @@
 {
-  "version": "5.4.11",
-  "timestamp": "2026-05-22T11:16:06.927Z",
-  "buildNumber": 569,
+  "version": "5.4.12",
+  "timestamp": "2026-05-24T18:25:18.518Z",
+  "buildNumber": 570,
   "changelog": [
+    {
+      "version": "5.4.12",
+      "date": "2026-05-24",
+      "type": "patch",
+      "changes": [
+        "fix:[MC]fonts",
+        "🔖 Bump version to 5.4.11 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.11",
       "date": "2026-05-22",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[BJ,YATZI,MC]Sonar",
         "🔖 Bump version to 5.4.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.2",
-      "date": "2026-05-15",
-      "type": "patch",
-      "changes": [
-        "fix:[MC]xp banner",
-        "🔖 Bump version to 5.4.1 [skip-version]"
       ]
     }
   ]

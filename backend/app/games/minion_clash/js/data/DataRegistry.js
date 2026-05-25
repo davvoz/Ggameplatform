@@ -81,11 +81,27 @@ export class DataRegistry {
             throw new Error('DataRegistry: campaign.json missing "levels" array');
         }
         for (const lvl of json.levels) {
-            this._requireKeys(lvl, ['id','title','enemyHeroId','enemyDeck','aiProfile','modifiers'], 'level');
+            this._requireKeys(lvl, ['id','title','enemyHeroId','enemyDeck','difficulties'], 'level');
             if (!Array.isArray(lvl.enemyDeck) || lvl.enemyDeck.length !== 10) {
                 throw new Error(`DataRegistry: level "${lvl.id}" enemyDeck must have exactly 10 cards`);
             }
-            this._levels.set(lvl.id, Object.freeze({ ...lvl }));
+            for (const diff of ['easy', 'medium', 'hard']) {
+                const block = lvl.difficulties[diff];
+                if (!block) {
+                    throw new Error(`DataRegistry: level "${lvl.id}" missing difficulty "${diff}"`);
+                }
+                this._requireKeys(block, ['aiProfile', 'modifiers'],
+                    `level "${lvl.id}" difficulty "${diff}"`);
+            }
+            this._levels.set(lvl.id, Object.freeze({
+                id:          lvl.id,
+                title:       lvl.title,
+                subtitle:    lvl.subtitle ?? '',
+                theme:       lvl.theme    ?? '',
+                enemyHeroId: lvl.enemyHeroId,
+                enemyDeck:   Object.freeze([...lvl.enemyDeck]),
+                difficulties: Object.freeze({ ...lvl.difficulties }),
+            }));
             this._levelOrder.push(lvl.id);
         }
     }
@@ -145,5 +161,30 @@ export class DataRegistry {
         if (!l) throw new Error(`DataRegistry: unknown level "${id}"`);
         return l;
     }
+
+    /**
+     * Returns a flat level object (same shape as before) for the given difficulty.
+     * Falls back to 'medium' if the requested difficulty block is absent.
+     *
+     * @param {string} id         - level id
+     * @param {string} difficulty - 'easy' | 'medium' | 'hard'
+     * @returns {object} Frozen level object with aiProfile and modifiers resolved.
+     */
+    getLevelForDifficulty(id, difficulty) {
+        const lvl  = this.getLevel(id);
+        const diff = lvl.difficulties[difficulty] ?? lvl.difficulties['medium'];
+        if (!diff) throw new Error(`DataRegistry: level "${id}" has no difficulty block`);
+        return Object.freeze({
+            id:          lvl.id,
+            title:       lvl.title,
+            subtitle:    lvl.subtitle,
+            theme:       lvl.theme,
+            enemyHeroId: lvl.enemyHeroId,
+            enemyDeck:   lvl.enemyDeck,
+            aiProfile:   diff.aiProfile,
+            modifiers:   diff.modifiers,
+        });
+    }
+
     getAllLevels() { return this._levelOrder.map((id) => this._levels.get(id)); }
 }

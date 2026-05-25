@@ -16,6 +16,9 @@ const TIME_BONUS_MULT = 10;
 const KILL_BONUS_PER_KILL = 30;
 const WIN_STARS = 3;
 
+// Seconds to wait after tower destruction before transitioning to the result screen.
+const OUTCOME_PAUSE_SEC = 1.8;
+
 // Sentinel level id used for multiplayer matches (not a real campaign level).
 const MP_LEVEL_ID = '__multiplayer__';
 
@@ -37,6 +40,8 @@ class BaseBattleState {
         this._renderer = null;
         this._drag = { active: false, slotIndex: -1, previewCardId: null, x: null, y: null };
         this._endHandled = false;
+        this._endFinalized = false;
+        this._outcomePause = 0;
         this._pauseBtn = this._buildPauseBtn();
         this._tap = null;
     }
@@ -137,10 +142,17 @@ class BaseBattleState {
     update(dt) {
         if (!this._world) return;
         this._world.update(dt);
-        if (this._world.outcome && !this._endHandled) {
+        if (!this._world.outcome) return;
+        if (!this._endHandled) {
             this._endHandled = true;
+            this._outcomePause = OUTCOME_PAUSE_SEC;
             const snd = this._world.outcome === 'win' ? SoundEvent.BATTLE_WIN : SoundEvent.BATTLE_LOSE;
             this._game.sound?.play(snd);
+        }
+        this._outcomePause -= dt;
+        if (this._outcomePause > 0) return;
+        if (!this._endFinalized) {
+            this._endFinalized = true;
             this._finalizeRun();
             this._game.transitionTo(ResultState.create(this._game));
         }
@@ -206,6 +218,10 @@ class BaseBattleState {
         if (!this._world) return;
         this._onQuitExtra();
         this._world.outcome = 'lose';
+        this._game.sound?.play(SoundEvent.BATTLE_LOSE);
+        // Skip explosion delay — the player explicitly chose to leave.
+        this._endHandled = true;
+        this._outcomePause = 0;
     }
 
     render(ctx) {
@@ -229,7 +245,10 @@ class BaseBattleState {
  */
 class SinglePlayerBattleState extends BaseBattleState {
     _createWorld() {
-        const level = this._game.data.getLevel(this._game.run.levelId);
+        const level = this._game.data.getLevelForDifficulty(
+            this._game.run.levelId,
+            this._game.run.difficulty ?? 'medium'
+        );
         return new BattleWorld({
             data: this._game.data, level, runContext: this._game.run,
             assets: this._game.assets, sound: this._game.sound ?? null,

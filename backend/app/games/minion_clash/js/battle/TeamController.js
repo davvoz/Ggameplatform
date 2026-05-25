@@ -6,6 +6,7 @@ import { Hand } from './Hand.js';
 import { CooldownTracker } from './CooldownTracker.js';
 import { GameConfig } from '../config/GameConfig.js';
 import { SoundEvent } from '../audio/SoundEvent.js';
+import { SupportVfxSystem } from '../vfx/SupportVfxSystem.js';
 
 /**
  * Abstract team controller. Owns mana, deck, hand, hero and tower for one team.
@@ -41,6 +42,7 @@ export class TeamController {
         this._heroDef = heroDef;
         this._heroRespawnTimer = 0;
         this._heroSpawn = { x: heroX, y: heroY };
+        this._supportVfxSystem = new SupportVfxSystem();
     }
 
     update(dt, _world) {
@@ -48,10 +50,42 @@ export class TeamController {
         const manaRushMult = (timeLeft != null && timeLeft <= 60)
             ? 1 + 2 * (1 - timeLeft / 60)
             : 1;
-        this.mana.update(dt, manaRushMult);
+        const manaBonus = this._collectManaPumpBonus();
+        this.mana.update(dt, manaRushMult, manaBonus);
+        this._applyTowerRepair(dt);
+        this._supportVfxSystem.update(
+            dt,
+            this.world.entityManager.list(),
+            this.team,
+            this.tower,
+            this.world?.vfx ?? null,
+        );
         this.cooldowns.update(dt);
         this.hand.update();
         this._tickHeroRespawn(dt);
+    }
+
+    _applyTowerRepair(dt) {
+        if (this.tower.isDead()) return;
+        let repair = 0;
+        for (const e of this.world.entityManager.list()) {
+            if (!e.isDead() && e.team === this.team && e.def?.towerRepairBonus) {
+                repair += e.def.towerRepairBonus;
+            }
+        }
+        if (repair > 0) {
+            this.tower.hp = Math.min(this.tower.maxHp, this.tower.hp + repair * dt);
+        }
+    }
+
+    _collectManaPumpBonus() {
+        let bonus = 0;
+        for (const e of this.world.entityManager.list()) {
+            if (!e.isDead() && e.team === this.team && e.def?.manaRegenBonus) {
+                bonus += e.def.manaRegenBonus;
+            }
+        }
+        return bonus;
     }
 
     _tickHeroRespawn(dt) {
@@ -81,7 +115,7 @@ export class TeamController {
         const cardId = this.hand.cardAt(slotIndex);
         if (!cardId) return false;
         const card = this.world.data.getCard(cardId);
-        if (!this._isInOwnHalf(x, y)) return false;
+        if (card.kind !== 'spell' && !this._isInOwnHalf(x, y)) return false;
         if (!this.mana.canConsume(card.cost)) return false;
         this.mana.consume(card.cost);
         this.hand.play(slotIndex);

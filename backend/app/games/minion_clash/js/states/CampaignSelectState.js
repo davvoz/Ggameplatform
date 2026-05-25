@@ -1,7 +1,7 @@
 import { GameConfig } from '../config/GameConfig.js';
 import { UIPainter } from '../ui/UIPainter.js';
 import { DeckBuilderState } from './DeckBuilderState.js';
-import { BattleState } from './BattleState.js';
+import { DifficultySelectState } from './DifficultySelectState.js';
 import { SoundEvent } from '../audio/SoundEvent.js';
 
 /**
@@ -39,8 +39,7 @@ export class CampaignSelectState {
         for (const it of this._items) {
             if (UIPainter.isInside(t, it)) {
                 this._game.sound?.play(SoundEvent.UI_CLICK);
-                this._game.run.levelId = it.level.id;
-                this._game.transitionTo(BattleState.create(this._game));
+                this._game.transitionTo(new DifficultySelectState(this._game, it.level.id));
                 return;
             }
         }

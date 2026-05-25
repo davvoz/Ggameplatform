@@ -812,9 +812,11 @@ ArenaTheme.THEMES = Object.freeze({
 });
 
 ArenaTheme.LEVEL_THEME_MAP = Object.freeze({
-    lvl_1_outpost: 'grassland',
-    lvl_2_forest:  'forest',
-    lvl_3_arcanum: 'arcane',
-    lvl_4_iron:    'iron',
-    lvl_5_final:   'infernal'
+    lvl_1_outpost:  'grassland',
+    lvl_2_forest:   'forest',
+    lvl_3_arcanum:  'arcane',
+    lvl_4_iron:     'iron',
+    lvl_5_final:    'infernal',
+    lvl_6_siphon:   'arcane',
+    lvl_7_fortress: 'iron'
 });

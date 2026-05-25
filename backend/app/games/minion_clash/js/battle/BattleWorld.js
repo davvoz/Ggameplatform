@@ -67,6 +67,7 @@ export class BattleWorld {
     }
 
     update(dt) {
+        this.vfx.update(dt); // always tick — keeps tower explosion alive after match ends
         if (this.outcome) return;
         this.matchTime += dt;
         this.timeLeft = Math.max(0, GameConfig.BATTLE.MATCH_TIME_LIMIT - this.matchTime);
@@ -92,10 +93,10 @@ export class BattleWorld {
         this.entityManager.cullDead();
         if (killed > 0) this.stats.unitsKilled += killed;
 
-        this.vfx.update(dt);
-
         const winner = this.winCheck.check(this.player, this.enemy);
         if (winner) {
+            const losingTower = winner === 'player' ? this.enemy.tower : this.player.tower;
+            this._emitTowerExplosion(losingTower);
             this.outcome = winner === 'player' ? 'win' : 'lose';
             this.stats.durationSec = this.matchTime;
             return;
@@ -111,6 +112,47 @@ export class BattleWorld {
         if (t === 'player') return 'win';
         if (t === 'enemy') return 'lose';
         return 'timeout';
+    }
+
+    _emitTowerExplosion(tower) {
+        const { x, y } = tower;
+        const EMBER_COUNT = 16;
+        const SMOKE_COUNT = 4;
+
+        // Central white-to-orange flash
+        this.vfx.add({ type: 'tower_flash', x, y, maxLife: 0.5 });
+
+        // Three shockwave rings of varying size and timing
+        this.vfx.add({ type: 'tower_ring', x, y, maxLife: 0.75, maxRadius: 55 });
+        this.vfx.add({ type: 'tower_ring', x, y, maxLife: 0.9,  maxRadius: 80 });
+        this.vfx.add({ type: 'tower_ring', x, y, maxLife: 1.1,  maxRadius: 50 });
+
+        // Flying ember sparks radiate in all directions
+        for (let i = 0; i < EMBER_COUNT; i++) {
+            const angle = (i / EMBER_COUNT) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+            const speed = 40 + Math.random() * 80;
+            this.vfx.add({
+                type:    'tower_ember',
+                x:       x + (Math.random() - 0.5) * 20,
+                y:       y + (Math.random() - 0.5) * 20,
+                vx:      Math.cos(angle) * speed,
+                vy:      Math.sin(angle) * speed - 20,
+                gravity: 80,
+                maxLife: 0.6 + Math.random() * 0.6,
+            });
+        }
+
+        // Rising smoke puffs drift upward
+        for (let s = 0; s < SMOKE_COUNT; s++) {
+            this.vfx.add({
+                type:    'tower_smoke',
+                x:       x + (Math.random() - 0.5) * 30,
+                y:       y + (Math.random() - 0.5) * 20,
+                vx:      (Math.random() - 0.5) * 15,
+                vy:      -(20 + Math.random() * 25),
+                maxLife: 1.2 + Math.random() * 0.4,
+            });
+        }
     }
 
     /**

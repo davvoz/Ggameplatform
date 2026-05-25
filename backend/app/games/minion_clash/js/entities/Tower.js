@@ -35,6 +35,10 @@ export class Tower extends Entity {
         }
     }
 
+    onDeath(_world) {
+        this.deathTimestamp = performance.now();
+    }
+
     _distSq(other) {
         const dx = other.x - this.x, dy = other.y - this.y;
         return dx * dx + dy * dy;

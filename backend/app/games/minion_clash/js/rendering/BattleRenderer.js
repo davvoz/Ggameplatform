@@ -3,6 +3,7 @@ import { EntityKind } from '../entities/Entity.js';
 import { UIPainter } from '../ui/UIPainter.js';
 import { CardArt } from '../ui/CardArt.js';
 import { ArenaTheme } from './ArenaTheme.js';
+import { VfxDrawRegistry } from '../vfx/VfxDrawRegistry.js';
 
 /** Visual config for each aura type — drawn beneath all sprites in a dedicated pass. */
 const AURA_STYLES = Object.freeze({
@@ -21,6 +22,8 @@ export class BattleRenderer {
         this._world = world;
         const themeId = world?.level?.theme ?? ArenaTheme.forLevel(world?.level?.id);
         this._arena = new ArenaTheme(themeId);
+        this._vfxDrawRegistry = VfxDrawRegistry.createDefault()
+            .register('spell', (ctx, it) => this._drawSpellVfx(ctx, it));
     }
 
     render(ctx, drag) {
@@ -39,19 +42,40 @@ export class BattleRenderer {
     _drawEntities(ctx) {
         const list = this._world.entityManager.list();
         // Pass 0: aura rings beneath everything.
-        for (const e of list) {
-            if (e.kind === EntityKind.UNIT) this._drawAura(ctx, e);
-        }
+        this.drawAuraRings(list, ctx);
         // Draw in z-order: towers, units/heroes, projectiles.
+        this.drawTowers(list, ctx);
+        this.drawUnitsAndHeroes(list, ctx);
+        this.drawProjectiles(list, ctx);
+        // Animate dead towers culled from the entity list
+        const pt = this._world.player?.tower;
+        const et = this._world.enemy?.tower;
+        if (pt?.isDead() && pt.deathTimestamp) this._drawTower(ctx, pt);
+        if (et?.isDead() && et.deathTimestamp) this._drawTower(ctx, et);
+    }
+
+    drawProjectiles(list, ctx) {
         for (const e of list) {
-            if (e.kind === EntityKind.TOWER) this._drawTower(ctx, e);
+            if (e.kind === EntityKind.PROJECTILE) this._drawProjectile(ctx, e);
         }
+    }
+
+    drawUnitsAndHeroes(list, ctx) {
         for (const e of list) {
             if (e.kind === EntityKind.UNIT) this._drawUnit(ctx, e);
             else if (e.kind === EntityKind.HERO) this._drawHero(ctx, e);
         }
+    }
+
+    drawTowers(list, ctx) {
         for (const e of list) {
-            if (e.kind === EntityKind.PROJECTILE) this._drawProjectile(ctx, e);
+            if (e.kind === EntityKind.TOWER) this._drawTower(ctx, e);
+        }
+    }
+
+    drawAuraRings(list, ctx) {
+        for (const e of list) {
+            if (e.kind === EntityKind.UNIT) this._drawAura(ctx, e);
         }
     }
 
@@ -79,10 +103,30 @@ export class BattleRenderer {
     }
 
     _drawTower(ctx, t) {
+        if (t.isDead()) {
+            if (!t.deathTimestamp) return;
+            const elapsed = performance.now() - t.deathTimestamp;
+            if (elapsed > 1500) return;
+            const p = elapsed / 1500;
+            ctx.save();
+            ctx.globalAlpha = 1 - p;
+            ctx.translate(t.x, t.y);
+            ctx.rotate(p * Math.PI * 2);
+            const s = 1 + p * 1.2;
+            ctx.scale(s, s);
+            ctx.translate(-t.x, -t.y);
+            this._drawTowerBody(ctx, t);
+            ctx.restore();
+            return;
+        }
+        this._drawTowerBody(ctx, t);
+        this._hpBar(ctx, t, 56);
+    }
+
+    _drawTowerBody(ctx, t) {
         if (t.sprite) {
             t.sprite.draw(ctx, t.x, t.y, t.facingX);
             this._teamRingTower(ctx, t);
-            this._hpBar(ctx, t, 56);
             return;
         }
         ctx.save();
@@ -95,7 +139,6 @@ export class BattleRenderer {
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
         ctx.strokeRect(-t.radius + 0.5, -t.radius + 0.5, t.radius * 2 - 1, t.radius * 2 - 1);
         ctx.restore();
-        this._hpBar(ctx, t, 56);
     }
 
     _teamRingTower(ctx, t) {
@@ -195,7 +238,7 @@ export class BattleRenderer {
 
     _drawVfx(ctx) {
         for (const it of this._world.vfx.list()) {
-            if (it.type === 'spell') this._drawSpellVfx(ctx, it);
+            this._vfxDrawRegistry.draw(ctx, it);
         }
     }
 

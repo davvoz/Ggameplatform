@@ -429,3 +429,5 @@ reports/viewer-brutalist.html
 reports/index__.html
 reports/index.html
 reports/index.html
+backend/app/games/minion_clash/assets/spritesheets/generate_mana_pump.py
+backend/app/games/minion_clash/assets/spritesheets/generate_tower_repair.py

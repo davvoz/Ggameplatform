@@ -1,5 +1,5 @@
 {
-  "_comment": "Campaign levels. Each level: enemy hero, enemy deck (10 cards), aiProfile (decision rate), modifiers (mana regen multipliers, hp scaling), unlockOrder.",
+  "_comment": "Campaign levels. Each level has 3 difficulty blocks (easy/medium/hard). Each block has aiProfile + modifiers.",
   "levels": [
     {
       "id": "lvl_1_outpost",
@@ -7,9 +7,12 @@
       "title": "Outpost Skirmish",
       "subtitle": "An easy warm-up",
       "enemyHeroId": "warrior",
-      "enemyDeck": ["skeleton_squad","goblin_pack","imp_trio","crossbowman","knight","fireball","heal_wave","archer_trio","bat_swarm","berserker"],
-      "aiProfile": { "playInterval": 4.5, "manaThreshold": 0.55, "aggression": 0.4 },
-      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.85, "enemyUnitHpMult": 0.9 }
+      "enemyDeck": ["skeleton_squad","goblin_pack","knight","berserker","wolf_pair","crossbowman","fireball","heal_wave","shield_maiden","war_banner"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 5.5, "manaThreshold": 0.65, "aggression": 0.30, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.75, "enemyUnitHpMult": 0.80 } },
+        "medium": { "aiProfile": { "playInterval": 4.5, "manaThreshold": 0.55, "aggression": 0.40, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.85, "enemyUnitHpMult": 0.90 } },
+        "hard":   { "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.40, "aggression": 0.60, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.05 } }
+      }
     },
     {
       "id": "lvl_2_forest",
@@ -18,8 +21,11 @@
       "subtitle": "Goblin scouts fast wolves",
       "enemyHeroId": "archer",
       "enemyDeck": ["goblin_pack","wolf_pair","imp_trio","archer_trio","frost_sniper","heal_wave","fireball","bat_swarm","plague_doctor","wyvern"],
-      "aiProfile": { "playInterval": 3.5, "manaThreshold": 0.45, "aggression": 0.55 },
-      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 }
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 5.0, "manaThreshold": 0.60, "aggression": 0.35, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.85, "enemyUnitHpMult": 0.85 } },
+        "medium": { "aiProfile": { "playInterval": 3.5, "manaThreshold": 0.45, "aggression": 0.55, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.00 } },
+        "hard":   { "aiProfile": { "playInterval": 2.5, "manaThreshold": 0.35, "aggression": 0.70, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.15, "enemyUnitHpMult": 1.10 } }
+      }
     },
     {
       "id": "lvl_3_arcanum",
@@ -28,8 +34,11 @@
       "subtitle": "A mage opponent loves spells",
       "enemyHeroId": "mage",
       "enemyDeck": ["mage_apprentice","frost_sniper","fireball","frost_nova","lightning_bolt","heal_wave","skeleton_squad","crossbowman","time_witch","wyvern"],
-      "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.4, "aggression": 0.6 },
-      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.05, "enemyUnitHpMult": 1.0 }
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 4.5, "manaThreshold": 0.55, "aggression": 0.40, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.90, "enemyUnitHpMult": 0.90 } },
+        "medium": { "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.40, "aggression": 0.60, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.05, "enemyUnitHpMult": 1.00 } },
+        "hard":   { "aiProfile": { "playInterval": 2.2, "manaThreshold": 0.30, "aggression": 0.75, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.20, "enemyUnitHpMult": 1.10 } }
+      }
     },
     {
       "id": "lvl_4_iron",
@@ -37,9 +46,12 @@
       "title": "Iron Bastion",
       "subtitle": "Heavy units and siege",
       "enemyHeroId": "robot",
-      "enemyDeck": ["knight","iron_sentinel","stone_golem","cannon","crossbowman","heal_wave","fireball","shield_maiden","war_banner","drake"],
-      "aiProfile": { "playInterval": 2.8, "manaThreshold": 0.4, "aggression": 0.65 },
-      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.1, "enemyUnitHpMult": 1.05 }
+      "enemyDeck": ["knight","iron_sentinel","stone_golem","cannon","troll_brute","healer","fireball","shield_maiden","war_banner","earthquake"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 4.0, "manaThreshold": 0.50, "aggression": 0.45, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.95, "enemyUnitHpMult": 0.95 } },
+        "medium": { "aiProfile": { "playInterval": 2.8, "manaThreshold": 0.40, "aggression": 0.65, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.10, "enemyUnitHpMult": 1.05 } },
+        "hard":   { "aiProfile": { "playInterval": 2.0, "manaThreshold": 0.28, "aggression": 0.80, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.25, "enemyUnitHpMult": 1.20 } }
+      }
     },
     {
       "id": "lvl_5_final",
@@ -48,8 +60,37 @@
       "subtitle": "The final boss",
       "enemyHeroId": "warrior",
       "enemyDeck": ["wolf_pair","berserker","assassin","stone_golem","drake","phoenix","fireball","frost_nova","lightning_bolt","necromancer"],
-      "aiProfile": { "playInterval": 2.2, "manaThreshold": 0.35, "aggression": 0.8 },
-      "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.2, "enemyUnitHpMult": 1.15 }
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 3.5, "manaThreshold": 0.50, "aggression": 0.55, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.00 } },
+        "medium": { "aiProfile": { "playInterval": 2.2, "manaThreshold": 0.35, "aggression": 0.80, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.20, "enemyUnitHpMult": 1.15 } },
+        "hard":   { "aiProfile": { "playInterval": 1.6, "manaThreshold": 0.25, "aggression": 0.95, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.40, "enemyUnitHpMult": 1.30 } }
+      }
+    },
+    {
+      "id": "lvl_6_siphon",
+      "theme": "arcane",
+      "title": "The Mana Siphon",
+      "subtitle": "Kill the pump before it bankrolls an army",
+      "enemyHeroId": "mage",
+      "enemyDeck": ["mana_pump","cannon","stone_golem","drake","war_banner","time_witch","healer","wyvern","frost_nova","lightning_bolt"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 3.8, "manaThreshold": 0.45, "aggression": 0.50, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.95, "enemyUnitHpMult": 0.95 } },
+        "medium": { "aiProfile": { "playInterval": 2.6, "manaThreshold": 0.30, "aggression": 0.68, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.10, "enemyUnitHpMult": 1.05 } },
+        "hard":   { "aiProfile": { "playInterval": 1.8, "manaThreshold": 0.22, "aggression": 0.85, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.30, "enemyUnitHpMult": 1.20 } }
+      }
+    },
+    {
+      "id": "lvl_7_fortress",
+      "theme": "iron",
+      "title": "Fortress Protocol",
+      "subtitle": "Pump + Tower Repair — break through before it's too late",
+      "enemyHeroId": "robot",
+      "enemyDeck": ["mana_pump","tower_repair","iron_sentinel","troll_brute","stone_golem","shield_maiden","healer","war_banner","earthquake","cannon"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.40, "aggression": 0.55, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.05 } },
+        "medium": { "aiProfile": { "playInterval": 2.0, "manaThreshold": 0.28, "aggression": 0.72, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.15, "enemyUnitHpMult": 1.18 } },
+        "hard":   { "aiProfile": { "playInterval": 1.4, "manaThreshold": 0.20, "aggression": 0.90, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.35, "enemyUnitHpMult": 1.35 } }
+      }
     }
   ]
 }

@@ -2,9 +2,7 @@ import { EntityKind } from '../entities/Entity.js';
 
 /**
  * ThreatEvaluator: stateless utility that reads BattleWorld state to produce
- * battlefield metrics for smarter AI decision-making.
- *
- * Called by ReactiveAIBehavior and StrategicAIBehavior each evaluation tick.
+ * battlefield metrics used by AIBehavior each evaluation tick.
  * No mutable state — safe to share across behavior instances.
  */
 export class ThreatEvaluator {

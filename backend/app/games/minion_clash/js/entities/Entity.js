@@ -97,6 +97,15 @@ export class Entity {
         }
         return factor;
     }
+
+    /** Combined attack-speed factor from all active AttackSlowEffects (min of factors). 1 = no slow. */
+    attackSpeedFactor() {
+        let factor = 1;
+        for (const e of this._effects) {
+            if (e.attackSlowFactor !== undefined && e.attackSlowFactor < factor) factor = e.attackSlowFactor;
+        }
+        return factor;
+    }
 }
 
 Entity._nextId = 1;

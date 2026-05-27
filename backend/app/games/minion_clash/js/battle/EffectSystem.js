@@ -1,6 +1,9 @@
 import { EntityKind } from '../entities/Entity.js';
-import { SlowEffect, DotEffect } from '../entities/effects/StatusEffects.js';
+import { SlowEffect, DotEffect, AttackSlowEffect } from '../entities/effects/StatusEffects.js';
 import { opposingTeam } from '../config/GameConfig.js';
+
+/** Hearts emitted per second on each charmed victim (dt-based, framerate-independent). */
+const CHARM_HEARTS_PER_SEC = 1.5;
 
 /**
  * EffectSystem: each frame, applies passive auras emitted by units that have
@@ -19,7 +22,12 @@ import { opposingTeam } from '../config/GameConfig.js';
 export class EffectSystem {
     constructor(spatial) { this._spatial = spatial; }
 
-    update(entityManager, dt) {
+    /**
+     * @param {object}      entityManager
+     * @param {number}      dt
+     * @param {object|null} vfxManager - Optional VFXManager for charm-victim hearts.
+     */
+    update(entityManager, dt, vfxManager = null) {
         const list = entityManager.list();
         // Reset per-frame damage multipliers
         for (const e of list) {
@@ -35,8 +43,30 @@ export class EffectSystem {
             const targets = aura.team === 'ally'
                 ? this._spatial.queryByTeam(src.x, src.y, r, src.team)
                 : this._spatial.queryByTeam(src.x, src.y, r, opposingTeam(src.team));
-            for (const t of targets) this._applyAura(aura, t, dt);
+            const isCharmSource = !!src.def?.charmAura;
+            for (const t of targets) {
+                this._applyAura(aura, t, dt);
+                if (vfxManager && isCharmSource && Math.random() < CHARM_HEARTS_PER_SEC * dt) {
+                    this._emitCharmHeart(vfxManager, t);
+                }
+            }
         }
+    }
+
+    /**
+     * Emits a single floating heart above a charmed victim.
+     * @private
+     */
+    _emitCharmHeart(vfxManager, target) {
+        const r = target.radius ?? 8;
+        vfxManager.add({
+            type:    'heart_particle',
+            x:       target.x + (Math.random() - 0.5) * r * 1.8,
+            y:       target.y - r,
+            vy:      -(46 + Math.random() * 30),
+            vx:      (Math.random() - 0.5) * 24,
+            maxLife: 0.62 + Math.random() * 0.38,
+        });
     }
 
     _applyAura(aura, target, dt) {
@@ -54,6 +84,10 @@ export class EffectSystem {
             case 'slow':
                 // Re-apply a short slow each frame so leaving the aura reverts after ~0.4s.
                 target.addEffect(new SlowEffect({ factor: aura.factor, duration: 0.4 }));
+                break;
+            case 'attackSlow':
+                // Re-apply a short attack-speed slow each frame; reverts ~0.4s after leaving aura.
+                target.addEffect(new AttackSlowEffect({ factor: aura.factor, duration: 0.4 }));
                 break;
             default:
                 throw new Error(`EffectSystem: unknown aura type "${aura.type}"`);

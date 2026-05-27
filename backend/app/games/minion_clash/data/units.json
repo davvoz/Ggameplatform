@@ -28,6 +28,8 @@
     "assassin": { "name": "Assassin", "color": "#3a3a4a", "hp": 60, "moveSpeed": 130, "attackDamage": 36, "attackInterval": 0.9, "attackRange": 22, "attackKind": "melee", "radius": 9, "tags": ["ground","fast","assassin"] },
     "cannon": { "name": "Cannon", "color": "#5a5a6a", "hp": 145, "moveSpeed": 30, "attackDamage": 44, "attackInterval": 1.8, "attackRange": 240, "attackKind": "ranged", "projectileSpeed": 320, "radius": 12, "tags": ["ground","siege"], "siegeBonus": 3.0 },
     "mana_pump":    { "name": "Mana Pump",     "color": "#8844ff", "hp": 1, "moveSpeed": 0, "attackDamage": 0, "attackInterval": 1, "attackRange": 0, "attackKind": "support", "radius": 12, "tags": ["ground","static","support"], "manaRegenBonus": 0.5 },
-    "tower_repair": { "name": "Tower Repair",  "color": "#44ccff", "hp": 1, "moveSpeed": 0, "attackDamage": 0, "attackInterval": 1, "attackRange": 0, "attackKind": "support", "radius": 12, "tags": ["ground","static","support"], "towerRepairBonus": 15 }
+    "tower_repair": { "name": "Tower Repair",  "color": "#44ccff", "hp": 1, "moveSpeed": 0, "attackDamage": 0, "attackInterval": 1, "attackRange": 0, "attackKind": "support", "radius": 12, "tags": ["ground","static","support"], "towerRepairBonus": 15 },
+    "pink_witch": { "name": "Pink Witch", "color": "#ff69b4", "hp": 85, "moveSpeed": 60, "attackDamage": 18, "attackInterval": 1.1, "attackRange": 160, "attackKind": "ranged", "projectileSpeed": 310, "radius": 10, "tags": ["ground","ranged","magic","charm"], "charmAura": true, "onHitEffect": { "type": "slow", "factor": 0.50, "duration": 2.0 }, "auraEffect": { "type": "attackSlow", "factor": 0.35, "radius": 120, "team": "enemy" } },
+    "wall":      { "name": "Wall",       "color": "#8a8070", "hp": 500, "moveSpeed": 0, "attackDamage": 0, "attackInterval": 1, "attackRange": 0, "attackKind": "support", "radius": 16, "tags": ["ground","static","tank"], "sprite": { "prefix": "unit_wall", "scale": 0.65 } }
   }
 }

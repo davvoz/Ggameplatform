@@ -29,8 +29,9 @@ export class SpellResolver {
     }
 
     _filterTargets(targets, sp) {
-        if (!sp.groundOnly) return targets;
-        return targets.filter((t) => !t.def?.tags?.includes('flying'));
+        const noTowers = targets.filter((t) => t.kind !== EntityKind.TOWER);
+        if (!sp.groundOnly) return noTowers;
+        return noTowers.filter((t) => !t.def?.tags?.includes('flying'));
     }
 
     _aoeDamage(sp, x, y, team, world) {
@@ -51,7 +52,8 @@ export class SpellResolver {
     }
 
     _singleDamage(sp, x, y, team, world) {
-        const candidates = this._spatial.queryByTeam(x, y, sp.radius ?? 30, opposingTeam(team));
+        const candidates = this._spatial.queryByTeam(x, y, sp.radius ?? 30, opposingTeam(team))
+            .filter((c) => c.kind !== EntityKind.TOWER);
         if (candidates.length === 0) return;
         let best = null, bestSq = Infinity;
         for (const c of candidates) {

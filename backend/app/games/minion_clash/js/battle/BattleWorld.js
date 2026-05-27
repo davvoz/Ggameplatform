@@ -79,7 +79,7 @@ export class BattleWorld {
         this.entityManager.flushAdditions();
 
         this.spatial.rebuild(this.entityManager);
-        this.effects.update(this.entityManager, dt);
+        this.effects.update(this.entityManager, dt, this.vfx);
 
         const list = this.entityManager.list();
         for (const e of list) e.update(dt, this);

@@ -194,6 +194,18 @@
       "frameH": 80,
       "frameCount": 8
     },
+    "unit_pink_witch": {
+      "src": "unit_pink_witch.png",
+      "frameW": 80,
+      "frameH": 80,
+      "frameCount": 8
+    },
+    "unit_wall": {
+      "src": "unit_wall.png",
+      "frameW": 80,
+      "frameH": 80,
+      "frameCount": 8
+    },
     "tower": {
       "src": "tower.png",
       "frameW": 128,
@@ -659,6 +671,27 @@
       "count": 4,
       "fps": 11,
       "loop": false
+    },
+    "unit_pink_witch_idle": {
+      "sheetId": "unit_pink_witch",
+      "start": 0,
+      "count": 4,
+      "fps": 6,
+      "loop": true
+    },
+    "unit_pink_witch_attack": {
+      "sheetId": "unit_pink_witch",
+      "start": 4,
+      "count": 4,
+      "fps": 11,
+      "loop": false
+    },
+    "unit_wall_idle": {
+      "sheetId": "unit_wall",
+      "start": 0,
+      "count": 8,
+      "fps": 4,
+      "loop": true
     },
     "unit_war_banner_idle": {
       "sheetId": "unit_war_banner",

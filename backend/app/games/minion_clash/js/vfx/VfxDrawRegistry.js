@@ -8,6 +8,10 @@ const REPAIR_MAIN  = '#44ffaa';
 const REPAIR_GLOW  = '#00ff88';
 const REPAIR_CORE  = '#ccffee';
 
+const HEART_MAIN  = '#ff69b4';
+const HEART_GLOW  = '#ff1493';
+const HEART_PULSE = '#ff85c2';
+
 // ─── Drawer functions (pure canvas, no external state) ───────────────────────
 
 function drawManaOrb(ctx, it) {
@@ -111,6 +115,52 @@ function drawRepairPulse(ctx, it) {
     ctx.stroke();
     ctx.globalAlpha = alpha * 0.08;
     ctx.fillStyle   = REPAIR_MAIN;
+    ctx.fill();
+    ctx.restore();
+}
+
+// ─── Charm / hearts VFX (Pink Witch aura) ────────────────────────────────────────
+
+function drawHeartParticle(ctx, it) {
+    const t     = it.life / it.maxLife;
+    const alpha = Math.max(0, 1 - t * 1.3);
+    if (alpha < 0.02) return;
+    const cx = it.x + (it.vx ?? 0) * it.life;
+    const cy = it.y + (it.vy ?? 0) * it.life;
+    const s  = Math.max(1, 7 - t * 2.5);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = HEART_GLOW;
+    ctx.shadowBlur  = 18;
+    ctx.fillStyle   = HEART_MAIN;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - s * 0.25);
+    ctx.bezierCurveTo(cx, cy - s,       cx - s, cy - s,       cx - s, cy - s * 0.25);
+    ctx.bezierCurveTo(cx - s, cy + s * 0.15, cx, cy + s * 0.65, cx, cy + s);
+    ctx.bezierCurveTo(cx, cy + s * 0.65, cx + s, cy + s * 0.15, cx + s, cy - s * 0.25);
+    ctx.bezierCurveTo(cx + s, cy - s,       cx, cy - s,       cx, cy - s * 0.25);
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawHeartPulse(ctx, it) {
+    const t     = it.life / it.maxLife;
+    const alpha = Math.max(0, 1 - t * 1.6) * 0.8;
+    if (alpha < 0.02) return;
+    const r = 12 + t * 28;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = HEART_PULSE;
+    ctx.shadowBlur  = 20;
+    ctx.strokeStyle = HEART_PULSE;
+    ctx.lineWidth   = Math.max(0.5, 4 - t * 3);
+    ctx.beginPath();
+    ctx.arc(it.x, it.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = alpha * 0.08;
+    ctx.fillStyle   = HEART_MAIN;
     ctx.fill();
     ctx.restore();
 }
@@ -233,13 +283,15 @@ export class VfxDrawRegistry {
      */
     static createDefault() {
         return new VfxDrawRegistry()
-            .register('mana_orb',     drawManaOrb)
-            .register('mana_pulse',   drawManaPulse)
-            .register('repair_spark', drawRepairSpark)
-            .register('repair_pulse', drawRepairPulse)
-            .register('tower_flash',  drawTowerFlash)
-            .register('tower_ring',   drawTowerRing)
-            .register('tower_ember',  drawTowerEmber)
-            .register('tower_smoke',  drawTowerSmoke);
+            .register('mana_orb',       drawManaOrb)
+            .register('mana_pulse',     drawManaPulse)
+            .register('repair_spark',   drawRepairSpark)
+            .register('repair_pulse',   drawRepairPulse)
+            .register('heart_particle', drawHeartParticle)
+            .register('heart_pulse',    drawHeartPulse)
+            .register('tower_flash',    drawTowerFlash)
+            .register('tower_ring',     drawTowerRing)
+            .register('tower_ember',    drawTowerEmber)
+            .register('tower_smoke',    drawTowerSmoke);
     }
 }

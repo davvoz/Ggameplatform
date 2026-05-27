@@ -26,3 +26,15 @@ export class DotEffect {
         this._remaining -= dt;
     }
 }
+
+export class AttackSlowEffect {
+    constructor({ factor, duration }) {
+        this.attackSlowFactor = factor;
+        this._remaining = duration;
+        this.expired = false;
+    }
+    update(dt) {
+        this._remaining -= dt;
+        if (this._remaining <= 0) this.expired = true;
+    }
+}

@@ -1,5 +1,5 @@
 {
-  "_comment": "Campaign levels. Each level has 3 difficulty blocks (easy/medium/hard). Each block has aiProfile + modifiers.",
+  "_comment": "Campaign levels. Difficulty is expressed only through AI behaviour parameters. All stat modifiers are 1.0 on all difficulties — no stat cheating. AI profile keys: reactionTime (seconds between plays), fieldAwareness (0-1: reacts to units on field), manaManagement (0-1: waits for better plays), towerSensitivity (0-1: reacts to tower HP), phaseAdaptation (0-1: early economy/mid pressure/late push), unitPositioning (0-1: precise placement per unit type).",
   "levels": [
     {
       "id": "lvl_1_outpost",
@@ -9,9 +9,9 @@
       "enemyHeroId": "warrior",
       "enemyDeck": ["skeleton_squad","goblin_pack","knight","berserker","wolf_pair","crossbowman","fireball","heal_wave","shield_maiden","war_banner"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 5.5, "manaThreshold": 0.65, "aggression": 0.30, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.75, "enemyUnitHpMult": 0.80 } },
-        "medium": { "aiProfile": { "playInterval": 4.5, "manaThreshold": 0.55, "aggression": 0.40, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.85, "enemyUnitHpMult": 0.90 } },
-        "hard":   { "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.40, "aggression": 0.60, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.05 } }
+        "easy":   { "aiProfile": { "reactionTime": 5.5, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 4.0, "fieldAwareness": 0.35, "manaManagement": 0.30, "towerSensitivity": 0.40, "phaseAdaptation": 0.25, "unitPositioning": 0.35 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 1.2, "fieldAwareness": 0.90, "manaManagement": 0.85, "towerSensitivity": 0.90, "phaseAdaptation": 0.88, "unitPositioning": 0.90 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     },
     {
@@ -22,9 +22,9 @@
       "enemyHeroId": "archer",
       "enemyDeck": ["goblin_pack","wolf_pair","imp_trio","archer_trio","frost_sniper","heal_wave","fireball","bat_swarm","plague_doctor","wyvern"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 5.0, "manaThreshold": 0.60, "aggression": 0.35, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.85, "enemyUnitHpMult": 0.85 } },
-        "medium": { "aiProfile": { "playInterval": 3.5, "manaThreshold": 0.45, "aggression": 0.55, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.00 } },
-        "hard":   { "aiProfile": { "playInterval": 2.5, "manaThreshold": 0.35, "aggression": 0.70, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.15, "enemyUnitHpMult": 1.10 } }
+        "easy":   { "aiProfile": { "reactionTime": 5.0, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 3.5, "fieldAwareness": 0.40, "manaManagement": 0.35, "towerSensitivity": 0.45, "phaseAdaptation": 0.30, "unitPositioning": 0.40 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 1.0, "fieldAwareness": 0.92, "manaManagement": 0.87, "towerSensitivity": 0.92, "phaseAdaptation": 0.90, "unitPositioning": 0.92 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     },
     {
@@ -35,9 +35,9 @@
       "enemyHeroId": "mage",
       "enemyDeck": ["mage_apprentice","frost_sniper","fireball","frost_nova","lightning_bolt","heal_wave","skeleton_squad","crossbowman","time_witch","wyvern"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 4.5, "manaThreshold": 0.55, "aggression": 0.40, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.90, "enemyUnitHpMult": 0.90 } },
-        "medium": { "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.40, "aggression": 0.60, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.05, "enemyUnitHpMult": 1.00 } },
-        "hard":   { "aiProfile": { "playInterval": 2.2, "manaThreshold": 0.30, "aggression": 0.75, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.20, "enemyUnitHpMult": 1.10 } }
+        "easy":   { "aiProfile": { "reactionTime": 4.5, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 3.0, "fieldAwareness": 0.45, "manaManagement": 0.40, "towerSensitivity": 0.50, "phaseAdaptation": 0.35, "unitPositioning": 0.45 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 0.9, "fieldAwareness": 0.93, "manaManagement": 0.89, "towerSensitivity": 0.93, "phaseAdaptation": 0.92, "unitPositioning": 0.93 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     },
     {
@@ -48,9 +48,9 @@
       "enemyHeroId": "robot",
       "enemyDeck": ["knight","iron_sentinel","stone_golem","cannon","troll_brute","healer","fireball","shield_maiden","war_banner","earthquake"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 4.0, "manaThreshold": 0.50, "aggression": 0.45, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.95, "enemyUnitHpMult": 0.95 } },
-        "medium": { "aiProfile": { "playInterval": 2.8, "manaThreshold": 0.40, "aggression": 0.65, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.10, "enemyUnitHpMult": 1.05 } },
-        "hard":   { "aiProfile": { "playInterval": 2.0, "manaThreshold": 0.28, "aggression": 0.80, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.25, "enemyUnitHpMult": 1.20 } }
+        "easy":   { "aiProfile": { "reactionTime": 4.0, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 2.8, "fieldAwareness": 0.50, "manaManagement": 0.45, "towerSensitivity": 0.55, "phaseAdaptation": 0.40, "unitPositioning": 0.50 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 1.3, "fieldAwareness": 0.88, "manaManagement": 0.82, "towerSensitivity": 0.90, "phaseAdaptation": 0.86, "unitPositioning": 0.88 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     },
     {
@@ -61,9 +61,9 @@
       "enemyHeroId": "warrior",
       "enemyDeck": ["wolf_pair","berserker","assassin","stone_golem","drake","phoenix","fireball","frost_nova","lightning_bolt","necromancer"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 3.5, "manaThreshold": 0.50, "aggression": 0.55, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.00 } },
-        "medium": { "aiProfile": { "playInterval": 2.2, "manaThreshold": 0.35, "aggression": 0.80, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.20, "enemyUnitHpMult": 1.15 } },
-        "hard":   { "aiProfile": { "playInterval": 1.6, "manaThreshold": 0.25, "aggression": 0.95, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.40, "enemyUnitHpMult": 1.30 } }
+        "easy":   { "aiProfile": { "reactionTime": 3.5, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 2.2, "fieldAwareness": 0.55, "manaManagement": 0.50, "towerSensitivity": 0.60, "phaseAdaptation": 0.50, "unitPositioning": 0.55 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 1.2, "fieldAwareness": 0.90, "manaManagement": 0.86, "towerSensitivity": 0.91, "phaseAdaptation": 0.89, "unitPositioning": 0.90 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     },
     {
@@ -74,9 +74,9 @@
       "enemyHeroId": "mage",
       "enemyDeck": ["mana_pump","cannon","stone_golem","drake","war_banner","time_witch","healer","wyvern","frost_nova","lightning_bolt"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 3.8, "manaThreshold": 0.45, "aggression": 0.50, "behavior": "standard" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 0.95, "enemyUnitHpMult": 0.95 } },
-        "medium": { "aiProfile": { "playInterval": 2.6, "manaThreshold": 0.30, "aggression": 0.68, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.10, "enemyUnitHpMult": 1.05 } },
-        "hard":   { "aiProfile": { "playInterval": 1.8, "manaThreshold": 0.22, "aggression": 0.85, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.30, "enemyUnitHpMult": 1.20 } }
+        "easy":   { "aiProfile": { "reactionTime": 3.8, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 2.6, "fieldAwareness": 0.55, "manaManagement": 0.55, "towerSensitivity": 0.58, "phaseAdaptation": 0.55, "unitPositioning": 0.55 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 1.1, "fieldAwareness": 0.92, "manaManagement": 0.88, "towerSensitivity": 0.93, "phaseAdaptation": 0.92, "unitPositioning": 0.92 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     },
     {
@@ -87,9 +87,48 @@
       "enemyHeroId": "robot",
       "enemyDeck": ["mana_pump","tower_repair","iron_sentinel","troll_brute","stone_golem","shield_maiden","healer","war_banner","earthquake","cannon"],
       "difficulties": {
-        "easy":   { "aiProfile": { "playInterval": 3.0, "manaThreshold": 0.40, "aggression": 0.55, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.00, "enemyUnitHpMult": 1.05 } },
-        "medium": { "aiProfile": { "playInterval": 2.0, "manaThreshold": 0.28, "aggression": 0.72, "behavior": "reactive" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.15, "enemyUnitHpMult": 1.18 } },
-        "hard":   { "aiProfile": { "playInterval": 1.4, "manaThreshold": 0.20, "aggression": 0.90, "behavior": "strategic" }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.35, "enemyUnitHpMult": 1.35 } }
+        "easy":   { "aiProfile": { "reactionTime": 3.0, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 2.0, "fieldAwareness": 0.58, "manaManagement": 0.58, "towerSensitivity": 0.62, "phaseAdaptation": 0.58, "unitPositioning": 0.58 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 0.9, "fieldAwareness": 0.94, "manaManagement": 0.91, "towerSensitivity": 0.95, "phaseAdaptation": 0.95, "unitPositioning": 0.94 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
+      }
+    },
+    {
+      "id": "lvl_8_marsh",
+      "theme": "forest",
+      "title": "Cursed Marshes",
+      "subtitle": "Walls, poison, charm — nothing is as it seems",
+      "enemyHeroId": "mage",
+      "enemyDeck": ["pink_witch","plague_doctor","necromancer","bat_swarm","imp_trio","wall","heal_wave","frost_nova","archer_trio","wyvern"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "reactionTime": 2.8, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 1.8, "fieldAwareness": 0.60, "manaManagement": 0.58, "towerSensitivity": 0.63, "phaseAdaptation": 0.60, "unitPositioning": 0.60 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 0.8, "fieldAwareness": 0.96, "manaManagement": 0.93, "towerSensitivity": 0.97, "phaseAdaptation": 0.96, "unitPositioning": 0.96 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
+      }
+    },
+    {
+      "id": "lvl_9_apex",
+      "theme": "infernal",
+      "title": "Apex Predator",
+      "subtitle": "Walls, cannon, witch and blades — the ultimate combo",
+      "enemyHeroId": "warrior",
+      "enemyDeck": ["wall","pink_witch","cannon","assassin","berserker","mage_apprentice","frost_sniper","earthquake","lightning_bolt","stone_golem"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "reactionTime": 2.5, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 1.6, "fieldAwareness": 0.65, "manaManagement": 0.62, "towerSensitivity": 0.67, "phaseAdaptation": 0.65, "unitPositioning": 0.65 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 0.6, "fieldAwareness": 0.98, "manaManagement": 0.96, "towerSensitivity": 0.98, "phaseAdaptation": 0.98, "unitPositioning": 0.98 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
+      }
+    },
+    {
+      "id": "lvl_10_warlord",
+      "theme": "infernal",
+      "title": "The Warlord's Gambit",
+      "subtitle": "Pump early, push hard, cannon to finish",
+      "enemyHeroId": "warrior",
+      "enemyDeck": ["mana_pump","wolf_pair","berserker","troll_brute","stone_golem","cannon","healer","war_banner","fireball","heal_wave"],
+      "difficulties": {
+        "easy":   { "aiProfile": { "reactionTime": 2.0, "fieldAwareness": 0.00, "manaManagement": 0.00, "towerSensitivity": 0.00, "phaseAdaptation": 0.00, "unitPositioning": 0.00 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "medium": { "aiProfile": { "reactionTime": 1.4, "fieldAwareness": 0.68, "manaManagement": 0.65, "towerSensitivity": 0.70, "phaseAdaptation": 0.68, "unitPositioning": 0.68 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } },
+        "hard":   { "aiProfile": { "reactionTime": 0.5, "fieldAwareness": 0.98, "manaManagement": 0.97, "towerSensitivity": 0.97, "phaseAdaptation": 0.97, "unitPositioning": 0.98 }, "modifiers": { "playerManaRegenMult": 1.0, "enemyManaRegenMult": 1.0, "enemyUnitHpMult": 1.0 } }
       }
     }
   ]

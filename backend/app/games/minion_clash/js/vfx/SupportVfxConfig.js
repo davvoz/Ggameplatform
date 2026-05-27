@@ -88,4 +88,23 @@ export const SUPPORT_VFX_CONFIGS = Object.freeze([
         }),
         pulse: Object.freeze({ maxLife: 0.58 }),
     },
+    {
+        trigger:       'charmAura',
+        burstType:     'heart_particle',
+        pulseType:     'heart_pulse',
+        burstOrigin:   'entity',
+        pulseOrigin:   'entity',
+        requiresTower: false,
+        burst: Object.freeze({
+            count:    3,
+            spreadX:  20,
+            spreadY:  12,
+            vyBase:   65,
+            vyRange:  30,
+            vxSpread: 40,
+            lifeMin:  0.5,
+            lifeMax:  0.85,
+        }),
+        pulse: Object.freeze({ maxLife: 0.5 }),
+    },
 ]);

@@ -18,8 +18,10 @@ export class CampaignSelectState {
     enter() {
         const levels = this._game.data.getAllLevels();
         const w = GameConfig.VIEW_WIDTH - 32;
-        const h = 90, gap = 12;
-        const startY = 100;
+        const gap = 10;
+        const startY = 90;
+        const available = GameConfig.VIEW_HEIGHT - startY - 16;
+        const h = Math.min(90, Math.floor((available - gap * (levels.length - 1)) / levels.length));
         this._items = levels.map((lvl, i) => ({
             level: lvl, x: 16, y: startY + i * (h + gap), w, h
         }));
@@ -59,22 +61,23 @@ export class CampaignSelectState {
     }
 
     _drawLevel(ctx, it) {
-        UIPainter.panel(ctx, it.x, it.y, it.w, it.h, {
+        const h = it.h;
+        UIPainter.panel(ctx, it.x, it.y, it.w, h, {
             fill: 'rgba(20,16,40,0.85)', stroke: 'rgba(255,255,255,0.18)'
         });
-        UIPainter.text(ctx, it.level.title, it.x + 16, it.y + 30,
+        UIPainter.text(ctx, it.level.title, it.x + 16, it.y + Math.round(h * 0.36),
             {
                 font: 'bold 18px system-ui',
                 color: GameConfig.COLOR.TEXT
             });
-        UIPainter.text(ctx, it.level.subtitle ?? '', it.x + 16, it.y + 54,
+        UIPainter.text(ctx, it.level.subtitle ?? '', it.x + 16, it.y + Math.round(h * 0.60),
             {
                 font: '15px system-ui', 
                 color: GameConfig.COLOR.TEXT,
                 outline: { color: 'rgba(243, 239, 239, 0.95)', width: 1 }
             });
         const enemyName = this._game.data.getHero(it.level.enemyHeroId).name;
-        UIPainter.text(ctx, `Enemy: ${enemyName}`, it.x + 16, it.y + 76,
+        UIPainter.text(ctx, `Enemy: ${enemyName}`, it.x + 16, it.y + Math.round(h * 0.85),
             { font: '12px system-ui', color: GameConfig.COLOR.ENEMY_TINT });
     }
 }

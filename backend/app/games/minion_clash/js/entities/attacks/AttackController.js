@@ -85,7 +85,7 @@ export class AttackController {
         this._strategy.perform(owner, target, world);
         if (this._strategy.soundKey) world?.sound?.play(this._strategy.soundKey);
         owner.playAnim?.('attack');
-        this._cooldown = owner.def.attackInterval;
+        this._cooldown = owner.def.attackInterval / (owner.attackSpeedFactor?.() ?? 1);
     }
 }
 

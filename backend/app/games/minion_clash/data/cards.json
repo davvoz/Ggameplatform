@@ -31,7 +31,9 @@
     { "id": "lightning_bolt", "name": "Lightning Bolt", "kind": "spell", "cost": 3, "cooldown": 8, "spell": { "type": "single_damage", "damage": 250, "radius": 30, "fxColor": "#fff36a" }, "rarity": "rare", "description": "Strikes single target for 250 dmg." },
     { "id": "heal_wave", "name": "Heal Wave", "kind": "spell", "cost": 3, "cooldown": 10, "spell": { "type": "aoe_heal", "radius": 90, "amount": 150, "fxColor": "#9bff9b" }, "rarity": "common", "description": "Heals allies in area for 150 HP." },
     { "id": "earthquake", "name": "Earthquake", "kind": "spell", "cost": 5, "cooldown": 14, "spell": { "type": "aoe_damage_slow", "radius": 110, "damage": 85, "slowFactor": 0.55, "slowDuration": 4, "fxColor": "#a07a3a", "groundOnly": true }, "rarity": "epic", "description": "Wide AoE on ground units, 4s slow." },
+    { "id": "pink_witch",   "name": "Pink Witch",   "kind": "summon", "cost": 5, "cooldown": 12, "unitId": "pink_witch",   "count": 1, "rarity": "epic", "description": "Charm magic: slows enemies on hit and weakens their attack speed." },
     { "id": "mana_pump",    "name": "Mana Pump",    "kind": "summon", "cost": 5, "cooldown": 70, "unitId": "mana_pump",    "count": 1, "rarity": "rare", "description": "Static building: +0.5 mana/sec while alive." },
-    { "id": "tower_repair", "name": "Tower Repair", "kind": "summon", "cost": 5, "cooldown": 65, "unitId": "tower_repair", "count": 1, "rarity": "rare", "description": "Static building: repairs your tower for 15 HP/sec while alive." }
+    { "id": "tower_repair", "name": "Tower Repair", "kind": "summon", "cost": 5, "cooldown": 65, "unitId": "tower_repair", "count": 1, "rarity": "rare", "description": "Static building: repairs your tower for 15 HP/sec while alive." },
+    { "id": "wall",         "name": "Wall",         "kind": "summon", "cost": 3, "cooldown": 22, "unitId": "wall",         "count": 1, "rarity": "common", "description": "A sturdy stone barrier. 500 HP, no attack — blocks the enemy advance." }
   ]
 }

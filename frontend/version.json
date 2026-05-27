@@ -1,8 +1,17 @@
 {
-  "version": "5.4.13",
-  "timestamp": "2026-05-25T01:09:45.490Z",
-  "buildNumber": 571,
+  "version": "5.4.14",
+  "timestamp": "2026-05-27T05:44:20.918Z",
+  "buildNumber": 572,
   "changelog": [
+    {
+      "version": "5.4.14",
+      "date": "2026-05-27",
+      "type": "patch",
+      "changes": [
+        "fix:[MC]new levels , new cards",
+        "🔖 Bump version to 5.4.13 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.13",
       "date": "2026-05-25",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [SA]update parameters for soul position and return path functions",
         "🔖 Bump version to 5.4.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.4",
-      "date": "2026-05-16",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2]ultimate instuctions",
-        "🔖 Bump version to 5.4.3 [skip-version]"
       ]
     }
   ]

@@ -1,0 +1,201 @@
+classDiagram
+    %% ============ CORE ============
+    class Game {
+        +DataRegistry data
+        +InputManager input
+        +PlatformBridge platform
+        +SoundManager sound
+        +RunContext runCtx
+        +StateMachine fsm
+        +ReelEngine reelEngine
+        +PaylineEvaluator paylineEvaluator
+        +WinCalculator winCalculator
+        +WildHandler wildHandler
+        +ScatterHandler scatterHandler
+        +ComboTracker comboTracker
+        +BonusManager bonusManager
+        +ReelRenderer[] reelRenderers
+        +PaylineRenderer paylineRenderer
+        +CabinetRenderer cabinet
+        +BackgroundRenderer background
+        +HUDRenderer hud
+        +VFXManager vfx
+        +SymbolRenderer symbolRenderer
+        +init() Promise
+        +start()
+        +pause()
+        +resume()
+        +renderWorld(ctx, opts)
+        +checkGameOverOnBroke()
+        +finalize()
+    }
+    class StateMachine {
+        -current
+        -next
+        +set(state)
+        +update(dt)
+        +render(ctx)
+        +handleInput(ev)
+    }
+    class RunContext {
+        +balance
+        +totalWon
+        +lastWin
+        +betTierIndex
+        +autoplayRemaining
+        +freeSpinsRemaining
+        +freeSpinsMultiplier
+        +consecutiveWins
+        +hotStreakMultiplier
+        +hotStreakLabel
+        +jackpotPool
+        +reset()
+        +pushLastWin(amount)
+    }
+
+    %% ============ DATA / IO ============
+    class DataRegistry {
+        +symbols
+        +reels
+        +paylines
+        +bets
+        +bonuses
+        +sounds
+        +config
+        +load() Promise
+        +getSymbol(id)
+    }
+    class InputManager {
+        -queue
+        +drain() Event[]
+    }
+    class PlatformBridge {
+        +init() Promise
+        +sendScore(score, meta)
+        +gameOver(score, meta)
+        +on(evt, fn)
+    }
+    class SoundManager {
+        -ctx
+        -masterGain
+        -loops
+        +play(id)
+        +startLoop(id)
+        +stopLoop(id)
+        +resume()
+        +suspend()
+    }
+
+    %% ============ SYSTEMS ============
+    class ReelEngine {
+        -strips
+        +spinReel(i) {landingIndex, visible}
+        +getStrip(i)
+    }
+    class PaylineEvaluator {
+        +evaluate(grid, activeLines) Hit[]
+    }
+    class WinCalculator {
+        +compute(hits, betPerLine, fsMult, hsMult) coins
+        +classifyTier(won, bet, thresholds) tier
+    }
+    class WildHandler {
+        +resolveMysteries(grid) grid
+        +countWilds(grid)
+    }
+    class ScatterHandler {
+        +countScatter(grid)
+        +countBonus(grid)
+    }
+    class ComboTracker {
+        +resolve(consecutiveWins) {mult,label}
+    }
+    class BonusManager {
+        +rollPick() outcome
+        +runSession(betTotal) summary
+    }
+
+    %% ============ RENDERING ============
+    class SymbolRenderer {
+        +draw(ctx, id, x, y, w, h, t, scale)
+    }
+    class ReelRenderer {
+        -strip
+        -offset, speed, phase
+        +startSpin(visible, landingIndex, fullMs)
+        +update(dt)
+        +render(ctx)
+        +isStopped()
+    }
+    class PaylineRenderer {
+        -activeHits
+        +setHits(hits)
+        +update(dt)
+        +render(ctx)
+    }
+    class BackgroundRenderer { +update(dt); +render(ctx) }
+    class CabinetRenderer { +update(dt); +render(ctx, runCtx) }
+    class HUDRenderer {
+        -lastButtons
+        +render(ctx, runCtx, opts) Rects
+        +hitTest(x, y) id
+    }
+    class VFXManager {
+        -particles
+        -popups
+        +emitBurst(x,y,n,color,opts)
+        +popup(x,y,text,color,opts)
+        +update(dt)
+        +render(ctx)
+    }
+
+    %% ============ STATES ============
+    class LoadingState
+    class IdleState
+    class SpinningState
+    class EvaluationState
+    class WinState
+    class FreeSpinsState
+    class BonusState
+    class JackpotState
+
+    Game --* StateMachine
+    Game --* RunContext
+    Game --o DataRegistry
+    Game --o InputManager
+    Game --o PlatformBridge
+    Game --o SoundManager
+    Game --* ReelEngine
+    Game --* PaylineEvaluator
+    Game --* WinCalculator
+    Game --* WildHandler
+    Game --* ScatterHandler
+    Game --* ComboTracker
+    Game --* BonusManager
+    Game --* SymbolRenderer
+    Game --* PaylineRenderer
+    Game --* CabinetRenderer
+    Game --* BackgroundRenderer
+    Game --* HUDRenderer
+    Game --* VFXManager
+    Game "1" --* "5" ReelRenderer
+    ReelRenderer --> SymbolRenderer
+    StateMachine "1" o-- "*" LoadingState
+    StateMachine "1" o-- "*" IdleState
+    StateMachine "1" o-- "*" SpinningState
+    StateMachine "1" o-- "*" EvaluationState
+    StateMachine "1" o-- "*" WinState
+    StateMachine "1" o-- "*" FreeSpinsState
+    StateMachine "1" o-- "*" BonusState
+    StateMachine "1" o-- "*" JackpotState
+    IdleState --> SpinningState : SPIN
+    SpinningState --> EvaluationState : reels stopped
+    EvaluationState --> WinState : baseWin > 0
+    EvaluationState --> FreeSpinsState : scatter >= 3
+    EvaluationState --> BonusState : chest >= 3
+    EvaluationState --> JackpotState : jackpot
+    EvaluationState --> IdleState : no win
+    WinState --> IdleState
+    FreeSpinsState --> IdleState
+    BonusState --> IdleState
+    JackpotState --> IdleState

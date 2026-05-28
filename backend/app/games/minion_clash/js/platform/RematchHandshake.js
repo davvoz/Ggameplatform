@@ -1,28 +1,13 @@
 // RematchHandshake.js
 //
-// Session-scoped owner of the rematch handshake events ('rematchRequested'
-// and 'matchStart'). Lives for the entire lifetime of a multiplayer session
-// (from MultiplayerLobbyState._onMatchStart until the client disconnects).
+// Session-scoped manager for rematch handshake events ('rematchRequested' and 'matchStart').
+// Buffers events arriving between state transitions and replays them when observers attach.
 //
-// Why this exists:
-//   These two events are SESSION-scoped, but their natural handler lives in
-//   the post-battle ResultState — which is STATE-scoped. A client briefly
-//   sits outside ResultState while the FSM is transitioning out of BattleState.
-//   Any handshake message arriving in that window was silently dropped
-//   because no listener was registered. This class closes that gap by
-//   subscribing once at session start and BUFFERING events when no observer
-//   is attached, then replaying them as soon as ResultState wires itself in.
-//
-// Contract:
-//   - Constructor subscribes to the MultiplayerClient. Call dispose() exactly
-//     once when the session ends to release the subscriptions.
-//   - reset() clears any buffered state between matches (called by the new
-//     BattleState as it boots).
-//   - setObservers() lets the active UI state plug in callbacks; any
-//     already-buffered events are delivered synchronously to the new
-//     observers, so no event is ever lost.
-//   - clearObservers() detaches the UI state without affecting the
-//     underlying subscription.
+// Public API:
+//   - setObservers({ onOpponentReady, onMatchStart }): Attach callbacks; buffered events fire immediately.
+//   - clearObservers(): Detach callbacks without unsubscribing from the client.
+//   - reset(): Clear buffered state between matches.
+//   - dispose(): Unsubscribe and cleanup.
 
 export class RematchHandshake {
     constructor(client) {

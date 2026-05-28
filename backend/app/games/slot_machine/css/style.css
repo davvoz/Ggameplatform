@@ -1,0 +1,73 @@
+:root {
+  --bg: #0a0010;
+  --ink: #f8f8ff;
+  --neon-violet: #cc00ff;
+  --neon-cyan: #00ffff;
+  --neon-gold: #ffd700;
+  --neon-red: #ff2244;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden; user-select: none; -webkit-user-select: none;
+  touch-action: none;
+}
+#loading-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: radial-gradient(ellipse at center, #1a0033 0%, #0a0010 80%);
+  display: flex; justify-content: center; align-items: center;
+  transition: opacity 0.5s ease-out;
+}
+#loading-screen.fade-out { opacity: 0; pointer-events: none; }
+.loader-content { text-align: center; }
+.loader-title {
+  font-size: 30px; font-weight: 900; letter-spacing: 6px;
+  color: var(--neon-gold);
+  text-shadow: 0 0 8px var(--neon-gold), 0 0 24px var(--neon-violet), 0 0 48px var(--neon-violet);
+  margin-bottom: 28px;
+  animation: nj-flicker 2.5s infinite;
+}
+@keyframes nj-flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.4; }
+}
+.loader-spinner {
+  width: 48px; height: 48px; margin: 0 auto 20px;
+  border: 4px solid rgba(204, 0, 255, 0.2);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: nj-spin 1s linear infinite;
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.5);
+}
+@keyframes nj-spin { to { transform: rotate(360deg); } }
+.loader-text {
+  color: var(--neon-cyan); font-size: 12px; letter-spacing: 4px;
+  animation: nj-pulse 1.2s ease-in-out infinite;
+}
+@keyframes nj-pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+#stage {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #1a0033 0%, #0a0010 80%);
+}
+#game {
+  width: min(100vw, calc(100svh * 480 / 800));
+  height: auto;
+  max-height: 100svh;
+  aspect-ratio: 480 / 800;
+  background: #0a0010;
+  display: block;
+  touch-action: none;
+}
+#fullscreen-btn {
+  position: fixed; top: 10px; right: 10px;
+  width: 36px; height: 36px;
+  background: rgba(0,0,0,0.55); color: var(--ink);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px; cursor: pointer;
+  font-size: 18px; line-height: 1;
+  z-index: 10;
+}
+#fullscreen-btn:hover { background: rgba(0,0,0,0.8); }

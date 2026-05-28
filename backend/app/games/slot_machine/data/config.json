@@ -1,0 +1,49 @@
+{
+  "_comment": "All gameplay tunables. Engine constants live in GameConfig.js. Anything that affects feel/payout/timing lives here.",
+  "reels": {
+    "count": 5,
+    "rowsVisible": 3,
+    "accelerationMs": 200,
+    "fullSpeedMinMs": 800,
+    "fullSpeedMaxMs": 1600,
+    "decelerationMs": 420,
+    "bounceMs": 220,
+    "stopStaggerMs": 200,
+    "stopStaggerFreeSpinsMs": 100,
+    "fullSpeedPxPerSec": 2600,
+    "bounceOvershootSymbols": 1
+  },
+  "session": {
+    "startingBalance": 1000,
+    "minBalanceForSpin": 1
+  },
+  "jackpotTicker": {
+    "seed": 25000,
+    "incrementPerSpin": 0.75,
+    "displayUpdateMs": 100,
+    "lerpFactor": 0.18
+  },
+  "wins": {
+    "thresholds": {
+      "small":  0,
+      "medium": 5,
+      "big":    20,
+      "super":  50,
+      "mega":   100
+    },
+    "messages": {
+      "medium": "NICE WIN!",
+      "big":    "BIG WIN!",
+      "super":  "SUPER WIN!",
+      "mega":   "MEGA WIN!"
+    },
+    "_comment": "Multipliers of total bet → tier of celebration"
+  },
+  "mystery": {
+    "_comment": "DEPRECATED — mystery_box symbol removed. Kept for back-compat with DataRegistry guard; safe to delete later.",
+    "morphPool": []
+  },
+  "autoplay": {
+    "presets": [5, 10, 25, 50, 100]
+  }
+}

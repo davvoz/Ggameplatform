@@ -1,0 +1,115 @@
+```mermaid
+classDiagram
+    class Game {
+        +canvas
+        +ctx
+        +data: DataRegistry
+        +sound: SoundManager
+        +input: InputManager
+        +platform: PlatformBridge
+        +fsm: StateMachine
+        +run: RunContext
+        +init() Promise
+        +start() void
+        +transitionTo(state) void
+    }
+
+    class StateMachine {
+        -_current
+        -_next
+        +set(state)
+        +update(dt)
+        +render(ctx)
+        +handleInput(ev)
+    }
+
+    class RunContext {
+        +balance: number
+        +heatmap: HeatmapTracker
+        +chips: ChipManager
+        +lastSpinNumber: number
+        +lastSpinPayout: number
+        +history: number[]
+    }
+
+    class DataRegistry {
+        -_bets
+        -_wheel
+        -_chips
+        -_config
+        +load(basePath) Promise
+        +getBets() Map
+        +getWheelOrder() number[]
+        +getChipDefs() array
+        +getConfig() object
+    }
+
+    class BetResolver {
+        +SELECTORS: Map
+        +resolve(spinNumber, bets) ResolutionResult
+        +matches(betDef, instance, n) bool
+    }
+
+    class WheelPhysics {
+        -_state
+        +start(targetNumber, spinConfig)
+        +update(dt)
+        +getBallAngle() number
+        +getWheelAngle() number
+        +isSettled() bool
+    }
+
+    class ChipManager {
+        -_placedBets: array
+        -_lastBets: array
+        +place(typeId, numbers, amount)
+        +clear()
+        +rebet()
+        +totalWagered() number
+    }
+
+    class HeatmapTracker {
+        -_history: number[]
+        -_counts: Map
+        +record(n)
+        +getHotNumbers(k) number[]
+        +getColdNumbers(k) number[]
+    }
+
+    class IGameState {
+        <<interface>>
+        +enter()
+        +exit()
+        +update(dt)
+        +render(ctx)
+        +handleInput(ev)
+    }
+
+    Game --* DataRegistry
+    Game --* StateMachine
+    Game --* SoundManager
+    Game --* InputManager
+    Game --* PlatformBridge
+    Game --* RunContext
+    RunContext --* HeatmapTracker
+    RunContext --* ChipManager
+    StateMachine --> IGameState
+    BettingState ..|> IGameState
+    SpinState ..|> IGameState
+    RevealState ..|> IGameState
+    ResultState ..|> IGameState
+    LoadingState ..|> IGameState
+    SpinState --* WheelPhysics
+    RevealState --> BetResolver
+```
+
+# Roulette Architecture Notes
+
+- **Bet selection is data-driven**: `bets.json` lists templates with `selector` keys; `BetResolver.SELECTORS` is a name→function map. No `if/switch` on bet type anywhere.
+- **Wheel uses European single-zero** (37 sectors) — order in `wheel.json`.
+- **All gameplay numbers** (payouts, spin duration, ball physics) live in JSON; `GameConfig.js` only holds geometry/colors.
+- **States separate concerns**:
+  - `BettingState`: chip placement, no time pressure, transitions to `SpinState` on "spin".
+  - `SpinState`: runs `WheelPhysics`, locks input.
+  - `RevealState`: short pause with ball settled, runs `BetResolver`, kicks off VFX.
+  - `ResultState`: shows summary overlay, allows rebet/clear/spin again.

@@ -1,0 +1,38 @@
+{
+    "version": "1.0.0",
+    "startBalance": 1000,
+    "minBet": 1,
+    "maxStraightBet": 500,
+    "spin": {
+        "wheelStartSpeed": 6.0,
+        "wheelDecay": 0.42,
+        "ballStartSpeed": -14.0,
+        "ballDecay": 0.55,
+        "ballDropSpeed": 0.6,
+        "duration": 6.0,
+        "settleDuration": 1.2,
+        "bounceCount": 3,
+        "bounceSpread": 2
+    },
+    "reveal": {
+        "displayDuration": 1.6,
+        "bigWinMultiplier": 10
+    },
+    "heatmap": {
+        "windowSize": 20,
+        "hotCount": 5,
+        "coldCount": 5
+    },
+    "specials": {
+        "luckyZeroBonus": 0,
+        "hotMultiplier": 1.5,
+        "coldMultiplier": 2.0,
+        "neighborSpread": 2,
+        "sectorSpread": 6,
+        "snakeNumbers": [1, 5, 9, 12, 14, 16, 19, 23, 27, 30, 32, 34],
+        "luckyTrioMaxSpins": 3,
+        "luckyTrioBonus": 3.0,
+        "doubleDownCap": 8,
+        "allInChaosFraction": 0.5
+    }
+}

@@ -1,0 +1,15 @@
+{
+    "master": 0.35,
+    "sounds": {
+        "ui_click":     { "procedural": "click",       "volume": 0.45, "throttle": 80  },
+        "chip_drop":    { "procedural": "chip",        "volume": 0.55, "throttle": 40  },
+        "chip_clear":   { "procedural": "clear",       "volume": 0.45, "throttle": 100 },
+        "spin_start":   { "procedural": "spin_start",  "volume": 0.70, "throttle": 0   },
+        "spin_loop":    { "procedural": "spin_loop",   "volume": 0.30, "throttle": 0   },
+        "ball_bounce":  { "procedural": "bounce",      "volume": 0.45, "throttle": 30  },
+        "ball_settle":  { "procedural": "settle",      "volume": 0.65, "throttle": 0   },
+        "win_small":    { "procedural": "win_small",   "volume": 0.65, "throttle": 0   },
+        "win_big":      { "procedural": "win_big",     "volume": 0.85, "throttle": 0   },
+        "lose":         { "procedural": "lose",        "volume": 0.45, "throttle": 0   }
+    }
+}

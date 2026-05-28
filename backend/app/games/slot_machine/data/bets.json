@@ -1,0 +1,12 @@
+{
+  "_comment": "Bet tiers. perLine = coins staked per active payline. activeLines = number of paylines enabled (from top of paylines.json).",
+  "tiers": [
+    { "id": "min",  "perLine": 1,  "activeLines": 5,  "label": "MIN" },
+    { "id": "low",  "perLine": 2,  "activeLines": 10, "label": "LOW" },
+    { "id": "mid",  "perLine": 5,  "activeLines": 15, "label": "MID" },
+    { "id": "high", "perLine": 10, "activeLines": 20, "label": "HIGH" },
+    { "id": "max",  "perLine": 25, "activeLines": 20, "label": "MAX" }
+  ],
+  "defaultTierIndex": 0,
+  "maxBetTierIndex": 4
+}

@@ -1,0 +1,31 @@
+{
+    "bets": [
+        { "id": "straight", "label": "Straight",     "payout": 35, "color": "#d4a017", "selector": "matchesNumbers" },
+        { "id": "split",    "label": "Split",        "payout": 17, "color": "#d4a017", "selector": "matchesNumbers" },
+        { "id": "street",   "label": "Street",       "payout": 11, "color": "#d4a017", "selector": "matchesNumbers" },
+        { "id": "corner",   "label": "Corner",       "payout":  8, "color": "#d4a017", "selector": "matchesNumbers" },
+        { "id": "sixline",  "label": "Six Line",     "payout":  5, "color": "#d4a017", "selector": "matchesNumbers" },
+
+        { "id": "dozen_1",  "label": "1st 12",       "payout": 2, "color": "#8c7a2a", "selector": "matchesDozen", "data": { "dozen": 1 } },
+        { "id": "dozen_2",  "label": "2nd 12",       "payout": 2, "color": "#8c7a2a", "selector": "matchesDozen", "data": { "dozen": 2 } },
+        { "id": "dozen_3",  "label": "3rd 12",       "payout": 2, "color": "#8c7a2a", "selector": "matchesDozen", "data": { "dozen": 3 } },
+
+        { "id": "column_1", "label": "Col 1",        "payout": 2, "color": "#8c7a2a", "selector": "matchesColumn", "data": { "column": 1 } },
+        { "id": "column_2", "label": "Col 2",        "payout": 2, "color": "#8c7a2a", "selector": "matchesColumn", "data": { "column": 2 } },
+        { "id": "column_3", "label": "Col 3",        "payout": 2, "color": "#8c7a2a", "selector": "matchesColumn", "data": { "column": 3 } },
+
+        { "id": "low",      "label": "1-18",         "payout": 1, "color": "#5a5a55", "selector": "matchesLow"  },
+        { "id": "high",     "label": "19-36",        "payout": 1, "color": "#5a5a55", "selector": "matchesHigh" },
+        { "id": "red",      "label": "RED",          "payout": 1, "color": "#c0392b", "selector": "matchesRed"  },
+        { "id": "black",    "label": "BLACK",        "payout": 1, "color": "#1a1a1a", "selector": "matchesBlack"},
+        { "id": "even",     "label": "EVEN",         "payout": 1, "color": "#5a5a55", "selector": "matchesEven" },
+        { "id": "odd",      "label": "ODD",          "payout": 1, "color": "#5a5a55", "selector": "matchesOdd"  },
+
+        { "id": "lucky_zero",   "label": "Lucky 0",       "payout": 35, "color": "#0e7d3f", "selector": "matchesZero",     "special": true, "vfx": "luckyZero" },
+        { "id": "hot_numbers",  "label": "Hot Numbers",   "payout": 35, "color": "#ff6a2c", "selector": "matchesNumbers",  "special": true, "vfx": "hot",  "multiplier": 1.5, "expandStrategy": "hot" },
+        { "id": "cold_numbers", "label": "Cold Numbers",  "payout": 35, "color": "#4ab8ff", "selector": "matchesNumbers",  "special": true, "vfx": "cold", "multiplier": 2.0, "expandStrategy": "cold" },
+        { "id": "neighbor_bet", "label": "Neighbours",    "payout": 35, "color": "#d4a017", "selector": "matchesNumbers",  "special": true, "vfx": "neighbour", "expandStrategy": "neighbour" },
+        { "id": "snake_bet",    "label": "Snake",         "payout": 35, "color": "#7d3ec8", "selector": "matchesNumbers",  "special": true, "vfx": "snake",     "expandStrategy": "snake" },
+        { "id": "mirror_bet",   "label": "Mirror",        "payout": 35, "color": "#d4a017", "selector": "matchesNumbers",  "special": true, "vfx": "mirror",    "expandStrategy": "mirror" }
+    ]
+}

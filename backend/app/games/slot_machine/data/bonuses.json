@@ -1,0 +1,40 @@
+{
+  "freeSpins": {
+    "trigger": "scatter_star",
+    "minScatters": 3,
+    "rewards": {
+      "3": { "spins": 8,  "multiplier": 2 },
+      "4": { "spins": 12, "multiplier": 3 },
+      "5": { "spins": 20, "multiplier": 5 }
+    },
+    "retriggerBonusSpins": 5
+  },
+  "treasureVault": {
+    "trigger": "bonus_chest",
+    "minBonus": 3,
+    "chests": 9,
+    "picks": 3,
+    "outcomes": [
+      { "type": "coins",      "value": 50,  "weight": 18 },
+      { "type": "coins",      "value": 100, "weight": 14 },
+      { "type": "coins",      "value": 250, "weight": 8 },
+      { "type": "coins",      "value": 500, "weight": 4 },
+      { "type": "multiplier", "value": 2,   "weight": 5 },
+      { "type": "multiplier", "value": 5,   "weight": 2 },
+      { "type": "exit",       "value": 0,   "weight": 6 }
+    ]
+  },
+  "hotStreak": {
+    "thresholds": [
+      { "wins": 3, "multiplier": 1.25, "label": "🔥 HOT x1.25" },
+      { "wins": 5, "multiplier": 1.5,  "label": "🔥 HOT x1.5"  },
+      { "wins": 7, "multiplier": 2.0,  "label": "🔥🔥 HOT x2"  }
+    ]
+  },
+  "jackpot": {
+    "trigger": "seven_lucky",
+    "requireFullLine": 5,
+    "requireMaxBet": true,
+    "basePayout": 25000
+  }
+}

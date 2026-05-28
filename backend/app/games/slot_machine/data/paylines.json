@@ -1,0 +1,24 @@
+{
+  "paylines": [
+    { "id": "line_top",      "cells": [[0,0],[1,0],[2,0],[3,0],[4,0]], "color": "#ff2244", "label": "TOP" },
+    { "id": "line_middle",   "cells": [[0,1],[1,1],[2,1],[3,1],[4,1]], "color": "#ffd700", "label": "MID" },
+    { "id": "line_bottom",   "cells": [[0,2],[1,2],[2,2],[3,2],[4,2]], "color": "#44ff00", "label": "BOT" },
+    { "id": "line_v",        "cells": [[0,0],[1,1],[2,2],[3,1],[4,0]], "color": "#ff8800", "label": "V" },
+    { "id": "line_inv_v",    "cells": [[0,2],[1,1],[2,0],[3,1],[4,2]], "color": "#00ffff", "label": "Λ" },
+    { "id": "line_w",        "cells": [[0,0],[1,2],[2,0],[3,2],[4,0]], "color": "#ff44ff", "label": "W" },
+    { "id": "line_m",        "cells": [[0,2],[1,0],[2,2],[3,0],[4,2]], "color": "#cc00ff", "label": "M" },
+    { "id": "line_zig_1",    "cells": [[0,0],[1,0],[2,1],[3,2],[4,2]], "color": "#ffaa00", "label": "Z1" },
+    { "id": "line_zig_2",    "cells": [[0,2],[1,2],[2,1],[3,0],[4,0]], "color": "#aaffaa", "label": "Z2" },
+    { "id": "line_arch_top", "cells": [[0,1],[1,0],[2,0],[3,0],[4,1]], "color": "#ff66cc", "label": "AT" },
+    { "id": "line_arch_bot", "cells": [[0,1],[1,2],[2,2],[3,2],[4,1]], "color": "#66ccff", "label": "AB" },
+    { "id": "line_diag_1",   "cells": [[0,0],[1,1],[2,2],[3,2],[4,2]], "color": "#ff0066", "label": "D1" },
+    { "id": "line_diag_2",   "cells": [[0,2],[1,1],[2,0],[3,0],[4,0]], "color": "#00ff66", "label": "D2" },
+    { "id": "line_diag_3",   "cells": [[0,0],[1,0],[2,0],[3,1],[4,2]], "color": "#6600ff", "label": "D3" },
+    { "id": "line_diag_4",   "cells": [[0,2],[1,2],[2,2],[3,1],[4,0]], "color": "#ff6600", "label": "D4" },
+    { "id": "line_step_1",   "cells": [[0,1],[1,0],[2,1],[3,2],[4,1]], "color": "#88ffee", "label": "S1" },
+    { "id": "line_step_2",   "cells": [[0,1],[1,2],[2,1],[3,0],[4,1]], "color": "#eeff88", "label": "S2" },
+    { "id": "line_peak",     "cells": [[0,2],[1,1],[2,0],[3,1],[4,0]], "color": "#ff88aa", "label": "PK" },
+    { "id": "line_valley",   "cells": [[0,0],[1,1],[2,2],[3,1],[4,2]], "color": "#88aaff", "label": "VL" },
+    { "id": "line_cross",    "cells": [[0,0],[1,2],[2,1],[3,2],[4,0]], "color": "#aa00aa", "label": "X" }
+  ]
+}

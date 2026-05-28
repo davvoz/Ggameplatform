@@ -1,0 +1,29 @@
+{
+  "master": 0.4,
+  "sounds": {
+    "ui_click":        { "procedural": "click",    "volume": 0.6, "throttle": 40 },
+    "ui_hover":        { "procedural": "hover",    "volume": 0.3, "throttle": 60 },
+    "spin_start":      { "procedural": "whoosh",   "volume": 0.7 },
+    "reel_spin_loop":  { "procedural": "rumble",   "volume": 0.35 },
+    "reel_stop":       { "procedural": "thud",     "volume": 0.55, "throttle": 80 },
+    "coin_drop":       { "procedural": "coin",     "volume": 0.6, "throttle": 60 },
+    "win_small":       { "procedural": "blip",     "volume": 0.6 },
+    "win_medium":      { "procedural": "fanfare1", "volume": 0.7 },
+    "win_big":         { "procedural": "fanfare2", "volume": 0.8 },
+    "win_super":       { "procedural": "fanfare3", "volume": 0.85 },
+    "win_mega":        { "procedural": "fanfare4", "volume": 0.9 },
+    "jackpot_siren":   { "procedural": "siren",    "volume": 0.95 },
+    "scatter_appear":  { "procedural": "twinkle",  "volume": 0.6, "throttle": 80 },
+    "scatter_trigger": { "procedural": "fanfare1", "volume": 0.8 },
+    "bonus_appear":    { "procedural": "clack",    "volume": 0.55, "throttle": 80 },
+    "bonus_trigger":   { "procedural": "fanfare2", "volume": 0.85 },
+    "wild_expand":     { "procedural": "swoosh",   "volume": 0.7 },
+    "free_spins_start":{ "procedural": "fanfare3", "volume": 0.85 },
+    "free_spins_end":  { "procedural": "fanfare2", "volume": 0.8 },
+    "hot_streak":      { "procedural": "blip",     "volume": 0.65 },
+    "mystery_morph":   { "procedural": "glitch",   "volume": 0.6 },
+    "bet_change":      { "procedural": "click",    "volume": 0.5, "throttle": 50 },
+    "chest_open":      { "procedural": "clack",    "volume": 0.7 },
+    "chest_exit":      { "procedural": "wah",      "volume": 0.7 }
+  }
+}

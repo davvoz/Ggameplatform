@@ -1,8 +1,17 @@
 {
-  "version": "5.4.14",
-  "timestamp": "2026-05-27T05:44:20.918Z",
-  "buildNumber": 572,
+  "version": "5.4.15",
+  "timestamp": "2026-05-28T17:25:20.271Z",
+  "buildNumber": 573,
   "changelog": [
+    {
+      "version": "5.4.15",
+      "date": "2026-05-28",
+      "type": "patch",
+      "changes": [
+        "feat : add betting games",
+        "🔖 Bump version to 5.4.14 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.14",
       "date": "2026-05-27",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC] font outlines",
         "🔖 Bump version to 5.4.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.5",
-      "date": "2026-05-16",
-      "type": "patch",
-      "changes": [
-        "fix: [SA]update parameters for soul position and return path functions",
-        "🔖 Bump version to 5.4.4 [skip-version]"
       ]
     }
   ]

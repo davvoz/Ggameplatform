@@ -92,9 +92,8 @@ export class BonusState {
         const cx = rect.x + rect.w / 2;
         const cy = rect.y + rect.h / 2;
         if (outcome.type === 'coins') {
-            const amount = Math.round(outcome.value * this.multiplier);
-            this.totalCoins += amount;
-            this.game.vfx.popup(cx, cy, `+${amount}`, GameConfig.COLOR.NEON_GOLD, { size: 22, life: 1.2 });
+            this.totalCoins += outcome.value;
+            this.game.vfx.popup(cx, cy, `+${outcome.value}`, GameConfig.COLOR.NEON_GOLD, { size: 22, life: 1.2 });
             this.game.vfx.emitBurst(cx, cy, 28, GameConfig.COLOR.NEON_GOLD, { speedMax: 280 });
         } else if (outcome.type === 'multiplier') {
             this.multiplier *= outcome.value;
@@ -104,20 +103,21 @@ export class BonusState {
     }
 
     _finish() {
+        const finalCoins = Math.round(this.totalCoins * this.multiplier);
         const ctx = this.game.runCtx;
-        ctx.totalWon += this.totalCoins;
-        ctx.balance += this.totalCoins;
-        ctx.lastWin = this.totalCoins;
-        ctx.pushLastWin(this.totalCoins);
-        if (this.totalCoins > 0) {
+        ctx.totalWon += finalCoins;
+        ctx.balance += finalCoins;
+        ctx.lastWin = finalCoins;
+        ctx.pushLastWin(finalCoins);
+        if (finalCoins > 0) {
             // Count as a won hand: force-expire LOCK and apply cooldown
             const hadLock = this.game.powerUpManager.forceExpire('reel_lock');
             ctx.lockCooldown = 3;
             if (hadLock) {
                 this.game.marquee.push('🔓 LOCK released — cooldown 3 spins', '#00ffff', 2000);
             }
-            this.game.platform.sendScore(ctx.totalWon, { reason: 'bonus', amount: this.totalCoins });
-            this.game.platform.awardCoins(this.totalCoins, `Slot bonus: ${this.totalCoins} coins`)
+            this.game.platform.sendScore(ctx.totalWon, { reason: 'bonus', amount: finalCoins });
+            this.game.platform.awardCoins(finalCoins, `Slot bonus: ${finalCoins} coins`)
                 .catch(err => console.warn('[BonusState] awardCoins failed:', err));
         }
         this.game.fsm.set(new IdleState(this.game));

@@ -10,6 +10,18 @@ export class HUDRenderer {
         this.data = dataRegistry;
         this.t = 0;
         this.lastButtons = {};
+        // String caches — rebuilt only when source values change
+        this._balVal = null;    this._balStr     = '';
+        this._betIdx = -1;      this._betStr     = '';
+        this._winVal = null;    this._winStr     = '';
+        this._autoVal = null;   this._autoLabel  = 'AUTO';
+        this._fsVal = -1;       this._fsStr      = '';
+        this._statsSpins = -1;  this._statsTotalWon = null;  this._statsStr = '';
+        // Gradient cache for spin button (layout is fixed, safe to cache)
+        this._gradSpinOn  = null;
+        this._gradSpinOff = null;
+        // Font string cache keyed by pixel size
+        this._fontMap = new Map();
     }
 
     update(dt) { this.t += dt; }
@@ -42,20 +54,37 @@ export class HUDRenderer {
 
         // Balance
         this._label(ctx, 'BALANCE', 28, L.HUD_Y + 22);
-        this._value(ctx, runCtx.balance.toLocaleString('en-US'), 28, L.HUD_Y + 46, balanceColor, 22, 'left');
+        if (this._balVal !== runCtx.balance) {
+            this._balVal = runCtx.balance;
+            this._balStr = runCtx.balance.toLocaleString('en-US');
+        }
+        this._value(ctx, this._balStr, 28, L.HUD_Y + 46, balanceColor, 22, 'left');
 
         // Bet
         this._label(ctx, 'BET', 28, L.HUD_Y + 74);
-        this._value(ctx, `${betTotal}  (${tier.activeLines} × ${tier.perLine})`, 28, L.HUD_Y + 94, GameConfig.COLOR.NEON_CYAN, 14, 'left');
+        if (this._betIdx !== runCtx.betTierIndex) {
+            this._betIdx = runCtx.betTierIndex;
+            this._betStr = `${betTotal}  (${tier.activeLines} \xD7 ${tier.perLine})`;
+        }
+        this._value(ctx, this._betStr, 28, L.HUD_Y + 94, GameConfig.COLOR.NEON_CYAN, 14, 'left');
 
         // Last win
         this._label(ctx, 'WIN', GameConfig.VIEW_WIDTH - 28, L.HUD_Y + 22, 'right');
         const lastWinColor = runCtx.lastWin > 0 ? GameConfig.COLOR.NEON_LIME : GameConfig.COLOR.CHROME;
-        this._value(ctx, runCtx.lastWin > 0 ? `+${runCtx.lastWin}` : '0', GameConfig.VIEW_WIDTH - 28, L.HUD_Y + 46, lastWinColor, 22, 'right');
+        if (this._winVal !== runCtx.lastWin) {
+            this._winVal = runCtx.lastWin;
+            this._winStr = runCtx.lastWin > 0 ? `+${runCtx.lastWin}` : '0';
+        }
+        this._value(ctx, this._winStr, GameConfig.VIEW_WIDTH - 28, L.HUD_Y + 46, lastWinColor, 22, 'right');
 
         // Hot streak / free spins
         if (runCtx.freeSpinsRemaining > 0) {
-            this._value(ctx, `🎰 FREE x${runCtx.freeSpinsMultiplier}: ${runCtx.freeSpinsRemaining}`,
+            const fsKey = runCtx.freeSpinsMultiplier * 10000 + runCtx.freeSpinsRemaining;
+            if (this._fsVal !== fsKey) {
+                this._fsVal = fsKey;
+                this._fsStr = `\uD83C\uDFB0 FREE x${runCtx.freeSpinsMultiplier}: ${runCtx.freeSpinsRemaining}`;
+            }
+            this._value(ctx, this._fsStr,
                 GameConfig.VIEW_WIDTH - 28, L.HUD_Y + 78, GameConfig.COLOR.NEON_GOLD, 14, 'right');
         } else if (runCtx.hotStreakLabel) {
             const pulse = 0.7 + Math.sin(this.t * 8) * 0.3;
@@ -75,7 +104,9 @@ export class HUDRenderer {
     }
 
     _value(ctx, txt, x, y, color, size, align = 'left') {
-        ctx.font = `900 ${size}px system-ui,sans-serif`;
+        let f = this._fontMap.get(size);
+        if (!f) { f = `900 ${size}px system-ui,sans-serif`; this._fontMap.set(size, f); }
+        ctx.font = f;
         ctx.fillStyle = color;
         ctx.textAlign = align;
         ctx.fillText(txt, x, y);
@@ -95,7 +126,11 @@ export class HUDRenderer {
         rects.betDown = this._btn({ ctx, x: 22,  y: yBet, w: 70, h: rowH, label: '−',  color: COL.NEON_CYAN, enabled: true });
         rects.betUp   = this._btn({ ctx, x: 100, y: yBet, w: 70, h: rowH, label: '+',  color: COL.NEON_CYAN, enabled: true });
         rects.max     = this._btn({ ctx, x: 178, y: yBet, w: 70, h: rowH, label: 'MAX', color: COL.NEON_GOLD, enabled: true });
-        rects.auto    = this._btn({ ctx, x: 256, y: yBet, w: 90, h: rowH, label: runCtx.autoplayRemaining > 0 ? `AUTO ${runCtx.autoplayRemaining}` : 'AUTO', color: COL.NEON_VIOLET, enabled: true });
+        if (this._autoVal !== runCtx.autoplayRemaining) {
+            this._autoVal = runCtx.autoplayRemaining;
+            this._autoLabel = runCtx.autoplayRemaining > 0 ? `AUTO ${runCtx.autoplayRemaining}` : 'AUTO';
+        }
+        rects.auto    = this._btn({ ctx, x: 256, y: yBet, w: 90, h: rowH, label: this._autoLabel, color: COL.NEON_VIOLET, enabled: true });
 
         // Row 3: SPIN
         rects.spin = this._spinButton(ctx, 22, L.BUTTONS_Y + 88, GameConfig.VIEW_WIDTH - 44, 44,
@@ -204,16 +239,24 @@ export class HUDRenderer {
 
     _spinButton(ctx, x, y, w, h, label, enabled) {
         ctx.save();
-        const grad = ctx.createLinearGradient(x, y, x, y + h);
         if (enabled) {
-            grad.addColorStop(0, '#ff44aa');
-            grad.addColorStop(0.5, '#cc00ff');
-            grad.addColorStop(1, '#660099');
+            if (!this._gradSpinOn) {
+                const g = ctx.createLinearGradient(x, y, x, y + h);
+                g.addColorStop(0, '#ff44aa');
+                g.addColorStop(0.5, '#cc00ff');
+                g.addColorStop(1, '#660099');
+                this._gradSpinOn = g;
+            }
+            ctx.fillStyle = this._gradSpinOn;
         } else {
-            grad.addColorStop(0, '#444');
-            grad.addColorStop(1, '#222');
+            if (!this._gradSpinOff) {
+                const g = ctx.createLinearGradient(x, y, x, y + h);
+                g.addColorStop(0, '#444');
+                g.addColorStop(1, '#222');
+                this._gradSpinOff = g;
+            }
+            ctx.fillStyle = this._gradSpinOff;
         }
-        ctx.fillStyle = grad;
         this._roundRect(ctx, x, y, w, h, 14);
         ctx.fill();
         ctx.lineWidth = 3;
@@ -244,8 +287,12 @@ export class HUDRenderer {
         ctx.fillStyle = 'rgba(170,180,200,0.55)';
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left';
-        const txt = `SPINS: ${runCtx.spinsPlayed}    TOTAL WON: ${runCtx.totalWon.toLocaleString('en-US')}`;
-        ctx.fillText(txt, 22, cy);
+        if (this._statsSpins !== runCtx.spinsPlayed || this._statsTotalWon !== runCtx.totalWon) {
+            this._statsSpins    = runCtx.spinsPlayed;
+            this._statsTotalWon = runCtx.totalWon;
+            this._statsStr = `SPINS: ${runCtx.spinsPlayed}    TOTAL WON: ${runCtx.totalWon.toLocaleString('en-US')}`;
+        }
+        ctx.fillText(this._statsStr, 22, cy);
         ctx.restore();
 
         // Right: "? PAYTABLE" pill

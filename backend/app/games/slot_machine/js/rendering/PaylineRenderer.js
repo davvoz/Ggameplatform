@@ -36,8 +36,10 @@ export class PaylineRenderer {
 
         ctx.save();
         ctx.strokeStyle = hit.color;
-        ctx.shadowColor = hit.color;
-        ctx.shadowBlur = 18;
+        if (!GameConfig.IS_MOBILE) {
+            ctx.shadowColor = hit.color;
+            ctx.shadowBlur = 18;
+        }
         ctx.lineWidth = 5;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';

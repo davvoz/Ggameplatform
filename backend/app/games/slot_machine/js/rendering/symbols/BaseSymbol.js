@@ -3,6 +3,8 @@
  * Subclasses MUST implement draw(ctx, cx, cy, size, sym).
  * Provides shared canvas helpers; no state.
  */
+import { GameConfig } from '../../config/GameConfig.js';
+
 export class BaseSymbol {
     draw(_ctx, _cx, _cy, _size, _sym) {
         throw new Error('BaseSymbol.draw must be overridden');
@@ -41,19 +43,26 @@ export class BaseSymbol {
         const gap = h * 0.45;
         const totalH = h * 3 + gap * 2;
         const y0 = cy - totalH / 2;
+        const mobile = GameConfig.IS_MOBILE;
         for (let i = 0; i < 3; i++) {
             const y = y0 + i * (h + gap);
             const x = cx - w / 2;
             this._roundRectPath(ctx, x, y, w, h, h * 0.42);
-            const grad = ctx.createLinearGradient(0, y, 0, y + h);
-            grad.addColorStop(0, palette.top);
-            grad.addColorStop(1, palette.bottom);
-            this._fillGlow(ctx, grad, sym.color, 12);
+            if (mobile) {
+                this._fillGlow(ctx, palette.top, sym.color, 12);
+            } else {
+                const grad = ctx.createLinearGradient(0, y, 0, y + h);
+                grad.addColorStop(0, palette.top);
+                grad.addColorStop(1, palette.bottom);
+                this._fillGlow(ctx, grad, sym.color, 12);
+            }
             this._stroke(ctx, size, '#000000', 0.04);
-            // inner sheen
-            this._roundRectPath(ctx, x + size * 0.02, y + h * 0.12, w - size * 0.04, h * 0.32, h * 0.2);
-            ctx.fillStyle = 'rgba(255,255,255,0.35)';
-            ctx.fill();
+            if (!mobile) {
+                // inner sheen
+                this._roundRectPath(ctx, x + size * 0.02, y + h * 0.12, w - size * 0.04, h * 0.32, h * 0.2);
+                ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                ctx.fill();
+            }
         }
     }
 }

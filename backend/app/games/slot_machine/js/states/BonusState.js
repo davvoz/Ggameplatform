@@ -100,10 +100,6 @@ export class BonusState {
             this.multiplier *= outcome.value;
             this.game.vfx.popup(cx, cy, `×${outcome.value}`, GameConfig.COLOR.NEON_VIOLET, { size: 26, life: 1.2 });
             this.game.vfx.emitBurst(cx, cy, 32, GameConfig.COLOR.NEON_VIOLET, { speedMax: 320 });
-        } else if (outcome.type === 'exit') {
-            this._exited = true;
-            this.game.sound.play(SoundEvent.CHEST_EXIT);
-            this.game.vfx.popup(cx, cy, 'COLLECT', GameConfig.COLOR.NEON_RED, { size: 24, life: 1.4 });
         }
     }
 
@@ -111,8 +107,15 @@ export class BonusState {
         const ctx = this.game.runCtx;
         ctx.totalWon += this.totalCoins;
         ctx.balance += this.totalCoins;
-        ctx.lastWin = Math.max(ctx.lastWin, this.totalCoins);
+        ctx.lastWin = this.totalCoins;
+        ctx.pushLastWin(this.totalCoins);
         if (this.totalCoins > 0) {
+            // Count as a won hand: force-expire LOCK and apply cooldown
+            const hadLock = this.game.powerUpManager.forceExpire('reel_lock');
+            ctx.lockCooldown = 3;
+            if (hadLock) {
+                this.game.marquee.push('🔓 LOCK released — cooldown 3 spins', '#00ffff', 2000);
+            }
             this.game.platform.sendScore(ctx.totalWon, { reason: 'bonus', amount: this.totalCoins });
             this.game.platform.awardCoins(this.totalCoins, `Slot bonus: ${this.totalCoins} coins`)
                 .catch(err => console.warn('[BonusState] awardCoins failed:', err));
@@ -149,7 +152,6 @@ export class BonusState {
 
     _getChestColor(opened) {
         if (!opened) return GameConfig.COLOR.NEON_ORANGE;
-        if (opened.type === 'exit') return GameConfig.COLOR.NEON_RED;
         if (opened.type === 'multiplier') return GameConfig.COLOR.NEON_VIOLET;
         return GameConfig.COLOR.NEON_GOLD;
     }

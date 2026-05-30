@@ -50,7 +50,9 @@ export class WinState {
 
     _burstCoins() {
         const color = TIER_TO_COLOR[this.tier];
-        const count = { small: 14, medium: 28, big: 60, super: 100, mega: 160 }[this.tier] ?? 14;
+        const full  = { small: 14, medium: 28, big: 60, super: 100, mega: 160 };
+        const mobile = { small: 8,  medium: 14, big: 24, super: 36,  mega: 50  };
+        const count = (GameConfig.IS_MOBILE ? mobile : full)[this.tier] ?? 14;
         this.game.vfx.emitBurst(
             GameConfig.VIEW_WIDTH / 2,
             GameConfig.LAYOUT.REEL_AREA_Y + GameConfig.LAYOUT.REEL_AREA_H / 2,

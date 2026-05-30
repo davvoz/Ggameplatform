@@ -2,6 +2,8 @@
  * Lightweight pooled particle/text-popup system for VFX (coin bursts, win popups,
  * scatter sparkles). No per-frame allocations once the pool is warmed.
  */
+import { GameConfig } from '../config/GameConfig.js';
+
 const PARTICLE_POOL_SIZE = 240;
 
 export class VFXManager {
@@ -73,8 +75,10 @@ export class VFXManager {
             const a = 1 - (p.life / p.maxLife);
             ctx.globalAlpha = Math.max(0, a);
             ctx.fillStyle = p.color;
-            ctx.shadowColor = p.color;
-            ctx.shadowBlur = 8;
+            if (!GameConfig.IS_MOBILE) {
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 8;
+            }
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size * a + 0.5, 0, Math.PI * 2);
             ctx.fill();

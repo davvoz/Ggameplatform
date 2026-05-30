@@ -434,7 +434,7 @@ export class PaytableOverlay {
         ctx.fillStyle = 'rgba(204,0,255,0.20)';
         this._roundRect(ctx, x, y, w, 22, 4);
         ctx.fill();
-        ctx.font = '900 12px system-ui,sans-serif';
+        ctx.font = '900 16px system-ui,sans-serif';
         ctx.fillStyle = GameConfig.COLOR.NEON_VIOLET;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
@@ -443,12 +443,12 @@ export class PaytableOverlay {
         ctx.fillText(title, x + 10, y + 11);
         ctx.shadowBlur = 0;
         ctx.restore();
-        return y + 28;
+        return y + 32;
     }
 
     _drawBullets(ctx, x, y, w, lines) {
         ctx.save();
-        ctx.font = '600 11px system-ui,sans-serif';
+        ctx.font = '600 14px system-ui,sans-serif';
         ctx.fillStyle = 'rgba(240,240,255,0.92)';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
@@ -456,9 +456,9 @@ export class PaytableOverlay {
             const wrapped = this._wrap(ctx, line, w - 12);
             for (const wl of wrapped) {
                 ctx.fillText(wl, x + 6, y);
-                y += 15;
+                y += 19;
             }
-            y += 3;
+            y += 4;
         }
         ctx.restore();
         return y;

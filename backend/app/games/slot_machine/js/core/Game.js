@@ -52,6 +52,7 @@ export class Game {
         this.sound = new SoundManager(this.data.sounds);
         this._initSystems();
         this._initRenderers();
+        this._initXPBanner();
         this._initSession();
         await this.platform.init();
         this._wirePlatformEvents();
@@ -82,6 +83,7 @@ export class Game {
         this.hud           = new HUDRenderer(this.data);
         this.vfx           = new VFXManager();
         this.paytableOverlay = new PaytableOverlay(this.data, this.symbolRenderer);
+        this._hudOpts      = { canSpin: false, powerUpManager: null };
         this.reelRenderers = [];
         const cfg = this.data.config.reels;
         for (let i = 0; i < cfg.count; i++) {
@@ -157,65 +159,84 @@ export class Game {
         });
     }
 
+    /**
+     * Initialises the XP overlay as pure JS state.
+     * Rendering happens entirely on the game canvas — no DOM elements,
+     * no CSS animations, no compositor-layer conflicts with WinState.
+     */
+    _initXPBanner() {
+        this._xpOverlay = { phase: 'hidden', t: 0, xpText: '' };
+    }
+
     _showXPBanner(xpAmount) {
-        if (!document.querySelector('#slot-xp-styles')) {
-            const style = document.createElement('style');
-            style.id = 'slot-xp-styles';
-            style.textContent = `
-                .game-xp-banner {
-                    position: fixed;
-                    top: 80px;
-                    right: 20px;
-                    z-index: 10000;
-                    animation: xpSlideIn 0.5s ease;
-                    pointer-events: none;
-                }
-                .game-xp-banner.hiding {
-                    animation: xpSlideOut 0.5s ease forwards;
-                }
-                .game-xp-badge {
-                    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-                    padding: 16px 24px;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 20px rgba(255,215,0,0.4);
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                .game-xp-icon   { font-size: 1.5em; }
-                .game-xp-amount { font-size: 1.2em; font-weight: bold; color: #1a1a1a; }
-                @keyframes xpSlideIn {
-                    from { transform: translateX(400px); opacity: 0; }
-                    to   { transform: translateX(0);     opacity: 1; }
-                }
-                @keyframes xpSlideOut {
-                    from { transform: translateX(0);     opacity: 1; }
-                    to   { transform: translateX(400px); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
+        this._xpOverlay.xpText = `+${Number(xpAmount).toFixed(2)} XP`;
+        this._xpOverlay.phase  = 'in';
+        this._xpOverlay.t      = 0;
+    }
+
+    /** Called every frame from _update(). Manages phase transitions by elapsed time. */
+    _updateXPOverlay(dt) {
+        const ov = this._xpOverlay;
+        if (ov.phase === 'hidden') return;
+        ov.t += dt;
+        const SLIDE_IN  = 0.5;
+        const HOLD      = 3;
+        const SLIDE_OUT = 0.6;
+        if      (ov.phase === 'in'   && ov.t >= SLIDE_IN)  { ov.phase = 'hold';   ov.t = 0; }
+        else if (ov.phase === 'hold' && ov.t >= HOLD)      { ov.phase = 'out';    ov.t = 0; }
+        else if (ov.phase === 'out'  && ov.t >= SLIDE_OUT) { ov.phase = 'hidden'; }
+    }
+
+    /** Draws the XP badge on top of the canvas. Fully isolated from the DOM. */
+    _renderXPOverlay(ctx) {
+        const ov = this._xpOverlay;
+        if (ov.phase === 'hidden') return;
+
+        const SLIDE_IN  = 0.5;
+        const SLIDE_OUT = 0.6;
+        const BW = 178, BH = 50, BY = 15, RADIUS = 12;
+        const destX = GameConfig.VIEW_WIDTH - BW - 10;
+        const srcX  = GameConfig.VIEW_WIDTH + 4;   // just off the right edge
+
+        // Ease-out cubic for slide-in, linear for slide-out
+        let slideP;
+        if (ov.phase === 'in') {
+            const p = Math.min(1, ov.t / SLIDE_IN);
+            slideP = 1 - Math.pow(1 - p, 3);
+        } else if (ov.phase === 'hold') {
+            slideP = 1;
+        } else {
+            slideP = Math.max(0, 1 - ov.t / SLIDE_OUT);
         }
 
-        const banner = document.createElement('div');
-        banner.className = 'game-xp-banner';
-        const badge = document.createElement('div');
-        badge.className = 'game-xp-badge';
-        const icon = document.createElement('span');
-        icon.className = 'game-xp-icon';
-        icon.textContent = '⭐';
-        const amount = document.createElement('span');
-        amount.className = 'game-xp-amount';
-        amount.textContent = `+${Number(xpAmount).toFixed(2)} XP`;
-        badge.appendChild(icon);
-        badge.appendChild(amount);
-        banner.appendChild(badge);
-        document.body.appendChild(banner);
+        const bx    = srcX + (destX - srcX) * slideP;
+        const inAlpha = ov.phase === 'in' ? ov.t / 0.25 : 1;
+        const alpha = ov.phase === 'out'
+            ? Math.max(0, 1 - ov.t / SLIDE_OUT)
+            : Math.min(1, inAlpha);
 
-        setTimeout(() => banner.classList.add('show'), 10);
-        setTimeout(() => {
-            banner.classList.add('hiding');
-            setTimeout(() => { if (banner.parentElement) banner.remove(); }, 600);
-        }, 3500);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.shadowColor = 'rgba(255,215,0,0.55)';
+        ctx.shadowBlur  = 18;
+        if (GameConfig.IS_MOBILE) {
+            ctx.fillStyle = '#ffd700';
+        } else {
+            const grad = ctx.createLinearGradient(bx, BY, bx, BY + BH);
+            grad.addColorStop(0, '#ffd700');
+            grad.addColorStop(1, '#e6c200');
+            ctx.fillStyle = grad;
+        }
+        ctx.beginPath();
+        ctx.roundRect(bx, BY, BW, BH, RADIUS);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.font = 'bold 17px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillText(`⭐  ${ov.xpText}`, bx + BW / 2, BY + BH / 2);
+        ctx.restore();
     }
 
     _showLevelUpModal(data) {
@@ -309,6 +330,7 @@ export class Game {
         this._lerpJackpotDisplay(dt);
 
         this.fsm.update(dt);
+        this._updateXPOverlay(dt);
     }
 
     /** Paytable overlay has priority: it can intercept any input. */
@@ -342,6 +364,7 @@ export class Game {
 
     _render() {
         this.fsm.render(this.ctx);
+        this._renderXPOverlay(this.ctx);
     }
 
     /** Composes the world. Called by states. */
@@ -352,7 +375,9 @@ export class Game {
         for (const r of this.reelRenderers) r.render(ctx);
         this._renderLockOverlay(ctx);
         this.paylineRenderer.render(ctx);
-        this.hud.render(ctx, this.runCtx, { ...opts, powerUpManager: this.powerUpManager });
+        this._hudOpts.canSpin = opts.canSpin;
+        this._hudOpts.powerUpManager = this.powerUpManager;
+        this.hud.render(ctx, this.runCtx, this._hudOpts);
         this.vfx.render(ctx);
         this.paytableOverlay.render(ctx);
     }

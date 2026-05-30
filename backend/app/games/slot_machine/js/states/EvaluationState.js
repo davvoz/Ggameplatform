@@ -8,6 +8,7 @@ import { BonusState } from './BonusState.js';
 import { JackpotState } from './JackpotState.js';
 import { IdleState } from './IdleState.js';
 import { SoundEvent } from '../audio/SoundEvent.js';
+import { GameConfig } from '../config/GameConfig.js';
 
 export class EvaluationState {
     constructor(game, grid) {
@@ -117,20 +118,52 @@ export class EvaluationState {
     }
 
     calculateCashWin(grid, betPerLine, baseWin) {
-        const cashCount = this.game.wildHandler.countCash(grid);
-        if (cashCount > 0) {
-            const cashSym = this.game.data.symbolList.find(s => s.isCash);
-            const cashWin = cashCount * (cashSym?.cashPayout ?? 0) * betPerLine;
-            if (cashWin > 0) {
-                baseWin += cashWin;
-                this.game.marquee.push(
-                    `💰 ${cashCount}× COIN — +${cashWin.toLocaleString('en-US')}`,
-                    '#ffd700',
-                    1600
-                );
-                this.game.sound.play(SoundEvent.COIN_DROP);
+        const cashSym = this.game.data.symbolList.find(s => s.isCash);
+        const cashPayout = cashSym?.cashPayout ?? 0;
+
+        // Collect positions of every $ on the grid
+        const cashPositions = [];
+        for (let col = 0; col < grid.length; col++) {
+            for (let row = 0; row < grid[col].length; row++) {
+                if (this.game.data.getSymbol(grid[col][row]).isCash) {
+                    cashPositions.push({ col, row });
+                }
             }
         }
+
+        if (cashPositions.length === 0) return baseWin;
+
+        const L = GameConfig.LAYOUT;
+        const perCoin = Math.round(cashPayout * betPerLine);
+        const cashWin = cashPositions.length * perCoin;
+        if (cashWin <= 0) return baseWin;
+
+        // VFX burst + per-coin popup on each $ cell
+        for (const { col, row } of cashPositions) {
+            const cx = L.REEL_AREA_X + col * (L.CELL_W + L.CELL_GAP_X) + L.CELL_W / 2;
+            const cy = L.REEL_AREA_Y + row * (L.CELL_H + L.CELL_GAP_Y) + L.CELL_H / 2;
+            this.game.vfx.emitBurst(cx, cy, 22, GameConfig.COLOR.NEON_GOLD,
+                { speedMax: 260, upBias: 90, lifeMin: 0.5, lifeMax: 1.1 });
+            this.game.vfx.popup(cx, cy, `+${perCoin}`,
+                GameConfig.COLOR.NEON_GOLD, { size: 18, life: 1.3, vy: -65 });
+        }
+
+        // Central COIN CASH popup
+        this.game.vfx.popup(
+            GameConfig.VIEW_WIDTH / 2,
+            L.REEL_AREA_Y + L.REEL_AREA_H / 2,
+            `💰 COIN CASH  +${cashWin.toLocaleString('en-US')}`,
+            GameConfig.COLOR.NEON_GOLD,
+            { size: 24, life: 2, vy: -40 }
+        );
+
+        baseWin += cashWin;
+        this.game.marquee.push(
+            `💰 ${cashPositions.length}× COIN CASH — +${cashWin.toLocaleString('en-US')}`,
+            '#ffd700',
+            2200
+        );
+        this.game.sound.play(SoundEvent.COIN_DROP);
         return baseWin;
     }
 

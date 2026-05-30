@@ -1,11 +1,11 @@
 {
   "_comment": "Per-reel weights. Each reel uses the symbol weights as the discrete distribution. Reels 4 and 5 are slightly harsher for tier-5 symbols to control jackpot frequency.",
   "reels": [
-    { "id": "reel_0", "weights": { "seven_lucky": 1, "diamond": 2, "crown": 3, "star_wild": 2, "rainbow": 4, "bar_gold": 5, "bar_silver": 7, "cherry_bomb": 8, "bell_neon": 8, "watermelon": 11, "grapes": 12, "lemon": 13, "orange": 14, "scatter_star": 3, "bonus_chest": 2, "coin_cash": 1 } },
-    { "id": "reel_1", "weights": { "seven_lucky": 1, "diamond": 2, "crown": 3, "star_wild": 2, "rainbow": 4, "bar_gold": 5, "bar_silver": 7, "cherry_bomb": 8, "bell_neon": 8, "watermelon": 11, "grapes": 12, "lemon": 13, "orange": 14, "scatter_star": 3, "bonus_chest": 2, "coin_cash": 1 } },
-    { "id": "reel_2", "weights": { "seven_lucky": 1, "diamond": 2, "crown": 3, "star_wild": 3, "rainbow": 4, "bar_gold": 5, "bar_silver": 7, "cherry_bomb": 8, "bell_neon": 8, "watermelon": 11, "grapes": 12, "lemon": 13, "orange": 14, "scatter_star": 3, "bonus_chest": 2, "coin_cash": 1 } },
-    { "id": "reel_3", "weights": { "seven_lucky": 1, "diamond": 1, "crown": 2, "star_wild": 2, "rainbow": 3, "bar_gold": 4, "bar_silver": 8, "cherry_bomb": 9, "bell_neon": 9, "watermelon": 13, "grapes": 13, "lemon": 14, "orange": 15, "scatter_star": 2, "bonus_chest": 2, "coin_cash": 1 } },
-    { "id": "reel_4", "weights": { "seven_lucky": 1, "diamond": 1, "crown": 2, "star_wild": 1, "rainbow": 3, "bar_gold": 4, "bar_silver": 8, "cherry_bomb": 9, "bell_neon": 9, "watermelon": 14, "grapes": 14, "lemon": 14, "orange": 15, "scatter_star": 2, "bonus_chest": 2, "coin_cash": 1 } }
+    { "id": "reel_0", "weights": { "seven_lucky": 1, "diamond": 2, "crown": 3, "star_wild": 2, "rainbow": 4, "bar_gold": 5, "bar_silver": 7, "cherry_bomb": 8, "bell_neon": 8, "watermelon": 11, "grapes": 12, "lemon": 13, "orange": 14, "scatter_star": 4, "bonus_chest": 3, "coin_cash": 1 } },
+    { "id": "reel_1", "weights": { "seven_lucky": 1, "diamond": 2, "crown": 3, "star_wild": 2, "rainbow": 4, "bar_gold": 5, "bar_silver": 7, "cherry_bomb": 8, "bell_neon": 8, "watermelon": 11, "grapes": 12, "lemon": 13, "orange": 14, "scatter_star": 4, "bonus_chest": 3, "coin_cash": 1 } },
+    { "id": "reel_2", "weights": { "seven_lucky": 1, "diamond": 2, "crown": 3, "star_wild": 3, "rainbow": 4, "bar_gold": 5, "bar_silver": 7, "cherry_bomb": 8, "bell_neon": 8, "watermelon": 11, "grapes": 12, "lemon": 13, "orange": 14, "scatter_star": 4, "bonus_chest": 3, "coin_cash": 1 } },
+    { "id": "reel_3", "weights": { "seven_lucky": 1, "diamond": 1, "crown": 2, "star_wild": 2, "rainbow": 3, "bar_gold": 4, "bar_silver": 8, "cherry_bomb": 9, "bell_neon": 9, "watermelon": 13, "grapes": 13, "lemon": 14, "orange": 15, "scatter_star": 3, "bonus_chest": 3, "coin_cash": 1 } },
+    { "id": "reel_4", "weights": { "seven_lucky": 1, "diamond": 1, "crown": 2, "star_wild": 1, "rainbow": 3, "bar_gold": 4, "bar_silver": 8, "cherry_bomb": 9, "bell_neon": 9, "watermelon": 14, "grapes": 14, "lemon": 14, "orange": 15, "scatter_star": 3, "bonus_chest": 3, "coin_cash": 1 } }
   ],
   "_comment2": "Strip length per reel — controls visual variety during the spin. Generated at boot from the weights.",
   "stripLength": 60

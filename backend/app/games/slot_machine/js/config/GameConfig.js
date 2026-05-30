@@ -4,6 +4,8 @@
 export const GameConfig = Object.freeze({
     VIEW_WIDTH: 480,
     VIEW_HEIGHT: 800,
+    /** True when running on a mobile/tablet user-agent. Evaluated once at load time. */
+    IS_MOBILE: /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent),
 
     LAYOUT: Object.freeze({
         // Top strip: jackpot ticker + neon title

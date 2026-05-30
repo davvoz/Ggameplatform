@@ -22,40 +22,48 @@ initSparks();
 
 export class BackgroundRenderer {
     t = 0;
+    _bgGradient = null;
 
     update(dt) { this.t += dt; }
 
     render(ctx) {
         const W = GameConfig.VIEW_WIDTH;
         const H = GameConfig.VIEW_HEIGHT;
-        const g = ctx.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, GameConfig.COLOR.BG_TOP);
-        g.addColorStop(0.6, GameConfig.COLOR.BG_DEEP);
-        g.addColorStop(1, GameConfig.COLOR.BG_BOTTOM);
-        ctx.fillStyle = g;
+
+        // Gradient cached after first frame — layout never changes
+        if (!this._bgGradient) {
+            const g = ctx.createLinearGradient(0, 0, 0, H);
+            g.addColorStop(0, GameConfig.COLOR.BG_TOP);
+            g.addColorStop(0.6, GameConfig.COLOR.BG_DEEP);
+            g.addColorStop(1, GameConfig.COLOR.BG_BOTTOM);
+            this._bgGradient = g;
+        }
+        ctx.fillStyle = this._bgGradient;
         ctx.fillRect(0, 0, W, H);
 
-        // Diagonal scrolling grid lines (cyan)
+        // Diagonal scrolling grid — single path, one stroke call
         ctx.save();
         ctx.strokeStyle = 'rgba(0,255,255,0.06)';
         ctx.lineWidth = 1;
         const step = 36;
         const offset = (this.t * 20) % step;
+        ctx.beginPath();
         for (let x = -H; x < W + H; x += step) {
-            ctx.beginPath();
             ctx.moveTo(x + offset, 0);
             ctx.lineTo(x + offset - H, H);
-            ctx.stroke();
         }
+        ctx.stroke();
         ctx.restore();
 
-        // Sparkles
+        // Sparkles — globalAlpha avoids per-spark string allocation
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
         for (const s of SPARKS) {
-            const a = 0.4 + Math.sin(this.t * s.speed + s.phase) * 0.4;
-            ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+            ctx.globalAlpha = 0.4 + Math.sin(this.t * s.speed + s.phase) * 0.4;
             ctx.beginPath();
             ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
             ctx.fill();
         }
+        ctx.restore();
     }
 }

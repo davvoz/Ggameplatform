@@ -20,8 +20,7 @@
       { "type": "coins",      "value": 250, "weight": 8 },
       { "type": "coins",      "value": 500, "weight": 4 },
       { "type": "multiplier", "value": 2,   "weight": 5 },
-      { "type": "multiplier", "value": 5,   "weight": 2 },
-      { "type": "exit",       "value": 0,   "weight": 6 }
+      { "type": "multiplier", "value": 5,   "weight": 2 }
     ]
   },
   "hotStreak": {
@@ -35,6 +34,6 @@
     "trigger": "seven_lucky",
     "requireFullLine": 5,
     "requireMaxBet": true,
-    "basePayout": 25000
+    "basePayout": 5000
   }
 }

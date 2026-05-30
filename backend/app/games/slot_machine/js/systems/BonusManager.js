@@ -37,10 +37,6 @@ export class BonusManager {
         for (let i = 0; i < this.picks; i++) {
             const out = this.rollPick();
             picksMade++;
-            if (out.type === 'exit') {
-                log.push({ outcome: out, runningCoins: coins });
-                break;
-            }
             if (out.type === 'multiplier') {
                 pendingMult *= out.value;
             } else if (out.type === 'coins') {

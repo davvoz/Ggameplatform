@@ -18,7 +18,7 @@
     "minBalanceForSpin": 1
   },
   "jackpotTicker": {
-    "seed": 25000,
+    "seed": 5000,
     "incrementPerSpin": 0.75,
     "displayUpdateMs": 100,
     "lerpFactor": 0.18

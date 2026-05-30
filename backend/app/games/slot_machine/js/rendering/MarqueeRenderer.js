@@ -35,6 +35,8 @@ export class MarqueeRenderer {
 
     constructor() {
         this._queue = [];
+        this._cachedJPFloor = -1;
+        this._cachedJPStr   = '';
     }
 
     update(dt) {
@@ -130,8 +132,12 @@ export class MarqueeRenderer {
         ctx.fillStyle = COL.NEON_RED;
         ctx.shadowColor = COL.NEON_RED;
         ctx.shadowBlur = 8;
-        const jp = Math.floor(runCtx.jackpotPool).toLocaleString('en-US');
-        ctx.fillText(`★ JACKPOT  ${jp}  ★`, GameConfig.VIEW_WIDTH / 2, L.HEADER_Y + 85);
+        const jpFloor = Math.floor(runCtx.jackpotPool);
+        if (this._cachedJPFloor !== jpFloor) {
+            this._cachedJPFloor = jpFloor;
+            this._cachedJPStr = `\u2605 JACKPOT  ${jpFloor.toLocaleString('en-US')}  \u2605`;
+        }
+        ctx.fillText(this._cachedJPStr, GameConfig.VIEW_WIDTH / 2, L.HEADER_Y + 85);
         ctx.shadowBlur = 0;
     }
 

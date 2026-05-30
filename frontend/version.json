@@ -1,8 +1,17 @@
 {
-  "version": "5.4.16",
-  "timestamp": "2026-05-30T20:18:43.303Z",
-  "buildNumber": 574,
+  "version": "5.4.17",
+  "timestamp": "2026-05-30T22:01:31.319Z",
+  "buildNumber": 575,
   "changelog": [
+    {
+      "version": "5.4.17",
+      "date": "2026-05-30",
+      "type": "patch",
+      "changes": [
+        "fix: [SM]correct coin calculation in BonusState and update final winnings logic",
+        "🔖 Bump version to 5.4.16 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.16",
       "date": "2026-05-30",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[SA]Sonar",
         "🔖 Bump version to 5.4.7 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.7",
-      "date": "2026-05-17",
-      "type": "patch",
-      "changes": [
-        "fix:[MC] loading screen",
-        "🔖 Bump version to 5.4.6 [skip-version]"
       ]
     }
   ]

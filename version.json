@@ -1,8 +1,17 @@
 {
-  "version": "5.4.15",
-  "timestamp": "2026-05-28T17:25:20.271Z",
-  "buildNumber": 573,
+  "version": "5.4.16",
+  "timestamp": "2026-05-30T20:18:43.303Z",
+  "buildNumber": 574,
   "changelog": [
+    {
+      "version": "5.4.16",
+      "date": "2026-05-30",
+      "type": "patch",
+      "changes": [
+        "fix:[SM]ottimizzazioni mobile",
+        "🔖 Bump version to 5.4.15 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.15",
       "date": "2026-05-28",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC] loading screen",
         "🔖 Bump version to 5.4.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.6",
-      "date": "2026-05-17",
-      "type": "patch",
-      "changes": [
-        "fix:[MC] font outlines",
-        "🔖 Bump version to 5.4.5 [skip-version]"
       ]
     }
   ]

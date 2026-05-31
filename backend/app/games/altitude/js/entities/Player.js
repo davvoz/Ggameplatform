@@ -92,6 +92,41 @@ export class Player extends GameObject {
         this.#spikeTimers = new Array(this.#stats.spikeCount ?? 0).fill(0);
     }
 
+    /**
+     * Apply newly purchased upgrade stats mid-run (Challenge shop overlay).
+     * Most stats are consumed live via getters; capacity stats (lives, dashes,
+     * spikes) are reconciled by their positive delta so a purchase takes effect
+     * immediately without resetting existing progress.
+     * @param {Object} newStats - Stats from the active progression.
+     */
+    applyStats(newStats) {
+        const prevMaxLives  = this.maxLives;
+        const prevDashCount = this.#stats.dashCount ?? 0;
+        const prevSpikes    = this.#stats.spikeCount ?? 0;
+
+        this.#stats = { ...this.#stats, ...newStats };
+
+        const livesDelta = this.maxLives - prevMaxLives;
+        if (livesDelta > 0) this.#lives += livesDelta;
+
+        const dashDelta = (this.#stats.dashCount ?? 0) - prevDashCount;
+        if (dashDelta > 0) this.#dashesRemaining += dashDelta;
+
+        const spikeCount = this.#stats.spikeCount ?? 0;
+        if (spikeCount !== prevSpikes) this.#resizeSpikeTimers(spikeCount);
+    }
+
+    /**
+     * Resize the per-spike cooldown array, preserving existing timers.
+     * @param {number} count - Target spike count.
+     */
+    #resizeSpikeTimers(count) {
+        const next = new Array(count).fill(0);
+        const keep = Math.min(count, this.#spikeTimers.length);
+        for (let i = 0; i < keep; i++) next[i] = this.#spikeTimers[i];
+        this.#spikeTimers = next;
+    }
+
     get isGrounded() { return this.#grounded; }
     get isJumping() { return this.#jumping; }
     get isGliding() { return this.#gliding; }

@@ -15,6 +15,7 @@ import { State } from './State.js';
 import { DESIGN_WIDTH, DESIGN_HEIGHT, COLORS, GAME_SETTINGS, QUALITY } from '../config/Constants.js';
 import { bitmapFont } from '../graphics/BitmapFont.js';
 import { Player } from '../entities/Player.js';
+import { ShopState } from './ShopState.js';
 
 // Extracted subsystems
 import { CameraController }   from '../systems/CameraController.js';
@@ -46,6 +47,13 @@ export class PlayingState extends State {
     #bgZoneColor = null;
     #starCanvas  = null;
     #starCanvasH = 0;
+
+    // ── Challenge in-run shop overlay ────────────────────────────────
+    // Reuses ShopState as a frozen overlay (NOT an FSM state) so the run
+    // survives. Only active while game.challengeMode is true.
+    #shop     = null;
+    #shopOpen = false;
+    static #SHOP_BTN = { x: DESIGN_WIDTH - 92, y: DESIGN_HEIGHT - 104, w: 82, h: 40 };
 
     // ══════════════════════════════════════════════════════════════
     // LIFECYCLE
@@ -93,6 +101,8 @@ export class PlayingState extends State {
         this.#bgGradient    = null;
         this.#bgZoneColor   = null;
         this.#starCanvas    = null;
+        this.#shop          = null;
+        this.#shopOpen      = false;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -102,10 +112,21 @@ export class PlayingState extends State {
     update(dt) {
         if (!this.#player) return;
 
+        // Challenge shop overlay freezes the world while open.
+        if (this.#shopOpen) {
+            this.#shop.update(dt);
+            return;
+        }
+
         // Pause
         if (this._game.input.pauseJustPressed) {
             this._game.input.consumePause();
             this._game.fsm.transition('pause');
+            return;
+        }
+
+        // Challenge: open the in-run shop via the 'S' key or the on-screen button.
+        if (this._game.challengeMode && this.#tryOpenShop()) {
             return;
         }
 
@@ -199,6 +220,52 @@ export class PlayingState extends State {
         }
     }
 
+    // ── Challenge in-run shop overlay ─────────────────────────────
+
+    /**
+     * Try to open the in-run shop overlay this frame, via the 'S' key
+     * (desktop) or a tap on the on-screen button.
+     * @returns {boolean} True when the overlay was opened.
+     */
+    #tryOpenShop() {
+        const input = this._game.input;
+        if (input.shopJustPressed) {
+            input.consumeShop();
+            this.#openShopOverlay();
+            return true;
+        }
+        if (!input.justTapped) return false;
+        const b = PlayingState.#SHOP_BTN;
+        const tx = input.tapX;
+        const ty = input.tapY;
+        if (tx < b.x || tx > b.x + b.w || ty < b.y || ty > b.y + b.h) return false;
+        input.consumeTap();
+        this.#openShopOverlay();
+        return true;
+    }
+
+    /** Open the shop overlay (lazily reusing one ShopState instance). */
+    #openShopOverlay() {
+        this.#shop = this.#shop ?? new ShopState(this._game);
+        this.#shop.enter();
+        this.#shopOpen = true;
+        this._game.sound.playSelect();
+    }
+
+    /**
+     * Close the shop overlay and resume the run, applying any upgrades bought.
+     * Called by Game.closeShop() when ShopState's back button is pressed.
+     */
+    closeShopOverlay() {
+        this.#shopOpen = false;
+        this.#player?.applyStats(this._game.getPlayerStats());
+    }
+
+    /** @returns {boolean} True while the in-run shop overlay is open. */
+    isShopOverlayOpen() {
+        return this.#shopOpen;
+    }
+
     #dashBurst(direction) {
         this._game.particles.burst(this.#player.x, this.#player.y, {
             color: '#88ddff',
@@ -277,6 +344,42 @@ export class PlayingState extends State {
             hudFlash:         this.#hudFlash,
             comboDisplay:     this.#comboDisplay,
         }, this.#floatingTexts);
+
+        // Challenge in-run shop button + overlay (drawn on top of everything).
+        if (this._game.challengeMode && !this.#shopOpen) {
+            this.#drawShopButton(ctx);
+        }
+        if (this.#shopOpen) {
+            this.#drawShopOverlay(ctx);
+        }
+    }
+
+    /** Draw the in-run shop button (bottom-right): flat panel + label. */
+    #drawShopButton(ctx) {
+        const b = PlayingState.#SHOP_BTN;
+        const cx = b.x + b.w / 2;
+        const cy = b.y + b.h / 2;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(b.x, b.y, b.w, b.h, 8);
+        ctx.fillStyle = 'rgba(10, 14, 26, 0.9)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = COLORS.NEON_CYAN;
+        ctx.stroke();
+        ctx.restore();
+
+        bitmapFont.drawText(ctx, 'SHOP', cx, cy, 14, { align: 'center', color: COLORS.NEON_CYAN });
+    }
+
+    /** Dim the frozen world and render the shop overlay on top. */
+    #drawShopOverlay(ctx) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, DESIGN_WIDTH, DESIGN_HEIGHT);
+        ctx.restore();
+        this.#shop.draw(ctx);
     }
 
     // ── Background (kept here — tightly coupled to canvas caching) ─

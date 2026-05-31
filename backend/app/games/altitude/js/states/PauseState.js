@@ -16,6 +16,11 @@ export class PauseState extends State {
         this.#selectedOption = 0;
         this.#animTime = 0;
         this.#backgroundAlpha = 0;
+        // Challenge pause has no SHOP option: the shop is an in-run overlay and
+        // routing through openShop('playing') would drop out of Challenge mode.
+        this.#options = this._game.challengeMode
+            ? ['RESUME', 'MENU']
+            : ['RESUME', 'SHOP', 'MENU'];
     }
 
     exit() {

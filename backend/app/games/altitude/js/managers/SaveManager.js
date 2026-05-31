@@ -4,6 +4,7 @@
  */
 
 import { UPGRADE_CATALOG } from '../config/Constants.js';
+import { computeUpgradeStats } from '../systems/UpgradeStats.js';
 
 export class SaveManager {
     #data = null;
@@ -317,23 +318,11 @@ export class SaveManager {
         const bonuses = this.#data.prestigeBonuses ?? [];
         const prestigeLives      = bonuses.filter(b => b === 'lives').length * 2;
         const prestigeCoinBonus  = bonuses.filter(b => b === 'coins').length * 0.5;
-        return {
-            jumpMultiplier: 1 + this.getUpgradeEffect('jump_power'),
-            ghostRepelLevel: this.getUpgradeLevel('ghost_repel'),
-            hasDoubleJump: this.hasUpgrade('double_jump'),
-            hasGlide: this.hasUpgrade('glide'),
-            dashCount: this.getUpgradeLevel('dash'),
-            stompMultiplier: 1 + this.getUpgradeEffect('stomp_power'),
-            hasShockwave: this.hasUpgrade('shockwave'),
-            knockbackResist: this.getUpgradeEffect('thick_skin'),
-            extraLives: this.getUpgradeLevel('extra_life') + prestigeLives,
-            magnetRange: this.getUpgradeEffect('coin_magnet_range'),
-            coinMultiplier: 1 + this.getUpgradeEffect('coin_value') + prestigeCoinBonus,
-            powerupDuration: 1 + this.getUpgradeEffect('powerup_duration'),
-            luckySpawn: this.getUpgradeEffect('lucky_spawn'),
-            scoreMultiplier: 1 + this.getUpgradeEffect('score_multiplier'),
-            comboKeeper: 1 + this.getUpgradeEffect('combo_keeper'),
-            spikeCount: this.getUpgradeLevel('spike_head'),
-        };
+
+        // Base stats from upgrades (shared, prestige-free), then patch prestige.
+        const stats = computeUpgradeStats((id) => this.getUpgradeLevel(id));
+        stats.extraLives     += prestigeLives;
+        stats.coinMultiplier += prestigeCoinBonus;
+        return stats;
     }
 }

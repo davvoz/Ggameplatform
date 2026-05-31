@@ -42,10 +42,28 @@ export class InputManager {
     // Track whether the current left/right comes from keyboard only
     #keyLeftPressed = false;
     #keyRightPressed = false;
+    // Shop key ('S') edge detection (Challenge in-run shop)
+    #shopJustPressed = false;
+    #prevShop = false;
+    // Whether the device is a desktop (fine pointer + hover) → show key hints
+    #isDesktop = false;
 
     constructor(renderer) {
         this.#renderer = renderer;
+        this.#isDesktop = InputManager.#detectDesktop();
         this.#bindEvents();
+    }
+
+    /**
+     * Detect a desktop-class device (fine pointer with hover capability).
+     * @returns {boolean} True on desktop, false on touch-first devices.
+     */
+    static #detectDesktop() {
+        const mm = globalThis.matchMedia;
+        if (typeof mm === 'function') {
+            return mm('(hover: hover) and (pointer: fine)').matches;
+        }
+        return !('ontouchstart' in globalThis);
     }
 
     #bindEvents() {
@@ -184,6 +202,10 @@ export class InputManager {
         const keyJump = this.#keys.has('Space') || keyUp;
         const keyGlide = this.#keys.has('ShiftLeft') || this.#keys.has('ShiftRight');
         const keyPause = this.#keys.has('Escape') || this.#keys.has('KeyP');
+        const keyShop = this.#keys.has('KeyS');
+
+        this.#shopJustPressed = keyShop && !this.#prevShop;
+        this.#prevShop = keyShop;
 
         // Touch input
         const screenMidX = this.#renderer.width / 2;
@@ -278,6 +300,10 @@ export class InputManager {
     get justTapped() { return this.#justTapped; }
     get tapX() { return this.#tapX; }
     get tapY() { return this.#tapY; }
+    /** true only on the frame the 'S' key transitions to pressed */
+    get shopJustPressed() { return this.#shopJustPressed; }
+    /** true on desktop-class devices (used to surface keyboard hints) */
+    get isDesktop() { return this.#isDesktop; }
     get jump() { return this.#jumpPressed; }
     get jumpJustPressed() { return this.#jumpJustPressed; }
     get glide() { return this.#glidePressed; }
@@ -331,6 +357,10 @@ export class InputManager {
         this.#justTapped = false;
         this.#tapX = -1;
         this.#tapY = -1;
+    }
+
+    consumeShop() {
+        this.#shopJustPressed = false;
     }
 
     consumeDash() {

@@ -13,6 +13,7 @@ import { SpriteGenerator } from '../graphics/SpriteGenerator.js';
 import { InputManager } from '../managers/InputManager.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { SaveManager } from '../managers/SaveManager.js';
+import { ChallengeSession } from '../managers/ChallengeSession.js';
 import { PlatformBridge } from '../PlatformBridge.js';
 import { ZONES } from '../config/Constants.js';
 import { bitmapFont } from '../graphics/BitmapFont.js';
@@ -64,6 +65,11 @@ export class Game {
     #pendingLives = null;   // lives carried over from the previous level
     #infiniteMode = false;
     #shopReturnState = 'menu';
+
+    // ── Challenge mode ────────────────────────────────────────────
+    // Competitive run: starts from zero, no prestige, run-scoped upgrades.
+    challenge = new ChallengeSession();
+    #challengeMode = false;
 
     // ── Performance monitor ───────────────────────────────────────
     #perfFrames = 0;
@@ -260,6 +266,11 @@ export class Game {
             this.maxAltitude = this.altitude;
         }
 
+        // Challenge runs report raw stats, ignore prestige and never persist coins.
+        if (this.#challengeMode) {
+            return this.#endChallengeSession();
+        }
+
         // Apply prestige altitude multiplier to reported stats
         const altMult      = this.save.getPrestigeAltMultiplier();
         const boostedAlt   = this.altitude * altMult;
@@ -273,15 +284,33 @@ export class Game {
         );
         this.save.addCoins(this.sessionCoins);
 
-        // Report to platform
-        this.platform.gameOver(this.score, {
+        // Report to platform. Score counts ONLY in Challenge mode, so standard
+        // runs report their stats with a zero score (no leaderboard entry).
+        this.platform.gameOver(0, {
             altitude:         Math.floor(boostedAlt),
             coins:            this.sessionCoins,
             enemiesDefeated:  this.enemiesDefeated,
             levelsCompleted:  this.#currentLevel,
             maxAltitude:      Math.floor(this.maxAltitude),
+            mode:             this. mode
         });
 
+        return isNewRecord;
+    }
+
+    /**
+     * Report a Challenge run to the platform without prestige or coin persistence.
+     * @returns {boolean} True when the raw score beats the persistent high score.
+     */
+    #endChallengeSession() {
+        const isNewRecord = this.score > this.save.getHighScore();
+        this.platform.gameOver(this.score, {
+            altitude:         Math.floor(this.altitude),
+            coins:            this.sessionCoins,
+            enemiesDefeated:  this.enemiesDefeated,
+            levelsCompleted:  0,
+            maxAltitude:      Math.floor(this.maxAltitude)
+        });
         return isNewRecord;
     }
 
@@ -289,15 +318,17 @@ export class Game {
      * Add to score
      */
     addScore(amount) {
-        const stats = this.save.getPlayerStats();
+        const stats = this.getPlayerStats();
         this.score += Math.floor(amount * stats.scoreMultiplier);
     }
 
     /**
-     * Add coins (session tracking)
+     * Add coins (session tracking).
+     * Challenge mode pays out 10x to fund the faster in-run economy.
      */
     addCoins(amount, multiplier = 1) {
-        const actual = Math.floor(amount * multiplier);
+        const modeFactor = this.#challengeMode ? 10 : 1;
+        const actual = Math.floor(amount * multiplier * modeFactor);
         this.coins += actual;
         this.sessionCoins += actual;
     }
@@ -325,7 +356,9 @@ export class Game {
      * Get player stats from upgrades
      */
     getPlayerStats() {
-        return this.save.getPlayerStats();
+        return this.#challengeMode
+            ? this.challenge.getPlayerStats()
+            : this.save.getPlayerStats();
     }
 
     /**
@@ -361,19 +394,33 @@ export class Game {
         this.timeMedal = 'none';
         this.timeBonusScore = 0;
         this.timeBonusCoins = 0;
+        // Challenge replays start from zero upgrades as well.
+        if (this.#challengeMode) {
+            this.challenge.reset();
+        }
+    }
+
+    /** True while the active run is a Challenge run. */
+    get challengeMode() {
+        return this.#challengeMode;
     }
 
     /**
      * Get player's coin balance
      */
     getCoins() {
-        return this.save.getCoins();
+        return this.#challengeMode ? this.coins : this.save.getCoins();
     }
 
     /**
      * Spend coins (returns true if successful)
      */
     spendCoins(amount) {
+        if (this.#challengeMode) {
+            if (this.coins < amount) return false;
+            this.coins -= amount;
+            return true;
+        }
         return this.save.spendCoins(amount);
     }
 
@@ -381,14 +428,20 @@ export class Game {
      * Get current upgrade level
      */
     getUpgradeLevel(upgradeId) {
-        return this.save.getUpgradeLevel(upgradeId);
+        return this.#challengeMode
+            ? this.challenge.getUpgradeLevel(upgradeId)
+            : this.save.getUpgradeLevel(upgradeId);
     }
 
     /**
      * Increase upgrade level
      */
     upgradeLevel(upgradeId) {
-        this.save.upgradeLevel(upgradeId);
+        if (this.#challengeMode) {
+            this.challenge.upgradeLevel(upgradeId);
+        } else {
+            this.save.upgradeLevel(upgradeId);
+        }
     }
 
     /**
@@ -409,6 +462,7 @@ export class Game {
      * Open the prestige selection screen (from shop).
      */
     openPrestige() {
+        if (this.#challengeMode) return;  // Prestige is disabled in Challenge.
         this.fsm.transition('prestige');
     }
 
@@ -423,7 +477,9 @@ export class Game {
      * True when every upgrade is at max level.
      */
     isAllUpgradesMaxed() {
-        return this.save.isAllUpgradesMaxed();
+        return this.#challengeMode
+            ? this.challenge.isAllUpgradesMaxed()
+            : this.save.isAllUpgradesMaxed();
     }
 
     /**
@@ -449,16 +505,26 @@ export class Game {
 
     /**
      * Open the shop and specify where to return afterwards.
+     * Leaving Challenge routing here guarantees the menu/game-over shop always
+     * operates on the persistent save, never on the run-scoped session.
      */
     openShop(returnState = 'menu') {
+        this.#challengeMode = false;
         this.#shopReturnState = returnState;
         this.fsm.transition('shop');
     }
 
     /**
      * Return from shop to the previously specified state.
+     * During a Challenge run the shop is an in-run overlay owned by
+     * PlayingState, so dismissal is delegated there instead of the FSM.
      */
     closeShop() {
+        const active = this.fsm.currentState;
+        if (active && typeof active.isShopOverlayOpen === 'function' && active.isShopOverlayOpen()) {
+            active.closeShopOverlay();
+            return;
+        }
         const target = this.#shopReturnState;
         this.#shopReturnState = 'menu';
         if (target === 'playing') {
@@ -494,6 +560,7 @@ export class Game {
      * Always starts fresh — no carry-over lives.
      */
     startLevel(levelIndex) {
+        this.#challengeMode = false;
         this.#currentLevel = levelIndex;
         this.#infiniteMode = false;
         this.#pendingLives = null;
@@ -528,6 +595,7 @@ export class Game {
      * Reset level progression back to level 0.
      */
     resetLevel() {
+        this.#challengeMode = false;
         this.#currentLevel = 0;
         this.#infiniteMode = false;
         this.#pendingLives = null;  // fresh run — discard any carry-over
@@ -537,8 +605,22 @@ export class Game {
      * Start Infinite Mode (unlocked after completing all levels).
      */
     startInfinite() {
+        this.#challengeMode = false;
         this.#infiniteMode = true;
         this.resetSession();
+        this.fsm.transition('playing');
+    }
+
+    /**
+     * Start a Challenge run: zero coins, run-scoped upgrades, no prestige.
+     * Reuses the Infinite map but reports as a competitive, fair run.
+     */
+    startChallenge() {
+        this.#challengeMode = true;
+        this.#infiniteMode = true;
+        this.#currentLevel = 0;
+        this.#pendingLives = null;
+        this.resetSession();  // also clears run-scoped upgrades
         this.fsm.transition('playing');
     }
 }

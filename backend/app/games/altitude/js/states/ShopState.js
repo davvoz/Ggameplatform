@@ -73,7 +73,7 @@ export class ShopState extends State {
     }
 
     #tapPrestigeButton(tx, ty) {
-        if (!this.#isAllMaxed()) return false;
+        if (!this.#prestigeAvailable()) return false;
         const pb = ShopState.#PRESTIGE_BTN;
         if (tx < pb.x || tx > pb.x + pb.w || ty < pb.y || ty > pb.y + pb.h) return false;
         this._game.openPrestige();
@@ -132,7 +132,7 @@ export class ShopState extends State {
 
         // Check if already maxed
         if (currentLevel >= upgrade.maxLevel) {
-            if (this.#isAllMaxed()) {
+            if (this.#prestigeAvailable()) {
                 this.#showNotification('All maxed! Tap ⭐ PRESTIGE below.', 'error');
             } else {
                 this.#showNotification('Already maxed!', 'error');
@@ -164,6 +164,11 @@ export class ShopState extends State {
 
     #isAllMaxed() {
         return this._game.isAllUpgradesMaxed();
+    }
+
+    #prestigeAvailable() {
+        // Prestige is disabled in Challenge mode — never expose its UI there.
+        return this.#isAllMaxed() && !this._game.challengeMode;
     }
 
     #getPrestigeProgress() {
@@ -272,8 +277,13 @@ export class ShopState extends State {
             { align: 'center', color: 'rgba(0, 0, 0, 1)' });
         bitmapFont.drawText(ctx, `${this._game.getCoins()}`, DESIGN_WIDTH / 2, 62, 28,
             { align: 'center', color: COLORS.COIN_GOLD });
-        // Prestige banner or progress counter
+        // Prestige banner or progress counter (hidden entirely in Challenge mode)
         const btn = ShopState.#PRESTIGE_BTN;
+        if (this._game.challengeMode) {
+            // No prestige-related UI in Challenge mode.
+            ctx.restore();
+            return;
+        }
         if (this.#isAllMaxed()) {
             const pulse = 0.7 + Math.sin(this.#animTime * 2.8) * 0.25;
             ctx.shadowColor = COLORS.NEON_YELLOW;

@@ -12,6 +12,7 @@ export class MenuState extends State {
     #bgStars = [];
     #selectedIndex = 0;
     #inputCooldown = 0;
+    #animTime = 0;
     #prestigeBadge = new PrestigeBadgeRenderer();
     #prestigeHeight = 0;
 
@@ -41,30 +42,25 @@ export class MenuState extends State {
         this.#buttons = [
             {
                 label: infiniteUnlocked ? 'CAMPAIGN' : 'PLAY',
-                action: () => {
-                    this._game.fsm.transition('levelSelect');
-                },
+                action: () => { this._game.fsm.transition('levelSelect'); },
                 color: COLORS.NEON_GREEN,
             },
-        ];
-
-        if (infiniteUnlocked) {
-            this.#buttons.push({
+            ...(infiniteUnlocked ? [{
                 label: 'INFINITE',
-                action: () => {
-                    this._game.startInfinite();
-                },
+                action: () => { this._game.startInfinite(); },
                 color: COLORS.NEON_PURPLE,
-            });
-        }
-
-        this.#buttons.push({
-            label: 'SHOP',
-            action: () => {
-                this._game.openShop('menu');
+            }] : []),
+            {
+                label: 'RANKED',
+                action: () => { this._game.startChallenge(); },
+                color: COLORS.NEON_CYAN,
             },
-            color: COLORS.NEON_ORANGE,
-        });
+            {
+                label: 'SHOP',
+                action: () => { this._game.openShop('menu'); },
+                color: COLORS.NEON_ORANGE,
+            },
+        ];
     }
 
     exit() {
@@ -72,6 +68,7 @@ export class MenuState extends State {
     }
 
     update(dt) {
+        this.#animTime += dt;
         this.#prestigeBadge.update(dt);
 
         // Update stars
@@ -256,24 +253,38 @@ export class MenuState extends State {
             const y = buttonY + i * buttonGap;
             const x = DESIGN_WIDTH / 2;
             const isSelected = i === this.#selectedIndex;
-            const hover = isSelected ? 1.05 : 1;
+            const isRanked = btn.label === 'RANKED';
+            const accent = isRanked ? '#ff3b1f' : btn.color;
+            const pulse = isRanked ? 0.5 + 0.5 * Math.sin(this.#animTime * 4) : 0;
+            const hover = (isSelected ? 1.05 : 1) + (isRanked ? pulse * 0.05 : 0);
 
             ctx.save();
             ctx.translate(x, y);
             ctx.scale(hover, hover);
 
+            // Pulsing glow to highlight the RANKED button
+            if (isRanked) {
+                ctx.shadowColor = accent;
+                ctx.shadowBlur = 12 + pulse * 18;
+            }
+
+            const idleFillAlpha = isRanked ? 0.25 + pulse * 0.2 : 0.2;
+            const idleLineWidth = isRanked ? 2 + pulse : 2;
+            const idleStrokeAlpha = isRanked ? 0.7 + pulse * 0.3 : 0.7;
+
             // Button background
-            ctx.fillStyle = isSelected ? btn.color : 'rgba(255, 255, 255, 1)';
-            ctx.globalAlpha = isSelected ? 0.3 : 0.2;
+            ctx.fillStyle = isSelected ? accent : 'rgba(255, 255, 255, 1)';
+            ctx.globalAlpha = isSelected ? 0.3 : idleFillAlpha;
             ctx.beginPath();
             ctx.roundRect(-buttonW / 2, -buttonH / 2, buttonW, buttonH, 12);
             ctx.fill();
 
             // Border
-            ctx.strokeStyle = btn.color;
-            ctx.lineWidth = isSelected ? 3 : 2;
-            ctx.globalAlpha = isSelected ? 1 : 0.7;
+            ctx.strokeStyle = accent;
+            ctx.lineWidth = isSelected ? 3 : idleLineWidth;
+            ctx.globalAlpha = isSelected ? 1 : idleStrokeAlpha;
             ctx.stroke();
+            ctx.shadowBlur = 0;
 
             //shadow
             bitmapFont.drawText(ctx, btn.label, 2, 3, 36, {
@@ -287,7 +298,7 @@ export class MenuState extends State {
             ctx.globalAlpha = 1;
             bitmapFont.drawText(ctx, btn.label, 0, 1, 36, {
                 align: 'center',
-                color: btn.color,
+                color: accent,
                 alpha: 1,
                 letterSpacing: 0.5,
             });

@@ -1,8 +1,17 @@
 {
-  "version": "5.4.17",
-  "timestamp": "2026-05-30T22:01:31.319Z",
-  "buildNumber": 575,
+  "version": "5.5.0",
+  "timestamp": "2026-05-31T01:27:25.348Z",
+  "buildNumber": 576,
   "changelog": [
+    {
+      "version": "5.5.0",
+      "date": "2026-05-31",
+      "type": "minor",
+      "changes": [
+        "feat: [A]implement Challenge mode with run-scoped upgrades and in-run shop",
+        "🔖 Bump version to 5.4.17 [skip-version]"
+      ]
+    },
     {
       "version": "5.4.17",
       "date": "2026-05-30",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC]better multiplayer",
         "🔖 Bump version to 5.4.8 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.8",
-      "date": "2026-05-19",
-      "type": "patch",
-      "changes": [
-        "fix:[SA]Sonar",
-        "🔖 Bump version to 5.4.7 [skip-version]"
       ]
     }
   ]

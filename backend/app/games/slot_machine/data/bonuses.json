@@ -15,10 +15,10 @@
     "chests": 9,
     "picks": 3,
     "outcomes": [
-      { "type": "coins",      "value": 50,  "weight": 18 },
-      { "type": "coins",      "value": 100, "weight": 14 },
-      { "type": "coins",      "value": 250, "weight": 8 },
-      { "type": "coins",      "value": 500, "weight": 4 },
+      { "type": "coins",      "value": 5,   "weight": 18 },
+      { "type": "coins",      "value": 10,  "weight": 14 },
+      { "type": "coins",      "value": 25,  "weight": 8 },
+      { "type": "coins",      "value": 50,  "weight": 4 },
       { "type": "multiplier", "value": 2,   "weight": 5 },
       { "type": "multiplier", "value": 5,   "weight": 2 }
     ]

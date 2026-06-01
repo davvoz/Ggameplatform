@@ -2,21 +2,21 @@
   "symbols": [
     {
       "id": "seven_lucky", "label": "7", "tier": 5,
-      "payout": { "3": 500, "4": 1000, "5": 5000 },
+      "payout": { "3": 570, "4": 1140, "5": 5700 },
       "color": "#ff2244", "accent": "#ffd700",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 1
     },
     {
       "id": "diamond", "label": "♦", "tier": 5,
-      "payout": { "3": 200, "4": 500, "5": 2000 },
+      "payout": { "3": 228, "4": 570, "5": 2280 },
       "color": "#00ffff", "accent": "#ffffff",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 2
     },
     {
       "id": "crown", "label": "♛", "tier": 5,
-      "payout": { "3": 150, "4": 400, "5": 1500 },
+      "payout": { "3": 171, "4": 456, "5": 1710 },
       "color": "#ffd700", "accent": "#ff8800",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 3
@@ -30,63 +30,63 @@
     },
     {
       "id": "rainbow", "label": "◈", "tier": 4,
-      "payout": { "3": 75, "4": 200, "5": 500 },
+      "payout": { "3": 86, "4": 228, "5": 570 },
       "color": "#ff44ff", "accent": "#44ff00",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 4
     },
     {
       "id": "bar_gold", "label": "BAR", "tier": 4,
-      "payout": { "3": 60, "4": 150, "5": 400 },
+      "payout": { "3": 68, "4": 171, "5": 456 },
       "color": "#ffd700", "accent": "#ffffff",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 5
     },
     {
       "id": "bar_silver", "label": "BAR", "tier": 3,
-      "payout": { "3": 30, "4": 80, "5": 200 },
+      "payout": { "3": 34, "4": 91, "5": 228 },
       "color": "#c0c0e0", "accent": "#8888aa",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 7
     },
     {
       "id": "cherry_bomb", "label": "🍒", "tier": 3,
-      "payout": { "3": 25, "4": 60, "5": 150 },
+      "payout": { "3": 29, "4": 68, "5": 171 },
       "color": "#ff2244", "accent": "#44ff00",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 8
     },
     {
       "id": "bell_neon", "label": "🔔", "tier": 3,
-      "payout": { "3": 20, "4": 50, "5": 120 },
+      "payout": { "3": 23, "4": 57, "5": 137 },
       "color": "#ffd700", "accent": "#ff8800",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 8
     },
     {
       "id": "watermelon", "label": "🍉", "tier": 2,
-      "payout": { "3": 10, "4": 25, "5": 60 },
+      "payout": { "3": 11, "4": 29, "5": 68 },
       "color": "#ff44aa", "accent": "#44ff00",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 11
     },
     {
       "id": "grapes", "label": "🍇", "tier": 2,
-      "payout": { "3": 8, "4": 20, "5": 50 },
+      "payout": { "3": 10, "4": 23, "5": 57 },
       "color": "#cc00ff", "accent": "#44ff00",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 12
     },
     {
       "id": "lemon", "label": "🍋", "tier": 2,
-      "payout": { "3": 5, "4": 15, "5": 40 },
+      "payout": { "3": 6, "4": 17, "5": 46 },
       "color": "#ffee44", "accent": "#44ff00",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 13
     },
     {
       "id": "orange", "label": "🍊", "tier": 2,
-      "payout": { "3": 4, "4": 12, "5": 30 },
+      "payout": { "3": 5, "4": 13, "5": 34 },
       "color": "#ff8800", "accent": "#ffd700",
       "isWild": false, "isScatter": false, "isBonusTrigger": false, "isMystery": false,
       "weight": 14

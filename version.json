@@ -1,8 +1,17 @@
 {
-  "version": "5.5.1",
-  "timestamp": "2026-06-01T09:29:35.878Z",
-  "buildNumber": 577,
+  "version": "5.5.2",
+  "timestamp": "2026-06-01T11:19:00.694Z",
+  "buildNumber": 578,
   "changelog": [
+    {
+      "version": "5.5.2",
+      "date": "2026-06-01",
+      "type": "patch",
+      "changes": [
+        "fix: [SM]update payout values for symbols and bonuses",
+        "🔖 Bump version to 5.5.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.5.1",
       "date": "2026-06-01",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC]better cards",
         "🔖 Bump version to 5.4.10 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.10",
-      "date": "2026-05-21",
-      "type": "patch",
-      "changes": [
-        "fix:[SS2,YATZI,RR]Sonar",
-        "🔖 Bump version to 5.4.9 [skip-version]"
       ]
     }
   ]

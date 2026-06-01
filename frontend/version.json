@@ -1,8 +1,17 @@
 {
-  "version": "5.5.0",
-  "timestamp": "2026-05-31T01:27:25.348Z",
-  "buildNumber": 576,
+  "version": "5.5.1",
+  "timestamp": "2026-06-01T09:29:35.878Z",
+  "buildNumber": 577,
   "changelog": [
+    {
+      "version": "5.5.1",
+      "date": "2026-06-01",
+      "type": "patch",
+      "changes": [
+        "fix:[A] add challenge high score tracking and update logic",
+        "🔖 Bump version to 5.5.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.5.0",
       "date": "2026-05-31",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[SS2,YATZI,RR]Sonar",
         "🔖 Bump version to 5.4.9 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.9",
-      "date": "2026-05-21",
-      "type": "patch",
-      "changes": [
-        "fix:[MC]better multiplayer",
-        "🔖 Bump version to 5.4.8 [skip-version]"
       ]
     }
   ]

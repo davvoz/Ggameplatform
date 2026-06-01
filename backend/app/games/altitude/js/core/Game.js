@@ -70,6 +70,7 @@ export class Game {
     // Competitive run: starts from zero, no prestige, run-scoped upgrades.
     challenge = new ChallengeSession();
     #challengeMode = false;
+    #challengeIsNewRecord = false;   // set in #endChallengeSession, read by isNewHighScore
 
     // ── Performance monitor ───────────────────────────────────────
     #perfFrames = 0;
@@ -292,7 +293,7 @@ export class Game {
             enemiesDefeated:  this.enemiesDefeated,
             levelsCompleted:  this.#currentLevel,
             maxAltitude:      Math.floor(this.maxAltitude),
-            mode:             this. mode
+            mode:             'normal'
         });
 
         return isNewRecord;
@@ -300,10 +301,10 @@ export class Game {
 
     /**
      * Report a Challenge run to the platform without prestige or coin persistence.
-     * @returns {boolean} True when the raw score beats the persistent high score.
+     * @returns {boolean} True when the raw score beats the persistent challenge high score.
      */
     #endChallengeSession() {
-        const isNewRecord = this.score > this.save.getHighScore();
+        this.#challengeIsNewRecord = this.save.updateChallengeHighScore(this.score);
         this.platform.gameOver(this.score, {
             altitude:         Math.floor(this.altitude),
             coins:            this.sessionCoins,
@@ -311,7 +312,7 @@ export class Game {
             levelsCompleted:  0,
             maxAltitude:      Math.floor(this.maxAltitude)
         });
-        return isNewRecord;
+        return this.#challengeIsNewRecord;
     }
 
     /**
@@ -448,7 +449,9 @@ export class Game {
      * Check if score is new high score
      */
     isNewHighScore(score) {
-        return score > this.save.getHighScore();
+        return this.#challengeMode
+            ? this.#challengeIsNewRecord
+            : score > this.save.getHighScore();
     }
 
     /**

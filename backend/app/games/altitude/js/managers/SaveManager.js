@@ -51,6 +51,7 @@ export class SaveManager {
             version: 1,
             totalCoins: 0,
             highScore: 0,
+            challengeHighScore: 0,
             maxAltitude: 0,
             gamesPlayed: 0,
             totalEnemiesDefeated: 0,
@@ -103,6 +104,23 @@ export class SaveManager {
 
     getHighScore() {
         return this.#data.highScore;
+    }
+
+    getChallengeHighScore() {
+        return this.#data.challengeHighScore ?? 0;
+    }
+
+    /**
+     * Update challenge mode high score if score is new best.
+     * @returns {boolean} True when score beats the previous challenge high score.
+     */
+    updateChallengeHighScore(score) {
+        if (score > (this.#data.challengeHighScore ?? 0)) {
+            this.#data.challengeHighScore = score;
+            this.save();
+            return true;
+        }
+        return false;
     }
 
     get maxAltitude() {

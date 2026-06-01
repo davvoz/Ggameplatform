@@ -132,6 +132,7 @@ export class CollisionSystem {
         // Ghost Repel perk
         if (enemy.type === 'ghost' && player.ghostRepelReady) {
             enemy.onStomp(game.particles, game.sound);
+            enemy.active = false; // force deactivation even if ghost is phased
             game.addScore(enemy.scoreValue);
             game.enemiesDefeated++;
             player.triggerGhostRepel();

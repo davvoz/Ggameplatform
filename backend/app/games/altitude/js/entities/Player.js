@@ -130,7 +130,7 @@ export class Player extends GameObject {
     get isGrounded() { return this.#grounded; }
     get isJumping() { return this.#jumping; }
     get isGliding() { return this.#gliding; }
-    get isInvincible() { return this.#invincible || this.#shieldActive || this.#dashing; }
+    get isInvincible() { return this.#invincible || this.#dashing; }
     get isDashing() { return this.#dashing; }
     get lives() { return this.#lives; }
     get maxLives() { return 2 + (this.#stats.extraLives ?? 0); }

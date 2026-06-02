@@ -1,8 +1,17 @@
 {
-  "version": "5.5.4",
-  "timestamp": "2026-06-02T09:43:21.827Z",
-  "buildNumber": 580,
+  "version": "5.5.5",
+  "timestamp": "2026-06-02T18:21:59.681Z",
+  "buildNumber": 581,
   "changelog": [
+    {
+      "version": "5.5.5",
+      "date": "2026-06-02",
+      "type": "patch",
+      "changes": [
+        "fix: [A]increase max lives from 2 to 3",
+        "🔖 Bump version to 5.5.4 [skip-version]"
+      ]
+    },
     {
       "version": "5.5.4",
       "date": "2026-06-02",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC]new levels , new cards",
         "🔖 Bump version to 5.4.13 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.13",
-      "date": "2026-05-25",
-      "type": "patch",
-      "changes": [
-        "dix:[MC]features",
-        "🔖 Bump version to 5.4.12 [skip-version]"
       ]
     }
   ]

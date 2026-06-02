@@ -1,8 +1,17 @@
 {
-  "version": "5.5.3",
-  "timestamp": "2026-06-02T09:09:02.950Z",
-  "buildNumber": 579,
+  "version": "5.5.4",
+  "timestamp": "2026-06-02T09:43:21.827Z",
+  "buildNumber": 580,
   "changelog": [
+    {
+      "version": "5.5.4",
+      "date": "2026-06-02",
+      "type": "patch",
+      "changes": [
+        "fix: [A]adjust shop label position and add desktop indicator",
+        "🔖 Bump version to 5.5.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.5.3",
       "date": "2026-06-02",
@@ -82,15 +91,6 @@
       "changes": [
         "dix:[MC]features",
         "🔖 Bump version to 5.4.12 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.12",
-      "date": "2026-05-24",
-      "type": "patch",
-      "changes": [
-        "fix:[MC]fonts",
-        "🔖 Bump version to 5.4.11 [skip-version]"
       ]
     }
   ]

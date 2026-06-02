@@ -53,6 +53,8 @@ export class PlayingState extends State {
     // survives. Only active while game.challengeMode is true.
     #shop     = null;
     #shopOpen = false;
+
+    #isDead = false;  // guard: prevents #gameOver() re-entry every frame
     static #SHOP_BTN = { x: DESIGN_WIDTH - 92, y: DESIGN_HEIGHT - 104, w: 82, h: 40 };
 
     // ══════════════════════════════════════════════════════════════
@@ -87,6 +89,7 @@ export class PlayingState extends State {
             this._game.pendingLives = null;
         }
 
+        this.#isDead = false;
         this._game.particles.clear();
     }
 
@@ -289,6 +292,8 @@ export class PlayingState extends State {
     }
 
     #gameOver() {
+        if (this.#isDead) return;
+        this.#isDead = true;
         this._game.sound.playDeath();
         this._game.shake.shake(20, 0.5);
 

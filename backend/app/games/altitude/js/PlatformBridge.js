@@ -111,14 +111,18 @@ export class PlatformBridge {
     async endSession(stats = {}) {
         try {
             if (this.#sdk && typeof this.#sdk.gameOver === 'function') {
-                const score = Math.floor(stats.score ?? 0);
                 const extra_data = {
                     distance:         Math.floor(stats.altitude          ?? 0),
                     coins_collected:  Math.floor(stats.coins             ?? 0),
                     enemies_defeated: Math.floor(stats.enemiesDefeated   ?? 0),
                     levels_completed: Math.floor(stats.levelsCompleted   ?? 0),
                 };
-                this.#sdk.gameOver(score, { extra_data });
+                
+                if(stats.mode === 'normal') {
+                    extra_data.distance = 0;
+                    stats.score = 0;
+                }
+                this.#sdk.gameOver(stats.score , { extra_data });
             }
         } catch (error) {
             console.error('[PlatformBridge] End session error:', error);

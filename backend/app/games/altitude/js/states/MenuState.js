@@ -254,6 +254,7 @@ export class MenuState extends State {
             const x = DESIGN_WIDTH / 2;
             const isSelected = i === this.#selectedIndex;
             const isRanked = btn.label === 'RANKED';
+            const buttonHalfW = buttonW / 2;
             const accent = isRanked ? '#ff3b1f' : btn.color;
             const pulse = isRanked ? 0.5 + 0.5 * Math.sin(this.#animTime * 4) : 0;
             const hover = (isSelected ? 1.05 : 1) + (isRanked ? pulse * 0.05 : 0);
@@ -304,7 +305,120 @@ export class MenuState extends State {
             });
 
             ctx.restore();
+
+            // Badge XP+Leaderboard visible only on the RANKED button
+            if (isRanked) {
+                this.#drawRankedBadge(ctx, x, y, buttonHalfW);
+            }
+
+            // NO XP badge for casual modes
+            const isFun = btn.label === 'CAMPAIGN' || btn.label === 'PLAY' || btn.label === 'INFINITE';
+            if (isFun) {
+                this.#drawFunBadge(ctx, x, y, buttonHalfW, btn.color);
+            }
         });
+    }
+
+    /**
+     * Small animated pill badge for casual modes (CAMPAIGN / INFINITE).
+     * Communicates that this mode gives no XP — fun only.
+     */
+    #drawFunBadge(ctx, btnCX, btnCY, btnHalfW, color) {
+        const pulse = 0.5 + 0.5 * Math.sin(this.#animTime * 1.8);
+        const badgeW = 84;
+        const badgeH = 40;
+        const bx = btnCX + btnHalfW + 8 + badgeW / 2;
+        const by = btnCY;
+
+        ctx.save();
+
+        // Soft background
+        ctx.globalAlpha = 0.07 + pulse * 0.07;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 10);
+        ctx.fill();
+
+        // Border — dimmer and dashed feel via reduced alpha
+        ctx.globalAlpha = 0.25 + pulse * 0.2;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 10);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.restore();
+
+        // "✕ NO XP" upper line
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = color;
+        ctx.font = `700 12px ${FONTS.UI}`;
+        ctx.globalAlpha = 0.55 + pulse * 0.2;
+        ctx.fillText('\u2715  NO XP', bx, by - 9);
+
+        // "FUN ONLY" lower line
+        ctx.font = `600 8px ${FONTS.UI}`;
+        ctx.globalAlpha = 0.4 + pulse * 0.2;
+        ctx.fillText('FUN ONLY', bx, by + 9);
+
+        ctx.restore();
+    }
+
+    /**
+     * Small animated pill badge to the right of the RANKED button.
+     * Communicates that only this mode grants XP and counts for leaderboard.
+     */
+    #drawRankedBadge(ctx, btnCX, btnCY, btnHalfW) {
+        const pulse = 0.5 + 0.5 * Math.sin(this.#animTime * 2.5);
+        const badgeW = 84;
+        const badgeH = 40;
+        // Position: 8px gap from button right edge
+        const bx = btnCX + btnHalfW + 8 + badgeW / 2;
+        const by = btnCY;
+
+        ctx.save();
+
+        // Outer glow
+        ctx.shadowColor = COLORS.NEON_CYAN;
+        ctx.shadowBlur = 5 + pulse * 12;
+
+        // Background fill
+        ctx.globalAlpha = 0.1 + pulse * 0.13;
+        ctx.fillStyle = COLORS.NEON_CYAN;
+        ctx.beginPath();
+        ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 10);
+        ctx.fill();
+
+        // Border
+        ctx.globalAlpha = 0.45 + pulse * 0.55;
+        ctx.strokeStyle = COLORS.NEON_CYAN;
+        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.roundRect(bx - badgeW / 2, by - badgeH / 2, badgeW, badgeH, 10);
+        ctx.stroke();
+
+        ctx.restore();
+
+        // "★ XP" upper line
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = COLORS.NEON_CYAN;
+        ctx.font = `700 13px ${FONTS.UI}`;
+        ctx.globalAlpha = 0.8 + pulse * 0.2;
+        ctx.fillText('\u2605  XP', bx, by - 9);
+
+        // "LEADERBOARD" lower line
+        ctx.font = `600 8px ${FONTS.UI}`;
+        ctx.globalAlpha = 0.55 + pulse * 0.4;
+        ctx.fillText('LEADERBOARD', bx, by + 9);
+
+        ctx.restore();
     }
 
     #drawInstructions(ctx) {

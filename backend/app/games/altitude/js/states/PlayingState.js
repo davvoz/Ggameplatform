@@ -375,7 +375,12 @@ export class PlayingState extends State {
         ctx.stroke();
         ctx.restore();
 
-        bitmapFont.drawText(ctx, 'SHOP', cx, cy, 14, { align: 'center', color: COLORS.NEON_CYAN });
+        bitmapFont.drawText(ctx, 'SHOP', cx , cy - 10, 14, { align: 'center', color: COLORS.NEON_CYAN });
+        //se siamo su desktop
+        const isDesktop = !('ontouchstart' in globalThis) && !navigator.maxTouchPoints;
+        if (isDesktop) {
+            bitmapFont.drawText(ctx, '(S)', cx, cy + 10, 20, { align: 'center', color: COLORS.NEON_CYAN });
+        }
     }
 
     /** Dim the frozen world and render the shop overlay on top. */

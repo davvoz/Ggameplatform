@@ -1,8 +1,17 @@
 {
-  "version": "5.5.2",
-  "timestamp": "2026-06-01T11:19:00.694Z",
-  "buildNumber": 578,
+  "version": "5.5.3",
+  "timestamp": "2026-06-02T09:09:02.950Z",
+  "buildNumber": 579,
   "changelog": [
+    {
+      "version": "5.5.3",
+      "date": "2026-06-02",
+      "type": "patch",
+      "changes": [
+        "fix:[A]gameover sound , details labels",
+        "🔖 Bump version to 5.5.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.5.2",
       "date": "2026-06-01",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[MC]fonts",
         "🔖 Bump version to 5.4.11 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.11",
-      "date": "2026-05-22",
-      "type": "patch",
-      "changes": [
-        "fix:[MC]better cards",
-        "🔖 Bump version to 5.4.10 [skip-version]"
       ]
     }
   ]

@@ -133,7 +133,7 @@ export class Player extends GameObject {
     get isInvincible() { return this.#invincible || this.#dashing; }
     get isDashing() { return this.#dashing; }
     get lives() { return this.#lives; }
-    get maxLives() { return 2 + (this.#stats.extraLives ?? 0); }
+    get maxLives() { return 3 + (this.#stats.extraLives ?? 0); }
     get combo() { return this.#combo; }
     get comboTimer() { return this.#comboTimer; }
     get stats() { return this.#stats; }

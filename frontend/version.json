@@ -1,8 +1,17 @@
 {
-  "version": "5.7.1",
-  "timestamp": "2026-06-08T20:31:28.787Z",
-  "buildNumber": 586,
+  "version": "5.8.0",
+  "timestamp": "2026-06-08T21:20:12.319Z",
+  "buildNumber": 587,
   "changelog": [
+    {
+      "version": "5.8.0",
+      "date": "2026-06-08",
+      "type": "minor",
+      "changes": [
+        "feat: add ip_address column to game_sessions and update related functionality",
+        "🔖 Bump version to 5.7.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.7.1",
       "date": "2026-06-08",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [SM]update payout values for symbols and bonuses",
         "🔖 Bump version to 5.5.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.5.1",
-      "date": "2026-06-01",
-      "type": "patch",
-      "changes": [
-        "fix:[A] add challenge high score tracking and update logic",
-        "🔖 Bump version to 5.5.0 [skip-version]"
       ]
     }
   ]

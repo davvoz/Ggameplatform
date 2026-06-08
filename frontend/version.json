@@ -1,8 +1,18 @@
 {
-  "version": "5.7.0",
-  "timestamp": "2026-06-08T20:29:31.576Z",
-  "buildNumber": 585,
+  "version": "5.7.1",
+  "timestamp": "2026-06-08T20:31:28.787Z",
+  "buildNumber": 586,
   "changelog": [
+    {
+      "version": "5.7.1",
+      "date": "2026-06-08",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[CR] update script tags for Three.js import map compatibility",
+        "🔖 Bump version to 5.7.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.7.0",
       "date": "2026-06-08",
@@ -82,15 +92,6 @@
       "changes": [
         "fix:[A] add challenge high score tracking and update logic",
         "🔖 Bump version to 5.5.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.5.0",
-      "date": "2026-05-31",
-      "type": "minor",
-      "changes": [
-        "feat: [A]implement Challenge mode with run-scoped upgrades and in-run shop",
-        "🔖 Bump version to 5.4.17 [skip-version]"
       ]
     }
   ]

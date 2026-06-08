@@ -1,8 +1,17 @@
 {
-  "version": "5.6.2",
-  "timestamp": "2026-06-04T21:50:41.945Z",
-  "buildNumber": 584,
+  "version": "5.7.0",
+  "timestamp": "2026-06-08T20:29:31.576Z",
+  "buildNumber": 585,
   "changelog": [
+    {
+      "version": "5.7.0",
+      "date": "2026-06-08",
+      "type": "minor",
+      "changes": [
+        "feat: add CUR8 Racing",
+        "🔖 Bump version to 5.6.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.6.2",
       "date": "2026-06-04",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: [A]implement Challenge mode with run-scoped upgrades and in-run shop",
         "🔖 Bump version to 5.4.17 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.4.17",
-      "date": "2026-05-30",
-      "type": "patch",
-      "changes": [
-        "fix: [SM]correct coin calculation in BonusState and update final winnings logic",
-        "🔖 Bump version to 5.4.16 [skip-version]"
       ]
     }
   ]

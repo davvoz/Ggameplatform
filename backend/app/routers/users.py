@@ -68,6 +68,18 @@ class DailyAccess(BaseModel):
 
 # ============ ENDPOINTS ============
 
+
+def _get_client_ip(request: Request) -> str:
+    """Extract the real client IP, honoring reverse-proxy headers set by nginx."""
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        # First entry is the original client address.
+        return forwarded_for.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else None
+
 @router.post("/register", responses=_RESP_400)
 @limiter.limit("5/minute")
 async def register_user(request: Request, user_data: UserRegister):
@@ -398,9 +410,11 @@ async def get_user_game_sessions(user_id: str, limit: Annotated[Optional[int], Q
 async def start_session(request: Request, session_data: SessionStart):
     """Start a new game session."""
     try:
+        client_ip = _get_client_ip(request)
         session = create_game_session(
             user_id=session_data.user_id,
-            game_id=session_data.game_id
+            game_id=session_data.game_id,
+            ip_address=client_ip
         )
         return {
             "success": True,

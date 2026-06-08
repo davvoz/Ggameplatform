@@ -325,10 +325,11 @@ const DB_SCHEMA = {
             duration_seconds: { ...FIELD_TYPES.INTEGER, label: 'Durata (sec)', default: 0 },
             started_at: { ...FIELD_TYPES.DATETIME, label: 'Inizio', required: true },
             ended_at: { ...FIELD_TYPES.DATETIME, label: 'Fine' },
+            ip_address: { ...FIELD_TYPES.STRING, label: 'Indirizzo IP' },
             extra_data: { ...FIELD_TYPES.JSON, label: 'Extra Data' }
         },
         
-        tableColumns: ['session_id', 'user_id', 'game_id', 'score', 'xp_earned', 'duration_seconds', 'ended_at', 'actions'],
+        tableColumns: ['session_id', 'user_id', 'game_id', 'score', 'xp_earned', 'duration_seconds', 'ip_address', 'ended_at', 'actions'],
         
         columnConfig: {
             session_id: { type: 'custom', render: RENDERERS.truncateId(10), searchable: true },
@@ -337,6 +338,7 @@ const DB_SCHEMA = {
             score: { type: 'custom', render: RENDERERS.score },
             xp_earned: { type: 'custom', render: RENDERERS.xp },
             duration_seconds: { type: 'duration' },
+            ip_address: { searchable: true },
             ended_at: { type: 'custom', render: (v) => ({ type: 'html', content: v ? Utils.formatDate(v) : '<span style="color: #ff9800;">⏳ In corso</span>' }) }
         },
         

@@ -113,6 +113,7 @@ class GameSession(Base):
     duration_seconds = Column(Integer, default=0)
     started_at = Column(String, nullable=False)
     ended_at = Column(String, nullable=True)
+    ip_address = Column(String, nullable=True)
     extra_data = Column(Text, default='{}')
 
     # Relationships
@@ -130,6 +131,7 @@ class GameSession(Base):
             "duration_seconds": self.duration_seconds,
             "started_at": self.started_at,
             "ended_at": self.ended_at,
+            "ip_address": self.ip_address,
             "metadata": json.loads(self.extra_data) if self.extra_data else {}
         }
 

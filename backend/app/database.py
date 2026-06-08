@@ -94,12 +94,25 @@ def _migrate_private_messages_reply_columns():
     except Exception as e:
         print(f"⚠️  PM reply columns migration: {e}")
 
+def _migrate_game_sessions_network_columns():
+    """Add ip_address column to game_sessions if missing."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(game_sessions)"))
+            cols = {row[1] for row in result}
+            if "ip_address" not in cols:
+                conn.execute(text("ALTER TABLE game_sessions ADD COLUMN ip_address VARCHAR(45)"))
+            conn.commit()
+    except Exception as e:
+        print(f"⚠️  Game sessions network columns migration: {e}")
+
 def init_db():
     """Initialize the database with required tables."""
     Base.metadata.create_all(bind=engine)
     _migrate_private_messages_edit_columns()
     _migrate_community_reply_columns()
     _migrate_private_messages_reply_columns()
+    _migrate_game_sessions_network_columns()
     setup_leaderboard_triggers()
     
     # Setup quest triggers for automatic quest progress updates
@@ -556,7 +569,7 @@ def calculate_session_xp(
 
 # ============ GAME SESSIONS ============
 
-def create_game_session(user_id: str, game_id: str) -> dict:
+def create_game_session(user_id: str, game_id: str, ip_address: str = None) -> dict:
     """Create a new game session."""
     with get_db_session() as session:
         now = datetime.now(timezone.utc).isoformat()
@@ -570,6 +583,7 @@ def create_game_session(user_id: str, game_id: str) -> dict:
             xp_earned=0.0,
             duration_seconds=0,
             started_at=now,
+            ip_address=ip_address,
             extra_data='{}'
         )
         

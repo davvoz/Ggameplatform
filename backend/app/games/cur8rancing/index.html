@@ -17,7 +17,8 @@
 <script src="../../sdk/platformsdk.obf.js"></script>
 
 <!-- Three.js via CDN import map (the engine is not vendored in this repo). -->
-<script type="importmap">
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js" integrity="sha384-/LpMD7oBVkFrIiKkLLOgyRFSJmFIFXBFkFpM7qFg3QFi2GiajdRjFPP1xXRiLlb" crossorigin="anonymous"></script>
+<script type="importmap-shim">
 {
   "imports": {
     "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -26,6 +27,6 @@
 }
 </script>
 
-<script type="module" src="js/main.js"></script>
+<script type="module-shim" src="js/main.js"></script>
 </body>
 </html>

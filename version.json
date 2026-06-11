@@ -1,8 +1,17 @@
 {
-  "version": "5.8.0",
-  "timestamp": "2026-06-08T21:20:12.319Z",
-  "buildNumber": 587,
+  "version": "5.9.0",
+  "timestamp": "2026-06-11T12:55:33.871Z",
+  "buildNumber": 588,
   "changelog": [
+    {
+      "version": "5.9.0",
+      "date": "2026-06-11",
+      "type": "minor",
+      "changes": [
+        "feat: update quest messages to English and add geo activity resolver",
+        "🔖 Bump version to 5.8.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.8.0",
       "date": "2026-06-08",
@@ -83,15 +92,6 @@
       "changes": [
         "fix:[A]gameover sound , details labels",
         "🔖 Bump version to 5.5.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.5.2",
-      "date": "2026-06-01",
-      "type": "patch",
-      "changes": [
-        "fix: [SM]update payout values for symbols and bonuses",
-        "🔖 Bump version to 5.5.1 [skip-version]"
       ]
     }
   ]

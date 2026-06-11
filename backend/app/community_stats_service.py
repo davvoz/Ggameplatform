@@ -193,3 +193,40 @@ class CommunityStatsService:
             "success": True,
             **data,
         }
+
+    # =========================================================================
+    # Geographic Activity (privacy-conscious World Activity Map)
+    # =========================================================================
+
+    # Map UI period tokens to a number of days.
+    _GEO_PERIOD_DAYS = {"today": 1, "7d": 7, "30d": 30}
+
+    def get_geo_activity(self, period: str = "30d") -> Dict[str, Any]:
+        """
+        Get approximate, country-level player activity for the World Activity Map.
+
+        Raw IPs are resolved server-side and discarded; only aggregated, coarse
+        country buckets (with representative centroid coordinates) are returned.
+
+        Args:
+            period: One of 'today', '7d', '30d' (defaults to '30d')
+
+        Returns:
+            Response dict with aggregated country activity and resolution counts.
+        """
+        period = period if period in self._GEO_PERIOD_DAYS else "30d"
+        days = self._GEO_PERIOD_DAYS[period]
+
+        ip_rows = self.repository.get_ip_activity(days=days)
+
+        # Lazy import keeps the optional geo dependency out of the hot import path.
+        from app.geo_activity import GeoActivityResolver
+
+        aggregated = GeoActivityResolver().aggregate(ip_rows)
+
+        return {
+            "success": True,
+            "period": period,
+            "days": days,
+            **aggregated,
+        }

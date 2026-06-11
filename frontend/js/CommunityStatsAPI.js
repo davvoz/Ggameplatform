@@ -126,6 +126,25 @@ class CommunityStatsAPI {
             throw error;
         }
     }
+
+    /**
+     * Fetch approximate, country-level activity for the World Activity Map.
+     * Privacy-safe: the backend resolves IPs to coarse countries and never
+     * returns IPs or any PII — only aggregated counts per country.
+     * @param {string} period - 'today' | '7d' | '30d' (default '30d')
+     * @returns {Promise<Object>} { success, period, days, countries[], resolved_ips, ... }
+     */
+    static async getGeoActivity(period = '30d') {
+        try {
+            const params = new URLSearchParams({ period });
+            const response = await fetch(`${STATS_API_URL}/api/community/stats/geo/activity?${params}`);
+            if (!response.ok) throw new Error('Failed to fetch geo activity');
+            return await response.json();
+        } catch (error) {
+            console.error('[CommunityStatsAPI] Error fetching geo activity:', error);
+            throw error;
+        }
+    }
 }
 
 // ES6 export

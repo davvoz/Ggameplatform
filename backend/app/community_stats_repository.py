@@ -95,6 +95,54 @@ class CommunityStatsRepository:
             raise RuntimeError(f"Error fetching daily game activity: {str(e)}") from e
 
     # =========================================================================
+    # Geographic Activity (privacy-conscious: aggregated by IP, no PII exposed)
+    # =========================================================================
+
+    def get_ip_activity(self, days: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get session activity grouped by raw IP address within a time window.
+
+        This returns intermediate data used ONLY server-side for approximate
+        geolocation. IP addresses are never returned to clients — the service
+        layer resolves them to coarse country-level aggregates and discards them.
+
+        Args:
+            days: Number of past days to include (rolling window)
+
+        Returns:
+            List of dicts: {ip_address, sessions_count, unique_players}
+        """
+        try:
+            date_expr = func.substr(GameSession.started_at, 1, 10)
+
+            query = self.db_session.query(
+                GameSession.ip_address.label("ip_address"),
+                func.count(GameSession.session_id).label("sessions_count"),
+                func.count(func.distinct(GameSession.user_id)).label("unique_players"),
+            ).filter(
+                GameSession.ip_address.isnot(None),
+                GameSession.ip_address != "",
+            )
+
+            if days > 0:
+                from datetime import datetime, timedelta, timezone
+                cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+                query = query.filter(date_expr >= cutoff)
+
+            results = query.group_by(GameSession.ip_address).all()
+
+            return [
+                {
+                    "ip_address": row.ip_address,
+                    "sessions_count": row.sessions_count,
+                    "unique_players": row.unique_players,
+                }
+                for row in results
+            ]
+        except SQLAlchemyError as e:
+            raise RuntimeError(f"Error fetching IP activity: {str(e)}") from e
+
+    # =========================================================================
     # Users Ranked List
     # =========================================================================
 

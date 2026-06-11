@@ -210,6 +210,28 @@ class TopAchieversResponse(BaseModel):
     coins_alltime: Optional[AchieverItem] = None
 
 
+class GeoActivityCountry(BaseModel):
+    """Aggregated, privacy-safe activity for a single country (no IPs/PII)."""
+    country_code: str
+    country: str
+    lat: float
+    lng: float
+    sessions: int
+    players: int
+
+
+class GeoActivityResponse(BaseModel):
+    """Response for the World Activity Map endpoint."""
+    success: bool
+    period: str
+    days: int
+    countries: List[GeoActivityCountry]
+    resolved_ips: int
+    unresolved_ips: int
+    total_sessions: int
+
+
+
 # =============================================================================
 # API Endpoints
 # =============================================================================
@@ -233,7 +255,7 @@ async def get_games_daily_activity(
         result = service.get_games_daily_activity(days=days, game_id=game_id)
         return result
     except Exception as e:
-        logger.error(f"[CommunityStats] Error fetching daily game activity: {e}")
+        logger.exception("[CommunityStats] Error fetching daily game activity")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch game activity: {str(e)}"
@@ -259,7 +281,7 @@ async def get_users_ranked(
         result = service.get_users_ranked(limit=limit, offset=offset)
         return result
     except Exception as e:
-        logger.error(f"[CommunityStats] Error fetching ranked users: {e}")
+        logger.exception("[CommunityStats] Error fetching ranked users")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch ranked users: {str(e)}"
@@ -285,7 +307,7 @@ async def get_economy_daily(
         result = service.get_economy_daily(days=days, game_id=game_id)
         return result
     except Exception as e:
-        logger.error(f"[CommunityStats] Error fetching daily economy: {e}")
+        logger.exception("[CommunityStats] Error fetching daily economy")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch daily economy stats: {str(e)}"
@@ -310,7 +332,7 @@ async def get_economy_weekly(
         result = service.get_economy_weekly(weeks=weeks, game_id=game_id)
         return result
     except Exception as e:
-        logger.error(f"[CommunityStats] Error fetching weekly economy: {e}")
+        logger.exception("[CommunityStats] Error fetching weekly economy")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch weekly economy stats: {str(e)}"
@@ -334,7 +356,7 @@ async def get_economy_historical(
         result = service.get_economy_historical(game_id=game_id)
         return result
     except Exception as e:
-        logger.error(f"[CommunityStats] Error fetching historical economy: {e}")
+        logger.exception("[CommunityStats] Error fetching historical economy")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch historical economy stats: {str(e)}"
@@ -356,8 +378,34 @@ async def get_top_achievers(
         result = service.get_top_achievers()
         return result
     except Exception as e:
-        logger.error(f"[CommunityStats] Error fetching top achievers: {e}")
+        logger.exception("[CommunityStats] Error fetching top achievers")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch top achievers: {str(e)}"
+        )
+
+
+@router.get("/geo/activity", response_model=GeoActivityResponse)
+async def get_geo_activity(
+    service: CommunityStatsServiceDep,
+    period: Annotated[str, Query(description="Time window: 'today', '7d', or '30d'")] = "30d",
+):
+    """
+    Get approximate, country-level player activity for the World Activity Map.
+
+    Privacy note: player IP addresses are resolved to an approximate **country**
+    server-side and immediately discarded. This endpoint never returns IPs or any
+    other personally identifiable information — only aggregated counts per country
+    with a representative centroid coordinate for map placement.
+
+    - **period**: 'today', '7d', or '30d' (default '30d')
+    """
+    try:
+        result = service.get_geo_activity(period=period)
+        return result
+    except Exception as e:
+        logger.exception("[CommunityStats] Error fetching geo activity")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch geo activity: {str(e)}"
         )

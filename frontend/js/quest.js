@@ -307,7 +307,7 @@ async function applyFilter(filter, questsList) {
         emptyMsg.innerHTML = `
             <div class="empty-icon">${emptyIcon}</div>
             <div class="empty-text">${emptyText}</div>
-            <div class="empty-subtext">Continua a giocare per sbloccare nuove quest!</div>
+            <div class="empty-subtext">Keep playing to unlock new quests!</div>
         `;
         questsList.appendChild(emptyMsg);
     }

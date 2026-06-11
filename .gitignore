@@ -438,3 +438,4 @@ roulette_prompt.txt
 slot_machine_prompt.txt
 RELAZIONE_TECNICA.md
 RELAZIONE_TECNICA_.md
+backend/scripts/seed_community_stats_data.py

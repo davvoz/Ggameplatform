@@ -2,6 +2,7 @@
 import { InfiniteScrollManager } from './InfiniteScrollManager.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import CommunityStatsAPI from './CommunityStatsAPI.js';
+import { CONTINENTS, projectLonLat } from './worldMapData.js';
 
 /**
  * CommunityStatsRenderer
@@ -39,6 +40,18 @@ class CommunityStatsRenderer {
     /** Active achiever period */
     achieverPeriod = 'daily'; // 'daily' | 'weekly' | 'alltime'
 
+    /** Active World Activity Map period */
+    geoPeriod = '30d'; // 'today' | '7d' | '30d'
+
+    /** Active Game Activity time window (in days) */
+    gamesPeriod = 30; // 7 | 15 | 30
+
+    /** @type {HTMLElement|null} Singleton custom tooltip element (on document.body) */
+    _tooltipEl = null;
+
+    /** @type {boolean} Whether the tooltip is pinned open (tap/click) */
+    _tooltipPinned = false;
+
     /** Animation duration (ms) */
     animDuration = 800;
 
@@ -70,6 +83,7 @@ class CommunityStatsRenderer {
      */
     destroy() {
         this._removeScrollSpy();
+        this._teardownTooltips();
         if (this._usersScrollManager) {
             this._usersScrollManager.destroy();
             this._usersScrollManager = null;
@@ -91,7 +105,7 @@ class CommunityStatsRenderer {
         try {
             const [historical, gamesDaily, usersRanked, economyDaily, topAchievers] = await Promise.all([
                 CommunityStatsAPI.getEconomyHistorical(),
-                CommunityStatsAPI.getGamesDailyActivity(30),
+                CommunityStatsAPI.getGamesDailyActivity(this.gamesPeriod),
                 CommunityStatsAPI.getUsersRanked(50, 0),
                 CommunityStatsAPI.getEconomyDaily(30),
                 CommunityStatsAPI.getTopAchievers(),
@@ -131,6 +145,7 @@ class CommunityStatsRenderer {
                 ${this._renderAnchorNav()}
                 ${this._renderPlatformHero(h)}
                 ${this._renderGameActivitySection()}
+                ${this._renderWorldActivitySection()}
                 ${this._renderEconomySection()}
                 ${this._renderTopAchieversSection()}
                 ${this._renderUsersRankedSection()}
@@ -142,6 +157,8 @@ class CommunityStatsRenderer {
             this._initAnimations();
             this._bindEvents();
             this._initScrollSpy();
+            this._initTooltips();
+            this._loadGeoActivity(this.geoPeriod);
         });
     }
 
@@ -157,6 +174,7 @@ class CommunityStatsRenderer {
         return [
             { id: 'cs-sec-overview', icon: '\ud83d\udcca', label: 'Overview' },
             { id: 'cs-sec-games', icon: '\ud83c\udfae', label: 'Games' },
+            { id: 'cs-sec-world', icon: '\ud83c\udf0d', label: 'World' },
             { id: 'cs-sec-economy', icon: '\ud83d\udcb0', label: 'Economy' },
             { id: 'cs-sec-fame', icon: '\ud83c\udfc5', label: 'Fame' },
             { id: 'cs-sec-leaderboard', icon: '\ud83c\udfc6', label: 'Board' },
@@ -230,29 +248,52 @@ class CommunityStatsRenderer {
     /** @private */
     _renderGameActivitySection() {
         const d = this._cache.gamesDaily;
+        const filter = this._renderGamesFilter();
+
         if (!d?.data?.length) {
             return `
             <section class="cs-section cs-section-card" id="cs-sec-games">
-                <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity</h3>
-                <div class="cs-empty">No game activity data yet.</div>
+                <div class="cs-section-head">
+                    <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity</h3>
+                    ${filter}
+                </div>
+                <div class="cs-empty">No game activity data for this period yet.</div>
             </section>`;
         }
 
         // Group data by date for stacked view
         const { dateLabels, gameNames, seriesMap } = this._groupByDate(d.data);
 
-        // Build stable color map (once) from the full game list
-        if (Object.keys(this._gameColorMap).length === 0) {
-            gameNames.forEach((g, i) => {
-                this._gameColorMap[g] = this.palette[i % this.palette.length];
-            });
-        }
+        // Build stable color map (additive) from the full game list
+        gameNames.forEach((g) => {
+            if (!this._gameColorMap[g]) {
+                const idx = Object.keys(this._gameColorMap).length;
+                this._gameColorMap[g] = this.palette[idx % this.palette.length];
+            }
+        });
+
+        // Respect the legend filter: hidden games must stay hidden across timeframe changes
+        const visibleGames = gameNames.filter(g => !this._hiddenGames.has(g));
+
+        // Derive an accurate header + subtitle from the real data span.
+        const windowDays = d.days || this.gamesPeriod;
+        const activeDays = dateLabels.length;
+        const firstDate = dateLabels[0];
+        const lastDate = dateLabels.at(-1);
+        const rangeText = firstDate === lastDate
+            ? this._fmtDateLong(firstDate)
+            : `${this._fmtDateShort(firstDate)} → ${this._fmtDateShort(lastDate)}`;
+        const subtitle = `Last ${windowDays} days`;
 
         return `
         <section class="cs-section cs-section-card" id="cs-sec-games">
-            <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity <small>Last 30 days</small></h3>
+            <div class="cs-section-head">
+                <h3 class="cs-section-title"><span class="cs-icon">🎮</span> Game Activity <small>${subtitle}</small></h3>
+                <span class="cs-section-meta">📅 ${rangeText} · ${activeDays} active day${activeDays === 1 ? '' : 's'}</span>
+                ${filter}
+            </div>
             <div class="cs-chart-container cs-fade-in">
-                ${this._renderBarChart(dateLabels, gameNames, seriesMap, 'sessions_count', 'Sessions')}
+                ${this._renderBarChart(dateLabels, visibleGames, seriesMap, 'sessions_count', 'Sessions')}
             </div>
             <div class="cs-chart-legend" id="csGameLegend">
                 ${gameNames.map((g) => `
@@ -264,6 +305,22 @@ class CommunityStatsRenderer {
             </div>
             ${this._renderGameBreakdownTable()}
         </section>`;
+    }
+
+    /**
+     * Render the Game Activity time-window filter (1 week / 15 / 30 days / all time).
+     * @private
+     */
+    _renderGamesFilter() {
+        const periods = [
+            { key: 7, label: '1 Week' },
+            { key: 15, label: '15 Days' },
+            { key: 30, label: '30 Days' },
+        ];
+        const btns = periods.map(p =>
+            `<button class="cs-seg-btn${this.gamesPeriod === p.key ? ' active' : ''}" data-games="${p.key}">${p.label}</button>`
+        ).join('');
+        return `<div class="cs-seg-filter" id="csGamesFilter" role="tablist" aria-label="Game activity period">${btns}</div>`;
     }
 
     /** @private */
@@ -304,9 +361,204 @@ class CommunityStatsRenderer {
     }
 
     // ========================================================================
-    // 3. Economy Section (XP & Coins daily / weekly / historical)
+    // 2b. World Activity Map (privacy-conscious, approximate geolocation)
     // ========================================================================
 
+    /** @private */
+    _renderWorldActivitySection() {
+        const periods = [
+            { key: 'today', label: 'Today' },
+            { key: '7d', label: '7 Days' },
+            { key: '30d', label: '30 Days' },
+        ];
+        const filterBtns = periods.map(p =>
+            `<button class="cs-seg-btn${this.geoPeriod === p.key ? ' active' : ''}" data-geo="${p.key}">${p.label}</button>`
+        ).join('');
+
+        return `
+        <section class="cs-section cs-section-card" id="cs-sec-world">
+            <div class="cs-section-head">
+                <h3 class="cs-section-title"><span class="cs-icon">🌍</span> World Activity <small>Where players are</small></h3>
+                <div class="cs-seg-filter" id="csGeoFilter" role="tablist" aria-label="World activity period">
+                    ${filterBtns}
+                </div>
+            </div>
+            <div class="cs-map-wrap" id="csWorldMap">
+                <div class="cs-map-loading"><span class="cs-spinner"></span> Loading world activity…</div>
+            </div>
+            <p class="cs-map-privacy">🔒 Locations are approximate (country-level) and privacy-protected — no IP addresses or personal data are stored or shown.</p>
+        </section>`;
+    }
+
+    /**
+     * Fetch and render the World Activity Map for a given period.
+     * Loaded independently so a geo failure never breaks the dashboard.
+     * @private
+     */
+    async _loadGeoActivity(period) {
+        const mapWrap = this.container?.querySelector('#csWorldMap');
+        if (!mapWrap) return;
+        mapWrap.innerHTML = `<div class="cs-map-loading"><span class="cs-spinner"></span> Loading world activity…</div>`;
+        try {
+            const geo = await CommunityStatsAPI.getGeoActivity(period);
+            this._cache.geo = geo;
+            mapWrap.innerHTML = this._renderWorldMap(geo);
+            requestAnimationFrame(() => this._animateMarkers());
+        } catch (err) {
+            console.error('[CommunityStatsRenderer] Geo load error:', err);
+            mapWrap.innerHTML = `<div class="cs-map-empty">
+                <span class="cs-map-empty-icon">🌍</span>
+                <p>World activity is unavailable right now.</p>
+            </div>`;
+        }
+    }
+
+    /**
+     * Build the world map SVG with continents + activity markers.
+     * @private
+     */
+    _renderWorldMap(geo) {
+        const countries = (geo?.countries || []).filter(c => typeof c.lat === 'number' && typeof c.lng === 'number');
+
+        if (!countries.length) {
+            return `<div class="cs-map-empty">
+                <span class="cs-map-empty-icon">🌍</span>
+                <p>No location data available for this period yet.</p>
+                <small>Player locations are approximate and privacy-protected.</small>
+            </div>`;
+        }
+
+        const W = 720;
+        const H = 360;
+        const maxSessions = Math.max(...countries.map(c => c.sessions), 1);
+
+        // Continents (share the exact projection used for markers).
+        const land = CONTINENTS.map(poly => {
+            const d = poly.map(([lon, lat], i) => {
+                const [x, y] = projectLonLat(lon, lat, W, H);
+                return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
+            }).join(' ') + ' Z';
+            return `<path d="${d}" class="cs-map-land"/>`;
+        }).join('');
+
+        // Markers, largest first so smaller ones stay clickable on top.
+        const markers = countries.map((c, i) => {
+            const [x, y] = projectLonLat(c.lng, c.lat, W, H);
+            const r = 4 + (c.sessions / maxSessions) * 14;
+            const tip = `<strong>${this._escapeHtml(c.country)}</strong>`
+                + `<span class="cs-tip-row">🎮 <b>${this._fmtCompact(c.sessions)}</b> sessions</span>`
+                + `<span class="cs-tip-row">👥 <b>${this._fmtCompact(c.players)}</b> player${c.players === 1 ? '' : 's'}</span>`;
+            return `<g class="cs-map-marker" data-cs-tip="${this._attrEscape(tip)}" tabindex="0" style="--delay:${i * 45}ms">
+                <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(r * 1.9).toFixed(1)}" class="cs-map-dot-halo"/>
+                <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" class="cs-map-dot-pulse"/>
+                <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" class="cs-map-dot"/>
+            </g>`;
+        }).join('');
+
+        const totalSessions = geo.total_sessions || countries.reduce((s, c) => s + c.sessions, 0);
+
+        return `
+        <div class="cs-map-summary">
+            <span class="cs-map-stat"><b>${countries.length}</b> ${countries.length === 1 ? 'country' : 'countries'}</span>
+            <span class="cs-map-stat"><b>${this._fmtCompact(totalSessions)}</b> sessions</span>
+        </div>
+        <div class="cs-map-canvas">
+            <svg viewBox="0 0 ${W} ${H}" class="cs-map-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World activity map">
+                <defs>
+                    <radialGradient id="csMapMarkerGrad" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#00d9ff"/>
+                        <stop offset="100%" stop-color="#0096b3"/>
+                    </radialGradient>
+                </defs>
+                <g class="cs-map-graticule">
+                    ${this._renderGraticule(W, H)}
+                </g>
+                <g class="cs-map-lands">${land}</g>
+                <g class="cs-map-markers">${markers}</g>
+            </svg>
+        </div>`;
+    }
+
+    /** Render a subtle lon/lat graticule grid. @private */
+    _renderGraticule(W, H) {
+        const lines = [];
+        for (let lon = -150; lon <= 150; lon += 30) {
+            const [x] = projectLonLat(lon, 0, W, H);
+            lines.push(`<line x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${H}" />`);
+        }
+        for (let lat = -60; lat <= 60; lat += 30) {
+            const [, y] = projectLonLat(0, lat, W, H);
+            lines.push(`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" />`);
+        }
+        return lines.join('');
+    }
+
+    /** Trigger marker entrance animation after map mount. @private */
+    _animateMarkers() {
+        const markers = this.container?.querySelectorAll('#csWorldMap .cs-map-marker');
+        markers?.forEach(m => m.classList.add('cs-map-marker--in'));
+    }
+
+    /**
+     * Switch the World Activity Map period.
+     * @private
+     */
+    _handleGeoFilter(btn) {
+        const period = btn.dataset.geo;
+        if (!period || period === this.geoPeriod) return;
+        this.geoPeriod = period;
+        this.container.querySelectorAll('#csGeoFilter .cs-seg-btn')
+            .forEach(b => b.classList.toggle('active', b === btn));
+        this._hideTooltip();
+        this._loadGeoActivity(period);
+    }
+
+    /**
+     * Switch the Game Activity time window (1 week / 15 / 30 days / all time).
+     * @private
+     */
+    _handleGamesFilter(btn) {
+        const days = Number(btn.dataset.games);
+        if (!days || days === this.gamesPeriod) return;
+        this.gamesPeriod = days;
+        this.container.querySelectorAll('#csGamesFilter .cs-seg-btn')
+            .forEach(b => b.classList.toggle('active', b === btn));
+        this._loadGamesActivity(days);
+    }
+
+    /**
+     * Fetch game activity for a given window and re-render the section.
+     * Loaded independently so a failure never breaks the dashboard.
+     * @private
+     */
+    async _loadGamesActivity(days) {
+        const chartEl = this.container?.querySelector('#cs-sec-games .cs-chart-container');
+        if (chartEl) {
+            chartEl.innerHTML = `<div class="cs-map-loading"><span class="cs-spinner"></span> Loading game activity…</div>`;
+        }
+        try {
+            const gamesDaily = await CommunityStatsAPI.getGamesDailyActivity(days);
+            this._cache.gamesDaily = gamesDaily;
+        } catch (err) {
+            console.error('[CommunityStatsRenderer] Games activity load error:', err);
+        }
+
+        const section = this.container?.querySelector('#cs-sec-games');
+        if (!section) return;
+        this._hideTooltip();
+        section.outerHTML = this._renderGameActivitySection();
+
+        // Re-bind interactive controls inside the freshly rendered section.
+        this.container.querySelectorAll('#csGamesFilter .cs-seg-btn')
+            .forEach(b => b.addEventListener('click', () => this._handleGamesFilter(b)));
+        this.container.querySelectorAll('#csGameLegend .cs-legend-btn')
+            .forEach(b => b.addEventListener('click', () => this._handleLegendToggle(b)));
+        this._initAnimations();
+    }
+
+    // ========================================================================
+    // 3. Economy Section (XP & Coins daily / weekly / historical)
+    // ========================================================================
     /** @private */
     _renderEconomySection() {
         return `
@@ -659,33 +911,67 @@ class CommunityStatsRenderer {
         });
         if (maxTotal === 0) maxTotal = 1;
 
-        // Show at most 15 dates (last ones)
-        const visibleLabels = dateLabels.slice(-15);
+        // Show at most 30 dates (the rolling window); container scrolls horizontally.
+        const visibleLabels = dateLabels.slice(-30);
 
         const bars = visibleLabels.map(date => {
             let total = 0;
+            const breakdown = [];
             gameNames.forEach(game => {
-                total += (seriesMap[game]?.[date]?.[valueKey] || 0);
+                const val = seriesMap[game]?.[date]?.[valueKey] || 0;
+                total += val;
+                if (val > 0) breakdown.push({ game, val });
             });
 
             const segments = gameNames.map((game) => {
                 const val = seriesMap[game]?.[date]?.[valueKey] || 0;
+                if (val <= 0) return '';
                 const pct = (val / maxTotal) * 100;
                 const color = this._gameColorMap[game] || '#888';
-                return `<div class="cs-bar-seg" style="height:${pct}%;background:${color}" title="${game}: ${val}"></div>`;
+                const segTip = `<strong>${this._escapeHtml(game)}</strong>`
+                    + `<span class="cs-tip-row">${this._fmtDateLong(date)}</span>`
+                    + `<span class="cs-tip-row"><b>${this._fmtCompact(val)}</b> ${label.toLowerCase()}</span>`;
+                return `<div class="cs-bar-seg" style="height:${pct}%;background:${color}" data-cs-tip="${this._attrEscape(segTip)}"></div>`;
             }).join('');
 
+            // Column-level tooltip: full date + weekday + total + per-game breakdown.
+            const breakdownRows = breakdown
+                .toSorted((a, b) => b.val - a.val)
+                .map(b => `<span class="cs-tip-row"><span class="cs-tip-dot" style="background:${this._gameColorMap[b.game] || '#888'}"></span>${this._escapeHtml(b.game)} <b>${this._fmtCompact(b.val)}</b></span>`)
+                .join('');
+            const colTip = `<strong>${this._fmtDateLong(date)}</strong>`
+                + `<span class="cs-tip-row cs-tip-total"><b>${this._fmtCompact(total)}</b> ${label.toLowerCase()}</span>`
+                + breakdownRows;
+
+            const dow = this._weekdayShort(date);
+            const day = this._dayOfMonth(date);
+
             return `
-            <div class="cs-bar-col">
+            <div class="cs-bar-col" data-cs-tip="${this._attrEscape(colTip)}">
+                <span class="cs-bar-value">${this._fmtCompact(total)}</span>
                 <div class="cs-bar-stack" style="height:100%">
                     ${segments}
                 </div>
-                <span class="cs-bar-label">${date.slice(5)}</span>
-                <span class="cs-bar-value">${total}</span>
+                <span class="cs-bar-label"><span class="cs-bar-dow">${dow}</span><span class="cs-bar-day">${day}</span></span>
             </div>`;
         }).join('');
 
-        return `<div class="cs-bar-chart">${bars}</div>`;
+        // Y-axis scale (0 → mid → max) with gridlines behind the bars.
+        const yAxis = `
+            <div class="cs-bar-yaxis">
+                <span>${this._fmtCompact(maxTotal)}</span>
+                <span>${this._fmtCompact(Math.round(maxTotal / 2))}</span>
+                <span>0</span>
+            </div>`;
+
+        return `
+        <div class="cs-bar-frame">
+            ${yAxis}
+            <div class="cs-bar-plot">
+                <div class="cs-bar-grid"><span></span><span></span><span></span></div>
+                <div class="cs-bar-chart">${bars}</div>
+            </div>
+        </div>`;
     }
 
     /**
@@ -832,6 +1118,18 @@ class CommunityStatsRenderer {
         const legendBtns = this.container?.querySelectorAll('#csGameLegend .cs-legend-btn');
         legendBtns?.forEach(btn => {
             btn.addEventListener('click', () => this._handleLegendToggle(btn));
+        });
+
+        // Game Activity time-window filter
+        const gamesBtns = this.container?.querySelectorAll('#csGamesFilter .cs-seg-btn');
+        gamesBtns?.forEach(btn => {
+            btn.addEventListener('click', () => this._handleGamesFilter(btn));
+        });
+
+        // World Activity Map period filter
+        const geoBtns = this.container?.querySelectorAll('#csGeoFilter .cs-seg-btn');
+        geoBtns?.forEach(btn => {
+            btn.addEventListener('click', () => this._handleGeoFilter(btn));
         });
 
         // Achiever period tabs
@@ -1103,6 +1401,195 @@ class CommunityStatsRenderer {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Escape an HTML string for safe placement inside a double-quoted attribute.
+     * Reading it back via getAttribute() returns the original HTML, so the
+     * delegated tooltip can render it with innerHTML.
+     * @private
+     */
+    _attrEscape(html) {
+        return String(html).replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+    }
+
+    /** Parse an ISO YYYY-MM-DD date string to a local Date. @private */
+    _parseDate(dateStr) {
+        return new Date(`${dateStr}T00:00:00`);
+    }
+
+    /** Short English weekday (e.g. "Mon"). @private */
+    _weekdayShort(dateStr) {
+        return this._parseDate(dateStr).toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    /** Day of month (e.g. "5"). @private */
+    _dayOfMonth(dateStr) {
+        return String(this._parseDate(dateStr).getDate());
+    }
+
+    /** Long English date with weekday (e.g. "Monday, Jan 5"). @private */
+    _fmtDateLong(dateStr) {
+        return this._parseDate(dateStr).toLocaleDateString('en-US', {
+            weekday: 'long', month: 'short', day: 'numeric',
+        });
+    }
+
+    /** Short English date (e.g. "Jan 5"). @private */
+    _fmtDateShort(dateStr) {
+        return this._parseDate(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    /**
+     * Compact number formatter for axes/labels: 1.2K, 15K, 1.3M.
+     * @private
+     */
+    _fmtCompact(n) {
+        const num = typeof n === 'number' ? n : Number(n) || 0;
+        const abs = Math.abs(num);
+        if (abs >= 1_000_000) {
+            return (num / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1).replace(/\.0$/, '') + 'M';
+        }
+        if (abs >= 1_000) {
+            return (num / 1_000).toFixed(abs >= 10_000 ? 0 : 1).replace(/\.0$/, '') + 'K';
+        }
+        return num.toLocaleString();
+    }
+
+    // ========================================================================
+    // Custom tooltips (chart bars + map markers)
+    // Desktop hover + click-to-pin; mobile tap-to-pin. Viewport-aware, never
+    // overflows, closes on outside tap / scroll / Escape / new selection.
+    // ========================================================================
+
+    /** Lazily create the singleton tooltip element on <body>. @private */
+    _ensureTooltip() {
+        if (this._tooltipEl) return this._tooltipEl;
+        const el = document.createElement('div');
+        el.className = 'cs-tooltip';
+        el.setAttribute('role', 'tooltip');
+        el.style.display = 'none';
+        document.body.appendChild(el);
+        this._tooltipEl = el;
+        return el;
+    }
+
+    /** Show the tooltip anchored to a target element. @private */
+    _showTooltipForTarget(target, pinned) {
+        const tip = target.dataset.csTip;
+        if (!tip) return;
+        const el = this._ensureTooltip();
+        el.innerHTML = tip;
+        el.style.display = 'block';
+        el.classList.toggle('cs-tooltip--pinned', !!pinned);
+        this._tooltipPinned = !!pinned;
+        this._positionTooltip(target);
+    }
+
+    /** Position the tooltip near the target, clamped within the viewport. @private */
+    _positionTooltip(target) {
+        const el = this._tooltipEl;
+        if (!el) return;
+        const r = target.getBoundingClientRect();
+        const tw = el.offsetWidth;
+        const th = el.offsetHeight;
+        const margin = 8;
+        const vw = globalThis.innerWidth;
+        const vh = globalThis.innerHeight;
+
+        let left = r.left + r.width / 2 - tw / 2;
+        let top = r.top - th - 10; // prefer above
+        let placement = 'top';
+
+        if (top < margin) {
+            top = r.bottom + 10; // flip below if no room above
+            placement = 'bottom';
+        }
+        left = Math.max(margin, Math.min(left, vw - tw - margin));
+        top = Math.max(margin, Math.min(top, vh - th - margin));
+
+        el.style.left = `${Math.round(left)}px`;
+        el.style.top = `${Math.round(top)}px`;
+        el.dataset.placement = placement;
+    }
+
+    /** Hide the tooltip. @private */
+    _hideTooltip() {
+        if (this._tooltipEl) {
+            this._tooltipEl.style.display = 'none';
+            this._tooltipEl.classList.remove('cs-tooltip--pinned');
+        }
+        this._tooltipPinned = false;
+        this._csHoverTarget = null;
+        this._csPinTarget = null;
+    }
+
+    /** Attach delegated tooltip listeners. @private */
+    _initTooltips() {
+        this._ensureTooltip();
+        const dash = this.container?.querySelector('.cs-dashboard');
+        if (!dash) return;
+
+        this._tipOver = (e) => {
+            if (e.pointerType && e.pointerType !== 'mouse') return;
+            if (this._tooltipPinned) return;
+            const t = e.target.closest('[data-cs-tip]');
+            if (!t) return;
+            this._csHoverTarget = t;
+            this._showTooltipForTarget(t, false);
+        };
+        this._tipOut = (e) => {
+            if (e.pointerType && e.pointerType !== 'mouse') return;
+            if (this._tooltipPinned) return;
+            const t = e.target.closest('[data-cs-tip]');
+            if (!t) return;
+            if (e.relatedTarget && t.contains(e.relatedTarget)) return;
+            this._hideTooltip();
+        };
+        this._tipClick = (e) => {
+            const t = e.target.closest('[data-cs-tip]');
+            if (!t) return;
+            if (this._tooltipPinned && this._csPinTarget === t) {
+                this._hideTooltip();
+            } else {
+                this._csPinTarget = t;
+                this._showTooltipForTarget(t, true);
+            }
+        };
+        this._tipDocClick = (e) => {
+            if (!this._tooltipPinned) return;
+            if (e.target.closest('[data-cs-tip]') || e.target.closest('.cs-tooltip')) return;
+            this._hideTooltip();
+        };
+        this._tipScroll = () => { if (this._tooltipEl && this._tooltipEl.style.display !== 'none') this._hideTooltip(); };
+        this._tipKey = (e) => { if (e.key === 'Escape') this._hideTooltip(); };
+
+        dash.addEventListener('pointerover', this._tipOver);
+        dash.addEventListener('pointerout', this._tipOut);
+        dash.addEventListener('click', this._tipClick);
+        document.addEventListener('click', this._tipDocClick, true);
+        globalThis.addEventListener('scroll', this._tipScroll, true);
+        document.addEventListener('keydown', this._tipKey);
+    }
+
+    /** Remove tooltip listeners and element. @private */
+    _teardownTooltips() {
+        const dash = this.container?.querySelector('.cs-dashboard');
+        if (dash) {
+            if (this._tipOver) dash.removeEventListener('pointerover', this._tipOver);
+            if (this._tipOut) dash.removeEventListener('pointerout', this._tipOut);
+            if (this._tipClick) dash.removeEventListener('click', this._tipClick);
+        }
+        if (this._tipDocClick) document.removeEventListener('click', this._tipDocClick, true);
+        if (this._tipScroll) globalThis.removeEventListener('scroll', this._tipScroll, true);
+        if (this._tipKey) document.removeEventListener('keydown', this._tipKey);
+        if (this._tooltipEl) {
+            this._tooltipEl.remove();
+            this._tooltipEl = null;
+        }
+        this._tooltipPinned = false;
+        this._csHoverTarget = null;
+        this._csPinTarget = null;
     }
 
     /**

@@ -54,7 +54,6 @@ export class EntityRenderer {
         this._bossRenderer.setup(ctx, time);
     }
 
-    // â”€â”€ Public draw API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     /**
      * Draw all entities belonging to a section (world-space).
@@ -97,7 +96,6 @@ export class EntityRenderer {
         }
     }
 
-    // â”€â”€ Entity draw methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     _drawWalls(section, p) {
         const ctx = this._ctx;
@@ -161,12 +159,10 @@ export class EntityRenderer {
         const ctx = this._ctx;
         if (!section.corridors?.length) return;
 
-        // â”€â”€ Background fill (drawn first, walls on top) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         for (const co of section.corridors) {
             this._drawCorridorBg(co, p);
         }
 
-        // â”€â”€ Walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
@@ -239,12 +235,10 @@ export class EntityRenderer {
         const ctx = this._ctx;
         if (!section.curvedCorridors?.length) return;
 
-        // â”€â”€ Background fill (drawn first, arcs on top) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         for (const cc of section.curvedCorridors) {
             this._drawCurvedCorridorBg(cc, p);
         }
 
-        // â”€â”€ Arc walls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 22;
@@ -292,7 +286,7 @@ export class EntityRenderer {
         const glow   = p.wallGlow ?? p.wall ?? '#880088';
         const bgCol  = p.bg      ?? '#04020a';
 
-        // Radial gradient: dark at inner edge â†’ glow at centre ring â†’ dark at outer edge
+        // Radial gradient: dark at inner edge → glow at centre ring → dark at outer edge
         const grad = ctx.createRadialGradient(cc.cx, cc.cy, inner, cc.cx, cc.cy, outer);
         grad.addColorStop(0,    _hexToRgba(bgCol, 0.97));
         grad.addColorStop(0.25, _hexToRgba(glow,  0.06 + 0.04 * pulse));
@@ -328,7 +322,7 @@ export class EntityRenderer {
     _drawTarget(t, p) {
         const ctx = this._ctx;
 
-        // â”€â”€ Respawning: animated pop-up from bottom â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Respawning: animated pop-up from bottom ────────────────────────────────
         if (t.respawning && t.respawnProgress > 0) {
             const prog = t.respawnProgress;          // 0..1
             const h    = t.h * prog;
@@ -347,14 +341,14 @@ export class EntityRenderer {
             return;
         }
 
-        // â”€â”€ Down (flat line) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Down (flat line) ───────────────────────────────────────────────────────
         if (!t.standing) {
             ctx.fillStyle = C.COLOR_DIM;
             ctx.fillRect(t.x, t.y + t.h - 2, t.w, 2);
             return;
         }
 
-        // â”€â”€ Standing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Standing ───────────────────────────────────────────────────────────────
         ctx.save();
         ctx.shadowColor = p.wallGlow;
         ctx.shadowBlur  = 8;
@@ -812,7 +806,6 @@ export class EntityRenderer {
         ctx.translate(cx, cy);
         ctx.rotate((k.angleDeg ?? 0) * Math.PI / 180);
 
-        // â”€â”€ Housing body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         ctx.shadowColor = fired ? p.accent : p.wallGlow;
         ctx.shadowBlur  = fired ? 20 : 6;
         ctx.fillStyle   = '#080812';
@@ -838,7 +831,7 @@ export class EntityRenderer {
         ctx.shadowBlur  = fired ? 22 : 8;
         ctx.strokeRect(-w/2 + 0.5, -h/2 + 0.5, w - 1, h - 1);
 
-        // â”€â”€ Piston rods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Piston rods ───────────────────────────────────────────────────────────────
         const rodTopY    = -h/2 - kickOut + plateH;
         const rodBottomY =  h/2 - 2;
         ctx.strokeStyle  = fired ? p.accent : '#44556a';
@@ -851,7 +844,7 @@ export class EntityRenderer {
             ctx.stroke();
         }
 
-        // â”€â”€ Launch surface plate (punches outward in local -y on fire) â”€â”€â”€â”€â”€
+        // ── Launch surface plate (punches outward in local -y on fire) ────────────────────────────────
         const plateTopY = -h/2 - kickOut;
         ctx.shadowBlur  = fired ? 28 : 12;
         ctx.fillStyle   = fired ? '#ffffff' : p.accent;
@@ -866,7 +859,7 @@ export class EntityRenderer {
         ctx.lineTo( w/2 - 5, plateTopY + plateH * 0.45);
         ctx.stroke();
 
-        // â”€â”€ Corner bolts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── Corner bolts ────────────────────────────────────────────────────────────────
         ctx.shadowBlur = 0;
         const bolts = [[-w/2+3.5, -h/2+3.5], [w/2-3.5, -h/2+3.5], [-w/2+3.5, h/2-3.5], [w/2-3.5, h/2-3.5]];
         for (const [bx, by] of bolts) {
@@ -929,7 +922,7 @@ export class EntityRenderer {
 
         ctx.save();
 
-        // â”€â”€ BASE MOUNT: thick plate + two mounting bolts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── BASE MOUNT: thick plate + two mounting bolts ────────────────────────────────
         ctx.shadowColor = glowColor;
         ctx.shadowBlur  = baseShadow;
         ctx.strokeStyle = mainColor;
@@ -971,7 +964,7 @@ export class EntityRenderer {
         ctx.moveTo(b2x, b2y - 1.4); ctx.lineTo(b2x, b2y + 1.4);
         ctx.stroke();
 
-        // â”€â”€ COIL: two-pass depth illusion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ── COIL: two-pass depth illusion ────────────────────────────────────────────────
         // Pass 1: wide dark shadow (simulates the back of the coil tube)
         ctx.shadowBlur  = 0;
         ctx.lineWidth   = 3.4;
@@ -1001,7 +994,7 @@ export class EntityRenderer {
         ctx.lineTo(coilEndX, coilEndY);
         ctx.stroke();
 
-        // â”€â”€ PAD: plunger cap  body + front face + side walls + bevel â”€â”€â”€â”€â”€â”€â”€
+        // ── PAD: plunger cap  body + front face + side walls + bevel ────────────────────────────────
         ctx.shadowColor = glowColor;
         ctx.shadowBlur  = padBlur;
         ctx.strokeStyle = padColor;

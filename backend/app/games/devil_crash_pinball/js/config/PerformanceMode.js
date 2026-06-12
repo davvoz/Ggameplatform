@@ -22,7 +22,7 @@ catch (err) { console.debug('[PerformanceMode] legacy localStorage cleanup skipp
 
 export const PerformanceMode = {
     /** @type {boolean} */
-    lowPerf: false,
+    lowPerf: true,
 
     /** Flip the flag. Returns the new value. Not persisted. */
     toggle() {

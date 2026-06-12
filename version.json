@@ -1,8 +1,17 @@
 {
-  "version": "5.9.0",
-  "timestamp": "2026-06-11T12:55:33.871Z",
-  "buildNumber": 588,
+  "version": "5.9.1",
+  "timestamp": "2026-06-12T07:15:20.857Z",
+  "buildNumber": 589,
   "changelog": [
+    {
+      "version": "5.9.1",
+      "date": "2026-06-12",
+      "type": "patch",
+      "changes": [
+        "fix: [R]enhance visual presentation with pre-rendered layers and dynamic effects for roulette game",
+        "🔖 Bump version to 5.9.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.9.0",
       "date": "2026-06-11",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: [A]adjust shop label position and add desktop indicator",
         "🔖 Bump version to 5.5.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.5.3",
-      "date": "2026-06-02",
-      "type": "patch",
-      "changes": [
-        "fix:[A]gameover sound , details labels",
-        "🔖 Bump version to 5.5.2 [skip-version]"
       ]
     }
   ]

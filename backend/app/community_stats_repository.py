@@ -124,7 +124,11 @@ class CommunityStatsRepository:
                 GameSession.ip_address != "",
             )
 
-            if days > 0:
+            if days == 1:
+                from datetime import datetime, timezone
+                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                query = query.filter(date_expr == today)
+            elif days > 1:
                 from datetime import datetime, timedelta, timezone
                 cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
                 query = query.filter(date_expr >= cutoff)

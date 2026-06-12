@@ -50,9 +50,38 @@ export const GameConfig = Object.freeze({
         WHEEL_RIM_LT: '#d4a017',
         SHADOW:       'rgba(0,0,0,0.55)',
         OVERLAY:      'rgba(8,6,12,0.82)',
+        // Premium presentation accents (visual only).
+        GOLD_DEEP:    '#9a7212',
+        GOLD_PALE:    '#ffe9a8',
+        FELT_GLOW:    '#2a6e44',
+        PANEL_DARK:   'rgba(10,10,18,0.92)',
+        PANEL_EDGE:   'rgba(240,192,64,0.35)',
+        GLASS:        'rgba(255,255,255,0.06)',
+        WIN_GLOW:     'rgba(240,192,64,0.55)',
+        VIGNETTE:     'rgba(0,0,0,0.45)',
     }),
 
     FRAME_DT_CLAMP: 0.05,
+});
+
+/**
+ * Presentation-only easing curves shared by renderers and states.
+ * Pure functions — no gameplay influence.
+ */
+export const Ease = Object.freeze({
+    outCubic:  (t) => 1 - Math.pow(1 - t, 3),
+    outQuint:  (t) => 1 - Math.pow(1 - t, 5),
+    inOutSine: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+    outBack:   (t) => {
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    },
+    outElastic: (t) => {
+        if (t === 0 || t === 1) return t;
+        const c4 = (2 * Math.PI) / 3;
+        return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+    },
 });
 
 // Static set of red numbers — referenced by data selectors.

@@ -14,6 +14,7 @@ from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameS
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from app.xp_calculator import XPCalculator, SessionContext
 from app.quest_tracker import track_quest_progress_for_session, track_quest_progress_for_login
+from app.game_score_validators import validate_game_score
 
 # Database in cartella dedicata (persistente con Docker volumes)
 DATABASE_PATH = Path(__file__).parent.parent / "data" / "game_platform.db"
@@ -713,13 +714,25 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
         
         multiplier = user.cur8_multiplier
         game_id = game_session.game_id
-        
+
+        # ── anti-cheat: void implausible scores BEFORE they touch the leaderboard,
+        #    high score, XP or quests. Games without a validator pass through.
+        validated_score, reject_reason = validate_game_score(game_id, score, duration_seconds, extra_data)
+        if reject_reason is not None:
+            print(f"[DB] ⚠️ Score rejected for {game_id} ({reject_reason}): {score} → 0")
+            score = 0
+            extra_data = dict(extra_data or {})
+            extra_data['score_rejected'] = reject_reason
+            for _k in ('distance', 'tricks', 'coins_collected', 'levels_completed'):
+                if _k in extra_data:
+                    extra_data[_k] = 0          # a voided run grants no XP/quest progress either
+
         if extra_data:
             game_session.extra_data = json.dumps(extra_data)
-        
+
         print(f"[DB] User multiplier: {multiplier}, current total_xp: {user.total_xp_earned}")
         print(f"[DB] Extra data received: {extra_data}")
-        
+
         is_new_high_score, previous_high_score = _check_high_score(user, game_id, score)
         
         session_extra_data = json.loads(game_session.extra_data) if game_session.extra_data else {}

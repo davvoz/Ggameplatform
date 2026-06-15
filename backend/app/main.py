@@ -24,6 +24,7 @@ from app.games.blackjack_be.router import router as blackjack_router
 from app.games.modern_pong_be.router import router as modern_pong_router
 from app.games.devil_crash_pinball_be.router import router as devil_crash_router
 from app.games.minion_clash_be.router import router as minion_clash_router, ws_router as minion_clash_ws_router
+from app.games.stunt_hill_be.router import router as stunt_hill_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -197,6 +198,7 @@ app.include_router(devil_crash_router)
 app.include_router(modern_pong_router, tags=["Modern Pong"])
 app.include_router(minion_clash_router, tags=["Minion Clash"])
 app.include_router(minion_clash_ws_router, tags=["Minion Clash Multiplayer"])
+app.include_router(stunt_hill_router, tags=["Stunt Hill Ranked"])
 #app.include_router(city_world_router, tags=["City World"])
 app.include_router(push_notifications.router, tags=["push-notifications"])
 app.include_router(campaigns.router, prefix="/campaigns", tags=["campaigns"])

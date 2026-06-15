@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Stunt Hill</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="loading-screen">
+    <div class="loader-spinner"></div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <button id="fullscreen-btn" title="Fullscreen" aria-label="Fullscreen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+    </svg>
+  </button>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-big"><span id="hud-score">0</span></div>
+    <div class="hud-sub"><span id="hud-dist">0</span> m &nbsp;·&nbsp; <span id="hud-spd">0</span> km/h &nbsp;·&nbsp; best <span id="hud-best">0</span></div>
+    <div class="hud-lives" id="hud-lives">❤❤❤</div>
+    <div class="hud-combo" id="hud-combo"></div>
+    <div class="combobar"><i id="hud-combobar"></i></div>
+  </div>
+  <div class="timer" id="hud-timer">1:30</div>
+  <div class="boostwrap"><div class="boostbar" id="hud-boostbar"></div></div>
+  <div class="zone" id="hud-zone"></div>
+  <div class="trick" id="hud-trick"></div>
+  <div class="countdown" id="hud-count"></div>
+  <div class="crash" id="hud-crash">CRASHED!</div>
+
+  <!-- Game over -->
+  <div class="gameover" id="gameover">
+    <div class="go-box">
+      <div class="go-reason" id="go-reason">GAME OVER</div>
+      <div class="go-label">SCORE</div>
+      <div class="go-score" id="go-score">0</div>
+      <div class="go-detail" id="go-detail"></div>
+      <div class="go-unlock" id="go-unlock"></div>
+      <button class="go-restart" id="go-restart">▶ PLAY AGAIN</button>
+      <button class="go-menu" id="go-menu">☰ MENU</button>
+    </div>
+  </div>
+
+  <!-- Menu: title + story map grid + ranked -->
+  <div class="menu" id="menu">
+    <div class="menu-home" id="menu-home">
+      <div class="menu-title">STUNT<span>HILL</span></div>
+      <button class="menu-btn story" id="btn-story">🏁 FREE RIDE</button>
+      <button class="menu-btn ranked" id="btn-ranked">🏆 RANKED</button>
+      <button class="menu-btn garage" id="btn-garage">🚗 GARAGE</button>
+      <div class="menu-hint">Free Ride: finish a map to unlock the next · Ranked: this week's map, everyone competes on Leaderboard</div>
+    </div>
+    <div class="menu-grid-wrap" id="menu-grid-wrap">
+      <div class="menu-grid-head">
+        <button class="menu-back" id="btn-menu-back">‹ BACK</button>
+        <span>CHOOSE A MAP</span>
+      </div>
+      <div class="menu-grid" id="menu-grid"></div>
+    </div>
+    <div class="menu-grid-wrap" id="menu-garage-wrap">
+      <div class="menu-grid-head">
+        <button class="menu-back" id="btn-garage-back">‹ BACK</button>
+        <span>GARAGE</span>
+        <span class="garage-balance" id="garage-balance">🪙 —</span>
+      </div>
+      <div class="menu-grid car-grid" id="menu-car-grid"></div>
+    </div>
+  </div>
+
+  <!-- Touch controls -->
+  <div class="controls">
+    <div class="pedal brake" id="btn-brake">◄ BRAKE</div>
+    <div class="boost-btn" id="btn-boost"><span class="ic">🔥</span>BOOST</div>
+    <div class="pedal gas" id="btn-gas">GAS ►</div>
+  </div>
+  <div class="hint">→ gas · ← brake · ↑/Space boost · R reset</div>
+
+  <!-- Platform SDK (UMD → globalThis.PlatformSDK) -->
+  <script src="../../../sdk/platformsdk.obf.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,8 +1,17 @@
 {
-  "version": "5.9.3",
-  "timestamp": "2026-06-12T21:57:22.816Z",
-  "buildNumber": 591,
+  "version": "5.10.0",
+  "timestamp": "2026-06-15T19:53:05.148Z",
+  "buildNumber": 592,
   "changelog": [
+    {
+      "version": "5.10.0",
+      "date": "2026-06-15",
+      "type": "minor",
+      "changes": [
+        "feat: add Stunt Hill game with thumbnail generation, backend services, and registration script",
+        "🔖 Bump version to 5.9.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.9.3",
       "date": "2026-06-12",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: add  ? to .gitignore",
         "🔖 Bump version to 5.6.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.6.0",
-      "date": "2026-06-04",
-      "type": "minor",
-      "changes": [
-        "feat: add technical analysis report for Ggameplatform",
-        "🔖 Bump version to 5.5.5 [skip-version]"
       ]
     }
   ]

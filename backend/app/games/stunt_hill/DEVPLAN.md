@@ -335,7 +335,7 @@ backend/scripts/register_stunt_hill.py   # upsert idempotente in games + XPRule 
 ## 6. Integrazione piattaforma (come funziona qui)
 - SDK = `backend/sdk/platformsdk.js` (UMD → `globalThis.PlatformSDK`). Eventi: `ready`, `config` (riceve userId/username), `scoreUpdate`, `gameOver(score,{extra_data})`, `resetSession`.
 - `PlatformBridge.gameOver(score, stats, mode)`: in mode **'free'** lo score è azzerato → **non tocca la leaderboard**. Solo il mode **'ranked'** invierebbe lo score vero. → "**leaderboard solo per il ranked**" (come fa il gioco *altitude*).
-- **Validazione score lato server (anti-cheat)**: lo score di TUTTI i giochi entra dalla piattaforma in `database.end_game_session()` (chiamato da `POST /api/users/sessions/end`), che fa `game_session.score = score` → trigger → tabella `Leaderboard`. Lì è agganciato `game_score_validators.validate_game_score(game_id, score, duration, extra_data)`: per `stunt_hill` (solo run ranked) applica il plausibility gate (`stunt_hill_be.service.check_ranked_run`) e **azzera** score+metriche se la run è implausibile o sulla mappa sbagliata, PRIMA di leaderboard/high-score/XP/quest. Gli altri giochi passano inalterati. → una sola classifica (quella della piattaforma) con anti-cheat davanti.
+- **Validazione score lato server (anti-cheat)**: lo score di TUTTI i giochi entra dalla piattaforma in `database.end_game_session()` (chiamato da `POST /api/users/sessions/end`), che fa `game_session.score = score` → trigger → tabella `Leaderboard`. Lì è agganciato `game_score_validators.validate_game_score(game_id, score, duration, extra_data)`: per `stunt_hill` (solo run ranked) applica un **controllo STRUTTURALE leggero** (`stunt_hill_be.service.check_ranked_run`) e **azzera** score+metriche solo se i dati sono **impossibili/manomessi** (mappa sbagliata, auto inesistente, valori negativi, distanza oltre il tracciato), PRIMA di leaderboard/high-score/XP/quest. **NIENTE cap su score/tricks/coins/tempo**: un giocatore bravo può fare numeri altissimi → qualsiasi soglia darebbe solo falsi positivi. La validazione VERA dello score è il **replay deterministico** (Fase 2), da fare prima di promuovere a reward. Gli altri giochi passano inalterati. → una sola classifica (quella della piattaforma).
 - **Week server-authoritative**: `GET /api/stunt-hill/week` (`stunt_hill_be`) dà mappa+seed della settimana (HMAC della ISO-week); il client ranked li applica con `setMap`/`setSeed`. Nessuna classifica vive in `stunt_hill_be`.
 - Giochi serviti da `/games/<id>/`; registrazione in tabella `games` (vedi register script).
 
@@ -376,11 +376,13 @@ backend/scripts/register_stunt_hill.py   # upsert idempotente in games + XPRule 
    - ✅ **`GET /week`** → `{ week_id, map_index, map_id, map_name, seed }` (mappa
      della settimana dal roster di 5 + seed, decisi dal server via HMAC della ISO-week;
      il client ranked chiama `setMap`/`setSeed` con quei valori). `RankedApi.getWeek()`.
-   - ✅ **Validazione (plausibilità)** — DECISIONE D'ARCHITETTURA CAMBIATA rispetto al
+   - ✅ **Validazione (strutturale)** — DECISIONE D'ARCHITETTURA CAMBIATA rispetto al
      piano originale: niente `POST /score` né classifica dedicata. Lo score ranked va
      **direttamente alla leaderboard della piattaforma** (via `gameOver`) e viene validato
-     lato server nel session-end (`game_score_validators` → `check_ranked_run`): una run
-     implausibile/mappa-sbagliata è azzerata. Una sola classifica, con anti-cheat. Vedi §6.
+     lato server nel session-end (`game_score_validators` → `check_ranked_run`): si azzerano
+     solo le run con **dati impossibili/manomessi** (mappa sbagliata, auto inesistente,
+     negativi, distanza oltre il tracciato). **NIENTE cap di magnitudine** su score/tricks/
+     coins (darebbero falsi positivi sullo skill). Una sola classifica. Vedi §6.
    - ❌ **Replay deterministico (Fase 2):** il client logga gli input per ogni step fisso
      (1/360s) + il seed; il server **ri-simula la fisica in Python** e ricalcola lo score,
      confrontandolo con quello dichiarato. È la *prova* vera (la plausibilità becca solo

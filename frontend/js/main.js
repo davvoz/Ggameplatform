@@ -22,6 +22,7 @@ import DailyLoginBanner from './daily-login-banner.js';
 import CampaignCountdown from './CampaignCountdown.js';
 import { initNavMultiplier } from './nav-multiplier.js';
 import WalletRenderer from './WalletRenderer.js';
+import { initVersionWatcher } from './versionWatcher.js';
 
 // Import nav.js for side effects (registers community notification handlers)
 import './nav.js';
@@ -224,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDailyLoginBanner();
     initializeAuthenticatedUI();
     setupEventListeners();
+    initVersionWatcher();
 });
 
 // Current game mode filter state

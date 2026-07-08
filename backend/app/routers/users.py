@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Query
+from fastapi import APIRouter, HTTPException, Depends, Request, Query, BackgroundTasks
 from pydantic import BaseModel, EmailStr
 from typing import Annotated, Optional, Dict, Any
 from app.database import (
@@ -101,29 +101,20 @@ async def register_user(request: Request, user_data: UserRegister):
 
 @router.post("/login", responses=_RESP_401)
 @limiter.limit("5/minute")
-async def login_user(request: Request, credentials: UserLogin):
+async def login_user(request: Request, credentials: UserLogin, background_tasks: BackgroundTasks):
     """Login with username and password."""
     user = authenticate_user(credentials.username, credentials.password)
-    
+
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    # Check Steem multiplier at login if user has steem_username
+
+    # Refresh Steem multiplier in background (AFTER the response): the login
+    # returns the stored multiplier; the fresh value lands in DB seconds later,
+    # in time for XP calculation which reads from DB at session end.
     if user.get('steem_username'):
-        from app.steem_checker import update_user_multiplier
-        from app.database import get_db_session
-        try:
-            with get_db_session() as session:
-                update_user_multiplier(user['user_id'], user['steem_username'], session, force=True)
-                session.commit()
-                # Reload user data
-                from app.models import User
-                db_user = session.query(User).filter(User.user_id == user['user_id']).first()
-                if db_user:
-                    user = db_user.to_dict()
-        except Exception as e:
-            print(f"[LOGIN] Could not update multiplier from Steem: {e}")
-    
+        from app.steem_checker import check_user_multiplier_task
+        background_tasks.add_task(check_user_multiplier_task, user['user_id'], True)  # force=True
+
     return {
         "success": True,
         "message": "Login successful",
@@ -458,7 +449,7 @@ async def track_daily_access(access_data: DailyAccess):
         raise HTTPException(status_code=500, detail=f"Error tracking daily access: {str(e)}")
 
 @router.post("/sessions/end", responses=_RESP_404)
-async def end_game(session_data: SessionEnd):
+async def end_game(session_data: SessionEnd, background_tasks: BackgroundTasks):
     """End a game session and calculate XP earned."""
     print("[DEBUG] Received session end request:")
     print(f"  - session_id: {session_data.session_id}")
@@ -477,7 +468,12 @@ async def end_game(session_data: SessionEnd):
         raise HTTPException(status_code=404, detail="Session not found")
     
     print(f"[DEBUG] Session ended with score: {session.get('score')}")
-    
+
+    # Event-driven multiplier check: runs AFTER the response is sent,
+    # cooldown-gated inside update_user_multiplier. No-op for non-Steem users.
+    from app.steem_checker import check_user_multiplier_task
+    background_tasks.add_task(check_user_multiplier_task, session['user_id'])
+
     return {
         "success": True,
         "message": f"Game ended! You earned {session['xp_earned']} XP",
@@ -587,7 +583,8 @@ async def get_game_leaderboard(game_id: str, limit: int = 10):
 async def check_steem_multiplier(user_id: str, force: bool = False):
     """
     Check and update Steem multiplier from blockchain.
-    Uses 10-minute cache - only queries Steem API if needed.
+    Respects the per-user cooldown (MULTIPLIER_COOLDOWN_MINUTES, default 30 min)
+    unless force=true.
     """
     from app.database import get_db_session
     from app.models import User
@@ -602,7 +599,7 @@ async def check_steem_multiplier(user_id: str, force: bool = False):
         if not user.steem_username:
             raise HTTPException(status_code=400, detail="User has no Steem account")
         
-        # Check multiplier (respects 10-minute cache unless forced)
+        # Check multiplier (respects the per-user cooldown unless forced)
         updated = update_user_multiplier(user_id, user.steem_username, session, force=force)
         session.commit()
         session.refresh(user)

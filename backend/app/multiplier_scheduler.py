@@ -1,10 +1,12 @@
 """
 Multiplier Scheduler
-Runs frequent checks against Steem to update user multipliers.
+Runs a RARE full multiplier sweep as a safety net for drift; per-user checks
+are event-driven (post-game / login, see steem_checker.check_user_multiplier_task).
 Uses the existing `schedule` package (already in requirements) and runs
 in a background daemon thread so it doesn't block the FastAPI event loop.
 """
 import logging
+import os
 import schedule
 import time
 import threading
@@ -12,8 +14,16 @@ from typing import Optional
 
 from app.database import get_db_session
 from app.models import User
-from app.steem_checker import update_user_multiplier
+from app.steem_checker import (
+    get_accounts_data,
+    resolve_witness_vote_from_memo,
+    persist_multiplier_result,
+    get_delegation_amount,
+)
 from app.telegram_notifier import send_telegram_error
+
+# Sweep interval (hours); the sweep is a safety net, per-user checks are event-driven
+MULTIPLIER_SWEEP_HOURS = int(os.getenv("MULTIPLIER_SWEEP_HOURS", "24"))
 
 logger = logging.getLogger(__name__)
 
@@ -26,24 +36,44 @@ class MultiplierScheduler:
         self.scheduler = schedule.Scheduler()
 
     def scheduled_multiplier_check(self):
-        logger.info("🔁 Running scheduled multiplier check")
+        logger.info("🔁 Running full multiplier sweep (safety net)")
         errors_count = 0
         users_checked = 0
-        
+
         try:
             with get_db_session() as session:
                 users = session.query(User).filter(User.steem_username != None).all()
                 users_checked = len(users)
-                logger.info("Found %d users with Steem accounts to check", users_checked)
-                
+                logger.info("Sweeping %d users with Steem accounts", users_checked)
+                if not users:
+                    return
+
+                # Batch-fetch all accounts: 1 RPC per 100 users (was 2 RPC per user)
+                memo = get_accounts_data([u.steem_username for u in users])
+
+                # Resolve proxy chains: batch-fetch unseen proxies, max 4 rounds
+                pending = {a.get("proxy") for a in memo.values() if a.get("proxy")} - set(memo)
+                for _ in range(4):
+                    if not pending:
+                        break
+                    fetched = get_accounts_data(sorted(pending))
+                    if not fetched:
+                        break
+                    memo.update(fetched)
+                    pending = {a.get("proxy") for a in fetched.values() if a.get("proxy")} - set(memo)
+
                 for u in users:
                     try:
-                        # Do not force: leave cache logic to update_user_multiplier
-                        update_user_multiplier(u.user_id, u.steem_username, session, force=False)
+                        # The sweep bypasses the per-user cooldown BY DESIGN: it is
+                        # the safety net for drift and must not depend on per-user
+                        # timestamps. At 24h cadence the cost is negligible.
+                        votes = resolve_witness_vote_from_memo(u.steem_username, memo)
+                        delegation = get_delegation_amount(u.steem_username)  # per-user RPC, unavoidable
+                        persist_multiplier_result(u, votes, delegation, session)
                     except Exception as e:
                         errors_count += 1
                         logger.exception("Error checking multiplier for user %s", u.user_id)
-                        
+
                         # Send Telegram alert for persistent errors (every 10th error)
                         if errors_count % 10 == 0:
                             send_telegram_error(
@@ -55,7 +85,7 @@ class MultiplierScheduler:
                                     'current_user': u.user_id
                                 }
                             )
-                            
+
         except Exception as e:
             logger.exception("Critical error during scheduled multiplier check")
             send_telegram_error(
@@ -70,9 +100,9 @@ class MultiplierScheduler:
     def schedule_job(self):
         # Clear any existing jobs to prevent duplicates
         self.scheduler.clear()
-        # Run every 10 minutes
-        self.scheduler.every(10).minutes.do(self.scheduled_multiplier_check)
-        logger.info("Scheduled multiplier check every 10 minutes")
+        # Rare full sweep; per-user checks are event-driven (post-game / login)
+        self.scheduler.every(MULTIPLIER_SWEEP_HOURS).hours.do(self.scheduled_multiplier_check)
+        logger.info("Scheduled full multiplier sweep every %d hours", MULTIPLIER_SWEEP_HOURS)
 
     def run_scheduler(self):
         logger.info("▶️ Starting multiplier scheduler thread")

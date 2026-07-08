@@ -37,8 +37,6 @@ import json
 import os
 from datetime import datetime, timezone
 
-router = APIRouter()
-
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-to-random-secret-in-production")
 ALGORITHM = "HS256"
@@ -119,6 +117,27 @@ def verify_token_from_cookie(
     return username
 
 CurrentUser = Annotated[str, Depends(verify_token_from_cookie)]
+
+# Paths reachable WITHOUT authentication (login page + login POST).
+# Everything else under /admin requires the admin JWT cookie via the
+# router-level guard below.
+ADMIN_PUBLIC_PATHS = {"/admin/login"}
+
+def admin_auth_guard(
+    request: Request,
+    admin_token: Annotated[Optional[str], Cookie()] = None,
+    db: DbSession = None
+):
+    """Router-level auth guard: applied to EVERY /admin route.
+
+    Skips the public login paths; for all other routes it enforces the same
+    JWT cookie check as verify_token_from_cookie (401 if missing/invalid).
+    """
+    if request.url.path in ADMIN_PUBLIC_PATHS:
+        return
+    verify_token_from_cookie(admin_token, db)
+
+router = APIRouter(dependencies=[Depends(admin_auth_guard)])
 
 @router.get("/login", response_class=HTMLResponse)
 async def admin_login_page():

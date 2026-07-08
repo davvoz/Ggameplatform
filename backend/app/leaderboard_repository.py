@@ -60,8 +60,8 @@ class LeaderboardRepository:
         """
         # Check if user is anonymous - skip leaderboard update for anonymous users
         user = self.session.query(User).filter(User.user_id == user_id).first()
-        if not user or user.is_anonymous:
-            print(f"👤 User {user_id} is anonymous or not found, skipping weekly leaderboard update")
+        if not user or user.is_anonymous or user.banned:
+            print(f"👤 User {user_id} is anonymous, banned or not found, skipping weekly leaderboard update")
             return None
         
         week_start, week_end = self.get_current_week()
@@ -108,8 +108,8 @@ class LeaderboardRepository:
         """
         # Check if user is anonymous - skip leaderboard update for anonymous users
         user = self.session.query(User).filter(User.user_id == user_id).first()
-        if not user or user.is_anonymous:
-            print(f"👤 User {user_id} is anonymous or not found, skipping all-time leaderboard update")
+        if not user or user.is_anonymous or user.banned:
+            print(f"👤 User {user_id} is anonymous, banned or not found, skipping all-time leaderboard update")
             return None
         
         now = datetime.now(timezone.utc).isoformat()

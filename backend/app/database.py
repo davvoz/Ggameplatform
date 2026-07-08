@@ -107,6 +107,22 @@ def _migrate_game_sessions_network_columns():
     except Exception as e:
         print(f"⚠️  Game sessions network columns migration: {e}")
 
+def _migrate_users_ban_columns():
+    """Add ban columns to users if missing."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(users)"))
+            cols = {row[1] for row in result}
+            if "banned" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0"))
+            if "banned_at" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN banned_at VARCHAR(50)"))
+            if "ban_reason" not in cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN ban_reason TEXT"))
+            conn.commit()
+    except Exception as e:
+        print(f"⚠️  Users ban columns migration: {e}")
+
 def init_db():
     """Initialize the database with required tables."""
     Base.metadata.create_all(bind=engine)
@@ -114,6 +130,7 @@ def init_db():
     _migrate_community_reply_columns()
     _migrate_private_messages_reply_columns()
     _migrate_game_sessions_network_columns()
+    _migrate_users_ban_columns()
     setup_leaderboard_triggers()
     
     # Setup quest triggers for automatic quest progress updates

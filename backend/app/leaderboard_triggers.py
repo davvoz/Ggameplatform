@@ -38,6 +38,10 @@ def update_leaderboard_for_session(session: Session, game_session: GameSession):
     if user.is_anonymous:
         print(f"👤 User {user_id} is anonymous, skipping leaderboard update")
         return
+
+    if user.banned:
+        print(f"🚫 User {user_id} is banned, skipping leaderboard update (shadow-ban)")
+        return
     
     # ========== ALL-TIME LEADERBOARD ==========
     # Check if user already has an entry for this game (deve essercene max 1 per via del constraint UNIQUE)

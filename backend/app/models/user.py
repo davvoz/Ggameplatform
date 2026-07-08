@@ -18,6 +18,9 @@ class User(Base):
     password_hash = Column(String, nullable=True)
     steem_username = Column(String, unique=True, nullable=True)
     is_anonymous = Column(Integer, default=0)
+    banned = Column(Integer, default=0)
+    banned_at = Column(String, nullable=True)
+    ban_reason = Column(Text, nullable=True)
     cur8_multiplier = Column(Float, default=1.0)
     votes_cur8_witness = Column(Integer, default=0)
     delegation_amount = Column(Float, default=0.0)
@@ -55,6 +58,9 @@ class User(Base):
             "email": self.email,
             "steem_username": self.steem_username,
             "is_anonymous": bool(self.is_anonymous),
+            "banned": bool(self.banned),
+            "banned_at": self.banned_at,
+            "ban_reason": self.ban_reason,
             "cur8_multiplier": self.cur8_multiplier,
             "votes_cur8_witness": bool(self.votes_cur8_witness),
             "delegation_amount": self.delegation_amount,

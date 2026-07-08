@@ -170,8 +170,8 @@ async def update_leaderboard_score(
         return {
             "success": True,
             "message": "Leaderboard updated",
-            "weekly_entry": weekly_entry.to_dict(),
-            "alltime_entry": alltime_entry.to_dict()
+            "weekly_entry": weekly_entry.to_dict() if weekly_entry else None,
+            "alltime_entry": alltime_entry.to_dict() if alltime_entry else None
         }
         
     except Exception as e:

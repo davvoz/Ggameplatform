@@ -271,6 +271,9 @@ const DB_SCHEMA = {
             password_hash: { ...FIELD_TYPES.STRING, label: 'Password Hash', hidden: true },
             steem_username: { ...FIELD_TYPES.STRING, label: 'Steem Username' },
             is_anonymous: { ...FIELD_TYPES.BOOLEAN, label: 'Anonimo' },
+            banned: { ...FIELD_TYPES.BOOLEAN, label: 'Bannato', readonly: true },
+            banned_at: { ...FIELD_TYPES.DATETIME, label: 'Bannato il', readonly: true },
+            ban_reason: { ...FIELD_TYPES.TEXT, label: 'Motivo Ban', readonly: true },
             cur8_multiplier: { ...FIELD_TYPES.FLOAT, label: 'CUR8 Multiplier', default: 1 },
             votes_cur8_witness: { ...FIELD_TYPES.BOOLEAN, label: 'Vota CUR8 Witness' },
             delegation_amount: { ...FIELD_TYPES.FLOAT, label: 'Delegation (STEEM)', default: 0 },
@@ -286,12 +289,13 @@ const DB_SCHEMA = {
             created_at: { ...FIELD_TYPES.CREATED_AT, label: 'Creato il' }
         },
         
-        tableColumns: ['user_id', 'username', 'is_anonymous', 'total_xp_earned', 'login_streak', 'last_login', 'actions'],
-        
+        tableColumns: ['user_id', 'username', 'is_anonymous', 'banned', 'total_xp_earned', 'login_streak', 'last_login', 'actions'],
+
         columnConfig: {
             user_id: { type: 'custom', render: RENDERERS.truncateId(12), searchable: true },
             username: { searchable: true, style: 'font-weight: 600;' },
             is_anonymous: { type: 'custom', render: RENDERERS.booleanStatus('🔓 Anonimo', '🔐 Registrato', '#ff9800', '#4caf50') },
+            banned: { type: 'custom', render: RENDERERS.booleanStatus('🚫 Bannato', '✅ OK', '#dc3545', '#28a745') },
             total_xp_earned: { type: 'custom', render: RENDERERS.xp },
             login_streak: { type: 'custom', render: RENDERERS.streakDays },
             last_login: { type: 'date' }

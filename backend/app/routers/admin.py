@@ -29,8 +29,10 @@ from app.schemas import (
     UserCoinsCreate, UserCoinsUpdate, CoinTransactionUpdate,
     CampaignCreate, CampaignUpdate
 )
-from sqlalchemy import desc
+from sqlalchemy import desc, func, distinct
 from sqlalchemy.orm import Session, joinedload
+from app.leaderboard_repository import LeaderboardRepository
+from app.leaderboard_triggers import recalculate_weekly_ranks
 import json
 import os
 from datetime import datetime, timezone
@@ -771,6 +773,152 @@ async def delete_user(user_id: str, db: DbSession):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== USER BAN / MULTI-ACCOUNT REPORT ENDPOINTS ==========
+
+class BanRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+@router.post("/users/{user_id}/ban", responses={401: {"description": "Not authenticated"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+async def ban_user(user_id: str, username: CurrentUser, db: DbSession, ban_data: Optional[BanRequest] = None):
+    """Shadow-ban a user: block future leaderboard writes and wipe current-week weekly entries.
+
+    XP/coins/quests keep working so the ban stays silent for the player.
+    Past weeks, all-time entries and weekly_winners are left untouched.
+    """
+    try:
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
+
+        user.banned = 1
+        user.banned_at = datetime.now(timezone.utc).isoformat()
+        user.ban_reason = ban_data.reason if ban_data else None
+
+        # Remove CURRENT week weekly entries only, then recalculate ranks
+        week_start, _ = LeaderboardRepository.get_current_week()
+        deleted = db.query(WeeklyLeaderboard).filter(
+            WeeklyLeaderboard.user_id == user_id,
+            WeeklyLeaderboard.week_start == week_start
+        ).delete(synchronize_session=False)
+        recalculate_weekly_ranks(db, week_start)
+        db.commit()
+
+        return {"success": True, "data": user.to_dict(), "weekly_entries_deleted": deleted}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/users/{user_id}/unban", responses={401: {"description": "Not authenticated"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
+async def unban_user(user_id: str, username: CurrentUser, db: DbSession):
+    """Remove a user's ban. Future scores flow again; no retroactive re-add of banned-period scores."""
+    try:
+        user = db.query(User).filter(User.user_id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail=USER_NOT_FOUND)
+
+        user.banned = 0
+        user.banned_at = None
+        user.ban_reason = None
+        db.commit()
+
+        return {"success": True, "data": user.to_dict()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/reports/multi-accounts", responses={401: {"description": "Not authenticated"}, 500: {"description": "Internal server error"}})
+async def multi_account_report(username: CurrentUser, db: DbSession, days: Optional[int] = None):
+    """List IPs used by 2+ distinct registered users, with per-user session details.
+
+    Default window: current week (Monday 00:00 UTC). Pass ?days=N for a rolling window.
+    Anonymous users and sessions without ip_address are excluded.
+    """
+    try:
+        if days:
+            since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        else:
+            # ISO date string; lexicographic comparison vs ISO datetimes is correct
+            since, _ = LeaderboardRepository.get_current_week()
+
+        base_filters = [
+            GameSession.ip_address.isnot(None),
+            GameSession.ip_address != '',
+            User.is_anonymous == 0,
+            GameSession.started_at >= since,
+        ]
+
+        flagged = (
+            db.query(
+                GameSession.ip_address,
+                func.count(distinct(GameSession.user_id)).label('user_count'),
+                func.count(GameSession.session_id).label('session_count'),
+                func.max(GameSession.started_at).label('last_seen'),
+            )
+            .join(User, GameSession.user_id == User.user_id)
+            .filter(*base_filters)
+            .group_by(GameSession.ip_address)
+            .having(func.count(distinct(GameSession.user_id)) >= 2)
+            .order_by(func.count(distinct(GameSession.user_id)).desc())
+            .all()
+        )
+
+        flagged_ips = [row.ip_address for row in flagged]
+        details = {}
+        if flagged_ips:
+            rows = (
+                db.query(
+                    GameSession.ip_address,
+                    User.user_id,
+                    User.username,
+                    User.banned,
+                    func.count(GameSession.session_id).label('sessions'),
+                    func.max(GameSession.started_at).label('last_seen'),
+                )
+                .join(User, GameSession.user_id == User.user_id)
+                .filter(GameSession.ip_address.in_(flagged_ips), *base_filters)
+                .group_by(GameSession.ip_address, User.user_id)
+                .all()
+            )
+            for r in rows:
+                details.setdefault(r.ip_address, []).append({
+                    "user_id": r.user_id,
+                    "username": r.username,
+                    "banned": bool(r.banned),
+                    "sessions": r.sessions,
+                    "last_seen": r.last_seen,
+                })
+
+        return {
+            "success": True,
+            "since": since,
+            "count": len(flagged),
+            "report": [
+                {
+                    "ip_address": row.ip_address,
+                    "user_count": row.user_count,
+                    "session_count": row.session_count,
+                    "last_seen": row.last_seen,
+                    "users": sorted(details.get(row.ip_address, []), key=lambda u: u["last_seen"] or '', reverse=True),
+                }
+                for row in flagged
+            ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/reports", response_class=HTMLResponse, responses={401: {"description": "Not authenticated"}})
+async def admin_reports_page(username: CurrentUser):
+    """Multi-account report page - Protected with JWT cookie"""
+    html_file = Path(__file__).parent.parent / "static" / "admin-reports.html"
+    return FileResponse(html_file)
 
 
 # ========== GAME SESSIONS CRUD ENDPOINTS ==========

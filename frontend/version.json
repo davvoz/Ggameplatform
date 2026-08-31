@@ -1,8 +1,17 @@
 {
-  "version": "5.13.0",
-  "timestamp": "2026-07-08T16:07:55.404Z",
-  "buildNumber": 596,
+  "version": "5.13.1",
+  "timestamp": "2026-08-31T20:39:48.430Z",
+  "buildNumber": 597,
   "changelog": [
+    {
+      "version": "5.13.1",
+      "date": "2026-08-31",
+      "type": "patch",
+      "changes": [
+        "obf",
+        "🔖 Bump version to 5.13.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.13.0",
       "date": "2026-07-08",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: update quest messages to English and add geo activity resolver",
         "🔖 Bump version to 5.8.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.8.0",
-      "date": "2026-06-08",
-      "type": "minor",
-      "changes": [
-        "feat: add ip_address column to game_sessions and update related functionality",
-        "🔖 Bump version to 5.7.1 [skip-version]"
       ]
     }
   ]

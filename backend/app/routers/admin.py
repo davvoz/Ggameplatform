@@ -29,7 +29,7 @@ from app.schemas import (
     UserCoinsCreate, UserCoinsUpdate, CoinTransactionUpdate,
     CampaignCreate, CampaignUpdate
 )
-from sqlalchemy import desc, func, distinct
+from sqlalchemy import desc, func, distinct, or_
 from sqlalchemy.orm import Session, joinedload
 from app.leaderboard_repository import LeaderboardRepository
 from app.leaderboard_triggers import recalculate_weekly_ranks
@@ -735,6 +735,30 @@ async def create_user(user_data: UserCreate, db: DbSession):
         return {"success": True, "data": user}
     except ValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/users/search", responses={401: {"description": "Not authenticated"}, 500: {"description": "Internal server error"}})
+async def search_users(username: CurrentUser, db: DbSession, q: str):
+    """Search users by username or user_id (partial match) for manual ban/unban.
+
+    Lets an admin ban any user directly, independent of the multi-account report.
+    """
+    try:
+        q = q.strip()
+        if not q:
+            return {"success": True, "data": []}
+
+        like = f"%{q}%"
+        users = (
+            db.query(User)
+            .filter(or_(User.username.ilike(like), User.user_id.ilike(like)))
+            .order_by(User.username)
+            .limit(20)
+            .all()
+        )
+        return {"success": True, "data": [u.to_dict() for u in users]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

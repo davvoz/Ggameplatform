@@ -221,6 +221,18 @@
             </div>
         </div>
 
+        <div class="card">
+            <div class="card-header">
+                <strong>🔨 Ban manuale</strong>
+                <span class="meta">Cerca un utente qualsiasi per bannarlo, a prescindere dal multi-account</span>
+            </div>
+            <div class="toolbar" style="margin-top: 0;">
+                <input type="text" id="searchInput" aria-label="Cerca utente per username o user ID" placeholder="Username o user ID..." style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid #d1d5da; border-radius: 4px; font-size: 0.95em;" onkeydown="if(event.key==='Enter') searchUsers()">
+                <button onclick="searchUsers()">🔍 Cerca</button>
+            </div>
+            <div id="searchResults"></div>
+        </div>
+
         <div class="summary" id="summary"></div>
         <div id="reportContainer">
             <div class="empty">Caricamento...</div>
@@ -246,7 +258,64 @@
         function formatDate(iso) {
             if (!iso) return '-';
             const d = new Date(iso);
-            return isNaN(d) ? escapeHtml(iso) : d.toLocaleString('it-IT');
+            return Number.isNaN(d) ? escapeHtml(iso) : d.toLocaleString('it-IT');
+        }
+
+        async function searchUsers() {
+            const q = document.getElementById('searchInput').value.trim();
+            const results = document.getElementById('searchResults');
+            if (!q) {
+                results.innerHTML = '';
+                return;
+            }
+            results.innerHTML = '<div class="empty">Ricerca...</div>';
+
+            try {
+                const response = await apiFetch(`/admin/users/search?q=${encodeURIComponent(q)}`);
+                const data = await response.json();
+                if (!data.success) throw new Error(data.detail || 'Errore');
+
+                if (!data.data.length) {
+                    results.innerHTML = '<div class="empty">Nessun utente trovato</div>';
+                    return;
+                }
+
+                results.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>User ID</th>
+                                <th>Stato</th>
+                                <th>Motivo ban</th>
+                                <th>Azione</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${data.data.map(u => `
+                                <tr>
+                                    <td style="font-weight: 600;">${escapeHtml(u.username) || '-'}</td>
+                                    <td><code>${escapeHtml((u.user_id || '').substring(0, 12))}...</code></td>
+                                    <td><span class="badge ${u.banned ? 'banned' : 'ok'}">${u.banned ? '🚫 Bannato' : '✅ OK'}</span></td>
+                                    <td>${escapeHtml(u.ban_reason) || '-'}</td>
+                                    <td>
+                                        ${u.banned
+                                            ? `<button class="btn-row btn-unban" onclick="unbanUser('${escapeHtml(u.user_id)}')">✅ Unban</button>`
+                                            : `<button class="btn-row btn-ban" onclick="banUser('${escapeHtml(u.user_id)}', '${escapeHtml(u.username || u.user_id)}')">🚫 Ban</button>`}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                results.innerHTML = `<div class="empty">❌ Errore nella ricerca: ${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        function refreshViews() {
+            loadReport();
+            if (document.getElementById('searchInput').value.trim()) searchUsers();
         }
 
         async function loadReport() {
@@ -324,7 +393,7 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.detail || 'Errore');
                 alert(`✅ Utente bannato. Entry weekly cancellate: ${data.weekly_entries_deleted}`);
-                loadReport();
+                refreshViews();
             } catch (error) {
                 alert(`❌ Errore: ${error.message}`);
             }
@@ -338,7 +407,7 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.detail || 'Errore');
                 alert('✅ Ban rimosso');
-                loadReport();
+                refreshViews();
             } catch (error) {
                 alert(`❌ Errore: ${error.message}`);
             }

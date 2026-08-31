@@ -3,7 +3,7 @@
  * @fileoverview Initializes the game when the page loads
  */
 
-import { Game } from './game.js';
+import { Game } from './game.obf.js';
 
 // Game instance
 let game = null;

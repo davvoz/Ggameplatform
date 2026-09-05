@@ -16,23 +16,46 @@ const AUTH_ENDPOINTS_ALLOWING_401 = ['/users/steem-auth', '/users/steem-posting-
 // them back to login instead of letting protected calls fail silently.
 (function installSessionExpiredRedirect() {
     const originalFetch = globalThis.fetch.bind(globalThis);
+
+    function getOwnApiOrigin() {
+        const apiUrl = globalThis.ENV?.API_URL;
+        if (!apiUrl) return globalThis.location.origin;
+        try {
+            return new URL(apiUrl, globalThis.location.href).origin;
+        } catch (error) {
+            return globalThis.location.origin;
+        }
+    }
+
     globalThis.fetch = async function (input, init) {
-        // Default to sending cookies even when the API is on a different
-        // port/origin than the page (e.g. local dev with API_URL pointing
-        // elsewhere) - fetch's own default ('same-origin') silently drops
-        // the session cookie in that case. Callers that already pass an
-        // explicit `credentials` option are left untouched.
         const requestInit = { ...init };
-        if (requestInit.credentials === undefined) {
+
+        let requestUrl = null;
+        try {
+            const rawUrl = typeof input === 'string' ? input : (input?.url ?? String(input));
+            requestUrl = new URL(rawUrl, globalThis.location.href);
+        } catch (error) {
+            // Unparseable URL - leave requestUrl null, skip both the
+            // credentials default below and the 401 handling further down.
+        }
+
+        // Default to sending cookies only for calls to OUR OWN backend, even
+        // when it's on a different port/origin than the page (e.g. local dev
+        // with API_URL pointing elsewhere) - fetch's own default
+        // ('same-origin') silently drops the session cookie in that case.
+        // Third-party APIs (e.g. api.steemit.com) must NOT get this: a
+        // wildcard 'Access-Control-Allow-Origin: *' response is incompatible
+        // with credentials: 'include' and the browser blocks the request.
+        // Callers that already pass an explicit `credentials` option are
+        // left untouched.
+        if (requestInit.credentials === undefined && requestUrl && requestUrl.origin === getOwnApiOrigin()) {
             requestInit.credentials = 'include';
         }
 
         const response = await originalFetch(input, requestInit);
 
-        if (response.status === 401) {
+        if (response.status === 401 && requestUrl) {
             try {
-                const rawUrl = typeof input === 'string' ? input : (input?.url ?? String(input));
-                const requestUrl = new URL(rawUrl, globalThis.location.href);
                 const isOwnApiCall = OWN_API_PATH_PREFIXES.some(p => requestUrl.pathname.startsWith(p));
                 const isExemptEndpoint = AUTH_ENDPOINTS_ALLOWING_401.some(p => requestUrl.pathname.endsWith(p));
                 const alreadyOnAuthPage = globalThis.location.pathname.endsWith('/auth.html');

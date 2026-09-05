@@ -1,8 +1,17 @@
 {
-  "version": "5.13.1",
-  "timestamp": "2026-08-31T20:39:48.430Z",
-  "buildNumber": 597,
+  "version": "5.14.0",
+  "timestamp": "2026-08-31T21:04:33.317Z",
+  "buildNumber": 598,
   "changelog": [
+    {
+      "version": "5.14.0",
+      "date": "2026-08-31",
+      "type": "minor",
+      "changes": [
+        "feat: add user search functionality for manual ban/unban in admin reports",
+        "🔖 Bump version to 5.13.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.13.1",
       "date": "2026-08-31",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [R]enhance visual presentation with pre-rendered layers and dynamic effects for roulette game",
         "🔖 Bump version to 5.9.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.9.0",
-      "date": "2026-06-11",
-      "type": "minor",
-      "changes": [
-        "feat: update quest messages to English and add geo activity resolver",
-        "🔖 Bump version to 5.8.0 [skip-version]"
       ]
     }
   ]

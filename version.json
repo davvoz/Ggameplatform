@@ -1,8 +1,18 @@
 {
-  "version": "5.14.0",
-  "timestamp": "2026-08-31T21:04:33.317Z",
-  "buildNumber": 598,
+  "version": "5.14.1",
+  "timestamp": "2026-09-05T13:17:11.686Z",
+  "buildNumber": 599,
   "changelog": [
+    {
+      "version": "5.14.1",
+      "date": "2026-09-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "Refactor user authentication and session management",
+        "🔖 Bump version to 5.14.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.14.0",
       "date": "2026-08-31",
@@ -82,15 +92,6 @@
       "changes": [
         "fix: adjust date filtering logic in get_ip_activity method for single day queries",
         "🔖 Bump version to 5.9.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.9.1",
-      "date": "2026-06-12",
-      "type": "patch",
-      "changes": [
-        "fix: [R]enhance visual presentation with pre-rendered layers and dynamic effects for roulette game",
-        "🔖 Bump version to 5.9.0 [skip-version]"
       ]
     }
   ]

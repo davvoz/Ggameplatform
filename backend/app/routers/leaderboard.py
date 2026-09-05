@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.leaderboard_repository import LeaderboardRepository
 from app.weekly_scheduler import get_scheduler
+from app.routers.admin import verify_token_from_cookie
 
 
 router = APIRouter(prefix="/api/leaderboard", tags=["Leaderboard"])
@@ -140,14 +141,30 @@ async def get_all_time_leaderboard(
     }
 
 
-@router.post("/score", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/score",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {"description": "Admin authentication required"},
+        500: {"description": "Server error"},
+    },
+)
 async def update_leaderboard_score(
     score_data: ScoreUpdate,
     db: DbSession,
+    admin_username: Annotated[str, Depends(verify_token_from_cookie)],
 ):
     """
-    Update user's score in both weekly and all-time leaderboards.
-    
+    [ADMIN ONLY / LEGACY] Manually update a user's score in both weekly and
+    all-time leaderboards.
+
+    The real leaderboard update path is automatic: app/leaderboard_triggers.py
+    updates it from a verified GameSession when a session ends. This endpoint
+    is not called by any current frontend code and previously had NO
+    authentication at all, letting anyone set an arbitrary score for an
+    arbitrary user_id/game_id and feed the STEEM weekly payout. It is now
+    gated behind the admin session like the rest of /admin.
+
     Only updates if the new score is better than existing score.
     """
     try:
@@ -203,16 +220,26 @@ async def get_winners_history(
     }
 
 
-@router.post("/manual-reset", status_code=status.HTTP_200_OK)
+@router.post(
+    "/manual-reset",
+    status_code=status.HTTP_200_OK,
+    responses={401: {"description": "Admin authentication required"}},
+)
 async def trigger_manual_reset(
+    admin_username: Annotated[str, Depends(verify_token_from_cookie)],
     use_current_week: Annotated[bool, Query(description="Process current week instead of previous (for testing)")] = False,
 ):
     """
-    Manually trigger weekly reset (admin only - should add auth).
-    
+    Manually trigger weekly reset (admin only).
+
+    The automatic weekly reset already runs on its own inside the in-process
+    scheduler (app/weekly_scheduler.py, every Monday 00:00) — nothing in the
+    frontend calls this endpoint. It previously had NO authentication despite
+    distributing real STEEM/coin rewards; now gated behind the admin session.
+
     Args:
         use_current_week: If True, processes current week (for testing). Default False processes previous week.
-    
+
     WARNING: This will process rewards and reset the leaderboard!
     """
     scheduler = get_scheduler()

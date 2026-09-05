@@ -1,5 +1,58 @@
 import { calculateXpData } from './level-widget.js';
 
+// Path prefixes that belong to OUR backend's user-session-protected API,
+// regardless of which host/port serves it (in dev, the frontend and the
+// API often run on different ports/origins, e.g. via ENV.API_URL - so we
+// can't rely on same-origin checks here).
+const OWN_API_PATH_PREFIXES = ['/users/', '/api/coins/', '/quests/', '/api/leaderboard/'];
+
+// Endpoints allowed to return 401 for reasons OTHER than "session expired"
+// (e.g. wrong password) - a 401 from these must NOT trigger a forced logout.
+const AUTH_ENDPOINTS_ALLOWING_401 = ['/users/steem-auth', '/users/steem-posting-key-auth'];
+
+// Global fetch interceptor: any other 401 from our own API means the
+// session cookie is missing or expired (e.g. a user who logged in before
+// this cookie-based session system existed). Clear local state and send
+// them back to login instead of letting protected calls fail silently.
+(function installSessionExpiredRedirect() {
+    const originalFetch = globalThis.fetch.bind(globalThis);
+    globalThis.fetch = async function (input, init) {
+        // Default to sending cookies even when the API is on a different
+        // port/origin than the page (e.g. local dev with API_URL pointing
+        // elsewhere) - fetch's own default ('same-origin') silently drops
+        // the session cookie in that case. Callers that already pass an
+        // explicit `credentials` option are left untouched.
+        const requestInit = { ...init };
+        if (requestInit.credentials === undefined) {
+            requestInit.credentials = 'include';
+        }
+
+        const response = await originalFetch(input, requestInit);
+
+        if (response.status === 401) {
+            try {
+                const rawUrl = typeof input === 'string' ? input : (input?.url ?? String(input));
+                const requestUrl = new URL(rawUrl, globalThis.location.href);
+                const isOwnApiCall = OWN_API_PATH_PREFIXES.some(p => requestUrl.pathname.startsWith(p));
+                const isExemptEndpoint = AUTH_ENDPOINTS_ALLOWING_401.some(p => requestUrl.pathname.endsWith(p));
+                const alreadyOnAuthPage = globalThis.location.pathname.endsWith('/auth.html');
+
+                if (isOwnApiCall && !isExemptEndpoint && !alreadyOnAuthPage) {
+                    console.warn(`[AuthManager] Session expired (401 on ${requestUrl.pathname}), redirecting to login`);
+                    localStorage.removeItem('gameplatform_user');
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('authMethod');
+                    globalThis.location.replace('/auth.html?reason=session_expired');
+                }
+            } catch (error) {
+                console.error('[AuthManager] Failed to handle 401 response:', error);
+            }
+        }
+
+        return response;
+    };
+})();
+
 // Authentication Manager
 class AuthManager {
     currentUser = null;
@@ -329,7 +382,13 @@ class AuthManager {
         }
     }
 
-    logout() {
+    async logout() {
+        try {
+            await fetch(`${this.apiBase}/logout`, { method: 'POST' });
+        } catch (error) {
+            console.error('Failed to clear server session:', error);
+        }
+
         this.currentUser = null;
         localStorage.removeItem('gameplatform_user');
         localStorage.removeItem('currentUser');

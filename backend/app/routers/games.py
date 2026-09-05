@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException, status, Request
-from typing import List
+from fastapi import APIRouter, HTTPException, status, Request, Depends
+from typing import Annotated, List
+from app.routers.admin import verify_token_from_cookie
 from app.schemas import (
     GameRegister, 
     GameResponse, 
@@ -32,6 +33,17 @@ limiter = Limiter(key_func=get_remote_address)
 # Path validation regex - only alphanumeric, dash, underscore
 GAME_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]+$')
 
+# Reusable description strings (Sonar S1192 - duplicated string literals).
+# Endpoints with more than one status code spell out the full literal dict
+# below instead of `**`-merging these: Sonar's S8415 checker only resolves
+# literal int status-code keys in `responses=`, not dict spreads.
+_DESC_ADMIN_401 = "Admin authentication required"
+_DESC_SERVER_500 = "Server error"
+_DESC_INVALID_GAME_ID_400 = "Invalid game_id"
+_DESC_GAME_404 = "Game not found"
+_DESC_RULE_404 = "Rule not found"
+_RESP_SERVER_500 = {500: {"model": ErrorResponse, "description": _DESC_SERVER_500}}
+
 def validate_game_id(game_id: str) -> str:
     """Validate and sanitize game_id to prevent path traversal"""
     if not game_id:
@@ -56,12 +68,13 @@ def validate_game_id(game_id: str) -> str:
     response_model=SuccessResponse,
     status_code=status.HTTP_201_CREATED,
     responses={
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
         409: {"model": ErrorResponse, "description": "Game already exists"},
         400: {"model": ErrorResponse, "description": "Invalid game data"}
     }
 )
 @limiter.limit("10/hour")
-async def register_game(request: Request, game_data: GameRegister):
+async def register_game(request: Request, game_data: GameRegister, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Register a new game in the platform.
     
@@ -111,9 +124,7 @@ async def register_game(request: Request, game_data: GameRegister):
 @router.get(
     "/list",
     response_model=GameListResponse,
-    responses={
-        500: {"model": ErrorResponse, "description": "Server error"}
-    }
+    responses=_RESP_SERVER_500
 )
 async def list_games(
     category: str = None,
@@ -178,29 +189,30 @@ async def list_games(
         )
 
 @router.get(
-    "/{gameId}/metadata",
+    "/{game_id}/metadata",
     response_model=GameResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Game not found"},
-        500: {"model": ErrorResponse, "description": "Server error"}
+        400: {"model": ErrorResponse, "description": _DESC_INVALID_GAME_ID_400},
+        404: {"model": ErrorResponse, "description": _DESC_GAME_404},
+        500: {"model": ErrorResponse, "description": _DESC_SERVER_500},
     }
 )
-async def get_game_metadata(gameId: str):
+async def get_game_metadata(game_id: str):
     """
     Get metadata for a specific game.
     
-    - **gameId**: The unique identifier of the game
+    - **game_id**: The unique identifier of the game
     """
     # Validate game_id to prevent path traversal
-    gameId = validate_game_id(gameId)
+    game_id = validate_game_id(game_id)
     
     try:
-        game = get_game_by_id(gameId)
+        game = get_game_by_id(game_id)
         
         if not game:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Game with ID '{gameId}' not found"
+                detail=f"Game with ID '{game_id}' not found"
             )
         
         return GameResponse(
@@ -229,35 +241,36 @@ async def get_game_metadata(gameId: str):
         )
 
 @router.put(
-    "/{gameId}",
+    "/{game_id}",
     response_model=SuccessResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Game not found"},
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
+        404: {"model": ErrorResponse, "description": _DESC_GAME_404},
         400: {"model": ErrorResponse, "description": "Invalid update data"}
     }
 )
-async def update_game_metadata(gameId: str, game_data: GameRegister):
+async def update_game_metadata(game_id: str, game_data: GameRegister, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Update an existing game's metadata.
     
-    - **gameId**: The unique identifier of the game to update
+    - **game_id**: The unique identifier of the game to update
     """
-    gameId = validate_game_id(gameId)
+    game_id = validate_game_id(game_id)
     try:
-        existing_game = get_game_by_id(gameId)
+        existing_game = get_game_by_id(game_id)
         if not existing_game:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Game with ID '{gameId}' not found"
+                detail=f"Game with ID '{game_id}' not found"
             )
         
         # Update game
         game_dict = game_data.dict()
-        updated_game = update_game(gameId, game_dict)
+        updated_game = update_game(game_id, game_dict)
         
         return SuccessResponse(
             success=True,
-            message=f"Game '{gameId}' updated successfully",
+            message=f"Game '{game_id}' updated successfully",
             data=updated_game
         )
     
@@ -270,31 +283,33 @@ async def update_game_metadata(gameId: str, game_data: GameRegister):
         )
 
 @router.delete(
-    "/{gameId}",
+    "/{game_id}",
     response_model=SuccessResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Game not found"}
+        400: {"model": ErrorResponse, "description": _DESC_INVALID_GAME_ID_400},
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
+        404: {"model": ErrorResponse, "description": _DESC_GAME_404},
     }
 )
-async def delete_game_endpoint(gameId: str):
+async def delete_game_endpoint(game_id: str, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Delete a game from the platform.
     
-    - **gameId**: The unique identifier of the game to delete
+    - **game_id**: The unique identifier of the game to delete
     """
-    gameId = validate_game_id(gameId)
+    game_id = validate_game_id(game_id)
     try:
-        deleted = delete_game(gameId)
+        deleted = delete_game(game_id)
         
         if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Game with ID '{gameId}' not found"
+                detail=f"Game with ID '{game_id}' not found"
             )
         
         return SuccessResponse(
             success=True,
-            message=f"Game '{gameId}' deleted successfully"
+            message=f"Game '{game_id}' deleted successfully"
         )
     
     except HTTPException:
@@ -306,26 +321,27 @@ async def delete_game_endpoint(gameId: str):
         )
 
 @router.post(
-    "/{gameId}/play",
+    "/{game_id}/play",
     response_model=SuccessResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Game not found"}
+        400: {"model": ErrorResponse, "description": _DESC_INVALID_GAME_ID_400},
+        404: {"model": ErrorResponse, "description": _DESC_GAME_404},
     }
 )
-async def track_game_play(gameId: str):
+async def track_game_play(game_id: str):
     """
     Track when a game is played (increment play count).
     
-    - **gameId**: The unique identifier of the game
+    - **game_id**: The unique identifier of the game
     """
-    gameId = validate_game_id(gameId)
+    game_id = validate_game_id(game_id)
     try:
-        success = increment_play_count(gameId)
+        success = increment_play_count(game_id)
         
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Game with ID '{gameId}' not found"
+                detail=f"Game with ID '{game_id}' not found"
             )
         
         return SuccessResponse(
@@ -345,34 +361,35 @@ async def track_game_play(gameId: str):
 # ============ XP RULES ENDPOINTS ============
 
 @router.get(
-    "/{gameId}/xp-rules",
+    "/{game_id}/xp-rules",
     responses={
-        404: {"model": ErrorResponse, "description": "Game not found"},
+        400: {"model": ErrorResponse, "description": _DESC_INVALID_GAME_ID_400},
+        404: {"model": ErrorResponse, "description": _DESC_GAME_404},
         200: {"description": "List of XP rules for the game"}
     }
 )
-async def get_game_xp_rules_endpoint(gameId: str, active_only: bool = True):
+async def get_game_xp_rules_endpoint(game_id: str, active_only: bool = True):
     """
     Get all XP rules for a specific game.
     
-    - **gameId**: The unique identifier of the game
+    - **game_id**: The unique identifier of the game
     - **active_only**: Filter only active rules (default: True)
     """
-    gameId = validate_game_id(gameId)
+    game_id = validate_game_id(game_id)
     try:
         # Verify game exists
-        game = get_game_by_id(gameId)
+        game = get_game_by_id(game_id)
         if not game:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Game with ID '{gameId}' not found"
+                detail=f"Game with ID '{game_id}' not found"
             )
         
-        rules = get_game_xp_rules(gameId, active_only=active_only)
+        rules = get_game_xp_rules(game_id, active_only=active_only)
         
         return {
             "success": True,
-            "game_id": gameId,
+            "game_id": game_id,
             "total_rules": len(rules),
             "rules": rules
         }
@@ -387,19 +404,21 @@ async def get_game_xp_rules_endpoint(gameId: str, active_only: bool = True):
 
 
 @router.post(
-    "/{gameId}/xp-rules",
+    "/{game_id}/xp-rules",
     response_model=SuccessResponse,
     status_code=status.HTTP_201_CREATED,
     responses={
-        404: {"model": ErrorResponse, "description": "Game not found"},
-        400: {"model": ErrorResponse, "description": "Invalid rule data"}
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
+        404: {"model": ErrorResponse, "description": _DESC_GAME_404},
+        400: {"model": ErrorResponse, "description": "Invalid rule data"},
+        500: {"model": ErrorResponse, "description": _DESC_SERVER_500},
     }
 )
-async def create_xp_rule_endpoint(gameId: str, rule_data: dict):
+async def create_xp_rule_endpoint(game_id: str, rule_data: dict, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Create a new XP calculation rule for a game.
     
-    - **gameId**: The unique identifier of the game
+    - **game_id**: The unique identifier of the game
     - **rule_data**: Rule configuration (name, type, parameters, priority)
     
     Example request body:
@@ -423,11 +442,11 @@ async def create_xp_rule_endpoint(gameId: str, rule_data: dict):
     """
     try:
         # Verify game exists
-        game = get_game_by_id(gameId)
+        game = get_game_by_id(game_id)
         if not game:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Game with ID '{gameId}' not found"
+                detail=f"Game with ID '{game_id}' not found"
             )
         
         # Validate required fields
@@ -441,7 +460,7 @@ async def create_xp_rule_endpoint(gameId: str, rule_data: dict):
         
         # Create rule
         rule = create_xp_rule(
-            game_id=gameId,
+            game_id=game_id,
             rule_name=rule_data['rule_name'],
             rule_type=rule_data['rule_type'],
             parameters=rule_data['parameters'],
@@ -470,32 +489,33 @@ async def create_xp_rule_endpoint(gameId: str, rule_data: dict):
 
 
 @router.get(
-    "/{gameId}/xp-rules/{ruleId}",
+    "/{game_id}/xp-rules/{rule_id}",
     responses={
-        404: {"model": ErrorResponse, "description": "Rule not found"}
+        404: {"model": ErrorResponse, "description": _DESC_RULE_404},
+        500: {"model": ErrorResponse, "description": _DESC_SERVER_500},
     }
 )
-async def get_xp_rule_endpoint(gameId: str, ruleId: str):
+async def get_xp_rule_endpoint(game_id: str, rule_id: str):
     """
     Get a specific XP rule by ID.
     
-    - **gameId**: The unique identifier of the game
-    - **ruleId**: The unique identifier of the XP rule
+    - **game_id**: The unique identifier of the game
+    - **rule_id**: The unique identifier of the XP rule
     """
     try:
-        rule = get_xp_rule_by_id(ruleId)
+        rule = get_xp_rule_by_id(rule_id)
         
         if not rule:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule with ID '{ruleId}' not found"
+                detail=f"XP rule with ID '{rule_id}' not found"
             )
         
         # Verify rule belongs to this game
-        if rule['game_id'] != gameId:
+        if rule['game_id'] != game_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+                detail=f"XP rule '{rule_id}' does not belong to game '{game_id}'"
             )
         
         return {
@@ -513,42 +533,43 @@ async def get_xp_rule_endpoint(gameId: str, ruleId: str):
 
 
 @router.put(
-    "/{gameId}/xp-rules/{ruleId}",
+    "/{game_id}/xp-rules/{rule_id}",
     response_model=SuccessResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Rule not found"},
-        400: {"model": ErrorResponse, "description": "Invalid update data"}
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
+        404: {"model": ErrorResponse, "description": _DESC_RULE_404},
+        500: {"model": ErrorResponse, "description": _DESC_SERVER_500},
     }
 )
-async def update_xp_rule_endpoint(gameId: str, ruleId: str, updates: dict):
+async def update_xp_rule_endpoint(game_id: str, rule_id: str, updates: dict, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Update an existing XP rule.
     
-    - **gameId**: The unique identifier of the game
-    - **ruleId**: The unique identifier of the XP rule
+    - **game_id**: The unique identifier of the game
+    - **rule_id**: The unique identifier of the XP rule
     - **updates**: Fields to update (rule_name, rule_type, parameters, priority, is_active)
     """
     try:
         # Verify rule exists and belongs to game
-        existing_rule = get_xp_rule_by_id(ruleId)
+        existing_rule = get_xp_rule_by_id(rule_id)
         if not existing_rule:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule with ID '{ruleId}' not found"
+                detail=f"XP rule with ID '{rule_id}' not found"
             )
         
-        if existing_rule['game_id'] != gameId:
+        if existing_rule['game_id'] != game_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+                detail=f"XP rule '{rule_id}' does not belong to game '{game_id}'"
             )
         
         # Update rule
-        updated_rule = update_xp_rule(ruleId, updates)
+        updated_rule = update_xp_rule(rule_id, updates)
         
         return SuccessResponse(
             success=True,
-            message=f"XP rule '{ruleId}' updated successfully",
+            message=f"XP rule '{rule_id}' updated successfully",
             data=updated_rule
         )
     
@@ -562,36 +583,38 @@ async def update_xp_rule_endpoint(gameId: str, ruleId: str, updates: dict):
 
 
 @router.delete(
-    "/{gameId}/xp-rules/{ruleId}",
+    "/{game_id}/xp-rules/{rule_id}",
     response_model=SuccessResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Rule not found"}
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
+        404: {"model": ErrorResponse, "description": _DESC_RULE_404},
+        500: {"model": ErrorResponse, "description": _DESC_SERVER_500},
     }
 )
-async def delete_xp_rule_endpoint(gameId: str, ruleId: str):
+async def delete_xp_rule_endpoint(game_id: str, rule_id: str, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Delete an XP rule.
     
-    - **gameId**: The unique identifier of the game
-    - **ruleId**: The unique identifier of the XP rule
+    - **game_id**: The unique identifier of the game
+    - **rule_id**: The unique identifier of the XP rule
     """
     try:
         # Verify rule exists and belongs to game
-        existing_rule = get_xp_rule_by_id(ruleId)
+        existing_rule = get_xp_rule_by_id(rule_id)
         if not existing_rule:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule with ID '{ruleId}' not found"
+                detail=f"XP rule with ID '{rule_id}' not found"
             )
         
-        if existing_rule['game_id'] != gameId:
+        if existing_rule['game_id'] != game_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+                detail=f"XP rule '{rule_id}' does not belong to game '{game_id}'"
             )
         
         # Delete rule
-        deleted = delete_xp_rule(ruleId)
+        deleted = delete_xp_rule(rule_id)
         
         if not deleted:
             raise HTTPException(
@@ -601,7 +624,7 @@ async def delete_xp_rule_endpoint(gameId: str, ruleId: str):
         
         return SuccessResponse(
             success=True,
-            message=f"XP rule '{ruleId}' deleted successfully"
+            message=f"XP rule '{rule_id}' deleted successfully"
         )
     
     except HTTPException:
@@ -614,43 +637,45 @@ async def delete_xp_rule_endpoint(gameId: str, ruleId: str):
 
 
 @router.patch(
-    "/{gameId}/xp-rules/{ruleId}/toggle",
+    "/{game_id}/xp-rules/{rule_id}/toggle",
     response_model=SuccessResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Rule not found"}
+        401: {"model": ErrorResponse, "description": _DESC_ADMIN_401},
+        404: {"model": ErrorResponse, "description": _DESC_RULE_404},
+        500: {"model": ErrorResponse, "description": _DESC_SERVER_500},
     }
 )
-async def toggle_xp_rule_endpoint(gameId: str, ruleId: str, is_active: bool):
+async def toggle_xp_rule_endpoint(game_id: str, rule_id: str, is_active: bool, admin_username: Annotated[str, Depends(verify_token_from_cookie)]):
     """
     Toggle an XP rule's active status.
     
-    - **gameId**: The unique identifier of the game
-    - **ruleId**: The unique identifier of the XP rule
+    - **game_id**: The unique identifier of the game
+    - **rule_id**: The unique identifier of the XP rule
     - **is_active**: New active status (true/false)
     """
     try:
         # Verify rule exists and belongs to game
-        existing_rule = get_xp_rule_by_id(ruleId)
+        existing_rule = get_xp_rule_by_id(rule_id)
         if not existing_rule:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule with ID '{ruleId}' not found"
+                detail=f"XP rule with ID '{rule_id}' not found"
             )
         
-        if existing_rule['game_id'] != gameId:
+        if existing_rule['game_id'] != game_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"XP rule '{ruleId}' does not belong to game '{gameId}'"
+                detail=f"XP rule '{rule_id}' does not belong to game '{game_id}'"
             )
         
         # Toggle rule
-        updated_rule = toggle_xp_rule(ruleId, is_active)
+        updated_rule = toggle_xp_rule(rule_id, is_active)
         
         status_text = "activated" if is_active else "deactivated"
         
         return SuccessResponse(
             success=True,
-            message=f"XP rule '{ruleId}' {status_text} successfully",
+            message=f"XP rule '{rule_id}' {status_text} successfully",
             data=updated_rule
         )
     

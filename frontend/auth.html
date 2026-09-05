@@ -184,6 +184,7 @@
                             const authResponse = await fetch(`${API_BASE}/steem-auth`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
                                 body: JSON.stringify({
                                     username: username,
                                     signature: response.result,
@@ -270,6 +271,7 @@
                 const response = await fetch(`${API_BASE}/steem-posting-key-auth`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         username: username,
                         posting_key: postingKey,
@@ -316,6 +318,7 @@
                 const response = await fetch(`${API_BASE}/anonymous`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({
                         cur8_multiplier: 1
                     })
@@ -345,17 +348,25 @@
             }
         }
         
-        // Show platform reset message if needed
+        // Show platform reset / session expired message if needed
         function showPlatformResetMessage() {
             const urlParams = new URLSearchParams(globalThis.location.search);
-            if (urlParams.get('reason') === 'platform_reset') {
+            const reason = urlParams.get('reason');
+
+            const reasonMessages = {
+                platform_reset: { icon: '🔄', text: 'The platform has been reset. Please login again.' },
+                session_expired: { icon: '⏱️', text: 'Your session has expired. Please login again to continue.' }
+            };
+
+            if (reasonMessages[reason]) {
+                const { icon, text } = reasonMessages[reason];
                 // Create notification banner
                 const banner = document.createElement('div');
                 banner.className = 'platform-reset-banner';
                 banner.innerHTML = `
                     <div class="reset-message">
-                        <span class="reset-icon">🔄</span>
-                        <span>The platform has been reset. Please login again.</span>
+                        <span class="reset-icon">${icon}</span>
+                        <span>${text}</span>
                         <button class="reset-close" onclick="this.parentElement.parentElement.remove()">✕</button>
                     </div>
                 `;

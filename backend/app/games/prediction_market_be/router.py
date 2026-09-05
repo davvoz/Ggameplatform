@@ -28,6 +28,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/prediction-market", tags=["Prediction Market"])
 
+# Reusable OpenAPI response docs (Sonar S1192 - duplicated string literals).
+# Kept as plain string constants, not merged dicts: Sonar's S8415 checker only
+# resolves literal int status-code keys in `responses=`, not `**dict` spreads.
+_DESC_503 = "BTC price temporarily unavailable"
+_RESP_503 = {503: {"description": _DESC_503}}
+
+
+class BTCPriceUnavailableError(Exception):
+    """Raised by get_btc_price(); route handlers convert it to HTTPException(503)."""
+
 # ─── Constants ────────────────────────────────────────────────────────
 ROUND_DURATION_SECONDS = 300       # 5 minutes
 BETTING_PHASE_SECONDS = 240        # First 4 minutes: bets open
@@ -123,7 +133,7 @@ async def _btc_websocket_loop():
                             _price_history.pop(0)
         except Exception as e:
             _ws_connected = False
-            logger.warning(f"[PredictionMarket] WebSocket disconnected: {e}. Reconnecting in 3s...")
+            logger.warning("[PredictionMarket] WebSocket disconnected: %s. Reconnecting in 3s...", e)
             await asyncio.sleep(3)
 
 
@@ -146,11 +156,11 @@ async def get_btc_price() -> float:
             if len(_price_history) > MAX_PRICE_HISTORY:
                 _price_history.pop(0)
             return price
-    except Exception as e:
-        logger.error(f"Failed to fetch BTC price via REST: {e}")
+    except Exception:
+        logger.exception("Failed to fetch BTC price via REST")
         if _price_cache["price"]:
             return _price_cache["price"]
-        raise HTTPException(status_code=503, detail="BTC price unavailable")
+        raise BTCPriceUnavailableError("BTC price unavailable")
 
 
 # ─── Odds Calculation ────────────────────────────────────────────────
@@ -244,19 +254,15 @@ def get_coin_service(db: Session) -> CoinService:
     return CoinService(coins_repo, transaction_repo)
 
 
-def get_user_id_from_request(request: Request) -> str:
-    user_id = request.session.get('user_id')
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    return user_id
-
-
 # ─── Pydantic Schemas ────────────────────────────────────────────────
 
 class PlaceBetRequest(BaseModel):
     direction: str = Field(..., pattern="^(up|down)$")
     amount: int = Field(..., ge=MIN_BET, le=MAX_BET)
-    user_id: str = Field(..., min_length=1)
+    # Matches the actual user_id formats issued by app.database (user_/anon_ + hex) -
+    # also rejects control characters (e.g. \r\n) that would otherwise flow straight
+    # into log messages below and allow log forging/injection.
+    user_id: str = Field(..., min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
 
 class PlaceBetResponse(BaseModel):
     bet_id: str
@@ -316,7 +322,10 @@ async def start_new_round():
     current_round.status = "betting"
     current_round.bets = []
     
-    logger.info(f"[PredictionMarket] New round {current_round.round_id} started. Lock price: ${price:,.2f}")
+    logger.info(
+        "[PredictionMarket] New round %s started. Lock price: $%s",
+        current_round.round_id, format(price, ",.2f")
+    )
 
     # Schedule round phases (keep reference to prevent premature garbage collection)
     task = asyncio.create_task(_round_lifecycle())
@@ -342,7 +351,7 @@ async def _round_lifecycle():
         current_round.frozen_odds = calculate_odds(lock_price_now, current_round.lock_price, lock_secs)
     except Exception:
         current_round.frozen_odds = {"up": 2.0, "down": 2.0, "prob_up": 50.0, "prob_down": 50.0}
-    logger.info(f"[PredictionMarket] Round {round_id} locked. No more bets.")
+    logger.info("[PredictionMarket] Round %s locked. No more bets.", round_id)
     
     # Wait for lock phase to end
     await asyncio.sleep(LOCK_PHASE_SECONDS)
@@ -365,18 +374,24 @@ async def _resolve_round():
     
     try:
         close_price = await get_btc_price()
-    except:
+    except Exception:
         close_price = current_round.lock_price  # fallback
-    
+
     current_round.close_price = close_price
     current_round.status = "resolved"
     current_round.resolved_at = time.time()
-    
-    result = "up" if close_price > current_round.lock_price else ("down" if close_price < current_round.lock_price else "flat")
+
+    if close_price > current_round.lock_price:
+        result = "up"
+    elif close_price < current_round.lock_price:
+        result = "down"
+    else:
+        result = "flat"
     
     logger.info(
-        f"[PredictionMarket] Round {current_round.round_id} resolved: "
-        f"lock=${current_round.lock_price:,.2f} close=${close_price:,.2f} result={result}"
+        "[PredictionMarket] Round %s resolved: lock=$%s close=$%s result=%s",
+        current_round.round_id, format(current_round.lock_price, ",.2f"),
+        format(close_price, ",.2f"), result
     )
     
     # Pay winners (or refund everyone on flat)
@@ -440,16 +455,20 @@ def _pay_winners(winners: List[Dict]):
                     source_id="prediction-market",
                     description=f"Prediction Market win: bet {bet['amount']} on {bet['direction'].upper()}, odds {bet['locked_odds']}x"
                 )
-                logger.info(f"[PredictionMarket] Paid {net_win} coins to {bet['user_id']}")
-            except Exception as e:
-                logger.error(f"[PredictionMarket] Failed to pay {bet['user_id']}: {e}")
+                logger.info("[PredictionMarket] Paid %s coins to %s", net_win, bet['user_id'])
+            except Exception:
+                logger.exception("[PredictionMarket] Failed to pay %s", bet['user_id'])
     finally:
         db.close()
 
 
 # ─── API Endpoints ───────────────────────────────────────────────────
 
-@router.get("/round", response_model=RoundInfoResponse)
+@router.get(
+    "/round",
+    response_model=RoundInfoResponse,
+    responses=_RESP_503,
+)
 async def get_current_round():
     """Get current round info with live odds."""
     if current_round.status == "waiting" or not current_round.round_id:
@@ -469,9 +488,12 @@ async def get_current_round():
     elapsed = now - current_round.start_time
     seconds_remaining = max(0, ROUND_DURATION_SECONDS - elapsed)
     betting_seconds_remaining = max(0, BETTING_PHASE_SECONDS - elapsed)
-    
-    current_price = await get_btc_price()
-    
+
+    try:
+        current_price = await get_btc_price()
+    except BTCPriceUnavailableError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
     odds = None
     if current_round.status == "betting":
         odds = calculate_odds(current_price, current_round.lock_price, seconds_remaining)
@@ -493,31 +515,43 @@ async def get_current_round():
     )
 
 
-@router.get("/price")
+@router.get(
+    "/price",
+    responses=_RESP_503,
+)
 async def get_price():
     """Get current BTC price."""
-    price = await get_btc_price()
+    try:
+        price = await get_btc_price()
+    except BTCPriceUnavailableError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     return {"price": price, "symbol": "BTCUSDT", "timestamp": time.time()}
 
 
-@router.post("/bet", response_model=PlaceBetResponse)
+@router.post(
+    "/bet",
+    response_model=PlaceBetResponse,
+    responses={
+        400: {"description": "Betting closed, duplicate bet, or insufficient balance"},
+        503: {"description": _DESC_503},
+    },
+)
 async def place_bet(
     bet_request: PlaceBetRequest,
     db: DbSession,
 ):
     """Place a bet on the current round."""
     user_id = bet_request.user_id
-    
+
     # Check round state
     if current_round.status != "betting":
-        raise HTTPException(
-            status_code=400,
-            detail="Betting is not open. " + (
-                "Round is locked." if current_round.status == "locked"
-                else "Waiting for next round." if current_round.status in ("waiting", "resolved")
-                else f"Round status: {current_round.status}"
-            )
-        )
+        if current_round.status == "locked":
+            reason = "Round is locked."
+        elif current_round.status in ("waiting", "resolved"):
+            reason = "Waiting for next round."
+        else:
+            reason = f"Round status: {current_round.status}"
+        raise HTTPException(status_code=400, detail=f"Betting is not open. {reason}")
     
     # Check user hasn't already bet this round
     existing_bet = next((b for b in current_round.bets if b["user_id"] == user_id), None)
@@ -528,7 +562,10 @@ async def place_bet(
     now = time.time()
     elapsed = now - current_round.start_time
     seconds_remaining = max(0, ROUND_DURATION_SECONDS - elapsed)
-    current_price = await get_btc_price()
+    try:
+        current_price = await get_btc_price()
+    except BTCPriceUnavailableError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     odds = calculate_odds(current_price, current_round.lock_price, seconds_remaining)
     
     locked_odds = odds["up"] if bet_request.direction == "up" else odds["down"]
@@ -565,8 +602,8 @@ async def place_bet(
     current_round.bets.append(bet_record)
     
     logger.info(
-        f"[PredictionMarket] Bet placed: user={user_id} dir={bet_request.direction} "
-        f"amount={bet_request.amount} odds={locked_odds}x"
+        "[PredictionMarket] Bet placed: user=%s dir=%s amount=%s odds=%sx",
+        user_id, bet_request.direction, bet_request.amount, locked_odds
     )
     
     return PlaceBetResponse(
@@ -620,13 +657,19 @@ async def get_round_history(limit: int = 10):
     return entries
 
 
-@router.post("/start-round")
+@router.post(
+    "/start-round",
+    responses=_RESP_503,
+)
 async def admin_start_round():
     """Start the first round (called once on startup or manually)."""
     if current_round.status == "betting" or current_round.status == "locked":
         return {"message": "Round already running", "round": current_round.to_dict()}
-    
-    await start_new_round()
+
+    try:
+        await start_new_round()
+    except BTCPriceUnavailableError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     return {"message": "Round started", "round": current_round.to_dict()}
 
 
@@ -639,11 +682,19 @@ async def get_price_history(limit: int = 300):
 
 # ─── SSE Stream ──────────────────────────────────────────────────────
 
-@router.get("/stream")
+@router.get(
+    "/stream",
+    responses=_RESP_503,
+)
 async def round_stream(request: Request):
     """
     Server-Sent Events stream.
     Pushes round state + price every second — replaces client polling.
+
+    Note: get_btc_price()'s BTCPriceUnavailableError is caught inside
+    event_generator() below and turned into an SSE error event, never an
+    HTTP 503 - documented here for completeness since the stream can still
+    fail before the first byte is sent.
     """
     async def event_generator():
         while True:
@@ -655,9 +706,9 @@ async def round_stream(request: Request):
                 payload = await _build_round_payload()
                 data_str = json.dumps(payload)
                 yield f"data: {data_str}\n\n"
-            except Exception as e:
-                logger.error(f"[SSE] Error building payload: {e}")
-                yield f"data: {{\"error\": true}}\n\n"
+            except Exception:
+                logger.exception("[SSE] Error building payload")
+                yield "data: {\"error\": true}\n\n"
 
             await asyncio.sleep(1)
 

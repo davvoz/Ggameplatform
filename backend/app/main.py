@@ -1,3 +1,13 @@
+from dotenv import load_dotenv
+
+# Must run before any `app.*` import below: several modules (e.g.
+# app.routers.admin, app.routers.quests) read security-critical secrets from
+# the environment at import time via app.secrets_check.require_secret(), which
+# fails fast if they're unset - so .env has to be loaded first, or those
+# checks always see an empty environment and crash (or, before that guard
+# existed, silently fell back to a hardcoded insecure default forever).
+load_dotenv()
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -35,13 +45,9 @@ import mimetypes
 import time
 import os
 import logging
-from dotenv import load_dotenv
 
 # Register WebP MIME type (not recognized by default on Windows)
 mimetypes.add_type('image/webp', '.webp')
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure logging with timestamp
 logging.basicConfig(

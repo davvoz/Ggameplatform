@@ -203,7 +203,7 @@ class DailyLoginBanner {
 
             const response = await fetch(
                 `${this.apiUrl}/users/daily-login-claim/${this.currentUser.user_id}`,
-                { method: 'POST' }
+                { method: 'POST', credentials: 'include' }
             );
 
             const data = await response.json();
@@ -417,7 +417,7 @@ class DailyLoginBanner {
 
             const response = await fetch(
                 `${this.apiUrl}/users/daily-login-claim/${this.currentUser.user_id}`,
-                { method: 'POST' }
+                { method: 'POST', credentials: 'include' }
             );
 
             const data = await response.json();

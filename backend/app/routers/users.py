@@ -1,11 +1,17 @@
-from fastapi import APIRouter, HTTPException, Depends, Request, Query, BackgroundTasks
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, HTTPException, Request, Response, Query, BackgroundTasks
+from pydantic import BaseModel
 from typing import Annotated, Optional, Dict, Any
 from app.database import (
-    create_user, get_user_by_id, get_user_by_username, 
-    authenticate_user,  get_all_users,
+    create_user, get_user_by_id, get_user_by_username,
+    get_all_users,
     create_game_session, end_game_session, get_user_sessions,
     get_game_by_id
+)
+from app.user_auth import (
+    CurrentUserId,
+    require_owner,
+    set_session_cookie,
+    clear_session_cookie,
 )
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -17,27 +23,26 @@ limiter = Limiter(key_func=get_remote_address)
 
 USER_NOT_FOUND = "User not found"
 
-# Reusable OpenAPI response docs (Sonar S8415)
-_RESP_400 = {400: {"description": "Bad request"}}
-_RESP_401 = {401: {"description": "Unauthorized"}}
-_RESP_404 = {404: {"description": "Resource not found"}}
-_RESP_500 = {500: {"description": "Internal server error"}}
-_RESP_400_401 = {**_RESP_400, **_RESP_401}
-_RESP_400_404 = {**_RESP_400, **_RESP_404}
-_RESP_400_500 = {**_RESP_400, **_RESP_500}
-_RESP_404_500 = {**_RESP_404, **_RESP_500}
+# Reusable description strings (Sonar S1192) and response docs (Sonar S8415).
+# Merged responses are spelled out as literal dicts rather than `**`-merged:
+# Sonar's S8415 checker only resolves literal int status-code keys in
+# `responses=`, not dict spreads.
+_DESC_400 = "Bad request"
+_DESC_401 = "Unauthorized"
+_DESC_403 = "Cannot act on behalf of another user"
+_DESC_404 = "Resource not found"
+_DESC_500 = "Internal server error"
+_RESP_400 = {400: {"description": _DESC_400}}
+_RESP_404 = {404: {"description": _DESC_404}}
+_RESP_500 = {500: {"description": _DESC_500}}
+_RESP_400_401 = {400: {"description": _DESC_400}, 401: {"description": _DESC_401}}
+_RESP_400_404 = {400: {"description": _DESC_400}, 404: {"description": _DESC_404}}
+_RESP_400_500 = {400: {"description": _DESC_400}, 500: {"description": _DESC_500}}
+_RESP_404_500 = {404: {"description": _DESC_404}, 500: {"description": _DESC_500}}
+# Endpoints gated by CurrentUserId + require_owner (session cookie ownership check)
+_RESP_OWNER = {401: {"description": _DESC_401}, 403: {"description": _DESC_403}}
 
 # ============ SCHEMAS ============
-
-class UserRegister(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    cur8_multiplier: Optional[float] = 1.0
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
 
 class AnonymousUserCreate(BaseModel):
     cur8_multiplier: Optional[float] = 1.0
@@ -80,55 +85,21 @@ def _get_client_ip(request: Request) -> str:
         return real_ip.strip()
     return request.client.host if request.client else None
 
-@router.post("/register", responses=_RESP_400)
-@limiter.limit("5/minute")
-async def register_user(request: Request, user_data: UserRegister):
-    """Register a new user with username and password."""
-    try:
-        user = create_user(
-            username=user_data.username,
-            email=user_data.email,
-            password=user_data.password,
-            cur8_multiplier=user_data.cur8_multiplier
-        )
-        return {
-            "success": True,
-            "message": "User registered successfully",
-            "user": user
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.post("/login", responses=_RESP_401)
-@limiter.limit("5/minute")
-async def login_user(request: Request, credentials: UserLogin, background_tasks: BackgroundTasks):
-    """Login with username and password."""
-    user = authenticate_user(credentials.username, credentials.password)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # Refresh Steem multiplier in background (AFTER the response): the login
-    # returns the stored multiplier; the fresh value lands in DB seconds later,
-    # in time for XP calculation which reads from DB at session end.
-    if user.get('steem_username'):
-        from app.steem_checker import check_user_multiplier_task
-        background_tasks.add_task(check_user_multiplier_task, user['user_id'], True)  # force=True
-
-    return {
-        "success": True,
-        "message": "Login successful",
-        "user": user
-    }
+@router.post("/logout")
+async def logout_user(response: Response):
+    """Clear the current user's session cookie."""
+    clear_session_cookie(response)
+    return {"success": True, "message": "Logged out"}
 
 @router.post("/anonymous")
 @limiter.limit("3/minute")
-async def create_anonymous_user(request: Request, data: Optional[AnonymousUserCreate] = None):
+async def create_anonymous_user(request: Request, response: Response, data: Optional[AnonymousUserCreate] = None):
     """Create an anonymous user for guest play."""
     multiplier = data.cur8_multiplier if data else 1.0
-    
+
     user = create_user(cur8_multiplier=multiplier)
-    
+    set_session_cookie(response, user['user_id'], request)
+
     return {
         "success": True,
         "message": "Anonymous user created",
@@ -136,7 +107,7 @@ async def create_anonymous_user(request: Request, data: Optional[AnonymousUserCr
     }
 
 @router.post("/steem-auth", responses=_RESP_400)
-async def authenticate_with_steem(auth_data: SteemKeychainAuth):
+async def authenticate_with_steem(auth_data: SteemKeychainAuth, response: Response, request: Request):
     """Authenticate user with Steem Keychain signature."""
     try:
         # Verifica che il messaggio sia valido (timestamp recente per evitare replay attacks)
@@ -169,8 +140,6 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
         user = get_user_by_username(auth_data.username)
         
         if user:
-            # User already exists - use ORM update via database.py
-            # The authenticate_user function in database.py handles last_login update
             pass
         else:
             # Crea nuovo utente Steem usando la funzione ORM
@@ -207,7 +176,9 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
                     db_user.steem_username = auth_data.username
                     session.flush()
                     user = db_user.to_dict()
-        
+
+        set_session_cookie(response, user['user_id'], request)
+
         return {
             "success": True,
             "message": f"Welcome {auth_data.username}! Authenticated via Steem Keychain",
@@ -226,7 +197,7 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth):
         raise HTTPException(status_code=400, detail=f"Steem authentication failed: {str(e)}")
 
 @router.post("/steem-posting-key-auth", responses=_RESP_400_401)
-async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth):
+async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth, response: Response, request: Request):
     """Authenticate user with Steem posting key.
     
     This method verifies the user's posting key against the Steem blockchain
@@ -296,7 +267,9 @@ async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth):
                     db_user.steem_username = auth_data.username
                     session.flush()
                     user = db_user.to_dict()
-        
+
+        set_session_cookie(response, user['user_id'], request)
+
         return {
             "success": True,
             "message": f"Welcome {auth_data.username}! Authenticated via Posting Key",
@@ -396,10 +369,15 @@ async def get_user_game_sessions(user_id: str, limit: Annotated[Optional[int], Q
             "sessions": sessions
         }
 
-@router.post("/sessions/start", responses=_RESP_400)
+@router.post("/sessions/start", responses={
+    400: {"description": _DESC_400},
+    401: {"description": _DESC_401},
+    403: {"description": _DESC_403},
+})
 @limiter.limit("30/minute")
-async def start_session(request: Request, session_data: SessionStart):
+async def start_session(request: Request, session_data: SessionStart, current_user_id: CurrentUserId):
     """Start a new game session."""
+    require_owner(session_data.user_id, current_user_id)
     try:
         client_ip = _get_client_ip(request)
         session = create_game_session(
@@ -616,13 +594,18 @@ async def check_steem_multiplier(user_id: str, force: bool = False):
         }
 
 
-@router.post("/update-steem-data/{user_id}", responses=_RESP_404)
-async def update_steem_data(user_id: str, votes_witness: bool, delegation_amount: float):
+@router.post("/update-steem-data/{user_id}", responses={
+    404: {"description": _DESC_404},
+    401: {"description": _DESC_401},
+    403: {"description": _DESC_403},
+})
+async def update_steem_data(user_id: str, votes_witness: bool, delegation_amount: float, current_user_id: CurrentUserId):
     """Update user's Steem witness vote and delegation data, recalculate multiplier."""
+    require_owner(user_id, current_user_id)
     from app.database import get_db_session
     from app.models import User
     from app.cur8_multiplier import calculate_cur8_multiplier
-    
+
     with get_db_session() as session:
         user = session.query(User).filter(User.user_id == user_id).first()
         
@@ -694,12 +677,18 @@ async def get_daily_login_status(user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/daily-login-claim/{user_id}", responses=_RESP_400_500)
-async def claim_daily_login_reward(user_id: str):
+@router.post("/daily-login-claim/{user_id}", responses={
+    400: {"description": _DESC_400},
+    500: {"description": _DESC_500},
+    401: {"description": _DESC_401},
+    403: {"description": _DESC_403},
+})
+async def claim_daily_login_reward(user_id: str, current_user_id: CurrentUserId):
     """Claim today's daily login reward."""
+    require_owner(user_id, current_user_id)
     from app.database import get_db_session
     from app.daily_login_service import DailyLoginService
-    
+
     try:
         with get_db_session() as db:
             service = DailyLoginService(db)
@@ -725,9 +714,14 @@ async def get_game_progress(user_id: str, game_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/game-progress/{user_id}/{game_id}", responses=_RESP_500)
-async def save_game_progress(user_id: str, game_id: str, body: dict):
+@router.put("/game-progress/{user_id}/{game_id}", responses={
+    500: {"description": _DESC_500},
+    401: {"description": _DESC_401},
+    403: {"description": _DESC_403},
+})
+async def save_game_progress(user_id: str, game_id: str, body: dict, current_user_id: CurrentUserId):
     """Save game progress for a user (upsert)."""
+    require_owner(user_id, current_user_id)
     from app.database import save_game_progress as db_save_progress
     try:
         progress_data = body.get("progress_data", body)

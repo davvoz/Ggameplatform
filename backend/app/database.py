@@ -7,8 +7,6 @@ from sqlalchemy import create_engine, desc, func, text
 from sqlalchemy.orm import sessionmaker, Session, joinedload
 from contextlib import contextmanager
 import bcrypt
-from jose import JWTError, jwt
-import secrets
 
 from app.models import Base, Game, User, GameSession, Leaderboard, XPRule, GameStatus, UserCoins, GameProgress
 from app.leaderboard_triggers import setup_leaderboard_triggers
@@ -290,13 +288,6 @@ def hash_password(password: str) -> str:
     salt = bcrypt.gensalt(rounds=12)  # 12 rounds = ~250ms per hash (secure)
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its bcrypt hash."""
-    try:
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
-    except Exception:
-        return False
-
 def create_user(username: Optional[str] = None, email: Optional[str] = None, 
                 password: Optional[str] = None, cur8_multiplier: float = 1.0) -> dict:
     """Create a new user (registered or anonymous)."""
@@ -365,26 +356,6 @@ def get_user_by_username(username: str) -> Optional[dict]:
     with get_db_session() as session:
         user = session.query(User).filter(User.username == username).first()
         return user.to_dict() if user else None
-
-def authenticate_user(username: str, password: str) -> Optional[dict]:
-    """Authenticate a user with username and password."""
-    user = get_user_by_username(username)
-    
-    if user and user.get('password_hash'):
-        # Verify password using bcrypt
-        if verify_password(password, user.get('password_hash')):
-            # Update last login
-            with get_db_session() as session:
-                db_user = session.query(User).filter(User.user_id == user['user_id']).first()
-                db_user.last_login = datetime.now(timezone.utc).isoformat()
-                session.flush()
-                
-                # Track quest progress for login
-                track_quest_progress_for_login(session, user['user_id'])
-                
-                return db_user.to_dict()
-    
-    return None
 
 def update_user_xp(user_id: str, xp_amount: float) -> Optional[dict]:
     """Update user's total XP earned."""
@@ -734,7 +705,7 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
 
         # ── anti-cheat: void implausible scores BEFORE they touch the leaderboard,
         #    high score, XP or quests. Games without a validator pass through.
-        validated_score, reject_reason = validate_game_score(game_id, score, duration_seconds, extra_data)
+        reject_reason = validate_game_score(game_id, score, duration_seconds, extra_data)
         if reject_reason is not None:
             print(f"[DB] ⚠️ Score rejected for {game_id} ({reject_reason}): {score} → 0")
             score = 0

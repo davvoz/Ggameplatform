@@ -65,12 +65,8 @@ echo.
 
 :: Check if .env exists
 if not exist ".env" (
-    echo ⚠️  File .env non trovato, lo creo da .env.example...
-    if exist ".env.example" (
-        copy ".env.example" ".env" >nul
-    ) else (
-        echo # Backend Environment > .env
-    )
+    echo ⚠️  File .env non trovato, lo creo...
+    echo # Backend Environment > .env
 )
 
 :: Check if VAPID keys already exist in .env

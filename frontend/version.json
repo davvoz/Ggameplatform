@@ -1,8 +1,17 @@
 {
-  "version": "5.14.2",
-  "timestamp": "2026-09-05T13:44:54.806Z",
-  "buildNumber": 600,
+  "version": "5.14.3",
+  "timestamp": "2026-09-06T10:00:27.891Z",
+  "buildNumber": 601,
   "changelog": [
+    {
+      "version": "5.14.3",
+      "date": "2026-09-06",
+      "type": "patch",
+      "changes": [
+        "fix: update validate_game_score to return score and reject reason",
+        "🔖 Bump version to 5.14.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.14.2",
       "date": "2026-09-05",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: add Stunt Hill game with thumbnail generation, backend services, and registration script",
         "🔖 Bump version to 5.9.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.9.3",
-      "date": "2026-06-12",
-      "type": "patch",
-      "changes": [
-        "fix: [DC]update default low performance flag to true and clean up commented sections in EntityRenderer",
-        "🔖 Bump version to 5.9.2 [skip-version]"
       ]
     }
   ]

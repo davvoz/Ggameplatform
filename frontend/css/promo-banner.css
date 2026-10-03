@@ -1,0 +1,571 @@
+/* ========================================
+   Promo Banner - DOMIN8 (https://magic.cur8.fun/)
+   Navy & gold card-game style matching the DOMIN8 UI.
+   Assets: frontend/images/promo/domin8/
+   ======================================== */
+
+.promo-banner {
+    --m8-gold: #e2b65c;
+    --m8-gold-light: #fff1c2;
+    --m8-gold-dark: #9a6420;
+    --m8-line: rgba(201, 162, 74, 0.55);
+    --m8-navy: #0a1430;
+    --m8-navy-deep: #050a1c;
+    --m8-text: #c9d3ea;
+    --m8-select: #7cc4ff;
+    --m8-corner: 86px;
+
+    position: relative;
+    display: grid;
+    grid-template-columns: 250px 1fr 240px;
+    align-items: center;
+    gap: var(--spacing-lg);
+    min-height: 190px;
+    margin-bottom: var(--spacing-md);
+    padding: 22px 56px 22px 40px;
+    border: 1px solid #b8893a;
+    border-radius: 12px;
+    background:
+        radial-gradient(ellipse at 22% 10%, rgba(80, 110, 190, 0.28) 0%, transparent 55%),
+        radial-gradient(ellipse at 78% 95%, rgba(70, 90, 170, 0.22) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(226, 182, 92, 0.06) 0%, transparent 60%),
+        linear-gradient(180deg, #0d1834 0%, var(--m8-navy-deep) 100%);
+    box-shadow:
+        inset 0 0 0 5px var(--m8-navy),
+        inset 0 0 0 6px var(--m8-line),
+        0 10px 30px rgba(0, 0, 0, 0.5);
+    color: #fff;
+    text-decoration: none;
+    overflow: hidden;
+    isolation: isolate;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.promo-banner:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 0 0 5px var(--m8-navy),
+        inset 0 0 0 6px rgba(226, 182, 92, 0.9),
+        0 14px 40px rgba(0, 0, 0, 0.6),
+        0 0 28px rgba(226, 182, 92, 0.18);
+}
+
+.promo-banner:focus-visible {
+    outline: 2px solid var(--m8-select);
+    outline-offset: 3px;
+}
+
+/* Gold light sweep */
+.promo-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 42%, rgba(255, 225, 160, 0.10) 50%, transparent 58%);
+    transform: translateX(-100%);
+    animation: m8-sweep 7s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* ---------- Starfield ---------- */
+.m8-stars,
+.m8-stars::before {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.m8-stars {
+    background-image:
+        radial-gradient(1.5px 1.5px at 6% 30%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 18% 85%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 31% 14%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 44% 88%, #ffe9b0 50%, transparent 51%),
+        radial-gradient(1px 1px at 57% 22%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 69% 70%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 83% 18%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 94% 62%, #fff 50%, transparent 51%);
+    opacity: 0.7;
+    animation: m8-twinkle 3.2s ease-in-out infinite;
+}
+
+.m8-stars::before {
+    content: '';
+    background-image:
+        radial-gradient(1px 1px at 12% 58%, #fff 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 25% 40%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 38% 72%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 51% 8%, #ffe9b0 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 63% 92%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 76% 44%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 89% 88%, #fff 50%, transparent 51%);
+    animation: m8-twinkle 3.2s ease-in-out 1.6s infinite;
+}
+
+/* ---------- Gold corner flourishes ---------- */
+.m8-corner {
+    position: absolute;
+    width: var(--m8-corner);
+    aspect-ratio: 240 / 215;
+    background: url('../images/promo/domin8/corner.png') no-repeat top left / contain;
+    pointer-events: none;
+    z-index: 1;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+}
+
+.m8-corner--tl { top: 8px; left: 8px; }
+.m8-corner--tr { top: 8px; right: 8px; transform: scaleX(-1); }
+.m8-corner--bl { bottom: 8px; left: 8px; transform: scaleY(-1); }
+.m8-corner--br { bottom: 8px; right: 8px; transform: scale(-1, -1); }
+
+/* ---------- Fanned cards ---------- */
+.m8-fan {
+    --cw: 84px;
+    --ch: 120px;
+    --spread: 11deg;
+
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: calc(var(--ch) + 22px);
+}
+
+.m8-card {
+    --r: 0;
+    --fc: #8fa3bf;
+    --fc-dark: #1d2636;
+
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 4px;
+    border: 2px solid var(--fc);
+    background: linear-gradient(180deg, var(--fc-dark) 0%, #0b0f1a 100%);
+    left: 50%;
+    bottom: 4px;
+    width: var(--cw);
+    height: var(--ch);
+    margin-left: calc(var(--cw) / -2);
+    border-radius: 7px;
+    transform-origin: 50% 200%;
+    transform: rotate(calc(var(--r) * var(--spread)));
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.2);
+}
+
+/* --r = position in the fan, --fc = faction frame colour */
+.m8-card--back {
+    --r: -2;
+    --fc: #c9a24a;
+
+    background: url('../images/promo/domin8/card-back.jpg') center / cover;
+}
+
+.m8-card--ember   { --r: -1; --fc: #c4532d; --fc-dark: #3a140c; }
+.m8-card--verdant { --r: 1;  --fc: #3f9b4a; --fc-dark: #10301a; }
+.m8-card--shadow  { --r: 2;  --fc: #8a4fc4; --fc-dark: #261238; }
+
+/* Center card: gold frame, on top */
+.m8-card--iron {
+    --fc: var(--m8-gold);
+
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7), 0 0 14px rgba(226, 182, 92, 0.45);
+}
+
+.promo-banner:hover .m8-fan {
+    --spread: 15deg;
+}
+
+.promo-banner:hover .m8-card--iron {
+    transform: translateY(-8px);
+}
+
+.m8-card-art {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid rgba(226, 182, 92, 0.7);
+    border-radius: 3px;
+}
+
+/* Placeholder rules text */
+.m8-card-text {
+    flex: 1;
+    border-radius: 2px;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.28)) 4px 5px / 80% 2px no-repeat,
+        linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.22)) 4px 10px / 64% 2px no-repeat,
+        rgba(0, 0, 0, 0.35);
+}
+
+.m8-card-cost,
+.m8-gem {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(var(--cw) * 0.25);
+    height: calc(var(--cw) * 0.25);
+    border-radius: 50%;
+    border: 1px solid var(--m8-gold-light);
+    color: #fff;
+    font: 700 calc(var(--cw) * 0.15) / 1 'Cinzel', Georgia, serif;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9);
+}
+
+.m8-card-cost {
+    top: -5px;
+    left: -5px;
+    background: radial-gradient(circle at 35% 30%, #8fb4ff, #2a54b8);
+}
+
+.m8-gem {
+    bottom: -5px;
+}
+
+.m8-gem--atk {
+    left: -5px;
+    background: radial-gradient(circle at 35% 30%, #ffb07a, #c4471d);
+}
+
+.m8-gem--hp {
+    right: -5px;
+    background: radial-gradient(circle at 35% 30%, #9ef0a6, #2c8a3d);
+}
+
+/* ---------- Text ---------- */
+.m8-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    text-align: center;
+}
+
+.m8-kicker {
+    color: var(--m8-gold);
+    font: 700 0.72rem / 1 'Cinzel', Georgia, serif;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.m8-title {
+    margin-top: 4px;
+    /* Same face as the DOMIN8 logo (New Rocker, SIL OFL) */
+    font: 400 3.4rem / 1 'New Rocker', 'Palatino Linotype', Georgia, serif;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff6dc 0%, #f7d9a0 30%, #e9a752 55%, #c06a24 78%, #7a3a10 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1px #3b1d07;
+    filter:
+        drop-shadow(0 2px 0 #1e0f03)
+        drop-shadow(0 0 12px rgba(233, 167, 82, 0.35));
+}
+
+.m8-divider {
+    display: block;
+    width: 160px;
+    max-width: 100%;
+    height: auto;
+    margin: 2px 0 6px;
+}
+
+.m8-tagline {
+    color: var(--m8-text);
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-wrap: balance;
+}
+
+/* ---------- CTA (same frame as the in-game menu buttons) ---------- */
+.m8-cta {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 230px;
+    height: 66px;
+    padding: 0 8px;
+    border-style: solid;
+    border-width: 6px 54px;
+    border-image: url('../images/promo/domin8/frame-button.png') 14 125 fill / 6px 54px stretch;
+    border-radius: 12px;
+    color: #f4d58d;
+    font: 700 1.25rem / 1 'Cinzel', Georgia, serif;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+    animation: m8-select 2.4s ease-in-out infinite;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.promo-banner:hover .m8-cta {
+    color: #fff;
+    transform: scale(1.04);
+}
+
+/* ---------- CTA column + "Powered by" partner logos ---------- */
+.m8-side {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Discreet: monochrome soft-gold logos, no badges */
+.m8-partners {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 0;
+    opacity: 0.7;
+    transition: opacity 0.25s ease;
+}
+
+.promo-banner:hover .m8-partners {
+    opacity: 1;
+}
+
+/* "— Powered by —" between hairlines */
+.m8-partners-label {
+    display: flex;
+    flex-basis: 100%;
+    align-items: center;
+    gap: 8px;
+    color: #e2c58a;
+    font: 700 0.56rem / 1 'Cinzel', Georgia, serif;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+}
+
+.m8-partners-label::before,
+.m8-partners-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(226, 197, 138, 0.6));
+}
+
+.m8-partners-label::after {
+    background: linear-gradient(90deg, rgba(226, 197, 138, 0.6), transparent);
+}
+
+.m8-partner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #e2c58a;
+    font: 700 0.58rem / 1 'Cinzel', Georgia, serif;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* Tiny diamond separator between partners */
+.m8-partner + .m8-partner::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    margin: 0 7px;
+    background: rgba(226, 197, 138, 0.6);
+    transform: rotate(45deg);
+}
+
+.m8-partner img {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width: 900px) {
+    .promo-banner {
+        --m8-corner: 70px;
+
+        grid-template-columns: 180px 1fr 210px;
+        gap: var(--spacing-md);
+        min-height: 160px;
+        padding: 18px 40px 18px 24px;
+    }
+
+    .m8-fan {
+        --cw: 66px;
+        --ch: 94px;
+        --spread: 8deg;
+    }
+
+    .m8-title {
+        font-size: 2.8rem;
+    }
+
+    .m8-divider {
+        width: 130px;
+    }
+
+    .m8-tagline {
+        font-size: 0.82rem;
+    }
+
+    .m8-partner {
+        font-size: 0.54rem;
+        letter-spacing: 0.02em;
+    }
+
+    .m8-partner + .m8-partner::before {
+        margin: 0 5px;
+    }
+
+    .m8-cta {
+        min-width: 180px;
+        height: 56px;
+        border-width: 5px 45px;
+        border-image-width: 5px 45px;
+        font-size: 1.05rem;
+    }
+}
+
+/* ---------- Phone: fan + text on top, full-width CTA below ---------- */
+@media (max-width: 600px) {
+    .promo-banner {
+        --m8-corner: 54px;
+
+        grid-template-columns: 118px 1fr;
+        gap: 10px 12px;
+        min-height: 0;
+        padding: 16px 16px 16px 10px;
+        border-radius: 10px;
+    }
+
+    .m8-fan {
+        --cw: 46px;
+        --ch: 66px;
+        --spread: 9deg;
+    }
+
+    .m8-card {
+        gap: 2px;
+        padding: 2px;
+        border-width: 1.5px;
+        border-radius: 5px;
+    }
+
+    .m8-card-cost,
+    .m8-gem {
+        top: auto;
+        width: 12px;
+        height: 12px;
+        font-size: 0.45rem;
+    }
+
+    .m8-card-cost {
+        top: -4px;
+        left: -4px;
+    }
+
+    .m8-gem {
+        bottom: -4px;
+    }
+
+    .m8-gem--atk { left: -4px; }
+    .m8-gem--hp { right: -4px; }
+
+    .m8-kicker {
+        font-size: 0.58rem;
+        letter-spacing: 0.16em;
+    }
+
+    .m8-title {
+        font-size: 2.2rem;
+    }
+
+    .m8-divider {
+        width: 104px;
+        margin: 0 0 4px;
+    }
+
+    .m8-tagline {
+        font-size: 0.74rem;
+    }
+
+    .m8-side {
+        grid-column: 1 / -1;
+        gap: 10px;
+    }
+
+    /* Keep the hairlines clear of the corner flourishes */
+    .m8-partners {
+        max-width: 250px;
+    }
+
+    .m8-partner {
+        font-size: 0.6rem;
+    }
+
+    .m8-partner + .m8-partner::before {
+        margin: 0 7px;
+    }
+
+    .m8-cta {
+        width: 100%;
+        min-width: 0;
+        height: 52px;
+        border-width: 5px 42px;
+        border-image-width: 5px 42px;
+        font-size: 1.05rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .promo-banner {
+        grid-template-columns: 96px 1fr;
+    }
+
+    .m8-fan {
+        --cw: 38px;
+        --ch: 54px;
+    }
+
+    .m8-title {
+        font-size: 1.9rem;
+    }
+}
+
+/* ---------- Animations ---------- */
+@keyframes m8-twinkle {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 0.25; }
+}
+
+@keyframes m8-sweep {
+    0%, 65% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Light-blue glow like the selected button in the DOMIN8 menu */
+@keyframes m8-select {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(124, 196, 255, 0), 0 0 0 rgba(124, 196, 255, 0); }
+    50% { box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.85), 0 0 18px rgba(124, 196, 255, 0.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .promo-banner,
+    .promo-banner *,
+    .promo-banner::after,
+    .promo-banner *::before {
+        animation: none !important;
+        transition: none !important;
+    }
+}

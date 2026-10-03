@@ -1,8 +1,17 @@
 {
-  "version": "5.14.3",
-  "timestamp": "2026-09-06T10:00:27.891Z",
-  "buildNumber": 601,
+  "version": "5.15.0",
+  "timestamp": "2026-10-03T16:55:26.955Z",
+  "buildNumber": 602,
   "changelog": [
+    {
+      "version": "5.15.0",
+      "date": "2026-10-03",
+      "type": "minor",
+      "changes": [
+        "feat:Add promotional images for Domin8",
+        "🔖 Bump version to 5.14.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.14.3",
       "date": "2026-09-06",
@@ -83,15 +92,6 @@
       "changes": [
         "fix: update score validation logic to implement light structural checks and remove magnitude caps",
         "🔖 Bump version to 5.10.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.10.0",
-      "date": "2026-06-15",
-      "type": "minor",
-      "changes": [
-        "feat: add Stunt Hill game with thumbnail generation, backend services, and registration script",
-        "🔖 Bump version to 5.9.3 [skip-version]"
       ]
     }
   ]

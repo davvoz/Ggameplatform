@@ -1,8 +1,17 @@
 {
-  "version": "5.15.0",
-  "timestamp": "2026-10-03T16:55:26.955Z",
-  "buildNumber": 602,
+  "version": "5.15.1",
+  "timestamp": "2026-10-05T11:18:43.284Z",
+  "buildNumber": 603,
   "changelog": [
+    {
+      "version": "5.15.1",
+      "date": "2026-10-05",
+      "type": "patch",
+      "changes": [
+        "fix:[banner]change name",
+        "🔖 Bump version to 5.15.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.15.0",
       "date": "2026-10-03",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: add version watcher to monitor server version changes and trigger reloads",
         "🔖 Bump version to 5.10.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.10.1",
-      "date": "2026-06-16",
-      "type": "patch",
-      "changes": [
-        "fix: update score validation logic to implement light structural checks and remove magnitude caps",
-        "🔖 Bump version to 5.10.0 [skip-version]"
       ]
     }
   ]

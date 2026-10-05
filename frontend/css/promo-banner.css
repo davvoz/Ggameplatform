@@ -1,7 +1,7 @@
 /* ========================================
-   Promo Banner - DOMIN8 (https://magic.cur8.fun/)
-   Navy & gold card-game style matching the DOMIN8 UI.
-   Assets: frontend/images/promo/domin8/
+   Promo Banner - KIJAM (https://magic.cur8.fun/)
+   Navy & gold card-game style matching the KIJAM UI.
+   Assets: frontend/images/promo/kijam/
    ======================================== */
 
 .promo-banner {
@@ -109,7 +109,7 @@
     position: absolute;
     width: var(--m8-corner);
     aspect-ratio: 240 / 215;
-    background: url('../images/promo/domin8/corner.png') no-repeat top left / contain;
+    background: url('../images/promo/kijam/corner.png') no-repeat top left / contain;
     pointer-events: none;
     z-index: 1;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
@@ -161,7 +161,7 @@
     --r: -2;
     --fc: #c9a24a;
 
-    background: url('../images/promo/domin8/card-back.jpg') center / cover;
+    background: url('../images/promo/kijam/card-back.jpg') center / cover;
 }
 
 .m8-card--ember   { --r: -1; --fc: #c4532d; --fc-dark: #3a140c; }
@@ -256,28 +256,22 @@
     white-space: nowrap;
 }
 
-.m8-title {
-    margin-top: 4px;
-    /* Same face as the DOMIN8 logo (New Rocker, SIL OFL) */
-    font: 400 3.4rem / 1 'New Rocker', 'Palatino Linotype', Georgia, serif;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    background: linear-gradient(180deg, #fff6dc 0%, #f7d9a0 30%, #e9a752 55%, #c06a24 78%, #7a3a10 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    -webkit-text-stroke: 1px #3b1d07;
+/* Official KIJAM logo (cut out on transparency, from the game's data/art/Logo_KIJAM.webp) */
+.m8-logo {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 140px;
+    object-fit: contain;
+    margin: 2px 0 4px;
     filter:
-        drop-shadow(0 2px 0 #1e0f03)
-        drop-shadow(0 0 12px rgba(233, 167, 82, 0.35));
+        drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6))
+        drop-shadow(0 0 14px rgba(242, 196, 109, 0.22));
+    transition: transform 0.3s ease;
 }
 
-.m8-divider {
-    display: block;
-    width: 160px;
-    max-width: 100%;
-    height: auto;
-    margin: 2px 0 6px;
+.promo-banner:hover .m8-logo {
+    transform: scale(1.03);
 }
 
 .m8-tagline {
@@ -300,7 +294,7 @@
     padding: 0 8px;
     border-style: solid;
     border-width: 6px 54px;
-    border-image: url('../images/promo/domin8/frame-button.png') 14 125 fill / 6px 54px stretch;
+    border-image: url('../images/promo/kijam/frame-button.png') 14 125 fill / 6px 54px stretch;
     border-radius: 12px;
     color: #f4d58d;
     font: 700 1.25rem / 1 'Cinzel', Georgia, serif;
@@ -407,12 +401,8 @@
         --spread: 8deg;
     }
 
-    .m8-title {
-        font-size: 2.8rem;
-    }
-
-    .m8-divider {
-        width: 130px;
+    .m8-logo {
+        height: 104px;
     }
 
     .m8-tagline {
@@ -487,13 +477,9 @@
         letter-spacing: 0.16em;
     }
 
-    .m8-title {
-        font-size: 2.2rem;
-    }
-
-    .m8-divider {
-        width: 104px;
-        margin: 0 0 4px;
+    .m8-logo {
+        height: 92px;
+        margin: 2px 0;
     }
 
     .m8-tagline {
@@ -538,8 +524,8 @@
         --ch: 54px;
     }
 
-    .m8-title {
-        font-size: 1.9rem;
+    .m8-logo {
+        height: 80px;
     }
 }
 
@@ -554,7 +540,7 @@
     100% { transform: translateX(100%); }
 }
 
-/* Light-blue glow like the selected button in the DOMIN8 menu */
+/* Light-blue glow like the selected button in the KIJAM menu */
 @keyframes m8-select {
     0%, 100% { box-shadow: 0 0 0 0 rgba(124, 196, 255, 0), 0 0 0 rgba(124, 196, 255, 0); }
     50% { box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.85), 0 0 18px rgba(124, 196, 255, 0.55); }

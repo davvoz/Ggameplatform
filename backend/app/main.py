@@ -21,6 +21,7 @@ from app.routers import coins
 from app.routers import levels
 from app.routers import leaderboard
 from app.routers import steem_posts
+from app.routers import pings
 from app.routers import platform
 from app.routers import community
 from app.routers import community_stats
@@ -190,6 +191,7 @@ app.include_router(coins.router, tags=["coins"])
 app.include_router(levels.router, tags=["levels"])
 app.include_router(leaderboard.router, tags=["leaderboard"])
 app.include_router(steem_posts.router, tags=["steem-posts"])
+app.include_router(pings.router, tags=["pings"])
 app.include_router(platform.router, prefix="/api/platform", tags=["platform"])
 app.include_router(community.router, tags=["community"])
 app.include_router(community.rest_router, tags=["community-api"])

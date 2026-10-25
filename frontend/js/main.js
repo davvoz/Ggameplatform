@@ -23,6 +23,8 @@ import CampaignCountdown from './CampaignCountdown.js';
 import { initNavMultiplier } from './nav-multiplier.js';
 import WalletRenderer from './WalletRenderer.js';
 import { initVersionWatcher } from './versionWatcher.js';
+import PingsAPI from './PingsAPI.js';
+import PingShareModal from './PingShareModal.js';
 
 // Import nav.js for side effects (registers community notification handlers)
 import './nav.js';
@@ -990,6 +992,8 @@ function setupPlayerControls(gameId, iframe) {
 
     });
 
+    setupPingShareButton(runtime);
+
     // Handle fullscreen exit (ESC key or native exit)
     const handleFullscreenChange = () => {
         const playerContainer = document.querySelector('.player-container');
@@ -1007,6 +1011,54 @@ function setupPlayerControls(gameId, iframe) {
 
     // Store runtime instance for cleanup
     setCurrentGameRuntime(runtime);
+}
+
+/**
+ * "Post on Pings" button over the game: shown to Steem users when a game
+ * session ends, it opens the dialog sharing that game's result on cur8.fun
+ * Pings. Hidden when the next game gets going, when dismissed or once shared.
+ */
+function setupPingShareButton(runtime) {
+    const container = document.querySelector('.player-container');
+    if (!container) return;
+
+    const shareButton = document.createElement('div');
+    shareButton.className = 'ping-share-btn';
+    shareButton.hidden = true;
+    shareButton.innerHTML = `
+        <button class="ping-share-btn-main">📣 Post on Pings</button>
+        <button class="ping-share-btn-dismiss" aria-label="Dismiss">&times;</button>
+    `;
+    container.appendChild(shareButton);
+
+    let endedSession = null;
+    const hide = () => { shareButton.hidden = true; };
+
+    const onSessionEnded = (event) => {
+        // The listener is global: drop it once this game's page is gone
+        if (getCurrentGameRuntime() !== runtime || !shareButton.isConnected) {
+            globalThis.removeEventListener('gameSessionEnded', onSessionEnded);
+            return;
+        }
+        const session = event.detail?.session;
+        if (!AuthManager.getUser()?.steem_username || !session?.session_id) return;
+        endedSession = session;
+        shareButton.hidden = false;
+    };
+    globalThis.addEventListener('gameSessionEnded', onSessionEnded);
+
+    runtime.on('gameStarted', hide);
+    runtime.on('scoreUpdate', (data) => {
+        // A new game scoring (not the final score sent again) means the ended one is behind
+        if (endedSession && data?.score > 0 && data.score !== endedSession.score) hide();
+    });
+
+    shareButton.querySelector('.ping-share-btn-dismiss').addEventListener('click', hide);
+    shareButton.querySelector('.ping-share-btn-main').addEventListener('click', () => {
+        if (!endedSession) return;
+        const modal = new PingShareModal(new PingsAPI(), AuthManager, { onShared: hide });
+        modal.show(endedSession.session_id);
+    });
 }
 
 /**

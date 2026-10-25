@@ -1,4 +1,5 @@
 import { calculateXpData } from './level-widget.js';
+import postingKeyVault from './PostingKeyVault.js';
 
 // Path prefixes that belong to OUR backend's user-session-protected API,
 // regardless of which host/port serves it (in dev, the frontend and the
@@ -65,6 +66,7 @@ const AUTH_ENDPOINTS_ALLOWING_401 = ['/users/steem-auth', '/users/steem-posting-
                     localStorage.removeItem('gameplatform_user');
                     localStorage.removeItem('currentUser');
                     localStorage.removeItem('authMethod');
+                    await postingKeyVault.clear();
                     globalThis.location.replace('/auth.html?reason=session_expired');
                 }
             } catch (error) {
@@ -135,6 +137,7 @@ class AuthManager {
                     localStorage.removeItem('gameplatform_user');
                     localStorage.removeItem('currentUser');
                     localStorage.removeItem('authMethod');
+                    await postingKeyVault.clear();
 
                     // Salva il nuovo epoch
                     localStorage.setItem('platformEpoch', serverEpoch);
@@ -416,6 +419,7 @@ class AuthManager {
         localStorage.removeItem('gameplatform_user');
         localStorage.removeItem('currentUser');
         localStorage.removeItem('authMethod');
+        await postingKeyVault.clear();
         this.updateUI().catch(err => console.error('Failed to update UI:', err));
 
         // Dispatch custom event

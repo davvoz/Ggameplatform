@@ -1,8 +1,17 @@
 {
-  "version": "5.16.1",
-  "timestamp": "2026-10-26T15:22:45.310Z",
-  "buildNumber": 605,
+  "version": "5.16.2",
+  "timestamp": "2026-10-26T15:49:09.875Z",
+  "buildNumber": 606,
   "changelog": [
+    {
+      "version": "5.16.2",
+      "date": "2026-10-26",
+      "type": "patch",
+      "changes": [
+        "fix: implement STEEM rewards management for processed weeks with new endpoints and UI updates",
+        "🔖 Bump version to 5.16.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.16.1",
       "date": "2026-10-26",
@@ -83,15 +92,6 @@
       "changes": [
         "obf",
         "🔖 Bump version to 5.13.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.13.0",
-      "date": "2026-07-08",
-      "type": "minor",
-      "changes": [
-        "feat: enhance multiplier scheduling and user multiplier checks with background tasks",
-        "🔖 Bump version to 5.12.0 [skip-version]"
       ]
     }
   ]

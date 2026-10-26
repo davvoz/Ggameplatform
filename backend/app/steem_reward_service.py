@@ -5,7 +5,7 @@ Handles STEEM transactions for leaderboard rewards
 
 import os
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 from datetime import datetime, timezone
 
 try:
@@ -13,6 +13,7 @@ try:
     from beem.account import Account
     from beem.exceptions import AccountDoesNotExistsException
     from beem.transactionbuilder import TransactionBuilder
+    from beem.utils import formatTimeString
     from beembase import operations
     BEEM_AVAILABLE = True
 except ImportError:
@@ -110,11 +111,11 @@ class SteemRewardService:
                 }
             
             # Format memo
-            full_memo = f"🏆 Weekly Leaderboard Reward - Rank #{rank} - {game_title} ({week_start} to {week_end})\n{memo}"
-            
+            full_memo = f"{self.reward_memo_title(rank, game_title, week_start, week_end)}\n{memo}"
+
             # Send transfer using the same method as steembot
             tb = TransactionBuilder(steem_instance=self.steem)
-            
+
             transfer_op = operations.Transfer(
                 **{
                     'from': self.account_name,
@@ -123,13 +124,15 @@ class SteemRewardService:
                     'memo': full_memo
                 }
             )
-            
+
             tb.appendOps(transfer_op)
             tb.appendSigner(self.account_name, 'active')
-            tb.sign()
-            result = tb.broadcast()
-            
-            tx_id = result.get('id') if result else None
+            signed_tx = tb.sign()
+            tb.broadcast()
+
+            # broadcast() returns the transaction without its id (it only adds
+            # one when it signs itself): take it from the signed transaction
+            tx_id = signed_tx.id if signed_tx else None
             
             logger.info(f"✅ Sent {amount} STEEM to @{to_username} - TX: {tx_id}")
             
@@ -151,6 +154,34 @@ class SteemRewardService:
                 'amount': amount
             }
     
+    @staticmethod
+    def reward_memo_title(rank: int, game_title: str, week_start: str, week_end: str) -> str:
+        """First line of a reward's memo: it identifies the reward on the chain."""
+        return f"🏆 Weekly Leaderboard Reward - Rank #{rank} - {game_title} ({week_start} to {week_end})"
+
+    def get_sent_rewards(self, week_start: str, week_end: str) -> Dict[Tuple[str, str], str]:
+        """
+        Rewards of a week already on the chain, as {(to, memo title): trx_id}.
+        A week's rewards are sent after it ends, so the history is read
+        backwards down to its last day. Raises if the history cannot be read.
+        """
+        if not BEEM_AVAILABLE or not self.steem:
+            raise RuntimeError("Steem not initialized")
+
+        week_suffix = f"({week_start} to {week_end})"
+        stop = datetime.fromisoformat(week_end).replace(tzinfo=timezone.utc)
+        sent = {}
+
+        account = Account(self.account_name, blockchain_instance=self.steem)
+        for op in account.history_reverse(only_ops=['transfer']):
+            if formatTimeString(op['timestamp']) < stop:
+                break
+            title = op['memo'].split('\n', 1)[0]
+            if op['from'] == self.account_name and title.endswith(week_suffix):
+                sent[(op['to'], title)] = op.get('trx_id')
+
+        return sent
+
     def send_batch_rewards(self, winners: list) -> Dict[str, Any]:
         """
         Send rewards to multiple winners.

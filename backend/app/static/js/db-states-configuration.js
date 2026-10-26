@@ -1227,7 +1227,7 @@ function openWeeklyRewardsModal(bodyHtml) {
 
 async function showWeeklyRewards() {
     try {
-        const response = await fetch(`${CONFIG.API_BASE}/weekly-rewards/unpaid`);
+        const response = await fetch(`${CONFIG.API_BASE}/weekly-rewards/status`);
         const data = await response.json();
 
         if (!data.success) {
@@ -1237,18 +1237,14 @@ async function showWeeklyRewards() {
 
         unpaidWeeks = data.weeks;
 
-        if (unpaidWeeks.length === 0) {
-            openWeeklyRewardsModal(`
-                        <div style="text-align: center; padding: 40px; color: #6c757d;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-                            <h3>Nessuna settimana da pagare</h3>
-                            <p>Tutte le settimane passate sono state elaborate.</p>
+        const unpaidHtml = unpaidWeeks.length === 0 ? `
+                        <div style="text-align: center; padding: 24px; color: #6c757d;">
+                            <div style="font-size: 36px; margin-bottom: 8px;">✅</div>
+                            <p>Nessuna settimana da pagare: tutte le settimane passate sono state elaborate.</p>
                         </div>
-                    `);
-            return;
-        }
+                    ` : unpaidWeeks.map(renderUnpaidWeek).join('');
 
-        openWeeklyRewardsModal(unpaidWeeks.map(renderUnpaidWeek).join(''));
+        openWeeklyRewardsModal(unpaidHtml + renderProcessedWeeks(data.processed_weeks));
 
     } catch (error) {
         console.error('Error loading weekly rewards:', error);
@@ -1344,6 +1340,159 @@ async function payWeeklyRewards(button, weekStart) {
         console.error('Error paying weekly rewards:', error);
         showToast('Errore: ' + error.message, 'error');
         await showWeeklyRewards();
+    }
+}
+
+function renderProcessedWeeks(weeks) {
+    if (weeks.length === 0) return '';
+    const esc = (v) => Utils.escapeHtml(String(v ?? ''));
+
+    const rows = weeks.map(w => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <span>Settimana ${esc(w.week_start)} → ${esc(w.week_end)}</span>
+                            <button onclick="checkWeeklySteem('${esc(w.week_start)}')"
+                                    style="font-size: 0.85em; padding: 6px 12px; background: #1c7ed6; border: none; color: white; cursor: pointer; border-radius: 4px; font-weight: 600;">
+                                🔍 Verifica STEEM
+                            </button>
+                        </div>
+                    `).join('');
+
+    return `
+                <div style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 4px;">Settimane elaborate</h3>
+                    <p style="margin-bottom: 8px; color: #6c757d; font-size: 0.9em;">
+                        Controlla sulla blockchain quali STEEM sono arrivati e invia solo quelli mancanti. Le coin non vengono ripagate.
+                    </p>
+                    ${rows}
+                </div>
+            `;
+}
+
+const STEEM_STATUS_LABELS = {
+    sent: '<span style="color: #2f9e44;">✅ Inviato</span>',
+    to_send: '<span style="color: #1c7ed6; font-weight: bold;">📤 Da inviare</span>',
+    no_account: '<span style="color: #e67700;">⚠️ Nessun account Steem</span>'
+};
+
+async function checkWeeklySteem(weekStart) {
+    const esc = (v) => Utils.escapeHtml(String(v ?? ''));
+    openWeeklyRewardsModal('<div style="text-align: center; padding: 40px;">⏳ Lettura della blockchain...</div>');
+
+    try {
+        const response = await fetch(`${CONFIG.API_BASE}/weekly-rewards/steem-check?week_start=${encodeURIComponent(weekStart)}`);
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            openWeeklyRewardsModal(`
+                        <p style="color: #dc3545;">❌ ${esc(data.detail || data.error || response.status)}</p>
+                        <button onclick="showWeeklyRewards()" style="margin-top: 12px;">← Indietro</button>
+                    `);
+            return;
+        }
+
+        const toSend = data.winners.filter(w => w.status === 'to_send');
+        const toSendSteem = Math.round(toSend.reduce((sum, w) => sum + w.steem_reward, 0) * 1000) / 1000;
+        const weekEnd = data.winners.length ? data.winners[0].week_end : '';
+
+        const rows = data.winners.map(w => `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 8px;">${esc(w.game_title)}</td>
+                            <td style="padding: 8px;">#${w.rank}</td>
+                            <td style="padding: 8px;">${w.steem_username ? '@' + esc(w.steem_username) : esc(w.username || w.user_id)}</td>
+                            <td style="padding: 8px; text-align: right;">${w.steem_reward}</td>
+                            <td style="padding: 8px;">${STEEM_STATUS_LABELS[w.status]}</td>
+                        </tr>
+                    `).join('');
+
+        const sendButton = toSend.length ? `
+                    <button onclick="resendWeeklySteem(this, '${esc(weekStart)}', ${toSend.length}, ${toSendSteem})"
+                            style="background: #1c7ed6; border: none; color: white; width: 100%; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        📤 Invia ${toSend.length} premi mancanti (${toSendSteem} STEEM)
+                    </button>` : `
+                    <p style="text-align: center; color: #2f9e44;">✅ Nessuno STEEM da inviare per questa settimana.</p>`;
+
+        openWeeklyRewardsModal(`
+                    <h3 style="margin-bottom: 8px;">STEEM settimana ${esc(weekStart)} → ${esc(weekEnd)}</h3>
+                    <p style="margin-bottom: 12px;">
+                        ${data.winners.filter(w => w.status === 'sent').length} già inviati ·
+                        <strong>${toSend.length} da inviare</strong> ·
+                        ${data.winners.filter(w => w.status === 'no_account').length} senza account
+                    </p>
+                    <div style="overflow-x: auto; max-height: 360px; overflow-y: auto; margin-bottom: 12px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.1);">
+                                    <th style="padding: 8px; text-align: left;">Gioco</th>
+                                    <th style="padding: 8px; text-align: left;">Rank</th>
+                                    <th style="padding: 8px; text-align: left;">Utente</th>
+                                    <th style="padding: 8px; text-align: right;">STEEM</th>
+                                    <th style="padding: 8px; text-align: left;">Stato</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    ${sendButton}
+                    <button onclick="showWeeklyRewards()" style="margin-top: 12px;">← Indietro</button>
+                `);
+
+    } catch (error) {
+        console.error('Error checking weekly STEEM:', error);
+        showToast('Errore: ' + error.message, 'error');
+    }
+}
+
+async function resendWeeklySteem(button, weekStart, count, steem) {
+    const esc = (v) => Utils.escapeHtml(String(v ?? ''));
+    const confirmed = confirm(
+        `Inviare ${count} premi mancanti (${steem} STEEM) per la settimana ${weekStart}?\n\n` +
+        `Prima dell'invio la blockchain viene ricontrollata: i premi già arrivati non vengono reinviati.`
+    );
+    if (!confirmed) return;
+
+    document.querySelectorAll('#crudModal button').forEach(b => { b.disabled = true; });
+    button.textContent = '⏳ Invio in corso... non chiudere la pagina';
+
+    try {
+        const response = await fetch(`${CONFIG.API_BASE}/weekly-rewards/resend-steem`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ week_start: weekStart })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast('Invio rifiutato: ' + (data.detail || response.status), 'error');
+            await checkWeeklySteem(weekStart);
+            return;
+        }
+
+        const r = data.results;
+        const errors = (r.errors || []).length ? `
+                    <div style="margin-top: 12px; padding: 10px; border-radius: 6px; background: rgba(220,53,69,0.15); color: #dc3545;">
+                        <strong>Errori:</strong>
+                        <ul style="margin: 8px 0 0 18px;">${r.errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>
+                    </div>` : '';
+        const notInitialized = r.error ? `<p style="color: #dc3545;">❌ ${esc(r.error)}</p>` : '';
+
+        openWeeklyRewardsModal(`
+                    <h3 style="margin-bottom: 12px;">${data.success ? '✅' : '⚠️'} STEEM settimana ${esc(weekStart)}</h3>
+                    ${notInitialized}
+                    <table style="border-collapse: collapse; font-size: 0.95em;">
+                        <tr><td style="padding: 4px 16px 4px 0;">Già sulla blockchain</td><td><strong>${r.already_sent ?? 0}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">Inviati ora</td><td><strong>${r.steem_sent ?? 0}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">Falliti</td><td><strong>${r.steem_failed ?? 0}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">Senza account Steem</td><td><strong>${r.no_account ?? 0}</strong></td></tr>
+                    </table>
+                    ${errors}
+                    <button onclick="checkWeeklySteem('${esc(weekStart)}')" style="margin-top: 16px;">🔍 Verifica di nuovo</button>
+                `);
+        showToast(data.success ? 'STEEM inviati' : 'Invio completato con errori', data.success ? 'success' : 'error');
+
+    } catch (error) {
+        console.error('Error resending weekly STEEM:', error);
+        showToast('Errore: ' + error.message, 'error');
+        await checkWeeklySteem(weekStart);
     }
 }
 

@@ -425,6 +425,19 @@ class LeaderboardRepository:
         ).all()
 
         return [(week_start, week_end) for week_start, week_end in weeks]
+
+    def get_processed_weeks(self, since_week_start: str) -> List[Tuple[str, str]]:
+        """Weeks with saved winners since a date, latest first."""
+        weeks = self.session.query(
+            WeeklyWinner.week_start,
+            WeeklyWinner.week_end
+        ).filter(
+            WeeklyWinner.week_start >= since_week_start
+        ).distinct().order_by(
+            desc(WeeklyWinner.week_start)
+        ).all()
+
+        return [(week_start, week_end) for week_start, week_end in weeks]
     
     def get_winners_history(self, limit: int = 50, game_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get historical weekly winners."""

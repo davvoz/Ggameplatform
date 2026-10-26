@@ -8,7 +8,7 @@ import schedule
 import time
 import threading
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Dict, Any, List
 import uuid
 
 from app.database import get_db_session
@@ -305,6 +305,122 @@ class WeeklyLeaderboardScheduler:
             
             return results
     
+    def _ensure_steem(self) -> bool:
+        """The connection is opened once, at startup: if the nodes were down then, open it again."""
+        if not self.steem_service.steem:
+            self.steem_service = SteemRewardService()
+        return bool(self.steem_service.steem)
+
+    def _week_steem_status(self, session, week_start: str) -> List[Dict[str, Any]]:
+        """
+        The STEEM rewards of a processed week, each with its status on the chain:
+        'sent', 'to_send', or 'no_account' (the winner has no Steem account).
+        The chain decides, not reward_sent: rewards were long sent without it.
+        """
+        from app.models import Game
+
+        rows = session.query(WeeklyWinner, User, Game).join(
+            User, WeeklyWinner.user_id == User.user_id
+        ).join(
+            Game, WeeklyWinner.game_id == Game.game_id
+        ).filter(
+            WeeklyWinner.week_start == week_start,
+            WeeklyWinner.steem_reward > 0
+        ).order_by(
+            WeeklyWinner.game_id,
+            WeeklyWinner.rank
+        ).all()
+
+        if not rows:
+            return []
+
+        week_end = rows[0][0].week_end
+        sent = self.steem_service.get_sent_rewards(week_start, week_end)
+        winners = []
+
+        for winner, user, game in rows:
+            title = SteemRewardService.reward_memo_title(winner.rank, game.title, week_start, week_end)
+            tx_id = sent.get((user.steem_username, title))
+
+            if not user.steem_username:
+                status = 'no_account'
+            elif (user.steem_username, title) in sent:
+                status = 'sent'
+            else:
+                status = 'to_send'
+
+            winners.append({
+                'winner_id': winner.winner_id,
+                'user_id': winner.user_id,
+                'username': user.username,
+                'steem_username': user.steem_username,
+                'steem_reward': winner.steem_reward,
+                'rank': winner.rank,
+                'week_start': week_start,
+                'week_end': week_end,
+                'game_title': game.title,
+                'status': status,
+                'tx_id': tx_id
+            })
+
+        return winners
+
+    def check_week_steem(self, week_start: str) -> Dict[str, Any]:
+        """Which STEEM rewards of a processed week are on the chain and which are still owed."""
+        if not self._ensure_steem():
+            return {'success': False, 'error': 'Steem not initialized (check STEEM_ACTIVE_KEY and nodes)'}
+
+        with get_db_session() as session:
+            return {'success': True, 'winners': self._week_steem_status(session, week_start)}
+
+    def resend_week_steem(self, week_start: str) -> Dict[str, Any]:
+        """
+        Send the STEEM rewards of a processed week that are not on the chain.
+        Coins are not paid again. The chain is read again right before sending.
+        """
+        with self._reset_lock:
+            if not self._ensure_steem():
+                return {'success': False, 'error': 'Steem not initialized (check STEEM_ACTIVE_KEY and nodes)'}
+
+            with get_db_session() as session:
+                winners = self._week_steem_status(session, week_start)
+                to_send = [w for w in winners if w['status'] == 'to_send']
+
+                logger.info(f"📤 Resending STEEM for week {week_start}: {len(to_send)} of {len(winners)} rewards not on the chain")
+                steem_results = self.steem_service.send_batch_rewards(to_send) if to_send else {}
+
+                # Mark what is on the chain now, found there or just sent
+                tx_ids = {w['winner_id']: w['tx_id'] for w in winners if w['status'] == 'sent'}
+                tx_ids.update({
+                    tx['winner_id']: tx.get('tx_id')
+                    for tx in steem_results.get('transactions', [])
+                    if 'error' not in tx
+                })
+                now = datetime.now(timezone.utc).isoformat()
+                for winner in session.query(WeeklyWinner).filter(WeeklyWinner.winner_id.in_(tx_ids)):
+                    winner.steem_tx_id = tx_ids[winner.winner_id]
+                    winner.reward_sent = 1
+                    winner.reward_sent_at = winner.reward_sent_at or now
+                session.commit()
+
+            errors = [
+                f"{tx.get('user_id')}: {tx['error']}"
+                for tx in steem_results.get('transactions', []) if 'error' in tx
+            ]
+            if steem_results.get('error'):
+                errors.append(steem_results['error'])
+
+            results = {
+                'success': not errors,
+                'already_sent': sum(1 for w in winners if w['status'] == 'sent'),
+                'no_account': sum(1 for w in winners if w['status'] == 'no_account'),
+                'steem_sent': steem_results.get('sent', 0),
+                'steem_failed': steem_results.get('failed', 0),
+                'errors': errors
+            }
+            logger.info(f"✅ STEEM resend for week {week_start}: {results}")
+            return results
+
     def schedule_weekly_job(self):
         """Schedule weekly job to run every Monday at 00:00 UTC."""
         # Clear any existing jobs to prevent duplicates

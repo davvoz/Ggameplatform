@@ -332,14 +332,13 @@ class LeaderboardRepository:
         
         return reward
     
-    def save_weekly_winners(self, week_start: str, week_end: str) -> List[WeeklyWinner]:
+    def compute_weekly_winners(self, week_start: str) -> List[Dict[str, Any]]:
         """
-        Save weekly winners to history.
-        Returns list of created winner records.
+        Compute the winners of a week and their rewards, without saving them.
+        Used both to save the winners and to preview them before paying.
         """
-        now = datetime.now(timezone.utc).isoformat()
         winners = []
-        
+
         # Get all games with their steem_rewards_enabled flag
         games = self.session.query(Game.game_id, Game.steem_rewards_enabled).all()
         
@@ -369,27 +368,63 @@ class LeaderboardRepository:
                 # Only give Steem rewards if enabled for this game
                 steem_reward = (reward.steem_reward if reward else 0.0) if steem_enabled else 0.0
                 coin_reward = reward.coin_reward if reward else 0
-                
-                # Create winner record
-                winner = WeeklyWinner(
-                    winner_id=str(uuid.uuid4()),
-                    week_start=week_start,
-                    week_end=week_end,
-                    game_id=game_id,
-                    user_id=user_id,
-                    rank=rank,
-                    score=score,
-                    steem_reward=steem_reward,
-                    coin_reward=coin_reward,
-                    reward_sent=0,
-                    created_at=now
-                )
-                
-                self.session.add(winner)
-                winners.append(winner)
-        
+
+                winners.append({
+                    'game_id': game_id,
+                    'user_id': user_id,
+                    'rank': rank,
+                    'score': score,
+                    'steem_reward': steem_reward,
+                    'coin_reward': coin_reward
+                })
+
+        return winners
+
+    def save_weekly_winners(self, week_start: str, week_end: str) -> List[WeeklyWinner]:
+        """
+        Save weekly winners to history.
+        Returns list of created winner records.
+        """
+        now = datetime.now(timezone.utc).isoformat()
+        winners = []
+
+        for data in self.compute_weekly_winners(week_start):
+            winner = WeeklyWinner(
+                winner_id=str(uuid.uuid4()),
+                week_start=week_start,
+                week_end=week_end,
+                reward_sent=0,
+                created_at=now,
+                **data
+            )
+
+            self.session.add(winner)
+            winners.append(winner)
+
         self.session.commit()
         return winners
+
+    def get_unpaid_weeks(self) -> List[Tuple[str, str]]:
+        """
+        Past weeks that still have leaderboard entries but no saved winners:
+        the weekly reset never ran for them (a processed week is cleared).
+        """
+        current_week_start, _ = self.get_current_week()
+        paid_weeks = self.session.query(WeeklyWinner.week_start).distinct()
+
+        weeks = self.session.query(
+            WeeklyLeaderboard.week_start,
+            func.max(WeeklyLeaderboard.week_end)
+        ).filter(
+            WeeklyLeaderboard.week_start < current_week_start,
+            WeeklyLeaderboard.week_start.notin_(paid_weeks)
+        ).group_by(
+            WeeklyLeaderboard.week_start
+        ).order_by(
+            WeeklyLeaderboard.week_start
+        ).all()
+
+        return [(week_start, week_end) for week_start, week_end in weeks]
     
     def get_winners_history(self, limit: int = 50, game_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get historical weekly winners."""

@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.leaderboard_repository import LeaderboardRepository
 from app.leaderboard_triggers import recalculate_weekly_ranks
 import json
+import logging
 import os
 from datetime import datetime, timezone
 
@@ -647,6 +648,64 @@ async def force_close_single_session(session_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ============ WEEKLY REWARDS ============
+
+class PayWeekRequest(BaseModel):
+    week_start: str
+
+@router.get("/weekly-rewards/unpaid")
+async def get_unpaid_weekly_rewards(db: DbSession):
+    """Past weeks the weekly reset never paid, with the winners it would pay"""
+    lb_repo = LeaderboardRepository(db)
+    games = {g.game_id: g for g in db.query(Game).all()}
+    weeks = []
+
+    for week_start, week_end in lb_repo.get_unpaid_weeks():
+        winners = []
+        for w in lb_repo.compute_weekly_winners(week_start):
+            user = db.query(User).filter(User.user_id == w['user_id']).first()
+            game = games.get(w['game_id'])
+            winners.append({
+                **w,
+                'username': user.username if user else None,
+                'steem_username': user.steem_username if user else None,
+                'game_title': game.title if game else w['game_id'],
+            })
+
+        weeks.append({
+            'week_start': week_start,
+            'week_end': week_end,
+            'winners': winners,
+            'total_steem': round(sum(w['steem_reward'] for w in winners), 3),
+            'total_coins': sum(w['coin_reward'] for w in winners),
+            # STEEM owed to players without a Steem account is not sent
+            'missing_steem_account': sum(
+                1 for w in winners if w['steem_reward'] > 0 and not w['steem_username']
+            ),
+        })
+
+    return {"success": True, "weeks": weeks}
+
+@router.post("/weekly-rewards/pay", responses={400: {"description": "Week not payable"}})
+def pay_weekly_rewards(request: PayWeekRequest, username: CurrentUser, db: DbSession):
+    """Pay a week the weekly reset missed (sync: STEEM transfers block)"""
+    from app.weekly_scheduler import get_scheduler
+
+    unpaid = dict(LeaderboardRepository(db).get_unpaid_weeks())
+    week_end = unpaid.get(request.week_start)
+    if week_end is None:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Week {request.week_start} is not an unpaid past week"
+        )
+
+    logging.getLogger(__name__).info(
+        f"💰 Admin {username} is paying weekly rewards for {request.week_start} to {week_end}"
+    )
+    results = get_scheduler().process_weekly_reset(request.week_start, week_end)
+
+    return {"success": results['success'], "results": results}
 
 
 # ========== GAMES CRUD ENDPOINTS ==========

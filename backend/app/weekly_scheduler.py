@@ -33,9 +33,17 @@ class WeeklyLeaderboardScheduler:
         self.steem_service = SteemRewardService()
         # Use a dedicated scheduler instance to avoid conflicts with multiplier_scheduler
         self.scheduler = schedule.Scheduler()
+        # The idempotency check is not atomic: one reset at a time, so a second
+        # run of the same week (scheduler + admin, double click) sees it done
+        self._reset_lock = threading.Lock()
         logger.info("✅ WeeklyLeaderboardScheduler initialized")
-    
+
     def process_weekly_reset(self, week_start: str = None, week_end: str = None) -> Dict[str, Any]:
+        """Process a weekly reset, one at a time (see _process_weekly_reset)."""
+        with self._reset_lock:
+            return self._process_weekly_reset(week_start, week_end)
+
+    def _process_weekly_reset(self, week_start: str = None, week_end: str = None) -> Dict[str, Any]:
         """
         Process weekly leaderboard reset and rewards.
         

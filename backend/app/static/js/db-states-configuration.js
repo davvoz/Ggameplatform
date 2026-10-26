@@ -1207,6 +1207,173 @@ function calculateDuration(startedAt) {
     return Math.floor((now - started) / 1000);
 }
 
+// ============ WEEKLY REWARDS ============
+let unpaidWeeks = [];
+
+function openWeeklyRewardsModal(bodyHtml) {
+    const modal = document.getElementById('crudModal');
+    modal.querySelector('.modal-content').innerHTML = `
+                <div class="modal-header" style="border-bottom-color: #2f9e44;">
+                    <div class="modal-title-group">
+                        <span class="modal-icon">💰</span>
+                        <h2>Premi settimanali</h2>
+                    </div>
+                    <button class="modal-close" onclick="closeCRUDModal()">×</button>
+                </div>
+                <div class="modal-body">${bodyHtml}</div>
+            `;
+    modal.style.display = 'flex';
+}
+
+async function showWeeklyRewards() {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE}/weekly-rewards/unpaid`);
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast('Errore nel caricamento dei premi settimanali', 'error');
+            return;
+        }
+
+        unpaidWeeks = data.weeks;
+
+        if (unpaidWeeks.length === 0) {
+            openWeeklyRewardsModal(`
+                        <div style="text-align: center; padding: 40px; color: #6c757d;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                            <h3>Nessuna settimana da pagare</h3>
+                            <p>Tutte le settimane passate sono state elaborate.</p>
+                        </div>
+                    `);
+            return;
+        }
+
+        openWeeklyRewardsModal(unpaidWeeks.map(renderUnpaidWeek).join(''));
+
+    } catch (error) {
+        console.error('Error loading weekly rewards:', error);
+        showToast('Errore nel caricamento dei premi settimanali: ' + error.message, 'error');
+    }
+}
+
+function renderUnpaidWeek(week) {
+    const esc = (v) => Utils.escapeHtml(String(v ?? ''));
+    const missingWarning = week.missing_steem_account > 0 ? `
+                    <div style="margin-bottom: 12px; padding: 10px; border-radius: 6px; background: rgba(255,193,7,0.15); color: #e67700;">
+                        ⚠️ ${week.missing_steem_account} vincitori senza account Steem: i loro STEEM non verranno inviati (le coin sì).
+                    </div>` : '';
+
+    const rows = week.winners.map(w => `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <td style="padding: 8px;">${esc(w.game_title)}</td>
+                            <td style="padding: 8px;">#${w.rank}</td>
+                            <td style="padding: 8px;">${esc(w.username || w.user_id)}</td>
+                            <td style="padding: 8px;">${w.steem_username ? '@' + esc(w.steem_username) : '<span style="color: #e67700;">—</span>'}</td>
+                            <td style="padding: 8px; text-align: right;">${w.score}</td>
+                            <td style="padding: 8px; text-align: right;">${w.steem_reward}</td>
+                            <td style="padding: 8px; text-align: right;">${w.coin_reward}</td>
+                        </tr>
+                    `).join('');
+
+    return `
+                <div style="margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 8px;">Settimana ${esc(week.week_start)} → ${esc(week.week_end)}</h3>
+                    <p style="margin-bottom: 12px;">
+                        ${week.winners.length} vincitori · <strong>${week.total_steem} STEEM</strong> · <strong>${week.total_coins} coin</strong>
+                    </p>
+                    ${missingWarning}
+                    <div style="overflow-x: auto; max-height: 360px; overflow-y: auto; margin-bottom: 12px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                            <thead>
+                                <tr style="background: rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.1);">
+                                    <th style="padding: 8px; text-align: left;">Gioco</th>
+                                    <th style="padding: 8px; text-align: left;">Rank</th>
+                                    <th style="padding: 8px; text-align: left;">Utente</th>
+                                    <th style="padding: 8px; text-align: left;">Steem</th>
+                                    <th style="padding: 8px; text-align: right;">Punteggio</th>
+                                    <th style="padding: 8px; text-align: right;">STEEM</th>
+                                    <th style="padding: 8px; text-align: right;">Coin</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    <button onclick="payWeeklyRewards(this, '${esc(week.week_start)}')"
+                            style="background: #2f9e44; border: none; color: white; width: 100%; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        💰 Paga settimana ${esc(week.week_start)} → ${esc(week.week_end)}
+                    </button>
+                </div>
+            `;
+}
+
+async function payWeeklyRewards(button, weekStart) {
+    const week = unpaidWeeks.find(w => w.week_start === weekStart);
+    if (!week) return;
+
+    const confirmed = confirm(
+        `Pagare la settimana ${week.week_start} → ${week.week_end}?\n\n` +
+        `${week.winners.length} vincitori\n` +
+        `${week.total_steem} STEEM\n` +
+        `${week.total_coins} coin\n\n` +
+        `I premi vengono inviati davvero e la classifica di quella settimana viene azzerata.`
+    );
+    if (!confirmed) return;
+
+    document.querySelectorAll('#crudModal button').forEach(b => { b.disabled = true; });
+    button.textContent = '⏳ Pagamento in corso... non chiudere la pagina';
+
+    try {
+        const response = await fetch(`${CONFIG.API_BASE}/weekly-rewards/pay`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ week_start: weekStart })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast('Pagamento rifiutato: ' + (data.detail || response.status), 'error');
+            await showWeeklyRewards();
+            return;
+        }
+
+        showWeeklyRewardsResult(week, data);
+        showToast(data.success ? 'Settimana pagata' : 'Settimana pagata con errori', data.success ? 'success' : 'error');
+        await refreshData();
+
+    } catch (error) {
+        console.error('Error paying weekly rewards:', error);
+        showToast('Errore: ' + error.message, 'error');
+        await showWeeklyRewards();
+    }
+}
+
+function showWeeklyRewardsResult(week, data) {
+    const esc = (v) => Utils.escapeHtml(String(v ?? ''));
+    const r = data.results;
+    const errors = r.errors.length ? `
+                    <div style="margin-top: 12px; padding: 10px; border-radius: 6px; background: rgba(220,53,69,0.15); color: #dc3545;">
+                        <strong>Errori:</strong>
+                        <ul style="margin: 8px 0 0 18px;">${r.errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul>
+                    </div>` : '';
+    const skipped = r.skipped ? `
+                    <p style="color: #e67700;">⚠️ La settimana risultava già elaborata: non è stato pagato nulla.</p>` : '';
+
+    openWeeklyRewardsModal(`
+                <div style="padding: 8px;">
+                    <h3 style="margin-bottom: 12px;">${data.success ? '✅' : '⚠️'} Settimana ${esc(week.week_start)} → ${esc(week.week_end)}</h3>
+                    ${skipped}
+                    <table style="border-collapse: collapse; font-size: 0.95em;">
+                        <tr><td style="padding: 4px 16px 4px 0;">Vincitori salvati</td><td><strong>${r.winners_saved}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">STEEM inviati</td><td><strong>${r.steem_sent}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">STEEM falliti</td><td><strong>${r.steem_failed}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">Coin distribuite</td><td><strong>${r.coins_distributed}</strong></td></tr>
+                        <tr><td style="padding: 4px 16px 4px 0;">Run ID</td><td><code>${esc(r.run_id)}</code></td></tr>
+                    </table>
+                    ${errors}
+                </div>
+            `);
+}
+
 function exportJSON() {
     const key = AppState.currentTab;
     const schema = DB_SCHEMA[key];

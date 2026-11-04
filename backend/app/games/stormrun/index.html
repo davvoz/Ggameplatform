@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Rainbow Rush: Stormrun</title>
+    <link rel="preload" href="assets/fonts/dynapuff-700.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/dynapuff-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main id="stage">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="hud" class="hud" hidden>
+            <span id="hud-metres">0 m</span>
+        </div>
+
+        <div class="corner-buttons">
+            <button id="btn-sound" class="round-button" aria-label="Sound" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="icon-solid" d="M4 9.5v5h3.5L13 19V5L7.5 9.5H4z"/>
+                    <path class="icon-waves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/>
+                    <path class="icon-mute" d="M16 9.5l5 5M21 9.5l-5 5"/>
+                </svg>
+            </button>
+            <button id="btn-fullscreen" class="round-button" aria-label="Fullscreen">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path class="icon-line" d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+            </button>
+        </div>
+
+        <section id="screen-ready" class="screen" hidden>
+            <div class="sheet">
+                <h1 id="title" class="title" aria-label="Rainbow Rush: Stormrun"></h1>
+                <p class="note">Tap to jump. Tap again in the air to jump again.</p>
+                <button id="btn-play" class="paper-button">Play</button>
+                <p id="ready-best" class="note"></p>
+            </div>
+        </section>
+
+        <section id="screen-over" class="screen" hidden>
+            <div class="sheet">
+                <p class="result" id="over-metres">0 m</p>
+                <p class="note" id="over-best"></p>
+                <p class="note strong" id="over-rank"></p>
+                <button id="btn-again" class="paper-button">Play again</button>
+            </div>
+        </section>
+
+        <div id="loading" class="loading">
+            <div class="stripes" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+        </div>
+
+        <div class="rotate-guard" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+                <rect class="phone" x="42" y="22" width="36" height="66" rx="6"/>
+                <path class="turn" d="M28 96a44 44 0 0 0 64 0M88 86l4 10-10 3"/>
+            </svg>
+        </div>
+    </main>
+
+    <script src="../../sdk/platformsdk.obf.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

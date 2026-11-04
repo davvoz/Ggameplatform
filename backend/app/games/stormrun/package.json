@@ -1,0 +1,9 @@
+{
+  "name": "stormrun",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "cover": "node tools/cover/render-cover.js"
+  }
+}

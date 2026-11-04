@@ -1,8 +1,17 @@
 {
-  "version": "5.16.2",
-  "timestamp": "2026-10-26T15:49:09.875Z",
-  "buildNumber": 606,
+  "version": "5.17.0",
+  "timestamp": "2026-11-04T23:22:26.901Z",
+  "buildNumber": 607,
   "changelog": [
+    {
+      "version": "5.17.0",
+      "date": "2026-11-04",
+      "type": "minor",
+      "changes": [
+        "feat: add Rainbow Rush Stormrun ranked endless runner",
+        "🔖 Bump version to 5.16.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.16.2",
       "date": "2026-10-26",
@@ -83,15 +92,6 @@
       "changes": [
         "feat: add user search functionality for manual ban/unban in admin reports",
         "🔖 Bump version to 5.13.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.13.1",
-      "date": "2026-08-31",
-      "type": "patch",
-      "changes": [
-        "obf",
-        "🔖 Bump version to 5.13.0 [skip-version]"
       ]
     }
   ]

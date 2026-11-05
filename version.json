@@ -1,8 +1,17 @@
 {
-  "version": "5.17.2",
-  "timestamp": "2026-11-05T00:26:55.951Z",
-  "buildNumber": 609,
+  "version": "5.17.3",
+  "timestamp": "2026-11-05T12:45:52.023Z",
+  "buildNumber": 610,
   "changelog": [
+    {
+      "version": "5.17.3",
+      "date": "2026-11-05",
+      "type": "patch",
+      "changes": [
+        "fix: adjust ping-share-btn positioning for landscape mode",
+        "🔖 Bump version to 5.17.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.17.2",
       "date": "2026-11-05",
@@ -84,15 +93,6 @@
       "changes": [
         "fix: update validate_game_score to return score and reject reason",
         "🔖 Bump version to 5.14.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.14.2",
-      "date": "2026-09-05",
-      "type": "patch",
-      "changes": [
-        "fix: enhance fetch interceptor to handle API origin dynamically and improve 401 response handling",
-        "🔖 Bump version to 5.14.1 [skip-version]"
       ]
     }
   ]

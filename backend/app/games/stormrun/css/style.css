@@ -90,6 +90,14 @@ body {
     touch-action: manipulation;
 }
 
+/* On a touch device the game already fills the screen, and the browser's full
+   screen would undo the turn the platform applies in the installed app. */
+@media (pointer: coarse) {
+    #btn-fullscreen {
+        display: none;
+    }
+}
+
 .round-button svg {
     display: block;
     width: 100%;

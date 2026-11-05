@@ -55,6 +55,7 @@ The game declares `"orientation": "landscape"` in its `extra_data`: the platform
 reads it in `renderGamePlayer` and uses the whole area instead of the 9:16 frame.
 The installed app is locked upright by `manifest.json`, so there the platform turns
 the frame by 90 degrees in `game-player.css`: the player turns the phone.
+Touch devices have no full screen button: the browser's full screen cancels that turn.
 
 ## Cover
 

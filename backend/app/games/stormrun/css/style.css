@@ -17,6 +17,7 @@
     --paper: #fff7e8;
     --paper-shadow: rgba(47, 42, 68, 0.28);
     --red: #e5483f;
+    --yellow: #f7c93e;
     --font: "DynaPuff", "Trebuchet MS", sans-serif;
 }
 
@@ -207,6 +208,56 @@ body {
 .note.is-new {
     color: var(--red);
     font-weight: 700;
+}
+
+.rewards {
+    position: absolute;
+    top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+    right: max(10px, env(safe-area-inset-right));
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.sticker {
+    display: flex;
+    flex-direction: column;
+    padding: 3px 14px 5px;
+    border: 3px solid var(--ink);
+    background: var(--yellow);
+    box-shadow: 3px 4px 0 var(--paper-shadow);
+    font-size: clamp(16px, 5vh, 22px);
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: right;
+    transform: rotate(2deg);
+    animation: stick-on 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+
+.sticker.is-level {
+    background: var(--red);
+    color: var(--paper);
+    transform: rotate(-2deg);
+}
+
+.sticker.is-level span + span {
+    font-size: 0.68em;
+    font-weight: 400;
+}
+
+.sticker.is-leaving {
+    animation: peel-off 0.3s ease-in forwards;
+}
+
+@keyframes stick-on {
+    from { opacity: 0; transform: translateY(-14px) rotate(14deg) scale(0.6); }
+}
+
+@keyframes peel-off {
+    to { opacity: 0; transform: translateY(-12px) rotate(10deg) scale(0.8); }
 }
 
 .loading {

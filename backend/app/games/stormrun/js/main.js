@@ -66,6 +66,10 @@ async function boot() {
         },
     });
 
+    platform.onRewards({
+        onXp: (xp) => screens.showXp(xp),
+        onLevelUp: (levelUp) => screens.showLevelUp(levelUp),
+    });
     screens.onPlay(() => game.play());
     screens.onSoundToggle((muted) => audio.setMuted(muted));
     screens.onFullscreen(() => platform.toggleFullscreen());

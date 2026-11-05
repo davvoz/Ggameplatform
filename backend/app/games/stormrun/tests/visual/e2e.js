@@ -15,7 +15,16 @@ globalThis.addEventListener('message', ({ data, source, origin }) => {
     if (type === 'ready') {
         source.postMessage({ type: 'config', payload: { userId: 'user_e2e' }, protocolVersion }, origin);
     }
-    if (type === 'gameOver') note(`platform gameOver: score ${payload.score}, ${JSON.stringify(payload.extra_data)}`);
+    if (type === 'gameOver') {
+        note(`platform gameOver: score ${payload.score}, ${JSON.stringify(payload.extra_data)}`);
+        // the server answers at once here: before the end screen, the hardest case
+        source.postMessage({ type: 'showXPBanner', payload: { xp_earned: 12.5 }, protocolVersion }, origin);
+        source.postMessage({
+            type: 'showLevelUpModal',
+            payload: { new_level: 7, title: 'Runner', coins_awarded: 50, user_data: { is_anonymous: false } },
+            protocolVersion,
+        }, origin);
+    }
     if (type === 'resetSession') note(`platform resetSession ${performance.now() | 0}`);
     if (type === 'saveProgress') note(`platform saveProgress: ${JSON.stringify(payload.progress_data)}`);
 });
@@ -67,6 +76,9 @@ async function run() {
     note(`metres after 17 s: ${doc.getElementById('hud-metres').textContent}`);
     note(`fps: ${Math.round((frames * 1000) / (performance.now() - countStart))}`);
     if (stop === 'running') return;
+
+    await until(() => doc.querySelectorAll('.sticker').length === 2, 'reward stickers');
+    note(`stickers: ${[...doc.querySelectorAll('.sticker')].map((sticker) => sticker.innerText.replace('\n', ' / ')).join(' | ')}`);
 
     await until(() => shown('screen-over'), 'game over');
     note(`game over: ${doc.getElementById('over-metres').textContent}, ${doc.getElementById('over-best').textContent}`);

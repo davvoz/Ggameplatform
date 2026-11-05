@@ -1,7 +1,7 @@
 /**
- * The game is made for a phone held sideways: upright, it asks to turn it.
- * It asks the screen of the device, never the size of the page: inside the
- * platform the game is in an iframe, whose shape says nothing about the phone.
+ * The game is made for a wide picture: on a touch device with a tall one, it asks
+ * to turn the phone. It looks at its own shape and not at the phone, because an
+ * installed app stays upright and the platform turns this page sideways for it.
  */
 
 const TOUCH_DEVICE = '(pointer: coarse)';
@@ -14,16 +14,14 @@ export class OrientationGuard {
     constructor(root) {
         this.#root = root;
         const update = () => this.#refresh();
-        globalThis.screen.orientation?.addEventListener('change', update);
         globalThis.addEventListener('resize', update);
         this.#refresh();
     }
 
     /** @returns {boolean} */
     get isUpright() {
-        const { orientation, width, height } = globalThis.screen;
-        const upright = orientation ? orientation.type.startsWith('portrait') : height > width;
-        return upright && globalThis.matchMedia(TOUCH_DEVICE).matches;
+        const tall = globalThis.innerHeight > globalThis.innerWidth;
+        return tall && globalThis.matchMedia(TOUCH_DEVICE).matches;
     }
 
     /** @param {(upright: boolean) => void} handler */

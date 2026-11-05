@@ -16,9 +16,16 @@
  * @property {number} metres
  * @property {boolean} isPlayer
  *
+ * @typedef {Object} LevelUp
+ * @property {number} level
+ * @property {string} title
+ * @property {number} coins 0 when the player cannot receive them
+ *
  * @typedef {Object} PlatformGateway
  * @property {() => Promise<void>} connect
  * @property {(callbacks: {onPause: Function, onResume: Function}) => void} onLifecycle
+ * @property {(callbacks: {onXp: (xp: number) => void, onLevelUp: (levelUp: LevelUp) => void}) => void} onRewards
+ *   the server answers some time after finishRun, whatever the game shows by then
  * @property {() => Promise<{weekId: string, seed: number}>} loadWeek
  * @property {() => Promise<number>} loadBest
  * @property {(metres: number) => void} saveBest

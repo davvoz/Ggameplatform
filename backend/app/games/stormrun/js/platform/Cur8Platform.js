@@ -41,11 +41,14 @@ export class Cur8Platform {
     #sdk = globalThis.PlatformSDK ?? null;
     #playerId = null;
     #callbacks = { onPause: () => {}, onResume: () => {} };
+    #rewards = { onXp: () => {}, onLevelUp: () => {} };
 
     async connect() {
         if (!this.#sdk) return;
         try {
             this.#sdk.on?.('config', (config) => this.#readConfig(config));
+            this.#sdk.on?.('showXPBanner', this.#once((payload) => this.#readXp(payload)));
+            this.#sdk.on?.('showLevelUpModal', this.#once((payload) => this.#readLevelUp(payload)));
             await this.#sdk.init({
                 onStart: () => {},
                 onPause: () => this.#callbacks.onPause(),
@@ -60,6 +63,10 @@ export class Cur8Platform {
 
     onLifecycle(callbacks) {
         this.#callbacks = callbacks;
+    }
+
+    onRewards(callbacks) {
+        this.#rewards = callbacks;
     }
 
     async loadWeek() {
@@ -119,6 +126,24 @@ export class Cur8Platform {
         } else {
             document.documentElement.requestFullscreen().catch(() => {});
         }
+    }
+
+    // The SDK fires these events twice, with the same object.
+    #once(handler) {
+        const seen = new WeakSet();
+        return (payload) => {
+            if (seen.has(payload)) return;
+            seen.add(payload);
+            handler(payload);
+        };
+    }
+
+    #readXp(payload) {
+        this.#rewards.onXp(Number(payload?.xp_earned) || 0);
+    }
+
+    #readLevelUp({ new_level: level, title = '', coins_awarded: coins = 0, user_data: user } = {}) {
+        this.#rewards.onLevelUp({ level, title, coins: user?.is_anonymous ? 0 : Number(coins) || 0 });
     }
 
     #readConfig(config) {

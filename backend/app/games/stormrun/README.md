@@ -53,12 +53,21 @@ by both the start screen and the cover.
 
 The game declares `"orientation": "landscape"` in its `extra_data`: the platform
 reads it in `renderGamePlayer` and uses the whole area instead of the 9:16 frame.
+The installed app is locked upright by `manifest.json`, so there the platform turns
+the frame by 90 degrees in `game-player.css`: the player turns the phone.
 
 ## Cover
 
 `npm run cover` draws the poster in `tools/cover/cover.js` and writes
 `thumbnail.png` and `thumbnail_preview.webp`. The catalogue crops the sides of
 narrow cards, so keep what matters in the middle 1000 units.
+
+## Rewards on screen
+
+After a run the platform computes the XP and sends `showXPBanner`, and
+`showLevelUpModal` if the player went up a level. Each game draws these itself.
+Here they are paper stickers made by `ui/Screens.js`, kept outside the screens
+because the answer of the server can arrive at any moment.
 
 ## Tests
 

@@ -3,6 +3,9 @@ import { Strings } from '../config/Strings.js';
 /** The few things drawn in HTML: score, start screen, end screen, two buttons. */
 
 const RETRY_GUARD_MS = 450;
+const XP_STICKER_MS = 3500;
+const LEVEL_STICKER_MS = 6000;
+const PEEL_MS = 300;
 
 export class Screens {
     #elements;
@@ -28,6 +31,7 @@ export class Screens {
             again: byId('btn-again'),
             sound: byId('btn-sound'),
             fullscreen: byId('btn-fullscreen'),
+            rewards: byId('rewards'),
         };
 
         const press = () => this.#play();
@@ -96,11 +100,40 @@ export class Screens {
         this.#elements.overRank.textContent = Strings.weekRank(rank);
     }
 
+    /** @param {number} xp */
+    showXp(xp) {
+        if (xp > 0) this.#stick([Strings.xpEarned(xp)], 'sticker', XP_STICKER_MS);
+    }
+
+    /** @param {import('../platform/PlatformGateway.js').LevelUp} levelUp */
+    showLevelUp({ level, title, coins }) {
+        const details = [title, coins > 0 ? Strings.coinsEarned(coins) : ''].filter(Boolean).join(' - ');
+        this.#stick([Strings.levelUp(level), details], 'sticker is-level', LEVEL_STICKER_MS);
+    }
+
     /** @param {number} metres */
     setMetres(metres) {
         if (metres === this.#shownMetres) return;
         this.#shownMetres = metres;
         this.#elements.metres.textContent = `${metres} m`;
+    }
+
+    // Rewards arrive when the server answers, in any state of the game, so they
+    // live outside the screens and take care of themselves.
+    #stick(lines, className, lifetime) {
+        const { rewards } = this.#elements;
+        const sticker = rewards.ownerDocument.createElement('p');
+        sticker.className = className;
+        for (const line of lines.filter(Boolean)) {
+            const row = rewards.ownerDocument.createElement('span');
+            row.textContent = line;
+            sticker.append(row);
+        }
+        rewards.append(sticker);
+        setTimeout(() => {
+            sticker.classList.add('is-leaving');
+            setTimeout(() => sticker.remove(), PEEL_MS);
+        }, lifetime);
     }
 
     #setVisible(active) {

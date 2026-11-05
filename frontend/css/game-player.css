@@ -116,6 +116,64 @@
     body:has(#game-iframe.is-landscape) .pwa-install-btn {
         display: none;
     }
+
+    body:has(#game-iframe.is-landscape) .game-exit {
+        display: flex;
+        top: max(10px, env(safe-area-inset-top));
+        left: max(10px, env(safe-area-inset-left));
+    }
+}
+
+/* The installed app is locked upright by its manifest and cannot rotate: the
+   game turns by itself, and the player turns the phone. */
+@media (orientation: portrait) and (pointer: coarse) and (display-mode: standalone) {
+    #game-iframe.is-landscape {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 100dvh;
+        height: 100vw;
+        max-width: none;
+        max-height: none;
+        z-index: 9000;
+        transform: translate(-50%, -50%) rotate(90deg);
+    }
+
+    body:has(#game-iframe.is-landscape) .navbar,
+    body:has(#game-iframe.is-landscape) .pwa-install-btn {
+        display: none;
+    }
+
+    body:has(#game-iframe.is-landscape) .game-exit {
+        display: flex;
+        top: max(10px, env(safe-area-inset-top));
+        right: 10px;
+        transform: rotate(90deg);
+    }
+}
+
+/* Without the navbar, an installed app has no other way out of the game */
+.game-exit {
+    display: none;
+    position: fixed;
+    z-index: 9001;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #fff7e8;
+    box-shadow: 2px 3px 0 rgba(47, 42, 68, 0.28);
+}
+
+.game-exit svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: #2f2a44;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 

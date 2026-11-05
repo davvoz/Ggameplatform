@@ -7,4 +7,7 @@ export const Strings = Object.freeze({
     best: 'Best',
     newBest: 'New best!',
     weekRank: (rank) => `#${rank} this week`,
+    xpEarned: (xp) => `+${xp.toFixed(2)} XP`,
+    levelUp: (level) => `Level ${level}!`,
+    coinsEarned: (coins) => `+${coins} coins`,
 });

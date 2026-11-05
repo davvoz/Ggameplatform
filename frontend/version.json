@@ -1,8 +1,18 @@
 {
-  "version": "5.17.1",
-  "timestamp": "2026-11-05T00:03:21.671Z",
-  "buildNumber": 608,
+  "version": "5.17.2",
+  "timestamp": "2026-11-05T00:26:55.951Z",
+  "buildNumber": 609,
   "changelog": [
+    {
+      "version": "5.17.2",
+      "date": "2026-11-05",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: hide fullscreen button on touch devices to prevent orientation issues",
+        "🔖 Bump version to 5.17.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.17.1",
       "date": "2026-11-05",
@@ -83,16 +93,6 @@
       "changes": [
         "fix: enhance fetch interceptor to handle API origin dynamically and improve 401 response handling",
         "🔖 Bump version to 5.14.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.14.1",
-      "date": "2026-09-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "Refactor user authentication and session management",
-        "🔖 Bump version to 5.14.0 [skip-version]"
       ]
     }
   ]

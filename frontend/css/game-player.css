@@ -122,6 +122,13 @@
         top: max(10px, env(safe-area-inset-top));
         left: max(10px, env(safe-area-inset-left));
     }
+
+    /* What the platform shows over a game must stay above the game */
+    body:has(#game-iframe.is-landscape) .ping-share-btn {
+        position: fixed;
+        bottom: max(8px, env(safe-area-inset-bottom));
+        z-index: 9001;
+    }
 }
 
 /* The installed app is locked upright by its manifest and cannot rotate: the
@@ -149,6 +156,17 @@
         top: max(10px, env(safe-area-inset-top));
         right: 10px;
         transform: rotate(90deg);
+    }
+
+    /* The bottom of the turned game is the left side of the phone */
+    body:has(#game-iframe.is-landscape) .ping-share-btn {
+        position: fixed;
+        top: 50%;
+        left: 34px;
+        bottom: auto;
+        z-index: 9001;
+        transform: translate(-50%, -50%) rotate(90deg);
+        animation: none;
     }
 }
 

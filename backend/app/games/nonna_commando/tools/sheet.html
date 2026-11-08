@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sprite sheet</title>
+    <style>
+        body { margin: 0; background: #6f8a8a; }
+        canvas { image-rendering: pixelated; display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="sheet"></canvas>
+    <script type="module">
+        import { buildArt } from '../js/render/art/buildArt.js';
+        import { SpriteBank } from '../js/render/SpriteBank.js';
+
+        // ?filter=nonna&zoom=4&cols=12
+        const q = new URLSearchParams(location.search);
+        const filter = q.get('filter') ?? '';
+        const zoom = Number(q.get('zoom') ?? 4);
+        const cols = Number(q.get('cols') ?? 10);
+        const bank = new SpriteBank();
+        const names = [];
+        const add = bank.add.bind(bank);
+        bank.add = (name, pc, ax, ay) => { names.push(name); add(name, pc, ax, ay); };
+        buildArt(bank);
+        const list = names.filter((n) => n.includes(filter));
+        let cellW = 0;
+        let cellH = 0;
+        for (const n of list) {
+            const f = bank.frame(n);
+            cellW = Math.max(cellW, f.w);
+            cellH = Math.max(cellH, f.h);
+        }
+        cellW += 4;
+        cellH += 10;
+        const canvas = document.getElementById('sheet');
+        canvas.width = cellW * cols;
+        canvas.height = cellH * Math.ceil(list.length / cols);
+        canvas.style.width = `${canvas.width * zoom}px`;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        list.forEach((n, i) => {
+            const f = bank.frame(n);
+            const x = (i % cols) * cellW + 2;
+            const y = Math.floor(i / cols) * cellH + 2;
+            ctx.fillStyle = (i % 2) ? '#7d9898' : '#6a8484';
+            ctx.fillRect(x - 2, y - 2, cellW, cellH);
+            ctx.drawImage(f.page, f.x, f.y, f.w, f.h, x, y, f.w, f.h);
+            ctx.fillStyle = '#ff0';
+            ctx.fillRect(x + f.ax, y + f.ay, 1, 1);
+        });
+        console.log('frames', list.length, 'pages', bank.pageCount);
+    </script>
+</body>
+</html>

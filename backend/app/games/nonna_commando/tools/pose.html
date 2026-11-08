@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Poses</title>
+<style>body{margin:0;background:#c98c6a}canvas{image-rendering:pixelated;display:block}</style></head>
+<body><canvas id="c" width="320" height="120"></canvas>
+<script type="module">
+import { buildArt } from '../js/render/art/buildArt.js';
+import { SpriteBank } from '../js/render/SpriteBank.js';
+import { HIP, HIP_CROUCH, RUN_BOB } from '../js/render/art/NonnaArt.js';
+const bank = new SpriteBank(); buildArt(bank);
+const c = document.getElementById('c'); const ctx = c.getContext('2d');
+const zoom = Number(new URLSearchParams(location.search).get('zoom') ?? 6);
+c.style.width = `${c.width * zoom}px`;
+ctx.fillStyle = '#e7c49b'; ctx.fillRect(0, 0, 320, 120);
+ctx.fillStyle = '#ae8763'; ctx.fillRect(0, 50, 320, 10); ctx.fillRect(0, 110, 320, 10);
+const poses = [
+  ['nonna_lo_stand', 'nonna_up_pistol_fwd_0', HIP], ['nonna_lo_run1', 'nonna_up_heavy_fwd_run', HIP + RUN_BOB[1]],
+  ['nonna_lo_run4', 'nonna_up_shotgun_fwd_0', HIP], ['nonna_lo_jump', 'nonna_up_heavy_upDiag_0', HIP + 2],
+  ['nonna_lo_stand', 'nonna_up_pistol_up_0', HIP], ['nonna_lo_crouch0', 'nonna_up_fireworks_fwd_0', HIP_CROUCH],
+  ['nonna_lo_stand', 'nonna_up_melee1', HIP], ['nonna_lo_fall', 'nonna_up_flamer_down_0', HIP],
+];
+poses.forEach(([lo, up, hip], i) => {
+  const x = 20 + (i % 4) * 75; const y = i < 4 ? 50 : 110;
+  bank.draw(ctx, lo, x, y); bank.draw(ctx, up, x, y - hip);
+});
+bank.draw(ctx, 'nonna_dead1', 300, 50);
+</script></body></html>

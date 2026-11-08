@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cover</title>
+    <style>
+        html, body { margin: 0; background: #000; overflow: hidden; }
+        canvas { display: block; width: 1280px; height: 720px; image-rendering: pixelated; }
+    </style>
+</head>
+<body>
+    <canvas id="cover" width="320" height="180"></canvas>
+    <script type="module">
+        // The catalogue poster, painted with the game's own art. 320x180 shown at x4.
+        // The catalogue crops the sides of narrow cards: what matters stays in the middle.
+        import { C, PARTY } from '../js/config/Palette.js';
+        import { Font } from '../js/render/Font.js';
+        import { PixelCanvas } from '../js/render/PixelCanvas.js';
+        import { SpriteBank } from '../js/render/SpriteBank.js';
+        import { buildArt } from '../js/render/art/buildArt.js';
+        import { HIP } from '../js/render/art/NonnaArt.js';
+        import { StreetPainter, paintBackdrop } from '../js/render/art/SceneryArt.js';
+        import { Mission1 } from '../js/sim/levels/Mission1.js';
+        import { Terrain } from '../js/sim/Terrain.js';
+
+        const canvas = document.getElementById('cover');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        const bank = new SpriteBank();
+        buildArt(bank);
+        const font = new Font();
+
+        const { sky, far, mid } = paintBackdrop('town');
+        ctx.drawImage(sky.toCanvas(), -40, -30);
+        ctx.drawImage(far.toCanvas(), -60, -30);
+        ctx.drawImage(mid.toCanvas(), -200, -30);
+        const street = new PixelCanvas(320, 216);
+        new StreetPainter('town', Mission1, new Terrain(Mission1)).paint(street, 2380);
+        ctx.drawImage(street.toCanvas(), 0, -36);
+        const ground = 148;
+
+        // the cake looms on the right
+        bank.draw(ctx, 'torta3_candles', 276, ground + 4);
+        // the army in trouble
+        bank.draw(ctx, 'clown_walk1', 214, ground, true);
+        bank.draw(ctx, 'grunt_panic1', 186, ground, false);
+        bank.draw(ctx, 'grenadier_surprised', 238, ground - 2, true);
+        ctx.save();
+        ctx.translate(160, 92);
+        ctx.rotate(-0.8);
+        bank.draw(ctx, 'grunt_dead0', 0, 12, true);
+        ctx.restore();
+
+        // Nonna, big, mid burst
+        ctx.save();
+        ctx.scale(2, 2);
+        bank.draw(ctx, 'nonna_lo_run2', 40, ground / 2 + 1);
+        bank.draw(ctx, 'nonna_up_heavy_fwd_1', 40, ground / 2 + 1 - HIP);
+        ctx.restore();
+        bank.draw(ctx, 'fx_muzzle1', 116, ground - 34);
+        for (let i = 0; i < 4; i++) bank.draw(ctx, 'shot_heavyBullet', 132 + i * 14, ground - 35 + (i % 2) * 3);
+        bank.draw(ctx, 'fx_boom2', 196, ground - 22);
+
+        // confetti everywhere: it is a party after all
+        let seed = 7;
+        const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+        for (let i = 0; i < 90; i++) {
+            ctx.fillStyle = PARTY[i % PARTY.length];
+            ctx.fillRect(Math.floor(130 + rnd() * 170), Math.floor(40 + rnd() * 100), 2, 1);
+        }
+
+        // logo
+        font.draw(ctx, 'NONNA', 161, 9, { align: 'center', scale: 4, color: C.bandanaShade });
+        font.draw(ctx, 'NONNA', 160, 8, { align: 'center', scale: 4, color: C.white });
+        font.draw(ctx, 'COMMANDO', 161, 41, { align: 'center', scale: 2, color: C.bandanaShade });
+        font.draw(ctx, 'COMMANDO', 160, 40, { align: 'center', scale: 2, color: C.yellow });
+        font.draw(ctx, "PARTY'S OVER, SUPREMO.", 160, 60, { align: 'center', color: C.pink });
+        console.log('SHOT cover');
+    </script>
+</body>
+</html>

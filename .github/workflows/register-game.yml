@@ -1,0 +1,61 @@
+name: Register a game
+
+# Runs backend/scripts/register_<game>.py inside the production backend
+# container, from the GitHub UI (Actions > Register a game > Run workflow).
+# The register scripts are idempotent: running one again only updates the game.
+# Run it after the deploy of the commit that adds the script has finished.
+
+on:
+  workflow_dispatch:
+    inputs:
+      game:
+        description: "Game id (runs scripts/register_<game>.py), e.g. nonna_commando"
+        required: true
+        type: string
+
+jobs:
+  register:
+    name: Register ${{ inputs.game }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🔎 Check the game id
+        env:
+          GAME: ${{ inputs.game }}
+        run: |
+          if ! [[ "$GAME" =~ ^[a-z0-9_]+$ ]]; then
+            echo "❌ Game id must be lowercase letters, digits and underscores: '$GAME'"
+            exit 1
+          fi
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🎮 Run the register script
+        env:
+          GAME: ${{ inputs.game }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          ssh -o StrictHostKeyChecking=no "$SERVER_USER@$SERVER_HOST" "bash -s" -- "$GAME" << 'EOF'
+            set -e
+            GAME="$1"
+            SCRIPT="scripts/register_${GAME}.py"
+            if ! docker exec gameplatform_backend test -f "$SCRIPT"; then
+              echo "❌ $SCRIPT is not in the backend container: is the deploy finished?"
+              exit 1
+            fi
+            echo "▶️ python $SCRIPT"
+            docker exec gameplatform_backend python "$SCRIPT"
+          EOF
+
+      - name: 📝 Summary
+        if: always()
+        env:
+          GAME: ${{ inputs.game }}
+        run: |
+          echo "### 🎮 Register a game" >> $GITHUB_STEP_SUMMARY
+          echo "- **Game**: \`$GAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

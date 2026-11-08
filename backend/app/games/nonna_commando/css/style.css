@@ -1,0 +1,315 @@
+/* Nonna Commando: the page is just a stage for the pixel canvas. */
+:root {
+    --ink: #1a0f1e;
+    --ink-soft: #2e1c33;
+    --red: #e0343c;
+    --red-dark: #9c1f2c;
+    --gold: #f2c14e;
+    --cream: #fff8ec;
+    --px: 3px; /* one game pixel, set by main.js */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--ink);
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+#stage {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    /* a dark brick pattern fills the space around the picture */
+    background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.18) 2px, transparent 2px) 0 0 / 24px 12px,
+        linear-gradient(rgba(0, 0, 0, 0.18) 2px, transparent 2px) 0 0 / 24px 12px,
+        var(--ink-soft);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#frame {
+    position: relative;
+    line-height: 0;
+    overflow: hidden; /* close up, the canvas is taller than the picture */
+    box-shadow: 0 0 0 var(--px) var(--ink), 0 calc(var(--px) * 3) 0 calc(var(--px) * 1) rgba(0, 0, 0, 0.4);
+}
+
+#game-canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: var(--ink);
+}
+
+/* ---- buttons drawn like the game: sized in game pixels, in the gap of the HUD */
+.chrome {
+    position: absolute;
+    top: calc(var(--px) * 3);
+    left: calc(var(--px) * 98);
+    display: flex;
+    gap: calc(var(--px) * 3);
+    line-height: 0;
+}
+
+.pix-btn {
+    width: calc(var(--px) * 13);
+    height: calc(var(--px) * 13);
+    padding: calc(var(--px) * 2.5);
+    border: var(--px) solid var(--ink);
+    background: var(--cream);
+    box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #c8b791;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+.pix-btn:hover { opacity: 1; }
+.pix-btn:active { transform: translateY(var(--px)); box-shadow: none; }
+
+.pix-btn svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: var(--ink);
+    shape-rendering: crispEdges;
+}
+
+#btn-sound .off,
+#btn-sound[aria-pressed="true"] .on { display: none; }
+#btn-sound[aria-pressed="true"] .off { display: inline; }
+
+body:not([data-mode="play"]):not([data-mode="paused"]) #btn-pause { display: none; }
+
+/* the browser's full screen fights the platform's rotation on phones */
+@media (pointer: coarse) {
+    #btn-fullscreen { display: none; }
+}
+
+/* ---- XP and level up from the platform, stuck on the picture like stickers */
+.rewards {
+    position: absolute;
+    top: calc(var(--px) * 20);
+    right: calc(var(--px) * 6);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(var(--px) * 3);
+    pointer-events: none;
+    line-height: 1.2;
+}
+
+.sticker {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 3px 14px 5px;
+    border: 3px solid var(--ink);
+    background: var(--gold);
+    color: var(--ink);
+    box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.45);
+    font-size: clamp(16px, calc(var(--px) * 7), 28px);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: right;
+    text-transform: uppercase;
+    transform: rotate(2deg);
+    animation: stick-on 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+
+.sticker.is-level {
+    background: var(--red);
+    color: var(--cream);
+    transform: rotate(-2deg);
+}
+
+.sticker.is-level span + span {
+    font-size: 0.68em;
+    font-weight: 400;
+}
+
+.sticker.is-leaving {
+    animation: peel-off 0.3s ease-in forwards;
+}
+
+@keyframes stick-on {
+    from { opacity: 0; transform: translateY(-14px) rotate(14deg) scale(0.6); }
+}
+
+@keyframes peel-off {
+    to { opacity: 0; transform: translateY(-12px) rotate(10deg) scale(0.8); }
+}
+
+/* ---- touch controls: corners of the whole screen, thumbs only */
+#touch {
+    position: fixed;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+}
+
+#touch.on { display: block; }
+body[data-mode="paused"] #touch { display: none; }
+
+.stick-zone {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 45%;
+    height: 75%;
+    pointer-events: auto;
+}
+
+.stick {
+    position: absolute;
+    left: 90px;
+    bottom: 90px;
+    top: auto;
+    width: 110px;
+    height: 110px;
+    margin: -55px 0 0 -55px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 248, 236, 0.35);
+    background: rgba(26, 15, 30, 0.25);
+    pointer-events: none;
+    opacity: 0.55;
+}
+
+.stick.live {
+    bottom: auto;
+    opacity: 1;
+}
+
+.knob {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 46px;
+    height: 46px;
+    margin: -23px 0 0 -23px;
+    border-radius: 50%;
+    background: rgba(255, 248, 236, 0.7);
+    border: 3px solid var(--ink);
+}
+
+.pad {
+    position: absolute;
+    pointer-events: auto;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    font: 700 13px/1 ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: 1px;
+    color: var(--ink);
+    opacity: 0.72;
+    touch-action: none;
+    box-shadow: inset -4px -5px 0 rgba(0, 0, 0, 0.25);
+}
+
+.pad.down {
+    opacity: 1;
+    transform: scale(0.94);
+    box-shadow: inset 2px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.pad-fire {
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(22px, env(safe-area-inset-bottom));
+    width: 92px;
+    height: 92px;
+    background: var(--red);
+    color: var(--cream);
+}
+
+.pad-jump {
+    right: calc(max(18px, env(safe-area-inset-right)) + 104px);
+    bottom: max(14px, env(safe-area-inset-bottom));
+    width: 72px;
+    height: 72px;
+    background: var(--cream);
+}
+
+.pad-bomb {
+    right: calc(max(18px, env(safe-area-inset-right)) + 14px);
+    bottom: calc(max(22px, env(safe-area-inset-bottom)) + 104px);
+    width: 62px;
+    height: 62px;
+    background: var(--gold);
+}
+
+/* ---- loading */
+.loading {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    gap: 18px;
+    background: var(--ink);
+    color: var(--cream);
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.loading[hidden] { display: none; }
+
+.meatballs {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.meatballs i {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #8a5a34;
+    box-shadow: inset -3px -3px 0 #5e3a1f, 0 0 0 3px var(--ink);
+    animation: hop 0.6s infinite steps(3);
+}
+
+.meatballs i:nth-child(2) { animation-delay: 0.2s; }
+.meatballs i:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes hop {
+    50% { transform: translateY(-10px); }
+}
+
+/* ---- phones held upright */
+.rotate-guard {
+    position: fixed;
+    inset: 0;
+    display: none;
+    place-content: center;
+    gap: 12px;
+    background: var(--ink);
+    color: var(--cream);
+    text-align: center;
+    letter-spacing: 2px;
+    z-index: 10;
+}
+
+.is-upright .rotate-guard { display: grid; }
+
+.rotate-guard svg {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    fill: none;
+    stroke: var(--cream);
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.rotate-guard .phone { animation: turn 2s infinite; transform-origin: 60px 55px; }
+
+@keyframes turn {
+    40%, 100% { transform: rotate(-90deg); }
+}

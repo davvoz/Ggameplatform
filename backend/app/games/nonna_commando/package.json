@@ -1,0 +1,11 @@
+{
+  "name": "nonna-commando",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "measure": "node tests/support/measure.js",
+    "cover": "node tools/shots.js tools/cover.html thumbnail.png --size 1280x720 --wait 3500",
+    "sheet": "node tools/shots.js \"tools/sheet.html?filter=nonna\" sheet.png --size 2200x1400"
+  }
+}

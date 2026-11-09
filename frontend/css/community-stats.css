@@ -565,7 +565,7 @@
 }
 
 .cs-dot:hover {
-    r: 3;
+    r: 3px; /* CSS needs the unit; Chrome tolerated a bare 3 */
 }
 
 .cs-line-labels {

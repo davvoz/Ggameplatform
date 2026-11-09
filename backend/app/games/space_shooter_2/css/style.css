@@ -90,7 +90,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background:
+    background-image:
         radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.8), transparent),
         radial-gradient(1px 1px at 30% 60%, rgba(255, 255, 255, 0.6), transparent),
         radial-gradient(1.5px 1.5px at 50% 10%, rgba(150, 200, 255, 0.9), transparent),

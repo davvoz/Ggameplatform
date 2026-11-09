@@ -89,7 +89,7 @@ body {
 .loading-embers {
     position: absolute;
     inset: 0;
-    background:
+    background-image:
         radial-gradient(1.5px 1.5px at 12% 25%, rgba(255,80,20,0.8), transparent),
         radial-gradient(1px 1px at 28% 55%, rgba(255,150,30,0.6), transparent),
         radial-gradient(2px 2px at 52% 12%, rgba(180,40,255,0.7), transparent),

@@ -1,8 +1,19 @@
 {
-  "version": "5.18.1",
-  "timestamp": "2026-11-09T19:20:28.523Z",
-  "buildNumber": 612,
+  "version": "5.18.2",
+  "timestamp": "2026-11-09T21:20:39.462Z",
+  "buildNumber": 613,
   "changelog": [
+    {
+      "version": "5.18.2",
+      "date": "2026-11-09",
+      "type": "patch",
+      "changes": [
+        "build: install backend dependencies from a hashed lock file; pin ssh-agent",
+        "fix: resolve SonarCloud vulnerabilities (log injection, path traversal, postMessage origin)",
+        "fix: chat online list no longer drops users who are still connected",
+        "🔖 Bump version to 5.18.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.18.1",
       "date": "2026-11-09",
@@ -84,15 +95,6 @@
       "changes": [
         "feat: add Ping Share functionality with modal and API integration",
         "🔖 Bump version to 5.15.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.15.1",
-      "date": "2026-10-05",
-      "type": "patch",
-      "changes": [
-        "fix:[banner]change name",
-        "🔖 Bump version to 5.15.0 [skip-version]"
       ]
     }
   ]

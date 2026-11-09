@@ -255,6 +255,14 @@ async def db_viewer_legacy(username: CurrentUser):
     html_file = Path(__file__).parent.parent / "static" / "db-viewer.html"
     return FileResponse(html_file)
 
+def _editable_game(game: dict) -> dict:
+    """Game.to_dict() names the extra_data column "metadata"; the DB viewer edits
+    columns by their own name. Without extra_data the edit form showed an empty
+    field and saving a game wiped its extra_data (orientation, playCount...)."""
+    game["extra_data"] = game.get("metadata", {})
+    return game
+
+
 @router.get("/db-stats", responses={401: {"description": "Not authenticated"}})
 async def get_db_stats(username: CurrentUser):
     """Get database statistics - Protected with JWT cookie"""
@@ -267,7 +275,7 @@ async def get_db_stats(username: CurrentUser):
         authors = set()
         
         for game in games_query:
-            game_dict = game.to_dict()
+            game_dict = _editable_game(game.to_dict())
             games.append(game_dict)
             
             categories.add(game.category)
@@ -781,7 +789,7 @@ async def get_game(game_id: str, db: DbSession):
         game = service.get(game_id)
         if not game:
             raise HTTPException(status_code=404, detail=GAME_NOT_FOUND)
-        return {"success": True, "data": game}
+        return {"success": True, "data": _editable_game(game)}
     except HTTPException:
         raise
     except Exception as e:

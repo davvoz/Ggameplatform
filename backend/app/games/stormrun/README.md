@@ -84,4 +84,5 @@ and run `node tests/visual/run-e2e.js http://127.0.0.1:8765 <output-dir>`.
 
 The backend is `app/games/stormrun_be` (the seed of the week, `GET /api/stormrun/week`).
 The game is registered by `python scripts/register_stormrun.py`, which is safe to
-run again. STEEM rewards are off until `STEEM_REWARDS = 1` is set there.
+run again. Whether STEEM is paid rotates by hand every week in the admin;
+the script never changes it on an existing game.

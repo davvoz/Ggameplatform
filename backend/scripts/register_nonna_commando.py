@@ -11,8 +11,11 @@ Ranked / STEEM:
   The game is ranked from day one. The score is the arcade score of a whole
   run (three missions) and the platform keeps each player's best of the week.
   Everybody plays the same seeded run for a week. The coin rewards are copied
-  from REWARDS_FROM. STEEM stays OFF, also in the amounts shown on the
-  leaderboard: to pay it, set STEEM_REWARDS = 1 here and run the script again.
+  from REWARDS_FROM, STEEM amounts included.
+
+  Whether STEEM is paid rotates by hand every week (the "STEEM Rewards" switch
+  of the game in the admin). This script switches it off only when it creates
+  the game; afterwards it never touches it, so running it again is safe.
 """
 
 import sys
@@ -35,7 +38,6 @@ from app.models import Game, LeaderboardReward, Quest, XPRule
 
 GAME_ID = "nonna_commando"
 RANKED_STATUS_ID = 5
-STEEM_REWARDS = 0
 REWARDS_FROM = "blocky-road"
 
 NOW = datetime.now(timezone.utc).isoformat()
@@ -57,7 +59,7 @@ GAME_DATA = {
     "category": "arcade",
     "tags": json.dumps(["arcade", "run-and-gun", "shooter", "pixel-art", "ranked", "bosses"]),
     "status_id": RANKED_STATUS_ID,
-    "steem_rewards_enabled": STEEM_REWARDS,
+    "steem_rewards_enabled": 0,  # only for a new game, see above
     "extra_data": json.dumps({
         "orientation": "landscape",
         "controls": "Keyboard: arrows/WASD, Z fire, X jump, C meatball. Gamepad supported. Touch: stick and buttons, landscape.",
@@ -159,12 +161,13 @@ _QUEST_TITLES = {q["title"] for q in QUESTS}
 def _upsert_game(db, ts: str) -> str:
     existing = db.query(Game).filter(Game.game_id == GAME_ID).first()
     if existing:
-        plays = json.loads(existing.extra_data or "{}").get("playCount")
+        # The weekly STEEM rotation is set by hand in the admin: keep it.
         for key, value in GAME_DATA.items():
-            if key != "game_id":
+            if key not in ("game_id", "steem_rewards_enabled", "extra_data"):
                 setattr(existing, key, value)
-        if plays is not None:
-            existing.extra_data = json.dumps({**json.loads(GAME_DATA["extra_data"]), "playCount": plays})
+        # Merged, not replaced: the play count and anything added later stay.
+        current = json.loads(existing.extra_data or "{}")
+        existing.extra_data = json.dumps({**current, **json.loads(GAME_DATA["extra_data"])})
         existing.updated_at = ts
         return "updated"
     db.add(Game(created_at=ts, updated_at=ts, **GAME_DATA))
@@ -206,7 +209,7 @@ def _copy_rewards(db, ts: str) -> int:
             game_id=GAME_ID,
             rank_start=reward.rank_start,
             rank_end=reward.rank_end,
-            steem_reward=reward.steem_reward if STEEM_REWARDS else 0.0,
+            steem_reward=reward.steem_reward,
             coin_reward=reward.coin_reward,
             description=reward.description,
             is_active=1,
@@ -233,7 +236,8 @@ def register_nonna_commando() -> bool:
 
             print(f"\n✅  Game {action}: {GAME_DATA['title']} [{GAME_ID}]")
             print(f"  Status ID: {RANKED_STATUS_ID} (ranked)")
-            print(f"  STEEM:     {STEEM_REWARDS}")
+            steem = db.query(Game.steem_rewards_enabled).filter(Game.game_id == GAME_ID).scalar()
+            print(f"  STEEM:     {'on' if steem else 'off'} this week (rotated by hand in the admin)")
             print(f"  XP rules:  {len(XP_RULES)}")
             print(f"  Quests:    {len(QUESTS)}")
             print(f"  Rewards:   {rewards} rank bands copied from {REWARDS_FROM}")

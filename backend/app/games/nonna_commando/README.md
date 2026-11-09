@@ -122,5 +122,6 @@ Registered by `python scripts/register_nonna_commando.py` (safe to run again):
 ranked, landscape (`"orientation": "landscape"` in `extra_data`), XP from the
 score (capped) and from play time, four daily quests read from the run's
 `extra_data` (`enemies_defeated`, `hostages_rescued`, `levels_completed`,
-`gold_teeth`), coin rewards copied from Blocky Road. STEEM rewards are off
-until `STEEM_REWARDS = 1` is set there. No backend module is needed.
+`gold_teeth`), coin and STEEM rewards copied from Blocky Road. Whether STEEM
+is paid rotates by hand every week in the admin; the script never changes it
+on an existing game. No backend module is needed.

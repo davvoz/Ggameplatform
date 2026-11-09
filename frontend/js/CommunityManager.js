@@ -90,9 +90,16 @@ class CommunityManager {
         const user = this.authManager?.getUser();
 
         // ── Reuse the global CommunityAPI WebSocket if available ──
-        if (getCommunityWS()?.isConnected) {
+        // Also when it is still opening (direct load / refresh on #/community):
+        // opening a second socket for the same user used to knock this user
+        // out of the online list.
+        const globalWS = getCommunityWS();
+        const canReuse = globalWS
+            && !globalWS.closedByUser
+            && (!user?.user_id || globalWS.userId === user.user_id);
+        if (canReuse) {
             // Take over the existing connection
-            this.communityAPI = getCommunityWS();
+            this.communityAPI = globalWS;
             this._ownsWS = false; // we must NOT disconnect on destroy
 
             // Swap callbacks to the full CommunityManager handlers
@@ -106,9 +113,20 @@ class CommunityManager {
             this.communityAPI.onMessageDeleted = this._boundHandlers.onMessageDeleted;
 
 
-            // Trigger the connect handler manually (WS is already open)
-            this._boundHandlers.onConnect();
+            if (this.communityAPI.isConnected) {
+                // Trigger the connect handler manually (WS is already open)
+                this._boundHandlers.onConnect();
+            } else {
+                // Still opening or between retries: onConnect fires on open
+                this._updateConnectionStatus('connecting', 'Connecting...');
+                this.communityAPI.connect().catch(() => { });
+            }
         } else {
+            if (globalWS) {
+                // Stale socket for another user: close it so it stops retrying
+                globalWS.disconnect();
+                setCommunityWS(null);
+            }
             // Fallback: create a new connection (first visit / not logged in)
             this.communityAPI = new CommunityAPI({
                 userId: user?.user_id || `anon_${Date.now()}`,

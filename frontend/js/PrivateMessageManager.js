@@ -36,6 +36,13 @@ class PrivateMessageAPI {
         this.ws = null;
         this.isConnected = false;
         this.pingInterval = null;
+        this.closedByUser = false;
+        this.reconnectAttempts = 0;
+        this.reconnectTimer = null;
+        this._connectPromise = null;
+        this._onWake = () => {
+            if (document.visibilityState === 'visible') this._reconnectNow();
+        };
     }
 
     /** @returns {string} REST API base */
@@ -46,9 +53,18 @@ class PrivateMessageAPI {
     // ─── WebSocket ───
 
     async connect() {
+        this.closedByUser = false;
+        document.addEventListener('visibilitychange', this._onWake);
+        globalThis.addEventListener('online', this._onWake);
+        globalThis.addEventListener('pageshow', this._onWake);
+
         if (this.ws?.readyState === WebSocket.OPEN) {
             return;
         }
+        if (this.ws?.readyState === WebSocket.CONNECTING && this._connectPromise) {
+            return this._connectPromise;
+        }
+        this._clearReconnectTimer();
 
         const protocol = globalThis.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const host = globalThis.ENV?.API_URL
@@ -56,32 +72,82 @@ class PrivateMessageAPI {
             : globalThis.location.host;
         const url = `${protocol}//${host}/ws/private-messages`;
 
-        return new Promise((resolve, reject) => {
-            this.ws = new WebSocket(url);
+        this._connectPromise = new Promise((resolve, reject) => {
+            const ws = new WebSocket(url);
+            this.ws = ws;
 
-            this.ws.onopen = () => {
+            // Runs once per socket; covers `error` without `close` and
+            // sockets stuck in CONNECTING, which would stall reconnection.
+            let closed = false;
+            const handleDown = () => {
+                if (closed) return;
+                closed = true;
+                clearTimeout(openTimeout);
+                if (this.ws !== ws) return;
+                this._connectPromise = null;
+                this._handleClose();
+                reject(new Error('PM WebSocket closed'));
+            };
+            const openTimeout = setTimeout(() => {
+                if (ws.readyState !== WebSocket.CONNECTING) return;
+                handleDown();
+                try { ws.close(); } catch { /* already closing */ }
+            }, 10000);
+
+            // Ignore events from a socket that has already been replaced.
+            ws.onopen = () => {
+                clearTimeout(openTimeout);
+                if (this.ws !== ws) return;
+                this._connectPromise = null;
                 this.isConnected = true;
-                this.ws.send(JSON.stringify({ type: 'join', user_id: this.userId }));
+                this.reconnectAttempts = 0;
+                ws.send(JSON.stringify({ type: 'join', user_id: this.userId }));
                 this._startPing();
                 resolve();
             };
 
-            this.ws.onmessage = (event) => this._handleMessage(event);
-            this.ws.onclose = () => this._handleClose();
-            this.ws.onerror = (err) => {
+            ws.onmessage = (event) => {
+                if (this.ws === ws) this._handleMessage(event);
+            };
+            ws.onclose = handleDown;
+            ws.onerror = (err) => {
+                if (this.ws !== ws) return;
                 this.onError(err);
-                reject(err instanceof Error ? err : new Error('PM WebSocket error'));
+                if (ws.readyState !== WebSocket.OPEN) handleDown();
             };
         });
+        return this._connectPromise;
     }
 
     disconnect() {
+        this.closedByUser = true;
+        this._clearReconnectTimer();
         this._stopPing();
+        this._connectPromise = null;
+        document.removeEventListener('visibilitychange', this._onWake);
+        globalThis.removeEventListener('online', this._onWake);
+        globalThis.removeEventListener('pageshow', this._onWake);
         if (this.ws) {
-            this.ws.close();
+            const ws = this.ws;
             this.ws = null;
+            ws.close();
         }
         this.isConnected = false;
+    }
+
+    _reconnectNow() {
+        if (this.closedByUser) return;
+        // Own state, not readyState: a failed socket can linger in CONNECTING.
+        if (this.isConnected || this._connectPromise) return;
+        this.reconnectAttempts = 0;
+        this.connect().catch(() => {});
+    }
+
+    _clearReconnectTimer() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
     }
 
     sendMessage(receiverId, text, { replyToId = null } = {}) {
@@ -221,6 +287,17 @@ class PrivateMessageAPI {
     _handleClose() {
         this.isConnected = false;
         this._stopPing();
+        if (this.closedByUser) return;
+
+        // Retry with capped backoff; before this the PM socket stayed dead
+        // until a page refresh.
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+        this._clearReconnectTimer();
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            this.reconnectAttempts++;
+            this.connect().catch(() => {});
+        }, delay);
     }
 
     _startPing() {
@@ -325,10 +402,10 @@ class PrivateMessageManager {
                     setPMWS(null);
                 }
                 // Reboot global PM WS so nav badges keep working
-                import('./nav.js').then(nav => nav.bootPMWS());
+                void import('./nav.js').then(nav => nav.bootPMWS());
             } else {
                 // Hand callbacks back to lightweight nav handlers
-                import('./nav.js').then(nav => nav.installNavPMHandlers());
+                void import('./nav.js').then(nav => nav.installNavPMHandlers());
             }
             this.api = null;
         }
@@ -518,9 +595,9 @@ class PrivateMessageManager {
             const action = btn.dataset.action;
             const connectionId = Number.parseInt(btn.dataset.id, 10);
             if (action === 'accept') {
-                this._acceptRequest(connectionId);
+                void this._acceptRequest(connectionId);
             } else if (action === 'reject') {
-                this._rejectRequest(connectionId);
+                void this._rejectRequest(connectionId);
             }
         });
 
@@ -534,7 +611,7 @@ class PrivateMessageManager {
             const peerId = item.dataset.peerId;
             const peerUsername = item.dataset.peerUsername;
             const connectionId = Number.parseInt(item.dataset.connectionId, 10);
-            this._openChat(peerId, peerUsername, connectionId);
+            void this._openChat(peerId, peerUsername, connectionId);
         });
     }
 
@@ -578,7 +655,7 @@ class PrivateMessageManager {
         if (!confirmed) {
             return;
         }
-        this._disconnectUser(this.activeConnectionId);
+        void this._disconnectUser(this.activeConnectionId);
     }
 
     async _disconnectUser(connectionId) {

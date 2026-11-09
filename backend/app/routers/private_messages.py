@@ -68,17 +68,22 @@ class PrivateMessageManager:
     """
 
     def __init__(self):
-        # user_id -> WebSocket
-        self.connections: Dict[str, WebSocket] = {}
+        # user_id -> every open socket of that user (tabs, devices)
+        self.connections: Dict[str, List[WebSocket]] = {}
 
     def connect(self, websocket: WebSocket, user_id: str) -> None:
         """Register a user's WebSocket for private messaging."""
-        self.connections[user_id] = websocket
+        self.connections.setdefault(user_id, []).append(websocket)
         logger.info("PM: User %s connected", user_id)
 
-    def disconnect(self, user_id: str) -> None:
-        """Remove a user's WebSocket connection."""
-        self.connections.pop(user_id, None)
+    def disconnect(self, user_id: str, websocket: WebSocket) -> None:
+        """Remove one socket; a stale socket closing never drops a newer one."""
+        sockets = self.connections.get(user_id)
+        if not sockets or websocket not in sockets:
+            return
+        sockets.remove(websocket)
+        if not sockets:
+            del self.connections[user_id]
         logger.info("PM: User %s disconnected", user_id)
 
     def is_online(self, user_id: str) -> bool:
@@ -86,16 +91,15 @@ class PrivateMessageManager:
         return user_id in self.connections
 
     async def send_to_user(self, user_id: str, payload: dict) -> bool:
-        """Send a JSON payload to a specific connected user. Returns True if sent."""
-        ws = self.connections.get(user_id)
-        if not ws:
-            return False
-        try:
-            await ws.send_json(payload)
-            return True
-        except Exception:
-            self.disconnect(user_id)
-            return False
+        """Send a JSON payload to every socket of a user. Returns True if any got it."""
+        sent = False
+        for ws in list(self.connections.get(user_id, [])):
+            try:
+                await ws.send_json(payload)
+                sent = True
+            except Exception:
+                self.disconnect(user_id, ws)
+        return sent
 
     async def deliver_message(self, message: PMMessage) -> None:
         """Persist a message and deliver it in real-time if the receiver is online."""
@@ -447,7 +451,7 @@ async def private_messages_ws(websocket: WebSocket):
         logger.exception("PM WebSocket error for user %s", user_id)
     finally:
         if user_id:
-            pm_manager.disconnect(user_id)
+            pm_manager.disconnect(user_id, websocket)
 
 
 async def _send_pending_requests(websocket: WebSocket, user_id: str) -> None:

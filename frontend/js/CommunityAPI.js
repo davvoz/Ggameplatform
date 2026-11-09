@@ -4,6 +4,8 @@
  * Single Responsibility: Handles WebSocket connection, message transport, uploads and GIPHY
  */
 
+const CONNECT_TIMEOUT_MS = 10000;
+
 class CommunityAPI {
     /**
      * @param {Object} options Configuration options
@@ -34,10 +36,21 @@ class CommunityAPI {
         this.ws = null;
         this.isConnected = false;
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
         this.reconnectDelay = 1000;
+        this.maxReconnectDelay = 30000;
+        this.reconnectTimer = null;
         this.pingInterval = null;
         this.messageQueue = [];
+        // Set only by disconnect(); every other close is retried, forever.
+        this.closedByUser = false;
+        this._connectPromise = null;
+
+        // Phones drop sockets when the screen locks or the app goes to the
+        // background. Reconnect as soon as the page is visible or back online
+        // instead of waiting out the backoff.
+        this._onWake = () => {
+            if (document.visibilityState === 'visible') this._reconnectNow();
+        };
 
         // API base URL for REST endpoints
         this.apiBaseUrl = globalThis.ENV?.API_URL || '';
@@ -68,31 +81,98 @@ class CommunityAPI {
      * @returns {Promise<void>}
      */
     async connect() {
+        this.closedByUser = false;
+        // Re-arm after a disconnect(); adding the same listener twice is a no-op.
+        document.addEventListener('visibilitychange', this._onWake);
+        globalThis.addEventListener('online', this._onWake);
+        globalThis.addEventListener('pageshow', this._onWake);
+
         if (this.ws?.readyState === WebSocket.OPEN) {
             return;
         }
+        // A socket is already on its way: share it instead of opening a
+        // second one for the same user.
+        if (this.ws?.readyState === WebSocket.CONNECTING && this._connectPromise) {
+            return this._connectPromise;
+        }
 
-        return new Promise((resolve, reject) => {
+        this._clearReconnectTimer();
+
+        this._connectPromise = new Promise((resolve, reject) => {
+            let ws;
             try {
-                const url = this._getWebSocketUrl();
-
-                this.ws = new WebSocket(url);
-
-                this.ws.onopen = (event) => {
-                    this._boundHandlers.onOpen(event);
-                    resolve();
-                };
-
-                this.ws.onmessage = this._boundHandlers.onMessage;
-                this.ws.onclose = this._boundHandlers.onClose;
-                this.ws.onerror = (error) => {
-                    this._boundHandlers.onError(error);
-                    reject(error instanceof Error ? error : new Error('WebSocket connection error'));
-                };
+                ws = new WebSocket(this._getWebSocketUrl());
             } catch (error) {
+                this._connectPromise = null;
                 reject(error);
+                return;
             }
+            this.ws = ws;
+
+            // Runs once per socket. Some clients fire `error` without a later
+            // `close`, or hang in CONNECTING; both would stall reconnection.
+            let closed = false;
+            const handleDown = (event) => {
+                if (closed) return;
+                closed = true;
+                clearTimeout(openTimeout);
+                if (this.ws !== ws) return;
+                this._connectPromise = null;
+                this._boundHandlers.onClose(event);
+                reject(new Error('WebSocket closed'));
+            };
+            const openTimeout = setTimeout(() => {
+                if (ws.readyState !== WebSocket.CONNECTING) return;
+                handleDown({ code: 4008, reason: 'Connect timeout' });
+                try { ws.close(); } catch { /* already closing */ }
+            }, CONNECT_TIMEOUT_MS);
+
+            // Events from a socket we already replaced are ignored, so a late
+            // close cannot flip a live connection to "disconnected".
+            ws.onopen = (event) => {
+                clearTimeout(openTimeout);
+                if (this.ws !== ws) return;
+                this._connectPromise = null;
+                this._boundHandlers.onOpen(event);
+                resolve();
+            };
+            ws.onmessage = (event) => {
+                if (this.ws === ws) this._boundHandlers.onMessage(event);
+            };
+            ws.onclose = handleDown;
+            ws.onerror = (error) => {
+                if (this.ws !== ws) return;
+                this._boundHandlers.onError(error);
+                if (ws.readyState !== WebSocket.OPEN) handleDown({ code: 1006, reason: 'Connection error' });
+            };
         });
+        return this._connectPromise;
+    }
+
+    /**
+     * Reconnect right away if the socket is down (page became visible,
+     * network came back).
+     * @private
+     */
+    _reconnectNow() {
+        if (this.closedByUser) return;
+        if (this.isConnected) {
+            this.requestStats(); // refresh who's online after the tab was hidden
+            return;
+        }
+        // Use our own state, not readyState: a failed socket can linger in
+        // CONNECTING after its error.
+        if (this._connectPromise) return;
+        this.reconnectAttempts = 0;
+        this.connect().catch(() => { });
+    }
+
+    /** @private */
+    _clearReconnectTimer() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
     }
 
     /**
@@ -188,15 +268,20 @@ class CommunityAPI {
 
         this.onDisconnect(event);
 
-        // Attempt reconnection
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts);
+        if (this.closedByUser) return;
 
-            setTimeout(() => {
-                this.reconnectAttempts++;
-                this.connect().catch(() => { });
-            }, delay);
-        }
+        // Keep retrying with capped backoff; the old cap of 5 attempts left
+        // the chat dead until a manual refresh.
+        const delay = Math.min(
+            this.reconnectDelay * Math.pow(2, this.reconnectAttempts),
+            this.maxReconnectDelay
+        );
+        this._clearReconnectTimer();
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            this.reconnectAttempts++;
+            this.connect().catch(() => { });
+        }, delay);
     }
 
     /**
@@ -321,12 +406,19 @@ class CommunityAPI {
      * Disconnect from WebSocket
      */
     disconnect() {
-        this.maxReconnectAttempts = 0; // Prevent reconnection
+        this.closedByUser = true;
+        this._clearReconnectTimer();
         this._stopPing();
+        this._connectPromise = null;
+
+        document.removeEventListener('visibilitychange', this._onWake);
+        globalThis.removeEventListener('online', this._onWake);
+        globalThis.removeEventListener('pageshow', this._onWake);
 
         if (this.ws) {
-            this.ws.close(1000, 'User disconnected');
-            this.ws = null;
+            const ws = this.ws;
+            this.ws = null; // detach first so its close event is ignored
+            ws.close(1000, 'User disconnected');
         }
 
         this.isConnected = false;

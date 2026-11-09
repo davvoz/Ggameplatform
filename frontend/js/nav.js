@@ -126,13 +126,13 @@ function initQuestNotifications() {
 
     // Check when auth state changes (login/logout)
     globalThis.addEventListener('auth-state-changed', () => {
-        checkUnclaimedQuests();
+        void checkUnclaimedQuests();
     });
 
     // Check when navigating to quests page
     globalThis.addEventListener('hashchange', () => {
         if (globalThis.location.hash.includes('quest')) {
-            checkUnclaimedQuests();
+            void checkUnclaimedQuests();
         }
     });
 
@@ -140,21 +140,21 @@ function initQuestNotifications() {
     globalThis.addEventListener('gameSessionEnded', () => {
         // Small delay to allow backend to process quest updates
         setTimeout(() => {
-            checkUnclaimedQuests();
+            void checkUnclaimedQuests();
         }, 1000);
     });
 
     // Check when page becomes visible
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-            checkUnclaimedQuests();
+            void checkUnclaimedQuests();
         }
     });
 
     // Initial check - wait for AuthManager to be ready
     const tryInitialCheck = () => {
         if (AuthManager.isLoggedIn()) {
-            checkUnclaimedQuests();
+            void checkUnclaimedQuests();
         } else {
             setTimeout(tryInitialCheck, 500);
         }
@@ -352,16 +352,25 @@ async function bootCommunityWS() {
     // Never interfere while CommunityManager owns the WS
     if (getCurrentCommunityManager()) return;
 
+    const user = AuthManager.isLoggedIn() ? AuthManager.getUser() : null;
+    const wantedUserId = user && !user.is_anonymous ? user.user_id : null;
+
+    // Same user (auth-state-changed fires on page load and token refresh):
+    // keep the live socket instead of tearing it down and reopening it.
+    const existing = getCommunityWS();
+    if (existing && wantedUserId && existing.userId === wantedUserId && !existing.closedByUser) {
+        existing.connect().catch(() => { });
+        return;
+    }
+
     // Tear down previous instance if user changed
-    if (getCommunityWS()) {
-        getCommunityWS().disconnect();
+    if (existing) {
+        existing.disconnect();
         setCommunityWS(null);
     }
     removeCommunityBadge();
 
-    if (!AuthManager.isLoggedIn()) return;
-    const user = AuthManager.getUser();
-    if (!user || user.is_anonymous) return;
+    if (!wantedUserId) return;
 
     const api = new CommunityAPI({
         userId: user.user_id,
@@ -393,8 +402,8 @@ function initCommunityNotifications() {
     globalThis.addEventListener('auth-state-changed', () => {
         // If CommunityManager is active it owns the WS — skip
         if (getCurrentCommunityManager()) return;
-        bootCommunityWS();
-        bootPMWS();
+        void bootCommunityWS();
+        void bootPMWS();
     });
 
     // When navigating TO community, mark as seen (CommunityManager will
@@ -419,8 +428,8 @@ function initCommunityNotifications() {
     const tryBoot = () => {
         if (getCurrentCommunityManager()) return; // CM is active, skip
         if (AuthManager.isLoggedIn()) {
-            bootCommunityWS();
-            bootPMWS();
+            void bootCommunityWS();
+            void bootPMWS();
         } else {
             setTimeout(tryBoot, 500);
         }
@@ -492,15 +501,23 @@ function installNavPMHandlers() {
  * Connects if user is logged in and not anonymous.
  */
 async function bootPMWS() {
+    const user = AuthManager.isLoggedIn() ? AuthManager.getUser() : null;
+    const wantedUserId = user && !user.is_anonymous ? user.user_id : null;
+
+    // Same user: keep the live socket
+    const existing = getPMWS();
+    if (existing && wantedUserId && existing.userId === wantedUserId && !existing.closedByUser) {
+        existing.connect().catch(() => { });
+        return;
+    }
+
     // Tear down previous instance if user changed
-    if (getPMWS()) {
-        getPMWS().disconnect();
+    if (existing) {
+        existing.disconnect();
         setPMWS(null);
     }
 
-    if (!AuthManager.isLoggedIn()) return;
-    const user = AuthManager.getUser();
-    if (!user || user.is_anonymous) return;
+    if (!wantedUserId) return;
 
     const api = new PrivateMessageAPI({ userId: user.user_id });
     setPMWS(api);

@@ -58,12 +58,17 @@ class ChatMessage:
         return asdict(self)
 
 
-@dataclass 
+@dataclass
 class ConnectedUser:
-    """Represents a connected user"""
+    """Represents a connected user.
+
+    A user may hold several sockets at once (two tabs, phone + PC, or a
+    reconnect that overlaps with the old socket closing). They stay online
+    until the last socket is gone.
+    """
     user_id: str
     username: str
-    websocket: WebSocket
+    websockets: List[WebSocket]
     connected_at: datetime
 
 
@@ -101,90 +106,91 @@ class CommunityChatManager:
         logger.info("[CommunityChat] Manager initialized (loaded %d messages from DB)", len(self.messages))
     
     async def connect(self, websocket: WebSocket, user_id: str, username: str):
-        """Add a new connection (websocket already accepted)"""
-        # Remove existing connection for same user if exists
-        if user_id in self.connections:
-            try:
-                old_ws = self.connections[user_id].websocket
-                await old_ws.close(code=1000, reason="New connection opened")
-            except Exception:
-                pass
-        
-        self.connections[user_id] = ConnectedUser(
-            user_id=user_id,
-            username=username,
-            websocket=websocket,
-            connected_at=datetime.now(timezone.utc)
+        """Register a socket for a user (websocket already accepted).
+
+        Extra sockets for the same user are kept side by side. Closing an
+        older one used to trigger its cleanup, which then removed the newer
+        socket and dropped the user from the online list.
+        """
+        user = self.connections.get(user_id)
+        is_new_user = user is None
+        if is_new_user:
+            user = ConnectedUser(
+                user_id=user_id,
+                username=username,
+                websockets=[],
+                connected_at=datetime.now(timezone.utc)
+            )
+            self.connections[user_id] = user
+        else:
+            user.username = username
+        user.websockets.append(websocket)
+
+        logger.info(
+            f"[CommunityChat] User {username} ({user_id}) connected "
+            f"({len(user.websockets)} socket(s)). Online: {len(self.connections)}"
         )
-        
-        logger.info(f"[CommunityChat] User {username} ({user_id}) connected. Total: {len(self.connections)}")
-        
-        # Send message history
+
         await self._send_history(websocket)
-        
-        # Send current stats
         await self._send_stats(websocket)
-        
-        # Broadcast join event
-        await self._broadcast_user_event(user_id, username, "join")
-    
-    async def disconnect(self, user_id: str):
-        """Remove a connection"""
-        if user_id in self.connections:
-            user = self.connections[user_id]
-            username = user.username
-            del self.connections[user_id]
-            
-            logger.info(f"[CommunityChat] User {username} ({user_id}) disconnected. Total: {len(self.connections)}")
-            
-            # Broadcast leave event
-            await self._broadcast_user_event(user_id, username, "leave")
-    
-    async def handle_message(self, user_id: str, data: dict):
-        """Handle incoming message from a user"""
+
+        if is_new_user:
+            await self._broadcast_user_event(user_id, username, "join")
+
+    async def disconnect(self, user_id: str, websocket: WebSocket):
+        """Remove one socket; the user goes offline when their last socket is gone."""
+        user = self.connections.get(user_id)
+        if user is None or websocket not in user.websockets:
+            return
+
+        user.websockets.remove(websocket)
+        if user.websockets:
+            return
+
+        del self.connections[user_id]
+        logger.info(f"[CommunityChat] User {user.username} ({user_id}) disconnected. Online: {len(self.connections)}")
+        await self._broadcast_user_event(user_id, user.username, "leave")
+
+    async def handle_message(self, user_id: str, websocket: WebSocket, data: dict):
+        """Handle incoming message from a user; replies go to the sending socket."""
         message_type = data.get("type", "")
-        
+
         if message_type == "message":
-            await self._handle_chat_message(user_id, data)
+            await self._handle_chat_message(user_id, websocket, data)
         elif message_type == "edit_message":
-            await self._handle_edit_message(user_id, data)
+            await self._handle_edit_message(user_id, websocket, data)
         elif message_type == "history":
-            await self._handle_history_request(user_id, data)
+            await self._handle_history_request(websocket, data)
         elif message_type == "request_stats":
-            await self._handle_stats_request(user_id)
+            await self._send_stats(websocket)
         elif message_type == "ping":
-            await self._send_pong(user_id)
+            await self._send_json(websocket, {"type": "pong"})
 
-    async def _handle_stats_request(self, user_id: str):
-        """Handle request for current stats"""
-        if user_id in self.connections:
-            await self._send_stats(self.connections[user_id].websocket)
-
-    async def _handle_edit_message(self, user_id: str, data: dict):
+    async def _handle_edit_message(self, user_id: str, websocket: WebSocket, data: dict):
         """Handle message edit request — only the original author may edit."""
         message_id = data.get("message_id", "").strip()
         new_text = data.get("text", "").strip()
 
         if not message_id:
-            await self._send_error(user_id, "Missing message_id")
+            await self._send_error(websocket, "Missing message_id")
             return
 
         if not new_text:
-            await self._send_error(user_id, "Edited message cannot be empty")
+            await self._send_error(websocket, "Edited message cannot be empty")
             return
 
         if len(new_text) > 500:
-            await self._send_error(user_id, "Message too long (max 500 characters)")
+            await self._send_error(websocket, "Message too long (max 500 characters)")
             return
 
         # Locate message and verify ownership
         target = next((m for m in self.messages if m.id == message_id), None)
         if not target:
-            await self._send_error(user_id, "Message not found")
+            await self._send_error(websocket, "Message not found")
             return
 
         if target.user_id != user_id:
-            await self._send_error(user_id, "Cannot edit another user's message")
+            await self._send_error(websocket, "Cannot edit another user's message")
             return
 
         # Update in-memory record
@@ -228,7 +234,7 @@ class CommunityChatManager:
             return reply_to_id, ref.username, (ref.text or "")[:100]
         return None, None, None
 
-    async def _handle_chat_message(self, user_id: str, data: dict):
+    async def _handle_chat_message(self, user_id: str, websocket: WebSocket, data: dict):
         """Process and broadcast a chat message"""
         if user_id not in self.connections:
             return
@@ -240,7 +246,7 @@ class CommunityChatManager:
 
         error = self._validate_chat_message(text, image_url, gif_url)
         if error:
-            await self._send_error(user_id, error)
+            await self._send_error(websocket, error)
             return
 
         self.message_counter += 1
@@ -272,19 +278,16 @@ class CommunityChatManager:
         await self._broadcast_message(message)
         self._send_push_to_offline_users(message)
 
-    async def _handle_history_request(self, user_id: str, data: dict):
+    async def _handle_history_request(self, websocket: WebSocket, data: dict):
         """Handle request for message history"""
-        if user_id not in self.connections:
-            return
-        
         offset = data.get("offset", 0)
         limit = min(data.get("limit", 50), 100)
-        
+
         # Get messages (newest first)
         messages = list(reversed(self.messages))
         messages = messages[offset:offset + limit]
-        
-        await self._send_to_user(user_id, {
+
+        await self._send_json(websocket, {
             "type": "history",
             "messages": [m.to_dict() for m in messages]
         })
@@ -326,39 +329,40 @@ class CommunityChatManager:
             "stats": self._get_stats()
         })
     
-    async def _send_pong(self, user_id: str):
-        """Send pong response"""
-        await self._send_to_user(user_id, {"type": "pong"})
-    
-    async def _send_error(self, user_id: str, error: str):
-        """Send error to a specific user"""
-        await self._send_to_user(user_id, {
+    async def _send_error(self, websocket: WebSocket, error: str):
+        """Send an error to one socket"""
+        await self._send_json(websocket, {
             "type": "error",
             "error": error
         })
-    
-    async def _send_to_user(self, user_id: str, data: dict):
-        """Send data to a specific user"""
-        if user_id in self.connections:
-            try:
-                await self.connections[user_id].websocket.send_json(data)
-            except Exception as e:
-                logger.error(f"[CommunityChat] Error sending to {user_id}: {e}")
-    
+
+    async def _send_json(self, websocket: WebSocket, data: dict):
+        """Send data to one socket"""
+        try:
+            await websocket.send_json(data)
+        except Exception as e:
+            logger.warning(f"[CommunityChat] Error sending to socket: {e}")
+
     async def _broadcast(self, data: dict):
-        """Broadcast data to all connected users"""
+        """Broadcast data to every socket of every connected user"""
+        # Snapshot first (no awaits inside the comprehension): connect and
+        # disconnect can run while we await a send.
+        targets = [
+            (user.user_id, ws)
+            for user in self.connections.values()
+            for ws in user.websockets
+        ]
         disconnected = []
-        
-        for user_id, user in self.connections.items():
+
+        for user_id, ws in targets:
             try:
-                await user.websocket.send_json(data)
+                await ws.send_json(data)
             except Exception as e:
                 logger.warning(f"[CommunityChat] Failed to send to {user_id}: {e}")
-                disconnected.append(user_id)
-        
-        # Clean up disconnected users
-        for user_id in disconnected:
-            await self.disconnect(user_id)
+                disconnected.append((user_id, ws))
+
+        for user_id, ws in disconnected:
+            await self.disconnect(user_id, ws)
     
     def _get_stats(self) -> dict:
         """Get current chat statistics"""
@@ -411,8 +415,8 @@ class CommunityChatManager:
                         int(m.id.split("_")[1]) for m in self.messages
                         if m.id.startswith("msg_")
                     )
-        except Exception as exc:
-            logger.error("[CommunityChat] Failed to load messages from DB: %s", exc)
+        except Exception:
+            logger.exception("[CommunityChat] Failed to load messages from DB")
 
     def _persist_message(self, message: ChatMessage) -> None:
         """Persist a chat message to the database and keep the table trimmed."""
@@ -423,8 +427,8 @@ class CommunityChatManager:
             with get_db_session() as db:
                 repo = CommunityMessageRepository(db)
                 repo.save_message(message.to_dict())
-        except Exception as exc:
-            logger.error("[CommunityChat] Failed to persist message %s: %s", message.id, exc)
+        except Exception:
+            logger.exception("[CommunityChat] Failed to persist message %s", message.id)
 
     async def remove_message(self, message_id: str) -> bool:
         """Remove a message from memory and broadcast deletion to all clients."""
@@ -448,8 +452,8 @@ class CommunityChatManager:
             with get_db_session() as db:
                 repo = CommunityMessageRepository(db)
                 repo.update_message_text(message_id, new_text, edited_at_ms)
-        except Exception as exc:
-            logger.error("[CommunityChat] Failed to persist edit for %s: %s", message_id, exc)
+        except Exception:
+            logger.exception("[CommunityChat] Failed to persist edit for %s", message_id)
 
     def _send_push_to_offline_users(self, message: ChatMessage):
 
@@ -508,8 +512,8 @@ class CommunityChatManager:
                 
                 logger.info(f"[CommunityChat] Sent push notifications to {len(subscriptions)} offline users")
                 
-        except Exception as e:
-            logger.error(f"[CommunityChat] Error sending push notifications: {e}")
+        except Exception:
+            logger.exception("[CommunityChat] Error sending push notifications")
 
     def _is_valid_media_url(self, url: str) -> bool:
         """
@@ -628,8 +632,8 @@ async def upload_media(file: Annotated[UploadFile, File()]):
             "is_gif": is_gif
         }
     
-    except Exception as e:
-        logger.error(f"[Community] Upload error: {e}")
+    except Exception:
+        logger.exception("[Community] Upload error")
         raise HTTPException(status_code=500, detail="Failed to save file")
 
 
@@ -679,12 +683,12 @@ async def community_websocket(websocket: WebSocket):
         
         # Connect user
         await chat_manager.connect(websocket, user_id, username)
-        
+
         # Handle messages
         while True:
             try:
                 data = await websocket.receive_json()
-                await chat_manager.handle_message(user_id, data)
+                await chat_manager.handle_message(user_id, websocket, data)
             except WebSocketDisconnect:
                 break
             except json.JSONDecodeError:
@@ -693,11 +697,11 @@ async def community_websocket(websocket: WebSocket):
     
     except WebSocketDisconnect:
         logger.info(f"[CommunityChat] WebSocket disconnected for {user_id}")
-    except Exception as e:
-        logger.error(f"[CommunityChat] Error: {e}")
+    except Exception:
+        logger.exception("[CommunityChat] WebSocket error")
     finally:
         if user_id:
-            await chat_manager.disconnect(user_id)
+            await chat_manager.disconnect(user_id, websocket)
 
 
 # =============================================================================

@@ -2,14 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Installa dipendenze di sistema
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copia requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Dipendenze bloccate con hash (requirements.lock, generato da requirements.txt:
+# vedi l'intestazione del file). Solo wheel già compilate, quindi niente gcc e
+# nessuno script di setup eseguito; le uniche eccezioni sono http-ece e
+# py-vapid, che su PyPI esistono solo come sorgente (Python puro).
+COPY requirements.lock .
+RUN pip install --no-cache-dir --require-hashes \
+    --only-binary :all: --no-binary http-ece,py-vapid \
+    -r requirements.lock
 
 # Copia l'applicazione (include sdk/ che è già in backend/sdk)
 COPY . .

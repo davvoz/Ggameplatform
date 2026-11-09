@@ -1,8 +1,17 @@
 {
-  "version": "5.18.3",
-  "timestamp": "2026-11-09T21:31:03.277Z",
-  "buildNumber": 614,
+  "version": "5.18.4",
+  "timestamp": "2026-11-09T21:39:31.237Z",
+  "buildNumber": 615,
   "changelog": [
+    {
+      "version": "5.18.4",
+      "date": "2026-11-09",
+      "type": "patch",
+      "changes": [
+        "fix: clear the three SonarCloud CSS blockers",
+        "🔖 Bump version to 5.18.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.18.3",
       "date": "2026-11-09",
@@ -86,15 +95,6 @@
       "changes": [
         "fix: implement STEEM rewards management for processed weeks with new endpoints and UI updates",
         "🔖 Bump version to 5.16.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.16.1",
-      "date": "2026-10-26",
-      "type": "patch",
-      "changes": [
-        "fix: [db-viewer]implement weekly rewards management with modal and API integration",
-        "🔖 Bump version to 5.16.0 [skip-version]"
       ]
     }
   ]

@@ -1,8 +1,17 @@
 {
-  "version": "5.18.0",
-  "timestamp": "2026-11-08T17:33:23.022Z",
-  "buildNumber": 611,
+  "version": "5.18.1",
+  "timestamp": "2026-11-09T19:20:28.523Z",
+  "buildNumber": 612,
   "changelog": [
+    {
+      "version": "5.18.1",
+      "date": "2026-11-09",
+      "type": "patch",
+      "changes": [
+        "fix: admin game edit no longer wipes extra_data; register scripts keep the STEEM rotation",
+        "🔖 Bump version to 5.18.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.18.0",
       "date": "2026-11-08",
@@ -84,15 +93,6 @@
       "changes": [
         "fix:[banner]change name",
         "🔖 Bump version to 5.15.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.15.0",
-      "date": "2026-10-03",
-      "type": "minor",
-      "changes": [
-        "feat:Add promotional images for Domin8",
-        "🔖 Bump version to 5.14.3 [skip-version]"
       ]
     }
   ]

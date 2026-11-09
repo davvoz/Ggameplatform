@@ -674,12 +674,16 @@ def _steem_resend_weeks(db: Session) -> List[tuple]:
     ).date().isoformat()
     return LeaderboardRepository(db).get_processed_weeks(since)
 
-def _require_steem_resend_week(db: Session, week_start: str) -> None:
-    if week_start not in dict(_steem_resend_weeks(db)):
+def _require_steem_resend_week(db: Session, week_start: str) -> str:
+    """Return the week as the database stores it, so nothing after this
+    check carries the request's own string into logs or the scheduler."""
+    trusted = {ws: ws for ws, _ in _steem_resend_weeks(db)}.get(week_start)
+    if trusted is None:
         raise HTTPException(
             status_code=400,
             detail=f"Week {week_start} is not a processed week of the last {STEEM_RESEND_WEEKS}"
         )
+    return trusted
 
 @router.get("/weekly-rewards/status")
 async def get_weekly_rewards_status(db: DbSession):
@@ -725,18 +729,21 @@ def pay_weekly_rewards(request: PayWeekRequest, username: CurrentUser, db: DbSes
     """Pay a week the weekly reset missed (sync: STEEM transfers block)"""
     from app.weekly_scheduler import get_scheduler
 
-    unpaid = dict(LeaderboardRepository(db).get_unpaid_weeks())
-    week_end = unpaid.get(request.week_start)
-    if week_end is None:
+    # Look the week up and carry on with the database's own values, not the
+    # request's string (keeps request text out of logs and the scheduler).
+    unpaid = {ws: (ws, we) for ws, we in LeaderboardRepository(db).get_unpaid_weeks()}
+    week = unpaid.get(request.week_start)
+    if week is None:
         raise HTTPException(
             status_code=400,
             detail=f"Week {request.week_start} is not an unpaid past week"
         )
+    week_start, week_end = week
 
     logging.getLogger(__name__).info(
-        f"💰 Admin {username} is paying weekly rewards for {request.week_start} to {week_end}"
+        f"💰 Admin {username} is paying weekly rewards for {week_start} to {week_end}"
     )
-    results = get_scheduler().process_weekly_reset(request.week_start, week_end)
+    results = get_scheduler().process_weekly_reset(week_start, week_end)
 
     return {"success": results['success'], "results": results}
 
@@ -745,19 +752,18 @@ def check_weekly_steem(week_start: str, db: DbSession):
     """Which STEEM rewards of a processed week are on the chain (sync: reads the chain)"""
     from app.weekly_scheduler import get_scheduler
 
-    _require_steem_resend_week(db, week_start)
-    return get_scheduler().check_week_steem(week_start)
+    return get_scheduler().check_week_steem(_require_steem_resend_week(db, week_start))
 
 @router.post("/weekly-rewards/resend-steem", responses={400: {"description": "Week not checkable"}})
 def resend_weekly_steem(request: PayWeekRequest, username: CurrentUser, db: DbSession):
     """Send the STEEM rewards of a processed week that are not on the chain (sync: STEEM transfers block)"""
     from app.weekly_scheduler import get_scheduler
 
-    _require_steem_resend_week(db, request.week_start)
+    week_start = _require_steem_resend_week(db, request.week_start)
     logging.getLogger(__name__).info(
-        f"📤 Admin {username} is resending the STEEM rewards of week {request.week_start}"
+        f"📤 Admin {username} is resending the STEEM rewards of week {week_start}"
     )
-    results = get_scheduler().resend_week_steem(request.week_start)
+    results = get_scheduler().resend_week_steem(week_start)
 
     return {"success": results['success'], "results": results}
 

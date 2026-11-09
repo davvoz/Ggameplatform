@@ -72,12 +72,14 @@ export class TestRunner {
         const onMsg = (event) => {
             const data = event.data;
             if (data?.type !== 'devilCrashReady') return;
+            // The test iframe loads ../index.html, so it shares our origin.
+            if (event.origin !== globalThis.location.origin) return;
             if (!this._iframe || event.source !== this._iframe.contentWindow) return;
             try {
                 this._iframe.contentWindow.postMessage({
                     type: 'devilCrashTestBoard',
                     payload: this._payload,
-                }, event.origin || '*');
+                }, globalThis.location.origin);
             } catch (err) {
                 console.warn('[TestRunner] postMessage failed', err);
             }

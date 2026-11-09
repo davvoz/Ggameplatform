@@ -1,8 +1,9 @@
 """
 Import games, quests and xp_rules from JSON backup to SQLite database using SQLAlchemy ORM
-Usage: python import_from_json.py <json_file>
+Usage: python import_from_json.py <json_file>   (a file in backend/backups)
 """
 
+import os
 import sys
 import json
 from pathlib import Path
@@ -13,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import get_db_session
 from app.models import Game, XPRule, Quest
+
+BACKUP_DIR = os.path.realpath(Path(__file__).parent.parent / "backups")
 
 def import_data(json_file):
     """Import games, quests and xp_rules from JSON backup."""
@@ -156,7 +159,12 @@ if __name__ == '__main__':
         print("Example: python import_from_json.py ../backups/backup.json")
         sys.exit(1)
     
-    json_file = sys.argv[1]
+    # Only backups in backend/backups can be imported: the argument is
+    # resolved there and refused if it points elsewhere.
+    json_file = os.path.realpath(os.path.join(BACKUP_DIR, sys.argv[1]))
+    if os.path.commonpath([BACKUP_DIR, json_file]) != BACKUP_DIR:
+        print(f"❌ Il file deve stare in {BACKUP_DIR}")
+        sys.exit(1)
     
     if not Path(json_file).exists():
         print(f"❌ File non trovato: {json_file}")

@@ -14,6 +14,8 @@ Crea un backup JSON delle tabelle di configurazione della piattaforma:
 
 Usage:
     python backup_platform_config.py [output_file]
+
+    output_file is a name inside backend/backups (default: platform_config_<timestamp>.json).
 """
 
 import sys
@@ -34,6 +36,7 @@ from app.models import (
 
 # Database path (backend/data/game_platform.db)
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "game_platform.db")
+BACKUP_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backups"))
 
 
 def backup_table(session, model, table_name: str) -> list:
@@ -94,12 +97,15 @@ def create_backup(output_file: str = None):
         # Generate output filename if not provided
         if not output_file:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            output_file = os.path.join(
-                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                "backups",
-                f"platform_config_{timestamp}.json"
-            )
-        
+            output_file = f"platform_config_{timestamp}.json"
+
+        # Backups only ever go in backend/backups: a name or path given on the
+        # command line is resolved there and refused if it points elsewhere.
+        output_file = os.path.realpath(os.path.join(BACKUP_DIR, output_file))
+        if os.path.commonpath([BACKUP_DIR, output_file]) != BACKUP_DIR:
+            print(f"❌ Il backup deve stare in {BACKUP_DIR}")
+            sys.exit(1)
+
         # Ensure backup directory exists
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         

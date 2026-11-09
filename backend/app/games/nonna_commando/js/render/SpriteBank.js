@@ -67,7 +67,9 @@ export class SpriteBank {
     draw(ctx, name, x, y, flip = false, flash = false) {
         const set = this.#frames.get(name);
         if (!set) return;
-        const f = flash ? (flip ? set.wf : set.w) : (flip ? set.f : set.n);
+        let f;
+        if (flash) f = flip ? set.wf : set.w;
+        else f = flip ? set.f : set.n;
         ctx.drawImage(f.page, f.x, f.y, f.w, f.h, Math.round(x - f.ax), Math.round(y - f.ay), f.w, f.h);
     }
 

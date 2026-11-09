@@ -568,7 +568,9 @@ async def place_bet(
         raise HTTPException(status_code=503, detail=str(e))
     odds = calculate_odds(current_price, current_round.lock_price, seconds_remaining)
     
-    locked_odds = odds["up"] if bet_request.direction == "up" else odds["down"]
+    # A literal, not the request's string: it is stored and logged below.
+    direction = "up" if bet_request.direction == "up" else "down"
+    locked_odds = odds[direction]
     potential_win = int(bet_request.amount * locked_odds)
     
     # Spend coins
@@ -579,7 +581,7 @@ async def place_bet(
             amount=bet_request.amount,
             transaction_type="prediction_bet",
             source_id="prediction-market",
-            description=f"Prediction Market bet: {bet_request.amount} on {bet_request.direction.upper()}"
+            description=f"Prediction Market bet: {bet_request.amount} on {direction.upper()}"
         )
         if transaction is None:
             raise HTTPException(status_code=400, detail="Insufficient balance")
@@ -592,7 +594,7 @@ async def place_bet(
         "bet_id": bet_id,
         "user_id": user_id,
         "round_id": current_round.round_id,
-        "direction": bet_request.direction,
+        "direction": direction,
         "amount": bet_request.amount,
         "locked_odds": locked_odds,
         "potential_win": potential_win,
@@ -603,12 +605,12 @@ async def place_bet(
     
     logger.info(
         "[PredictionMarket] Bet placed: user=%s dir=%s amount=%s odds=%sx",
-        user_id, bet_request.direction, bet_request.amount, locked_odds
+        user_id, direction, bet_request.amount, locked_odds
     )
     
     return PlaceBetResponse(
         bet_id=bet_id,
-        direction=bet_request.direction,
+        direction=direction,
         amount=bet_request.amount,
         locked_odds=locked_odds,
         potential_win=potential_win,

@@ -7,8 +7,22 @@
  *
  * Call initPlatformNotifications() once at boot.
  */
+// The platform page that embeds the game: the game's own origin when both are
+// served from one host, otherwise the embedding page's origin, which the
+// iframe receives as its referrer (strict-origin-when-cross-origin).
+function trustedOrigins() {
+  const origins = new Set([globalThis.location.origin]);
+  try {
+    if (document.referrer) origins.add(new URL(document.referrer).origin);
+  } catch { /* no usable referrer */ }
+  return origins;
+}
+
 export function initPlatformNotifications() {
+  const allowed = trustedOrigins();
   window.addEventListener('message', (event) => {
+    // Only the platform window that embeds us may drive the banners.
+    if (event.source !== window.parent || !allowed.has(event.origin)) return;
     try {
       const msg = event.data;
       if (!msg || typeof msg !== 'object') return;

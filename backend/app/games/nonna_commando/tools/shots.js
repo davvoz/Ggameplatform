@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { dirname, extname, join, normalize } from 'node:path';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const CHROME = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
@@ -29,9 +29,20 @@ const every = Number(opt('every', 1000));
 const touch = args.includes('--touch');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Resolves a URL path inside base; null when "../" would leave it.
+function within(base, urlPath) {
+    const root = resolve(base);
+    const path = resolve(root, `.${sep}${decodeURIComponent(urlPath)}`);
+    return path.startsWith(root + sep) ? path : null;
+}
+
 const server = createServer((req, res) => {
-    const url = new URL(req.url, 'http://x');
-    const path = url.pathname.startsWith('/sdk/') ? join(SDK, url.pathname.slice(5)) : join(ROOT, normalize(decodeURIComponent(url.pathname)));
+    const url = new URL(req.url, 'http://localhost');
+    const path = url.pathname.startsWith('/sdk/') ? within(SDK, url.pathname.slice(5)) : within(ROOT, url.pathname);
+    if (!path) {
+        res.writeHead(403).end();
+        return;
+    }
     try {
         const body = readFileSync(path);
         res.writeHead(200, { 'Content-Type': TYPES[extname(path)] ?? 'application/octet-stream', 'Cache-Control': 'no-store' });
@@ -49,16 +60,20 @@ const chrome = spawn(CHROME, [
     '--autoplay-policy=no-user-gesture-required', 'about:blank',
 ], { stdio: 'ignore' });
 
-async function target() {
-    for (let i = 0; i < 60; i++) {
-        try {
-            const list = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
-            const p = list.find((t) => t.type === 'page');
-            if (p) return p.webSocketDebuggerUrl;
-        } catch { /* starting */ }
-        await sleep(200);
-    }
-    throw new Error('no chrome');
+// Runs fn(item, index) for each item, one after the other: these steps are
+// timed (screenshots spaced apart, page scripts in order), not independent.
+const inSequence = (items, fn) => items.reduce((prev, item, i) => prev.then(() => fn(item, i)), Promise.resolve());
+
+// Polls Chrome until its page target is up (about 12 s at most).
+async function target(triesLeft = 60) {
+    const url = await fetch(`http://127.0.0.1:${port}/json`)
+        .then((r) => r.json())
+        .then((list) => list.find((t) => t.type === 'page')?.webSocketDebuggerUrl)
+        .catch(() => null); // still starting
+    if (url) return url;
+    if (triesLeft <= 1) throw new Error('no chrome');
+    await sleep(200);
+    return target(triesLeft - 1);
 }
 
 try {
@@ -95,12 +110,12 @@ try {
     await send('Page.navigate', { url });
     await sleep(wait);
     // --eval "js" runs in the page (repeatable), each followed by --after ms
-    for (let i = 0; i < args.length; i++) {
-        if (args[i] !== '--eval') continue;
-        const result = await send('Runtime.evaluate', { expression: args[i + 1], awaitPromise: true });
+    const evals = args.flatMap((a, i) => (a === '--eval' ? [args[i + 1]] : []));
+    await inSequence(evals, async (expression) => {
+        const result = await send('Runtime.evaluate', { expression, awaitPromise: true });
         console.log('[eval]', JSON.stringify(result?.result?.value ?? result?.exceptionDetails?.text ?? null).slice(0, 200));
         await sleep(Number(opt('after', 3000)));
-    }
+    });
     mkdirSync(dirname(out), { recursive: true });
     const save = async (file) => {
         const { data } = await send('Page.captureScreenshot', { format: 'png' });
@@ -109,22 +124,20 @@ try {
     };
     if (shots === 1) await save(out);
     else {
-        for (let i = 1; i <= shots; i++) {
-            await save(out.replace(/\.png$/, `-${i}.png`));
-            if (i < shots) await sleep(every);
-        }
+        await inSequence(Array.from({ length: shots }, (_, i) => i + 1), async (n) => {
+            await save(out.replace(/\.png$/, `-${n}.png`));
+            if (n < shots) await sleep(every);
+        });
     }
-    // named shots requested by the page
-    let done = 0;
-    for (let t = 0; t < 600 && args.includes('--follow'); t++) {
+    // named shots requested by the page ("SHOT name"), until it prints DONE (60 s at most)
+    const follow = async (ticksLeft, done) => {
         const named = logs.filter((l) => l.startsWith('SHOT '));
-        while (done < named.length) {
-            const name = named[done++].slice(5).trim();
-            await save(out.replace(/\.png$/, `-${name}.png`));
-        }
-        if (logs.some((l) => l.startsWith('DONE'))) break;
+        await inSequence(named.slice(done), (line) => save(out.replace(/\.png$/, `-${line.slice(5).trim()}.png`)));
+        if (ticksLeft <= 1 || logs.some((l) => l.startsWith('DONE'))) return;
         await sleep(100);
-    }
+        await follow(ticksLeft - 1, named.length);
+    };
+    if (args.includes('--follow')) await follow(600, 0);
     ws.close();
 } finally {
     chrome.kill();

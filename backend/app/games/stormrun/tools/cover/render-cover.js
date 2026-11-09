@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { basename, extname, join, normalize } from 'node:path';
+import { basename, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const CHROME = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
@@ -16,7 +16,12 @@ const TYPES = {
 
 function serveFile(url, response) {
     try {
-        const path = join(ROOT, normalize(decodeURIComponent(url.pathname)));
+        // Serve only files inside ROOT: "../" in the URL cannot reach out of it.
+        const path = resolve(ROOT, `.${decodeURIComponent(url.pathname)}`);
+        if (!path.startsWith(resolve(ROOT) + sep)) {
+            response.writeHead(403).end();
+            return;
+        }
         const content = readFileSync(path);
         response.writeHead(200, { 'Content-Type': TYPES[extname(path)] ?? 'application/octet-stream' });
         response.end(content);

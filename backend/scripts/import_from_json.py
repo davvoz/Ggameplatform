@@ -162,7 +162,7 @@ if __name__ == '__main__':
     # Only backups in backend/backups can be imported: the argument is
     # resolved there and refused if it points elsewhere.
     json_file = os.path.realpath(os.path.join(BACKUP_DIR, sys.argv[1]))
-    if os.path.commonpath([BACKUP_DIR, json_file]) != BACKUP_DIR:
+    if not json_file.startswith(BACKUP_DIR + os.sep):
         print(f"❌ Il file deve stare in {BACKUP_DIR}")
         sys.exit(1)
     

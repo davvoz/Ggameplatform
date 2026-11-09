@@ -102,7 +102,7 @@ def create_backup(output_file: str = None):
         # Backups only ever go in backend/backups: a name or path given on the
         # command line is resolved there and refused if it points elsewhere.
         output_file = os.path.realpath(os.path.join(BACKUP_DIR, output_file))
-        if os.path.commonpath([BACKUP_DIR, output_file]) != BACKUP_DIR:
+        if not output_file.startswith(BACKUP_DIR + os.sep):
             print(f"❌ Il backup deve stare in {BACKUP_DIR}")
             sys.exit(1)
 

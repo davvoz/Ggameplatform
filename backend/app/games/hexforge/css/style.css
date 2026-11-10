@@ -18,7 +18,8 @@
 }
 
 .loading[hidden],
-.hud[hidden] {
+.hud[hidden],
+.resources[hidden] {
     display: none;
 }
 
@@ -71,12 +72,6 @@ body {
     letter-spacing: 0.32em;
     color: var(--cyan);
     text-shadow: 0 0 18px rgba(57, 230, 255, 0.45);
-}
-
-.brand p {
-    margin: 2px 0 8px;
-    color: var(--muted);
-    font-size: 13px;
 }
 
 h2 {
@@ -199,11 +194,107 @@ h2 {
     cursor: default;
 }
 
-#btn-launch {
+.button.wide {
     width: 100%;
-    margin-top: 22px;
+    margin-top: 18px;
     font-size: 16px;
     letter-spacing: 0.04em;
+}
+
+.tabs {
+    display: flex;
+    gap: 6px;
+    margin: 10px 0 4px;
+}
+
+.tabs .chip {
+    flex: 1 1 0;
+    font-weight: 600;
+}
+
+.notice {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-2);
+    font-size: 14px;
+}
+
+.notice p {
+    margin: 0 0 6px;
+}
+
+.notice p:last-child {
+    margin: 0;
+    color: var(--muted);
+}
+
+.selected {
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1px solid var(--cyan);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--cyan) 7%, var(--panel-2));
+}
+
+.selected h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--text);
+}
+
+.sel-info {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.selected .controls {
+    margin-top: 12px;
+}
+
+.resources {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    pointer-events: none;
+}
+
+.resource {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius: 999px;
+    background: rgba(10, 13, 24, 0.85);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.resource::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.resource-name {
+    color: var(--muted);
+}
+
+.resource b {
+    color: var(--text);
 }
 
 .error {
@@ -387,6 +478,10 @@ h2 {
         padding: 16px;
         border-left: 0;
         border-top: 1px solid var(--line);
+    }
+
+    .resource-name {
+        display: none;
     }
 
     .hud {

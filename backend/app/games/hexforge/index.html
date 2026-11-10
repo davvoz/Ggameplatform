@@ -10,22 +10,46 @@
     <div id="app">
         <section id="stage" aria-label="Battlefield">
             <canvas id="view"></canvas>
+            <div id="resources" class="resources" aria-label="Materials" hidden></div>
             <div id="hud" class="hud" hidden>
                 <span id="hud-time" class="hud-time">0:00</span>
                 <div class="meter" aria-hidden="true"><div id="hud-bar" class="meter-fill"></div></div>
                 <span id="hud-destruction">0%</span>
                 <span id="hud-core" class="hud-core">Core standing</span>
             </div>
-            <p id="loading" class="loading">Loading the bastion…</p>
+            <p id="loading" class="loading">Loading…</p>
         </section>
 
         <aside id="panel">
             <header class="brand">
                 <h1>HEXFORGE</h1>
-                <p>Battle prototype · Test bastion</p>
+                <nav class="tabs" aria-label="Game mode">
+                    <button type="button" class="chip" data-tab="city" aria-pressed="false">My city</button>
+                    <button type="button" class="chip" data-tab="battle" aria-pressed="false">Test battle</button>
+                </nav>
             </header>
 
-            <section id="view-setup">
+            <section id="view-city" hidden>
+                <div id="city-signin" class="notice" hidden>
+                    <p><b>Sign in to the platform</b> to get your own city.</p>
+                    <p>Meanwhile you can try the test battle.</p>
+                </div>
+                <div id="city-body">
+                    <p id="city-hint" class="hint">Tap a glowing building to collect what it made. Select a building to move it.</p>
+                    <button id="btn-collect-all" class="button primary wide">Collect all</button>
+                    <div id="selected" class="selected" hidden>
+                        <h2 id="sel-name"></h2>
+                        <p id="sel-info" class="sel-info"></p>
+                        <div class="controls">
+                            <button id="btn-move" class="button">Move</button>
+                            <button id="btn-deselect" class="button">Close</button>
+                        </div>
+                    </div>
+                    <p id="city-message" class="hint" role="status"></p>
+                </div>
+            </section>
+
+            <section id="view-setup" hidden>
                 <h2>Assault squad</h2>
                 <div id="squad" class="squad"></div>
                 <ul id="classes" class="classes"></ul>
@@ -41,7 +65,7 @@
                 <div id="tactic" class="chips"></div>
                 <p id="tactic-hint" class="hint"></p>
 
-                <button id="btn-launch" class="button primary" disabled>Launch attack</button>
+                <button id="btn-launch" class="button primary wide" disabled>Launch attack</button>
                 <p id="error" class="error" role="alert" hidden></p>
             </section>
 

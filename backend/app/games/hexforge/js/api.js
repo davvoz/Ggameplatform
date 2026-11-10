@@ -1,13 +1,35 @@
-/** Calls to the Hexforge backend (same origin as the game). */
+/** Calls to the Hexforge backend (same origin as the game; the session cookie rides along). */
 
 const BASE = '/api/hexforge';
 
-async function request(path, options) {
-    const response = await fetch(`${BASE}${path}`, options);
-    if (!response.ok) {
-        throw new Error(`Hexforge server answered ${response.status}`);
+/** The player is not signed in to the platform. */
+export class SignInRequired extends Error {}
+
+/** The server refused an action; `code` is its reason (e.g. 'occupied'). */
+export class Refused extends Error {
+    constructor(code) {
+        super(code);
+        this.code = code;
     }
+}
+
+async function request(path, options) {
+    const response = await fetch(`${BASE}${path}`, { credentials: 'same-origin', ...options });
+    if (response.status === 401) throw new SignInRequired('sign in required');
+    if (response.status === 400 || response.status === 409) {
+        const body = await response.json().catch(() => ({}));
+        throw new Refused(typeof body.detail === 'string' ? body.detail : 'refused');
+    }
+    if (!response.ok) throw new Error(`Hexforge server answered ${response.status}`);
     return response.json();
+}
+
+function post(path, body) {
+    return request(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
 }
 
 export function fetchDemoCity() {
@@ -15,9 +37,17 @@ export function fetchDemoCity() {
 }
 
 export function runBattle(setup) {
-    return request('/battle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(setup),
-    });
+    return post('/battle', setup);
+}
+
+export function fetchMyState() {
+    return request('/me');
+}
+
+export function collect(buildingIds) {
+    return post('/me/collect', buildingIds ? { building_ids: buildingIds } : {});
+}
+
+export function moveBuilding(id, x, y) {
+    return post(`/me/buildings/${id}/move`, { x, y });
 }

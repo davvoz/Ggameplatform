@@ -37,6 +37,13 @@ export function toScreen(camera, x, y, z = 0) {
     return { x: camera.ox + p.x * camera.scale, y: camera.oy + p.y * camera.scale };
 }
 
+/** Canvas pixels → world point on the ground (inverse of toScreen with z = 0). */
+export function toWorld(camera, sx, sy) {
+    const a = (sx - camera.ox) / camera.scale / (TILE_W / 2);   // x - y
+    const b = (sy - camera.oy) / camera.scale / (TILE_H / 2);   // x + y
+    return { x: (a + b) / 2, y: (b - a) / 2 };
+}
+
 /**
  * Screen semi-axes of a circle of `radius` cells lying on the ground
  * (an iso circle is a 2:1 ellipse).

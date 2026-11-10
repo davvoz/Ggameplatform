@@ -26,7 +26,20 @@ platform session cookie (`session_token`).
 A save that loses a race with another request answers 409 `state_changed_retry`
 and changes nothing.
 
-Next steps: city building in the client, the forge, computer cities with loot.
+Step 2 (done): the game opens on **My city**. Production buildings show a
+bubble with what they hold; tapping one collects it, **Collect all** empties
+them all. Selecting a building shows its details; **Move** previews the
+footprint under the pointer (green fits, red does not) and a tap moves it.
+Signed-out players see a notice and can still use **Test battle**.
+
+| Path | What |
+| --- | --- |
+| `js/main.js` | Shell: tabs, input routing, frame loop |
+| `js/city.js` | My city: collect, select, move |
+| `js/battle.js` | Test battle: setup, replay, report |
+| `js/cityRules.js` | Client copy of the placement rules (preview only; the server decides) |
+
+Next steps: the forge, computer cities with loot.
 
 ## Layout
 
@@ -42,7 +55,7 @@ Next steps: city building in the client, the forge, computer cities with loot.
 | `backend/app/games/hexforge_be/models.py` | `hexforge_players`: one row per player, city/heroes/materials as JSON |
 | `js/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
 | `js/render.js` | Isometric canvas renderer, placeholder shapes |
-| `js/main.js` | Setup panel, replay controls, report |
+| `js/battle.js` | Setup panel, replay controls, report |
 
 ## Run
 

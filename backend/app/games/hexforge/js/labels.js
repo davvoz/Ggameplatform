@@ -20,6 +20,13 @@ export const BUILDING_INFO = {
     rune_trap: { name: 'Rune Trap', height: 0, side: '#000', top: '#000', glow: '#ff7a3d' },
 };
 
+export const MATERIAL_INFO = {
+    rune_stone: { name: 'Rune stone', color: '#ffb547' },
+    scrap: { name: 'Scrap', color: '#ff7a3d' },
+    mana: { name: 'Mana', color: '#a77bff' },
+    chips: { name: 'Chips', color: '#4dff9a' },
+};
+
 export const SIDE_INFO = {
     north: 'North', east: 'East', south: 'South', west: 'West',
 };

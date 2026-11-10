@@ -1,0 +1,48 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { anchorFor, estimatePending, placementError } from '../js/cityRules.js';
+import { fitCamera, toScreen, toWorld } from '../js/iso.js';
+
+const city = {
+    grid: 18,
+    buildings: [
+        { id: 1, type: 'core', x: 7, y: 7, size: 3 },
+        { id: 2, type: 'rune_tower', x: 3, y: 3, size: 2 },
+    ],
+};
+const tower = city.buildings[1];
+
+test('placement mirrors the server rules', () => {
+    assert.equal(placementError(city, tower, 1, 1), null);
+    assert.equal(placementError(city, tower, 0, 5), 'outside_city');
+    assert.equal(placementError(city, tower, 16, 5), 'outside_city');
+    assert.equal(placementError(city, tower, 15, 15), null);
+    assert.equal(placementError(city, tower, 8, 8), 'occupied');
+    assert.equal(placementError(city, tower, 6, 6), 'occupied');
+});
+
+test('a building may be dropped where it already stands', () => {
+    assert.equal(placementError(city, tower, 3, 3), null);
+    assert.equal(placementError(city, tower, 4, 3), null);
+});
+
+test('production keeps counting between server updates, up to capacity', () => {
+    const production = { per_hour: 60, pending: 10, capacity: 480 };
+    assert.equal(estimatePending(production, 0), 10);
+    assert.equal(estimatePending(production, 120), 12);
+    assert.equal(estimatePending(production, 99 * 3600), 480);
+});
+
+test('a building is centred under the pointer', () => {
+    assert.deepEqual(anchorFor(2, 5.2, 5.9), { x: 4, y: 5 });
+    assert.deepEqual(anchorFor(1, 5.2, 5.9), { x: 5, y: 5 });
+});
+
+test('screen to world undoes world to screen', () => {
+    const camera = fitCamera(18, 900, 600);
+    for (const [x, y] of [[0, 0], [3.25, 11.5], [17, 2]]) {
+        const p = toScreen(camera, x, y);
+        const back = toWorld(camera, p.x, p.y);
+        assert.ok(Math.abs(back.x - x) < 1e-9 && Math.abs(back.y - y) < 1e-9);
+    }
+});

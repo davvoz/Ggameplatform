@@ -1,5 +1,5 @@
-import { fitCamera, toScreen, groundEllipse, depthOf } from './iso.js';
-import { BUILDING_INFO, HERO_INFO } from './labels.js';
+import { fitCamera, toScreen, toWorld, groundEllipse, depthOf } from './iso.js';
+import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
 
 /**
  * Canvas renderer for the isometric battlefield. Placeholder art: every
@@ -7,7 +7,6 @@ import { BUILDING_INFO, HERO_INFO } from './labels.js';
  * this once the battle loop proves fun).
  */
 
-const INSIDE_RING = { min: 5, max: 12 };
 const HERO_SCALE = 1.5;   // heroes are drawn larger than life so they read next to buildings
 const INWARD = { north: [0, 1], south: [0, -1], west: [1, 0], east: [-1, 0] };
 
@@ -22,9 +21,60 @@ export class Renderer {
     }
 
     setCity(city) {
+        const sameGrid = this.city?.grid === city.grid && this.ground;
         this.city = city;
         this.byId = new Map(city.buildings.map((b) => [b.id, b]));
-        this.resize();
+        if (!sameGrid) this.resize();
+    }
+
+    /** Canvas pixels under a pointer event. */
+    canvasPoint(event) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: ((event.clientX - rect.left) * this.w) / rect.width,
+            y: ((event.clientY - rect.top) * this.h) / rect.height,
+        };
+    }
+
+    /** World point on the ground under canvas pixels. */
+    groundAt(point) {
+        return this.camera ? toWorld(this.camera, point.x, point.y) : null;
+    }
+
+    /** The building drawn under canvas pixels (nearest to the viewer first), or null. */
+    buildingAt(point) {
+        if (!this.camera) return null;
+        const standing = this.city.buildings
+            .filter((b) => b.type !== 'rune_trap')
+            .sort((a, b) => (b.x + b.y + b.size) - (a.x + a.y + a.size));
+        for (const b of standing) {
+            if (this.#silhouettes(b).some((shape) => pointInPolygon(point, shape))) return b;
+        }
+        const cell = this.groundAt(point);
+        return this.city.buildings.find((b) => b.type === 'rune_trap'
+            && cell.x >= b.x && cell.x < b.x + 1 && cell.y >= b.y && cell.y < b.y + 1) ?? null;
+    }
+
+    /** Clickable outlines: the box (plus a tower's head) and, for the core, its crystal. */
+    #silhouettes(b) {
+        const { camera } = this;
+        const info = BUILDING_INFO[b.type];
+        const up = info.height + (b.type.endsWith('_tower') ? 24 : 4);
+        const s = b.size;
+        const box = [
+            toScreen(camera, b.x, b.y, up), toScreen(camera, b.x + s, b.y, up),
+            toScreen(camera, b.x + s, b.y), toScreen(camera, b.x + s, b.y + s),
+            toScreen(camera, b.x, b.y + s), toScreen(camera, b.x, b.y + s, up),
+        ];
+        if (b.type !== 'core') return [box];
+        const top = toScreen(camera, b.x + s / 2, b.y + s / 2, info.height + 100);
+        const bottom = toScreen(camera, b.x + s / 2, b.y + s / 2, info.height + 20);
+        const half = 22 * camera.scale;
+        const crystal = [
+            { x: top.x - half, y: top.y }, { x: top.x + half, y: top.y },
+            { x: bottom.x + half, y: bottom.y }, { x: bottom.x - half, y: bottom.y },
+        ];
+        return [box, crystal];
     }
 
     resize() {
@@ -39,29 +89,41 @@ export class Renderer {
         this.ground = this.#paintGround();
     }
 
-    /** `state` = replay.stateAt(tick), or null to show the untouched city. */
-    draw(state, { side = null, time = 0 } = {}) {
+    /**
+     * `state` = replay.stateAt(tick), or null to show the untouched city.
+     * City mode options: `selectedId`, `preview` {x, y, size, valid},
+     * `bubbles` Map(id → {amount, material, full}), `floaters` [{x, y, text, color, age}],
+     * `showTraps` (the owner sees their own traps).
+     */
+    draw(state, options = {}) {
         const { ctx } = this;
         if (!this.ground) return;
+        const { side = null, time = 0, selectedId = null, preview = null } = options;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = 1;
         ctx.drawImage(this.ground, 0, 0);
         if (side) this.#entryEdge(side, time);
-        const items = this.#standingItems(state, time);
+        const selected = selectedId === null ? null : this.byId.get(selectedId);
+        if (selected) this.#footprint(selected.x, selected.y, selected.size, '#39e6ff', 0.25 + 0.1 * Math.sin(time * 5));
+        if (preview) this.#footprint(preview.x, preview.y, preview.size, preview.valid ? '#4dff9a' : '#ff5d6c', 0.35);
+        const items = this.#standingItems(state, time, options.showTraps);
         items.sort((a, b) => a.depth - b.depth);
         for (const item of items) item.draw();
         if (state) this.#overlays(state);
+        if (options.bubbles) this.#bubbles(options.bubbles, time);
+        for (const floater of options.floaters ?? []) this.#floater(floater);
     }
 
     /** Draws what lies flat on the ground and returns what stands up, for depth sorting. */
-    #standingItems(state, time) {
+    #standingItems(state, time, showTraps = false) {
         const destroyed = state?.destroyed ?? new Set();
         const sprung = state?.sprung ?? new Set();
         const items = [];
         for (const b of this.city.buildings) {
             if (b.type === 'rune_trap') {
                 if (sprung.has(b.id)) this.#scorch(b);
+                else if (showTraps) this.#trapMark(b, time);
             } else if (destroyed.has(b.id)) {
                 this.#rubble(b);
             } else {
@@ -107,8 +169,6 @@ export class Renderer {
         ctx.lineWidth = 1.5 * this.camera.scale;
         ctx.strokeStyle = 'rgba(57, 230, 255, 0.28)';
         this.#outline(ctx, 1, 1, grid - 2);
-        ctx.strokeStyle = 'rgba(255, 61, 184, 0.12)';
-        this.#outline(ctx, INSIDE_RING.min - 0.5, INSIDE_RING.min - 0.5, INSIDE_RING.max - INSIDE_RING.min + 2);
 
         const vignette = ctx.createRadialGradient(this.w / 2, this.h / 2, this.h * 0.25, this.w / 2, this.h / 2, this.h * 0.85);
         vignette.addColorStop(0, 'rgba(0,0,0,0)');
@@ -382,6 +442,60 @@ export class Renderer {
         ctx.beginPath();
         ctx.ellipse(c.x, c.y, rx * 0.55, ry * 0.55, 0, 0, Math.PI * 2);
         ctx.stroke();
+    }
+
+    // ── city mode ──────────────────────────────────────────────────────
+    #footprint(x, y, size, color, alpha) {
+        const { ctx } = this;
+        this.#diamond(ctx, x, y, size, withAlpha(color, alpha), null);
+        ctx.strokeStyle = withAlpha(color, 0.9);
+        ctx.lineWidth = 2 * this.camera.scale;
+        this.#outline(ctx, x, y, size);
+    }
+
+    #trapMark(b, time) {
+        const { ctx, camera } = this;
+        const c = toScreen(camera, b.x + 0.5, b.y + 0.5);
+        const { rx, ry } = groundEllipse(camera, 0.38);
+        ctx.strokeStyle = withAlpha('#ff7a3d', 0.45 + 0.2 * Math.sin(time * 3));
+        ctx.lineWidth = 2 * camera.scale;
+        ctx.setLineDash([3 * camera.scale, 3 * camera.scale]);
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    #bubbles(bubbles, time) {
+        const { ctx, camera } = this;
+        const s = camera.scale;
+        for (const [id, bubble] of bubbles) {
+            const b = this.byId.get(id);
+            if (!b) continue;
+            const color = MATERIAL_INFO[bubble.material].color;
+            const bob = Math.sin(time * 3 + id) * 3 * s;
+            const p = toScreen(camera, b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].height + 46);
+            const r = Math.max(11, 15 * s);
+            this.#halo(p.x, p.y + bob, r * 2.2, color, bubble.full ? 1 : 0.6);
+            ctx.fillStyle = 'rgba(10, 13, 24, 0.92)';
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(1.5, 2 * s);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y + bob, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.font = `700 ${Math.max(10, r * 0.8)}px system-ui, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(bubble.amount), p.x, p.y + bob + 1);
+            ctx.textBaseline = 'alphabetic';
+        }
+    }
+
+    #floater({ x, y, text, color, age }) {
+        const p = toScreen(this.camera, x, y, 70 + 50 * age);
+        this.#label(text, p.x, p.y, color, 1 - age * age);
     }
 
     #recentlyFired(buildingId, state) {
@@ -658,11 +772,19 @@ export class Renderer {
 
 function tileColor(x, y, grid) {
     if (x === 0 || y === 0 || x === grid - 1 || y === grid - 1) return '#0a0d15';
-    const odd = (x + y) % 2 === 1;
-    const inner = x >= INSIDE_RING.min && x <= INSIDE_RING.max
-        && y >= INSIDE_RING.min && y <= INSIDE_RING.max;
-    if (inner) return odd ? '#161a2e' : '#191d33';
-    return odd ? '#111725' : '#131a2a';
+    return (x + y) % 2 === 1 ? '#111725' : '#131a2a';
+}
+
+function pointInPolygon(p, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const a = polygon[i];
+        const b = polygon[j];
+        const crosses = (a.y > p.y) !== (b.y > p.y)
+            && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x;
+        if (crosses) inside = !inside;
+    }
+    return inside;
 }
 
 function roundRect(ctx, x, y, w, h, r) {

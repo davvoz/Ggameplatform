@@ -35,6 +35,7 @@ class PlaceRequest(BaseModel):
 
 
 class AttackRequest(BaseModel):
+    """An attack with 4 of your heroes (on an outpost or the scouted rival)."""
     hero_ids: list[int] = Field(min_length=4, max_length=4)
     side: Literal["north", "east", "south", "west"]
     priority: Literal["towers", "core", "production"]

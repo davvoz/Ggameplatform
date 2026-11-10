@@ -14,9 +14,10 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import get_db
 from app.games.hexforge_be import economy
-from app.games.hexforge_be.models import HexforgePlayer
+from app.games.hexforge_be.models import HexforgeAttack, HexforgePlayer
 from app.games.hexforge_be.player_service import ActionError, PlayerService, StaleState
 from app.games.hexforge_be.router import get_now, limiter, router
+from app.models import User
 from app.user_auth import get_current_user_id
 
 HOUR = 3600.0
@@ -26,7 +27,8 @@ T0 = 1_800_000_000.0
 def memory_db():
     engine = create_engine("sqlite://", poolclass=StaticPool,
                            connect_args={"check_same_thread": False})
-    HexforgePlayer.__table__.create(engine)
+    for table in (HexforgePlayer.__table__, HexforgeAttack.__table__, User.__table__):
+        table.create(engine)
     return sessionmaker(bind=engine)
 
 

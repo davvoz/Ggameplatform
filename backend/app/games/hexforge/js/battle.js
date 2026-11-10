@@ -1,19 +1,22 @@
-import { Refused, SignInRequired, attackOutpost, fetchDemoCity, fetchOutposts, runBattle } from './api.js';
+import { Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle } from './api.js';
 import { describeWorst } from './defensePanel.js';
 import { formatCountdown } from './forgePanel.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
 import { createReplay } from './replay.js';
+import { lootRow, materialChips, renderRival, rivalBlocker } from './rivalPanel.js';
 import { SQUAD_SIZE, isAvailable, launchBlocker, settleSquad, toggleHero } from './squad.js';
 
 /**
- * "Attack": pick an outpost and 4 of your heroes, choose side, priority and
- * tactic, watch the replay, read the report with the loot.
+ * "Attack": pick an outpost or scout a rival player, pick 4 of your heroes,
+ * choose side, priority and tactic, watch the replay, read the report with the loot.
  * Also replays the worst raid of a defence test (`watch`), then goes back.
  */
 
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'hexforge.attack';
-const DEFAULT_SETUP = { side: 'south', priority: 'core', tactic: 'compact', outpost: 1, heroIds: [] };
+const DEFAULT_SETUP = { mode: 'outposts', side: 'south', priority: 'core', tactic: 'compact', outpost: 1, heroIds: [] };
+const MODES = { outposts: 'Outposts', rivals: 'Rivals' };
+const EMPTY_CITY = { grid: 18, buildings: [] };
 const SPEEDS = [1, 2, 4];
 const TAIL_SECONDS = 1.5;   // keep the last frame on screen before the report
 const REFUSALS = {
@@ -21,6 +24,9 @@ const REFUSALS = {
     hero_injured: 'One of your heroes is still injured.',
     outpost_locked: 'Beat the previous outpost first.',
     bad_squad: 'Pick 4 different heroes.',
+    arena_locked: 'Clear Scrap Hollow to enter the arena.',
+    no_rival: 'Find a rival first.',
+    rival_unavailable: 'That rival just got a shield. Find another one.',
     state_changed_retry: 'Your city changed meanwhile. Try again.',
 };
 
@@ -112,7 +118,7 @@ export class BattleMode {
         } catch (error) {
             if (!(error instanceof SignInRequired)) throw error;
             this.data = null;
-            this.renderer.setCity({ grid: 18, buildings: [] });
+            this.renderer.setCity(EMPTY_CITY);
             $('attack-signin').hidden = false;
             $('attack-body').hidden = true;
         }
@@ -123,7 +129,8 @@ export class BattleMode {
         this.receivedAt = performance.now();
         if (!data.outposts.some((o) => o.id === this.setup.outpost && o.unlocked)) this.setup.outpost = 1;
         this.setup.heroIds = settleSquad(this.setup.heroIds, data.heroes, this.#serverNow());
-        this.renderer.setCity(this.#outpost().city);
+        if (!(this.setup.mode in MODES)) this.setup.mode = 'outposts';
+        this.renderer.setCity(this.#targetCity());
         this.#renderSetup();
     }
 
@@ -135,9 +142,27 @@ export class BattleMode {
         return this.data?.outposts.find((o) => o.id === this.setup.outpost) ?? null;
     }
 
+    #rivals() {
+        return this.setup.mode === 'rivals';
+    }
+
+    #targetCity() {
+        if (this.#rivals()) return this.data.rival?.city ?? EMPTY_CITY;
+        return this.#outpost().city;
+    }
+
+    /** What the chosen target says against attacking it, or null. */
+    #targetBlocker() {
+        if (this.#rivals()) return rivalBlocker(this.data.pvp, this.data.rival);
+        const o = this.#outpost();
+        if (!o) return 'Choose an outpost';
+        return o.unlocked ? null : 'Beat the previous outpost first';
+    }
+
     // ── setup panel ────────────────────────────────────────────────────
     #wire() {
         $('btn-launch').addEventListener('click', () => void this.#launch());
+        $('btn-find-rival').addEventListener('click', () => void this.#findRival());
         $('btn-pause').addEventListener('click', () => {
             this.paused = !this.paused;
             $('btn-pause').textContent = this.paused ? 'Play' : 'Pause';
@@ -166,13 +191,21 @@ export class BattleMode {
 
     #changed() {
         saveSetup(this.setup);
-        this.renderer.setCity(this.#outpost().city);
+        this.renderer.setCity(this.#targetCity());
         this.#renderSetup();
     }
 
     #renderSetup() {
         if (!this.data) return;
-        this.#renderOutposts();
+        const target = { 'target-mode': this.setup.mode };
+        fillChoice('target-mode', MODES, (v) => v, target, () => {
+            this.setup.mode = target['target-mode'];
+            this.#changed();
+        });
+        $('outpost-section').hidden = this.#rivals();
+        $('rival-section').hidden = !this.#rivals();
+        if (this.#rivals()) this.#renderRivalSection();
+        else this.#renderOutposts();
         this.#renderSquad();
         renderClassLegend();
         fillChoice('side', SIDE_INFO, (v) => v, this.setup, () => this.#changed());
@@ -204,15 +237,34 @@ export class BattleMode {
         line.className = 'hint';
         line.textContent = `Difficulty ${'◆'.repeat(o.difficulty)}${'◇'.repeat(5 - o.difficulty)}`
             + ` · best ${o.best}%${o.cleared ? ' · cleared, loot halved' : ''}`;
-        const lootRow = (label, amounts) => {
-            const row = document.createElement('p');
-            row.className = 'loot-line';
-            const name = document.createElement('span');
-            name.textContent = label;
-            row.append(name, materialChips(amounts));
-            return row;
-        };
         info.append(line, lootRow('Loot if you win', o.loot_on_win), lootRow('If the core falls', o.loot_on_core));
+    }
+
+    #renderRivalSection() {
+        renderRival($('rival-info'), this.data, this.#serverNow());
+        const button = $('btn-find-rival');
+        button.hidden = !this.data.pvp.arena;
+        button.textContent = this.data.rival ? 'Find another rival' : 'Find a rival';
+    }
+
+    async #findRival() {
+        const button = $('btn-find-rival');
+        button.disabled = true;
+        $('error').hidden = true;
+        try {
+            const answer = await findRival();
+            this.#apply(answer);
+            if (!answer.rival) this.#showError('Nobody to raid right now: every rival is shielded. Try again later.');
+        } catch (error) {
+            this.#showError(error instanceof Refused ? (REFUSALS[error.code] ?? 'The server refused.') : 'The server did not answer. Try again in a moment.');
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    #showError(text) {
+        $('error').textContent = text;
+        $('error').hidden = false;
     }
 
     #renderSquad() {
@@ -254,11 +306,13 @@ export class BattleMode {
             void this.#reload();
             return;
         }
+        if (this.#rivals() && this.data.pvp.shield_until) this.#renderRivalSection();
         $('energy').textContent = `Energy ${energy.charges}/${energy.max}`
             + (energy.next_at ? ` · next in ${formatCountdown(energy.next_at - now)}` : ' · full');
-        const blocker = launchBlocker({ outpost: this.#outpost(), picked: this.setup.heroIds, energy });
+        const blocker = launchBlocker({ blocked: this.#targetBlocker(), picked: this.setup.heroIds, energy });
         $('btn-launch').disabled = Boolean(blocker);
-        $('launch-hint').textContent = blocker ?? 'Costs 1 energy.';
+        const ending = this.#rivals() && this.data.pvp.shield_until ? ' Ends your shield.' : '';
+        $('launch-hint').textContent = blocker ?? `Costs 1 energy.${ending}`;
     }
 
     // ── battle flow ────────────────────────────────────────────────────
@@ -268,12 +322,13 @@ export class BattleMode {
         button.textContent = 'Simulating…';
         $('error').hidden = true;
         try {
-            const answer = await attackOutpost(this.setup.outpost, {
+            const setup = {
                 hero_ids: this.setup.heroIds,
                 side: this.setup.side,
                 priority: this.setup.priority,
                 tactic: this.setup.tactic,
-            });
+            };
+            const answer = this.#rivals() ? await attackRival(setup) : await attackOutpost(this.setup.outpost, setup);
             this.battle = answer.battle;
             const data = { ...answer };
             delete data.battle;
@@ -376,10 +431,9 @@ export class BattleMode {
 
         const note = $('result-note');
         const next = rewards?.unlocked && this.data?.outposts.find((o) => o.id === rewards.unlocked);
-        if (defense) note.textContent = `Worst raid of the test: ${describeWorst(this.battle)}.`;
-        else note.textContent = next ? `Outpost cleared! ${next.name} is now open.` : '';
+        note.textContent = resultNote(this.battle, next);
         note.classList.toggle('plain', defense);
-        note.hidden = !defense && !next;
+        note.hidden = !note.textContent;
         $('report-title').textContent = defense ? 'Raiders' : 'Squad report';
         $('btn-new').textContent = defense ? 'Back to my city' : 'Back';
 
@@ -399,6 +453,12 @@ export class BattleMode {
         }
         this.#show('result');
     }
+}
+
+function resultNote(battle, unlocked) {
+    if (battle.defense) return `Worst raid of the test: ${describeWorst(battle)}.`;
+    if (battle.rival) return battle.summary.victory ? `You raided ${battle.rival}!` : `${battle.rival}'s defense held.`;
+    return unlocked ? `Outpost cleared! ${unlocked.name} is now open.` : '';
 }
 
 function verdictText(defense, won) {
@@ -439,21 +499,6 @@ function fillChoice(key, options, labelOf, setup, onChange) {
             onChange();
         }));
     }
-}
-
-function materialChips(amounts) {
-    const wrap = document.createElement('span');
-    wrap.className = 'costs';
-    for (const [m, amount] of Object.entries(amounts)) {
-        if (!amount) continue;
-        const item = document.createElement('span');
-        item.className = 'cost';
-        item.style.setProperty('--accent', MATERIAL_INFO[m].color);
-        item.title = MATERIAL_INFO[m].name;
-        item.textContent = String(amount);
-        wrap.append(item);
-    }
-    return wrap;
 }
 
 // The last setup is a convenience only: the game works without storage.

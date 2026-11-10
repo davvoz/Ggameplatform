@@ -1,5 +1,5 @@
 """
-Hexforge: one row per player holding their whole game state.
+Hexforge: one row per player holding their whole game state, and the attack log.
 
 City, heroes and materials are JSON: they are always read and written
 together, and the city is small (a few dozen buildings). `version` is bumped
@@ -22,3 +22,20 @@ class HexforgePlayer(Base):
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(Float, nullable=False)
     updated_at = Column(Float, nullable=False)
+
+
+class HexforgeAttack(Base):
+    """One attack on another player. The battle is deterministic, so the
+    inputs (squad, choices, the defender's city at that moment) are enough
+    to rebuild its replay later."""
+
+    __tablename__ = "hexforge_attacks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    attacker_id = Column(String, nullable=False, index=True)
+    defender_id = Column(String, nullable=False, index=True)
+    created_at = Column(Float, nullable=False)
+    setup_json = Column(Text, nullable=False)     # {squad, side, priority, tactic}
+    city_json = Column(Text, nullable=False)      # the defender's battle city
+    summary_json = Column(Text, nullable=False)
+    loot_json = Column(Text, nullable=False)

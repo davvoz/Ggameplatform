@@ -83,3 +83,11 @@ export function setAim(id, aim) {
 export function testDefense() {
     return post('/me/defense/test', {});
 }
+
+export function findRival() {
+    return post('/me/rivals/find', {});
+}
+
+export function attackRival(setup) {
+    return post('/me/rivals/attack', setup);
+}

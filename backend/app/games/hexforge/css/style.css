@@ -724,3 +724,23 @@ h2 {
     color: #0b0e18;
     background: var(--accent);
 }
+
+/* ── rivals ──────────────────────────────────────────────────────────── */
+.target-mode {
+    margin: 4px 0 2px;
+}
+
+.target-mode .chip {
+    flex: 1 1 0;
+}
+
+.rival-name {
+    margin: 0 0 2px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--magenta);
+}
+
+.rival-info .error {
+    margin-top: 8px;
+}

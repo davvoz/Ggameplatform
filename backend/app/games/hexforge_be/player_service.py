@@ -9,16 +9,19 @@ nothing; the client simply retries with fresh state.
 from __future__ import annotations
 
 import json
+import random
 from dataclasses import dataclass
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import defense, economy, forge, outposts
+from app.models import User
+
+from . import defense, economy, forge, outposts, pvp
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
-from .models import HexforgePlayer
-from .simulation import DEFAULT_AIM
+from .models import HexforgeAttack, HexforgePlayer
+from .simulation import DEFAULT_AIM, simulate
 
 __all__ = ["ActionError", "PlayerService", "PlayerState", "StaleState", "public_state"]
 
@@ -44,6 +47,7 @@ class PlayerService:
             city = economy.starter_city(now)
             forge.ensure_forge(city)
             outposts.ensure_campaign(city, now)
+            pvp.ensure_pvp(city)
             row = HexforgePlayer(
                 user_id=user_id,
                 city_json=json.dumps(city),
@@ -60,18 +64,28 @@ class PlayerService:
                 # a parallel first visit created the row: use that one
                 self.db.rollback()
                 row = self.db.get(HexforgePlayer, user_id)
-        state = PlayerState(
-            user_id=row.user_id,
-            city=json.loads(row.city_json),
-            heroes=json.loads(row.heroes_json),
-            materials=json.loads(row.materials_json),
-            version=row.version,
-        )
-        forge.ensure_forge(state.city)
-        outposts.ensure_campaign(state.city, now)
-        return state
+        return _state_of(row, now)
+
+    def existing(self, user_id: str, now: float):
+        """Another player's state, or None if they never played (nothing is created)."""
+        row = self.db.get(HexforgePlayer, user_id)
+        return _state_of(row, now) if row is not None else None
 
     def save(self, state: PlayerState, now: float) -> None:
+        self.save_together([state], now)
+
+    def save_together(self, states: list, now: float, extra_rows=()) -> None:
+        """Save several players (and log rows) in one transaction, or none of them."""
+        for state in states:
+            if not self._update(state, now):
+                self.db.rollback()
+                raise StaleState()
+        self.db.add_all(list(extra_rows))
+        self.db.commit()
+        for state in states:
+            state.version += 1
+
+    def _update(self, state: PlayerState, now: float) -> bool:
         updated = (
             self.db.query(HexforgePlayer)
             .filter(HexforgePlayer.user_id == state.user_id,
@@ -84,11 +98,7 @@ class PlayerService:
                 HexforgePlayer.updated_at: now,
             }, synchronize_session=False)
         )
-        if updated != 1:
-            self.db.rollback()
-            raise StaleState()
-        self.db.commit()
-        state.version += 1
+        return updated == 1
 
     # ── actions ────────────────────────────────────────────────────────
     def collect(self, user_id: str, now: float, building_ids=None) -> tuple[PlayerState, dict]:
@@ -146,11 +156,80 @@ class PlayerService:
         """Read only: the city is tested as saved, nothing changes."""
         return defense.run_defense_test(self.load(user_id, now).city)
 
+    # ── PvP ────────────────────────────────────────────────────────────
+    def find_rival(self, user_id: str, now: float, rng: random.Random | None = None) -> PlayerState:
+        state = self.load(user_id, now)
+        pvp.require_arena(state.city)
+        rows = (self.db.query(HexforgePlayer.user_id, HexforgePlayer.city_json)
+                .filter(HexforgePlayer.user_id != user_id).all())
+        candidates = [(uid, json.loads(city)) for uid, city in rows]
+        state.city["pvp"]["scout"] = pvp.choose_rival(state.city, candidates, now, rng)
+        self.save(state, now)
+        return state
+
+    def rival_view(self, state: PlayerState, now: float):
+        """The scouted rival as the attacker may see it, or None."""
+        rival_id = state.city["pvp"]["scout"]
+        rival = self.existing(rival_id, now) if rival_id else None
+        if rival is None:
+            return None
+        return pvp.public_rival(self.names([rival_id])[rival_id], defense.battle_city(rival.city),
+                                rival.materials, pvp.attackable(rival.city, now))
+
+    def attack_rival(self, user_id: str, hero_ids: list, side: str, priority: str, tactic: str,
+                     now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        pvp.require_arena(state.city)
+        rival_id = state.city["pvp"]["scout"]
+        if rival_id is None:
+            raise ActionError("no_rival")
+        rival = self.existing(rival_id, now)
+        if rival is None or not pvp.attackable(rival.city, now):
+            raise ActionError("rival_unavailable")
+        classes = outposts.squad_classes(state.heroes, hero_ids, now)
+        outposts.spend_energy(state.city, now)
+
+        target = defense.battle_city(rival.city)
+        battle = simulate(target, classes, side, priority, tactic)
+        summary = battle["summary"]
+        loot = pvp.settle_attack(state.city, rival.city, state.materials, rival.materials, summary, now)
+        injured = outposts.injure_fallen(state.heroes, hero_ids, summary, now)
+        log = HexforgeAttack(
+            attacker_id=user_id, defender_id=rival_id, created_at=now,
+            setup_json=json.dumps({"squad": classes, "side": side, "priority": priority, "tactic": tactic}),
+            city_json=json.dumps(target), summary_json=json.dumps(summary), loot_json=json.dumps(loot),
+        )
+        self.save_together([state, rival], now, [log])
+        name = self.names([rival_id])[rival_id]
+        return state, {"rival": name, "city": target, **battle,
+                       "rewards": {"loot": loot, "injured": injured}}
+
+    def names(self, user_ids: list) -> dict:
+        """Display names for players; anonymous players get a stable placeholder."""
+        rows = (self.db.query(User.user_id, User.username, User.steem_username)
+                .filter(User.user_id.in_(user_ids)).all())
+        found = {uid: username or steem for uid, username, steem in rows}
+        return {uid: found.get(uid) or f"Raider {uid[-4:].upper()}" for uid in user_ids}
+
     def dismantle_building(self, user_id: str, building_id: int, now: float) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         refund = forge.dismantle(state.city, state.materials, building_id, now)
         self.save(state, now)
         return state, refund
+
+
+def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
+    state = PlayerState(
+        user_id=row.user_id,
+        city=json.loads(row.city_json),
+        heroes=json.loads(row.heroes_json),
+        materials=json.loads(row.materials_json),
+        version=row.version,
+    )
+    forge.ensure_forge(state.city)
+    outposts.ensure_campaign(state.city, now)
+    pvp.ensure_pvp(state.city)
+    return state
 
 
 def public_state(state: PlayerState, now: float) -> dict:
@@ -180,6 +259,12 @@ def public_state(state: PlayerState, now: float) -> dict:
         "forge": {"slots": state.city["forge"]["slots"], "jobs": jobs},
         "recipes": forge.public_recipes(state.city, state.heroes),
         "energy": outposts.public_energy(state.city["energy"], now),
+        "pvp": _public_pvp(state.city, now),
         "version": state.version,
         "server_time": now,
     }
+
+
+def _public_pvp(city: dict, now: float) -> dict:
+    shield = pvp.shield_until(city)
+    return {"arena": pvp.in_arena(city), "shield_until": shield if shield > now else None}

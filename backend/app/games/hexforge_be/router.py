@@ -16,6 +16,8 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/outposts/{id}/attack   attack with 4 of your heroes
   POST /api/hexforge/me/buildings/{id}/aim     which hero a tower shoots first
   POST /api/hexforge/me/defense/test           standard raids against your city
+  POST /api/hexforge/me/rivals/find            scout a player to attack
+  POST /api/hexforge/me/rivals/attack          attack the scouted player
 
 The /me routes need the platform session cookie.
 """
@@ -138,20 +140,22 @@ def dismantle_building(building_id: int, user_id: CurrentUserId, db: Db, now: No
 
 @router.get("/me/outposts")
 def list_outposts(user_id: CurrentUserId, db: Db, now: Now):
-    state = PlayerService(db).load(user_id, now)
-    return {"outposts": outposts.public_outposts(state.city), **public_state(state, now)}
+    service = PlayerService(db)
+    state = service.load(user_id, now)
+    return _attack_screen(service, state, now)
 
 
 @router.post("/me/outposts/{outpost_id}/attack")
 @limiter.limit("30/minute")
 def attack_outpost(request: Request, outpost_id: int, body: AttackRequest,
                    user_id: CurrentUserId, db: Db, now: Now):
+    service = PlayerService(db)
     try:
-        state, battle = PlayerService(db).attack_outpost(
+        state, battle = service.attack_outpost(
             user_id, outpost_id, list(body.hero_ids), body.side, body.priority, body.tactic, now)
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
-    return {"battle": battle, "outposts": outposts.public_outposts(state.city), **public_state(state, now)}
+    return {"battle": battle, **_attack_screen(service, state, now)}
 
 
 @router.post("/me/buildings/{building_id}/aim")
@@ -167,3 +171,33 @@ def set_tower_aim(building_id: int, body: AimRequest, user_id: CurrentUserId, db
 @limiter.limit("20/minute")
 def run_my_defense_test(request: Request, user_id: CurrentUserId, db: Db, now: Now):
     return PlayerService(db).defense_test(user_id, now)
+
+
+# ── PvP ────────────────────────────────────────────────────────────────
+def _attack_screen(service: PlayerService, state, now: float) -> dict:
+    """Everything the Attack tab shows: outposts, the scouted rival, your state."""
+    return {"outposts": outposts.public_outposts(state.city), "rival": service.rival_view(state, now),
+            **public_state(state, now)}
+
+
+@router.post("/me/rivals/find")
+@limiter.limit("30/minute")
+def find_rival(request: Request, user_id: CurrentUserId, db: Db, now: Now):
+    service = PlayerService(db)
+    try:
+        state = service.find_rival(user_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return _attack_screen(service, state, now)
+
+
+@router.post("/me/rivals/attack")
+@limiter.limit("30/minute")
+def attack_rival(request: Request, body: AttackRequest, user_id: CurrentUserId, db: Db, now: Now):
+    service = PlayerService(db)
+    try:
+        state, battle = service.attack_rival(
+            user_id, list(body.hero_ids), body.side, body.priority, body.tactic, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"battle": battle, **_attack_screen(service, state, now)}

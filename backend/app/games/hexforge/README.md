@@ -93,7 +93,28 @@ score always means a better city.
 | `POST /api/hexforge/me/buildings/{id}/aim` | `{aim}` — 400 `not_a_tower` for anything but a tower |
 | `POST /api/hexforge/me/defense/test` | the report, `worst` carries the replay (limit 20/min) |
 
-Next: attack other players.
+Step 2 (done): **attack other players** (`hexforge_be/pvp.py`). The Attack
+tab has two targets, **Outposts** and **Rivals**. The arena opens when you
+clear the first outpost; until then you cannot attack players and nobody can
+attack you. **Find a rival** picks one of the 5 attackable players nearest in
+strength (towers and traps); asking again picks another. The attacker sees
+the rival's layout without traps and without tower aims, and the loot at
+stake. A raid costs 1 energy; a win takes 20 % (30 % if the core falls) of
+what lies above the vault's protection (400 of each material) — the rival
+loses exactly what you take. The rival then gets a 3-hour shield; attacking a
+player ends your own shield. Both players are saved in one transaction with
+a version check each, and every raid is logged in `hexforge_attacks` with
+its inputs, so its replay can be rebuilt later (the battle is deterministic).
+
+| Route | What |
+| --- | --- |
+| `POST /api/hexforge/me/rivals/find` | scout a rival; `rival` is null when nobody can be attacked; 400 `arena_locked` |
+| `POST /api/hexforge/me/rivals/attack` | `{hero_ids[4], side, priority, tactic}` — 400 `no_rival` / `rival_unavailable` / `no_energy` / `hero_injured` |
+
+`GET /api/hexforge/me/outposts` also returns the scouted `rival` and every
+state now carries `pvp: {arena, shield_until}`.
+
+Next: trophies and the in-game leaderboard.
 
 ## Layout
 

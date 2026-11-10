@@ -149,7 +149,8 @@ def loot_for(outpost: Outpost, percent: int, already_cleared: bool) -> dict:
 
 
 # ── the attack ─────────────────────────────────────────────────────────
-def _squad(heroes: list, hero_ids: list, now: float) -> list[str]:
+def squad_classes(heroes: list, hero_ids: list, now: float) -> list[str]:
+    """The classes of 4 different, fit heroes the player owns (or a refusal)."""
     if len(hero_ids) != SQUAD_SIZE or len(set(hero_ids)) != SQUAD_SIZE:
         raise ActionError("bad_squad")
     by_id = {h["id"]: h for h in heroes}
@@ -158,6 +159,28 @@ def _squad(heroes: list, hero_ids: list, now: float) -> list[str]:
     if any(by_id[i].get("injured_until", 0) > now for i in hero_ids):
         raise ActionError("hero_injured")
     return [by_id[i]["cls"] for i in hero_ids]
+
+
+def spend_energy(city: dict, now: float) -> None:
+    energy = city["energy"]
+    settle_energy(energy, now)
+    if energy["charges"] < 1:
+        raise ActionError("no_energy")
+    if energy["charges"] >= ENERGY_MAX:
+        energy["updated_at"] = now          # regeneration starts with the first spent charge
+    energy["charges"] -= 1
+
+
+def injure_fallen(heroes: list, hero_ids: list, summary: dict, now: float) -> list[int]:
+    """Heroes who went down rest for a while; returns their ids."""
+    injured = []
+    by_id = {h["id"]: h for h in heroes}
+    for slot, result in enumerate(summary["heroes"]):
+        if not result["survived"]:
+            hero = by_id[hero_ids[slot]]
+            hero["injured_until"] = now + INJURY_SECONDS
+            injured.append(hero["id"])
+    return injured
 
 
 def attack(city: dict, heroes: list, materials: dict, outpost_id: int, hero_ids: list,
@@ -169,15 +192,8 @@ def attack(city: dict, heroes: list, materials: dict, outpost_id: int, hero_ids:
     campaign = city["campaign"]
     if not is_unlocked(campaign, outpost_id):
         raise ActionError("outpost_locked")
-    classes = _squad(heroes, hero_ids, now)
-    energy = city["energy"]
-    settle_energy(energy, now)
-    if energy["charges"] < 1:
-        raise ActionError("no_energy")
-
-    if energy["charges"] >= ENERGY_MAX:
-        energy["updated_at"] = now          # regeneration starts with the first spent charge
-    energy["charges"] -= 1
+    classes = squad_classes(heroes, hero_ids, now)
+    spend_energy(city, now)
 
     target = outpost_city(outpost_id)
     battle = simulate(target, classes, side, priority, tactic)
@@ -188,13 +204,7 @@ def attack(city: dict, heroes: list, materials: dict, outpost_id: int, hero_ids:
     for m, amount in loot.items():
         materials[m] = materials.get(m, 0) + amount
 
-    injured = []
-    by_id = {h["id"]: h for h in heroes}
-    for slot, result in enumerate(summary["heroes"]):
-        if not result["survived"]:
-            hero = by_id[hero_ids[slot]]
-            hero["injured_until"] = now + INJURY_SECONDS
-            injured.append(hero["id"])
+    injured = injure_fallen(heroes, hero_ids, summary, now)
 
     key = str(outpost_id)
     campaign["best"][key] = max(campaign["best"].get(key, 0), summary["destruction"])

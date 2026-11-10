@@ -30,12 +30,11 @@ test('the squad drops injured picks and fills up with fit heroes', () => {
 });
 
 test('launch explains what is missing', () => {
-    const open = { unlocked: true };
+    const open = null;
     const full = [1, 3, 5, 6];
-    assert.equal(launchBlocker({ outpost: null, picked: full, energy: { charges: 5 } }), 'Choose an outpost');
-    assert.equal(launchBlocker({ outpost: { unlocked: false }, picked: full, energy: { charges: 5 } }), 'Beat the previous outpost first');
-    assert.equal(launchBlocker({ outpost: open, picked: [1, 3], energy: { charges: 5 } }), 'Pick 2 more heroes');
-    assert.equal(launchBlocker({ outpost: open, picked: [1, 3, 5], energy: { charges: 5 } }), 'Pick 1 more hero');
-    assert.equal(launchBlocker({ outpost: open, picked: full, energy: { charges: 0 } }), 'No energy left');
-    assert.equal(launchBlocker({ outpost: open, picked: full, energy: { charges: 1 } }), null);
+    assert.equal(launchBlocker({ blocked: 'Find a rival first', picked: full, energy: { charges: 5 } }), 'Find a rival first');
+    assert.equal(launchBlocker({ blocked: open, picked: [1, 3], energy: { charges: 5 } }), 'Pick 2 more heroes');
+    assert.equal(launchBlocker({ blocked: open, picked: [1, 3, 5], energy: { charges: 5 } }), 'Pick 1 more hero');
+    assert.equal(launchBlocker({ blocked: open, picked: full, energy: { charges: 0 } }), 'No energy left');
+    assert.equal(launchBlocker({ blocked: open, picked: full, energy: { charges: 1 } }), null);
 });

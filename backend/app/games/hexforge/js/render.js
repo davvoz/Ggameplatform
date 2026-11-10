@@ -2,7 +2,7 @@ import { carryOver, clampCamera, panBy, zoomAt } from './camera.js';
 import { fitRegion, toScreen, toWorld, groundEllipse, depthOf } from './iso.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import {
-    drawBuilding, drawHero, drawRubble, drawTrapMark, flame, halo, hash, path, withAlpha,
+    MAGE_ORB, drawBuilding, drawHero, drawRubble, drawTrapMark, flame, halo, hash, path, withAlpha,
 } from './forgeArt.js';
 
 /**
@@ -12,7 +12,7 @@ import {
  * the pointer is on, and draws the battle effects and the city overlays.
  */
 
-const HERO_SCALE = 1.5;   // heroes are drawn larger than life so they read next to buildings
+const HERO_SCALE = 1.65;   // heroes are drawn larger than life so they read next to buildings
 const INWARD = { north: [0, 1], south: [0, -1], west: [1, 0], east: [-1, 0] };
 const EMBERS = 46;
 const FONT = '"Chakra Petch", "Segoe UI", system-ui, sans-serif';
@@ -33,6 +33,7 @@ export class Renderer {
         this.insets = {};             // CSS pixels kept free for the interface
         this.ground = null;
         this.groundDirty = true;
+        this.facings = new Map();     // which way each hero last looked, so standing heroes do not flip
         this.dpr = 1;
         this.w = 1;
         this.h = 1;
@@ -236,8 +237,13 @@ export class Renderer {
                 items.push({ depth: depthOf(b.x + b.size / 2, b.y + b.size / 2), draw: () => drawBuilding(this.ctx, this.camera, b, look) });
             }
         }
+        const falling = new Map();
+        for (const { event, age } of state?.effects ?? []) {
+            if (event.type === 'hero_down') falling.set(event.hero, age);
+        }
         for (const hero of state?.heroes ?? []) {
-            if (hero.alive) items.push({ depth: depthOf(hero.x, hero.y), draw: () => this.#hero(hero, time) });
+            if (hero.alive) items.push({ depth: depthOf(hero.x, hero.y) + 0.01, draw: () => this.#hero(hero, time) });
+            else if (falling.has(hero.id)) items.push({ depth: depthOf(hero.x, hero.y), draw: () => this.#fallen(hero, time, falling.get(hero.id)) });
         }
         return items;
     }
@@ -248,7 +254,9 @@ export class Renderer {
             if (b.type !== 'rune_trap' && !state.destroyed.has(b.id) && hp < b.hp) this.#buildingBar(b, hp);
         }
         for (const hero of state.heroes) {
-            if (hero.alive) this.#heroBar(hero);
+            if (!hero.alive) continue;
+            this.#heroBar(hero);
+            if (hero.cls === 'technomancer' && hero.attack && !hero.attack.nova && hero.attack.phase < 0) this.#mageBolt(hero, time);
         }
         for (const fx of state.effects) this.#effect(fx, state, time);
     }
@@ -463,33 +471,104 @@ export class Renderer {
         const s = camera.scale * HERO_SCALE;
         const info = HERO_INFO[hero.cls];
         const foot = toScreen(camera, hero.x, hero.y);
-        const bob = hero.moving ? Math.abs(Math.sin(time * 12 + hero.id * 1.7)) * -2 * s : 0;
+        const lift = hero.leap === null ? 0 : Math.sin(Math.PI * hero.leap) * 34 * s;
+        const facing = this.#facing(hero, foot);
 
+        // shadow (smaller while in the air) and a ring in the class colour: whose hero this is
+        const shrink = 1 - 0.45 * (lift / (34 * s || 1));
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.beginPath();
-        ctx.ellipse(foot.x, foot.y, 12 * s, 5.5 * s, 0, 0, Math.PI * 2);
+        ctx.ellipse(foot.x, foot.y, 12 * s * shrink, 5.5 * s * shrink, 0, 0, Math.PI * 2);
         ctx.fill();
-        // a ring in the class colour under the feet: whose hero this is, at a glance
-        ctx.strokeStyle = withAlpha(info.color, 0.8);
-        ctx.lineWidth = 1.6 * camera.scale;
-        ctx.beginPath();
-        ctx.ellipse(foot.x, foot.y, 12 * s, 5.5 * s, 0, 0, Math.PI * 2);
-        ctx.stroke();
+        if (lift === 0) {
+            ctx.strokeStyle = withAlpha(info.color, 0.8);
+            ctx.lineWidth = 1.6 * camera.scale;
+            ctx.beginPath();
+            ctx.ellipse(foot.x, foot.y, 12 * s, 5.5 * s, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        }
 
-        if (hero.cls === 'neon_blade' && hero.moving) {
+        const pose = {
+            facing,
+            walking: hero.moving && hero.leap === null,
+            attack: hero.attack?.phase ?? null,
+            nova: hero.attack?.nova ?? false,
+            leap: hero.leap,
+        };
+        if (hero.cls === 'neon_blade' && (hero.moving || lift > 0)) {
+            // afterimages trailing the assassin
+            const back = this.#screenHeading(hero);
             for (const k of [2, 1]) {
-                ctx.globalAlpha = 0.16 * k;
-                drawHero(ctx, hero, foot.x - (hero.facing || 1) * k * 7 * s, foot.y + bob, s, info.color, time);
+                ctx.globalAlpha = 0.14 * k;
+                drawHero(ctx, hero, foot.x - back.x * k * 6 * s, foot.y - lift - back.y * k * 6 * s, s, info.color, time - k * 0.04, pose);
             }
             ctx.globalAlpha = 1;
         }
-        drawHero(ctx, hero, foot.x, foot.y + bob, s, info.color, time);
+        drawHero(ctx, hero, foot.x, foot.y - lift, s, info.color, time, pose);
+        if (hero.hurt > 0) {
+            // flash when hit
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = hero.hurt * 0.6;
+            drawHero(ctx, hero, foot.x, foot.y - lift, s, info.color, time, pose);
+            ctx.restore();
+        }
         if (hero.slowed) {
             ctx.fillStyle = 'rgba(159, 227, 255, 0.28)';
             ctx.beginPath();
-            ctx.ellipse(foot.x, foot.y - 16 * s, 14 * s, 19 * s, 0, 0, Math.PI * 2);
+            ctx.ellipse(foot.x, foot.y - lift - 20 * s, 14 * s, 22 * s, 0, 0, Math.PI * 2);
             ctx.fill();
         }
+    }
+
+    #fallen(hero, time, age) {
+        const s = this.camera.scale * HERO_SCALE;
+        const foot = toScreen(this.camera, hero.x, hero.y);
+        drawHero(this.ctx, hero, foot.x, foot.y, s, HERO_INFO[hero.cls].color, time,
+            { facing: this.facings.get(hero.id) ?? 1, down: age });
+    }
+
+    /** Face the blow's target while fighting, the way of travel while walking; otherwise keep looking where it was. */
+    #facing(hero, foot) {
+        let dx = 0;
+        if (hero.attack?.target) dx = toScreen(this.camera, hero.attack.target.x, hero.attack.target.y).x - foot.x;
+        else if (hero.heading) dx = hero.heading.dx - hero.heading.dy;
+        const facing = Math.abs(dx) > 0.01 ? Math.sign(dx) : (this.facings.get(hero.id) ?? 1);
+        this.facings.set(hero.id, facing);
+        return facing;
+    }
+
+    /** Unit screen vector of where the hero is heading. */
+    #screenHeading(hero) {
+        const h = hero.heading ?? { dx: 0, dy: 0 };
+        const x = h.dx - h.dy;
+        const y = (h.dx + h.dy) / 2;
+        const len = Math.hypot(x, y) || 1;
+        return { x: x / len, y: y / len };
+    }
+
+    /** The Technomancer's bolt, flying from the orb to the target as the blow is wound up. */
+    #mageBolt(hero, time) {
+        const k = (hero.attack.phase + 0.6) / 0.6;
+        if (k <= 0 || hero.attack.building === null || !this.byId.has(hero.attack.building)) return;
+        const { ctx } = this;
+        const s = this.camera.scale * HERO_SCALE;
+        const foot = toScreen(this.camera, hero.x, hero.y);
+        const facing = this.facings.get(hero.id) ?? 1;
+        const from = { x: foot.x + facing * MAGE_ORB.x * s, y: foot.y + MAGE_ORB.y * s };
+        const to = this.#buildingPoint(hero.attack.building);
+        const color = HERO_INFO[hero.cls].color;
+        const at = (q) => ({ x: from.x + (to.x - from.x) * q, y: from.y + (to.y - from.y) * q - Math.sin(q * Math.PI) * 14 * s });
+        for (let i = 4; i >= 1; i--) {
+            const q = at(Math.max(0, k - i * 0.07));
+            halo(ctx, q.x, q.y, (7 - i) * s, color, 0.7 - i * 0.12);
+        }
+        const p = at(k);
+        halo(ctx, p.x, p.y, 14 * s, color, 1);
+        ctx.fillStyle = '#f1eaff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3 * s + Math.sin(time * 40) * 0.5 * s, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     // ── bars and effects ───────────────────────────────────────────────
@@ -543,9 +622,12 @@ export class Renderer {
         switch (e.type) {
             case 'strike': {
                 const to = this.#buildingPoint(e.building);
-                const color = HERO_INFO[state.heroes[e.hero].cls].color;
+                const cls = state.heroes[e.hero].cls;
+                const color = HERO_INFO[cls].color;
+                if (cls === 'neon_blade') this.#cuts(to, e.t + e.hero, age, s, color);
+                else if (cls === 'guardian') this.#shockwave(e.building, age, s, color);
                 this.#sparks(to, e.t + e.hero, age, s, ['#fff1c9', '#ffb347', color]);
-                halo(ctx, to.x, to.y, 16 * s, color, fade);
+                halo(ctx, to.x, to.y, (cls === 'technomancer' ? 26 : 16) * s, color, fade);
                 break;
             }
             case 'nova': {
@@ -662,6 +744,46 @@ export class Renderer {
         ctx.arc(p.x, p.y, 3.5 * s, 0, Math.PI * 2);
         ctx.fill();
         if (k * 1.6 >= 1) halo(ctx, to.x, to.y, 22 * s, glow, 1 - k);
+    }
+
+    /** Two crossing cuts where the Neon Blade's daggers bite. */
+    #cuts(at, seed, age, s, color) {
+        const { ctx } = this;
+        const fade = 1 - age;
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10 * s;
+        for (const [i, tilt] of [[0, 0.6], [1, -0.7]]) {
+            const len = 18 * s * easeOut(Math.min(1, age * 2 + i * 0.2));
+            const a = tilt + hash(seed + i) * 0.4;
+            ctx.strokeStyle = withAlpha(color, fade);
+            ctx.lineWidth = 3.5 * s;
+            ctx.beginPath();
+            ctx.moveTo(at.x - Math.cos(a) * len, at.y - Math.sin(a) * len);
+            ctx.lineTo(at.x + Math.cos(a) * len, at.y + Math.sin(a) * len);
+            ctx.stroke();
+            ctx.strokeStyle = withAlpha('#ffffff', fade);
+            ctx.lineWidth = 1.2 * s;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    /** The Guardian's hammer shaking the ground round the building. */
+    #shockwave(buildingId, age, s, color) {
+        const b = this.byId.get(buildingId);
+        if (!b) return;
+        const { ctx } = this;
+        const c = toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2);
+        const { rx, ry } = groundEllipse(this.camera, b.size * 0.6 + 0.6 * easeOut(age));
+        ctx.strokeStyle = withAlpha('#ffe6b0', 0.8 * (1 - age));
+        ctx.lineWidth = 3 * s * (1 - age);
+        ctx.beginPath();
+        ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = withAlpha(color, 0.6 * (1 - age));
+        ctx.lineWidth = 1.5 * s;
+        ctx.stroke();
     }
 
     #sparks(at, seed, age, s, colors) {

@@ -431,112 +431,341 @@ export function drawRubble(ctx, cam, b, time) {
 }
 
 // ── heroes ──────────────────────────────────────────────────────────────
-/** `s` already includes the hero scale; (x, y) is the foot point; `facing` -1 / 1. */
-export function drawHero(ctx, hero, x, y, s, color, time) {
-    if (hero.cls === 'guardian') guardian(ctx, x, y, s, color, hero.facing || 1);
-    else if (hero.cls === 'neon_blade') blade(ctx, x, y, s, color, hero.facing || 1);
-    else mage(ctx, x, y, s, color, time + hero.id);
+/**
+ * A hero standing on (x, y), drawn `s` times its natural size.
+ * `pose` (all optional): facing (1 right, -1 left), walking, attack (-1..0
+ * winding up, 0..1 following through), nova, leap (0..1 through a jump),
+ * down (0..1 collapsing). Heroes are drawn in profile, facing right, in
+ * unscaled units with the feet at the origin; facing left mirrors them.
+ */
+export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
+    const facing = (pose.facing ?? hero.facing ?? 1) < 0 ? -1 : 1;
+    const p = {
+        t: time + (hero.id ?? 0) * 0.37,
+        walk: pose.walking ? time * WALK_RATE[hero.cls] + (hero.id ?? 0) : null,
+        attack: pose.attack ?? null,
+        nova: Boolean(pose.nova),
+        leap: pose.leap ?? null,
+    };
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(facing * s, s);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (pose.down !== undefined && pose.down !== null) {
+        ctx.globalAlpha *= Math.max(0, 1 - pose.down);
+        ctx.rotate(-Math.min(1, pose.down * 3) * Math.PI / 2);   // topples backwards
+    }
+    if (hero.cls === 'guardian') guardian(ctx, color, p);
+    else if (hero.cls === 'neon_blade') blade(ctx, color, p);
+    else mage(ctx, color, p);
+    ctx.restore();
 }
 
-function legs(ctx, x, y, s, step) {
-    ctx.fillStyle = '#1a1411';
-    ctx.fillRect(x - 5 * s, y - 9 * s + step, 4 * s, 9 * s - step);
-    ctx.fillRect(x + 1 * s, y - 9 * s - step, 4 * s, 9 * s + step);
+const WALK_RATE = { guardian: 8, neon_blade: 15, technomancer: 4 };
+
+/**
+ * Arm angle through a blow: rest → raised while winding up → hit on impact →
+ * back to rest. `over` = true brings the arm down over the head (an overhead
+ * smash) instead of swinging it up from below.
+ */
+function swing(a, rest, raised, hit, over = false) {
+    if (a === null) return rest;
+    if (a < 0) {
+        const w = 1 + a;
+        if (w < 0.7) return lerp(rest, raised, easeOut(w / 0.7));
+        return lerp(raised, over ? hit - Math.PI * 2 : hit, easeIn((w - 0.7) / 0.3));
+    }
+    return lerp(hit, rest, easeOut(a));
 }
 
-function guardian(ctx, x, y, s, color, facing) {
-    legs(ctx, x, y, s, 0);
-    // plate body and tabard
-    ctx.fillStyle = '#3a3029';
-    path(ctx, [{ x: x - 9 * s, y: y - 8 * s }, { x: x - 8 * s, y: y - 25 * s }, { x: x + 8 * s, y: y - 25 * s }, { x: x + 9 * s, y: y - 8 * s }]);
+/** 0..1, peaking when the blow lands: how far the body lunges into it. */
+function lunge(a) {
+    if (a === null) return 0;
+    return Math.max(0, 1 - Math.abs(a) * (a < 0 ? 3 : 2));
+}
+
+function lerp(a, b, k) {
+    return a + (b - a) * k;
+}
+
+function easeOut(k) {
+    return 1 - (1 - k) * (1 - k);
+}
+
+function easeIn(k) {
+    return k * k;
+}
+
+/** A limb from (x, y), `length` long, `angle` radians forward of straight down. */
+function limbEnd(x, y, length, angle) {
+    return { x: x + Math.sin(angle) * length, y: y + Math.cos(angle) * length };
+}
+
+function stroke(ctx, color, width, points) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (const q of points.slice(1)) ctx.lineTo(q.x, q.y);
+    ctx.stroke();
+}
+
+function leg(ctx, hipX, hipY, length, angle, color, width) {
+    const knee = limbEnd(hipX, hipY, length * 0.5, angle);
+    const foot = limbEnd(knee.x, knee.y, length * 0.5, angle * 0.4);
+    stroke(ctx, color, width, [{ x: hipX, y: hipY }, knee, foot]);
+    ctx.fillStyle = color;
+    ctx.fillRect(foot.x - width * 0.5, foot.y - width * 0.45, width * 1.5, width * 0.9);
+}
+
+// ── Guardian: plate armour, tower shield, rune hammer ──────────────────
+function guardian(ctx, color, p) {
+    const step = p.walk === null ? 0 : Math.sin(p.walk);
+    const bob = p.walk === null ? 0 : -Math.abs(Math.cos(p.walk)) * 1.4;
+    const push = lunge(p.attack) * 4;
+    ctx.translate(push, bob);
+    const steel = '#5b5f69';
+    const dark = '#2a2c33';
+
+    leg(ctx, -2, -15, 15, -step * 0.5, dark, 5);
+    // hammer arm behind the body while resting or winding up
+    const arm = swing(p.attack, 0.35, -2.7, 1.1, true);
+    const striking = p.attack !== null && (p.attack > -0.3);
+    if (!striking) hammer(ctx, color, arm);
+
+    // body: plate cuirass with the class tabard
+    const body = ctx.createLinearGradient(-9, 0, 9, 0);
+    body.addColorStop(0, '#3a3d45');
+    body.addColorStop(0.5, '#7a7f8a');
+    body.addColorStop(1, '#3a3d45');
+    ctx.fillStyle = body;
+    path(ctx, [{ x: -9, y: -14 }, { x: -10, y: -31 }, { x: 9, y: -31 }, { x: 8, y: -14 }]);
     ctx.fill();
     ctx.fillStyle = color;
-    path(ctx, [{ x: x - 4 * s, y: y - 6 * s }, { x: x - 4 * s, y: y - 22 * s }, { x: x + 4 * s, y: y - 22 * s }, { x: x + 4 * s, y: y - 6 * s }]);
+    path(ctx, [{ x: -3, y: -29 }, { x: 4, y: -29 }, { x: 5, y: -9 }, { x: 0.5, y: -6 }, { x: -4, y: -9 }]);
     ctx.fill();
-    // helm with a glowing visor
-    ctx.fillStyle = '#4d3d31';
+    ctx.fillStyle = '#d9a441';
+    ctx.fillRect(-9, -16, 17, 2.4);
+    leg(ctx, 2, -15, 15, step * 0.5, steel, 5);
+
+    // great helm with a glowing visor and a plume
+    ctx.fillStyle = steel;
     ctx.beginPath();
-    ctx.arc(x, y - 29 * s, 6 * s, Math.PI, 0);
-    ctx.lineTo(x + 6 * s, y - 25 * s);
-    ctx.lineTo(x - 6 * s, y - 25 * s);
+    ctx.moveTo(-6, -31);
+    ctx.lineTo(-6.5, -39);
+    ctx.quadraticCurveTo(0, -46, 6.5, -39);
+    ctx.lineTo(6, -31);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#ffd36b';
-    ctx.fillRect(x - 4 * s, y - 29 * s, 8 * s, 1.6 * s);
-    // tower shield on the facing side
-    const sx = x + facing * 9 * s;
-    ctx.fillStyle = shade(color, 0.6);
-    ctx.strokeStyle = '#d9a441';
-    ctx.lineWidth = 1.5 * s;
+    ctx.fillRect(0, -38, 6.5, 1.8);
+    ctx.fillRect(3, -38, 1.6, 5);
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(sx - 6 * s, y - 26 * s);
-    ctx.lineTo(sx + 6 * s, y - 26 * s);
-    ctx.lineTo(sx + 6 * s, y - 10 * s);
-    ctx.quadraticCurveTo(sx, y - 2 * s, sx - 6 * s, y - 10 * s);
+    ctx.moveTo(-1, -44);
+    ctx.quadraticCurveTo(-10, -48 + Math.sin(p.t * 6) * 1.5, -13, -40);
+    ctx.quadraticCurveTo(-7, -43, -1, -42);
+    ctx.fill();
+    // pauldron
+    ctx.fillStyle = '#80858f';
+    ctx.beginPath();
+    ctx.ellipse(-1, -30, 7, 4, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (striking) hammer(ctx, color, arm);
+    shield(ctx, color, push * 0.5);
+}
+
+function hammer(ctx, color, angle) {
+    const shoulder = { x: -2, y: -29 };
+    const hand = limbEnd(shoulder.x, shoulder.y, 10, angle);
+    stroke(ctx, '#4a4d55', 4.5, [shoulder, hand]);
+    const tip = limbEnd(hand.x, hand.y, 15, angle);
+    stroke(ctx, '#6b4a2e', 2.4, [limbEnd(hand.x, hand.y, -4, angle), tip]);
+    ctx.save();
+    ctx.translate(tip.x, tip.y);
+    ctx.rotate(-angle);
+    ctx.fillStyle = '#3d4048';
+    ctx.fillRect(-6, -3.5, 12, 7);
+    ctx.fillStyle = '#9aa0ab';
+    ctx.fillRect(-6, -3.5, 12, 1.6);
+    ctx.fillStyle = color;
+    ctx.fillRect(-1.5, -2.5, 3, 5);
+    ctx.restore();
+}
+
+function shield(ctx, color, push) {
+    const x = 9 + push;
+    ctx.fillStyle = shade(color, 0.55);
+    ctx.strokeStyle = '#d9a441';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x - 4, -33);
+    ctx.lineTo(x + 5, -31);
+    ctx.lineTo(x + 5, -12);
+    ctx.quadraticCurveTo(x + 1, -3, x - 4, -9);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = color;
-    ctx.fillRect(sx - 1 * s, y - 23 * s, 2 * s, 12 * s);
+    ctx.fillRect(x - 0.5, -28, 2, 14);
+    ctx.fillRect(x - 3, -22, 7, 2);
 }
 
-function blade(ctx, x, y, s, color, facing) {
-    legs(ctx, x, y, s, 1.5 * s);
-    // hooded cloak
-    ctx.fillStyle = shade(color, 0.55);
-    path(ctx, [{ x: x - 8 * s, y: y - 6 * s }, { x: x, y: y - 32 * s }, { x: x + 8 * s, y: y - 6 * s }]);
+// ── Neon Blade: hooded assassin, twin energy daggers ───────────────────
+function blade(ctx, color, p) {
+    const running = p.walk !== null;
+    const step = running ? Math.sin(p.walk) : 0;
+    const push = lunge(p.attack) * 7;
+    ctx.translate(push, running ? -Math.abs(Math.cos(p.walk)) * 1.5 : 0);
+    if (p.leap !== null) {
+        // a front flip over the wall, tucked
+        ctx.translate(0, -16);
+        ctx.rotate(p.leap * Math.PI * 2);
+        ctx.translate(0, 16);
+    } else if (running) {
+        ctx.rotate(0.22);                         // leaning into the run
+    }
+    const tuck = p.leap === null ? 1 : 0.55;
+    const dark = '#1d1418';
+
+    // scarf and cloak streaming behind
+    const wave = Math.sin(p.t * (running ? 14 : 4));
+    ctx.fillStyle = shade(color, 0.45);
+    path(ctx, [{ x: -3, y: -30 }, { x: -14, y: -22 + wave * 2 }, { x: -11, y: -8 + wave }, { x: -2, y: -12 }]);
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(-1, -29);
+    ctx.quadraticCurveTo(-9, -31 + wave * 2, -16, -27 - wave * 2);
+    ctx.stroke();
+
+    leg(ctx, -1, -13, 13 * tuck, -step * 0.9, dark, 3.6);
+    dagger(ctx, color, swing(p.attack, 0.9, -1.6, 2.1) - 0.5, { x: -2, y: -26 });
+    // slim body
+    ctx.fillStyle = '#2b1f27';
+    path(ctx, [{ x: -5, y: -13 }, { x: -4, y: -29 }, { x: 4, y: -29 }, { x: 5, y: -13 }]);
     ctx.fill();
     ctx.fillStyle = color;
-    path(ctx, [{ x: x - 4 * s, y: y - 7 * s }, { x: x, y: y - 27 * s }, { x: x + 4 * s, y: y - 7 * s }]);
+    path(ctx, [{ x: -1, y: -28 }, { x: 2, y: -28 }, { x: 3, y: -14 }, { x: -2, y: -14 }]);
     ctx.fill();
-    // eyes in the hood
+    leg(ctx, 1, -13, 13 * tuck, step * 0.9, '#2b1f27', 3.6);
+    // hood with burning eyes
+    ctx.fillStyle = shade(color, 0.6);
+    ctx.beginPath();
+    ctx.moveTo(-5, -28);
+    ctx.quadraticCurveTo(-6, -40, 1, -42);
+    ctx.quadraticCurveTo(7, -38, 5, -28);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = dark;
+    ctx.beginPath();
+    ctx.ellipse(2.5, -33, 3, 3.6, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#ffe0ef';
-    ctx.fillRect(x - 3 * s, y - 25 * s, 2 * s, 1.4 * s);
-    ctx.fillRect(x + 1 * s, y - 25 * s, 2 * s, 1.4 * s);
-    // twin daggers
-    ctx.strokeStyle = '#ffe9f3';
-    ctx.lineWidth = 1.6 * s;
-    ctx.lineCap = 'round';
-    for (const side of [-1, 1]) {
-        const hx = x + side * 8 * s;
-        ctx.beginPath();
-        ctx.moveTo(hx, y - 14 * s);
-        ctx.lineTo(hx + side * facing * 6 * s, y - 24 * s);
-        ctx.stroke();
-    }
+    ctx.fillRect(2.5, -34, 2.6, 1.3);
+    dagger(ctx, color, swing(p.attack, 1.2, -1.2, 2.4), { x: 2, y: -26 });
+    if (p.attack !== null && p.attack > -0.35 && p.attack < 0.8) slash(ctx, color, p.attack);
 }
 
-function mage(ctx, x, y, s, color, phase) {
-    // robe
-    ctx.fillStyle = shade(color, 0.5);
-    path(ctx, [{ x: x - 10 * s, y: y - 1 * s }, { x: x - 4 * s, y: y - 26 * s }, { x: x + 4 * s, y: y - 26 * s }, { x: x + 10 * s, y: y - 1 * s }]);
+function dagger(ctx, color, angle, shoulder) {
+    const hand = limbEnd(shoulder.x, shoulder.y, 8, angle);
+    stroke(ctx, '#2b1f27', 3, [shoulder, hand]);
+    const tip = limbEnd(hand.x, hand.y, 10, angle - 0.6);
+    halo(ctx, (hand.x + tip.x) / 2, (hand.y + tip.y) / 2, 8, color, 0.7);
+    stroke(ctx, color, 2.6, [hand, tip]);
+    stroke(ctx, '#ffffff', 1, [hand, tip]);
+}
+
+/** The bright arc a dagger leaves when it cuts. */
+function slash(ctx, color, a) {
+    const fade = a < 0 ? (a + 0.35) / 0.35 : 1 - a / 0.8;
+    ctx.save();
+    ctx.globalAlpha *= Math.max(0, fade);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(2, -24, 17, -1.4, 0.9);
+    ctx.stroke();
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(2, -24, 17, -1.1, 0.7);
+    ctx.stroke();
+    ctx.restore();
+}
+
+// ── Technomancer: floating robe, rune staff, charged orb ───────────────
+function mage(ctx, color, p) {
+    const hover = -3 + Math.sin(p.t * 2.2) * 1.5;
+    ctx.translate(lunge(p.attack) * 2, hover);
+    const robe = ctx.createLinearGradient(0, -30, 0, 0);
+    robe.addColorStop(0, shade(color, 0.55));
+    robe.addColorStop(1, shade(color, 0.25));
+    // robe with a hem that ripples as it floats
+    ctx.fillStyle = robe;
+    ctx.beginPath();
+    ctx.moveTo(-4, -28);
+    ctx.lineTo(4, -28);
+    ctx.lineTo(9, 0);
+    for (let i = 1; i <= 6; i++) {
+        const hx = 9 - (18 * i) / 6;
+        ctx.lineTo(hx, Math.sin(p.t * 5 + i) * 1.2 + (i % 2 ? 1.5 : 0));
+    }
+    ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = '#d9a441';
-    ctx.lineWidth = 1.2 * s;
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.moveTo(x, y - 24 * s); ctx.lineTo(x, y - 2 * s);
+    ctx.moveTo(1, -27);
+    ctx.lineTo(3, -1);
     ctx.stroke();
+    // a rune glowing on the chest
+    halo(ctx, 0, -20, 6, color, 0.8 + 0.2 * Math.sin(p.t * 4));
+    ctx.fillStyle = '#f1eaff';
+    ctx.fillRect(-0.8, -23, 1.6, 6);
+    ctx.fillRect(-2.5, -21, 5, 1.4);
     // hood
-    ctx.fillStyle = shade(color, 0.7);
+    ctx.fillStyle = shade(color, 0.75);
     ctx.beginPath();
-    ctx.arc(x, y - 29 * s, 5.5 * s, 0, Math.PI * 2);
+    ctx.moveTo(-5, -27);
+    ctx.quadraticCurveTo(-7, -38, 0, -40);
+    ctx.quadraticCurveTo(6, -37, 5, -27);
+    ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#f1eaff';
-    ctx.fillRect(x - 2.5 * s, y - 29 * s, 5 * s, 1.4 * s);
-    // staff with a floating orb
-    ctx.strokeStyle = '#6b4a2e';
-    ctx.lineWidth = 2 * s;
+    ctx.fillStyle = '#120a1c';
     ctx.beginPath();
-    ctx.moveTo(x + 11 * s, y);
-    ctx.lineTo(x + 11 * s, y - 34 * s);
-    ctx.stroke();
-    const oy = y - 39 * s + Math.sin(phase * 3) * 2 * s;
-    halo(ctx, x + 11 * s, oy, 12 * s, color, 1);
+    ctx.ellipse(1.5, -32, 3, 3.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e6d8ff';
+    ctx.fillRect(1.2, -33, 3, 1.3);
+    staff(ctx, color, p);
+}
+
+function staff(ctx, color, p) {
+    const angle = swing(p.attack, 0.12, -0.45, 0.95);   // from straight up, forward is positive
+    const hand = { x: 6, y: -19 };
+    const up = { x: Math.sin(angle), y: -Math.cos(angle) };
+    stroke(ctx, '#3f2a5a', 3, [{ x: 2, y: -26 }, hand]);
+    const bottom = { x: hand.x - up.x * 13, y: hand.y - up.y * 13 };
+    const top = { x: hand.x + up.x * 21, y: hand.y + up.y * 21 };
+    stroke(ctx, '#6b4a2e', 2, [bottom, top]);
+    let charge = 0;
+    if (p.attack !== null) charge = p.attack < 0 ? 1 + p.attack : Math.max(0, 1 - p.attack * 2);
+    const orb = { x: top.x + up.x * 4, y: top.y + up.y * 4 + Math.sin(p.t * 3) * 1.2 };
+    halo(ctx, orb.x, orb.y, 9 + charge * (p.nova ? 26 : 14), color, 0.8 + charge * 0.2);
     ctx.fillStyle = '#f1eaff';
     ctx.beginPath();
-    ctx.arc(x + 11 * s, oy, 3.2 * s, 0, Math.PI * 2);
+    ctx.arc(orb.x, orb.y, 3 + charge * 1.6, 0, Math.PI * 2);
     ctx.fill();
 }
+
+/** Where the Technomancer's orb sits, relative to the feet, in unscaled units (for its bolts). */
+export const MAGE_ORB = { x: 9, y: -46 };
 
 // ── colour helpers ──────────────────────────────────────────────────────
 function hexToRgb(hex) {

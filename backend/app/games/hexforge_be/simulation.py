@@ -26,6 +26,7 @@ MAX_SECONDS = 90
 MAX_TICKS = TICK_RATE * MAX_SECONDS
 FRAME_STRIDE = 2
 WALL_PATH_COST = 8.0           # how much a squad prefers walking round a wall to breaking it
+LEAP_MIN_TICKS = 5             # a leap over walls takes at least half a second
 WIN_DESTRUCTION = 50           # % of buildings (walls and traps excluded)
 LOOT_WIN, LOOT_CORE = 20, 30   # % of unprotected materials
 AIMS = ("closest", "weakest", "ranged")   # how a tower picks among heroes in range
@@ -82,6 +83,7 @@ class _Hero:
     ready_tick: int = 0
     nova_ready_tick: int = 0
     slow_until: int = -1
+    leap: Optional[tuple] = None   # (x0, y0, x1, y1, start tick, end tick, path cells it clears)
     dealt: int = 0
     taken: int = 0
 
@@ -172,6 +174,9 @@ class Battle:
 
     # ── heroes ──────────────────────────────────────────────────────────
     def _hero_step(self, hero: _Hero) -> None:
+        if hero.leap is not None:
+            self._leap_step(hero)
+            return
         target = self.by_id.get(hero.target) if hero.target is not None else None
         if target is None or not target.alive:
             target = self._choose_target(hero)
@@ -191,11 +196,35 @@ class Battle:
 
         nx, ny = hero.path[0]
         blocker = self._wall_at(nx, ny)
+        if blocker is not None and hero.spec.jumps_walls and self._start_leap(hero):
+            return
         if blocker is not None and not hero.spec.jumps_walls:
             if blocker.distance_to(hero.x, hero.y) <= hero.spec.attack_range:
                 self._hero_attack(hero, blocker)
                 return
         self._move(hero, nx + 0.5, ny + 0.5)
+
+    def _start_leap(self, hero: _Hero) -> bool:
+        """Jump over the walls ahead in one arc, landing on the first free cell of the path."""
+        landing = next((i for i, (cx, cy) in enumerate(hero.path) if self._wall_at(cx, cy) is None), None)
+        if landing is None:
+            return False
+        lx, ly = hero.path[landing][0] + 0.5, hero.path[landing][1] + 0.5
+        distance = math.hypot(lx - hero.x, ly - hero.y)
+        ticks = max(LEAP_MIN_TICKS, math.ceil(distance / self._speed(hero) * TICK_RATE))
+        hero.leap = (hero.x, hero.y, lx, ly, self.tick, self.tick + ticks, landing + 1)
+        self._event("leap", hero=hero.id, x0=round(hero.x, 2), y0=round(hero.y, 2),
+                    x1=round(lx, 2), y1=round(ly, 2), until=self.tick + ticks)
+        self._leap_step(hero)
+        return True
+
+    def _leap_step(self, hero: _Hero) -> None:
+        x0, y0, x1, y1, start, end, cleared = hero.leap
+        k = min(1.0, (self.tick - start) / (end - start))
+        hero.x, hero.y = x0 + (x1 - x0) * k, y0 + (y1 - y0) * k
+        if self.tick >= end:
+            hero.leap = None
+            del hero.path[:cleared]
 
     def _choose_target(self, hero: _Hero) -> Optional[_Building]:
         alive = [b for b in self.buildings if b.alive and b.counts]
@@ -217,7 +246,8 @@ class Battle:
             return self._cell_cost(cx, cy, jumps)
 
         def is_goal(cx: int, cy: int) -> bool:
-            return cost(cx, cy) is not None and \
+            # a hero never stops on top of a standing wall
+            return cost(cx, cy) is not None and self._wall_at(cx, cy) is None and \
                 target.distance_to(cx + 0.5, cy + 0.5) <= reach
 
         def heuristic(cx: int, cy: int) -> float:

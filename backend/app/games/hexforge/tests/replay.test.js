@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { EFFECT_TICKS, createReplay } from '../js/replay.js';
+import { EFFECT_TICKS, createReplay, poseOfBlow, separate } from '../js/replay.js';
 
 // A real battle produced by the server simulation (south, production, spread).
 // Regenerate it after changing the simulation:
@@ -54,4 +54,43 @@ test('an effect is visible for its lifetime and then gone', () => {
 test('time outside the battle is clamped', () => {
     assert.deepEqual(replay.stateAt(-50).heroes, replay.stateAt(0).heroes);
     assert.equal(replay.stateAt(replay.duration + 999).destruction, battle.summary.destruction);
+});
+
+test('a blow is wound up before it lands and followed through after', () => {
+    const blow = { t: 20, type: 'strike', hero: 0, building: 1 };
+    assert.equal(poseOfBlow(null, blow, 16).phase, -1);
+    assert.equal(poseOfBlow(null, blow, 18).phase, -0.5);
+    assert.equal(poseOfBlow(blow, null, 20).phase, 0);
+    assert.equal(poseOfBlow(blow, null, 23).phase, 1);
+    assert.equal(poseOfBlow(blow, null, 24), null);
+    assert.equal(poseOfBlow(null, blow, 15), null);
+});
+
+test('heroes standing on the same spot are pushed apart', () => {
+    const heroes = [0, 1, 2].map((id) => ({ id, x: 5, y: 5, alive: true, leap: null }));
+    separate(heroes);
+    for (let i = 0; i < heroes.length; i++) {
+        for (let j = i + 1; j < heroes.length; j++) {
+            assert.ok(Math.hypot(heroes[i].x - heroes[j].x, heroes[i].y - heroes[j].y) > 0.3);
+        }
+    }
+});
+
+test('a hero in the air is not pushed, and a fallen one does not push', () => {
+    const heroes = [
+        { id: 0, x: 5, y: 5, alive: true, leap: 0.5 },
+        { id: 1, x: 5, y: 5, alive: true, leap: null },
+        { id: 2, x: 5, y: 5, alive: false, leap: null },
+    ];
+    separate(heroes);
+    for (const h of heroes) assert.deepEqual([h.x, h.y], [5, 5]);
+});
+
+test('the replay knows when a blade is in the air', () => {
+    const replay = createReplay(battle);
+    const leap = battle.events.find((e) => e.type === 'leap');
+    assert.ok(leap, 'the fixture has a leap');
+    const mid = replay.stateAt((leap.t + leap.until) / 2).heroes[leap.hero];
+    assert.ok(mid.leap > 0 && mid.leap < 1);
+    assert.equal(replay.stateAt(leap.until + 1).heroes[leap.hero].leap, null);
 });

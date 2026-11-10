@@ -181,6 +181,17 @@ Chakra Petch for numbers (Google Fonts); icons are an inline SVG sprite.
 `?debug` exposes the renderer as `globalThis.hexforge` for automated
 screenshots.
 
+Heroes, redone: each is drawn in profile with a pose (`drawHero` in
+`js/forgeArt.js`): walking legs, the Guardian's overhead hammer smash behind
+a tower shield, the Neon Blade's twin dagger cuts with a glowing arc and a
+front flip over walls, the Technomancer's floating robe, staff and charged
+orb that throws a bolt. Blows are wound up before they land and followed
+through after (`poseOfBlow` in `js/replay.js`); heroes flash when hit,
+topple when downed, face their target, and are nudged apart so they never
+stand inside each other (drawing only). On the server the Neon Blade now
+really **leaps**: a `leap` event (from, to, until) carries it over the walls
+in one arc, and no hero ever stops on top of a standing wall.
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 

@@ -99,6 +99,34 @@ class BattleRulesTest(unittest.TestCase):
         battle = run(squad=["neon_blade"] * 4, side="west", priority="core")
         self.assertFalse(any(e["type"] == "strike" and e["building"] in walls for e in battle["events"]))
 
+    def test_a_leap_clears_the_walls_and_lands_on_free_ground(self):
+        city = demo_city()
+        walls = {(x, y) for b in city["buildings"] if b["type"] == "wall"
+                 for x in range(b["x"], b["x"] + b["size"]) for y in range(b["y"], b["y"] + b["size"])}
+        battle = run(squad=["neon_blade"] * 4, side="west", priority="core")
+        leaps = [e for e in battle["events"] if e["type"] == "leap"]
+        self.assertTrue(leaps, "the blades should leap over the wall ring")
+        for leap in leaps:
+            self.assertGreater(leap["until"], leap["t"])
+            self.assertNotIn((math.floor(leap["x1"]), math.floor(leap["y1"])), walls)
+            self.assertNotIn((math.floor(leap["x0"]), math.floor(leap["y0"])), walls)
+
+    def test_heroes_never_stop_on_a_standing_wall(self):
+        city = demo_city()
+        walls = {(x, y) for b in city["buildings"] if b["type"] == "wall"
+                 for x in range(b["x"], b["x"] + b["size"]) for y in range(b["y"], b["y"] + b["size"])}
+        for side in SIDES:
+            battle = run(side=side)
+            strikes = {(e["t"], e["hero"]) for e in battle["events"] if e["type"] in ("strike", "nova")}
+            for t, hero in strikes:
+                if t % FRAME_STRIDE:
+                    continue
+                x, y, _ = battle["frames"][t // FRAME_STRIDE][hero]
+                broken = {(e["building"]) for e in battle["events"] if e["type"] == "destroyed" and e["t"] <= t}
+                standing = {cell for cell in walls if not any(
+                    b["id"] in broken and b["x"] == cell[0] and b["y"] == cell[1] for b in city["buildings"])}
+                self.assertNotIn((math.floor(x), math.floor(y)), standing, f"hero {hero} attacks from a wall at t={t}")
+
     def test_guardians_have_to_break_walls_to_reach_the_core(self):
         walls = {b["id"] for b in demo_city()["buildings"] if b["type"] == "wall"}
         battle = run(squad=["guardian"] * 4, side="west", priority="core")

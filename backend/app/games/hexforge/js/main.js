@@ -1,14 +1,15 @@
 import { BattleMode } from './battle.js';
 import { CityMode } from './city.js';
+import { RankingMode } from './ranking.js';
 import { Renderer } from './render.js';
 
-/** App shell: the two tabs (My city / Attack), input routing and the frame loop. */
+/** App shell: the tabs (My city / Attack / Ranking), input routing and the frame loop. */
 
 const TAB_KEY = 'hexforge.tab';
 const $ = (id) => document.getElementById(id);
 
 const renderer = new Renderer($('view'));
-const modes = { city: new CityMode(renderer), battle: new BattleMode(renderer) };
+const modes = { city: new CityMode(renderer), battle: new BattleMode(renderer), ranking: new RankingMode(renderer) };
 modes.battle.onStateChanged = () => modes.city.invalidate();
 modes.city.onWatch = (battle) => {
     modes.battle.watch(battle, () => void switchTo('city'));

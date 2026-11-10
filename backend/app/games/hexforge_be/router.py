@@ -18,6 +18,7 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/defense/test           standard raids against your city
   POST /api/hexforge/me/rivals/find            scout a player to attack
   POST /api/hexforge/me/rivals/attack          attack the scouted player
+  GET  /api/hexforge/me/leaderboard            best players by trophies, and your rank
 
 The /me routes need the platform session cookie.
 """
@@ -201,3 +202,8 @@ def attack_rival(request: Request, body: AttackRequest, user_id: CurrentUserId, 
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return {"battle": battle, **_attack_screen(service, state, now)}
+
+
+@router.get("/me/leaderboard")
+def leaderboard(user_id: CurrentUserId, db: Db, now: Now):
+    return PlayerService(db).leaderboard(user_id, now)

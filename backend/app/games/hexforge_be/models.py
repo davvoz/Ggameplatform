@@ -20,6 +20,7 @@ class HexforgePlayer(Base):
     heroes_json = Column(Text, nullable=False)
     materials_json = Column(Text, nullable=False)
     version = Column(Integer, nullable=False, default=1)
+    trophies = Column(Integer, nullable=False, default=0, index=True)   # PvP score, never reset
     created_at = Column(Float, nullable=False)
     updated_at = Column(Float, nullable=False)
 
@@ -39,3 +40,4 @@ class HexforgeAttack(Base):
     city_json = Column(Text, nullable=False)      # the defender's battle city
     summary_json = Column(Text, nullable=False)
     loot_json = Column(Text, nullable=False)
+    trophies = Column(Integer, nullable=False, default=0)   # the attacker's change

@@ -114,7 +114,22 @@ its inputs, so its replay can be rebuilt later (the battle is deterministic).
 `GET /api/hexforge/me/outposts` also returns the scouted `rival` and every
 state now carries `pvp: {arena, shield_until}`.
 
-Next: trophies and the in-game leaderboard.
+Step 3 (done): **trophies and the ranking**. Trophies are the PvP score and
+never reset (a `trophies` column on `hexforge_players`, added to older
+databases by `_migrate_hexforge_trophies` in `app/database.py`). A won raid
+takes 30 trophies from the rival, a lost one hands them 20; every 25 trophies
+of difference move both by 1 (win 5–50, loss 5–40), so beating a stronger
+rival pays more. Nobody goes below 0. The scout now matches by trophies
+first, then strength. The rival card shows their trophies, league and what
+the raid is worth; the report shows the change. Leagues: Bronze 0, Silver
+200, Gold 500, Neon 1000, Mythic 2000. The new **Ranking** tab shows your
+trophies, league, rank and the top 50 (players with at least 1 trophy).
+
+| Route | What |
+| --- | --- |
+| `GET /api/hexforge/me/leaderboard` | `{top: [{rank, name, trophies, league, me}], me: {trophies, rank, league, next_league}}` |
+
+Next: the defence log (who attacked you, with the replay).
 
 ## Layout
 

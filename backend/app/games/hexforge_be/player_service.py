@@ -33,6 +33,7 @@ class PlayerState:
     heroes: list
     materials: dict
     version: int
+    trophies: int = 0
 
 
 class PlayerService:
@@ -54,6 +55,7 @@ class PlayerService:
                 heroes_json=json.dumps(economy.starter_heroes()),
                 materials_json=json.dumps(economy.STARTING_MATERIALS),
                 version=1,
+                trophies=0,
                 created_at=now,
                 updated_at=now,
             )
@@ -95,6 +97,7 @@ class PlayerService:
                 HexforgePlayer.heroes_json: json.dumps(state.heroes),
                 HexforgePlayer.materials_json: json.dumps(state.materials),
                 HexforgePlayer.version: state.version + 1,
+                HexforgePlayer.trophies: state.trophies,
                 HexforgePlayer.updated_at: now,
             }, synchronize_session=False)
         )
@@ -160,10 +163,10 @@ class PlayerService:
     def find_rival(self, user_id: str, now: float, rng: random.Random | None = None) -> PlayerState:
         state = self.load(user_id, now)
         pvp.require_arena(state.city)
-        rows = (self.db.query(HexforgePlayer.user_id, HexforgePlayer.city_json)
+        rows = (self.db.query(HexforgePlayer.user_id, HexforgePlayer.city_json, HexforgePlayer.trophies)
                 .filter(HexforgePlayer.user_id != user_id).all())
-        candidates = [(uid, json.loads(city)) for uid, city in rows]
-        state.city["pvp"]["scout"] = pvp.choose_rival(state.city, candidates, now, rng)
+        candidates = [(uid, json.loads(city), trophies or 0) for uid, city, trophies in rows]
+        state.city["pvp"]["scout"] = pvp.choose_rival(state.city, state.trophies, candidates, now, rng)
         self.save(state, now)
         return state
 
@@ -174,7 +177,8 @@ class PlayerService:
         if rival is None:
             return None
         return pvp.public_rival(self.names([rival_id])[rival_id], defense.battle_city(rival.city),
-                                rival.materials, pvp.attackable(rival.city, now))
+                                rival.materials, pvp.attackable(rival.city, now),
+                                rival.trophies, state.trophies)
 
     def attack_rival(self, user_id: str, hero_ids: list, side: str, priority: str, tactic: str,
                      now: float) -> tuple[PlayerState, dict]:
@@ -194,15 +198,34 @@ class PlayerService:
         summary = battle["summary"]
         loot = pvp.settle_attack(state.city, rival.city, state.materials, rival.materials, summary, now)
         injured = outposts.injure_fallen(state.heroes, hero_ids, summary, now)
+        state.trophies, rival.trophies, trophies = pvp.settle_trophies(
+            state.trophies, rival.trophies, summary["victory"])
         log = HexforgeAttack(
             attacker_id=user_id, defender_id=rival_id, created_at=now,
             setup_json=json.dumps({"squad": classes, "side": side, "priority": priority, "tactic": tactic}),
             city_json=json.dumps(target), summary_json=json.dumps(summary), loot_json=json.dumps(loot),
+            trophies=trophies,
         )
         self.save_together([state, rival], now, [log])
         name = self.names([rival_id])[rival_id]
         return state, {"rival": name, "city": target, **battle,
-                       "rewards": {"loot": loot, "injured": injured}}
+                       "rewards": {"loot": loot, "injured": injured, "trophies": trophies}}
+
+    def leaderboard(self, user_id: str, now: float, limit: int = 50) -> dict:
+        """The best players by trophies, and where you stand."""
+        rows = (self.db.query(HexforgePlayer.user_id, HexforgePlayer.trophies)
+                .filter(HexforgePlayer.trophies > 0)
+                .order_by(HexforgePlayer.trophies.desc(), HexforgePlayer.user_id)
+                .limit(limit).all())
+        names = self.names([uid for uid, _ in rows])
+        top = [{"rank": i, "name": names[uid], "trophies": trophies, "league": pvp.league(trophies),
+                "me": uid == user_id} for i, (uid, trophies) in enumerate(rows, start=1)]
+        mine = self.load(user_id, now).trophies
+        rank = None
+        if mine > 0:
+            rank = 1 + self.db.query(HexforgePlayer).filter(HexforgePlayer.trophies > mine).count()
+        return {"top": top, "me": {"trophies": mine, "rank": rank, "league": pvp.league(mine),
+                                   "next_league": pvp.next_league(mine)}}
 
     def names(self, user_ids: list) -> dict:
         """Display names for players; anonymous players get a stable placeholder."""
@@ -225,6 +248,7 @@ def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
         heroes=json.loads(row.heroes_json),
         materials=json.loads(row.materials_json),
         version=row.version,
+        trophies=row.trophies or 0,
     )
     forge.ensure_forge(state.city)
     outposts.ensure_campaign(state.city, now)
@@ -259,7 +283,7 @@ def public_state(state: PlayerState, now: float) -> dict:
         "forge": {"slots": state.city["forge"]["slots"], "jobs": jobs},
         "recipes": forge.public_recipes(state.city, state.heroes),
         "energy": outposts.public_energy(state.city["energy"], now),
-        "pvp": _public_pvp(state.city, now),
+        "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies)},
         "version": state.version,
         "server_time": now,
     }

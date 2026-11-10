@@ -91,3 +91,7 @@ export function findRival() {
 export function attackRival(setup) {
     return post('/me/rivals/attack', setup);
 }
+
+export function fetchLeaderboard() {
+    return request('/me/leaderboard');
+}

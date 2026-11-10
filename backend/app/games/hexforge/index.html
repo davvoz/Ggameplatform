@@ -26,6 +26,7 @@
                 <nav class="tabs" aria-label="Game mode">
                     <button type="button" class="chip" data-tab="city" aria-pressed="false">My city</button>
                     <button type="button" class="chip" data-tab="battle" aria-pressed="false">Attack</button>
+                    <button type="button" class="chip" data-tab="ranking" aria-pressed="false">Ranking</button>
                 </nav>
             </header>
 
@@ -110,6 +111,19 @@
                     <button id="btn-launch" class="button primary wide" disabled>Launch attack</button>
                     <p id="launch-hint" class="hint"></p>
                     <p id="error" class="error" role="alert" hidden></p>
+                </div>
+            </section>
+
+            <section id="view-ranking" hidden>
+                <div id="ranking-signin" class="notice" hidden>
+                    <p><b>Sign in to the platform</b> to collect trophies and climb the ranking.</p>
+                </div>
+                <div id="ranking-body">
+                    <div id="ranking-me" class="ranking-me"></div>
+                    <h2>Top players</h2>
+                    <ol id="ranking-list" class="ranking-list"></ol>
+                    <p id="ranking-empty" class="hint" hidden>Nobody has trophies yet. Win a raid in Attack → Rivals to be the first.</p>
+                    <p class="hint">Trophies are won by raiding rivals: beating a stronger rival pays more. They never reset.</p>
                 </div>
             </section>
 

@@ -65,19 +65,19 @@ class ArenaTest(unittest.TestCase):
     def test_the_scout_picks_a_rival_of_similar_strength(self):
         me = city(towers=2)
         evens = [f"even{i}" for i in range(pvp.CLOSEST_RIVALS)]
-        candidates = [("weak", city(towers=1)), ("strong", self.fortress())] + [(uid, city(towers=2)) for uid in evens]
-        picks = {pvp.choose_rival(me, candidates, T0, random.Random(seed)) for seed in range(30)}
+        candidates = [("weak", city(towers=1), 0), ("strong", self.fortress(), 0)] + [(uid, city(towers=2), 0) for uid in evens]
+        picks = {pvp.choose_rival(me, 0, candidates, T0, random.Random(seed)) for seed in range(30)}
         self.assertLessEqual(picks, set(evens))
         self.assertGreater(len(picks), 1, "some variety among equals")
 
     def test_asking_again_gives_someone_else_when_possible(self):
         me = city()
         me["pvp"]["scout"] = "bob"
-        self.assertEqual(pvp.choose_rival(me, [("bob", city()), ("eve", city())], T0, random.Random(0)), "eve")
-        self.assertEqual(pvp.choose_rival(me, [("bob", city())], T0, random.Random(0)), "bob")
+        self.assertEqual(pvp.choose_rival(me, 0, [("bob", city(), 0), ("eve", city(), 0)], T0, random.Random(0)), "eve")
+        self.assertEqual(pvp.choose_rival(me, 0, [("bob", city(), 0)], T0, random.Random(0)), "bob")
 
     def test_nobody_to_attack(self):
-        self.assertIsNone(pvp.choose_rival(city(), [("bob", city(arena=False))], T0))
+        self.assertIsNone(pvp.choose_rival(city(), 0, [("bob", city(arena=False), 0)], T0))
 
     def test_the_attacker_sees_no_aims_and_no_traps(self):
         target = {"grid": 18, "buildings": [

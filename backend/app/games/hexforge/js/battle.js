@@ -1,6 +1,7 @@
 import { Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle } from './api.js';
 import { describeWorst } from './defensePanel.js';
 import { formatCountdown } from './forgePanel.js';
+import { signed } from './leagues.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
 import { createReplay } from './replay.js';
 import { lootRow, materialChips, renderRival, rivalBlocker } from './rivalPanel.js';
@@ -424,6 +425,7 @@ export class BattleMode {
         if (rewards) {
             const got = Object.values(rewards.loot).some((n) => n > 0);
             row('Loot', got ? materialChips(rewards.loot) : 'None');
+            if (rewards.trophies !== undefined) row('Trophies', signed(rewards.trophies));
             row('Injured', rewards.injured.length ? `${rewards.injured.length} hero${rewards.injured.length > 1 ? 'es' : ''}, back in 15 min` : 'Nobody');
         }
         row('Battle time', `${s.seconds} s`);

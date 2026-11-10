@@ -1,5 +1,6 @@
 import { formatCountdown } from './forgePanel.js';
 import { MATERIAL_INFO } from './labels.js';
+import { LEAGUE_COLORS, stakesText } from './leagues.js';
 
 /** The "Rivals" side of the Attack tab: the scouted player, the loot at stake, your shield. */
 
@@ -18,12 +19,18 @@ export function renderRival(container, data, serverNow) {
         container.append(hint('Clear the first outpost, Scrap Hollow, to enter the arena. Until then nobody can attack you either.'));
         return;
     }
+    container.append(hint(`You: ${pvp.trophies} trophies · ${pvp.league} league`));
     if (rival) {
         const name = document.createElement('p');
         name.className = 'rival-name';
         name.textContent = rival.name;
+        const league = document.createElement('p');
+        league.className = 'rival-league';
+        league.style.setProperty('--accent', LEAGUE_COLORS[rival.league]);
+        league.textContent = `${rival.trophies} trophies · ${rival.league} · ${stakesText(rival.stakes)}`;
         container.append(
             name,
+            league,
             hint(`Strength ${rival.strength} · their towers aim in secret and their traps are hidden.`),
             lootRow('Loot if you win', rival.loot_on_win),
             lootRow('If the core falls', rival.loot_on_core),

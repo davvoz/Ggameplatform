@@ -744,3 +744,74 @@ h2 {
 .rival-info .error {
     margin-top: 8px;
 }
+
+.rival-league {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+/* ── ranking ─────────────────────────────────────────────────────────── */
+.ranking-me {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 8%, var(--panel-2));
+}
+
+.ranking-trophies {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+.ranking-league {
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+.ranking-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ranking-list li {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 10px;
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    background: var(--panel-2);
+    font-size: 14px;
+}
+
+.ranking-list li + li {
+    margin-top: 4px;
+}
+
+.ranking-list li.me {
+    outline: 1px solid var(--cyan);
+}
+
+.ranking-list .rank {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.ranking-list .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ranking-list .score {
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}

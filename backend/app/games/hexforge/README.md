@@ -248,6 +248,23 @@ level with the XP bar under the name; every gain shows "+N XP", and a new
 level pops a card with its gifts and a fanfare. The battle result shows
 the XP earned and a reached level.
 
+Step 2, bonuses and rewards (`hexforge_be/rewards.py`, `js/rewardsPanel.js`,
+`js/bonusPicker.js`). Bonuses stay in an inventory until used: Hourglass
+(−15 min) and Golden hourglass (−1 h) on a forge job, a hurt hero or the
+energy; Healing salve heals a hero at once; Energy flask gives a charge (never
+above the maximum). The Rewards button (badge = what waits to be claimed)
+opens a sheet with:
+- a 7-day calendar: one gift a day, growing, day 7 the biggest; a missed day
+  loses nothing, the next visit claims the next day; then it starts again
+- 3 daily tasks picked from a pool (the same all day for a player: collect,
+  forge, claim, attack, win...), each paying XP and a bonus once claimed
+- a weekly chest that opens after 12 claimed tasks in the week
+- the bonus inventory.
+Days and weeks are UTC, weeks start on Monday. A running forge job shows
+"Speed up"; in the attack plan a hurt hero and the energy pill open the same
+bonus picker. Rewards pop a card with what was won (then a level-up card if
+their XP reached one).
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 

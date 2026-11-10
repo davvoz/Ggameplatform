@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import defense, economy, forge, outposts, progress, pvp
+from . import defense, economy, forge, outposts, progress, pvp, rewards
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -108,7 +108,11 @@ class PlayerService:
     def collect(self, user_id: str, now: float, building_ids=None) -> tuple[PlayerState, dict, dict]:
         state = self.load(user_id, now)
         gained = economy.collect(state.city, state.materials, now, building_ids)
-        earned = _earn(state, progress.xp_for_collecting(sum(gained.values())))
+        units = sum(gained.values())
+        if units:
+            rewards.record(state.city, "collect")
+            rewards.record(state.city, "collect_units", units)
+        earned = _earn(state, progress.xp_for_collecting(units))
         if any(gained.values()):
             self.save(state, now)
         return state, gained, earned
@@ -128,6 +132,7 @@ class PlayerService:
     def start_forging(self, user_id: str, recipe_id: str, now: float) -> PlayerState:
         state = self.load(user_id, now)
         forge.start(state.city, state.heroes, state.materials, recipe_id, now)
+        rewards.record(state.city, "forge")
         self.save(state, now)
         return state
 
@@ -135,6 +140,7 @@ class PlayerService:
         state = self.load(user_id, now)
         result = forge.claim(state.city, state.heroes, job_id, now)
         result.update(_earn(state, progress.xp_for_forging(forge.RECIPES[result["item"]].seconds)))
+        rewards.record(state.city, "claim")
         self.save(state, now)
         return state, result
 
@@ -150,6 +156,7 @@ class PlayerService:
         result = outposts.attack(state.city, state.heroes, state.materials, outpost_id,
                                  hero_ids, side, priority, tactic, now)
         result["rewards"].update(_earn(state, progress.xp_for_attack("outpost", result["summary"]["victory"])))
+        _record_attack(state, result["summary"]["victory"])
         self.save(state, now)
         return state, result
 
@@ -206,6 +213,7 @@ class PlayerService:
         state.trophies, rival.trophies, trophies = pvp.settle_trophies(
             state.trophies, rival.trophies, summary["victory"])
         earned = _earn(state, progress.xp_for_attack("rival", summary["victory"]))
+        _record_attack(state, summary["victory"])
         log = HexforgeAttack(
             attacker_id=user_id, defender_id=rival_id, created_at=now,
             setup_json=json.dumps({"squad": classes, "side": side, "priority": priority, "tactic": tactic}),
@@ -296,6 +304,31 @@ class PlayerService:
         found = {uid: username or steem for uid, username, steem in rows}
         return {uid: found.get(uid) or f"Raider {uid[-4:].upper()}" for uid in user_ids}
 
+    # ── rewards and bonuses ────────────────────────────────────────────
+    def claim_login(self, user_id: str, now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        got = rewards.claim_login(state.city, state.materials, now)
+        self.save(state, now)
+        return state, got
+
+    def claim_task(self, user_id: str, task_id: str, now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        got = rewards.claim_task(state.city, state.materials, task_id)
+        self.save(state, now)
+        return state, got
+
+    def claim_chest(self, user_id: str, now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        got = rewards.claim_chest(state.city, state.materials)
+        self.save(state, now)
+        return state, got
+
+    def use_bonus(self, user_id: str, bonus: str, now: float, **target) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        used = rewards.use_bonus(state.city, state.heroes, bonus, now, **target)
+        self.save(state, now)
+        return state, used
+
     def dismantle_building(self, user_id: str, building_id: int, now: float) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         refund = forge.dismantle(state.city, state.materials, building_id, now)
@@ -316,7 +349,14 @@ def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
     outposts.ensure_campaign(state.city, now)
     pvp.ensure_pvp(state.city)
     progress.ensure_progress(state.city)
+    rewards.ensure_rewards(state.city, row.user_id, now)
     return state
+
+
+def _record_attack(state: PlayerState, victory: bool) -> None:
+    rewards.record(state.city, "attack")
+    if victory:
+        rewards.record(state.city, "win")
 
 
 def _earn(state: PlayerState, xp: int) -> dict:
@@ -353,6 +393,9 @@ def public_state(state: PlayerState, now: float) -> dict:
         "recipes": forge.public_recipes(state.city, state.heroes),
         "energy": outposts.public_energy(state.city["energy"], now),
         "progress": progress.public_progress(state.city),
+        "bonuses": state.city["bonuses"],
+        "rewards": {**rewards.public_rewards(state.city, now),
+                    "ready": rewards.ready_count(state.city, now)},
         "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies),
                 "next_league": pvp.next_league(state.trophies)},
         "version": state.version,

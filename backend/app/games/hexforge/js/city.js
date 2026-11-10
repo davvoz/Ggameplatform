@@ -1,8 +1,9 @@
 import {
-    Refused, SignInRequired, claimJob, collect, dismantleBuilding, fetchMyState,
-    fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding, placeBuilding, revengeRaid,
-    setAim, startForging, testDefense,
+    Refused, SignInRequired, claimJob, claimLoginReward, claimTaskReward, claimWeeklyChest, collect,
+    dismantleBuilding, fetchMyState, fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding,
+    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus,
 } from './api.js';
+import { openBonusPicker } from './bonusPicker.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { play } from './audio.js';
@@ -10,9 +11,12 @@ import { countUp, flyMaterial, flyPicture, rewardPop } from './fx.js';
 import { formatCountdown, itemName, itemThumb, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
-import { AIM_INFO, BUILDING_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import { AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import { LEAGUE_COLORS } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
+import {
+    formatLong, medal, renderBonuses, renderCalendar, renderChest, renderTasks, rewardChips, usableBonuses,
+} from './rewardsPanel.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
 import { buildingThumb } from './thumbs.js';
 
@@ -23,6 +27,8 @@ import { buildingThumb } from './thumbs.js';
  *  - Forge (sheet): forge buildings and heroes; claimed buildings go to the
  *    "ready to place" tray, then onto the map
  *  - Defense (sheet): defence test, raids on your city, replay and revenge
+ *  - Rewards (sheet): the 7-day calendar, today's tasks, the weekly chest
+ *    and the bonus inventory; an hourglass speeds up a forge job
  *  - the big Attack button opens the attack plan
  *  - the player's level (shield) and XP bar; "+XP" after every action that
  *    earns some, and a level-up card with its gifts
@@ -50,6 +56,13 @@ const MESSAGES = {
     unknown_raid: 'That raid is gone.',
     arena_locked: 'Clear the first outpost to enter the arena.',
     unknown_aim: 'Unknown aim.',
+    already_claimed: 'Already claimed.',
+    not_done: 'Not done yet.',
+    unknown_task: 'That task is over: a new day has begun.',
+    no_bonus: 'You have none of those left.',
+    nothing_to_speed_up: 'Nothing to speed up there.',
+    wrong_bonus: 'That bonus does not work there.',
+    energy_full: 'Your energy is already full.',
 };
 
 export class CityMode {
@@ -162,6 +175,7 @@ export class CityMode {
         $('player-plate').addEventListener('click', () => this.onRanking());
         $('btn-open-forge').addEventListener('click', () => this.#openForge());
         $('btn-open-defense').addEventListener('click', () => this.#openDefense());
+        $('btn-open-rewards').addEventListener('click', () => this.#openRewards());
         $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
         $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
         $('btn-aim').addEventListener('click', () => {
@@ -204,6 +218,77 @@ export class CityMode {
         this.#select(null);
         this.#renderForge();
         openSheet('sheet-forge');
+    }
+
+    #openRewards() {
+        if (!this.state) return;
+        this.#select(null);
+        openSheet('sheet-rewards');
+        this.#renderRewards();               // fills the sheet only while it is open
+    }
+
+    // ── rewards and bonuses ────────────────────────────────────────────
+    #renderRewards() {
+        const r = this.state?.rewards;
+        if (!r) return;
+        const badge = $('rewards-badge');
+        badge.hidden = !r.ready;
+        badge.textContent = String(r.ready);
+        if (!isSheetOpen('sheet-rewards')) return;
+        renderCalendar($('calendar'), r.login, () => void this.#claimReward('login'));
+        $('login-note').textContent = r.login.claimable ? `Day ${r.login.day} of 7` : 'Come back tomorrow';
+        renderTasks($('tasks'), r.tasks, (id) => void this.#claimReward('task', id));
+        renderChest($('chest'), r.weekly, this.#serverNow(), () => void this.#claimReward('chest'));
+        renderBonuses($('bonus-list'), this.state.bonuses);
+        this.#tickRewards(this.#serverNow());
+    }
+
+    #tickRewards(now) {
+        if (!this.state?.rewards || !isSheetOpen('sheet-rewards')) return;
+        $('tasks-note').textContent = `new in ${formatLong(this.state.rewards.tasks_reset_at - now)}`;
+        const reset = document.querySelector('#chest .chest-reset');
+        if (reset) reset.textContent = `new in ${formatLong(this.state.rewards.weekly.reset_at - now)}`;
+    }
+
+    async #claimReward(kind, taskId = null) {
+        const CARDS = {
+            login: () => ({ icon: 'gift', title: `Day ${this.state.rewards.login.day} gift` }),
+            task: () => ({ icon: 'star', title: 'Task done!' }),
+            chest: () => ({ icon: 'chest', title: 'Weekly chest!' }),
+        };
+        const card = CARDS[kind]();
+        let shown = null;
+        await this.#run(async () => {
+            const call = { login: claimLoginReward, task: () => claimTaskReward(taskId), chest: claimWeeklyChest }[kind];
+            const result = await call();
+            shown = this.#queuePop(() => {            // before #apply, so a level-up card comes after it
+                play('claim');
+                return rewardPop({
+                    picture: medal(card.icon), title: card.title,
+                    extra: rewardChips(result.got, { big: true }), line: 'Added to your city', ms: 2600,
+                });
+            });
+            this.#apply(result);
+        });
+        await shown;
+    }
+
+    /** Offer the bonuses that work on `target` ('job' | 'hero' | 'energy'), then use the one picked. */
+    #pickBonus(target, payload, title, line) {
+        const options = usableBonuses(target, this.state.bonuses);
+        if (!options.length) {
+            toast('No bonus for that. Daily tasks and the calendar give some.');
+            return;
+        }
+        openBonusPicker({ title, line, options, owned: this.state.bonuses, onPick: (bonus) => void this.#useBonus(bonus, payload) });
+    }
+
+    async #useBonus(bonus, payload) {
+        await this.#run(async () => {
+            this.#apply(await useBonus(bonus, payload));
+            play('boost');
+            toast(`${BONUS_INFO[bonus].name}: ${BONUS_INFO[bonus].effect}.`);
+        });
     }
 
     #openDefense() {
@@ -559,6 +644,7 @@ export class CityMode {
         renderStorage($('storage'), this.state.storage, this.placingType, (type) => this.#togglePlacing(type));
         this.#renderBottom();
         this.#renderForge();
+        this.#renderRewards();
         this.second = -1;
         this.#tick();
     }
@@ -646,7 +732,10 @@ export class CityMode {
         const second = Math.floor(now);
         if (second === this.second) return;
         this.second = second;
-        renderForgeSlots($('forge-slots'), this.state.forge, now, (id) => void this.#claim(id));
+        const hourglass = usableBonuses('job', this.state.bonuses).length > 0;
+        renderForgeSlots($('forge-slots'), this.state.forge, now, (id) => void this.#claim(id),
+            hourglass ? (id) => this.#speedUpJob(id) : null);
+        this.#tickRewards(now);
         const ready = this.state.forge.jobs.filter((j) => j.ready_at <= now).length;
         const badge = $('forge-badge');
         badge.hidden = ready === 0;
@@ -654,6 +743,13 @@ export class CityMode {
         const { charges, max, next_at: nextAt } = this.state.energy;
         const energy = $('city-energy');
         energy.replaceChildren(icon('bolt'), `${charges}/${max}${nextAt && charges < max ? ` · ${formatCountdown(nextAt - now)}` : ''}`);
+    }
+
+    #speedUpJob(jobId) {
+        const job = this.state.forge.jobs.find((j) => j.id === jobId);
+        if (!job) return;
+        this.#pickBonus('job', { job_id: jobId }, `Speed up ${itemName(job.recipe)}`,
+            `${formatCountdown(job.ready_at - this.#serverNow())} left`);
     }
 
     #renderResources() {

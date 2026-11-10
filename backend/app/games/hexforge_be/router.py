@@ -23,6 +23,10 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/defenses/seen          mark them all as read
   GET  /api/hexforge/me/defenses/{id}/replay   watch a raid on your city
   POST /api/hexforge/me/defenses/{id}/revenge  scout the raider
+  POST /api/hexforge/me/rewards/login          today's reward of the 7-day calendar
+  POST /api/hexforge/me/rewards/tasks/{id}/claim   a finished daily task
+  POST /api/hexforge/me/rewards/chest          the weekly chest
+  POST /api/hexforge/me/bonuses/use            spend a bonus on a job, a hero or the energy
 
 The /me routes need the platform session cookie.
 """
@@ -42,7 +46,9 @@ from .catalog import public_catalog
 from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
-from .schemas import AimRequest, AttackRequest, BattleRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest
+from .schemas import (
+    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest,
+)
 from .simulation import simulate
 
 router = APIRouter(prefix="/api/hexforge", tags=["Hexforge"])
@@ -244,3 +250,41 @@ def revenge(raid_id: int, user_id: CurrentUserId, db: Db, now: Now):
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return _attack_screen(service, state, now)
+
+
+# ── rewards and bonuses ────────────────────────────────────────────────
+@router.post("/me/rewards/login")
+def claim_login_reward(user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, got = PlayerService(db).claim_login(user_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"got": got, **public_state(state, now)}
+
+
+@router.post("/me/rewards/tasks/{task_id}/claim")
+def claim_task_reward(task_id: str, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, got = PlayerService(db).claim_task(user_id, task_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"got": got, **public_state(state, now)}
+
+
+@router.post("/me/rewards/chest")
+def claim_weekly_chest(user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, got = PlayerService(db).claim_chest(user_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"got": got, **public_state(state, now)}
+
+
+@router.post("/me/bonuses/use")
+def use_bonus(body: BonusRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, used = PlayerService(db).use_bonus(user_id, body.bonus, now, job_id=body.job_id,
+                                                  hero_id=body.hero_id, energy=body.energy)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"used": used, **public_state(state, now)}

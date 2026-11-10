@@ -1,11 +1,15 @@
-import { Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle } from './api.js';
+import {
+    Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle, useBonus,
+} from './api.js';
+import { openBonusPicker } from './bonusPicker.js';
 import { play, playBattleEvent, setMode as setMusic } from './audio.js';
 import { formatCountdown } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
-import { CHOICE_ICONS, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
+import { BONUS_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
 import { LEAGUE_COLORS, signed, stakesText } from './leagues.js';
 import { createReplay } from './replay.js';
+import { usableBonuses } from './rewardsPanel.js';
 import { materialChips, rivalBlocker } from './rivalPanel.js';
 import { toast } from './sheets.js';
 import { SQUAD_SIZE, launchBlocker, settleSquad, toggleHero } from './squad.js';
@@ -15,7 +19,8 @@ import { heroThumb, thumbImg } from './thumbs.js';
 /**
  * "Attack", full screen on the target's city:
  *  - plan: outpost or player, entry side (arrows on the map), squad of 4,
- *    what to hit first, formation, Fight!
+ *    what to hit first, formation, Fight! A hurt hero or the energy take a
+ *    speed-up bonus when tapped.
  *  - battle: the replay with the squad's health at the bottom
  *  - result: a big verdict, destruction, loot
  * Also replays raids on the player's own city (`watch`), then goes back.
@@ -40,6 +45,9 @@ const REFUSALS = {
     no_rival: 'Find a rival first.',
     rival_unavailable: 'That rival just got a shield. Find another one.',
     state_changed_retry: 'Your city changed meanwhile. Try again.',
+    no_bonus: 'You have none of those left.',
+    nothing_to_speed_up: 'Nothing to speed up there.',
+    energy_full: 'Your energy is already full.',
 };
 
 export class BattleMode {
@@ -206,6 +214,7 @@ export class BattleMode {
     // ── the plan ───────────────────────────────────────────────────────
     #wire() {
         $('btn-attack-back').addEventListener('click', () => this.onExit());
+        $('energy').addEventListener('click', () => this.#tapEnergy());
         for (const button of document.querySelectorAll('#target-mode [data-mode]')) {
             button.addEventListener('click', () => {
                 if (this.setup.mode === button.dataset.mode) return;
@@ -405,6 +414,10 @@ export class BattleMode {
         const now = this.#serverNow();
         const { state, left } = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
         if (state === 'hurt') {
+            if (usableBonuses('hero', this.data.bonuses).length) {
+                this.#pickBonus('hero', { hero_id: hero.id }, `Heal ${name}`, `ready again in ${formatHeal(left)}`);
+                return;
+            }
             play('error');
             toast(`${name} is healing: ready again in ${formatHeal(left)}.`);
             return;
@@ -416,6 +429,50 @@ export class BattleMode {
         }
         if (state === 'ready') toast(`${name} joins the squad. ${HERO_INFO[hero.cls].what}`);
         this.#pick(toggleHero(this.setup.heroIds, hero.id));
+    }
+
+    /** The energy pill: a flask or an hourglass brings a charge sooner. */
+    #tapEnergy() {
+        const energy = this.data?.energy;
+        if (!energy) return;
+        if (energy.charges >= energy.max) {
+            toast('Your energy is full. Each attack costs 1, and a charge comes back every hour.');
+            return;
+        }
+        if (!usableBonuses('energy', this.data.bonuses).length) {
+            toast('A charge comes back every hour. Energy flasks from the daily rewards give one at once.');
+            return;
+        }
+        this.#pickBonus('energy', { energy: true }, 'More energy', `${energy.charges}/${energy.max} charges`);
+    }
+
+    #pickBonus(target, payload, title, line) {
+        openBonusPicker({
+            title, line, options: usableBonuses(target, this.data.bonuses), owned: this.data.bonuses,
+            onPick: (bonus) => void this.#useBonus(bonus, payload),
+        });
+    }
+
+    async #useBonus(bonus, payload) {
+        if (this.busy) return;
+        this.busy = true;
+        try {
+            const state = await useBonus(bonus, payload);
+            this.data = { ...this.data, ...state };      // keeps the outposts and the rival
+            this.receivedAt = performance.now();
+            play('boost');
+            toast(`${BONUS_INFO[bonus].name}: ${BONUS_INFO[bonus].effect}.`);
+            this.onStateChanged();
+            this.#renderSquad();
+            this.second = -1;
+            this.#tickSetup();
+        } catch (error) {
+            if (!(error instanceof Refused)) throw error;
+            play('error');
+            toast(REFUSALS[error.code] ?? 'That did not work.');
+        } finally {
+            this.busy = false;
+        }
     }
 
     #pick(heroIds) {
@@ -453,6 +510,7 @@ export class BattleMode {
         }
         $('energy').replaceChildren(icon('bolt'), (energy.charges > energy.max ? String(energy.charges) : `${energy.charges}/${energy.max}`)
             + (energy.next_at ? ` · +1 in ${formatCountdown(energy.next_at - now)}` : ''));
+        $('energy').classList.toggle('boostable', energy.charges < energy.max && usableBonuses('energy', this.data.bonuses).length > 0);
         const blocker = launchBlocker({ blocked: this.#targetBlocker(), picked: this.setup.heroIds, energy });
         $('btn-launch').disabled = Boolean(blocker) || this.busy;
         $('fight-cost').textContent = `1 energy of ${energy.charges}`;

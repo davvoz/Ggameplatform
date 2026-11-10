@@ -2485,3 +2485,463 @@ button.hero-tile.ready:hover {
         transition-duration: 0.01ms;
     }
 }
+
+/* ── rewards: chips, medal, calendar, tasks, chest, bonuses ──────────── */
+.panel-note {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.reward-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.reward-chip {
+    --accent: var(--gold);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+.reward-chip .icon {
+    width: 13px;
+    height: 13px;
+}
+
+.reward-chips.big {
+    position: relative;
+    justify-content: center;
+    gap: 6px;
+    margin: 4px 0 2px;
+}
+
+.reward-chips.big .reward-chip {
+    padding: 3px 10px;
+    font-size: 14px;
+}
+
+.reward-chips.big .reward-chip .icon {
+    width: 16px;
+    height: 16px;
+}
+
+.reward-medal {
+    --accent: var(--gold);
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid color-mix(in srgb, var(--accent) 80%, #fff);
+    background: radial-gradient(circle at 40% 30%, #3a2a20, #120a06 70%);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--accent) 70%, transparent), inset 0 0 18px rgba(0, 0, 0, 0.8);
+    color: var(--accent);
+    animation: reward-float 1.6s ease-in-out infinite;
+}
+
+.reward-medal .icon {
+    width: 64px;
+    height: 64px;
+    stroke-width: 1.6;
+}
+
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.day-tile {
+    --accent: var(--gold);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 2px;
+    border-radius: 12px;
+    border: 1px solid var(--edge);
+    background: #1a100a;
+    color: var(--accent);
+    font: inherit;
+    min-width: 0;
+}
+
+.day-tile .icon {
+    width: 22px;
+    height: 22px;
+}
+
+.day-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.day-amount {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.day-tile.last {
+    border-color: var(--brass);
+    background: radial-gradient(circle at 50% 30%, rgba(255, 179, 71, 0.18), #1a100a 70%);
+}
+
+.day-tile.claimed {
+    opacity: 0.45;
+    color: var(--good);
+}
+
+.day-tile.today {
+    border: 2px solid var(--gold-hi);
+    background: radial-gradient(circle at 50% 35%, rgba(255, 138, 42, 0.45), #1a100a 75%);
+    box-shadow: 0 0 14px rgba(255, 138, 42, 0.7);
+    cursor: pointer;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.day-tile.today .day-label {
+    color: var(--gold-hi);
+}
+
+.tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background: #1a100a;
+}
+
+.task.done {
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 12px rgba(255, 138, 42, 0.4);
+}
+
+.task.claimed {
+    opacity: 0.5;
+}
+
+.task-icon {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2c1d13;
+    border: 1px solid var(--edge);
+    color: var(--gold-hi);
+}
+
+.task.claimed .task-icon {
+    color: var(--good);
+}
+
+.task-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.task-text b {
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.task-meter {
+    display: block;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 179, 71, 0.25);
+    overflow: hidden;
+}
+
+.task-meter span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #ff7a1a, #ffd27a);
+}
+
+.task-side {
+    flex: none;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.chest-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chest-panel h3 {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.chest-open {
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.chest-art {
+    width: 64px;
+    height: 64px;
+    flex: none;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 40%, rgba(255, 179, 71, 0.25), #1a100a 70%);
+    border: 1px solid var(--brass);
+    color: var(--gold-hi);
+}
+
+.chest-art .icon {
+    width: 40px;
+    height: 40px;
+    stroke-width: 1.7;
+}
+
+.chest-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.chest-line {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.chest-panel.ready {
+    border: 2px solid var(--gold-hi);
+    box-shadow: 0 0 18px rgba(255, 138, 42, 0.55);
+}
+
+.chest-panel.ready .chest-art {
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.chest-panel.claimed {
+    opacity: 0.6;
+}
+
+.bonus-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.bonus-tile {
+    --accent: var(--gold);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+    min-width: 0;
+}
+
+.bonus-tile b {
+    font-size: 11px;
+    line-height: 1.15;
+}
+
+.bonus-tile small {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.bonus-tile.none {
+    opacity: 0.4;
+}
+
+.bonus-art {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+    background: radial-gradient(circle at 40% 30%, #3a2a20, #120a06 75%);
+    color: var(--accent);
+}
+
+.bonus-art .icon {
+    width: 26px;
+    height: 26px;
+}
+
+.bonus-count {
+    position: absolute;
+    right: -6px;
+    bottom: -4px;
+    min-width: 22px;
+    padding: 0 4px;
+    border-radius: 10px;
+    background: #120a06;
+    border: 1px solid var(--accent);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* ── bonus picker ────────────────────────────────────────────────────── */
+.picker-shade {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px 16px calc(24px + var(--safe-bottom));
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.bonus-picker {
+    width: min(100%, 380px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 20px;
+    border: 2px solid var(--brass);
+    background: linear-gradient(#2c1d13, #120b07);
+    box-shadow: 0 10px 30px #000;
+    animation: rise 0.2s ease-out;
+}
+
+.bonus-picker > b {
+    font-family: var(--display);
+    font-size: 24px;
+    color: var(--gold-hi);
+}
+
+.bonus-picker > small {
+    margin-top: -6px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.picker-options {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.picker-option {
+    --accent: var(--gold);
+    width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 6px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    background: #1a100a;
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.picker-option:hover,
+.picker-option:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.picker-option b {
+    color: var(--accent);
+    font-size: 15px;
+}
+
+.picker-option small {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* speed-up button on a forge job, and the energy pill as a button */
+.slot-speed {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 210, 122, 0.6);
+    background: rgba(255, 179, 71, 0.12);
+    color: var(--gold-hi);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.slot-speed .icon {
+    width: 14px;
+    height: 14px;
+}
+
+button.energy-pill {
+    font: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    color: inherit;
+    cursor: pointer;
+}
+
+button.energy-pill.boostable {
+    border-color: #6fd3ff;
+    box-shadow: 0 0 8px rgba(111, 211, 255, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .day-tile.today,
+    .chest-panel.ready .chest-art,
+    .reward-medal {
+        animation: none;
+    }
+}

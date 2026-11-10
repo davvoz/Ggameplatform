@@ -70,7 +70,8 @@ export function costChips(cost, materials) {
     return wrap;
 }
 
-export function renderForgeSlots(container, forge, serverNow, onClaim) {
+/** The forge's slots; `onSpeedUp(jobId)` (or null) offers an hourglass on a job still running. */
+export function renderForgeSlots(container, forge, serverNow, onClaim, onSpeedUp = null) {
     container.replaceChildren();
     for (let i = 0; i < forge.slots; i++) {
         const job = forge.jobs[i];
@@ -97,6 +98,12 @@ export function renderForgeSlots(container, forge, serverNow, onClaim) {
             slot.classList.add('ready');
         } else {
             text.append(el('small', '', `${formatCountdown(left)} left`));
+            if (onSpeedUp) {
+                const speed = withIcon(el('button', 'slot-speed'), 'hourglass', 'Speed up');
+                speed.type = 'button';
+                speed.addEventListener('click', () => onSpeedUp(job.id));
+                text.append(speed);
+            }
         }
         slot.append(ring, text);
         container.append(slot);

@@ -42,5 +42,13 @@ class AttackRequest(BaseModel):
     tactic: Literal["compact", "spread", "split"]
 
 
+class BonusRequest(BaseModel):
+    """Use one bonus on exactly one target: a forge job, a hurt hero or the energy."""
+    bonus: Literal["hourglass", "golden_hourglass", "salve", "flask"]
+    job_id: Optional[int] = None
+    hero_id: Optional[int] = None
+    energy: bool = False
+
+
 class AimRequest(BaseModel):
     aim: Literal["closest", "weakest", "ranged"]

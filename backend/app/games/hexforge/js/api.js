@@ -111,3 +111,20 @@ export function fetchRaidReplay(raidId) {
 export function revengeRaid(raidId) {
     return post(`/me/defenses/${raidId}/revenge`, {});
 }
+
+export function claimLoginReward() {
+    return post('/me/rewards/login', {});
+}
+
+export function claimTaskReward(taskId) {
+    return post(`/me/rewards/tasks/${encodeURIComponent(taskId)}/claim`, {});
+}
+
+export function claimWeeklyChest() {
+    return post('/me/rewards/chest', {});
+}
+
+/** `target` is { job_id }, { hero_id } or { energy: true }. */
+export function useBonus(bonus, target) {
+    return post('/me/bonuses/use', { bonus, ...target });
+}

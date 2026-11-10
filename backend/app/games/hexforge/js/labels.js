@@ -61,3 +61,28 @@ export const CHOICE_ICONS = {
     tactic: { compact: 'compact', spread: 'spread', split: 'split' },
     aim: { closest: 'aim', weakest: 'hero', ranged: 'bolt' },
 };
+
+/** Speed-up bonuses: what they are called, what they do, which icon and colour. */
+export const BONUS_INFO = {
+    hourglass: { name: 'Hourglass', effect: '−15 min', what: '15 minutes off a forge job, a hurt hero or the energy.', icon: 'hourglass', color: '#ffd27a' },
+    golden_hourglass: { name: 'Golden hourglass', effect: '−1 hour', what: 'One hour off a forge job, a hurt hero or the energy.', icon: 'hourglass', color: '#ffb300' },
+    salve: { name: 'Healing salve', effect: 'Heal now', what: 'Heals a hurt hero at once.', icon: 'salve', color: '#4dd98a' },
+    flask: { name: 'Energy flask', effect: '+1 energy', what: 'One more attack charge right now.', icon: 'flask', color: '#6fd3ff' },
+};
+
+/** Which bonuses work on what: a forge job, a hurt hero, the energy. */
+export const BONUS_TARGETS = {
+    job: ['hourglass', 'golden_hourglass'],
+    hero: ['salve', 'hourglass', 'golden_hourglass'],
+    energy: ['flask', 'hourglass', 'golden_hourglass'],
+};
+
+/** Daily tasks: their line (from the goal) and icon. */
+export const TASK_INFO = {
+    collect_times: { text: (goal) => `Collect from your buildings ${goal} times`, icon: 'collect' },
+    collect_units: { text: (goal) => `Collect ${goal} materials`, icon: 'gem' },
+    forge: { text: (goal) => `Start ${goal} jobs at the forge`, icon: 'anvil' },
+    claim: { text: (goal) => `Claim ${goal} forged items`, icon: 'gift' },
+    attack: { text: (goal) => `Attack ${goal} times`, icon: 'attack' },
+    win: { text: (goal) => (goal === 1 ? 'Win an attack' : `Win ${goal} attacks`), icon: 'trophy' },
+};

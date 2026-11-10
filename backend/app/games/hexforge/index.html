@@ -53,6 +53,11 @@
             <symbol id="i-test" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5"/></symbol>
             <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
             <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9l-5.4 2.9 1.1-6.1-4.5-4.3 6.1-.8z"/></symbol>
+            <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3v3l5 6 5-6V3M7 21v-3l5-6 5 6v3"/></symbol>
+            <symbol id="i-salve" viewBox="0 0 24 24"><path d="M7 9h10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2zM8 5h8v4H8zM12 12v6M9 15h6"/></symbol>
+            <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 3h4M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3M7.5 14h9"/></symbol>
+            <symbol id="i-chest" viewBox="0 0 24 24"><path d="M3 11h18v9H3zM3 11a9 6 0 0 1 18 0M3 14h18M10.5 13h3v3h-3z"/></symbol>
+            <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M8 3v5M16 3v5"/></symbol>
             <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v5h-5"/></symbol>
             <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
             <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
@@ -130,6 +135,10 @@
                 <span id="city-energy" class="under-label"></span>
             </div>
             <div class="corner right">
+                <button id="btn-open-rewards" class="action big" type="button">
+                    <span class="round"><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg><span id="rewards-badge" class="badge good" hidden></span></span>
+                    <span class="action-label">Rewards</span>
+                </button>
                 <button id="btn-open-defense" class="action big" type="button">
                     <span class="round"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span id="defense-badge" class="badge alert" hidden></span></span>
                     <span class="action-label">Defense</span>
@@ -166,7 +175,7 @@
                 <p id="launch-hint" class="tray-hint"></p>
                 <div class="tray-head">
                     <span><svg class="icon" aria-hidden="true"><use href="#i-hero"/></svg>Squad <b id="squad-count"></b><span id="squad-pips" class="squad-pips" aria-hidden="true"></span></span>
-                    <span id="energy" class="energy-pill" title="Energy: each attack costs 1. One charge comes back every hour."></span>
+                    <button id="energy" class="energy-pill" type="button" title="Energy: each attack costs 1. One charge comes back every hour."></button>
                 </div>
                 <div id="squad" class="squad"></div>
                 <div class="plan-row">
@@ -230,6 +239,30 @@
                 </nav>
                 <div id="recipes" class="recipe-grid"></div>
                 <div id="roster" class="roster"></div>
+            </div>
+        </section>
+
+        <section id="sheet-rewards" class="sheet" aria-labelledby="rewards-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg>
+                <h2 id="rewards-title">Rewards</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            </header>
+            <div class="sheet-body">
+                <div class="panel">
+                    <h3><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>Daily gift<small id="login-note" class="panel-note"></small></h3>
+                    <div id="calendar" class="calendar"></div>
+                </div>
+                <div class="panel">
+                    <h3><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Today's tasks<small id="tasks-note" class="panel-note"></small></h3>
+                    <div id="tasks" class="tasks"></div>
+                </div>
+                <div id="chest" class="panel chest-panel"></div>
+                <div class="panel">
+                    <h3><svg class="icon" aria-hidden="true"><use href="#i-hourglass"/></svg>Your bonuses</h3>
+                    <div id="bonus-list" class="bonus-list"></div>
+                    <p class="hint">Use them on a forge job, on a hurt hero in the attack plan, or on the energy.</p>
+                </div>
             </div>
         </section>
 

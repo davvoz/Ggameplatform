@@ -83,31 +83,56 @@ h2 {
     color: var(--muted);
 }
 
-.squad {
-    display: grid;
-    gap: 6px;
+.energy {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--line));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--amber) 8%, var(--panel-2));
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
-.slot {
+.outposts .chip,
+.squad-picker .chip {
+    flex: 0 1 auto;
+}
+
+.chip:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.count {
+    margin-left: 6px;
+    color: var(--text);
+    letter-spacing: 0;
+}
+
+.loot-line {
     display: grid;
-    grid-template-columns: 22px repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: 118px 1fr;
+    flex-wrap: wrap;
     align-items: center;
-}
-
-.slot .chip {
-    padding: 6px 4px;
-    font-size: 12.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.slot-index {
+    gap: 6px;
+    margin: 4px 0 0;
+    font-size: 13px;
     color: var(--muted);
-    font-size: 12px;
-    text-align: center;
 }
+
+.result-note {
+    margin: 4px 0 0;
+    color: var(--good);
+    font-weight: 600;
+}
+
+.stats dd .costs {
+    justify-content: flex-end;
+}
+
+
+
 
 .chips {
     display: flex;

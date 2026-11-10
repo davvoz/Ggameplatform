@@ -56,7 +56,25 @@ load unchanged.
 | `POST /api/hexforge/me/place` | `{type, x, y}` — from storage |
 | `POST /api/hexforge/me/buildings/{id}/dismantle` | refund half; 400 `cannot_dismantle` for core/vault |
 
-Next step: computer cities to attack with your own heroes, with loot.
+Step 4 (done): **outposts**. The second tab is now **Attack**: five
+hand-built computer cities (`hexforge_be/outposts.py`) of rising difficulty —
+with the starter squad over all 36 side/priority/tactic combinations, the win
+rate goes 100 % → 94 % → 83 % → 69 % → 39 %, and a test keeps it rising. The
+first is open; each first victory opens the next. A win takes 20 % of the
+outpost's treasury (30 % if the core falls); an outpost already cleared pays
+half. Each attack costs 1 energy (5 max, +1 per hour, lazy like production).
+The squad is 4 heroes from your roster; heroes who fall are injured for
+15 minutes. Campaign and energy live inside the city JSON.
+
+| Route | What |
+| --- | --- |
+| `GET /api/hexforge/me/outposts` | Outposts with layout, status and loot preview, plus your state |
+| `POST /api/hexforge/me/outposts/{id}/attack` | `{hero_ids[4], side, priority, tactic}` — replay + rewards; 400 `no_energy` / `hero_injured` / `outpost_locked` / `bad_squad` |
+
+The old test battle (`/api/hexforge/battle` on the test city) remains only for
+the `?at=` screenshot helper.
+
+Phase 2 is complete. Next (phase 3): PvP between players.
 
 ## Layout
 

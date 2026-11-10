@@ -67,6 +67,11 @@ export class CityMode {
         else await this.#reload();
     }
 
+    /** Another mode changed the saved state: reload on the next visit. */
+    invalidate() {
+        this.state = null;
+    }
+
     leave() {
         this.#setMode('idle');
         $('view-city').hidden = true;

@@ -12,6 +12,8 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/forge/{job}/claim      collect a finished job
   POST /api/hexforge/me/place                  place a building from storage
   POST /api/hexforge/me/buildings/{id}/dismantle   remove it, refund half the recipe
+  GET  /api/hexforge/me/outposts               computer outposts, progress, energy
+  POST /api/hexforge/me/outposts/{id}/attack   attack with 4 of your heroes
 
 The /me routes need the platform session cookie.
 """
@@ -29,8 +31,9 @@ from app.user_auth import CurrentUserId
 
 from .catalog import public_catalog
 from .demo_city import demo_city
+from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
-from .schemas import BattleRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest
+from .schemas import AttackRequest, BattleRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest
 from .simulation import simulate
 
 router = APIRouter(prefix="/api/hexforge", tags=["Hexforge"])
@@ -129,3 +132,21 @@ def dismantle_building(building_id: int, user_id: CurrentUserId, db: Db, now: No
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return {"refund": refund, **public_state(state, now)}
+
+
+@router.get("/me/outposts")
+def list_outposts(user_id: CurrentUserId, db: Db, now: Now):
+    state = PlayerService(db).load(user_id, now)
+    return {"outposts": outposts.public_outposts(state.city), **public_state(state, now)}
+
+
+@router.post("/me/outposts/{outpost_id}/attack")
+@limiter.limit("30/minute")
+def attack_outpost(request: Request, outpost_id: int, body: AttackRequest,
+                   user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, battle = PlayerService(db).attack_outpost(
+            user_id, outpost_id, list(body.hero_ids), body.side, body.priority, body.tactic, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"battle": battle, "outposts": outposts.public_outposts(state.city), **public_state(state, now)}

@@ -2,13 +2,14 @@ import { BattleMode } from './battle.js';
 import { CityMode } from './city.js';
 import { Renderer } from './render.js';
 
-/** App shell: the two tabs (My city / Test battle), input routing and the frame loop. */
+/** App shell: the two tabs (My city / Attack), input routing and the frame loop. */
 
 const TAB_KEY = 'hexforge.tab';
 const $ = (id) => document.getElementById(id);
 
 const renderer = new Renderer($('view'));
 const modes = { city: new CityMode(renderer), battle: new BattleMode(renderer) };
+modes.battle.onStateChanged = () => modes.city.invalidate();
 let active = null;
 let activeName = null;
 let time = 0;

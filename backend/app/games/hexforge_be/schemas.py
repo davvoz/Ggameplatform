@@ -32,3 +32,10 @@ class PlaceRequest(BaseModel):
     type: str = Field(min_length=1, max_length=32)
     x: int = Field(ge=0, le=64)
     y: int = Field(ge=0, le=64)
+
+
+class AttackRequest(BaseModel):
+    hero_ids: list[int] = Field(min_length=4, max_length=4)
+    side: Literal["north", "east", "south", "west"]
+    priority: Literal["towers", "core", "production"]
+    tactic: Literal["compact", "spread", "split"]

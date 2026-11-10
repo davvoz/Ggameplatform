@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import economy, forge
+from . import economy, forge, outposts
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgePlayer
@@ -40,9 +40,12 @@ class PlayerService:
         """The player's state, creating the starter city on first visit."""
         row = self.db.get(HexforgePlayer, user_id)
         if row is None:
+            city = economy.starter_city(now)
+            forge.ensure_forge(city)
+            outposts.ensure_campaign(city, now)
             row = HexforgePlayer(
                 user_id=user_id,
-                city_json=json.dumps(economy.starter_city(now)),
+                city_json=json.dumps(city),
                 heroes_json=json.dumps(economy.starter_heroes()),
                 materials_json=json.dumps(economy.STARTING_MATERIALS),
                 version=1,
@@ -64,6 +67,7 @@ class PlayerService:
             version=row.version,
         )
         forge.ensure_forge(state.city)
+        outposts.ensure_campaign(state.city, now)
         return state
 
     def save(self, state: PlayerState, now: float) -> None:
@@ -123,6 +127,14 @@ class PlayerService:
         self.save(state, now)
         return state
 
+    def attack_outpost(self, user_id: str, outpost_id: int, hero_ids: list, side: str,
+                       priority: str, tactic: str, now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        result = outposts.attack(state.city, state.heroes, state.materials, outpost_id,
+                                 hero_ids, side, priority, tactic, now)
+        self.save(state, now)
+        return state, result
+
     def dismantle_building(self, user_id: str, building_id: int, now: float) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         refund = forge.dismantle(state.city, state.materials, building_id, now)
@@ -154,6 +166,7 @@ def public_state(state: PlayerState, now: float) -> dict:
         "storage": state.city["storage"],
         "forge": {"slots": state.city["forge"]["slots"], "jobs": jobs},
         "recipes": forge.public_recipes(state.city, state.heroes),
+        "energy": outposts.public_energy(state.city["energy"], now),
         "version": state.version,
         "server_time": now,
     }

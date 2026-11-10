@@ -67,3 +67,11 @@ export function placeBuilding(type, x, y) {
 export function dismantleBuilding(id) {
     return post(`/me/buildings/${id}/dismantle`, {});
 }
+
+export function fetchOutposts() {
+    return request('/me/outposts');
+}
+
+export function attackOutpost(outpostId, setup) {
+    return post(`/me/outposts/${outpostId}/attack`, setup);
+}

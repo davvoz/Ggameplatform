@@ -14,21 +14,12 @@ from dataclasses import dataclass
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import economy
+from . import economy, forge
 from .catalog import BUILDINGS
+from .errors import ActionError, StaleState
 from .models import HexforgePlayer
 
-
-class StaleState(Exception):
-    """Another request saved this player first."""
-
-
-class ActionError(Exception):
-    """The action breaks a game rule; `code` says which."""
-
-    def __init__(self, code: str):
-        super().__init__(code)
-        self.code = code
+__all__ = ["ActionError", "PlayerService", "PlayerState", "StaleState", "public_state"]
 
 
 @dataclass
@@ -65,13 +56,15 @@ class PlayerService:
                 # a parallel first visit created the row: use that one
                 self.db.rollback()
                 row = self.db.get(HexforgePlayer, user_id)
-        return PlayerState(
+        state = PlayerState(
             user_id=row.user_id,
             city=json.loads(row.city_json),
             heroes=json.loads(row.heroes_json),
             materials=json.loads(row.materials_json),
             version=row.version,
         )
+        forge.ensure_forge(state.city)
+        return state
 
     def save(self, state: PlayerState, now: float) -> None:
         updated = (
@@ -112,6 +105,30 @@ class PlayerService:
         self.save(state, now)
         return state
 
+    def start_forging(self, user_id: str, recipe_id: str, now: float) -> PlayerState:
+        state = self.load(user_id, now)
+        forge.start(state.city, state.heroes, state.materials, recipe_id, now)
+        self.save(state, now)
+        return state
+
+    def claim_forged(self, user_id: str, job_id: int, now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        result = forge.claim(state.city, state.heroes, job_id, now)
+        self.save(state, now)
+        return state, result
+
+    def place_building(self, user_id: str, building_type: str, x: int, y: int, now: float) -> PlayerState:
+        state = self.load(user_id, now)
+        forge.place(state.city, building_type, x, y, now)
+        self.save(state, now)
+        return state
+
+    def dismantle_building(self, user_id: str, building_id: int, now: float) -> tuple[PlayerState, dict]:
+        state = self.load(user_id, now)
+        refund = forge.dismantle(state.city, state.materials, building_id, now)
+        self.save(state, now)
+        return state, refund
+
 
 def public_state(state: PlayerState, now: float) -> dict:
     """What the client sees: buildings with size, HP and what they have made."""
@@ -129,10 +146,14 @@ def public_state(state: PlayerState, now: float) -> dict:
                 "capacity": economy.capacity(b["type"]),
             }
         buildings.append(item)
+    jobs = [{**job, "ready": job["ready_at"] <= now} for job in state.city["forge"]["jobs"]]
     return {
         "city": {"grid": state.city["grid"], "buildings": buildings},
         "heroes": state.heroes,
         "materials": state.materials,
+        "storage": state.city["storage"],
+        "forge": {"slots": state.city["forge"]["slots"], "jobs": jobs},
+        "recipes": forge.public_recipes(state.city, state.heroes),
         "version": state.version,
         "server_time": now,
     }

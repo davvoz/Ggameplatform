@@ -8,6 +8,10 @@ Hexforge API (mounted in main.py).
   GET  /api/hexforge/me                        your saved state (created on first visit)
   POST /api/hexforge/me/collect                collect what production buildings made
   POST /api/hexforge/me/buildings/{id}/move    move one of your buildings
+  POST /api/hexforge/me/forge                  start forging a recipe
+  POST /api/hexforge/me/forge/{job}/claim      collect a finished job
+  POST /api/hexforge/me/place                  place a building from storage
+  POST /api/hexforge/me/buildings/{id}/dismantle   remove it, refund half the recipe
 
 The /me routes need the platform session cookie.
 """
@@ -26,7 +30,7 @@ from app.user_auth import CurrentUserId
 from .catalog import public_catalog
 from .demo_city import demo_city
 from .player_service import ActionError, PlayerService, StaleState, public_state
-from .schemas import BattleRequest, CollectRequest, MoveRequest
+from .schemas import BattleRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest
 from .simulation import simulate
 
 router = APIRouter(prefix="/api/hexforge", tags=["Hexforge"])
@@ -89,3 +93,39 @@ def move_building(building_id: int, body: MoveRequest, user_id: CurrentUserId, d
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return public_state(state, now)
+
+
+@router.post("/me/forge")
+def start_forging(body: ForgeRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).start_forging(user_id, body.recipe, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/forge/{job_id}/claim")
+def claim_forged(job_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, claimed = PlayerService(db).claim_forged(user_id, job_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"claimed": claimed, **public_state(state, now)}
+
+
+@router.post("/me/place")
+def place_building(body: PlaceRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).place_building(user_id, body.type, body.x, body.y, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/buildings/{building_id}/dismantle")
+def dismantle_building(building_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, refund = PlayerService(db).dismantle_building(user_id, building_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"refund": refund, **public_state(state, now)}

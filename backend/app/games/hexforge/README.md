@@ -39,7 +39,24 @@ Signed-out players see a notice and can still use **Test battle**.
 | `js/battle.js` | Test battle: setup, replay, report |
 | `js/cityRules.js` | Client copy of the placement rules (preview only; the server decides) |
 
-Next steps: the forge, computer cities with loot.
+Step 3 (done): **the forge**. Fixed recipes (`hexforge_be/forge.py`): exact
+cost, exact time, no randomness. Two jobs run at once; a finished job is
+claimed with a tap. Forged buildings go to **storage** and are placed from
+there (same green/red preview); forged heroes join the roster. Ownership is
+capped per group (8 towers, 6 traps, 60 walls, 2 of each producer, 8 heroes),
+counting placed + stored + being forged. **Dismantle** (with a confirm that
+shows the refund) gives back half the recipe; the core and the vault stay.
+Forge and storage live inside the city JSON, so cities saved before step 3
+load unchanged.
+
+| Route | What |
+| --- | --- |
+| `POST /api/hexforge/me/forge` | `{recipe}` — 400 `forge_busy` / `limit_reached` / `not_enough_materials` |
+| `POST /api/hexforge/me/forge/{job}/claim` | 400 `not_ready` before its time |
+| `POST /api/hexforge/me/place` | `{type, x, y}` — from storage |
+| `POST /api/hexforge/me/buildings/{id}/dismantle` | refund half; 400 `cannot_dismantle` for core/vault |
+
+Next step: computer cities to attack with your own heroes, with loot.
 
 ## Layout
 

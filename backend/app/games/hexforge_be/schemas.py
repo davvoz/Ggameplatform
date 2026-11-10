@@ -22,3 +22,13 @@ class CollectRequest(BaseModel):
 class MoveRequest(BaseModel):
     x: int = Field(ge=0, le=64)
     y: int = Field(ge=0, le=64)
+
+
+class ForgeRequest(BaseModel):
+    recipe: str = Field(min_length=1, max_length=32)
+
+
+class PlaceRequest(BaseModel):
+    type: str = Field(min_length=1, max_length=32)
+    x: int = Field(ge=0, le=64)
+    y: int = Field(ge=0, le=64)

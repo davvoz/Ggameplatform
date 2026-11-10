@@ -1,10 +1,16 @@
-import { Refused, SignInRequired, collect, fetchMyState, moveBuilding } from './api.js';
+import {
+    Refused, SignInRequired, claimJob, collect, dismantleBuilding, fetchMyState,
+    moveBuilding, placeBuilding, startForging,
+} from './api.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
+import { itemName, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
 import { BUILDING_INFO, MATERIAL_INFO } from './labels.js';
 
 /**
- * "My city": the player's saved city. Tap a glowing production building to
- * collect, select a building and press Move to relocate it.
+ * "My city": the player's saved city.
+ *  - tap a glowing production building to collect, or Collect all
+ *  - select a building to move or dismantle it
+ *  - forge buildings and heroes; place forged buildings from storage
  */
 
 const $ = (id) => document.getElementById(id);
@@ -16,6 +22,17 @@ const MESSAGES = {
     outside_city: 'Keep it inside the city limits.',
     unknown_building: 'That building is gone. Reloading your city…',
     state_changed_retry: 'Your city changed meanwhile. Try again.',
+    forge_busy: 'Both forge slots are busy.',
+    limit_reached: 'You already own as many of those as allowed.',
+    not_enough_materials: 'Not enough materials.',
+    not_ready: 'Not ready yet.',
+    not_in_storage: 'Nothing like that in storage.',
+    cannot_dismantle: 'The core and the vault cannot be dismantled.',
+};
+const HINTS = {
+    idle: 'Tap a glowing building to collect what it made. Select a building to move or dismantle it.',
+    move: 'Tap where the building should stand. Green fits, red does not. Esc cancels.',
+    place: 'Tap where the new building should stand. Green fits, red does not. Esc cancels.',
 };
 
 export class CityMode {
@@ -24,14 +41,23 @@ export class CityMode {
         this.state = null;
         this.receivedAt = 0;
         this.selectedId = null;
-        this.moving = false;
+        this.mode = 'idle';           // idle | move | place
+        this.placingType = null;
         this.preview = null;
+        this.confirmDismantle = false;
         this.floaters = [];
         this.busy = false;
         this.infoText = '';
-        $('btn-collect-all').addEventListener('click', () => this.#collect(null));
-        $('btn-move').addEventListener('click', () => this.#setMoving(!this.moving));
+        this.forgeSecond = -1;
+        $('btn-collect-all').addEventListener('click', () => void this.#collect(null));
+        $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
+        $('btn-dismantle').addEventListener('click', () => void this.#dismantle());
         $('btn-deselect').addEventListener('click', () => this.#select(null));
+        $('btn-recipes').addEventListener('click', () => {
+            const list = $('recipes');
+            list.hidden = !list.hidden;
+            $('btn-recipes').textContent = list.hidden ? 'Forge something' : 'Hide recipes';
+        });
     }
 
     async enter() {
@@ -42,7 +68,7 @@ export class CityMode {
     }
 
     leave() {
-        this.#setMoving(false);
+        this.#setMode('idle');
         $('view-city').hidden = true;
         $('resources').hidden = true;
     }
@@ -51,23 +77,23 @@ export class CityMode {
     onClick(event) {
         if (!this.state || this.busy) return;
         const point = this.renderer.canvasPoint(event);
-        if (this.moving) {
-            this.#tryMove(point);
+        if (this.mode !== 'idle') {
+            void this.#tryDrop(point);
             return;
         }
         const building = this.renderer.buildingAt(point);
         this.#select(building?.id ?? null);
-        if (building?.production && this.#pendingOf(building) > 0) this.#collect([building.id]);
+        if (building?.production && this.#pendingOf(building) > 0) void this.#collect([building.id]);
     }
 
     onPointerMove(event) {
-        if (!this.moving || !this.state) return;
+        if (this.mode === 'idle' || !this.state) return;
         this.preview = this.#previewAt(this.renderer.canvasPoint(event));
     }
 
     onEscape() {
-        if (this.moving) this.#setMoving(false);
-        else this.#select(null);
+        if (this.mode === 'idle') this.#select(null);
+        else this.#setMode('idle');
     }
 
     // ── per frame ──────────────────────────────────────────────────────
@@ -86,13 +112,14 @@ export class CityMode {
         }
         this.renderer.draw(null, {
             time,
-            selectedId: this.selectedId,
-            preview: this.moving ? this.preview : null,
+            selectedId: this.mode === 'place' ? null : this.selectedId,
+            preview: this.mode === 'idle' ? null : this.preview,
             bubbles,
             floaters: this.floaters,
             showTraps: true,
         });
         this.#updateInfo();
+        this.#tickForge();
     }
 
     // ── server round trips ─────────────────────────────────────────────
@@ -114,9 +141,9 @@ export class CityMode {
         this.state = state;
         this.receivedAt = performance.now();
         this.renderer.setCity(state.city);
-        this.#renderResources();
         if (this.selectedId !== null && !this.#building(this.selectedId)) this.#select(null);
-        this.#renderSelection();
+        if (this.mode === 'place' && !state.storage[this.placingType]) this.#setMode('idle');
+        this.#renderAll();
     }
 
     async #collect(ids) {
@@ -133,14 +160,14 @@ export class CityMode {
             const result = await collect(ids);
             for (const { b, amount } of sources) {
                 const info = MATERIAL_INFO[b.production.material];
-                this.floaters.push({ x: b.x + b.size / 2, y: b.y + b.size / 2, text: `+${amount} ${info.name}`, color: info.color, age: 0 });
+                this.#float(b, `+${amount} ${info.name}`, info.color);
             }
             this.#apply(result);
             this.#message('');
         });
     }
 
-    async #tryMove(point) {
+    async #tryDrop(point) {
         const target = this.#previewAt(point);
         this.preview = target;
         if (!target.valid) {
@@ -148,9 +175,51 @@ export class CityMode {
             return;
         }
         await this.#run(async () => {
-            this.#apply(await moveBuilding(this.selectedId, target.x, target.y));
-            this.#setMoving(false);
-            this.#message('Moved.');
+            if (this.mode === 'move') {
+                this.#apply(await moveBuilding(this.selectedId, target.x, target.y));
+                this.#setMode('idle');
+                this.#message('Moved.');
+            } else {
+                const type = this.placingType;
+                this.#apply(await placeBuilding(type, target.x, target.y));
+                this.#message(`${itemName(type)} placed.`);
+                if (!this.state.storage[type]) this.#setMode('idle');
+            }
+        });
+    }
+
+    async #forge(recipeId) {
+        await this.#run(async () => {
+            this.#apply(await startForging(recipeId));
+            this.#message(`Forging ${itemName(recipeId)}.`);
+        });
+    }
+
+    async #claim(jobId) {
+        await this.#run(async () => {
+            const result = await claimJob(jobId);
+            this.#apply(result);
+            const { item, kind, count } = result.claimed;
+            this.#message(kind === 'hero'
+                ? `${itemName(item)} joined your heroes.`
+                : `${itemName(item)}${count > 1 ? ` ×${count}` : ''} ready in storage. Tap it below to place it.`);
+        });
+    }
+
+    async #dismantle() {
+        const b = this.#building(this.selectedId);
+        if (!b) return;
+        if (!this.confirmDismantle) {
+            this.confirmDismantle = true;
+            this.#renderSelection();
+            return;
+        }
+        await this.#run(async () => {
+            const result = await dismantleBuilding(b.id);
+            const gained = Object.entries(result.refund).map(([m, n]) => `+${n} ${MATERIAL_INFO[m].name}`).join('  ');
+            if (gained) this.#float(b, gained, '#e6e9f5');
+            this.#apply(result);
+            this.#message(`${BUILDING_INFO[b.type].name} dismantled.`);
         });
     }
 
@@ -178,36 +247,77 @@ export class CityMode {
         return this.state?.city.buildings.find((b) => b.id === id) ?? null;
     }
 
+    #serverNow() {
+        return this.state.server_time + (performance.now() - this.receivedAt) / 1000;
+    }
+
     #pendingOf(b) {
         if (!b.production) return 0;
         return estimatePending(b.production, (performance.now() - this.receivedAt) / 1000);
     }
 
+    #recipe(id) {
+        return this.state.recipes.find((r) => r.id === id);
+    }
+
+    #float(b, text, color) {
+        this.floaters.push({ x: b.x + b.size / 2, y: b.y + b.size / 2, text, color, age: 0 });
+    }
+
     #previewAt(point) {
-        const b = this.#building(this.selectedId);
         const ground = this.renderer.groundAt(point);
-        const { x, y } = anchorFor(b.size, ground.x, ground.y);
-        const error = placementError(this.state.city, b, x, y);
-        return { x, y, size: b.size, valid: !error, error };
+        const subject = this.mode === 'move'
+            ? this.#building(this.selectedId)
+            : { id: null, size: this.#recipe(this.placingType).size };
+        const { x, y } = anchorFor(subject.size, ground.x, ground.y);
+        const error = placementError(this.state.city, subject, x, y);
+        return { x, y, size: subject.size, valid: !error, error };
     }
 
     #select(id) {
-        if (id !== this.selectedId) this.#setMoving(false);
+        if (id !== this.selectedId && this.mode === 'move') this.#setMode('idle');
         this.selectedId = id;
+        this.confirmDismantle = false;
         this.#renderSelection();
     }
 
-    #setMoving(on) {
-        this.moving = on && this.selectedId !== null;
+    #setMode(mode, placingType = null) {
+        this.mode = mode === 'move' && this.selectedId === null ? 'idle' : mode;
+        this.placingType = this.mode === 'place' ? placingType : null;
         this.preview = null;
-        $('btn-move').textContent = this.moving ? 'Cancel move' : 'Move';
-        $('city-hint').textContent = this.moving
-            ? 'Tap where the building should stand. Green fits, red does not.'
-            : 'Tap a glowing building to collect what it made. Select a building to move it.';
+        $('btn-move').textContent = this.mode === 'move' ? 'Cancel move' : 'Move';
+        $('city-hint').textContent = HINTS[this.mode];
+        if (this.state) renderStorage($('storage'), this.state.storage, this.placingType, (type) => this.#togglePlacing(type));
+    }
+
+    #togglePlacing(type) {
+        if (this.mode === 'place' && this.placingType === type) this.#setMode('idle');
+        else this.#setMode('place', type);
     }
 
     #message(text) {
         $('city-message').textContent = text;
+    }
+
+    // ── panel ──────────────────────────────────────────────────────────
+    #renderAll() {
+        this.#renderResources();
+        this.#renderSelection();
+        this.forgeSecond = -1;
+        this.#tickForge();
+        const freeSlots = this.state.forge.slots - this.state.forge.jobs.length;
+        renderRecipes($('recipes'), this.state.recipes, this.state.materials, freeSlots, (id) => void this.#forge(id));
+        renderStorage($('storage'), this.state.storage, this.placingType, (type) => this.#togglePlacing(type));
+        const heroLimit = this.state.recipes.find((r) => r.kind === 'hero')?.limit ?? 0;
+        renderRoster($('roster'), this.state.heroes, heroLimit);
+    }
+
+    #tickForge() {
+        if (!this.state) return;
+        const second = Math.floor(this.#serverNow());
+        if (second === this.forgeSecond) return;
+        this.forgeSecond = second;
+        renderForgeSlots($('forge-slots'), this.state.forge, this.#serverNow(), (id) => void this.#claim(id));
     }
 
     #renderResources() {
@@ -233,6 +343,13 @@ export class CityMode {
         $('selected').hidden = !b;
         if (!b) return;
         $('sel-name').textContent = BUILDING_INFO[b.type].name;
+        const locked = b.type === 'core' || b.type === 'vault';
+        const refund = this.#recipe(b.type)?.refund ?? {};
+        const refundText = Object.entries(refund).map(([m, n]) => `${n} ${MATERIAL_INFO[m].name.toLowerCase()}`).join(', ');
+        const button = $('btn-dismantle');
+        button.hidden = locked;
+        button.textContent = this.confirmDismantle ? `Confirm: get back ${refundText || 'nothing'}` : 'Dismantle';
+        button.classList.toggle('danger', this.confirmDismantle);
         this.infoText = '';
         this.#updateInfo();
     }

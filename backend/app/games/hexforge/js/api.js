@@ -51,3 +51,19 @@ export function collect(buildingIds) {
 export function moveBuilding(id, x, y) {
     return post(`/me/buildings/${id}/move`, { x, y });
 }
+
+export function startForging(recipe) {
+    return post('/me/forge', { recipe });
+}
+
+export function claimJob(jobId) {
+    return post(`/me/forge/${jobId}/claim`, {});
+}
+
+export function placeBuilding(type, x, y) {
+    return post('/me/place', { type, x, y });
+}
+
+export function dismantleBuilding(id) {
+    return post(`/me/buildings/${id}/dismantle`, {});
+}

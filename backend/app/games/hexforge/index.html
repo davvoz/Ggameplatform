@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Hexforge</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <section id="stage" aria-label="Battlefield">
+            <canvas id="view"></canvas>
+            <div id="hud" class="hud" hidden>
+                <span id="hud-time" class="hud-time">0:00</span>
+                <div class="meter" aria-hidden="true"><div id="hud-bar" class="meter-fill"></div></div>
+                <span id="hud-destruction">0%</span>
+                <span id="hud-core" class="hud-core">Core standing</span>
+            </div>
+            <p id="loading" class="loading">Loading the bastion…</p>
+        </section>
+
+        <aside id="panel">
+            <header class="brand">
+                <h1>HEXFORGE</h1>
+                <p>Battle prototype · Test bastion</p>
+            </header>
+
+            <section id="view-setup">
+                <h2>Assault squad</h2>
+                <div id="squad" class="squad"></div>
+                <ul id="classes" class="classes"></ul>
+
+                <h2>Entry side</h2>
+                <div id="side" class="chips"></div>
+
+                <h2>Priority target</h2>
+                <div id="priority" class="chips"></div>
+                <p id="priority-hint" class="hint"></p>
+
+                <h2>Tactic</h2>
+                <div id="tactic" class="chips"></div>
+                <p id="tactic-hint" class="hint"></p>
+
+                <button id="btn-launch" class="button primary" disabled>Launch attack</button>
+                <p id="error" class="error" role="alert" hidden></p>
+            </section>
+
+            <section id="view-battle" hidden>
+                <h2>Squad</h2>
+                <div id="hero-list" class="hero-list"></div>
+                <div class="controls">
+                    <button id="btn-pause" class="button">Pause</button>
+                    <button id="btn-speed" class="button">Speed 1×</button>
+                    <button id="btn-skip" class="button">Skip</button>
+                </div>
+            </section>
+
+            <section id="view-result" hidden>
+                <p id="verdict" class="verdict"></p>
+                <dl id="stats" class="stats"></dl>
+                <h2>Squad report</h2>
+                <table class="report">
+                    <thead><tr><th>Hero</th><th>Damage dealt</th><th>Taken</th><th></th></tr></thead>
+                    <tbody id="report"></tbody>
+                </table>
+                <div class="controls">
+                    <button id="btn-rewatch" class="button">Watch again</button>
+                    <button id="btn-new" class="button primary">New attack</button>
+                </div>
+            </section>
+        </aside>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -125,7 +125,7 @@ export class Renderer {
         const c = toScreen(this.camera, g / 2, g / 2);
         const d = this.dpr;
         const { top = 0, right = 0, bottom = 0, left = 0 } = this.insets;
-        const pad = 34;
+        const pad = 48;             // room for the button and its "Enter here" label
         const cssX = Math.min(this.w / d - right - pad, Math.max(left + pad, p.x / d));
         const cssY = Math.min(this.h / d - bottom - pad, Math.max(top + pad, p.y / d));
         const angle = (Math.atan2(c.x - p.x, -(c.y - p.y)) * 180) / Math.PI;

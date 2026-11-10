@@ -1082,24 +1082,6 @@ button.round:disabled {
     align-items: center;
 }
 
-.roster-item {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 12px 4px 4px;
-    border-radius: 14px;
-    border: 1px solid var(--accent);
-    background: #1a100a;
-    font-weight: 700;
-    font-size: 13px;
-}
-
-.roster-item img {
-    width: 40px;
-    height: 40px;
-}
-
 .roster-total {
     color: var(--muted);
     font-size: 13px;
@@ -1486,85 +1468,159 @@ button.round:disabled {
 
 .squad {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px 6px;
+    padding: 6px 2px 2px;
 }
 
-.hero-card {
-    position: relative;
+.squad .hero-tile {
+    width: auto;
 }
 
-.hero-add {
+.squad-pips {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 6px;
+}
+
+.squad-pips span {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    transform: rotate(45deg);
+    border: 1px solid var(--gold);
+    background: transparent;
+}
+
+.squad-pips span.full {
+    background: var(--gold);
+    box-shadow: 0 0 6px var(--gold);
+}
+
+/* one tile per hero: ready, in the squad, or hurt and healing */
+.hero-tile {
     position: relative;
-    width: 100%;
+    flex: none;
+    width: 76px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1px;
-    padding: 6px 4px;
+    padding: 6px 2px 5px;
     border-radius: 14px;
     border: 2px solid var(--edge);
     background: linear-gradient(#2c1d13, #160e09);
+    font-size: 12px;
     font-weight: 700;
-    font-size: 13px;
+    line-height: 1.2;
 }
 
-.hero-card.picked .hero-add {
-    border-color: var(--accent);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent);
-}
-
-.hero-add:disabled {
-    cursor: default;
-}
-
-.hero-card:not(.picked) .hero-add:disabled img {
-    filter: grayscale(0.8);
-    opacity: 0.6;
-}
-
-.hero-card img {
-    width: 50px;
-    height: 50px;
-}
-
-.hero-card small {
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 600;
-}
-
-.hero-card .count {
-    position: absolute;
-    top: 4px;
-    left: 6px;
-    padding: 1px 6px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.7);
-    color: var(--accent);
-    font-size: 13px;
-}
-
-.hero-card .minus {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 30px;
-    height: 30px;
+.ht-portrait {
+    position: relative;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
-    border: 2px solid #1a0f08;
-    background: #5a3a28;
-    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
 }
 
-.hero-card .minus .icon {
-    width: 16px;
-    height: 16px;
-    stroke-width: 3;
+.ht-portrait img {
+    width: 52px;
+    height: 52px;
+}
+
+.ht-status {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.ht-badge {
+    position: absolute;
+    right: -6px;
+    top: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #1a0f08;
+}
+
+.ht-badge .icon {
+    width: 13px;
+    height: 13px;
+    stroke-width: 3.2;
+}
+
+.hero-tile.picked {
+    border-color: var(--accent);
+    background: linear-gradient(color-mix(in srgb, var(--accent) 28%, #2c1d13), #160e09);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent);
+    transform: translateY(-4px);
+}
+
+.hero-tile.picked .ht-status {
+    color: var(--text);
+}
+
+.ht-badge.picked {
+    background: var(--accent);
+    color: #120a06;
+}
+
+.hero-tile.hurt {
+    border-style: dashed;
+    border-color: rgba(255, 90, 74, 0.55);
+}
+
+.hero-tile.hurt .ht-portrait {
+    background: conic-gradient(#4dd98a 0 var(--healed), rgba(255, 90, 74, 0.35) var(--healed) 100%);
+    padding: 3px;
+}
+
+.hero-tile.hurt .ht-portrait img {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #160e09;
+    filter: grayscale(1) brightness(0.6);
+}
+
+.hero-tile.hurt .ht-name {
+    color: var(--muted);
+}
+
+.hero-tile.hurt .ht-status {
+    color: #ff9a8a;
+    font-variant-numeric: tabular-nums;
+}
+
+.ht-badge.hurt {
+    background: #e0442a;
+    color: #fff;
+}
+
+.ht-badge.hurt .icon {
+    transform: rotate(0deg);
+}
+
+button.hero-tile.ready:hover {
+    border-color: var(--accent);
+}
+
+.roster {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.roster-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .plan-row {
@@ -2035,6 +2091,26 @@ button.round:disabled {
 }
 
 @media (max-width: 520px) {
+    .squad {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .squad .ht-portrait,
+    .squad .ht-portrait img {
+        width: 42px;
+        height: 42px;
+    }
+
+    .squad .hero-tile.hurt .ht-portrait img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .squad .hero-tile {
+        font-size: 11px;
+        padding: 5px 1px 4px;
+    }
+
     .hero-strip {
         flex-wrap: nowrap;
         gap: 4px;

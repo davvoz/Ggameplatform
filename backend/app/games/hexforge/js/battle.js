@@ -7,7 +7,8 @@ import { LEAGUE_COLORS, signed, stakesText } from './leagues.js';
 import { createReplay } from './replay.js';
 import { materialChips, rivalBlocker } from './rivalPanel.js';
 import { toast } from './sheets.js';
-import { SQUAD_SIZE, isAvailable, launchBlocker, settleSquad, toggleHero } from './squad.js';
+import { SQUAD_SIZE, launchBlocker, settleSquad, toggleHero } from './squad.js';
+import { formatHeal, heroNames, heroStatus, heroTile } from './heroTiles.js';
 import { heroThumb, thumbImg } from './thumbs.js';
 
 /**
@@ -27,7 +28,7 @@ const SIDES = ['north', 'east', 'south', 'west'];
 const EMPTY_CITY = { grid: 18, buildings: [] };
 const SPEEDS = [1, 2, 4];
 const TAIL_SECONDS = 1.5;   // keep the last frame on screen before the report
-const PLAN_INSETS = { top: 150, right: 0, bottom: 250, left: 0 };
+const PLAN_INSETS = { top: 150, right: 0, bottom: 300, left: 0 };
 const BATTLE_INSETS = { top: 70, right: 0, bottom: 110, left: 0 };
 const REFUSALS = {
     no_energy: 'No energy left. A charge comes back every hour.',
@@ -361,48 +362,51 @@ export class BattleMode {
         this.#tickSetup();
     }
 
-    /** One card per hero class: tap to add one more, − to take one out. */
+    /** Every hero you own, one tile each: tap a ready one to add it, a picked one to take it out. */
     #renderSquad() {
         const list = $('squad');
         list.replaceChildren();
         const now = this.#serverNow();
-        for (const [cls, info] of Object.entries(HERO_INFO)) {
-            const mine = this.data.heroes.filter((h) => h.cls === cls);
-            const fit = mine.filter((h) => isAvailable(h, now));
-            const picked = mine.filter((h) => this.setup.heroIds.includes(h.id));
-            const spare = fit.find((h) => !this.setup.heroIds.includes(h.id));
-            const card = document.createElement('div');
-            card.className = `hero-card${picked.length ? ' picked' : ''}`;
-            card.style.setProperty('--accent', info.color);
-            const add = document.createElement('button');
-            add.type = 'button';
-            add.className = 'hero-add';
-            add.disabled = !spare || this.setup.heroIds.length >= SQUAD_SIZE;
-            add.setAttribute('aria-label', `Add a ${info.name}`);
-            add.addEventListener('click', () => this.#pick(toggleHero(this.setup.heroIds, spare.id)));
-            const count = Object.assign(document.createElement('span'), { className: 'count', textContent: `${picked.length}/${fit.length}` });
-            add.append(count, thumbImg(heroThumb(cls, 50), '', ''), Object.assign(document.createElement('span'), { textContent: info.tag }));
-            add.append(Object.assign(document.createElement('small'), { textContent: this.#heroNote(mine, fit, now) }));
-            card.append(add);
-            if (picked.length) {
-                const minus = document.createElement('button');
-                minus.type = 'button';
-                minus.className = 'minus';
-                minus.setAttribute('aria-label', `Take a ${info.name} out`);
-                minus.append(icon('minus'));
-                minus.addEventListener('click', () => this.#pick(toggleHero(this.setup.heroIds, picked.at(-1).id)));
-                card.append(minus);
-            }
-            list.append(card);
+        const names = heroNames(this.data.heroes);
+        const order = Object.keys(HERO_INFO);
+        const heroes = [...this.data.heroes].sort((a, b) => order.indexOf(a.cls) - order.indexOf(b.cls) || a.id - b.id);
+        for (const hero of heroes) {
+            const status = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
+            list.append(heroTile(hero, names.get(hero.id), status, () => this.#tapHero(hero, names.get(hero.id))));
         }
-        $('squad-count').textContent = `${this.setup.heroIds.length}/${SQUAD_SIZE}`;
+        const count = this.setup.heroIds.length;
+        $('squad-count').textContent = `${count}/${SQUAD_SIZE}`;
+        const pips = $('squad-pips');
+        pips.replaceChildren(...Array.from({ length: SQUAD_SIZE }, (_, k) => {
+            const pip = document.createElement('span');
+            if (k < count) pip.className = 'full';
+            return pip;
+        }));
     }
 
-    #heroNote(mine, fit, now) {
-        if (!mine.length) return 'Forge one';
-        if (fit.length) return `${fit.length} ready`;
-        const back = Math.min(...mine.map((h) => h.injured_until));
-        return `Hurt ${formatCountdown(back - now)}`;
+    /** Heal countdowns and rings, updated in place so a tap is never lost to a redraw. */
+    #tickHealing(now) {
+        for (const tile of $('squad').children) {
+            const hero = this.data.heroes.find((h) => h.id === Number(tile.dataset.hero));
+            if (!hero || !tile.classList.contains('hurt')) continue;
+            const status = heroStatus(hero, false, now);
+            tile.querySelector('.ht-status').textContent = formatHeal(status.left);
+            tile.style.setProperty('--healed', `${Math.round(status.healed * 100)}%`);
+        }
+    }
+
+    #tapHero(hero, name) {
+        const now = this.#serverNow();
+        const { state, left } = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
+        if (state === 'hurt') {
+            toast(`${name} is healing: ready again in ${formatHeal(left)}.`);
+            return;
+        }
+        if (state === 'ready' && this.setup.heroIds.length >= SQUAD_SIZE) {
+            toast(`The squad is full (${SQUAD_SIZE}). Tap a hero in the squad to take it out first.`);
+            return;
+        }
+        this.#pick(toggleHero(this.setup.heroIds, hero.id));
     }
 
     #pick(heroIds) {
@@ -432,12 +436,13 @@ export class BattleMode {
         const healed = this.data.heroes.some((h) => h.injured_until && h.injured_until > this.second && h.injured_until <= now);
         this.second = second;
         if (healed) this.#renderSquad();
+        else this.#tickHealing(now);
         const energy = { ...this.data.energy };
         if (energy.next_at && now >= energy.next_at) {
             void this.#reload();
             return;
         }
-        $('energy').replaceChildren(icon('bolt'), `${energy.charges}/${energy.max}`
+        $('energy').replaceChildren(icon('bolt'), (energy.charges > energy.max ? String(energy.charges) : `${energy.charges}/${energy.max}`)
             + (energy.next_at ? ` · +1 in ${formatCountdown(energy.next_at - now)}` : ''));
         const blocker = launchBlocker({ blocked: this.#targetBlocker(), picked: this.setup.heroIds, energy });
         $('btn-launch').disabled = Boolean(blocker) || this.busy;

@@ -1,5 +1,6 @@
 import { icon, withIcon } from './icons.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import { heroNames, heroStatus, heroTile } from './heroTiles.js';
 import { buildingThumb, heroThumb, thumbImg } from './thumbs.js';
 
 /** DOM builders for the forge sheet and the "ready to place" tray. */
@@ -134,15 +135,11 @@ export function renderStorage(container, storage, placingType, onPlace) {
     }
 }
 
-export function renderRoster(container, heroes, limit) {
+export function renderRoster(container, heroes, limit, serverNow) {
     container.replaceChildren();
-    const counts = {};
-    for (const h of heroes) counts[h.cls] = (counts[h.cls] ?? 0) + 1;
-    container.append(el('span', 'roster-total', `Your heroes ${heroes.length}/${limit}:`));
-    for (const [cls, info] of Object.entries(HERO_INFO)) {
-        const item = el('span', 'roster-item');
-        item.append(thumbImg(heroThumb(cls, 40), '', info.name), el('span', '', `${info.tag} ×${counts[cls] ?? 0}`));
-        item.style.setProperty('--accent', info.color);
-        container.append(item);
-    }
+    container.append(el('span', 'roster-total', `Your heroes ${heroes.length}/${limit}`));
+    const names = heroNames(heroes);
+    const tiles = el('div', 'roster-tiles');
+    for (const hero of heroes) tiles.append(heroTile(hero, names.get(hero.id), heroStatus(hero, false, serverNow)));
+    container.append(tiles);
 }

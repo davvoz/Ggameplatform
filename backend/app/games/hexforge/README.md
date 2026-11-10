@@ -192,6 +192,12 @@ stand inside each other (drawing only). On the server the Neon Blade now
 really **leaps**: a `leap` event (from, to, until) carries it over the walls
 in one arc, and no hero ever stops on top of a standing wall.
 
+The squad is picked hero by hero (`js/heroTiles.js`): each hero has its own
+tile and name (Blade 1, Blade 2…) and shows whether it is ready, in the
+squad (lit, with a check) or hurt (greyed, a red cross, the time left and a
+ring that fills as it heals). Tapping a hurt hero or a full squad says why
+nothing happened. The forge's Heroes tab shows the same tiles.
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 

@@ -509,7 +509,7 @@ export class CityMode {
         renderRecipes($('recipes'), this.state.recipes, this.state.materials, freeSlots, this.forgeKind, (id) => void this.#forge(id));
         const heroLimit = this.state.recipes.find((r) => r.kind === 'hero')?.limit ?? 0;
         $('roster').hidden = this.forgeKind !== 'hero';
-        renderRoster($('roster'), this.state.heroes, heroLimit);
+        renderRoster($('roster'), this.state.heroes, heroLimit, this.#serverNow());
     }
 
     /** Once a second: forge countdowns, the forge badge, energy under the Attack button. */

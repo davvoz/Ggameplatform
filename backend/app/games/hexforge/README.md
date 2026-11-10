@@ -231,6 +231,23 @@ everything out in turned "view" coordinates (`rotatePoint`, `rotateRect`,
 `rotateVector` in `js/iso.js`) and draws the art there unturned, and taps
 are turned back to world cells. Attacks and replays are always seen unturned.
 
+## Phase 5 (in progress): progression
+
+Cities grow stronger over time, so the player and the heroes must grow too.
+Planned steps: (1) player level, (2) speed-up bonuses with daily and weekly
+rewards, (3) hero evolution, (4) craftable hero items, (5) the Explorer.
+
+Step 1, the player's level (`hexforge_be/progress.py`): playing earns XP:
+collecting (1 per 25 units), forging (about 1 per minute of the job),
+attacking (outpost 40 for a win / 15 for a loss, players 50 / 20). Level 1
+needs 100 XP, each next level 50 more. Each level adds one hero slot (8 at
+level 1) and a gift of materials; level 5 also opens a third forge slot.
+Progress lives in `city["progress"]` (`granted` = last level whose gift was
+handed out, so gifts are never doubled). In the city the shield shows the
+level with the XP bar under the name; every gain shows "+N XP", and a new
+level pops a card with its gifts and a fanfare. The battle result shows
+the XP earned and a reached level.
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 

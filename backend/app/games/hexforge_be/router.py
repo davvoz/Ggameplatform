@@ -93,10 +93,10 @@ def get_my_state(user_id: CurrentUserId, db: Db, now: Now):
 @router.post("/me/collect")
 def collect_materials(body: CollectRequest, user_id: CurrentUserId, db: Db, now: Now):
     try:
-        state, gained = PlayerService(db).collect(user_id, now, body.building_ids)
+        state, gained, earned = PlayerService(db).collect(user_id, now, body.building_ids)
     except StaleState as error:
         raise _http_error(error) from error
-    return {"gained": gained, **public_state(state, now)}
+    return {"gained": gained, **earned, **public_state(state, now)}
 
 
 @router.post("/me/buildings/{building_id}/move")

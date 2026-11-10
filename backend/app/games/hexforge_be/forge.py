@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import economy
+from . import economy, progress
 from .catalog import BUILDINGS, HEROES
 from .errors import ActionError
 
@@ -62,7 +62,7 @@ LIMIT_GROUPS: dict[str, tuple[tuple[str, ...], int]] = {
     "scrap_foundry": (("scrap_foundry",), 2),
     "mana_well": (("mana_well",), 2),
     "data_node": (("data_node",), 2),
-    "heroes": (tuple(HEROES), 8),
+    "heroes": (tuple(HEROES), 8),     # the real limit grows with the player's level
 }
 _GROUP_OF = {item: name for name, (items, _) in LIMIT_GROUPS.items() for item in items}
 
@@ -83,9 +83,16 @@ def owned(city: dict, heroes: list, items) -> int:
     return count
 
 
+def limit_of(city: dict, group: str) -> int:
+    """How many of a group the player may own; heroes grow with the player's level."""
+    if group == "heroes" and "progress" in city:
+        return progress.hero_slots(city)
+    return LIMIT_GROUPS[group][1]
+
+
 def room_for(city: dict, heroes: list, item: str) -> int:
-    items, limit = LIMIT_GROUPS[_GROUP_OF[item]]
-    return limit - owned(city, heroes, items)
+    group = _GROUP_OF[item]
+    return limit_of(city, group) - owned(city, heroes, LIMIT_GROUPS[group][0])
 
 
 # ── forging ────────────────────────────────────────────────────────────
@@ -169,7 +176,8 @@ def dismantle(city: dict, materials: dict, building_id: int, now: float) -> dict
 def public_recipes(city: dict, heroes: list) -> list[dict]:
     rows = []
     for recipe in RECIPES.values():
-        items, limit = LIMIT_GROUPS[_GROUP_OF[recipe.item]]
+        group = _GROUP_OF[recipe.item]
+        items, limit = LIMIT_GROUPS[group][0], limit_of(city, group)
         rows.append({
             "id": recipe.item, "kind": recipe.kind, "cost": recipe.cost,
             "seconds": recipe.seconds, "yields": recipe.yields,

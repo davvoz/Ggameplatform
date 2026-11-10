@@ -115,7 +115,7 @@ class PlayerServiceTest(unittest.TestCase):
 
     def test_collecting_is_saved(self):
         self.service.load("ada", T0)
-        _, gained = self.service.collect("ada", T0 + 2 * HOUR)
+        _, gained, _ = self.service.collect("ada", T0 + 2 * HOUR)
         self.assertEqual(gained["scrap"], 120)
         stored = self.service.load("ada", T0 + 2 * HOUR)
         self.assertEqual(stored.materials["scrap"], economy.STARTING_MATERIALS["scrap"] + 120)

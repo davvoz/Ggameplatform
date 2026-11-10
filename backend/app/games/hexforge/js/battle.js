@@ -572,19 +572,7 @@ export class BattleMode {
         $('result-ring').style.setProperty('--done', `${s.destruction}%`);
         $('result-percent').textContent = `${s.destruction}%`;
 
-        const badges = $('result-badges');
-        badges.replaceChildren();
-        const badge = (text, kind, iconName) => {
-            const span = document.createElement('span');
-            span.className = kind;
-            if (iconName) span.append(icon(iconName));
-            span.append(text);
-            badges.append(span);
-        };
-        badge(s.core_destroyed ? 'Core destroyed' : 'Core standing', s.core_destroyed === !defense ? 'good' : 'bad', s.core_destroyed ? 'flame' : 'shield');
-        if (next) badge(`${next.name} unlocked`, 'good', 'lock');
-        if (rewards?.trophies !== undefined) badge(`${signed(rewards.trophies)} trophies`, rewards.trophies >= 0 ? 'good' : 'bad', 'trophy');
-        if (rewards?.injured.length) badge(`${rewards.injured.length} hurt · back in 15 min`, 'bad', 'hero');
+        renderBadges($('result-badges'), s, rewards, defense, next);
 
         const loot = $('result-loot');
         loot.replaceChildren();
@@ -642,6 +630,24 @@ function heroChip(cls, caption = null) {
     chip.append(thumbImg(heroThumb(cls, 46), '', info.name), bar);
     if (caption) chip.append(caption);
     return chip;
+}
+
+/** The result's badges: the core, what was unlocked, trophies, XP, a new level, hurt heroes. */
+function renderBadges(badges, s, rewards, defense, next) {
+    badges.replaceChildren();
+    const badge = (text, kind, iconName) => {
+        const span = document.createElement('span');
+        span.className = kind;
+        if (iconName) span.append(icon(iconName));
+        span.append(text);
+        badges.append(span);
+    };
+    badge(s.core_destroyed ? 'Core destroyed' : 'Core standing', s.core_destroyed === !defense ? 'good' : 'bad', s.core_destroyed ? 'flame' : 'shield');
+    if (next) badge(`${next.name} unlocked`, 'good', 'lock');
+    if (rewards?.trophies !== undefined) badge(`${signed(rewards.trophies)} trophies`, rewards.trophies >= 0 ? 'good' : 'bad', 'trophy');
+    if (rewards?.xp) badge(`+${rewards.xp} XP`, 'good', 'star');
+    if (rewards?.levels?.length) badge(`Level ${rewards.levels.at(-1).level}!`, 'good', 'star');
+    if (rewards?.injured.length) badge(`${rewards.injured.length} hurt · back in 15 min`, 'bad', 'hero');
 }
 
 function renderOption(button, label, value, iconName) {

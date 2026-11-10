@@ -184,7 +184,9 @@ class ForgeApiTest(unittest.TestCase):
 
         self.clock[0] = T0 + 600
         claimed = self.post(f"/me/forge/{job['id']}/claim").json()
-        self.assertEqual(claimed["claimed"], {"item": "rune_tower", "kind": "building", "count": 1})
+        self.assertEqual(claimed["claimed"], {"item": "rune_tower", "kind": "building", "count": 1,
+                                              "xp": 10, "levels": []})
+        self.assertEqual(claimed["progress"]["xp"], 10)
         self.assertEqual(claimed["storage"], {"rune_tower": 1})
 
         placed = self.post("/me/place", {"type": "rune_tower", "x": 14, "y": 1}).json()

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import defense, economy, forge, outposts, pvp
+from . import defense, economy, forge, outposts, progress, pvp
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -49,6 +49,7 @@ class PlayerService:
             forge.ensure_forge(city)
             outposts.ensure_campaign(city, now)
             pvp.ensure_pvp(city)
+            progress.ensure_progress(city)
             row = HexforgePlayer(
                 user_id=user_id,
                 city_json=json.dumps(city),
@@ -104,12 +105,13 @@ class PlayerService:
         return updated == 1
 
     # ── actions ────────────────────────────────────────────────────────
-    def collect(self, user_id: str, now: float, building_ids=None) -> tuple[PlayerState, dict]:
+    def collect(self, user_id: str, now: float, building_ids=None) -> tuple[PlayerState, dict, dict]:
         state = self.load(user_id, now)
         gained = economy.collect(state.city, state.materials, now, building_ids)
+        earned = _earn(state, progress.xp_for_collecting(sum(gained.values())))
         if any(gained.values()):
             self.save(state, now)
-        return state, gained
+        return state, gained, earned
 
     def move_building(self, user_id: str, building_id: int, x: int, y: int, now: float) -> PlayerState:
         state = self.load(user_id, now)
@@ -132,6 +134,7 @@ class PlayerService:
     def claim_forged(self, user_id: str, job_id: int, now: float) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         result = forge.claim(state.city, state.heroes, job_id, now)
+        result.update(_earn(state, progress.xp_for_forging(forge.RECIPES[result["item"]].seconds)))
         self.save(state, now)
         return state, result
 
@@ -146,6 +149,7 @@ class PlayerService:
         state = self.load(user_id, now)
         result = outposts.attack(state.city, state.heroes, state.materials, outpost_id,
                                  hero_ids, side, priority, tactic, now)
+        result["rewards"].update(_earn(state, progress.xp_for_attack("outpost", result["summary"]["victory"])))
         self.save(state, now)
         return state, result
 
@@ -201,6 +205,7 @@ class PlayerService:
         rival_before = rival.trophies
         state.trophies, rival.trophies, trophies = pvp.settle_trophies(
             state.trophies, rival.trophies, summary["victory"])
+        earned = _earn(state, progress.xp_for_attack("rival", summary["victory"]))
         log = HexforgeAttack(
             attacker_id=user_id, defender_id=rival_id, created_at=now,
             setup_json=json.dumps({"squad": classes, "side": side, "priority": priority, "tactic": tactic}),
@@ -210,7 +215,7 @@ class PlayerService:
         self.save_together([state, rival], now, [log])
         name = self.names([rival_id])[rival_id]
         return state, {"rival": name, "city": target, **battle,
-                       "rewards": {"loot": loot, "injured": injured, "trophies": trophies}}
+                       "rewards": {"loot": loot, "injured": injured, "trophies": trophies, **earned}}
 
     # ── defence log ────────────────────────────────────────────────────
     def defense_log(self, user_id: str, now: float, limit: int = 20) -> dict:
@@ -310,7 +315,13 @@ def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
     forge.ensure_forge(state.city)
     outposts.ensure_campaign(state.city, now)
     pvp.ensure_pvp(state.city)
+    progress.ensure_progress(state.city)
     return state
+
+
+def _earn(state: PlayerState, xp: int) -> dict:
+    """Give XP; returns {"xp": gained, "levels": [levels reached with their gifts]}."""
+    return {"xp": xp, "levels": progress.gain(state.city, state.materials, xp)}
 
 
 def public_state(state: PlayerState, now: float) -> dict:
@@ -341,6 +352,7 @@ def public_state(state: PlayerState, now: float) -> dict:
         "forge": {"slots": state.city["forge"]["slots"], "jobs": jobs},
         "recipes": forge.public_recipes(state.city, state.heroes),
         "energy": outposts.public_energy(state.city["energy"], now),
+        "progress": progress.public_progress(state.city),
         "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies),
                 "next_league": pvp.next_league(state.trophies)},
         "version": state.version,

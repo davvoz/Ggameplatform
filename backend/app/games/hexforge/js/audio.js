@@ -169,6 +169,15 @@ const SOUNDS = {
         });
         clang(700, 1.1, 0.14, 0.3);
     },
+    levelup: () => {
+        [523, 659, 784, 1046, 1318].forEach((f, i) => {
+            tone(f, 0.6, { type: 'triangle', vol: 0.12, at: i * 0.07 });
+            tone(f * 1.5, 0.4, { type: 'sine', vol: 0.04, at: i * 0.07 + 0.02 });
+        });
+        [784, 988, 1175, 1568].forEach((f) => tone(f, 1.8, { type: 'triangle', vol: 0.07, at: 0.42 }));
+        noise(0.9, { vol: 0.05, from: 4000, to: 9000, type: 'bandpass', q: 0.8, at: 0.35 });
+        clang(1046, 1.6, 0.1, 0.4);
+    },
     place: () => {
         tone(120, 0.22, { type: 'sine', vol: 0.4, slide: 55 });
         noise(0.16, { vol: 0.25, from: 900, to: 150 });
@@ -249,7 +258,7 @@ const SOUNDS = {
 
 /** Makeup gain per sound, so everything lands at a similar loudness (measured by rendering each one). */
 const LEVEL = {
-    click: 6, open: 6, close: 6, error: 4, gem: 5, collect: 2.5, forge: 0.75, claim: 0.8, place: 3, dismantle: 2.5,
+    click: 6, open: 6, close: 6, error: 4, gem: 5, collect: 2.5, forge: 0.75, claim: 0.8, levelup: 0.9, place: 3, dismantle: 2.5,
     horn: 2, strike_guardian: 1.5, strike_blade: 5, strike_technomancer: 4, nova: 2, leap: 10, shot: 6, bolt: 2.5,
     frost: 2.5, trap: 1.5, destroyed: 1.2, hero_down: 2.5, victory: 0.9, defeat: 1,
 };

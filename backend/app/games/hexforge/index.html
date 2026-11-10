@@ -52,6 +52,7 @@
             <symbol id="i-hero" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-3a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v3"/></symbol>
             <symbol id="i-test" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5"/></symbol>
             <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
+            <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9l-5.4 2.9 1.1-6.1-4.5-4.3 6.1-.8z"/></symbol>
             <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 4v5h-5"/></symbol>
             <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
             <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
@@ -74,11 +75,12 @@
                 <svg class="icon" aria-hidden="true"><use href="#i-rotate"/></svg>
             </button>
             <button id="player-plate" class="plate player" type="button" aria-label="Ranking">
-                <span id="league-badge" class="league-badge"><span><svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg></span></span>
+                <span id="league-badge" class="league-badge"><span><small>LV</small><b id="player-level">1</b></span></span>
                 <span class="plate-text">
                     <b id="player-name">You</b>
                     <span id="player-trophies">0 trophies</span>
-                    <span class="league-meter" aria-hidden="true"><span id="league-bar"></span></span>
+                    <span class="xp-meter" aria-hidden="true"><span id="xp-bar"></span></span>
+                    <small id="xp-text" class="xp-text"></small>
                 </span>
             </button>
             <div id="resources" class="resources" aria-label="Materials"></div>

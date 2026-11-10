@@ -11,7 +11,7 @@ import { formatCountdown, itemName, itemThumb, renderForgeSlots, renderRecipes, 
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
 import { AIM_INFO, BUILDING_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO } from './labels.js';
-import { LEAGUE_COLORS, leagueProgress } from './leagues.js';
+import { LEAGUE_COLORS } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
 import { buildingThumb } from './thumbs.js';
@@ -24,6 +24,8 @@ import { buildingThumb } from './thumbs.js';
  *    "ready to place" tray, then onto the map
  *  - Defense (sheet): defence test, raids on your city, replay and revenge
  *  - the big Attack button opens the attack plan
+ *  - the player's level (shield) and XP bar; "+XP" after every action that
+ *    earns some, and a level-up card with its gifts
  */
 
 const $ = (id) => document.getElementById(id);
@@ -73,6 +75,8 @@ export class CityMode {
         this.shownMaterials = {};
         this.heldMaterials = new Set();   // materials whose counter waits for flying gems
         this.rot = loadRotation();        // quarter turns of the view, remembered on this device
+        this.progress = null;             // last level and XP seen, kept across reloads to spot gains
+        this.pops = Promise.resolve();    // big cards (forged, level up) wait for each other
         this.onWatch = () => {};      // set by the shell: replay a battle
         this.onRevenge = () => {};    // set by the shell: open the attack plan on the scouted raider
         this.onAttack = () => {};     // set by the shell: open the attack plan
@@ -232,6 +236,7 @@ export class CityMode {
     #apply(state) {
         if (state.name) this.name = state.name;
         this.state = state;
+        this.#noticeProgress(state.progress);
         this.receivedAt = performance.now();
         this.renderer.setCity(state.city);
         if (this.selectedId !== null && !this.#building(this.selectedId)) this.#select(null);
@@ -315,21 +320,27 @@ export class CityMode {
 
     async #claim(jobId) {
         let claimed = null;
+        let shown = null;
         await this.#run(async () => {
             const result = await claimJob(jobId);
-            this.#apply(result);
             claimed = result.claimed;
+            const { item, kind, count } = claimed;
+            const hero = kind === 'hero';
+            shown = this.#queuePop(() => {             // before #apply, so a level-up card comes after it
+                play('claim');
+                return rewardPop({
+                    src: itemThumb(item, 150),
+                    title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
+                    line: hero ? 'joined your heroes!' : 'forged! Now place it on the map',
+                    color: hero ? HERO_INFO[item].color : (BUILDING_INFO[item]?.glow ?? '#ffb347'),
+                });
+            });
+            this.#apply(result);
         });
         if (!claimed) return;
-        play('claim');
-        const { item, kind, count } = claimed;
-        const hero = kind === 'hero';
-        await rewardPop({
-            src: itemThumb(item, 150),
-            title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
-            line: hero ? 'joined your heroes!' : 'forged! Now place it on the map',
-            color: hero ? HERO_INFO[item].color : (BUILDING_INFO[item]?.glow ?? '#ffb347'),
-        });
+        await shown;
+        const hero = claimed.kind === 'hero';
+        const { item } = claimed;
         if (hero) {
             this.forgeKind = 'hero';
             this.#renderForge();
@@ -553,13 +564,67 @@ export class CityMode {
     }
 
     #renderPlayer() {
-        const { pvp } = this.state;
+        const { pvp, progress } = this.state;
         const color = LEAGUE_COLORS[pvp.league] ?? '#c3cbdb';
         $('player-plate').style.setProperty('--league', color);
         $('league-badge').style.setProperty('--league', color);
         $('player-name').textContent = this.name || 'You';
         $('player-trophies').textContent = `${pvp.trophies} trophies · ${pvp.league}`;
-        $('league-bar').style.width = `${Math.round(100 * leagueProgress(pvp.trophies, pvp.league, pvp.next_league))}%`;
+        if (!progress) return;
+        $('player-level').textContent = String(progress.level);
+        $('xp-bar').style.width = `${Math.round((100 * progress.into_level) / progress.for_next)}%`;
+        $('xp-text').textContent = `${progress.into_level} / ${progress.for_next} XP`;
+        $('player-plate').setAttribute('aria-label',
+            `Level ${progress.level}, ${progress.into_level} of ${progress.for_next} XP to the next. Open the ranking`);
+    }
+
+    // ── level and XP ───────────────────────────────────────────────────
+    /** Compare with the last progress seen: "+XP" for a gain, a card for a new level. */
+    #noticeProgress(progress) {
+        const before = this.progress;
+        if (!progress) return;
+        this.progress = progress;
+        if (!before) return;
+        if (progress.xp > before.xp) this.#xpPop(progress.xp - before.xp);
+        if (progress.level > before.level) void this.#queuePop(() => this.#levelPop(progress));
+    }
+
+    /** Big cards one after the other, never on top of each other. */
+    #queuePop(show) {
+        const next = this.pops.then(show, show);
+        this.pops = next.catch(() => {});
+        return next;
+    }
+
+    #xpPop(amount) {
+        const pop = document.createElement('span');
+        pop.className = 'xp-pop';
+        pop.textContent = `+${amount} XP`;
+        pop.addEventListener('animationend', () => pop.remove());
+        $('hud-city').append(pop);
+    }
+
+    #levelPop(progress) {
+        play('levelup');
+        bumpOnce($('league-badge'));
+        const shield = document.createElement('div');
+        shield.className = 'level-shield';
+        shield.append(Object.assign(document.createElement('small'), { textContent: 'LEVEL' }),
+            Object.assign(document.createElement('strong'), { textContent: String(progress.level) }));
+        const perks = document.createElement('div');
+        perks.className = 'level-perks';
+        const perk = (iconName, text, color) => {
+            const chip = document.createElement('span');
+            if (color) chip.style.setProperty('--accent', color);
+            chip.append(icon(iconName), text);
+            perks.append(chip);
+        };
+        perk('hero', `+1 hero slot · ${progress.hero_slots}`);
+        if (progress.unlocked_forge_slots) perk('anvil', `Forge slot ${progress.unlocked_forge_slots}`);
+        for (const [m, amount] of Object.entries(progress.gift ?? {})) {
+            perk(MATERIAL_INFO[m].icon, `+${amount}`, MATERIAL_INFO[m].color);
+        }
+        return rewardPop({ picture: shield, title: 'Level up!', extra: perks, line: 'Gifts added to your city', ms: 3600 });
     }
 
     #renderForge() {
@@ -683,6 +748,13 @@ function saveRotation(rot) {
     try {
         globalThis.localStorage?.setItem(ROTATION_KEY, String(rot));
     } catch { /* private mode: the turn is simply not remembered */ }
+}
+
+function bumpOnce(el) {
+    el.classList.remove('bump');
+    void el.offsetWidth;              // restart the animation
+    el.classList.add('bump');
+    el.addEventListener('animationend', () => el.classList.remove('bump'), { once: true });
 }
 
 function bump(item) {

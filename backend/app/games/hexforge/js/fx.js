@@ -6,6 +6,7 @@ import { icon } from './icons.js';
  *    counter at the top, which bumps and counts up as they land
  *  - flyPicture: a picture glides from one place on screen to another
  *  - rewardPop: a big "forged!" card with rays, for what the forge made
+ *    (or any picture: the level-up shield)
  * Everything respects "reduce motion": the result is shown without the trip.
  */
 
@@ -105,7 +106,7 @@ export function flyPicture(src, from, to, { size = 64, ms = 650 } = {}) {
  * "Forged!": the item's picture rises over spinning rays with its name and a
  * line under it. Resolves when it is gone (after `ms`, or sooner on a tap).
  */
-export function rewardPop({ src, title, line, color = '#ffb347', ms = 1700 }) {
+export function rewardPop({ src, picture = null, title, extra = null, line, color = '#ffb347', ms = 1700 }) {
     const box = layer();
     const card = document.createElement('div');
     card.className = 'reward-pop';
@@ -113,14 +114,17 @@ export function rewardPop({ src, title, line, color = '#ffb347', ms = 1700 }) {
     card.setAttribute('role', 'status');
     const rays = document.createElement('span');
     rays.className = 'reward-rays';
-    const img = document.createElement('img');
-    img.src = src;
-    img.alt = '';
+    let art = picture;                   // any element, or an image from `src`
+    if (!art) {
+        art = document.createElement('img');
+        art.src = src;
+        art.alt = '';
+    }
     const name = document.createElement('b');
     name.textContent = title;
     const sub = document.createElement('span');
     sub.textContent = line;
-    card.append(rays, img, name, sub);
+    card.append(rays, art, name, ...(extra ? [extra] : []), sub);
     box.append(card);
     return new Promise((resolve) => {
         let done = false;

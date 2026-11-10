@@ -14,10 +14,11 @@ from dataclasses import dataclass
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import economy, forge, outposts
+from . import defense, economy, forge, outposts
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgePlayer
+from .simulation import DEFAULT_AIM
 
 __all__ = ["ActionError", "PlayerService", "PlayerState", "StaleState", "public_state"]
 
@@ -135,6 +136,16 @@ class PlayerService:
         self.save(state, now)
         return state, result
 
+    def set_aim(self, user_id: str, building_id: int, aim: str, now: float) -> PlayerState:
+        state = self.load(user_id, now)
+        defense.set_aim(state.city, building_id, aim)
+        self.save(state, now)
+        return state
+
+    def defense_test(self, user_id: str, now: float) -> dict:
+        """Read only: the city is tested as saved, nothing changes."""
+        return defense.run_defense_test(self.load(user_id, now).city)
+
     def dismantle_building(self, user_id: str, building_id: int, now: float) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         refund = forge.dismantle(state.city, state.materials, building_id, now)
@@ -157,6 +168,8 @@ def public_state(state: PlayerState, now: float) -> dict:
                 "pending": economy.pending(b, now),
                 "capacity": economy.capacity(b["type"]),
             }
+        if defense.is_tower(b):
+            item["aim"] = b.get("aim", DEFAULT_AIM)
         buildings.append(item)
     jobs = [{**job, "ready": job["ready_at"] <= now} for job in state.city["forge"]["jobs"]]
     return {

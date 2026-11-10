@@ -28,6 +28,8 @@ FRAME_STRIDE = 2
 WALL_PATH_COST = 8.0           # how much a squad prefers walking round a wall to breaking it
 WIN_DESTRUCTION = 50           # % of buildings (walls and traps excluded)
 LOOT_WIN, LOOT_CORE = 20, 30   # % of unprotected materials
+AIMS = ("closest", "weakest", "ranged")   # how a tower picks among heroes in range
+DEFAULT_AIM = "closest"
 
 _DT = 1.0 / TICK_RATE
 
@@ -41,6 +43,7 @@ class _Building:
     y: int
     size: int
     hp: int
+    aim: str = DEFAULT_AIM
     alive: bool = True
     ready_tick: int = 0
 
@@ -93,7 +96,8 @@ class Battle:
         self.tactic = tactic
         self.buildings = [
             _Building(id=b["id"], type=b["type"], spec=BUILDINGS[b["type"]],
-                      x=b["x"], y=b["y"], size=b["size"], hp=b["hp"])
+                      x=b["x"], y=b["y"], size=b["size"], hp=b["hp"],
+                      aim=b.get("aim", DEFAULT_AIM))
             for b in city["buildings"]
         ]
         self.by_id = {b.id: b for b in self.buildings}
@@ -366,17 +370,23 @@ class Battle:
                     radius=spec.splash_radius, hits=hits)
 
     def _tower_target(self, tower: _Building) -> Optional[_Hero]:
+        """A guardian close by draws the fire; otherwise the tower follows its aim."""
         in_range = [h for h in self.heroes
                     if h.alive and math.hypot(h.x - tower.cx, h.y - tower.cy) <= tower.spec.attack_range]
         if not in_range:
             return None
 
-        def distance(h: _Hero) -> tuple[float, int]:
-            return math.hypot(h.x - tower.cx, h.y - tower.cy), h.id
+        def distance(h: _Hero) -> float:
+            return math.hypot(h.x - tower.cx, h.y - tower.cy)
 
-        taunting = [h for h in in_range
-                    if h.spec.taunt_radius and distance(h)[0] <= h.spec.taunt_radius]
-        return min(taunting or in_range, key=distance)
+        taunting = [h for h in in_range if h.spec.taunt_radius and distance(h) <= h.spec.taunt_radius]
+        if taunting:
+            return min(taunting, key=lambda h: (distance(h), h.id))
+        if tower.aim == "weakest":
+            return min(in_range, key=lambda h: (h.hp, distance(h), h.id))
+        if tower.aim == "ranged":
+            return min(in_range, key=lambda h: (-h.spec.attack_range, distance(h), h.id))
+        return min(in_range, key=lambda h: (distance(h), h.id))
 
     def _damage_hero(self, hero: _Hero, amount: int) -> dict:
         dealt = min(amount, hero.hp)

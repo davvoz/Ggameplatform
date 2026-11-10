@@ -74,7 +74,26 @@ The squad is 4 heroes from your roster; heroes who fall are injured for
 The old test battle (`/api/hexforge/battle` on the test city) remains only for
 the `?at=` screenshot helper.
 
-Phase 2 is complete. Next (phase 3): PvP between players.
+Phase 2 is complete.
+
+## Phase 3 (in progress): PvP between players
+
+Step 1 (done): **get the city ready to defend** (`hexforge_be/defense.py`).
+Every tower has an **aim**: *Closest* (default), *Weakest* (finishes off the
+hero with the least health) or *Back line* (ranged heroes first). A Guardian
+close to the tower still draws its fire whatever the aim. In **My city**,
+**Test my defenses** throws four standard squads at the city from every side
+with every priority and tactic (144 raids, about a second on the server) and
+reports how many it holds, per squad and per side, with the replay of the
+worst raid. The test is read-only and free; it is deterministic, so a better
+score always means a better city.
+
+| Route | What |
+| --- | --- |
+| `POST /api/hexforge/me/buildings/{id}/aim` | `{aim}` — 400 `not_a_tower` for anything but a tower |
+| `POST /api/hexforge/me/defense/test` | the report, `worst` carries the replay (limit 20/min) |
+
+Next: attack other players.
 
 ## Layout
 

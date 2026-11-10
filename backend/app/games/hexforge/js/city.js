@@ -1,16 +1,18 @@
 import {
     Refused, SignInRequired, claimJob, collect, dismantleBuilding, fetchMyState,
-    moveBuilding, placeBuilding, startForging,
+    moveBuilding, placeBuilding, setAim, startForging, testDefense,
 } from './api.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
+import { renderDefenseReport } from './defensePanel.js';
 import { itemName, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
-import { BUILDING_INFO, MATERIAL_INFO } from './labels.js';
+import { AIM_INFO, BUILDING_INFO, MATERIAL_INFO } from './labels.js';
 
 /**
  * "My city": the player's saved city.
  *  - tap a glowing production building to collect, or Collect all
  *  - select a building to move or dismantle it
  *  - forge buildings and heroes; place forged buildings from storage
+ *  - set each tower's aim; test the defenses against standard raids
  */
 
 const $ = (id) => document.getElementById(id);
@@ -28,6 +30,8 @@ const MESSAGES = {
     not_ready: 'Not ready yet.',
     not_in_storage: 'Nothing like that in storage.',
     cannot_dismantle: 'The core and the vault cannot be dismantled.',
+    not_a_tower: 'Only towers take an aim.',
+    unknown_aim: 'Unknown aim.',
 };
 const HINTS = {
     idle: 'Tap a glowing building to collect what it made. Select a building to move or dismantle it.',
@@ -49,6 +53,10 @@ export class CityMode {
         this.busy = false;
         this.infoText = '';
         this.forgeSecond = -1;
+        this.defense = null;          // last defence test, while the defenses are unchanged
+        this.defenseKey = '';
+        this.onWatch = () => {};      // set by the shell: replay a battle in the Attack view
+        $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
         $('btn-collect-all').addEventListener('click', () => void this.#collect(null));
         $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
         $('btn-dismantle').addEventListener('click', () => void this.#dismantle());
@@ -148,6 +156,7 @@ export class CityMode {
         this.renderer.setCity(state.city);
         if (this.selectedId !== null && !this.#building(this.selectedId)) this.#select(null);
         if (this.mode === 'place' && !state.storage[this.placingType]) this.#setMode('idle');
+        if (this.defense && defenseKey(state.city) !== this.defenseKey) this.#showDefense(null);
         this.#renderAll();
     }
 
@@ -226,6 +235,37 @@ export class CityMode {
             this.#apply(result);
             this.#message(`${BUILDING_INFO[b.type].name} dismantled.`);
         });
+    }
+
+    async #setAim(aim) {
+        const b = this.#building(this.selectedId);
+        if (!b || b.aim === aim) return;
+        await this.#run(async () => {
+            this.#apply(await setAim(b.id, aim));
+            this.#message(`${BUILDING_INFO[b.type].name} now aims: ${AIM_INFO[aim].name}.`);
+        });
+    }
+
+    async #testDefense() {
+        if (this.busy || !this.state) return;
+        const button = $('btn-defense-test');
+        button.disabled = true;
+        button.textContent = 'Running the raids…';
+        await this.#run(async () => {
+            const report = await testDefense();
+            this.defenseKey = defenseKey(this.state.city);
+            this.#showDefense(report);
+        });
+        button.disabled = false;
+        button.textContent = this.defense ? 'Test again' : 'Test my defenses';
+    }
+
+    #showDefense(report) {
+        this.defense = report;
+        const box = $('defense-report');
+        box.hidden = !report;
+        if (report) renderDefenseReport(box, report, () => this.onWatch(report.worst));
+        else $('btn-defense-test').textContent = 'Test my defenses';
     }
 
     async #run(action) {
@@ -355,8 +395,25 @@ export class CityMode {
         button.hidden = locked;
         button.textContent = this.confirmDismantle ? `Confirm: get back ${refundText || 'nothing'}` : 'Dismantle';
         button.classList.toggle('danger', this.confirmDismantle);
+        $('sel-aim').hidden = !b.aim;
+        if (b.aim) this.#renderAim(b);
         this.infoText = '';
         this.#updateInfo();
+    }
+
+    #renderAim(b) {
+        const chips = $('aim-chips');
+        chips.replaceChildren();
+        for (const [aim, info] of Object.entries(AIM_INFO)) {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'chip';
+            chip.textContent = info.name;
+            chip.setAttribute('aria-pressed', String(aim === b.aim));
+            chip.addEventListener('click', () => void this.#setAim(aim));
+            chips.append(chip);
+        }
+        $('aim-hint').textContent = `${AIM_INFO[b.aim].hint} A Guardian close to the tower always draws its fire.`;
     }
 
     #updateInfo() {
@@ -373,4 +430,9 @@ export class CityMode {
             $('sel-info').textContent = text;
         }
     }
+}
+
+/** What the defence test depends on: where every building stands and how towers aim. */
+function defenseKey(city) {
+    return city.buildings.map((b) => `${b.id}:${b.type}:${b.x}:${b.y}:${b.aim ?? ''}`).join('|');
 }

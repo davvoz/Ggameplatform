@@ -42,3 +42,9 @@ export const TACTIC_INFO = {
     spread: { name: 'Spread', hint: 'Fan out along the edge, everyone at full speed' },
     split: { name: 'Split', hint: 'Two pairs entering from two points' },
 };
+
+export const AIM_INFO = {
+    closest: { name: 'Closest', hint: 'Shoots the nearest hero.' },
+    weakest: { name: 'Weakest', hint: 'Finishes off the hero with the least health.' },
+    ranged: { name: 'Back line', hint: 'Hunts ranged heroes like the Technomancer first.' },
+};

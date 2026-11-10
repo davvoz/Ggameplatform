@@ -127,6 +127,12 @@ h2 {
     font-weight: 600;
 }
 
+.result-note.plain {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 13px;
+}
+
 .stats dd .costs {
     justify-content: flex-end;
 }
@@ -660,4 +666,61 @@ h2 {
 
 .roster-total {
     color: var(--muted);
+}
+
+/* ── tower aim and defence test ─────────────────────────────────────── */
+.aim {
+    margin-top: 10px;
+}
+
+.aim-title {
+    margin: 0 0 6px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.aim .hint {
+    margin-top: 6px;
+}
+
+.defense-report {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-2);
+}
+
+.defense-score {
+    margin: 0;
+    font-size: 15px;
+}
+
+.defense-score b {
+    color: var(--cyan);
+}
+
+.defense-report .stats {
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.raid-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.raid-hero {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    color: #0b0e18;
+    background: var(--accent);
 }

@@ -75,3 +75,11 @@ export function fetchOutposts() {
 export function attackOutpost(outpostId, setup) {
     return post(`/me/outposts/${outpostId}/attack`, setup);
 }
+
+export function setAim(id, aim) {
+    return post(`/me/buildings/${id}/aim`, { aim });
+}
+
+export function testDefense() {
+    return post('/me/defense/test', {});
+}

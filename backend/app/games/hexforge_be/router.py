@@ -14,6 +14,8 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/buildings/{id}/dismantle   remove it, refund half the recipe
   GET  /api/hexforge/me/outposts               computer outposts, progress, energy
   POST /api/hexforge/me/outposts/{id}/attack   attack with 4 of your heroes
+  POST /api/hexforge/me/buildings/{id}/aim     which hero a tower shoots first
+  POST /api/hexforge/me/defense/test           standard raids against your city
 
 The /me routes need the platform session cookie.
 """
@@ -33,7 +35,7 @@ from .catalog import public_catalog
 from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
-from .schemas import AttackRequest, BattleRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest
+from .schemas import AimRequest, AttackRequest, BattleRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest
 from .simulation import simulate
 
 router = APIRouter(prefix="/api/hexforge", tags=["Hexforge"])
@@ -150,3 +152,18 @@ def attack_outpost(request: Request, outpost_id: int, body: AttackRequest,
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return {"battle": battle, "outposts": outposts.public_outposts(state.city), **public_state(state, now)}
+
+
+@router.post("/me/buildings/{building_id}/aim")
+def set_tower_aim(building_id: int, body: AimRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).set_aim(user_id, building_id, body.aim, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/defense/test")
+@limiter.limit("20/minute")
+def run_my_defense_test(request: Request, user_id: CurrentUserId, db: Db, now: Now):
+    return PlayerService(db).defense_test(user_id, now)

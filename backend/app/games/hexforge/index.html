@@ -40,6 +40,11 @@
                     <div id="selected" class="selected" hidden>
                         <h2 id="sel-name"></h2>
                         <p id="sel-info" class="sel-info"></p>
+                        <div id="sel-aim" class="aim" hidden>
+                            <p class="aim-title">Aim</p>
+                            <div id="aim-chips" class="chips"></div>
+                            <p id="aim-hint" class="hint"></p>
+                        </div>
                         <div class="controls">
                             <button id="btn-move" class="button">Move</button>
                             <button id="btn-deselect" class="button">Close</button>
@@ -47,6 +52,11 @@
                         <button id="btn-dismantle" class="button wide-plain">Dismantle</button>
                     </div>
                     <p id="city-message" class="hint" role="status"></p>
+
+                    <h2>Defense</h2>
+                    <p class="hint">Four standard squads attack your city from every side, with every target and tactic. See how many raids it holds. Free, and nothing changes.</p>
+                    <button id="btn-defense-test" class="button wide-plain">Test my defenses</button>
+                    <div id="defense-report" class="defense-report" hidden></div>
 
                     <h2>Forge</h2>
                     <div id="forge-slots" class="forge-slots"></div>
@@ -94,7 +104,7 @@
             </section>
 
             <section id="view-battle" hidden>
-                <h2>Squad</h2>
+                <h2 id="battle-title">Squad</h2>
                 <div id="hero-list" class="hero-list"></div>
                 <div class="controls">
                     <button id="btn-pause" class="button">Pause</button>
@@ -107,7 +117,7 @@
                 <p id="verdict" class="verdict"></p>
                 <p id="result-note" class="result-note" hidden></p>
                 <dl id="stats" class="stats"></dl>
-                <h2>Squad report</h2>
+                <h2 id="report-title">Squad report</h2>
                 <table class="report">
                     <thead><tr><th>Hero</th><th>Damage dealt</th><th>Taken</th><th></th></tr></thead>
                     <tbody id="report"></tbody>

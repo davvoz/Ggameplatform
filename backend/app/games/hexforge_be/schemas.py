@@ -39,3 +39,7 @@ class AttackRequest(BaseModel):
     side: Literal["north", "east", "south", "west"]
     priority: Literal["towers", "core", "production"]
     tactic: Literal["compact", "spread", "split"]
+
+
+class AimRequest(BaseModel):
+    aim: Literal["closest", "weakest", "ranged"]

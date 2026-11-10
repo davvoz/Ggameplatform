@@ -10,6 +10,10 @@ const $ = (id) => document.getElementById(id);
 const renderer = new Renderer($('view'));
 const modes = { city: new CityMode(renderer), battle: new BattleMode(renderer) };
 modes.battle.onStateChanged = () => modes.city.invalidate();
+modes.city.onWatch = (battle) => {
+    modes.battle.watch(battle, () => void switchTo('city'));
+    void switchTo('battle');
+};
 let active = null;
 let activeName = null;
 let time = 0;

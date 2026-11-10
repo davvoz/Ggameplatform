@@ -1,4 +1,5 @@
 import { Refused, SignInRequired, attackOutpost, fetchDemoCity, fetchOutposts, runBattle } from './api.js';
+import { describeWorst } from './defensePanel.js';
 import { formatCountdown } from './forgePanel.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
 import { createReplay } from './replay.js';
@@ -7,6 +8,7 @@ import { SQUAD_SIZE, isAvailable, launchBlocker, settleSquad, toggleHero } from 
 /**
  * "Attack": pick an outpost and 4 of your heroes, choose side, priority and
  * tactic, watch the replay, read the report with the loot.
+ * Also replays the worst raid of a defence test (`watch`), then goes back.
  */
 
 const $ = (id) => document.getElementById(id);
@@ -36,6 +38,7 @@ export class BattleMode {
         this.paused = false;
         this.second = -1;
         this.onStateChanged = () => {};
+        this.returnTo = null;         // set while replaying a defence test
         this.#wire();
     }
 
@@ -46,6 +49,10 @@ export class BattleMode {
     }
 
     leave() {
+        if (this.returnTo) {
+            this.returnTo = null;
+            this.view = 'setup';
+        }
         for (const view of ['setup', 'battle', 'result']) $(`view-${view}`).hidden = true;
         $('hud').hidden = true;
     }
@@ -66,6 +73,13 @@ export class BattleMode {
             this.#updateHeroList(state);
             if (this.playTick >= this.replay.duration + TAIL_SECONDS * this.replay.tickRate) this.#showResult();
         }
+    }
+
+    /** Replay a raid on the player's own city (defence test); Back calls `onBack`. */
+    watch(raid, onBack) {
+        this.battle = { ...raid, rewards: null, defense: true };
+        this.returnTo = onBack;
+        this.#startReplay();
     }
 
     /**
@@ -135,6 +149,10 @@ export class BattleMode {
         $('btn-skip').addEventListener('click', () => this.#showResult());
         $('btn-rewatch').addEventListener('click', () => this.#startReplay());
         $('btn-new').addEventListener('click', () => {
+            if (this.returnTo) {
+                this.returnTo();
+                return;
+            }
             this.#show('setup');
             void this.#reload();
         });
@@ -280,6 +298,7 @@ export class BattleMode {
         this.playTick = 0;
         this.paused = false;
         $('btn-pause').textContent = 'Pause';
+        $('battle-title').textContent = this.battle.defense ? 'Raiders' : 'Squad';
         this.#buildHeroList();
         this.#show('battle');
     }
@@ -330,9 +349,11 @@ export class BattleMode {
         this.playTick = this.replay.duration;
         const s = this.battle.summary;
         const rewards = this.battle.rewards;
+        const defense = Boolean(this.battle.defense);
+        const won = defense ? !s.victory : s.victory;
         const verdict = $('verdict');
-        verdict.textContent = s.victory ? 'VICTORY' : 'DEFEAT';
-        verdict.className = `verdict ${s.victory ? 'win' : 'loss'}`;
+        verdict.textContent = verdictText(defense, won);
+        verdict.className = `verdict ${won ? 'win' : 'loss'}`;
 
         const stats = $('stats');
         stats.replaceChildren();
@@ -355,8 +376,12 @@ export class BattleMode {
 
         const note = $('result-note');
         const next = rewards?.unlocked && this.data?.outposts.find((o) => o.id === rewards.unlocked);
-        note.textContent = next ? `Outpost cleared! ${next.name} is now open.` : '';
-        note.hidden = !next;
+        if (defense) note.textContent = `Worst raid of the test: ${describeWorst(this.battle)}.`;
+        else note.textContent = next ? `Outpost cleared! ${next.name} is now open.` : '';
+        note.classList.toggle('plain', defense);
+        note.hidden = !defense && !next;
+        $('report-title').textContent = defense ? 'Raiders' : 'Squad report';
+        $('btn-new').textContent = defense ? 'Back to my city' : 'Back';
 
         const report = $('report');
         report.replaceChildren();
@@ -374,6 +399,11 @@ export class BattleMode {
         }
         this.#show('result');
     }
+}
+
+function verdictText(defense, won) {
+    if (defense) return won ? 'DEFENSE HELD' : 'DEFENSE BREACHED';
+    return won ? 'VICTORY' : 'DEFEAT';
 }
 
 function chip(label, pressed, onClick, accent) {

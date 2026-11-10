@@ -17,6 +17,7 @@ export const WINDUP = 4;
 export const FOLLOW = 3;
 const HURT_TICKS = 3;
 const SLOW_TICKS = 20;
+const AFTER_TICKS = 15;       // the log is replayed a little past the end, so the last heroes to fall are seen falling
 const PERSONAL_SPACE = 0.5;   // cells between two heroes' feet, at least
 const UNCOUNTED = new Set(['wall', 'rune_trap']);
 
@@ -66,7 +67,7 @@ export function createReplay(battle) {
     }
 
     function stateAt(tick) {
-        const t = Math.min(Math.max(tick, 0), ticks);
+        const t = Math.min(Math.max(tick, 0), ticks + AFTER_TICKS);
         const buildingHp = new Map(city.buildings.map((b) => [b.id, b.hp]));
         const heroHp = squad.map((h) => h.hp);
         const slowUntil = squad.map(() => -1);
@@ -117,8 +118,8 @@ export function createReplay(battle) {
         separate(heroes);
         const destroyedCounted = counted.filter((id) => destroyed.has(id)).length;
         return {
-            tick: t,
-            seconds: t / tickRate,
+            tick: Math.min(t, ticks),
+            seconds: Math.min(t, ticks) / tickRate,
             heroes,
             buildingHp,
             destroyed,

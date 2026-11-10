@@ -59,10 +59,11 @@ load unchanged.
 Step 4 (done): **outposts**. The second tab is now **Attack**: five
 hand-built computer cities (`hexforge_be/outposts.py`) of rising difficulty —
 with the starter squad over all 36 side/priority/tactic combinations, the win
-rate goes 100 % → 94 % → 83 % → 69 % → 39 %, and a test keeps it rising. The
-first is open; each first victory opens the next. A win takes 20 % of the
-outpost's treasury (30 % if the core falls); an outpost already cleared pays
-half. Each attack costs 1 energy (5 max, +1 per hour, lazy like production).
+rate goes 100 % → 89 % → 81 % → 64 % → 19 %, and a test keeps it rising. The
+first is open; each first victory opens the next. **Only bringing down the
+core wins** (the owner's rule: no victory with a city still standing); a win
+takes 30 % of the outpost's treasury, a defeat nothing; an outpost already
+cleared pays half. Each attack costs 1 energy (5 max, +1 per hour, lazy like production).
 The squad is 4 heroes from your roster; heroes who fall are injured for
 15 minutes. Campaign and energy live inside the city JSON.
 
@@ -197,6 +198,15 @@ tile and name (Blade 1, Blade 2…) and shows whether it is ready, in the
 squad (lit, with a check) or hurt (greyed, a red cross, the time left and a
 ring that fills as it heals). Tapping a hurt hero or a full squad says why
 nothing happened. The forge's Heroes tab shows the same tiles.
+
+Animations (`js/fx.js`): collecting makes the material's gems burst out of
+the building and fly into their counter at the top, which bumps and counts
+up as they land; tapping a recipe sends its picture flying into the forge
+slot; claiming pops a "forged!" card with spinning rays (tap to skip), then
+a building goes straight to placing. Reduced motion skips the trips.
+
+The result waits for the last heroes to finish falling, and a defeat says
+the core still stands.
 
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).

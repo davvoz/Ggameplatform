@@ -5,10 +5,11 @@ import {
 } from './api.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
-import { formatCountdown, itemName, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
+import { countUp, flyMaterial, flyPicture, rewardPop } from './fx.js';
+import { formatCountdown, itemName, itemThumb, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
-import { AIM_INFO, BUILDING_INFO, CHOICE_ICONS, MATERIAL_INFO } from './labels.js';
+import { AIM_INFO, BUILDING_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import { LEAGUE_COLORS, leagueProgress } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
@@ -68,6 +69,7 @@ export class CityMode {
         this.defenseKey = '';
         this.raids = null;
         this.shownMaterials = {};
+        this.heldMaterials = new Set();   // materials whose counter waits for flying gems
         this.onWatch = () => {};      // set by the shell: replay a battle
         this.onRevenge = () => {};    // set by the shell: open the attack plan on the scouted raider
         this.onAttack = () => {};     // set by the shell: open the attack plan
@@ -229,11 +231,30 @@ export class CityMode {
         if (!sources.length) return;
         await this.#run(async () => {
             const result = await collect(ids);
-            for (const { b, amount } of sources) {
-                const info = MATERIAL_INFO[b.production.material];
-                this.#float(b, `+${amount} ${info.name}`, info.color);
-            }
+            const before = { ...this.shownMaterials };
+            for (const { b } of sources) this.heldMaterials.add(b.production.material);
             this.#apply(result);
+            for (const { b, amount } of sources) this.#flyHome(b, amount, before);
+        });
+    }
+
+    /** Gems burst out of the building and fly into their counter, which then counts up. */
+    #flyHome(b, amount, before) {
+        const key = b.production.material;
+        const info = MATERIAL_INFO[key];
+        const pill = document.querySelector(`#resources [data-material="${key}"]`);
+        this.#float(b, `+${amount}`, info.color);
+        flyMaterial(this.renderer.screenOf(b.x + b.size / 2, b.y + b.size / 2, 30), pill, {
+            iconName: info.icon,
+            color: info.color,
+            count: Math.max(4, Math.min(10, Math.round(amount / 12))),
+            onLand: () => {
+                this.heldMaterials.delete(key);
+                const to = this.state.materials[key] ?? 0;
+                countUp(pill.querySelector('b'), before[key] ?? to, to);
+                this.shownMaterials[key] = to;
+                bump(pill);
+            },
         });
     }
 
@@ -259,24 +280,38 @@ export class CityMode {
     }
 
     async #forge(recipeId) {
+        const picture = document.querySelector(`#recipes [data-recipe="${recipeId}"] img`);
         await this.#run(async () => {
             this.#apply(await startForging(recipeId));
+            const slot = $('forge-slots').children[this.state.forge.jobs.length - 1];
+            if (picture && slot) void flyPicture(picture.src, picture, slot, { size: 72 });
             toast(`The forge is making ${itemName(recipeId)}.`);
         });
     }
 
     async #claim(jobId) {
+        let claimed = null;
         await this.#run(async () => {
             const result = await claimJob(jobId);
             this.#apply(result);
-            const { item, kind } = result.claimed;
-            if (kind === 'hero') {
-                toast(`${itemName(item)} joined your heroes.`);
-                return;
-            }
-            closeSheet();
-            this.#setMode('place', item);
+            claimed = result.claimed;
         });
+        if (!claimed) return;
+        const { item, kind, count } = claimed;
+        const hero = kind === 'hero';
+        await rewardPop({
+            src: itemThumb(item, 150),
+            title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
+            line: hero ? 'joined your heroes!' : 'forged! Now place it on the map',
+            color: hero ? HERO_INFO[item].color : (BUILDING_INFO[item]?.glow ?? '#ffb347'),
+        });
+        if (hero) {
+            this.forgeKind = 'hero';
+            this.#renderForge();
+            return;
+        }
+        closeSheet();
+        this.#setMode('place', item);
     }
 
     async #dismantle() {
@@ -546,12 +581,9 @@ export class CityMode {
         for (const item of bar.children) {
             const key = item.dataset.material;
             const value = this.state.materials[key] ?? 0;
+            if (this.heldMaterials.has(key)) continue;   // gems on their way: the counter waits for them
             item.querySelector('b').textContent = String(value);
-            if (!fresh && value > (this.shownMaterials[key] ?? value)) {
-                item.classList.remove('bump');
-                void item.offsetWidth;            // restart the animation
-                item.classList.add('bump');
-            }
+            if (!fresh && value > (this.shownMaterials[key] ?? value)) bump(item);
             this.shownMaterials[key] = value;
         }
     }
@@ -608,6 +640,12 @@ export class CityMode {
             $('sel-info').textContent = text;
         }
     }
+}
+
+function bump(item) {
+    item.classList.remove('bump');
+    void item.offsetWidth;            // restart the animation
+    item.classList.add('bump');
 }
 
 /** What the defence test depends on: where every building stands and how towers aim. */

@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from .catalog import BUILDINGS, TRAP, WALL
 from .economy import MATERIALS
 from .errors import ActionError
-from .simulation import simulate
+from .simulation import LOOT_WIN, simulate
 
 ENERGY_MAX = 5
 ENERGY_REGEN_SECONDS = 3600
@@ -140,7 +140,7 @@ def public_outposts(city: dict) -> list[dict]:
             "id": o.id, "name": o.name, "difficulty": o.difficulty,
             "unlocked": is_unlocked(campaign, o.id), "cleared": cleared,
             "best": campaign["best"].get(str(o.id), 0),
-            "loot_on_win": loot_for(o, 20, cleared), "loot_on_core": loot_for(o, 30, cleared),
+            "loot_on_win": loot_for(o, LOOT_WIN, cleared),
             "city": outpost_city(o.id),
         })
     return rows

@@ -2041,6 +2041,118 @@ button.hero-tile.ready:hover {
     text-transform: uppercase;
 }
 
+/* ── animations: flying gems, flying pictures, the forged card ────────── */
+.fx-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.fly-gem {
+    position: absolute;
+    left: -14px;
+    top: -14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0) 70%);
+    filter: drop-shadow(0 0 6px var(--accent));
+}
+
+.fly-gem .icon {
+    width: 22px;
+    height: 22px;
+    stroke-width: 2.4;
+}
+
+.fly-picture {
+    position: absolute;
+    left: 0;
+    top: 0;
+    filter: drop-shadow(0 0 12px rgba(255, 160, 60, 0.9));
+}
+
+.reward-pop {
+    position: absolute;
+    left: 50%;
+    top: 42%;
+    width: 280px;
+    margin-left: -140px;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 18px 16px 20px;
+    border-radius: 22px;
+    border: 2px solid var(--accent);
+    background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--accent) 35%, #2c1d13), #120b07 75%);
+    box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 60%, transparent), 0 20px 40px #000;
+    text-align: center;
+    pointer-events: auto;
+    cursor: pointer;
+    overflow: hidden;
+    animation: reward-in 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.reward-rays {
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    width: 420px;
+    height: 420px;
+    margin: -210px 0 0 -210px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(color-mix(in srgb, var(--accent) 30%, transparent) 0 7deg, transparent 7deg 20deg);
+    mask-image: radial-gradient(circle, #000 15%, transparent 60%);
+    animation: spin 8s linear infinite;
+}
+
+.reward-pop img {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    animation: reward-float 1.6s ease-in-out infinite;
+}
+
+.reward-pop b {
+    position: relative;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 30px;
+    line-height: 1.05;
+    color: var(--gold-hi);
+    text-shadow: 0 0 14px rgba(255, 122, 26, 0.7), 0 3px 0 #4a1800;
+}
+
+.reward-pop span:last-child {
+    position: relative;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffe2b8;
+}
+
+@keyframes reward-in {
+    from {
+        transform: translateY(-50%) scale(0.2) rotate(-8deg);
+        opacity: 0;
+    }
+}
+
+@keyframes reward-float {
+    50% {
+        transform: translateY(-6px) scale(1.04);
+    }
+}
+
 /* ── wide screens: sheets become a side panel ─────────────────────────── */
 @media (min-width: 900px) {
     .sheet {

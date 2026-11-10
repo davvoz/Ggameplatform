@@ -534,7 +534,7 @@ export class BattleMode {
     }
 
     #showResult() {
-        this.playTick = this.replay.duration;
+        this.playTick = this.replay.duration + TAIL_SECONDS * this.replay.tickRate;
         const s = this.battle.summary;
         const rewards = this.battle.rewards;
         const defense = Boolean(this.battle.defense);
@@ -592,9 +592,9 @@ export class BattleMode {
 
 function resultNote(battle, unlocked) {
     if (battle.defense) return battle.note;
-    if (battle.rival) return battle.summary.victory ? `You raided ${battle.rival}!` : `${battle.rival}'s defense held.`;
+    if (battle.rival) return battle.summary.victory ? `You raided ${battle.rival}!` : `${battle.rival}'s core still stands`;
     if (unlocked) return 'Outpost cleared!';
-    return battle.summary.victory ? 'The outpost has fallen' : 'Your squad fell back';
+    return battle.summary.victory ? 'The core has fallen' : 'The core still stands: bring it down to win';
 }
 
 function verdictText(defense, won) {
@@ -630,7 +630,7 @@ function paragraph(className, text) {
 }
 
 function lootLine(amounts) {
-    const line = paragraph('target-loot', 'Loot');
+    const line = paragraph('target-loot', 'Loot if the core falls');
     const got = Object.values(amounts).some((n) => n > 0);
     line.append(got ? materialChips(amounts) : ' · nothing above their vault');
     return line;

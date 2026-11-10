@@ -104,6 +104,7 @@ export function renderRecipes(container, recipes, materials, freeSlots, kind, on
     for (const recipe of recipes.filter((r) => r.kind === kind)) {
         const card = el('button', 'recipe');
         card.type = 'button';
+        card.dataset.recipe = recipe.id;
         const time = el('span', 'recipe-time');
         time.append(icon('clock'), formatDuration(recipe.seconds));
         const ped = el('span', 'ped');

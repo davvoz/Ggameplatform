@@ -104,6 +104,13 @@ export class Renderer {
         this.canvas.height = this.h;
     }
 
+    /** Where a world point (cells, height z) is on the page, in CSS pixels. */
+    screenOf(x, y, z = 0) {
+        const rect = this.canvas.getBoundingClientRect();
+        const p = toScreen(this.camera, x, y, z);
+        return { x: rect.left + p.x / this.dpr, y: rect.top + p.y / this.dpr };
+    }
+
     /** Slide the map up if building `b` sits below `limitY` (CSS px), e.g. under a panel. */
     reveal(b, limitY) {
         if (!this.camera) return;

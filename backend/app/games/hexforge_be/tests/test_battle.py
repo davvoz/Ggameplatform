@@ -67,14 +67,9 @@ class BattleRulesTest(unittest.TestCase):
     def test_loot_follows_the_result(self):
         for side, priority in itertools.product(SIDES, PRIORITIES):
             s = run(side=side, priority=priority)["summary"]
-            if s["core_destroyed"]:
-                expected = 30
-            elif s["destruction"] >= 50:
-                expected = 20
-            else:
-                expected = 0
+            expected = 30 if s["core_destroyed"] else 0
             self.assertEqual(s["loot_percent"], expected)
-            self.assertEqual(s["victory"], expected > 0)
+            self.assertEqual(s["victory"], s["core_destroyed"])
 
     def test_the_event_log_rebuilds_the_final_city(self):
         """The client draws building HP from the log alone, so the log must add up."""

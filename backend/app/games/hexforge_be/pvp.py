@@ -27,6 +27,7 @@ import random
 from .catalog import BUILDINGS, TRAP
 from .economy import MATERIALS
 from .errors import ActionError
+from .simulation import LOOT_WIN
 
 ARENA_OUTPOST = 1
 SHIELD_SECONDS = 3 * 3600
@@ -101,8 +102,7 @@ def public_rival(name: str, battle_city: dict, materials: dict, available: bool,
         "trophies": trophies,
         "league": league(trophies),
         "stakes": trophy_stakes(my_trophies, trophies),
-        "loot_on_win": loot_for(materials, 20),
-        "loot_on_core": loot_for(materials, 30),
+        "loot_on_win": loot_for(materials, LOOT_WIN),
     }
 
 

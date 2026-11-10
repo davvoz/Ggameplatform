@@ -27,8 +27,7 @@ MAX_TICKS = TICK_RATE * MAX_SECONDS
 FRAME_STRIDE = 2
 WALL_PATH_COST = 8.0           # how much a squad prefers walking round a wall to breaking it
 LEAP_MIN_TICKS = 5             # a leap over walls takes at least half a second
-WIN_DESTRUCTION = 50           # % of buildings (walls and traps excluded)
-LOOT_WIN, LOOT_CORE = 20, 30   # % of unprotected materials
+LOOT_WIN = 30                  # % of unprotected materials, taken only by bringing down the core
 AIMS = ("closest", "weakest", "ranged")   # how a tower picks among heroes in range
 DEFAULT_AIM = "closest"
 
@@ -442,13 +441,8 @@ class Battle:
         counted = [b for b in self.buildings if b.counts]
         destroyed = sum(1 for b in counted if not b.alive)
         destruction = round(100 * destroyed / len(counted)) if counted else 0
-        victory = self.core_destroyed or destruction >= WIN_DESTRUCTION
-        if self.core_destroyed:
-            loot = LOOT_CORE
-        elif victory:
-            loot = LOOT_WIN
-        else:
-            loot = 0
+        victory = self.core_destroyed        # the core is the city: nothing else wins
+        loot = LOOT_WIN if victory else 0
         return {
             "tick_rate": TICK_RATE,
             "frame_stride": FRAME_STRIDE,

@@ -2945,3 +2945,271 @@ button.energy-pill.boostable {
         animation: none;
     }
 }
+
+/* ── hero card and evolution ─────────────────────────────────────────── */
+.ht-badge.forge {
+    background: var(--gold);
+    color: #2a0d00;
+}
+
+.ht-badge.evolve {
+    background: #4dd98a;
+    color: #0a1f12;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.hero-tile.forge {
+    border-style: dashed;
+    border-color: rgba(255, 179, 71, 0.6);
+}
+
+.hero-tile.forge .ht-status {
+    color: var(--gold-hi);
+}
+
+.roster-total small {
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.segmented button.alert::after {
+    content: '';
+    width: 9px;
+    height: 9px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: #4dd98a;
+    box-shadow: 0 0 6px #4dd98a;
+}
+
+.xp-meter.wide {
+    width: 100%;
+}
+
+.hero-head {
+    --accent: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-art {
+    width: 104px;
+    height: 104px;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+    background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent) 22%, #1a100a), #120a06 70%);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent);
+    overflow: hidden;
+}
+
+.hero-art img {
+    width: 104px;
+    height: 104px;
+}
+
+.hero-who {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.hero-name {
+    font-family: var(--display);
+    font-size: 28px;
+    line-height: 1;
+    color: var(--gold-hi);
+}
+
+.hero-form {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.hero-what {
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0.85;
+}
+
+.hero-xp {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.hero-xp small {
+    font-size: 12px;
+    font-weight: 700;
+    color: #d9b98c;
+    font-variant-numeric: tabular-nums;
+}
+
+.hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 6px;
+}
+
+.hero-stat {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--edge);
+    background: #1a100a;
+}
+
+.hero-stat small {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.hero-stat b {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+}
+
+.evolve {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--brass);
+    background: linear-gradient(#2c1d13, #160e09);
+}
+
+.evolve h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--gold-hi);
+}
+
+.form-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.form-card {
+    --accent: var(--gold);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    background: #1a100a;
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+}
+
+button.form-card {
+    cursor: pointer;
+}
+
+.form-card[aria-pressed="true"] {
+    border: 2px solid var(--accent);
+    background: radial-gradient(circle at 50% 25%, color-mix(in srgb, var(--accent) 25%, #1a100a), #1a100a 70%);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.form-card img {
+    width: 84px;
+    height: 84px;
+}
+
+.form-card > b {
+    color: var(--accent);
+    font-size: 15px;
+}
+
+.form-what {
+    font-size: 12px;
+    line-height: 1.25;
+    opacity: 0.85;
+}
+
+.form-changes {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: 100%;
+    margin-top: 3px;
+}
+
+.form-changes .change {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.form-changes .change small {
+    color: var(--muted);
+}
+
+.form-changes .change b {
+    color: #7dff9a;
+    font-variant-numeric: tabular-nums;
+}
+
+.evolve-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.evolve-price {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.evolve-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold-hi);
+}
+
+.evolve-note {
+    font-size: 12px;
+    color: #ff9a8a;
+    font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ht-badge.evolve {
+        animation: none;
+    }
+}
+
+.chip-caption,
+.chip-xp {
+    display: block;
+    line-height: 1.15;
+}
+
+.chip-xp {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--gold-hi);
+}
+
+.chip-xp.ready {
+    color: #4dd98a;
+}

@@ -86,3 +86,16 @@ export const TASK_INFO = {
     attack: { text: (goal) => `Attack ${goal} times`, icon: 'attack' },
     win: { text: (goal) => (goal === 1 ? 'Win an attack' : `Win ${goal} attacks`), icon: 'trophy' },
 };
+
+/** Evolved forms: name, class, what they are good at, and their accent colour. */
+export const FORM_INFO = {
+    bastion: { name: 'Bastion', cls: 'guardian', what: 'Tougher, and towers turn on him from farther away.', accent: '#ffd36b' },
+    warlord: { name: 'Warlord', cls: 'guardian', what: 'A heavier hammer that also hits the buildings around.', accent: '#ff5a2a' },
+    phantom: { name: 'Phantom', cls: 'neon_blade', what: 'Faster on its feet, and strikes more often.', accent: '#8ff7ff' },
+    reaper: { name: 'Reaper', cls: 'neon_blade', what: 'Harder blows, and far harder on towers.', accent: '#b6ff4d' },
+    archon: { name: 'Archon', cls: 'technomancer', what: 'A bigger, stronger nova, more often.', accent: '#ffd36b' },
+    arcanist: { name: 'Arcanist', cls: 'technomancer', what: 'Hits from much farther away, and harder.', accent: '#4dfff0' },
+};
+
+/** Tier names: 1 base, 2 evolved, 3 ascended. */
+export const TIER_NAMES = { 1: 'Recruit', 2: 'Evolved', 3: 'Ascended' };

@@ -1,5 +1,5 @@
 import { drawBuilding, drawHero } from './forgeArt.js';
-import { BUILDING_INFO, HERO_INFO } from './labels.js';
+import { BUILDING_INFO, FORM_INFO, HERO_INFO } from './labels.js';
 
 /**
  * Small pictures of buildings and heroes, painted with the game's own art
@@ -41,21 +41,29 @@ export function buildingThumb(type, px = 64) {
     return cache.get(key);
 }
 
-/** Portrait of a hero class, `px` CSS pixels square. */
-export function heroThumb(cls, px = 56) {
-    const key = `h:${cls}:${px}`;
+/** Portrait of a hero class (evolved into `form` at `tier`, if given), `px` CSS pixels square. */
+export function heroThumb(cls, px = 56, form = null, tier = 1) {
+    const evolved = form && tier > 1;
+    const key = `h:${cls}:${px}:${evolved ? `${form}${tier}` : ''}`;
     if (!cache.has(key)) {
         cache.set(key, paint(px, (ctx) => {
-            const s = px / 48;
+            const s = (px / 48) * (evolved ? 0.9 - 0.06 * (tier - 2) : 1);     // room for the taller evolved gear
+            const tint = evolved ? FORM_INFO[form].accent : HERO_INFO[cls].color;
             const glow = ctx.createRadialGradient(px / 2, px * 0.6, 2, px / 2, px * 0.6, px * 0.5);
-            glow.addColorStop(0, `${HERO_INFO[cls].color}55`);
-            glow.addColorStop(1, `${HERO_INFO[cls].color}00`);
+            glow.addColorStop(0, `${tint}55`);
+            glow.addColorStop(1, `${tint}00`);
             ctx.fillStyle = glow;
             ctx.fillRect(0, 0, px, px);
-            drawHero(ctx, { cls, id: 0, facing: 1 }, px / 2 - 3 * s, px * 0.9, s, HERO_INFO[cls].color, 0.6);
+            const hero = { cls, id: 0, facing: 1, form: evolved ? form : null, tier: evolved ? tier : 1 };
+            drawHero(ctx, hero, px / 2 - 3 * s, px * (evolved ? 0.95 : 0.92), s, HERO_INFO[cls].color, 0.6);
         }));
     }
     return cache.get(key);
+}
+
+/** The portrait of one owned hero, as it is now. */
+export function heroPortrait(hero, px = 56) {
+    return heroThumb(hero.cls, px, hero.form ?? null, hero.tier ?? 1);
 }
 
 function trapIcon(ctx, px) {

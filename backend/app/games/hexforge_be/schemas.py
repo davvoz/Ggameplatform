@@ -42,6 +42,11 @@ class AttackRequest(BaseModel):
     tactic: Literal["compact", "spread", "split"]
 
 
+class EvolveRequest(BaseModel):
+    """The form to evolve into (ignored when ascending: the form stays)."""
+    form: Optional[Literal["bastion", "warlord", "phantom", "reaper", "archon", "arcanist"]] = None
+
+
 class BonusRequest(BaseModel):
     """Use one bonus on exactly one target: a forge job, a hurt hero or the energy."""
     bonus: Literal["hourglass", "golden_hourglass", "salve", "flask"]

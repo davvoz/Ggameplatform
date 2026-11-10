@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import economy, progress
+from . import economy, evolution, progress
 from .catalog import BUILDINGS, HEROES
 from .errors import ActionError
 
@@ -123,6 +123,9 @@ def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
         raise ActionError("unknown_job")
     if job["ready_at"] > now:
         raise ActionError("not_ready")
+    if job["recipe"] == "evolve":
+        forge["jobs"].remove(job)
+        return evolution.finish(job, heroes)
     recipe = RECIPES[job["recipe"]]
     forge["jobs"].remove(job)
     if recipe.kind == "hero":
@@ -131,7 +134,7 @@ def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
             heroes.append({"id": next_id + i, "cls": recipe.item})
     else:
         city["storage"][recipe.item] = city["storage"].get(recipe.item, 0) + recipe.yields
-    return {"item": recipe.item, "kind": recipe.kind, "count": recipe.yields}
+    return {"item": recipe.item, "kind": recipe.kind, "count": recipe.yields, "seconds": recipe.seconds}
 
 
 # ── storage and dismantling ────────────────────────────────────────────

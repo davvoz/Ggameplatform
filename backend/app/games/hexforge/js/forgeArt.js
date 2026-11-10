@@ -1,4 +1,5 @@
 import { toScreen } from './iso.js';
+import { FORM_INFO } from './labels.js';
 
 /**
  * Hexforge art, "Forgia Infernale": iron, basalt and molten metal, drawn
@@ -437,15 +438,22 @@ export function drawRubble(ctx, cam, b, time) {
  * winding up, 0..1 following through), nova, leap (0..1 through a jump),
  * down (0..1 collapsing). Heroes are drawn in profile, facing right, in
  * unscaled units with the feet at the origin; facing left mirrors them.
+ * An evolved hero (`hero.form`, `hero.tier` 2 or 3) carries its form's
+ * gear in the form's accent colour; an ascended one is a little taller
+ * and burns with an aura.
  */
 export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
     const facing = (pose.facing ?? hero.facing ?? 1) < 0 ? -1 : 1;
+    const tier = hero.form ? (hero.tier ?? 1) : 1;
     const p = {
         t: time + (hero.id ?? 0) * 0.37,
         walk: pose.walking ? time * WALK_RATE[hero.cls] + (hero.id ?? 0) : null,
         attack: pose.attack ?? null,
         nova: Boolean(pose.nova),
         leap: pose.leap ?? null,
+        form: tier > 1 ? hero.form : null,
+        tier,
+        accent: tier > 1 ? FORM_INFO[hero.form]?.accent ?? color : color,
     };
     ctx.save();
     ctx.translate(x, y);
@@ -456,6 +464,8 @@ export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
         ctx.globalAlpha *= Math.max(0, 1 - pose.down);
         ctx.rotate(-Math.min(1, pose.down * 3) * Math.PI / 2);   // topples backwards
     }
+    if (tier > 1) ctx.scale(1 + 0.05 * (tier - 1), 1 + 0.05 * (tier - 1));
+    if (tier === 3) halo(ctx, 0, -24, 34, p.accent, 0.4 + 0.12 * Math.sin(p.t * 3));
     if (hero.cls === 'guardian') guardian(ctx, color, p);
     else if (hero.cls === 'neon_blade') blade(ctx, color, p);
     else mage(ctx, color, p);
@@ -528,11 +538,13 @@ function guardian(ctx, color, p) {
     const steel = '#5b5f69';
     const dark = '#2a2c33';
 
+    if (p.form === 'warlord') cape(ctx, p.accent, p.t, -2, -30, 16);
     leg(ctx, -2, -15, 15, -step * 0.5, dark, 5);
     // hammer arm behind the body while resting or winding up
     const arm = swing(p.attack, 0.35, -2.7, 1.1, true);
     const striking = p.attack !== null && (p.attack > -0.3);
-    if (!striking) hammer(ctx, color, arm);
+    const head = p.form === 'warlord' ? 1.25 + 0.15 * (p.tier - 2) : 1;
+    if (!striking) hammer(ctx, color, arm, head, p.accent);
 
     // body: plate cuirass with the class tabard
     const body = ctx.createLinearGradient(-9, 0, 9, 0);
@@ -545,7 +557,7 @@ function guardian(ctx, color, p) {
     ctx.fillStyle = color;
     path(ctx, [{ x: -3, y: -29 }, { x: 4, y: -29 }, { x: 5, y: -9 }, { x: 0.5, y: -6 }, { x: -4, y: -9 }]);
     ctx.fill();
-    ctx.fillStyle = '#d9a441';
+    ctx.fillStyle = p.form ? p.accent : '#d9a441';
     ctx.fillRect(-9, -16, 17, 2.4);
     leg(ctx, 2, -15, 15, step * 0.5, steel, 5);
 
@@ -561,7 +573,7 @@ function guardian(ctx, color, p) {
     ctx.fillStyle = '#ffd36b';
     ctx.fillRect(0, -38, 6.5, 1.8);
     ctx.fillRect(3, -38, 1.6, 5);
-    ctx.fillStyle = color;
+    ctx.fillStyle = p.form === 'warlord' ? p.accent : color;        // the warlord's plume burns red
     ctx.beginPath();
     ctx.moveTo(-1, -44);
     ctx.quadraticCurveTo(-10, -48 + Math.sin(p.t * 6) * 1.5, -13, -40);
@@ -572,12 +584,40 @@ function guardian(ctx, color, p) {
     ctx.beginPath();
     ctx.ellipse(-1, -30, 7, 4, -0.2, 0, Math.PI * 2);
     ctx.fill();
+    if (p.form) {
+        ctx.strokeStyle = p.accent;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+    }
+    if (p.tier === 3) horns(ctx, p.form === 'warlord' ? '#2a2c33' : p.accent, 0, -41);
 
-    if (striking) hammer(ctx, color, arm);
-    shield(ctx, color, push * 0.5);
+    if (striking) hammer(ctx, color, arm, head, p.accent);
+    const big = p.form === 'bastion' ? 1.2 + 0.15 * (p.tier - 2) : 1;
+    shield(ctx, color, push * 0.5, big, p.form ? p.accent : '#d9a441');
 }
 
-function hammer(ctx, color, angle) {
+/** A cloak hanging from the shoulders, waving. */
+function cape(ctx, color, t, x, y, length) {
+    const wave = Math.sin(t * 3) * 1.5;
+    ctx.fillStyle = shade(color, 0.6);
+    path(ctx, [{ x: x + 2, y }, { x: x - 8, y: y + length * 0.5 + wave }, { x: x - 10, y: y + length + wave }, { x: x + 1, y: y + length - 2 }]);
+    ctx.fill();
+}
+
+/** Two horns (ascended Guardian and Reaper) above a head centred at (x, y). */
+function horns(ctx, color, x, y) {
+    ctx.fillStyle = color;
+    for (const side of [-1, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(x + side * 3, y + 3);
+        ctx.quadraticCurveTo(x + side * 8, y - 1, x + side * 7, y - 7);
+        ctx.quadraticCurveTo(x + side * 5, y - 2, x + side * 1, y + 1);
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+
+function hammer(ctx, color, angle, size = 1, accent = color) {
     const shoulder = { x: -2, y: -29 };
     const hand = limbEnd(shoulder.x, shoulder.y, 10, angle);
     stroke(ctx, '#4a4d55', 4.5, [shoulder, hand]);
@@ -586,19 +626,33 @@ function hammer(ctx, color, angle) {
     ctx.save();
     ctx.translate(tip.x, tip.y);
     ctx.rotate(-angle);
+    ctx.scale(size, size);
     ctx.fillStyle = '#3d4048';
     ctx.fillRect(-6, -3.5, 12, 7);
     ctx.fillStyle = '#9aa0ab';
     ctx.fillRect(-6, -3.5, 12, 1.6);
+    if (size > 1) {
+        // the warlord's spikes
+        ctx.fillStyle = accent;
+        path(ctx, [{ x: -6, y: -3.5 }, { x: -9, y: 0 }, { x: -6, y: 3.5 }]);
+        ctx.fill();
+        path(ctx, [{ x: 6, y: -3.5 }, { x: 9, y: 0 }, { x: 6, y: 3.5 }]);
+        ctx.fill();
+        halo(ctx, 0, 0, 9, accent, 0.5);
+    }
     ctx.fillStyle = color;
     ctx.fillRect(-1.5, -2.5, 3, 5);
     ctx.restore();
 }
 
-function shield(ctx, color, push) {
+function shield(ctx, color, push, size = 1, trim = '#d9a441') {
     const x = 9 + push;
+    ctx.save();
+    ctx.translate(x, -20);
+    ctx.scale(size, size);
+    ctx.translate(-x, 20);
     ctx.fillStyle = shade(color, 0.55);
-    ctx.strokeStyle = '#d9a441';
+    ctx.strokeStyle = trim;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(x - 4, -33);
@@ -608,9 +662,10 @@ function shield(ctx, color, push) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = color;
+    ctx.fillStyle = size > 1 ? trim : color;
     ctx.fillRect(x - 0.5, -28, 2, 14);
     ctx.fillRect(x - 3, -22, 7, 2);
+    ctx.restore();
 }
 
 // ── Neon Blade: hooded assassin, twin energy daggers ───────────────────
@@ -632,6 +687,15 @@ function blade(ctx, color, p) {
 
     // scarf and cloak streaming behind
     const wave = Math.sin(p.t * (running ? 14 : 4));
+    if (p.tier === 3 && p.form === 'phantom') wings(ctx, p.accent, p.t);
+    if (p.form === 'phantom') {
+        ctx.strokeStyle = p.accent;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-1, -27);
+        ctx.quadraticCurveTo(-12, -27 - wave * 2, -21, -21 + wave * 2);
+        ctx.stroke();
+    }
     ctx.fillStyle = shade(color, 0.45);
     path(ctx, [{ x: -3, y: -30 }, { x: -14, y: -22 + wave * 2 }, { x: -11, y: -8 + wave }, { x: -2, y: -12 }]);
     ctx.fill();
@@ -643,7 +707,9 @@ function blade(ctx, color, p) {
     ctx.stroke();
 
     leg(ctx, -1, -13, 13 * tuck, -step * 0.9, dark, 3.6);
-    dagger(ctx, color, swing(p.attack, 0.9, -1.6, 2.1) - 0.5, { x: -2, y: -26 });
+    const reach = p.form === 'reaper' ? 1.35 + 0.15 * (p.tier - 2) : 1;
+    const edge = p.form === 'reaper' ? p.accent : color;
+    dagger(ctx, edge, swing(p.attack, 0.9, -1.6, 2.1) - 0.5, { x: -2, y: -26 }, reach);
     // slim body
     ctx.fillStyle = '#2b1f27';
     path(ctx, [{ x: -5, y: -13 }, { x: -4, y: -29 }, { x: 4, y: -29 }, { x: 5, y: -13 }]);
@@ -664,16 +730,36 @@ function blade(ctx, color, p) {
     ctx.beginPath();
     ctx.ellipse(2.5, -33, 3, 3.6, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#ffe0ef';
+    ctx.fillStyle = p.form ? p.accent : '#ffe0ef';
     ctx.fillRect(2.5, -34, 2.6, 1.3);
-    dagger(ctx, color, swing(p.attack, 1.2, -1.2, 2.4), { x: 2, y: -26 });
-    if (p.attack !== null && p.attack > -0.35 && p.attack < 0.8) slash(ctx, color, p.attack);
+    if (p.tier === 3 && p.form === 'reaper') horns(ctx, p.accent, 0, -40);
+    dagger(ctx, edge, swing(p.attack, 1.2, -1.2, 2.4), { x: 2, y: -26 }, reach);
+    if (p.attack !== null && p.attack > -0.35 && p.attack < 0.8) slash(ctx, edge, p.attack);
 }
 
-function dagger(ctx, color, angle, shoulder) {
+/** Two thin wings of light (the ascended Phantom). */
+function wings(ctx, color, t) {
+    const beat = Math.sin(t * 6) * 0.15;
+    ctx.save();
+    ctx.globalAlpha *= 0.75;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = withAlpha(color, 0.18);
+    for (const k of [0, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(-2, -27);
+        ctx.quadraticCurveTo(-14 - k * 4, -44 + k * 6 - beat * 20, -22 - k * 3, -30 + k * 8);
+        ctx.quadraticCurveTo(-12, -30 + k * 4, -2, -24);
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function dagger(ctx, color, angle, shoulder, reach = 1) {
     const hand = limbEnd(shoulder.x, shoulder.y, 8, angle);
     stroke(ctx, '#2b1f27', 3, [shoulder, hand]);
-    const tip = limbEnd(hand.x, hand.y, 10, angle - 0.6);
+    const tip = limbEnd(hand.x, hand.y, 10 * reach, angle - 0.6 * reach);
     halo(ctx, (hand.x + tip.x) / 2, (hand.y + tip.y) / 2, 8, color, 0.7);
     stroke(ctx, color, 2.6, [hand, tip]);
     stroke(ctx, '#ffffff', 1, [hand, tip]);
@@ -741,9 +827,59 @@ function mage(ctx, color, p) {
     ctx.beginPath();
     ctx.ellipse(1.5, -32, 3, 3.4, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#e6d8ff';
+    ctx.fillStyle = p.form ? p.accent : '#e6d8ff';
     ctx.fillRect(1.2, -33, 3, 1.3);
+    if (p.form === 'archon') runeRing(ctx, p.accent, p.t, p.tier);
+    if (p.tier === 3 && p.form === 'arcanist') shards(ctx, p.accent, p.t);
     staff(ctx, color, p);
+}
+
+/** A ring of runes turning round the head (Archon); ascended, three orbs crown it. */
+function runeRing(ctx, color, t, tier) {
+    ctx.save();
+    ctx.strokeStyle = withAlpha(color, 0.8);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(0.5, -41, 9, 2.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = color;
+    for (let i = 0; i < 6; i++) {
+        const a = t * 1.5 + (i / 6) * Math.PI * 2;
+        ctx.fillRect(0.5 + Math.cos(a) * 9 - 0.8, -41 + Math.sin(a) * 2.6 - 0.8, 1.6, 1.6);
+    }
+    if (tier === 3) {
+        for (let i = 0; i < 3; i++) {
+            const a = t * 0.8 + (i / 3) * Math.PI * 2;
+            const ox = 0.5 + Math.cos(a) * 6;
+            const oy = -47 + Math.sin(a) * 1.5;
+            halo(ctx, ox, oy, 4, color, 0.9);
+            ctx.fillStyle = '#fff6d8';
+            ctx.beginPath();
+            ctx.arc(ox, oy, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    ctx.restore();
+}
+
+/** Crystal shards floating round the ascended Arcanist. */
+function shards(ctx, color, t) {
+    for (let i = 0; i < 3; i++) {
+        const a = t * 1.2 + (i / 3) * Math.PI * 2;
+        const x = Math.cos(a) * 12;
+        const y = -24 + Math.sin(a) * 4 - 6;
+        crystal(ctx, color, x, y, 2.4);
+    }
+}
+
+function crystal(ctx, color, x, y, r) {
+    halo(ctx, x, y, r * 3, color, 0.7);
+    ctx.fillStyle = color;
+    path(ctx, [{ x, y: y - r * 1.8 }, { x: x + r, y }, { x, y: y + r * 1.8 }, { x: x - r, y }]);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    path(ctx, [{ x, y: y - r * 1.8 }, { x: x + r * 0.4, y }, { x, y: y + r * 0.6 }]);
+    ctx.fill();
 }
 
 function staff(ctx, color, p) {
@@ -751,13 +887,19 @@ function staff(ctx, color, p) {
     const hand = { x: 6, y: -19 };
     const up = { x: Math.sin(angle), y: -Math.cos(angle) };
     stroke(ctx, '#3f2a5a', 3, [{ x: 2, y: -26 }, hand]);
+    const long = p.form === 'arcanist' ? 6 : 0;
     const bottom = { x: hand.x - up.x * 13, y: hand.y - up.y * 13 };
-    const top = { x: hand.x + up.x * 21, y: hand.y + up.y * 21 };
-    stroke(ctx, '#6b4a2e', 2, [bottom, top]);
+    const top = { x: hand.x + up.x * (21 + long), y: hand.y + up.y * (21 + long) };
+    stroke(ctx, p.form === 'arcanist' ? '#3a3f4a' : '#6b4a2e', 2, [bottom, top]);
     let charge = 0;
     if (p.attack !== null) charge = p.attack < 0 ? 1 + p.attack : Math.max(0, 1 - p.attack * 2);
     const orb = { x: top.x + up.x * 4, y: top.y + up.y * 4 + Math.sin(p.t * 3) * 1.2 };
-    halo(ctx, orb.x, orb.y, 9 + charge * (p.nova ? 26 : 14), color, 0.8 + charge * 0.2);
+    if (p.form === 'arcanist') {
+        halo(ctx, orb.x, orb.y, 8 + charge * 14, p.accent, 0.8 + charge * 0.2);
+        crystal(ctx, p.accent, orb.x, orb.y, 2.6 + charge);
+        return;
+    }
+    halo(ctx, orb.x, orb.y, 9 + charge * (p.nova ? 26 : 14), p.form === 'archon' ? p.accent : color, 0.8 + charge * 0.2);
     ctx.fillStyle = '#f1eaff';
     ctx.beginPath();
     ctx.arc(orb.x, orb.y, 3 + charge * 1.6, 0, Math.PI * 2);

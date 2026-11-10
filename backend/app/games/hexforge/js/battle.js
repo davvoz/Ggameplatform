@@ -6,7 +6,9 @@ import { play, playBattleEvent, setMode as setMusic } from './audio.js';
 import { formatCountdown } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
-import { BONUS_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
+import {
+    BONUS_INFO, CHOICE_ICONS, FORM_INFO, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO,
+} from './labels.js';
 import { LEAGUE_COLORS, signed, stakesText } from './leagues.js';
 import { createReplay } from './replay.js';
 import { usableBonuses } from './rewardsPanel.js';
@@ -48,6 +50,7 @@ const REFUSALS = {
     no_bonus: 'You have none of those left.',
     nothing_to_speed_up: 'Nothing to speed up there.',
     energy_full: 'Your energy is already full.',
+    hero_evolving: 'One of your heroes is evolving at the forge.',
 };
 
 export class BattleMode {
@@ -413,6 +416,11 @@ export class BattleMode {
     #tapHero(hero, name) {
         const now = this.#serverNow();
         const { state, left } = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
+        if (state === 'forge') {
+            play('error');
+            toast(`${name} is evolving at the forge.`);
+            return;
+        }
         if (state === 'hurt') {
             if (usableBonuses('hero', this.data.bonuses).length) {
                 this.#pickBonus('hero', { hero_id: hero.id }, `Heal ${name}`, `ready again in ${formatHeal(left)}`);
@@ -593,7 +601,7 @@ export class BattleMode {
     #buildHeroList() {
         const list = $('hero-list');
         list.replaceChildren();
-        for (const hero of this.battle.squad) list.append(heroChip(hero.cls));
+        for (const hero of this.battle.squad) list.append(heroChip(hero));
     }
 
     #updateHeroList(state) {
@@ -650,12 +658,14 @@ export class BattleMode {
 
         const report = $('report');
         report.replaceChildren();
-        for (const hero of s.heroes) {
-            const chip = heroChip(hero.cls, `${hero.dealt} dmg`);
+        s.heroes.forEach((hero, i) => {
+            const gain = rewards?.hero_xp?.[i];
+            const chip = heroChip(hero, `${hero.dealt} dmg`, gain);
             chip.classList.toggle('down', !hero.survived);
-            chip.title = `${HERO_INFO[hero.cls].name}: dealt ${hero.dealt}, took ${hero.taken}${hero.survived ? '' : ', down'}`;
+            chip.title = `${chipName(hero)}: dealt ${hero.dealt}, took ${hero.taken}${hero.survived ? '' : ', down'}`
+                + (gain ? `, +${gain.xp} XP${gain.ready ? ', can evolve' : ''}` : '');
             report.append(chip);
-        }
+        });
         const gotLoot = loot.childElementCount > 0;
         $('btn-new').firstElementChild.textContent = defense ? 'Back to my city' : (gotLoot ? 'Collect' : 'Continue');
         this.#show('result');
@@ -674,19 +684,35 @@ function verdictText(defense, won) {
     return won ? 'Victory' : 'Defeat';
 }
 
-function heroChip(cls, caption = null) {
-    const info = HERO_INFO[cls];
+function chipName(hero) {
+    return (hero.tier ?? 1) > 1 ? FORM_INFO[hero.form].name : HERO_INFO[hero.cls].name;
+}
+
+/** A hero of the fight (`{cls, form, tier}`): portrait, health bar, a caption, and the XP it earned. */
+function heroChip(hero, caption = null, gain = null) {
+    const info = HERO_INFO[hero.cls];
     const chip = document.createElement('div');
     chip.className = 'hero-chip';
     chip.style.setProperty('--accent', info.color);
-    chip.title = info.name;
+    chip.title = chipName(hero);
     const bar = document.createElement('div');
     bar.className = 'bar';
     const fill = document.createElement('div');
     fill.style.width = '100%';
     bar.append(fill);
-    chip.append(thumbImg(heroThumb(cls, 46), '', info.name), bar);
-    if (caption) chip.append(caption);
+    chip.append(thumbImg(heroThumb(hero.cls, 46, hero.form ?? null, hero.tier ?? 1), '', chipName(hero)), bar);
+    if (caption) {
+        const text = document.createElement('span');
+        text.className = 'chip-caption';
+        text.textContent = caption;
+        chip.append(text);
+    }
+    if (gain) {
+        const xp = document.createElement('small');
+        xp.className = `chip-xp${gain.ready ? ' ready' : ''}`;
+        xp.textContent = gain.ready ? `+${gain.xp} XP · evolve!` : `+${gain.xp} XP`;
+        chip.append(xp);
+    }
     return chip;
 }
 
@@ -705,6 +731,8 @@ function renderBadges(badges, s, rewards, defense, next) {
     if (rewards?.trophies !== undefined) badge(`${signed(rewards.trophies)} trophies`, rewards.trophies >= 0 ? 'good' : 'bad', 'trophy');
     if (rewards?.xp) badge(`+${rewards.xp} XP`, 'good', 'star');
     if (rewards?.levels?.length) badge(`Level ${rewards.levels.at(-1).level}!`, 'good', 'star');
+    const evolvable = (rewards?.hero_xp ?? []).filter((g) => g.ready).length;
+    if (evolvable) badge(`${evolvable} hero${evolvable > 1 ? 'es' : ''} can evolve: Forge, Heroes`, 'good', 'arrow');
     if (rewards?.injured.length) badge(`${rewards.injured.length} hurt · back in 15 min`, 'bad', 'hero');
 }
 

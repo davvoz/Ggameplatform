@@ -100,6 +100,8 @@ export function createReplay(battle) {
             return {
                 id: h.id,
                 cls: h.cls,
+                form: h.form ?? null,
+                tier: h.tier ?? 1,
                 maxHp: h.hp,
                 hp: heroHp[k],
                 alive: !down.has(h.id),
@@ -181,6 +183,7 @@ function applyEvent(e, s) {
     switch (e.type) {
         case 'strike':
             s.buildingHp.set(e.building, e.hp);
+            for (const hit of e.splash ?? []) s.buildingHp.set(hit.building, hit.hp);   // a warlord's blow
             break;
         case 'nova':
             for (const hit of e.hits) s.buildingHp.set(hit.building, hit.hp);

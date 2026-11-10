@@ -128,3 +128,8 @@ export function claimWeeklyChest() {
 export function useBonus(bonus, target) {
     return post('/me/bonuses/use', { bonus, ...target });
 }
+
+/** Send a hero to the forge to evolve into `form` (null when ascending). */
+export function evolveHero(heroId, form) {
+    return post(`/me/heroes/${heroId}/evolve`, { form });
+}

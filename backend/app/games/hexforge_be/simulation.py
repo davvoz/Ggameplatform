@@ -18,7 +18,8 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .catalog import BUILDINGS, CORE, HEROES, TRAP, WALL, BuildingType, HeroClass
+from .catalog import BUILDINGS, CORE, TRAP, WALL, BuildingType, HeroClass
+from .evolution import parse_unit, spec_of
 from .pathfinding import find_path
 
 TICK_RATE = 10                 # ticks per second
@@ -74,6 +75,8 @@ class _Hero:
     x: float
     y: float
     group: int
+    form: Optional[str] = None
+    tier: int = 1
     hp: int = 0
     alive: bool = True
     target: Optional[int] = None
@@ -91,7 +94,7 @@ class _Hero:
 
 
 class Battle:
-    def __init__(self, city: dict, squad: list[str], side: str, priority: str, tactic: str):
+    def __init__(self, city: dict, squad: list, side: str, priority: str, tactic: str):
         self.grid = city["grid"]
         self.priority = priority
         self.tactic = tactic
@@ -116,9 +119,11 @@ class Battle:
         self.frames: list[list[list[float]]] = []
 
     # ── setup ───────────────────────────────────────────────────────────
-    def _spawn(self, squad: list[str], side: str) -> list[_Hero]:
+    def _spawn(self, squad: list, side: str) -> list[_Hero]:
+        """`squad`: class names, or {"cls", "form", "tier"} for evolved heroes."""
         heroes = []
-        for i, cls in enumerate(squad):
+        for i, unit in enumerate(squad):
+            cls, form, tier = parse_unit(unit)
             if self.tactic == "spread":
                 fraction, group = 0.2 + 0.2 * i, i
             elif self.tactic == "split":
@@ -129,7 +134,8 @@ class Battle:
                 # small offsets so heroes sharing a spawn point do not overlap exactly
                 fraction += (i - 1.5) * 0.035
             x, y = self._edge_point(side, fraction)
-            heroes.append(_Hero(id=i, cls=cls, spec=HEROES[cls], x=x, y=y, group=group))
+            heroes.append(_Hero(id=i, cls=cls, spec=spec_of(cls, form, tier), x=x, y=y, group=group,
+                                form=form if tier > 1 else None, tier=tier))
         return heroes
 
     def _edge_point(self, side: str, fraction: float) -> tuple[float, float]:
@@ -314,7 +320,16 @@ class Battle:
                         radius=spec.nova_radius, hits=hits)
             hero.nova_ready_tick = self.tick + round(spec.nova_cooldown * TICK_RATE)
         else:
-            hit = self._damage_building(hero, target, spec.damage)
+            damage = round(spec.damage * (spec.tower_bonus if target.spec.category == "tower" else 1))
+            hit = self._damage_building(hero, target, damage)
+            splash = []
+            if spec.splash_radius:
+                for b in self.buildings:
+                    if (b is not target and b.alive and b.type != TRAP
+                            and b.distance_to(target.cx, target.cy) <= spec.splash_radius):
+                        splash.append(self._damage_building(hero, b, damage // 2))
+            if splash:
+                hit["splash"] = splash
             self._event("strike", hero=hero.id, **hit)
         hero.ready_tick = self.tick + round(spec.cooldown * TICK_RATE)
         self._finalise_destroyed()
@@ -447,7 +462,8 @@ class Battle:
             "tick_rate": TICK_RATE,
             "frame_stride": FRAME_STRIDE,
             "ticks": self.tick,
-            "squad": [{"id": h.id, "cls": h.cls, "hp": h.spec.hp} for h in self.heroes],
+            "squad": [{"id": h.id, "cls": h.cls, "form": h.form, "tier": h.tier, "hp": h.spec.hp}
+                      for h in self.heroes],
             "frames": self.frames,
             "events": self.events,
             "summary": {
@@ -457,12 +473,12 @@ class Battle:
                 "loot_percent": loot,
                 "seconds": round(self.tick / TICK_RATE, 1),
                 "first_tower_lost": self.first_tower_lost,
-                "heroes": [{"id": h.id, "cls": h.cls, "dealt": h.dealt, "taken": h.taken,
-                            "survived": h.alive} for h in self.heroes],
+                "heroes": [{"id": h.id, "cls": h.cls, "form": h.form, "tier": h.tier, "dealt": h.dealt,
+                            "taken": h.taken, "survived": h.alive} for h in self.heroes],
             },
         }
 
 
-def simulate(city: dict, squad: list[str], side: str, priority: str, tactic: str) -> dict:
+def simulate(city: dict, squad: list, side: str, priority: str, tactic: str) -> dict:
     """Run one battle and return its replay log and summary."""
     return Battle(city, squad, side, priority, tactic).run()

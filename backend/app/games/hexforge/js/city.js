@@ -1,24 +1,28 @@
 import {
     Refused, SignInRequired, claimJob, claimLoginReward, claimTaskReward, claimWeeklyChest, collect,
     dismantleBuilding, fetchMyState, fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding,
-    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus,
+    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero,
 } from './api.js';
 import { openBonusPicker } from './bonusPicker.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { play } from './audio.js';
 import { countUp, flyMaterial, flyPicture, rewardPop } from './fx.js';
-import { formatCountdown, itemName, itemThumb, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
+import {
+    formatCountdown, itemName, itemThumb, jobName, renderForgeSlots, renderRecipes, renderRoster, renderStorage,
+} from './forgePanel.js';
+import { renderHeroCard } from './heroPanel.js';
+import { evolveReady, heroNames } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
-import { AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import { AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, FORM_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import { LEAGUE_COLORS } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
 import {
     formatLong, medal, renderBonuses, renderCalendar, renderChest, renderTasks, rewardChips, usableBonuses,
 } from './rewardsPanel.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
-import { buildingThumb } from './thumbs.js';
+import { buildingThumb, heroThumb } from './thumbs.js';
 
 /**
  * "My city": the player's saved city, full screen.
@@ -27,6 +31,8 @@ import { buildingThumb } from './thumbs.js';
  *  - Forge (sheet): forge buildings and heroes; claimed buildings go to the
  *    "ready to place" tray, then onto the map
  *  - Defense (sheet): defence test, raids on your city, replay and revenge
+ *  - hero card (sheet, from the forge's Heroes tab): XP, stats, and the
+ *    evolution into one of two forms, then the ascension, at the forge
  *  - Rewards (sheet): the 7-day calendar, today's tasks, the weekly chest
  *    and the bonus inventory; an hourglass speeds up a forge job
  *  - the big Attack button opens the attack plan
@@ -63,6 +69,12 @@ const MESSAGES = {
     nothing_to_speed_up: 'Nothing to speed up there.',
     wrong_bonus: 'That bonus does not work there.',
     energy_full: 'Your energy is already full.',
+    not_enough_xp: 'Not enough XP yet: fight more with this hero.',
+    already_evolving: 'That hero is already at the forge.',
+    fully_evolved: 'That hero is fully ascended.',
+    unknown_form: 'Pick one of the two forms.',
+    hero_injured: 'That hero is hurt: wait until it heals.',
+    unknown_hero: 'That hero is gone.',
 };
 
 export class CityMode {
@@ -90,6 +102,8 @@ export class CityMode {
         this.rot = loadRotation();        // quarter turns of the view, remembered on this device
         this.progress = null;             // last level and XP seen, kept across reloads to spot gains
         this.pops = Promise.resolve();    // big cards (forged, level up) wait for each other
+        this.heroId = null;               // the hero whose card is open
+        this.heroForm = null;             // the form picked on it so far
         this.onWatch = () => {};      // set by the shell: replay a battle
         this.onRevenge = () => {};    // set by the shell: open the attack plan on the scouted raider
         this.onAttack = () => {};     // set by the shell: open the attack plan
@@ -218,6 +232,55 @@ export class CityMode {
         this.#select(null);
         this.#renderForge();
         openSheet('sheet-forge');
+    }
+
+    // ── hero card ──────────────────────────────────────────────────────
+    #openHero(heroId) {
+        if (!this.state) return;
+        this.heroId = heroId;
+        this.heroForm = null;
+        openSheet('sheet-hero', () => {
+            this.heroId = null;
+            this.forgeKind = 'hero';
+            // back to the forge's heroes, unless another sheet took over or the city was left
+            setTimeout(() => {
+                if (!isSheetOpen() && !$('hud-city').hidden) this.#openForge();
+            }, 0);
+        });
+        this.#renderHero();
+    }
+
+    #renderHero() {
+        if (this.heroId === null || !isSheetOpen('sheet-hero')) return;
+        const hero = this.state.heroes.find((h) => h.id === this.heroId);
+        if (!hero) {
+            closeSheet();
+            return;
+        }
+        const name = heroNames(this.state.heroes).get(hero.id);
+        $('hero-title').textContent = name;
+        const job = this.state.forge.jobs.find((j) => j.recipe === 'evolve' && j.hero === hero.id) ?? null;
+        renderHeroCard($('hero-card'), {
+            hero, name, table: this.state.evolution, materials: this.state.materials,
+            freeSlots: this.state.forge.slots - this.state.forge.jobs.length, serverNow: this.#serverNow(),
+            job, picked: this.heroForm,
+        }, {
+            onPick: (form) => {
+                this.heroForm = form;
+                play('click');
+                this.#renderHero();
+            },
+            onEvolve: (form) => void this.#evolve(hero, name, form),
+        });
+    }
+
+    async #evolve(hero, name, form) {
+        await this.#run(async () => {
+            this.#apply(await evolveHero(hero.id, form));
+            play('forge');
+            const goal = (hero.tier ?? 1) + 1 === 3 ? 'ascend' : 'become a ' + FORM_INFO[form].name;
+            toast(`${name} went into the forge to ${goal}.`);
+        });
     }
 
     #openRewards() {
@@ -412,7 +475,16 @@ export class CityMode {
             const { item, kind, count } = claimed;
             const hero = kind === 'hero';
             shown = this.#queuePop(() => {             // before #apply, so a level-up card comes after it
-                play('claim');
+                play(kind === 'evolution' ? 'levelup' : 'claim');
+                if (kind === 'evolution') {
+                    const form = FORM_INFO[claimed.form];
+                    return rewardPop({
+                        src: heroThumb(item, 150, claimed.form, claimed.tier),
+                        title: `${form.name} ${'★'.repeat(claimed.tier)}`,
+                        line: claimed.tier === 3 ? 'ascended! Stronger than ever' : 'evolved! A new form',
+                        color: form.accent,
+                    });
+                }
                 return rewardPop({
                     src: itemThumb(item, 150),
                     title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
@@ -424,7 +496,7 @@ export class CityMode {
         });
         if (!claimed) return;
         await shown;
-        const hero = claimed.kind === 'hero';
+        const hero = claimed.kind === 'hero' || claimed.kind === 'evolution';
         const { item } = claimed;
         if (hero) {
             this.forgeKind = 'hero';
@@ -645,6 +717,7 @@ export class CityMode {
         this.#renderBottom();
         this.#renderForge();
         this.#renderRewards();
+        this.#renderHero();
         this.second = -1;
         this.#tick();
     }
@@ -722,7 +795,11 @@ export class CityMode {
         renderRecipes($('recipes'), this.state.recipes, this.state.materials, freeSlots, this.forgeKind, (id) => void this.#forge(id));
         const heroLimit = this.state.recipes.find((r) => r.kind === 'hero')?.limit ?? 0;
         $('roster').hidden = this.forgeKind !== 'hero';
-        renderRoster($('roster'), this.state.heroes, heroLimit, this.#serverNow());
+        const tierXp = this.state.evolution?.tier_xp;
+        renderRoster($('roster'), this.state.heroes, heroLimit, this.#serverNow(), tierXp, (id) => this.#openHero(id));
+        const evolvable = this.state.heroes.filter((h) => evolveReady(h, tierXp)).length;
+        const tab = document.querySelector('#forge-tabs [data-kind="hero"]');
+        tab.classList.toggle('alert', evolvable > 0);
     }
 
     /** Once a second: forge countdowns, the forge badge, energy under the Attack button. */
@@ -748,7 +825,7 @@ export class CityMode {
     #speedUpJob(jobId) {
         const job = this.state.forge.jobs.find((j) => j.id === jobId);
         if (!job) return;
-        this.#pickBonus('job', { job_id: jobId }, `Speed up ${itemName(job.recipe)}`,
+        this.#pickBonus('job', { job_id: jobId }, `Speed up ${jobName(job)}`,
             `${formatCountdown(job.ready_at - this.#serverNow())} left`);
     }
 

@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from .catalog import BUILDINGS, TRAP, WALL
 from .economy import MATERIALS
 from .errors import ActionError
+from .evolution import unit_of
 from .simulation import LOOT_WIN, simulate
 
 ENERGY_MAX = 5
@@ -152,8 +153,8 @@ def loot_for(outpost: Outpost, percent: int, already_cleared: bool) -> dict:
 
 
 # ── the attack ─────────────────────────────────────────────────────────
-def squad_classes(heroes: list, hero_ids: list, now: float) -> list[str]:
-    """The classes of 4 different, fit heroes the player owns (or a refusal)."""
+def squad_classes(heroes: list, hero_ids: list, now: float) -> list:
+    """The squad entries of 4 different, fit heroes the player owns (or a refusal)."""
     if len(hero_ids) != SQUAD_SIZE or len(set(hero_ids)) != SQUAD_SIZE:
         raise ActionError("bad_squad")
     by_id = {h["id"]: h for h in heroes}
@@ -161,7 +162,9 @@ def squad_classes(heroes: list, hero_ids: list, now: float) -> list[str]:
         raise ActionError("bad_squad")
     if any(by_id[i].get("injured_until", 0) > now for i in hero_ids):
         raise ActionError("hero_injured")
-    return [by_id[i]["cls"] for i in hero_ids]
+    if any(by_id[i].get("evolving") for i in hero_ids):
+        raise ActionError("hero_evolving")
+    return [unit_of(by_id[i]) for i in hero_ids]
 
 
 def spend_energy(city: dict, now: float) -> None:

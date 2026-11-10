@@ -265,6 +265,28 @@ Days and weeks are UTC, weeks start on Monday. A running forge job shows
 bonus picker. Rewards pop a card with what was won (then a level-up card if
 their XP reached one).
 
+Step 3, hero evolution (`hexforge_be/evolution.py`, `js/heroPanel.js`).
+Every hero who fights earns its own XP (10, +1 per 100 damage up to 30, +5
+if it survived, +10 for a victory). At 150 XP it can evolve into one of two
+forms of its class; at 600 that form ascends:
+- Guardian: Bastion (tougher, draws fire from farther) or Warlord (heavier
+  hammer that also hits the buildings around)
+- Neon Blade: Phantom (faster, strikes more often) or Reaper (harder blows,
+  far harder on towers)
+- Technomancer: Archon (bigger, stronger, more frequent nova) or Arcanist
+  (much longer reach, harder hits)
+Evolved heroes get +10% health and damage, ascended +25%, on top of their
+form's speciality. Evolving is a forge job (a slot, materials, 2 h; ascending
+4 h and 2.5× the materials); the hero cannot fight meanwhile, hourglasses
+speed it up. The simulation takes squad entries as a class name or
+{cls, form, tier}, so old replays still replay. Each form wears its own gear
+in its accent colour (big shield, spiked hammer and red plume, light scarf
+and wings, long green blades and horns, rune ring and orbs, crystal staff);
+ascended heroes are taller and burn with an aura. In the forge's Heroes tab
+every hero opens its card (stats, XP, the two forms with what changes, the
+cost); an arrow badge marks those that can evolve. The battle report shows
+the XP each hero earned.
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 

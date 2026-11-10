@@ -27,6 +27,7 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/rewards/tasks/{id}/claim   a finished daily task
   POST /api/hexforge/me/rewards/chest          the weekly chest
   POST /api/hexforge/me/bonuses/use            spend a bonus on a job, a hero or the energy
+  POST /api/hexforge/me/heroes/{id}/evolve     send a hero to the forge to evolve or ascend
 
 The /me routes need the platform session cookie.
 """
@@ -47,7 +48,8 @@ from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
 from .schemas import (
-    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, ForgeRequest, MoveRequest, PlaceRequest,
+    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EvolveRequest, ForgeRequest,
+    MoveRequest, PlaceRequest,
 )
 from .simulation import simulate
 
@@ -288,3 +290,12 @@ def use_bonus(body: BonusRequest, user_id: CurrentUserId, db: Db, now: Now):
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return {"used": used, **public_state(state, now)}
+
+
+@router.post("/me/heroes/{hero_id}/evolve")
+def evolve_hero(hero_id: int, body: EvolveRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).evolve_hero(user_id, hero_id, body.form, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)

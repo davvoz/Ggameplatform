@@ -1,6 +1,6 @@
 import { icon, withIcon } from './icons.js';
-import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
-import { heroNames, heroStatus, heroTile } from './heroTiles.js';
+import { BUILDING_INFO, FORM_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import { evolveReady, heroNames, heroStatus, heroTile } from './heroTiles.js';
 import { buildingThumb, heroThumb, thumbImg } from './thumbs.js';
 
 /** DOM builders for the forge sheet and the "ready to place" tray. */
@@ -46,6 +46,18 @@ export function itemThumb(item, px) {
     return HERO_INFO[item] ? heroThumb(item, px) : buildingThumb(item, px);
 }
 
+/** A forge job's name: what it makes, or the hero evolving ("Bastion ★★"). */
+export function jobName(job) {
+    if (job.recipe !== 'evolve') return itemName(job.recipe);
+    return `${FORM_INFO[job.form].name} ${'★'.repeat(job.tier)}`;
+}
+
+/** A forge job's picture. */
+export function jobThumb(job, px) {
+    if (job.recipe !== 'evolve') return itemThumb(job.recipe, px);
+    return heroThumb(FORM_INFO[job.form].cls, px, job.form, job.tier);
+}
+
 // ── DOM ────────────────────────────────────────────────────────────────
 function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -87,9 +99,9 @@ export function renderForgeSlots(container, forge, serverNow, onClaim, onSpeedUp
         const ready = left <= 0;
         const ring = el('span', 'slot-ring');
         ring.style.setProperty('--done', `${ready ? 100 : Math.round((100 * (total - left)) / total)}%`);
-        ring.append(thumbImg(itemThumb(job.recipe, 50), '', itemName(job.recipe)));
+        ring.append(thumbImg(jobThumb(job, 50), '', jobName(job)));
         const text = el('span', 'slot-text');
-        text.append(el('span', '', itemName(job.recipe)));
+        text.append(el('span', '', jobName(job)));
         if (ready) {
             const button = withIcon(el('button', 'button primary small'), 'gift', 'Claim!');
             button.type = 'button';
@@ -149,11 +161,19 @@ export function renderStorage(container, storage, placingType, onPlace) {
     }
 }
 
-export function renderRoster(container, heroes, limit, serverNow) {
+/** Every hero you own; tap one for its card. `tierXp` marks those that can evolve. */
+export function renderRoster(container, heroes, limit, serverNow, tierXp = null, onTap = null) {
     container.replaceChildren();
-    container.append(el('span', 'roster-total', `Your heroes ${heroes.length}/${limit}`));
+    const head = el('span', 'roster-total', `Your heroes ${heroes.length}/${limit}`);
+    container.append(head);
     const names = heroNames(heroes);
     const tiles = el('div', 'roster-tiles');
-    for (const hero of heroes) tiles.append(heroTile(hero, names.get(hero.id), heroStatus(hero, false, serverNow)));
+    let ready = 0;
+    for (const hero of heroes) {
+        const status = { ...heroStatus(hero, false, serverNow), evolve: evolveReady(hero, tierXp) };
+        if (status.evolve) ready += 1;
+        tiles.append(heroTile(hero, names.get(hero.id), status, onTap ? () => onTap(hero.id) : null));
+    }
+    if (onTap) head.append(el('small', '', ready ? ` · ${ready} can evolve: tap them` : ' · tap a hero for its card'));
     container.append(tiles);
 }

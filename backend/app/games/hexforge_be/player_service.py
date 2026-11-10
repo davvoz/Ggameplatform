@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import defense, economy, forge, outposts, progress, pvp, rewards
+from . import defense, economy, evolution, forge, outposts, progress, pvp, rewards
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -139,7 +139,7 @@ class PlayerService:
     def claim_forged(self, user_id: str, job_id: int, now: float) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         result = forge.claim(state.city, state.heroes, job_id, now)
-        result.update(_earn(state, progress.xp_for_forging(forge.RECIPES[result["item"]].seconds)))
+        result.update(_earn(state, progress.xp_for_forging(result["seconds"])))
         rewards.record(state.city, "claim")
         self.save(state, now)
         return state, result
@@ -156,6 +156,7 @@ class PlayerService:
         result = outposts.attack(state.city, state.heroes, state.materials, outpost_id,
                                  hero_ids, side, priority, tactic, now)
         result["rewards"].update(_earn(state, progress.xp_for_attack("outpost", result["summary"]["victory"])))
+        result["rewards"]["hero_xp"] = evolution.gain_hero_xp(state.heroes, hero_ids, result["summary"])
         _record_attack(state, result["summary"]["victory"])
         self.save(state, now)
         return state, result
@@ -213,6 +214,7 @@ class PlayerService:
         state.trophies, rival.trophies, trophies = pvp.settle_trophies(
             state.trophies, rival.trophies, summary["victory"])
         earned = _earn(state, progress.xp_for_attack("rival", summary["victory"]))
+        earned["hero_xp"] = evolution.gain_hero_xp(state.heroes, hero_ids, summary)
         _record_attack(state, summary["victory"])
         log = HexforgeAttack(
             attacker_id=user_id, defender_id=rival_id, created_at=now,
@@ -323,6 +325,13 @@ class PlayerService:
         self.save(state, now)
         return state, got
 
+    def evolve_hero(self, user_id: str, hero_id: int, form, now: float) -> PlayerState:
+        """Send a hero to the forge to evolve (or ascend)."""
+        state = self.load(user_id, now)
+        evolution.start(state.city, state.heroes, state.materials, hero_id, form, now)
+        self.save(state, now)
+        return state
+
     def use_bonus(self, user_id: str, bonus: str, now: float, **target) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         used = rewards.use_bonus(state.city, state.heroes, bonus, now, **target)
@@ -394,6 +403,7 @@ def public_state(state: PlayerState, now: float) -> dict:
         "energy": outposts.public_energy(state.city["energy"], now),
         "progress": progress.public_progress(state.city),
         "bonuses": state.city["bonuses"],
+        "evolution": evolution.public_evolution(),
         "rewards": {**rewards.public_rewards(state.city, now),
                     "ready": rewards.ready_count(state.city, now)},
         "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies),

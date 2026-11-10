@@ -1,39 +1,25 @@
-import { SignInRequired, fetchLeaderboard, fetchMyState } from './api.js';
+import { SignInRequired, fetchLeaderboard } from './api.js';
 import { LEAGUE_COLORS, progressText, rankText } from './leagues.js';
+import { openSheet } from './sheets.js';
 
-/** "Ranking": your trophies and league, and the best players. Your city stays in the background. */
+/** The ranking sheet: your trophies and league, and the best players. */
 
 const $ = (id) => document.getElementById(id);
-const EMPTY_CITY = { grid: 18, buildings: [] };
 
-export class RankingMode {
-    constructor(renderer) {
-        this.renderer = renderer;
-    }
-
-    async enter() {
-        $('view-ranking').hidden = false;
+export class RankingPanel {
+    async open() {
+        openSheet('sheet-ranking');
         try {
-            const [board, state] = await Promise.all([fetchLeaderboard(), fetchMyState()]);
-            this.renderer.setCity(state.city);
+            const board = await fetchLeaderboard();
             renderMe(board.me);
             renderTop(board.top);
             $('ranking-signin').hidden = true;
             $('ranking-body').hidden = false;
         } catch (error) {
             if (!(error instanceof SignInRequired)) throw error;
-            this.renderer.setCity(EMPTY_CITY);
             $('ranking-signin').hidden = false;
             $('ranking-body').hidden = true;
         }
-    }
-
-    leave() {
-        $('view-ranking').hidden = true;
-    }
-
-    frame(time) {
-        this.renderer.draw(null, { time, showTraps: true });
     }
 }
 

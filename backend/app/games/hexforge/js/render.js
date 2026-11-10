@@ -1,4 +1,5 @@
-import { fitCamera, toScreen, toWorld, groundEllipse, depthOf } from './iso.js';
+import { carryOver, clampCamera, panBy, zoomAt } from './camera.js';
+import { fitRegion, toScreen, toWorld, groundEllipse, depthOf } from './iso.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import {
     drawBuilding, drawHero, drawRubble, drawTrapMark, flame, halo, hash, path, withAlpha,
@@ -26,14 +27,108 @@ export class Renderer {
         this.city = null;
         this.byId = new Map();
         this.camera = null;
+        this.base = null;             // the fitted view; zoom limits are relative to the whole field
+        this.limits = { min: 0.1, max: 4 };
+        this.region = null;           // what focus() fits on screen (null: the whole field)
+        this.insets = {};             // CSS pixels kept free for the interface
         this.ground = null;
+        this.groundDirty = true;
+        this.dpr = 1;
+        this.w = 1;
+        this.h = 1;
     }
 
     setCity(city) {
-        const sameGrid = this.city?.grid === city.grid && this.ground;
+        const sameGrid = this.city?.grid === city.grid && this.camera;
         this.city = city;
         this.byId = new Map(city.buildings.map((b) => [b.id, b]));
-        if (!sameGrid) this.resize();
+        if (!sameGrid) this.focus(this.region, this.insets);
+    }
+
+    /**
+     * Fit `region` ({x0, y0, x1, y1} in cells, or null for the whole field)
+     * inside the canvas, leaving `insets` (CSS px: top, right, bottom, left)
+     * free for the interface. Resets any zoom or pan.
+     */
+    focus(region, insets = {}) {
+        this.region = region;
+        this.insets = insets;
+        this.#measure();
+        if (!this.city) return;
+        this.base = this.#fit();
+        this.camera = this.base;
+        this.groundDirty = true;
+    }
+
+    /** Pinch or wheel: zoom by `factor` around a point in CSS pixels. */
+    zoomAt(factor, cssX, cssY) {
+        if (!this.camera) return;
+        this.#setCamera(zoomAt(this.camera, factor, cssX * this.dpr, cssY * this.dpr, this.limits));
+    }
+
+    /** Drag: move the map by CSS pixels. */
+    panBy(dx, dy) {
+        if (!this.camera) return;
+        this.#setCamera(panBy(this.camera, dx * this.dpr, dy * this.dpr));
+    }
+
+    #setCamera(camera) {
+        this.camera = clampCamera(camera, this.city.grid, { w: this.w, h: this.h });
+        this.groundDirty = true;
+    }
+
+    #fit() {
+        const d = this.dpr;
+        const { top = 0, right = 0, bottom = 0, left = 0 } = this.insets;
+        const free = { top: top * d, right: right * d, bottom: bottom * d, left: left * d };
+        const whole = fitRegion({ x0: 0, y0: 0, x1: this.city.grid, y1: this.city.grid }, this.w, this.h, { ...free, headroom: 60 });
+        this.limits = { min: whole.scale * 0.8, max: Math.max(whole.scale * 4, 1.6 * d) };
+        const region = this.region ?? { x0: 0, y0: 0, x1: this.city.grid, y1: this.city.grid };
+        // on a tall phone screen the city may spill past the sides: bigger buildings, drag to see the edges
+        const wide = this.h > this.w * 1.2 ? this.w * 1.4 : this.w;
+        const fitted = fitRegion(region, wide, this.h, { ...free, headroom: 70 });
+        const scale = Math.min(fitted.scale, this.limits.max);
+        const k = scale / fitted.scale;
+        const cx = (free.left + wide - free.right) / 2;
+        const cy = (free.top + this.h - free.bottom) / 2;
+        return { scale, ox: cx + (fitted.ox - cx) * k - (wide - this.w) / 2, oy: cy + (fitted.oy - cy) * k };
+    }
+
+    #measure() {
+        this.dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+        const rect = this.canvas.getBoundingClientRect();
+        this.w = Math.max(1, Math.round(rect.width * this.dpr));
+        this.h = Math.max(1, Math.round(rect.height * this.dpr));
+        this.canvas.width = this.w;
+        this.canvas.height = this.h;
+    }
+
+    /** Slide the map up if building `b` sits below `limitY` (CSS px), e.g. under a panel. */
+    reveal(b, limitY) {
+        if (!this.camera) return;
+        const foot = toScreen(this.camera, b.x + b.size, b.y + b.size);
+        const y = foot.y / this.dpr + 8;
+        if (y > limitY) this.panBy(0, limitY - y);
+    }
+
+    /**
+     * Where to put the button for an entry side: the middle of that edge of
+     * the field, pulled inside the free part of the screen. CSS pixels, plus
+     * the angle (degrees, 0 = up) of an arrow pointing into the city.
+     */
+    edgeAnchor(side) {
+        const g = this.city.grid;
+        const mids = { north: [g / 2, 0.5], south: [g / 2, g - 0.5], west: [0.5, g / 2], east: [g - 0.5, g / 2] };
+        const [x, y] = mids[side];
+        const p = toScreen(this.camera, x, y);
+        const c = toScreen(this.camera, g / 2, g / 2);
+        const d = this.dpr;
+        const { top = 0, right = 0, bottom = 0, left = 0 } = this.insets;
+        const pad = 34;
+        const cssX = Math.min(this.w / d - right - pad, Math.max(left + pad, p.x / d));
+        const cssY = Math.min(this.h / d - bottom - pad, Math.max(top + pad, p.y / d));
+        const angle = (Math.atan2(c.x - p.x, -(c.y - p.y)) * 180) / Math.PI;
+        return { x: cssX, y: cssY, angle };
     }
 
     /** Canvas pixels under a pointer event. */
@@ -76,16 +171,15 @@ export class Renderer {
         ];
     }
 
+    /** The canvas changed size: keep what the player was looking at. */
     resize() {
-        const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
-        const rect = this.canvas.getBoundingClientRect();
-        this.w = Math.max(1, Math.round(rect.width * dpr));
-        this.h = Math.max(1, Math.round(rect.height * dpr));
-        this.canvas.width = this.w;
-        this.canvas.height = this.h;
+        const old = this.camera && { camera: this.camera, base: this.base, view: { w: this.w, h: this.h } };
+        this.#measure();
         if (!this.city) return;
-        this.camera = fitCamera(this.city.grid, this.w, this.h, { margin: 10 * dpr, headroom: 90 });
-        this.ground = this.#paintGround();
+        const base = this.#fit();
+        this.base = base;
+        this.camera = old ? clampCamera(carryOver(old.camera, old.view, old.base, base, { w: this.w, h: this.h }), this.city.grid, { w: this.w, h: this.h }) : base;
+        this.groundDirty = true;
     }
 
     /**
@@ -97,7 +191,11 @@ export class Renderer {
      */
     draw(state, options = {}) {
         const { ctx } = this;
-        if (!this.ground) return;
+        if (!this.camera) return;
+        if (this.groundDirty) {
+            this.ground = this.#paintGround();
+            this.groundDirty = false;
+        }
         const { side = null, time = 0, selectedId = null, preview = null } = options;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalCompositeOperation = 'source-over';
@@ -157,9 +255,9 @@ export class Renderer {
 
     // ── ground ─────────────────────────────────────────────────────────
     #paintGround() {
-        const canvas = document.createElement('canvas');
-        canvas.width = this.w;
-        canvas.height = this.h;
+        const canvas = this.ground ?? document.createElement('canvas');
+        if (canvas.width !== this.w) canvas.width = this.w;
+        if (canvas.height !== this.h) canvas.height = this.h;
         const ctx = canvas.getContext('2d');
         const bg = ctx.createLinearGradient(0, 0, 0, this.h);
         bg.addColorStop(0, '#0b0605');

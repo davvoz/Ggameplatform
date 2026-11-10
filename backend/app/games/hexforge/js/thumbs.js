@@ -1,0 +1,84 @@
+import { drawBuilding, drawHero } from './forgeArt.js';
+import { BUILDING_INFO, HERO_INFO } from './labels.js';
+
+/**
+ * Small pictures of buildings and heroes, painted with the game's own art
+ * (so the forge shows exactly what you will get). Cached as data URLs.
+ */
+
+const cache = new Map();
+const SIZES = { core: 3, wall: 1 };
+
+function paint(size, draw) {
+    const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+    const canvas = document.createElement('canvas');
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    draw(ctx);
+    return canvas.toDataURL();
+}
+
+/** Picture of a building type, `px` CSS pixels square. */
+export function buildingThumb(type, px = 64) {
+    const key = `b:${type}:${px}`;
+    if (!cache.has(key)) {
+        const cells = SIZES[type] ?? (type === 'rune_trap' ? 1 : 2);
+        const info = BUILDING_INFO[type];
+        // footprint is cells*64 wide and cells*32 tall, plus the silhouette above it
+        const scale = Math.min((px * 0.92) / (cells * 64), (px * 0.92) / (cells * 32 + info.pick + 6));
+        const height = (cells * 32 + info.pick) * scale;
+        const camera = { scale, ox: px / 2, oy: (px - height) / 2 + info.pick * scale };
+        cache.set(key, paint(px, (ctx) => {
+            if (type === 'rune_trap') {
+                trapIcon(ctx, px);
+                return;
+            }
+            drawBuilding(ctx, camera, { id: 1, type, x: 0, y: 0, size: cells }, { time: 1.3, firing: 0, health: 1 });
+        }));
+    }
+    return cache.get(key);
+}
+
+/** Portrait of a hero class, `px` CSS pixels square. */
+export function heroThumb(cls, px = 56) {
+    const key = `h:${cls}:${px}`;
+    if (!cache.has(key)) {
+        cache.set(key, paint(px, (ctx) => {
+            const s = px / 48;
+            const glow = ctx.createRadialGradient(px / 2, px * 0.6, 2, px / 2, px * 0.6, px * 0.5);
+            glow.addColorStop(0, `${HERO_INFO[cls].color}55`);
+            glow.addColorStop(1, `${HERO_INFO[cls].color}00`);
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, px, px);
+            drawHero(ctx, { cls, id: 0, facing: 1 }, px / 2 - 3 * s, px * 0.9, s, HERO_INFO[cls].color, 0.6);
+        }));
+    }
+    return cache.get(key);
+}
+
+function trapIcon(ctx, px) {
+    const c = px / 2;
+    ctx.strokeStyle = '#ff7a3d';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(c, c * 1.15, px * 0.36, px * 0.18, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(c, c * 1.15, px * 0.2, px * 0.1, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffb347';
+    ctx.font = `700 ${Math.round(px * 0.3)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('ᛟ', c, c * 1.0);
+}
+
+export function thumbImg(src, className = 'thumb', alt = '') {
+    const img = document.createElement('img');
+    img.className = className;
+    img.src = src;
+    img.alt = alt;
+    img.decoding = 'async';
+    return img;
+}

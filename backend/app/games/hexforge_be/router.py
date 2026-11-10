@@ -85,8 +85,9 @@ def _http_error(error: Exception) -> HTTPException:
 
 @router.get("/me")
 def get_my_state(user_id: CurrentUserId, db: Db, now: Now):
-    state = PlayerService(db).load(user_id, now)
-    return public_state(state, now)
+    service = PlayerService(db)
+    state = service.load(user_id, now)
+    return {"name": service.names([user_id])[user_id], **public_state(state, now)}
 
 
 @router.post("/me/collect")

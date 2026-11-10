@@ -33,7 +33,7 @@ export function renderRaidLog({ banner, list }, log, pvp, serverNow, actions) {
     if (log.unseen) {
         const text = document.createElement('span');
         text.textContent = unseenText(log.unseen);
-        const ok = button('Got it', actions.seen);
+        const ok = button('See', actions.seen, 'primary');
         banner.append(text, ok);
     }
 

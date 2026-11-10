@@ -4,158 +4,260 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Hexforge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600;800&family=Chakra+Petch:wght@500;600;700&display=swap">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <symbol id="i-city" viewBox="0 0 24 24"><path d="M3 21V10l3-2V4h3v2l3-2 3 2V4h3v4l3 2v11zM10 21v-5h4v5"/></symbol>
+            <symbol id="i-attack" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 17.5 21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></symbol>
+            <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3"/></symbol>
+            <symbol id="i-anvil" viewBox="0 0 24 24"><path d="M2 8h14a4 4 0 0 1-4 4h-1l1 4h3v3H7v-3h3l1-4H8a6 6 0 0 1-6-4zM17 4l4 4M19 2l3 3-2 2-3-3z"/></symbol>
+            <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+            <symbol id="i-raid" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM13 7l-3 5h4l-3 5"/></symbol>
+            <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3 9 6M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+            <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+            <symbol id="i-hammer" viewBox="0 0 24 24"><path d="M14 3l7 7-3 3-7-7zM12.5 8.5 3 18l3 3 9.5-9.5"/></symbol>
+            <symbol id="i-aim" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+            <symbol id="i-collect" viewBox="0 0 24 24"><path d="M9 4h6l-1.5 3c4 1.5 6.5 5 6.5 9a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4c0-4 2.5-7.5 6.5-9zM10 13h4M12 11v6"/></symbol>
+            <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+            <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+            <symbol id="i-lock" viewBox="0 0 24 24"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+            <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></symbol>
+            <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></symbol>
+            <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4h3v16H7zM14 4h3v16h-3z"/></symbol>
+            <symbol id="i-fast" viewBox="0 0 24 24"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z"/></symbol>
+            <symbol id="i-skip" viewBox="0 0 24 24"><path d="M5 5l10 7-10 7zM18 5v14"/></symbol>
+            <symbol id="i-back" viewBox="0 0 24 24"><path d="M10 6l-6 6 6 6M4 12h16"/></symbol>
+            <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></symbol>
+            <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+            <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></symbol>
+            <symbol id="i-gift" viewBox="0 0 24 24"><path d="M4 11h16v10H4zM3 7h18v4H3zM12 7v14M12 7S10 3 7.5 3.5 7 7 12 7zM12 7s2-4 4.5-3.5S17 7 12 7z"/></symbol>
+            <symbol id="i-tower" viewBox="0 0 24 24"><path d="M7 21V9L6 8V4h3v2h2V4h2v2h2V4h3v4l-1 1v12zM10 21v-4h4v4"/></symbol>
+            <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-7 0 2 1 3 2 3 0-3 0-5 1-8z"/></symbol>
+            <symbol id="i-pick" viewBox="0 0 24 24"><path d="M4 20l9-9M5 7c4-4 10-4 14 0M9 4l11 11"/></symbol>
+            <symbol id="i-compact" viewBox="0 0 24 24"><circle cx="12" cy="8" r="2.5"/><circle cx="8" cy="15" r="2.5"/><circle cx="16" cy="15" r="2.5"/></symbol>
+            <symbol id="i-spread" viewBox="0 0 24 24"><path d="M12 21V9M12 21 5 11M12 21l7-10"/><circle cx="12" cy="6" r="2"/><circle cx="4" cy="9" r="2"/><circle cx="20" cy="9" r="2"/></symbol>
+            <symbol id="i-split" viewBox="0 0 24 24"><path d="M12 21v-7M12 14 6 7M12 14l6-7"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/></symbol>
+            <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 20V5M5 11l7-7 7 7"/></symbol>
+            <symbol id="i-gem" viewBox="0 0 24 24"><path d="M12 2l8 5v10l-8 5-8-5V7zM12 2v20M4 7l8 5 8-5"/></symbol>
+            <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></symbol>
+            <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/></symbol>
+            <symbol id="i-chip" viewBox="0 0 24 24"><path d="M7 7h10v10H7zM10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/></symbol>
+            <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+            <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+            <symbol id="i-hero" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-3a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v3"/></symbol>
+            <symbol id="i-test" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5"/></symbol>
+            <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+            <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+            <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+        </defs>
+    </svg>
+
     <div id="app">
-        <section id="stage" aria-label="Battlefield">
-            <canvas id="view"></canvas>
-            <div id="resources" class="resources" aria-label="Materials" hidden></div>
-            <div id="hud" class="hud" hidden>
+        <canvas id="view" aria-label="Map: drag to move, pinch or scroll to zoom"></canvas>
+        <p id="loading" class="loading">Loading…</p>
+        <output id="toast" class="toast"></output>
+
+        <!-- ── MY CITY ───────────────────────────────────────────────── -->
+        <div id="hud-city" class="layer" hidden>
+            <button id="player-plate" class="plate player" type="button" aria-label="Ranking">
+                <span id="league-badge" class="league-badge"><span><svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg></span></span>
+                <span class="plate-text">
+                    <b id="player-name">You</b>
+                    <span id="player-trophies">0 trophies</span>
+                    <span class="league-meter" aria-hidden="true"><span id="league-bar"></span></span>
+                </span>
+            </button>
+            <div id="resources" class="resources" aria-label="Materials"></div>
+            <output id="raid-banner" class="raid-banner" hidden></output>
+
+            <div id="city-signin" class="signin" hidden>
+                <h2>Your city awaits</h2>
+                <p><b>Sign in to the platform</b> to get your own city.</p>
+                <p>Your city, your forge and your heroes are saved to your account.</p>
+            </div>
+
+            <div class="bottom-ui">
+                <div id="selection" class="selection" hidden>
+                    <div class="sel-plate">
+                        <img id="sel-thumb" class="sel-thumb" alt="">
+                        <div>
+                            <h2 id="sel-name">Building</h2>
+                            <p id="sel-info" class="sel-info"></p>
+                        </div>
+                    </div>
+                    <div id="aim-picker" class="aim-picker" hidden>
+                        <div id="aim-chips" class="aim-chips"></div>
+                        <p id="aim-hint" class="aim-hint"></p>
+                    </div>
+                    <div class="actions">
+                        <button id="btn-move" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg></span><span class="action-label">Move</span></button>
+                        <button id="btn-aim" class="action" type="button" hidden><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-aim"/></svg></span><span class="action-label">Aim</span></button>
+                        <button id="btn-dismantle" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-hammer"/></svg></span><span class="action-label">Dismantle</span></button>
+                        <button id="btn-deselect" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></span><span class="action-label">Close</span></button>
+                    </div>
+                </div>
+                <div id="place-bar" class="place-bar" hidden>
+                    <p id="place-hint">Tap the map to place it.</p>
+                    <button id="btn-cancel-place" class="round small" type="button" aria-label="Cancel"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+                </div>
+                <div id="storage-tray" class="tray" hidden>
+                    <span class="tray-label">Ready to place</span>
+                    <div id="storage" class="tray-items"></div>
+                </div>
+            </div>
+
+            <div class="corner left">
+                <button id="btn-attack" class="attack-button" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#i-attack"/></svg><span>Attack</span>
+                </button>
+                <span id="city-energy" class="under-label"></span>
+            </div>
+            <div class="corner right">
+                <button id="btn-open-defense" class="action big" type="button">
+                    <span class="round"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg><span id="defense-badge" class="badge alert" hidden></span></span>
+                    <span class="action-label">Defense</span>
+                </button>
+                <button id="btn-open-forge" class="action big" type="button">
+                    <span class="round"><svg class="icon" aria-hidden="true"><use href="#i-anvil"/></svg><span id="forge-badge" class="badge good" hidden></span></span>
+                    <span class="action-label">Forge</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── ATTACK: THE PLAN ──────────────────────────────────────── -->
+        <div id="hud-attack" class="layer" hidden>
+            <div class="attack-top">
+                <button id="btn-attack-back" class="round" type="button" aria-label="Back to my city"><svg class="icon" aria-hidden="true"><use href="#i-back"/></svg></button>
+                <div id="target-mode" class="segmented small">
+                    <button type="button" data-mode="outposts" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-tower"/></svg><span>Outposts</span></button>
+                    <button type="button" data-mode="rivals" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-attack"/></svg><span>Players</span></button>
+                </div>
+            </div>
+            <div class="target-row">
+                <button id="btn-prev-target" class="round small" type="button" aria-label="Previous outpost"><svg class="icon" aria-hidden="true"><use href="#i-prev"/></svg></button>
+                <div id="target-plate" class="target-plate"></div>
+                <button id="btn-next-target" class="round small" type="button" aria-label="Next outpost"><svg class="icon" aria-hidden="true"><use href="#i-next"/></svg></button>
+            </div>
+            <div id="sides" class="sides" aria-label="Where your squad enters"></div>
+
+            <div id="attack-signin" class="signin" hidden>
+                <h2>Raid the outposts</h2>
+                <p><b>Sign in to the platform</b> to attack with your heroes.</p>
+            </div>
+
+            <div id="attack-tray" class="attack-tray">
+                <p id="launch-hint" class="tray-hint"></p>
+                <div class="tray-head">
+                    <span><svg class="icon" aria-hidden="true"><use href="#i-hero"/></svg>Squad <b id="squad-count"></b></span>
+                    <span id="energy" class="energy-pill" title="Energy: each attack costs 1. One charge comes back every hour."></span>
+                </div>
+                <div id="squad" class="squad"></div>
+                <div class="plan-row">
+                    <button id="btn-priority" class="opt" type="button"></button>
+                    <button id="btn-tactic" class="opt" type="button"></button>
+                    <button id="btn-launch" class="fight" type="button" disabled><span>Fight!</span><small id="fight-cost"></small></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── BATTLE ────────────────────────────────────────────────── -->
+        <div id="hud-battle" class="layer" hidden>
+            <div id="hud" class="battle-top">
+                <span id="battle-title" class="battle-title">Squad</span>
                 <span id="hud-time" class="hud-time">0:00</span>
                 <div class="meter" aria-hidden="true"><div id="hud-bar" class="meter-fill"></div></div>
-                <span id="hud-destruction">0%</span>
+                <span id="hud-destruction" class="hud-destruction">0%</span>
                 <span id="hud-core" class="hud-core">Core standing</span>
             </div>
-            <p id="loading" class="loading">Loading…</p>
+            <div class="battle-bottom">
+                <div id="hero-list" class="hero-strip"></div>
+                <div class="battle-controls">
+                    <button id="btn-pause" class="round" type="button" aria-label="Pause"><svg class="icon" aria-hidden="true"><use href="#i-pause"/></svg></button>
+                    <button id="btn-speed" class="round speed" type="button" aria-label="Speed"><span>1×</span></button>
+                    <button id="btn-skip" class="round" type="button" aria-label="Skip to the result"><svg class="icon" aria-hidden="true"><use href="#i-skip"/></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RESULT ────────────────────────────────────────────────── -->
+        <section id="result" class="result" aria-labelledby="verdict" hidden>
+            <div class="rays" aria-hidden="true"></div>
+            <div class="result-body">
+                <h1 id="verdict" class="verdict">Victory</h1>
+                <p id="result-note" class="result-note"></p>
+                <div id="result-ring" class="ring"><div><b id="result-percent">0%</b><span>destroyed</span></div></div>
+                <div id="result-badges" class="badges"></div>
+                <div id="result-loot" class="loot-tiles"></div>
+                <div id="report" class="report-strip"></div>
+            </div>
+            <div class="result-actions">
+                <button id="btn-rewatch" class="button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-replay"/></svg><span>Replay</span></button>
+                <button id="btn-new" class="button primary" type="button"><span>Continue</span></button>
+            </div>
         </section>
 
-        <aside id="panel">
-            <header class="brand">
-                <h1>HEXFORGE</h1>
-                <nav class="tabs" aria-label="Game mode">
-                    <button type="button" class="chip" data-tab="city" aria-pressed="false">My city</button>
-                    <button type="button" class="chip" data-tab="battle" aria-pressed="false">Attack</button>
-                    <button type="button" class="chip" data-tab="ranking" aria-pressed="false">Ranking</button>
-                </nav>
+        <!-- ── SHEETS ────────────────────────────────────────────────── -->
+        <div id="backdrop" class="backdrop" hidden></div>
+
+        <section id="sheet-forge" class="sheet" aria-labelledby="forge-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-anvil"/></svg>
+                <h2 id="forge-title">The Forge</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
             </header>
+            <div class="sheet-body">
+                <div id="forge-slots" class="forge-slots"></div>
+                <nav id="forge-tabs" class="segmented" aria-label="What to forge">
+                    <button type="button" data-kind="building" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-tower"/></svg><span>Buildings</span></button>
+                    <button type="button" data-kind="hero" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-hero"/></svg><span>Heroes</span></button>
+                </nav>
+                <div id="recipes" class="recipe-grid"></div>
+                <div id="roster" class="roster"></div>
+            </div>
+        </section>
 
-            <section id="view-city" hidden>
-                <div id="city-signin" class="notice" hidden>
-                    <p><b>Sign in to the platform</b> to get your own city.</p>
-                    <p>Your city, your forge and your heroes are saved to your account.</p>
-                </div>
-                <div id="city-body">
-                    <div id="raid-banner" class="raid-banner" role="status" hidden></div>
-                    <p id="city-hint" class="hint">Tap a glowing building to collect what it made. Select a building to move it.</p>
-                    <button id="btn-collect-all" class="button primary wide">Collect all</button>
-                    <div id="selected" class="selected" hidden>
-                        <h2 id="sel-name"></h2>
-                        <p id="sel-info" class="sel-info"></p>
-                        <div id="sel-aim" class="aim" hidden>
-                            <p class="aim-title">Aim</p>
-                            <div id="aim-chips" class="chips"></div>
-                            <p id="aim-hint" class="hint"></p>
-                        </div>
-                        <div class="controls">
-                            <button id="btn-move" class="button">Move</button>
-                            <button id="btn-deselect" class="button">Close</button>
-                        </div>
-                        <button id="btn-dismantle" class="button wide-plain">Dismantle</button>
-                    </div>
-                    <p id="city-message" class="hint" role="status"></p>
-
-                    <h2>Defense</h2>
-                    <p class="hint">Four standard squads attack your city from every side, with every target and tactic. See how many raids it holds. Free, and nothing changes.</p>
-                    <button id="btn-defense-test" class="button wide-plain">Test my defenses</button>
+        <section id="sheet-defense" class="sheet" aria-labelledby="defense-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>
+                <h2 id="defense-title">Defense</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            </header>
+            <div class="sheet-body">
+                <p class="tip"><svg class="icon" aria-hidden="true"><use href="#i-aim"/></svg><span>Tap a tower on the map to see how far it shoots and choose its target.</span></p>
+                <div class="panel">
+                    <h3><svg class="icon" aria-hidden="true"><use href="#i-test"/></svg>Defense test</h3>
+                    <p class="hint">Four standard squads attack your city from every side, with every plan. Free, and nothing changes.</p>
+                    <button id="btn-defense-test" class="button primary wide" type="button"><svg class="icon" aria-hidden="true"><use href="#i-test"/></svg><span>Test my defenses</span></button>
                     <div id="defense-report" class="defense-report" hidden></div>
-
-                    <h2>Raids on your city</h2>
+                </div>
+                <div class="panel">
+                    <h3><svg class="icon" aria-hidden="true"><use href="#i-raid"/></svg>Raids on your city</h3>
                     <div id="raid-log" class="raid-log"></div>
-
-                    <h2>Forge</h2>
-                    <div id="forge-slots" class="forge-slots"></div>
-                    <button id="btn-recipes" class="button wide-plain">Forge something</button>
-                    <div id="recipes" class="recipes" hidden></div>
-
-                    <h2>Storage</h2>
-                    <div id="storage" class="chips storage"></div>
-
-                    <h2>Heroes</h2>
-                    <div id="roster" class="roster"></div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section id="view-setup" hidden>
-                <div id="attack-signin" class="notice" hidden>
-                    <p><b>Sign in to the platform</b> to attack outposts with your heroes.</p>
-                </div>
-                <div id="attack-body">
-                    <p id="energy" class="energy"></p>
-
-                    <div id="target-mode" class="chips target-mode" role="group" aria-label="Target"></div>
-
-                    <div id="outpost-section">
-                        <h2>Outpost</h2>
-                        <div id="outposts" class="chips outposts"></div>
-                        <div id="outpost-info"></div>
-                    </div>
-
-                    <div id="rival-section" hidden>
-                        <h2>Rival</h2>
-                        <div id="rival-info" class="rival-info"></div>
-                        <button id="btn-find-rival" class="button wide-plain">Find a rival</button>
-                    </div>
-
-                    <h2>Squad <span id="squad-count" class="count"></span></h2>
-                    <div id="squad" class="chips squad-picker"></div>
-                    <ul id="classes" class="classes"></ul>
-
-                    <h2>Entry side</h2>
-                    <div id="side" class="chips"></div>
-
-                    <h2>Priority target</h2>
-                    <div id="priority" class="chips"></div>
-                    <p id="priority-hint" class="hint"></p>
-
-                    <h2>Tactic</h2>
-                    <div id="tactic" class="chips"></div>
-                    <p id="tactic-hint" class="hint"></p>
-
-                    <button id="btn-launch" class="button primary wide" disabled>Launch attack</button>
-                    <p id="launch-hint" class="hint"></p>
-                    <p id="error" class="error" role="alert" hidden></p>
-                </div>
-            </section>
-
-            <section id="view-ranking" hidden>
-                <div id="ranking-signin" class="notice" hidden>
-                    <p><b>Sign in to the platform</b> to collect trophies and climb the ranking.</p>
-                </div>
+        <section id="sheet-ranking" class="sheet" aria-labelledby="ranking-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-trophy"/></svg>
+                <h2 id="ranking-title">Ranking</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            </header>
+            <div class="sheet-body">
+                <div id="ranking-signin" class="hint" hidden><b>Sign in to the platform</b> to collect trophies and climb the ranking.</div>
                 <div id="ranking-body">
                     <div id="ranking-me" class="ranking-me"></div>
-                    <h2>Top players</h2>
                     <ol id="ranking-list" class="ranking-list"></ol>
-                    <p id="ranking-empty" class="hint" hidden>Nobody has trophies yet. Win a raid in Attack → Rivals to be the first.</p>
-                    <p class="hint">Trophies are won by raiding rivals: beating a stronger rival pays more. They never reset.</p>
+                    <p id="ranking-empty" class="hint" hidden>Nobody has trophies yet. Win a raid against a player to be the first.</p>
+                    <p class="hint">Trophies are won by raiding players: beating a stronger one pays more. They never reset.</p>
                 </div>
-            </section>
-
-            <section id="view-battle" hidden>
-                <h2 id="battle-title">Squad</h2>
-                <div id="hero-list" class="hero-list"></div>
-                <div class="controls">
-                    <button id="btn-pause" class="button">Pause</button>
-                    <button id="btn-speed" class="button">Speed 1×</button>
-                    <button id="btn-skip" class="button">Skip</button>
-                </div>
-            </section>
-
-            <section id="view-result" hidden>
-                <p id="verdict" class="verdict"></p>
-                <p id="result-note" class="result-note" hidden></p>
-                <dl id="stats" class="stats"></dl>
-                <h2 id="report-title">Squad report</h2>
-                <table class="report">
-                    <thead><tr><th>Hero</th><th>Damage dealt</th><th>Taken</th><th></th></tr></thead>
-                    <tbody id="report"></tbody>
-                </table>
-                <div class="controls">
-                    <button id="btn-rewatch" class="button">Watch again</button>
-                    <button id="btn-new" class="button primary">Back</button>
-                </div>
-            </section>
-        </aside>
+            </div>
+        </section>
     </div>
     <script type="module" src="js/main.js"></script>
 </body>

@@ -160,8 +160,28 @@ Towers now report their `range`: a selected tower shows its reach in My
 city, and the Attack setup shows every enemy tower's reach. The panel takes
 the same palette.
 
-Next: the interface (icons over text, big buttons, phone first), then a game
-that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
+Step 2 (done): **the interface**, made to feel like a mobile city-builder
+(the owner turned down a first side-panel version as "too much like a
+management tool"). The map fills the screen and can be dragged, pinched or
+wheel-zoomed (`js/camera.js`); it opens framed on the city, a little wider
+than a tall phone so buildings read well. Over it float the player plate
+(name, trophies, league bar; tap for the ranking), the material pills, a big
+molten **Attack** button and round **Defense** and **Forge** buttons with
+badges. Tapping a building shows its name and round actions (Move, Aim,
+Dismantle) and slides the map so it stays in sight. Forge, Defense and
+Ranking are sheets rising from the bottom (a side panel on wide screens,
+`js/sheets.js`): the forge is a grid of picture cards; a claimed building
+goes straight to placing. The attack plan shows the target full screen with
+arrows on the map edges for the entry side, a hero card per class (tap to
+add, − to remove), one-tap choices for target and formation and a Fight!
+button; the battle has portraits with health bars; the result is a big
+verdict with the destruction ring and the loot. Grenze Gotisch for names,
+Chakra Petch for numbers (Google Fonts); icons are an inline SVG sprite.
+`GET /me` now also returns the player's display name, and `pvp.next_league`.
+`?debug` exposes the renderer as `globalThis.hexforge` for automated
+screenshots.
+
+Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 
 ## Layout
@@ -179,7 +199,9 @@ section, XP and daily quests).
 | `js/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
 | `js/render.js` | Isometric canvas renderer: ground, picking, overlays, battle effects, embers |
 | `js/forgeArt.js` | The "Forgia Infernale" art: every building and hero drawn from shapes (no image files) |
-| `js/battle.js` | Setup panel, replay controls, report |
+| `js/battle.js` | Attack plan, replay controls, result |
+| `js/city.js` | My city: selection, placing, forge and defense sheets |
+| `js/camera.js` | Zoom and pan of the map (pure, tested) |
 
 ## Run
 

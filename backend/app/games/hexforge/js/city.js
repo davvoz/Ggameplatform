@@ -5,23 +5,30 @@ import {
 } from './api.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
-import { itemName, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
-import { AIM_INFO, BUILDING_INFO, MATERIAL_INFO } from './labels.js';
+import { formatCountdown, itemName, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
+import { icon, withIcon } from './icons.js';
+import { regionAround } from './iso.js';
+import { AIM_INFO, BUILDING_INFO, CHOICE_ICONS, MATERIAL_INFO } from './labels.js';
+import { LEAGUE_COLORS, leagueProgress } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
+import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
+import { buildingThumb } from './thumbs.js';
 
 /**
- * "My city": the player's saved city.
- *  - tap a glowing production building to collect, or Collect all
- *  - select a building to move or dismantle it
- *  - forge buildings and heroes; place forged buildings from storage
- *  - set each tower's aim; test the defenses against standard raids
- *  - read who raided you, watch it, take revenge
+ * "My city": the player's saved city, full screen.
+ *  - tap a glowing building to collect what it made
+ *  - tap a building for its actions: move, aim (towers), dismantle
+ *  - Forge (sheet): forge buildings and heroes; claimed buildings go to the
+ *    "ready to place" tray, then onto the map
+ *  - Defense (sheet): defence test, raids on your city, replay and revenge
+ *  - the big Attack button opens the attack plan
  */
 
 const $ = (id) => document.getElementById(id);
 const FLOAT_SECONDS = 1.4;
 const BUBBLE_FROM = 5;            // units before a building shows it has something to collect
 const EMPTY_CITY = { grid: 18, buildings: [] };
+const INSETS = { top: 80, right: 0, bottom: 160, left: 0 };
 const MESSAGES = {
     occupied: 'That spot is taken.',
     outside_city: 'Keep it inside the city limits.',
@@ -39,48 +46,40 @@ const MESSAGES = {
     arena_locked: 'Clear the first outpost to enter the arena.',
     unknown_aim: 'Unknown aim.',
 };
-const HINTS = {
-    idle: 'Tap a glowing building to collect what it made. Select a building to move or dismantle it.',
-    move: 'Tap where the building should stand. Green fits, red does not. Esc cancels.',
-    place: 'Tap where the new building should stand. Green fits, red does not. Esc cancels.',
-};
 
 export class CityMode {
     constructor(renderer) {
         this.renderer = renderer;
         this.state = null;
+        this.name = '';
         this.receivedAt = 0;
         this.selectedId = null;
         this.mode = 'idle';           // idle | move | place
         this.placingType = null;
         this.preview = null;
         this.confirmDismantle = false;
+        this.aimOpen = false;
         this.floaters = [];
         this.busy = false;
         this.infoText = '';
-        this.forgeSecond = -1;
+        this.second = -1;
+        this.forgeKind = 'building';
         this.defense = null;          // last defence test, while the defenses are unchanged
         this.defenseKey = '';
-        this.onWatch = () => {};      // set by the shell: replay a battle in the Attack view
-        this.onRevenge = () => {};    // set by the shell: open Attack on the scouted raider
         this.raids = null;
-        $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
-        $('btn-collect-all').addEventListener('click', () => void this.#collect(null));
-        $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
-        $('btn-dismantle').addEventListener('click', () => void this.#dismantle());
-        $('btn-deselect').addEventListener('click', () => this.#select(null));
-        $('btn-recipes').addEventListener('click', () => {
-            const list = $('recipes');
-            list.hidden = !list.hidden;
-            $('btn-recipes').textContent = list.hidden ? 'Forge something' : 'Hide recipes';
-        });
+        this.shownMaterials = {};
+        this.onWatch = () => {};      // set by the shell: replay a battle
+        this.onRevenge = () => {};    // set by the shell: open the attack plan on the scouted raider
+        this.onAttack = () => {};     // set by the shell: open the attack plan
+        this.onRanking = () => {};    // set by the shell: open the ranking
+        this.#wire();
     }
 
     async enter() {
-        $('view-city').hidden = false;
-        $('resources').hidden = false;
+        $('hud-city').hidden = false;
         if (this.state) this.renderer.setCity(this.state.city);
         else await this.#reload();
+        this.#focus();
         void this.#loadRaids();
     }
 
@@ -91,8 +90,9 @@ export class CityMode {
 
     leave() {
         this.#setMode('idle');
-        $('view-city').hidden = true;
-        $('resources').hidden = true;
+        this.#select(null);
+        closeSheet();
+        $('hud-city').hidden = true;
     }
 
     // ── input ──────────────────────────────────────────────────────────
@@ -114,8 +114,9 @@ export class CityMode {
     }
 
     onEscape() {
-        if (this.mode === 'idle') this.#select(null);
-        else this.#setMode('idle');
+        if (isSheetOpen()) closeSheet();
+        else if (this.mode !== 'idle') this.#setMode('idle');
+        else this.#select(null);
     }
 
     // ── per frame ──────────────────────────────────────────────────────
@@ -142,7 +143,50 @@ export class CityMode {
             showTraps: true,
         });
         this.#updateInfo();
-        this.#tickForge();
+        this.#tick();
+    }
+
+    // ── wiring ─────────────────────────────────────────────────────────
+    #wire() {
+        $('btn-attack').addEventListener('click', () => this.onAttack());
+        $('player-plate').addEventListener('click', () => this.onRanking());
+        $('btn-open-forge').addEventListener('click', () => this.#openForge());
+        $('btn-open-defense').addEventListener('click', () => this.#openDefense());
+        $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
+        $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
+        $('btn-aim').addEventListener('click', () => {
+            this.aimOpen = !this.aimOpen;
+            this.#renderSelection();
+            this.#reveal();
+        });
+        $('btn-dismantle').addEventListener('click', () => void this.#dismantle());
+        $('btn-deselect').addEventListener('click', () => this.#select(null));
+        $('btn-cancel-place').addEventListener('click', () => this.#setMode('idle'));
+        for (const tab of document.querySelectorAll('#forge-tabs [data-kind]')) {
+            tab.addEventListener('click', () => {
+                this.forgeKind = tab.dataset.kind;
+                this.#renderForge();
+            });
+        }
+    }
+
+    #focus() {
+        const city = this.state?.city ?? EMPTY_CITY;
+        this.renderer.focus(regionAround(city.buildings, city.grid, 1.5, 9), INSETS);
+    }
+
+    #openForge() {
+        if (!this.state) return;
+        this.#select(null);
+        this.#renderForge();
+        openSheet('sheet-forge');
+    }
+
+    #openDefense() {
+        if (!this.state) return;
+        this.#select(null);
+        openSheet('sheet-defense');
+        if (this.raids?.unseen) void this.#markSeen();
     }
 
     // ── server round trips ─────────────────────────────────────────────
@@ -150,17 +194,23 @@ export class CityMode {
         try {
             this.#apply(await fetchMyState());
             $('city-signin').hidden = true;
-            $('city-body').hidden = false;
+            this.#showHud(true);
         } catch (error) {
             if (!(error instanceof SignInRequired)) throw error;
+            this.state = null;
             this.renderer.setCity(EMPTY_CITY);
             $('city-signin').hidden = false;
-            $('city-body').hidden = true;
-            $('resources').hidden = true;
+            this.#showHud(false);
         }
     }
 
+    #showHud(signedIn) {
+        for (const id of ['player-plate', 'resources']) $(id).hidden = !signedIn;
+        for (const node of document.querySelectorAll('#hud-city .corner, #hud-city .bottom-ui')) node.hidden = !signedIn;
+    }
+
     #apply(state) {
+        if (state.name) this.name = state.name;
         this.state = state;
         this.receivedAt = performance.now();
         this.renderer.setCity(state.city);
@@ -176,10 +226,7 @@ export class CityMode {
             .filter((b) => b.production && (!ids || ids.includes(b.id)))
             .map((b) => ({ b, amount: this.#pendingOf(b) }))
             .filter(({ amount }) => amount > 0);
-        if (!sources.length) {
-            this.#message('Nothing to collect yet.');
-            return;
-        }
+        if (!sources.length) return;
         await this.#run(async () => {
             const result = await collect(ids);
             for (const { b, amount } of sources) {
@@ -187,7 +234,6 @@ export class CityMode {
                 this.#float(b, `+${amount} ${info.name}`, info.color);
             }
             this.#apply(result);
-            this.#message('');
         });
     }
 
@@ -195,18 +241,18 @@ export class CityMode {
         const target = this.#previewAt(point);
         this.preview = target;
         if (!target.valid) {
-            this.#message(MESSAGES[target.error]);
+            toast(MESSAGES[target.error]);
             return;
         }
         await this.#run(async () => {
             if (this.mode === 'move') {
                 this.#apply(await moveBuilding(this.selectedId, target.x, target.y));
                 this.#setMode('idle');
-                this.#message('Moved.');
+                toast('Moved.');
             } else {
                 const type = this.placingType;
                 this.#apply(await placeBuilding(type, target.x, target.y));
-                this.#message(`${itemName(type)} placed.`);
+                toast(`${itemName(type)} placed.`);
                 if (!this.state.storage[type]) this.#setMode('idle');
             }
         });
@@ -215,7 +261,7 @@ export class CityMode {
     async #forge(recipeId) {
         await this.#run(async () => {
             this.#apply(await startForging(recipeId));
-            this.#message(`Forging ${itemName(recipeId)}.`);
+            toast(`The forge is making ${itemName(recipeId)}.`);
         });
     }
 
@@ -223,10 +269,13 @@ export class CityMode {
         await this.#run(async () => {
             const result = await claimJob(jobId);
             this.#apply(result);
-            const { item, kind, count } = result.claimed;
-            this.#message(kind === 'hero'
-                ? `${itemName(item)} joined your heroes.`
-                : `${itemName(item)}${count > 1 ? ` ×${count}` : ''} ready in storage. Tap it below to place it.`);
+            const { item, kind } = result.claimed;
+            if (kind === 'hero') {
+                toast(`${itemName(item)} joined your heroes.`);
+                return;
+            }
+            closeSheet();
+            this.#setMode('place', item);
         });
     }
 
@@ -243,7 +292,7 @@ export class CityMode {
             const gained = Object.entries(result.refund).map(([m, n]) => `+${n} ${MATERIAL_INFO[m].name}`).join('  ');
             if (gained) this.#float(b, gained, '#e6e9f5');
             this.#apply(result);
-            this.#message(`${BUILDING_INFO[b.type].name} dismantled.`);
+            toast(`${BUILDING_INFO[b.type].name} dismantled.`);
         });
     }
 
@@ -252,7 +301,7 @@ export class CityMode {
         if (!b || b.aim === aim) return;
         await this.#run(async () => {
             this.#apply(await setAim(b.id, aim));
-            this.#message(`${BUILDING_INFO[b.type].name} now aims: ${AIM_INFO[aim].name}.`);
+            toast(`${BUILDING_INFO[b.type].name} now aims: ${AIM_INFO[aim].name}.`);
         });
     }
 
@@ -260,14 +309,14 @@ export class CityMode {
         if (this.busy || !this.state) return;
         const button = $('btn-defense-test');
         button.disabled = true;
-        button.textContent = 'Running the raids…';
+        withIcon(button, 'test', 'Running the raids…');
         await this.#run(async () => {
             const report = await testDefense();
             this.defenseKey = defenseKey(this.state.city);
             this.#showDefense(report);
         });
         button.disabled = false;
-        button.textContent = this.defense ? 'Test again' : 'Test my defenses';
+        withIcon(button, 'test', this.defense ? 'Test again' : 'Test my defenses');
     }
 
     #showDefense(report) {
@@ -277,8 +326,9 @@ export class CityMode {
         if (report) {
             renderDefenseReport(box, report,
                 () => this.onWatch(report.worst, `Worst raid of the test: ${describeWorst(report.worst)}.`));
+        } else {
+            withIcon($('btn-defense-test'), 'test', 'Test my defenses');
         }
-        else $('btn-defense-test').textContent = 'Test my defenses';
     }
 
     // ── raids on the city ──────────────────────────────────────────────
@@ -296,13 +346,13 @@ export class CityMode {
     #renderRaids() {
         if (!this.raids || !this.state) return;
         const unseen = this.raids.unseen;
-        const tab = document.querySelector('[data-tab="city"]');
-        if (unseen) tab.dataset.badge = String(unseen);
-        else delete tab.dataset.badge;
+        const badge = $('defense-badge');
+        badge.hidden = !unseen;
+        badge.textContent = String(unseen);
         renderRaidLog({ banner: $('raid-banner'), list: $('raid-log') }, this.raids, this.state.pvp, this.#serverNow(), {
             watch: (raid) => void this.#watchRaid(raid),
             revenge: (raid) => void this.#revenge(raid),
-            seen: () => void this.#markSeen(),
+            seen: () => this.#openDefense(),
         });
     }
 
@@ -337,13 +387,13 @@ export class CityMode {
             await action();
         } catch (error) {
             if (error instanceof Refused) {
-                this.#message(MESSAGES[error.code] ?? 'The server refused that.');
+                toast(MESSAGES[error.code] ?? 'The server refused that.');
                 await this.#reload();
             } else if (error instanceof SignInRequired) {
                 await this.#reload();
             } else {
                 console.error('[Hexforge] city action failed', error);
-                this.#message('The server did not answer. Try again in a moment.');
+                toast('The server did not answer. Try again in a moment.');
             }
         } finally {
             this.busy = false;
@@ -384,18 +434,34 @@ export class CityMode {
 
     #select(id) {
         if (id !== this.selectedId && this.mode === 'move') this.#setMode('idle');
+        if (id !== this.selectedId) this.aimOpen = false;
         this.selectedId = id;
         this.confirmDismantle = false;
         this.#renderSelection();
+        this.#renderBottom();
+        this.#reveal();
+    }
+
+    /** Keep the selected building in sight above its action panel. */
+    #reveal() {
+        const b = this.#building(this.selectedId);
+        if (!b) return;
+        requestAnimationFrame(() => this.renderer.reveal(b, $('selection').getBoundingClientRect().top - 6));
     }
 
     #setMode(mode, placingType = null) {
         this.mode = mode === 'move' && this.selectedId === null ? 'idle' : mode;
         this.placingType = this.mode === 'place' ? placingType : null;
         this.preview = null;
-        $('btn-move').textContent = this.mode === 'move' ? 'Cancel move' : 'Move';
-        $('city-hint').textContent = HINTS[this.mode];
+        $('btn-move').setAttribute('aria-pressed', String(this.mode === 'move'));
+        if (this.mode === 'place') {
+            this.selectedId = null;
+            this.#renderSelection();
+        }
+        const what = this.mode === 'move' ? BUILDING_INFO[this.#building(this.selectedId)?.type]?.name : itemName(placingType);
+        $('place-hint').textContent = `Tap the map where the ${what} should stand.`;
         if (this.state) renderStorage($('storage'), this.state.storage, this.placingType, (type) => this.#togglePlacing(type));
+        this.#renderBottom();
     }
 
     #togglePlacing(type) {
@@ -403,62 +469,111 @@ export class CityMode {
         else this.#setMode('place', type);
     }
 
-    #message(text) {
-        $('city-message').textContent = text;
+    /** One thing at a time above the corner buttons: the building's actions, the placing hint, or the tray. */
+    #renderBottom() {
+        const placing = this.mode !== 'idle';
+        $('place-bar').hidden = !placing;
+        $('selection').hidden = placing || this.#building(this.selectedId) === null;
+        const stored = this.state && Object.values(this.state.storage).some((n) => n > 0);
+        $('storage-tray').hidden = placing || this.selectedId !== null || !stored;
     }
 
-    // ── panel ──────────────────────────────────────────────────────────
+    // ── the interface ──────────────────────────────────────────────────
     #renderAll() {
+        this.#renderPlayer();
         this.#renderResources();
         this.#renderSelection();
-        this.forgeSecond = -1;
-        this.#tickForge();
-        const freeSlots = this.state.forge.slots - this.state.forge.jobs.length;
-        renderRecipes($('recipes'), this.state.recipes, this.state.materials, freeSlots, (id) => void this.#forge(id));
         renderStorage($('storage'), this.state.storage, this.placingType, (type) => this.#togglePlacing(type));
+        this.#renderBottom();
+        this.#renderForge();
+        this.second = -1;
+        this.#tick();
+    }
+
+    #renderPlayer() {
+        const { pvp } = this.state;
+        const color = LEAGUE_COLORS[pvp.league] ?? '#c3cbdb';
+        $('player-plate').style.setProperty('--league', color);
+        $('league-badge').style.setProperty('--league', color);
+        $('player-name').textContent = this.name || 'You';
+        $('player-trophies').textContent = `${pvp.trophies} trophies · ${pvp.league}`;
+        $('league-bar').style.width = `${Math.round(100 * leagueProgress(pvp.trophies, pvp.league, pvp.next_league))}%`;
+    }
+
+    #renderForge() {
+        if (!this.state) return;
+        for (const tab of document.querySelectorAll('#forge-tabs [data-kind]')) {
+            tab.setAttribute('aria-pressed', String(tab.dataset.kind === this.forgeKind));
+        }
+        const freeSlots = this.state.forge.slots - this.state.forge.jobs.length;
+        renderRecipes($('recipes'), this.state.recipes, this.state.materials, freeSlots, this.forgeKind, (id) => void this.#forge(id));
         const heroLimit = this.state.recipes.find((r) => r.kind === 'hero')?.limit ?? 0;
+        $('roster').hidden = this.forgeKind !== 'hero';
         renderRoster($('roster'), this.state.heroes, heroLimit);
     }
 
-    #tickForge() {
+    /** Once a second: forge countdowns, the forge badge, energy under the Attack button. */
+    #tick() {
         if (!this.state) return;
-        const second = Math.floor(this.#serverNow());
-        if (second === this.forgeSecond) return;
-        this.forgeSecond = second;
-        renderForgeSlots($('forge-slots'), this.state.forge, this.#serverNow(), (id) => void this.#claim(id));
+        const now = this.#serverNow();
+        const second = Math.floor(now);
+        if (second === this.second) return;
+        this.second = second;
+        renderForgeSlots($('forge-slots'), this.state.forge, now, (id) => void this.#claim(id));
+        const ready = this.state.forge.jobs.filter((j) => j.ready_at <= now).length;
+        const badge = $('forge-badge');
+        badge.hidden = ready === 0;
+        badge.textContent = String(ready);
+        const { charges, max, next_at: nextAt } = this.state.energy;
+        const energy = $('city-energy');
+        energy.replaceChildren(icon('bolt'), `${charges}/${max}${nextAt && charges < max ? ` · ${formatCountdown(nextAt - now)}` : ''}`);
     }
 
     #renderResources() {
         const bar = $('resources');
-        bar.replaceChildren();
-        for (const [key, info] of Object.entries(MATERIAL_INFO)) {
-            const item = document.createElement('span');
-            item.className = 'resource';
-            item.style.setProperty('--accent', info.color);
-            item.title = info.name;
-            const name = document.createElement('span');
-            name.className = 'resource-name';
-            name.textContent = info.name;
-            const value = document.createElement('b');
-            value.textContent = String(this.state.materials[key] ?? 0);
-            item.append(name, value);
-            bar.append(item);
+        const fresh = bar.childElementCount === 0;
+        if (fresh) {
+            for (const [key, info] of Object.entries(MATERIAL_INFO)) {
+                const item = document.createElement('span');
+                item.className = 'resource';
+                item.dataset.material = key;
+                item.style.setProperty('--accent', info.color);
+                item.title = info.name;
+                item.append(icon(info.icon), document.createElement('b'));
+                bar.append(item);
+            }
+        }
+        for (const item of bar.children) {
+            const key = item.dataset.material;
+            const value = this.state.materials[key] ?? 0;
+            item.querySelector('b').textContent = String(value);
+            if (!fresh && value > (this.shownMaterials[key] ?? value)) {
+                item.classList.remove('bump');
+                void item.offsetWidth;            // restart the animation
+                item.classList.add('bump');
+            }
+            this.shownMaterials[key] = value;
         }
     }
 
     #renderSelection() {
         const b = this.#building(this.selectedId);
-        $('selected').hidden = !b;
+        this.#renderBottom();
         if (!b) return;
         $('sel-name').textContent = BUILDING_INFO[b.type].name;
+        $('sel-thumb').src = buildingThumb(b.type, 64);
         const locked = b.type === 'core' || b.type === 'vault';
         const refund = this.#recipe(b.type)?.refund ?? {};
-        const refundText = Object.entries(refund).map(([m, n]) => `${n} ${MATERIAL_INFO[m].name.toLowerCase()}`).join(', ');
+        const refundText = Object.entries(refund).map(([m, n]) => `+${n} ${MATERIAL_INFO[m].name.toLowerCase()}`).join(' ');
         const button = $('btn-dismantle');
         button.hidden = locked;
-        button.textContent = this.confirmDismantle ? `Confirm: get back ${refundText || 'nothing'}` : 'Dismantle';
         button.classList.toggle('danger', this.confirmDismantle);
-        $('sel-aim').hidden = !b.aim;
+        button.querySelector('.action-label').textContent = this.confirmDismantle ? 'Sure?' : 'Dismantle';
+        button.title = this.confirmDismantle ? `Tap again to dismantle and get back ${refundText || 'nothing'}` : 'Dismantle';
+        if (this.confirmDismantle) toast(`Tap again to dismantle. You get back ${refundText || 'nothing'}.`);
+        $('btn-aim').hidden = !b.aim;
+        $('btn-aim').setAttribute('aria-pressed', String(this.aimOpen));
+        $('aim-picker').hidden = !b.aim || !this.aimOpen;
         if (b.aim) this.#renderAim(b);
         this.infoText = '';
         this.#updateInfo();
@@ -470,24 +585,24 @@ export class CityMode {
         for (const [aim, info] of Object.entries(AIM_INFO)) {
             const chip = document.createElement('button');
             chip.type = 'button';
-            chip.className = 'chip';
-            chip.textContent = info.name;
+            chip.append(icon(CHOICE_ICONS.aim[aim]), info.name);
             chip.setAttribute('aria-pressed', String(aim === b.aim));
             chip.addEventListener('click', () => void this.#setAim(aim));
             chips.append(chip);
         }
         $('aim-hint').textContent = `${AIM_INFO[b.aim].hint} A Guardian close to the tower always draws its fire.`;
+        $('btn-aim').querySelector('.action-label').textContent = `Aim: ${AIM_INFO[b.aim].name}`;
     }
 
     #updateInfo() {
         const b = this.#building(this.selectedId);
         if (!b) return;
-        let text = `${b.hp} HP · ${b.size}×${b.size}`;
+        let text = `${b.hp} HP`;
         if (b.production) {
             const material = MATERIAL_INFO[b.production.material].name.toLowerCase();
-            text += ` · makes ${b.production.per_hour} ${material} per hour`
-                + ` · holds ${this.#pendingOf(b)} / ${b.production.capacity}`;
+            text += ` · +${b.production.per_hour} ${material}/h · holds ${this.#pendingOf(b)}/${b.production.capacity}`;
         }
+        if (b.range) text += ` · reach ${b.range} cells`;
         if (text !== this.infoText) {
             this.infoText = text;
             $('sel-info').textContent = text;

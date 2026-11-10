@@ -57,3 +57,41 @@ export function groundEllipse(camera, radius) {
 export function depthOf(x, y) {
     return x + y;
 }
+
+/**
+ * Scale and offset that fit a world region inside width×height minus the
+ * `insets` (pixels kept free for the interface around the map).
+ * `region` = { x0, y0, x1, y1 } in cells; `headroom` keeps space above it.
+ */
+export function fitRegion(region, width, height, { top = 0, right = 0, bottom = 0, left = 0, headroom = 0 } = {}) {
+    const { x0, y0, x1, y1 } = region;
+    const minX = project(x0, y1).x;
+    const maxX = project(x1, y0).x;
+    const minY = project(x0, y0).y - headroom;
+    const maxY = project(x1, y1).y;
+    const availW = Math.max(1, width - left - right);
+    const availH = Math.max(1, height - top - bottom);
+    const scale = Math.max(0.05, Math.min(availW / (maxX - minX), availH / (maxY - minY)));
+    return {
+        scale,
+        ox: left + availW / 2 - ((minX + maxX) / 2) * scale,
+        oy: top + availH / 2 - ((minY + maxY) / 2) * scale,
+    };
+}
+
+/** The cells around every building, `pad` cells wide, at least `min` cells across, inside the grid. */
+export function regionAround(buildings, grid, pad = 1.5, min = 9) {
+    if (!buildings.length) return { x0: 0, y0: 0, x1: grid, y1: grid };
+    let x0 = Math.min(...buildings.map((b) => b.x)) - pad;
+    let y0 = Math.min(...buildings.map((b) => b.y)) - pad;
+    let x1 = Math.max(...buildings.map((b) => b.x + b.size)) + pad;
+    let y1 = Math.max(...buildings.map((b) => b.y + b.size)) + pad;
+    const grow = (a, b) => {
+        const extra = Math.max(0, min - (b - a)) / 2;
+        return [a - extra, b + extra];
+    };
+    [x0, x1] = grow(x0, x1);
+    [y0, y1] = grow(y0, y1);
+    const clamp = (v) => Math.max(0, Math.min(grid, v));
+    return { x0: clamp(x0), y0: clamp(y0), x1: clamp(x1), y1: clamp(y1) };
+}

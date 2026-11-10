@@ -30,3 +30,13 @@ export function rankText(me) {
 export function stakesText(stakes) {
     return `Win ${signed(stakes.win)} · lose ${signed(-stakes.loss)} trophies`;
 }
+
+/** Trophies where each league starts (display only: the server decides the league). */
+export const LEAGUE_FLOORS = { Bronze: 0, Silver: 200, Gold: 500, Neon: 1000, Mythic: 2000 };
+
+/** How far through the current league (0 to 1), for the bar under the player's name. */
+export function leagueProgress(trophies, league, next) {
+    if (!next) return 1;
+    const floor = LEAGUE_FLOORS[league] ?? 0;
+    return Math.max(0, Math.min(1, (trophies - floor) / Math.max(1, next.at - floor)));
+}

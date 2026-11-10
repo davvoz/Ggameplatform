@@ -1,24 +1,34 @@
 import { Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle } from './api.js';
 import { formatCountdown } from './forgePanel.js';
-import { signed } from './leagues.js';
-import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
+import { icon, withIcon } from './icons.js';
+import { regionAround } from './iso.js';
+import { CHOICE_ICONS, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
+import { LEAGUE_COLORS, signed, stakesText } from './leagues.js';
 import { createReplay } from './replay.js';
-import { lootRow, materialChips, renderRival, rivalBlocker } from './rivalPanel.js';
+import { materialChips, rivalBlocker } from './rivalPanel.js';
+import { toast } from './sheets.js';
 import { SQUAD_SIZE, isAvailable, launchBlocker, settleSquad, toggleHero } from './squad.js';
+import { heroThumb, thumbImg } from './thumbs.js';
 
 /**
- * "Attack": pick an outpost or scout a rival player, pick 4 of your heroes,
- * choose side, priority and tactic, watch the replay, read the report with the loot.
- * Also replays the worst raid of a defence test (`watch`), then goes back.
+ * "Attack", full screen on the target's city:
+ *  - plan: outpost or player, entry side (arrows on the map), squad of 4,
+ *    what to hit first, formation, Fight!
+ *  - battle: the replay with the squad's health at the bottom
+ *  - result: a big verdict, destruction, loot
+ * Also replays raids on the player's own city (`watch`), then goes back.
  */
 
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'hexforge.attack';
 const DEFAULT_SETUP = { mode: 'outposts', side: 'south', priority: 'core', tactic: 'compact', outpost: 1, heroIds: [] };
-const MODES = { outposts: 'Outposts', rivals: 'Rivals' };
+const MODES = ['outposts', 'rivals'];
+const SIDES = ['north', 'east', 'south', 'west'];
 const EMPTY_CITY = { grid: 18, buildings: [] };
 const SPEEDS = [1, 2, 4];
 const TAIL_SECONDS = 1.5;   // keep the last frame on screen before the report
+const PLAN_INSETS = { top: 150, right: 0, bottom: 250, left: 0 };
+const BATTLE_INSETS = { top: 70, right: 0, bottom: 110, left: 0 };
 const REFUSALS = {
     no_energy: 'No energy left. A charge comes back every hour.',
     hero_injured: 'One of your heroes is still injured.',
@@ -43,8 +53,12 @@ export class BattleMode {
         this.speed = 0;
         this.paused = false;
         this.second = -1;
+        this.busy = false;
+        this.error = '';
         this.onStateChanged = () => {};
-        this.returnTo = null;         // set while replaying a defence test
+        this.onExit = () => {};       // set by the shell: back to the city
+        this.returnTo = null;         // set while replaying a raid on the player's city
+        this.sideButtons = {};
         this.#wire();
     }
 
@@ -59,13 +73,13 @@ export class BattleMode {
             this.returnTo = null;
             this.view = 'setup';
         }
-        for (const view of ['setup', 'battle', 'result']) $(`view-${view}`).hidden = true;
-        $('hud').hidden = true;
+        for (const id of ['hud-attack', 'hud-battle', 'result']) $(id).hidden = true;
     }
 
     frame(time, dt) {
         if (this.view === 'setup') {
             this.renderer.draw(null, { side: this.data ? this.setup.side : null, time, ranges: 'all' });
+            this.#placeSides();
             this.#tickSetup();
             return;
         }
@@ -81,6 +95,10 @@ export class BattleMode {
         }
     }
 
+    onEscape() {
+        if (this.view === 'setup') this.onExit();
+    }
+
     /** Replay a raid on the player's own city (defence test or a real raid); Back calls `onBack`. */
     watch(raid, onBack, note = '') {
         this.battle = { ...raid, rewards: null, defense: true, note };
@@ -88,7 +106,7 @@ export class BattleMode {
         this.#startReplay();
     }
 
-    /** Open the setup on the Rivals side (after a revenge has scouted the raider). */
+    /** Open the plan on the Players side (after a revenge has scouted the raider). */
     showRivals() {
         this.setup.mode = 'rivals';
         saveSetup(this.setup);
@@ -114,7 +132,7 @@ export class BattleMode {
         }
         this.playTick = Number(at) * this.replay.tickRate;
         this.paused = true;
-        $('btn-pause').textContent = 'Play';
+        this.#renderPause();
     }
 
     // ── data ───────────────────────────────────────────────────────────
@@ -122,14 +140,19 @@ export class BattleMode {
         try {
             this.#apply(await fetchOutposts());
             $('attack-signin').hidden = true;
-            $('attack-body').hidden = false;
+            this.#showPlan(true);
         } catch (error) {
             if (!(error instanceof SignInRequired)) throw error;
             this.data = null;
             this.renderer.setCity(EMPTY_CITY);
             $('attack-signin').hidden = false;
-            $('attack-body').hidden = true;
+            this.#showPlan(false);
         }
+    }
+
+    #showPlan(signedIn) {
+        for (const id of ['attack-tray', 'sides', 'target-mode', 'energy']) $(id).hidden = !signedIn;
+        document.querySelector('#hud-attack .target-row').hidden = !signedIn;
     }
 
     #apply(data) {
@@ -137,8 +160,8 @@ export class BattleMode {
         this.receivedAt = performance.now();
         if (!data.outposts.some((o) => o.id === this.setup.outpost && o.unlocked)) this.setup.outpost = 1;
         this.setup.heroIds = settleSquad(this.setup.heroIds, data.heroes, this.#serverNow());
-        if (!(this.setup.mode in MODES)) this.setup.mode = 'outposts';
-        this.renderer.setCity(this.#targetCity());
+        if (!MODES.includes(this.setup.mode)) this.setup.mode = 'outposts';
+        this.#setTarget();
         this.#renderSetup();
     }
 
@@ -159,6 +182,13 @@ export class BattleMode {
         return this.#outpost().city;
     }
 
+    /** Show the chosen target's city, framed between the plate and the tray. */
+    #setTarget() {
+        const city = this.#targetCity();
+        this.renderer.setCity(city);
+        this.renderer.focus(regionAround(city.buildings, city.grid, 2.5, 10), PLAN_INSETS);
+    }
+
     /** What the chosen target says against attacking it, or null. */
     #targetBlocker() {
         if (this.#rivals()) return rivalBlocker(this.data.pvp, this.data.rival);
@@ -167,17 +197,42 @@ export class BattleMode {
         return o.unlocked ? null : 'Beat the previous outpost first';
     }
 
-    // ── setup panel ────────────────────────────────────────────────────
+    // ── the plan ───────────────────────────────────────────────────────
     #wire() {
+        $('btn-attack-back').addEventListener('click', () => this.onExit());
+        for (const button of document.querySelectorAll('#target-mode [data-mode]')) {
+            button.addEventListener('click', () => {
+                if (this.setup.mode === button.dataset.mode) return;
+                this.setup.mode = button.dataset.mode;
+                this.#changed(true);
+            });
+        }
+        $('btn-prev-target').addEventListener('click', () => this.#stepOutpost(-1));
+        $('btn-next-target').addEventListener('click', () => this.#stepOutpost(1));
+        $('btn-priority').addEventListener('click', () => this.#cycle('priority', PRIORITY_INFO));
+        $('btn-tactic').addEventListener('click', () => this.#cycle('tactic', TACTIC_INFO));
         $('btn-launch').addEventListener('click', () => void this.#launch());
-        $('btn-find-rival').addEventListener('click', () => void this.#findRival());
+        for (const side of SIDES) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'side';
+            button.dataset.side = side;
+            button.setAttribute('aria-label', `Enter from the ${SIDE_INFO[side].toLowerCase()}`);
+            button.append(icon('arrow'));
+            button.addEventListener('click', () => {
+                this.setup.side = side;
+                this.#changed(false);
+            });
+            this.sideButtons[side] = button;
+            $('sides').append(button);
+        }
         $('btn-pause').addEventListener('click', () => {
             this.paused = !this.paused;
-            $('btn-pause').textContent = this.paused ? 'Play' : 'Pause';
+            this.#renderPause();
         });
         $('btn-speed').addEventListener('click', () => {
             this.speed = (this.speed + 1) % SPEEDS.length;
-            $('btn-speed').textContent = `Speed ${SPEEDS[this.speed]}×`;
+            $('btn-speed').firstElementChild.textContent = `${SPEEDS[this.speed]}×`;
         });
         $('btn-skip').addEventListener('click', () => this.#showResult());
         $('btn-rewatch').addEventListener('click', () => this.#startReplay());
@@ -193,114 +248,182 @@ export class BattleMode {
 
     #show(view) {
         this.view = view;
-        for (const name of ['setup', 'battle', 'result']) $(`view-${name}`).hidden = name !== view;
-        $('hud').hidden = view === 'setup';
+        $('hud-attack').hidden = view !== 'setup';
+        $('hud-battle').hidden = view !== 'battle';
+        $('result').hidden = view !== 'result';
     }
 
-    #changed() {
+    #changed(newTarget) {
         saveSetup(this.setup);
-        this.renderer.setCity(this.#targetCity());
+        this.error = '';
+        if (newTarget) this.#setTarget();
         this.#renderSetup();
+    }
+
+    #stepOutpost(step) {
+        const ids = this.data.outposts.map((o) => o.id);
+        const at = ids.indexOf(this.setup.outpost) + step;
+        if (at < 0 || at >= ids.length) return;
+        this.setup.outpost = ids[at];
+        this.#changed(true);
+    }
+
+    #cycle(key, options) {
+        const values = Object.keys(options);
+        this.setup[key] = values[(values.indexOf(this.setup[key]) + 1) % values.length];
+        toast(`${options[this.setup[key]].name}: ${options[this.setup[key]].hint}.`);
+        this.#changed(false);
     }
 
     #renderSetup() {
         if (!this.data) return;
-        const target = { 'target-mode': this.setup.mode };
-        fillChoice('target-mode', MODES, (v) => v, target, () => {
-            this.setup.mode = target['target-mode'];
-            this.#changed();
-        });
-        $('outpost-section').hidden = this.#rivals();
-        $('rival-section').hidden = !this.#rivals();
-        if (this.#rivals()) this.#renderRivalSection();
-        else this.#renderOutposts();
+        for (const button of document.querySelectorAll('#target-mode [data-mode]')) {
+            button.setAttribute('aria-pressed', String(button.dataset.mode === this.setup.mode));
+        }
+        if (this.#rivals()) this.#renderRivalPlate();
+        else this.#renderOutpostPlate();
         this.#renderSquad();
-        renderClassLegend();
-        fillChoice('side', SIDE_INFO, (v) => v, this.setup, () => this.#changed());
-        fillChoice('priority', PRIORITY_INFO, (v) => v.name, this.setup, () => this.#changed());
-        fillChoice('tactic', TACTIC_INFO, (v) => v.name, this.setup, () => this.#changed());
-        $('priority-hint').textContent = PRIORITY_INFO[this.setup.priority].hint;
-        $('tactic-hint').textContent = TACTIC_INFO[this.setup.tactic].hint;
+        renderOption($('btn-priority'), 'Hit first', PRIORITY_INFO[this.setup.priority].name, CHOICE_ICONS.priority[this.setup.priority]);
+        renderOption($('btn-tactic'), 'Formation', TACTIC_INFO[this.setup.tactic].name, CHOICE_ICONS.tactic[this.setup.tactic]);
+        for (const [side, button] of Object.entries(this.sideButtons)) {
+            const picked = side === this.setup.side;
+            button.setAttribute('aria-pressed', String(picked));
+            button.querySelector('.side-label')?.remove();
+            if (picked) button.append(Object.assign(document.createElement('span'), { className: 'side-label', textContent: 'Enter here' }));
+        }
         this.second = -1;
         this.#tickSetup();
     }
 
-    #renderOutposts() {
-        const list = $('outposts');
-        list.replaceChildren();
-        for (const o of this.data.outposts) {
-            const label = `${o.id}. ${o.name}${o.cleared ? ' ✓' : ''}`;
-            const button = chip(label, o.id === this.setup.outpost, () => {
-                this.setup.outpost = o.id;
-                this.#changed();
-            });
-            button.disabled = !o.unlocked;
-            if (!o.unlocked) button.title = 'Beat the previous outpost first';
-            list.append(button);
-        }
+    #renderOutpostPlate() {
         const o = this.#outpost();
-        const info = $('outpost-info');
-        info.replaceChildren();
-        const line = document.createElement('p');
-        line.className = 'hint';
-        line.textContent = `Difficulty ${'◆'.repeat(o.difficulty)}${'◇'.repeat(5 - o.difficulty)}`
-            + ` · best ${o.best}%${o.cleared ? ' · cleared, loot halved' : ''}`;
-        info.append(line, lootRow('Loot if you win', o.loot_on_win), lootRow('If the core falls', o.loot_on_core));
+        const ids = this.data.outposts.map((x) => x.id);
+        $('btn-prev-target').hidden = false;
+        $('btn-next-target').hidden = false;
+        $('btn-prev-target').disabled = o.id === ids[0];
+        $('btn-next-target').disabled = o.id === ids.at(-1);
+        const plate = $('target-plate');
+        plate.replaceChildren();
+        const name = paragraph('target-name', o.name);
+        const sub = paragraph('target-sub', `Outpost ${o.id} · `);
+        sub.append(Object.assign(document.createElement('span'), { className: 'pips', textContent: '◆'.repeat(o.difficulty) + '◇'.repeat(5 - o.difficulty) }));
+        if (!o.unlocked) sub.append(' · ', icon('lock'), ' locked');
+        else if (o.cleared) sub.append(` · best ${o.best}% · loot halved`);
+        else if (o.best) sub.append(` · best ${o.best}%`);
+        plate.append(name, sub, lootLine(o.loot_on_win));
     }
 
-    #renderRivalSection() {
-        renderRival($('rival-info'), this.data, this.#serverNow());
-        const button = $('btn-find-rival');
-        button.hidden = !this.data.pvp.arena;
-        button.textContent = this.data.rival ? 'Find another rival' : 'Find a rival';
+    #renderRivalPlate() {
+        $('btn-prev-target').hidden = true;
+        $('btn-next-target').hidden = true;
+        const { pvp, rival } = this.data;
+        const plate = $('target-plate');
+        plate.replaceChildren();
+        if (!pvp.arena) {
+            plate.append(paragraph('target-name', 'Arena locked'), paragraph('target-sub', 'Clear the first outpost, Scrap Hollow, to raid players.'));
+            return;
+        }
+        const find = document.createElement('button');
+        find.type = 'button';
+        find.className = `button small${rival ? '' : ' primary'}`;
+        withIcon(find, 'search', rival ? 'Find another' : 'Find a rival');
+        find.addEventListener('click', () => void this.#findRival(find));
+        if (!rival) {
+            plate.append(paragraph('target-name', 'Find a rival'), paragraph('target-sub', 'A player of similar strength. Their vault keeps 400 of each material safe.'), find);
+            return;
+        }
+        const name = paragraph('target-name', rival.name);
+        const sub = paragraph('target-sub', `${rival.trophies} trophies · `);
+        const league = Object.assign(document.createElement('b'), { textContent: rival.league });
+        league.style.color = LEAGUE_COLORS[rival.league];
+        sub.append(league, ` · ${stakesText(rival.stakes)}`);
+        plate.append(name, sub, lootLine(rival.loot_on_win));
+        if (!rival.available) plate.append(paragraph('error', 'Shielded now: find another rival.'));
+        plate.append(find);
     }
 
-    async #findRival() {
-        const button = $('btn-find-rival');
+    async #findRival(button) {
         button.disabled = true;
-        $('error').hidden = true;
+        this.error = '';
         try {
             const answer = await findRival();
             this.#apply(answer);
             if (!answer.rival) this.#showError('Nobody to raid right now: every rival is shielded. Try again later.');
         } catch (error) {
             this.#showError(error instanceof Refused ? (REFUSALS[error.code] ?? 'The server refused.') : 'The server did not answer. Try again in a moment.');
-        } finally {
             button.disabled = false;
         }
     }
 
     #showError(text) {
-        $('error').textContent = text;
-        $('error').hidden = false;
+        this.error = text;
+        this.second = -1;
+        this.#tickSetup();
     }
 
+    /** One card per hero class: tap to add one more, − to take one out. */
     #renderSquad() {
         const list = $('squad');
         list.replaceChildren();
         const now = this.#serverNow();
-        const counts = {};
-        for (const hero of this.data.heroes) {
-            counts[hero.cls] = (counts[hero.cls] ?? 0) + 1;
-            const info = HERO_INFO[hero.cls];
-            const picked = this.setup.heroIds.includes(hero.id);
-            const fit = isAvailable(hero, now);
-            const label = fit ? `${info.name} #${counts[hero.cls]}` : `${info.name} #${counts[hero.cls]} · ${formatCountdown(hero.injured_until - now)}`;
-            const button = chip(label, picked, () => {
-                this.setup.heroIds = toggleHero(this.setup.heroIds, hero.id);
-                saveSetup(this.setup);
-                this.#renderSquad();
-                this.second = -1;
-                this.#tickSetup();
-            }, info.color);
-            button.disabled = !fit;
-            if (!fit) button.title = 'Injured: back soon';
-            list.append(button);
+        for (const [cls, info] of Object.entries(HERO_INFO)) {
+            const mine = this.data.heroes.filter((h) => h.cls === cls);
+            const fit = mine.filter((h) => isAvailable(h, now));
+            const picked = mine.filter((h) => this.setup.heroIds.includes(h.id));
+            const spare = fit.find((h) => !this.setup.heroIds.includes(h.id));
+            const card = document.createElement('div');
+            card.className = `hero-card${picked.length ? ' picked' : ''}`;
+            card.style.setProperty('--accent', info.color);
+            const add = document.createElement('button');
+            add.type = 'button';
+            add.className = 'hero-add';
+            add.disabled = !spare || this.setup.heroIds.length >= SQUAD_SIZE;
+            add.setAttribute('aria-label', `Add a ${info.name}`);
+            add.addEventListener('click', () => this.#pick(toggleHero(this.setup.heroIds, spare.id)));
+            const count = Object.assign(document.createElement('span'), { className: 'count', textContent: `${picked.length}/${fit.length}` });
+            add.append(count, thumbImg(heroThumb(cls, 50), '', ''), Object.assign(document.createElement('span'), { textContent: info.tag }));
+            add.append(Object.assign(document.createElement('small'), { textContent: this.#heroNote(mine, fit, now) }));
+            card.append(add);
+            if (picked.length) {
+                const minus = document.createElement('button');
+                minus.type = 'button';
+                minus.className = 'minus';
+                minus.setAttribute('aria-label', `Take a ${info.name} out`);
+                minus.append(icon('minus'));
+                minus.addEventListener('click', () => this.#pick(toggleHero(this.setup.heroIds, picked.at(-1).id)));
+                card.append(minus);
+            }
+            list.append(card);
         }
         $('squad-count').textContent = `${this.setup.heroIds.length}/${SQUAD_SIZE}`;
     }
 
-    /** Once a second: energy countdown, healing heroes, the launch button. */
+    #heroNote(mine, fit, now) {
+        if (!mine.length) return 'Forge one';
+        if (fit.length) return `${fit.length} ready`;
+        const back = Math.min(...mine.map((h) => h.injured_until));
+        return `Hurt ${formatCountdown(back - now)}`;
+    }
+
+    #pick(heroIds) {
+        this.setup.heroIds = heroIds;
+        saveSetup(this.setup);
+        this.#renderSquad();
+        this.second = -1;
+        this.#tickSetup();
+    }
+
+    /** Arrows on the four edges of the map, kept inside the screen. */
+    #placeSides() {
+        if (!this.data || !this.renderer.camera) return;
+        for (const [side, button] of Object.entries(this.sideButtons)) {
+            const { x, y, angle } = this.renderer.edgeAnchor(side);
+            button.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+            button.firstElementChild.style.transform = `rotate(${angle.toFixed(0)}deg)`;
+        }
+    }
+
+    /** Once a second: energy, healing heroes, the Fight button and its hint. */
     #tickSetup() {
         if (!this.data) return;
         const now = this.#serverNow();
@@ -314,21 +437,24 @@ export class BattleMode {
             void this.#reload();
             return;
         }
-        if (this.#rivals() && this.data.pvp.shield_until) this.#renderRivalSection();
-        $('energy').textContent = `Energy ${energy.charges}/${energy.max}`
-            + (energy.next_at ? ` · next in ${formatCountdown(energy.next_at - now)}` : ' · full');
+        $('energy').replaceChildren(icon('bolt'), `${energy.charges}/${energy.max}`
+            + (energy.next_at ? ` · +1 in ${formatCountdown(energy.next_at - now)}` : ''));
         const blocker = launchBlocker({ blocked: this.#targetBlocker(), picked: this.setup.heroIds, energy });
-        $('btn-launch').disabled = Boolean(blocker);
-        const ending = this.#rivals() && this.data.pvp.shield_until ? ' Ends your shield.' : '';
-        $('launch-hint').textContent = blocker ?? `Costs 1 energy.${ending}`;
+        $('btn-launch').disabled = Boolean(blocker) || this.busy;
+        $('fight-cost').textContent = `1 energy of ${energy.charges}`;
+        const hint = $('launch-hint');
+        const ending = this.#rivals() && this.data.pvp.shield_until && !blocker ? 'Attacking a player ends your shield.' : '';
+        hint.textContent = this.error || blocker || ending;
+        hint.classList.toggle('error', Boolean(this.error));
     }
 
     // ── battle flow ────────────────────────────────────────────────────
     async #launch() {
         const button = $('btn-launch');
         button.disabled = true;
-        button.textContent = 'Simulating…';
-        $('error').hidden = true;
+        this.busy = true;
+        button.firstElementChild.textContent = '…';
+        this.error = '';
         try {
             const setup = {
                 hero_ids: this.setup.heroIds,
@@ -345,56 +471,50 @@ export class BattleMode {
             this.renderer.setCity(this.battle.city);
             this.#startReplay();
         } catch (error) {
-            $('error').textContent = error instanceof Refused
+            this.error = error instanceof Refused
                 ? (REFUSALS[error.code] ?? 'The server refused the attack.')
                 : 'The battle server did not answer. Try again in a moment.';
-            $('error').hidden = false;
             if (!(error instanceof Refused)) console.error('[Hexforge] attack failed', error);
         } finally {
-            button.textContent = 'Launch attack';
+            this.busy = false;
+            button.firstElementChild.textContent = 'Fight!';
             this.second = -1;
         }
     }
 
     #startReplay() {
+        toast('');
         this.replay = createReplay(this.battle);
         this.playTick = 0;
         this.paused = false;
-        $('btn-pause').textContent = 'Pause';
-        $('battle-title').textContent = this.battle.defense ? 'Raiders' : 'Squad';
+        this.#renderPause();
+        const city = this.battle.city;
+        this.renderer.setCity(city);
+        this.renderer.focus(regionAround(city.buildings, city.grid, 2.5, 10), BATTLE_INSETS);
+        $('battle-title').textContent = this.battle.defense ? 'Raiders' : 'Your squad';
         this.#buildHeroList();
         this.#show('battle');
+    }
+
+    #renderPause() {
+        const button = $('btn-pause');
+        button.replaceChildren(icon(this.paused ? 'play' : 'pause'));
+        button.setAttribute('aria-label', this.paused ? 'Play' : 'Pause');
     }
 
     #buildHeroList() {
         const list = $('hero-list');
         list.replaceChildren();
-        for (const hero of this.battle.squad) {
-            const info = HERO_INFO[hero.cls];
-            const row = document.createElement('div');
-            row.className = 'hero-row';
-            row.style.setProperty('--accent', info.color);
-            const name = document.createElement('span');
-            name.className = 'name';
-            name.textContent = info.name;
-            const hp = document.createElement('span');
-            hp.className = 'hp';
-            const bar = document.createElement('div');
-            bar.className = 'bar';
-            bar.append(document.createElement('div'));
-            row.append(name, hp, bar);
-            list.append(row);
-        }
+        for (const hero of this.battle.squad) list.append(heroChip(hero.cls));
     }
 
     #updateHeroList(state) {
-        const rows = $('hero-list').children;
+        const chips = $('hero-list').children;
         state.heroes.forEach((hero, i) => {
-            const row = rows[i];
-            if (!row) return;
-            row.classList.toggle('down', !hero.alive);
-            row.querySelector('.hp').textContent = hero.alive ? `${hero.hp} / ${hero.maxHp}` : 'Down';
-            row.querySelector('.bar div').style.width = `${(100 * hero.hp) / hero.maxHp}%`;
+            const chip = chips[i];
+            if (!chip) return;
+            chip.classList.toggle('down', !hero.alive);
+            chip.querySelector('.bar div').style.width = `${(100 * hero.hp) / hero.maxHp}%`;
         });
     }
 
@@ -414,52 +534,53 @@ export class BattleMode {
         const rewards = this.battle.rewards;
         const defense = Boolean(this.battle.defense);
         const won = defense ? !s.victory : s.victory;
-        const verdict = $('verdict');
-        verdict.textContent = verdictText(defense, won);
-        verdict.className = `verdict ${won ? 'win' : 'loss'}`;
-
-        const stats = $('stats');
-        stats.replaceChildren();
-        const row = (label, value) => {
-            const dt = document.createElement('dt');
-            dt.textContent = label;
-            const dd = document.createElement('dd');
-            dd.append(value);
-            stats.append(dt, dd);
-        };
-        row('Destruction', `${s.destruction}%`);
-        row('Core', s.core_destroyed ? 'Destroyed' : 'Standing');
-        if (rewards) {
-            const got = Object.values(rewards.loot).some((n) => n > 0);
-            row('Loot', got ? materialChips(rewards.loot) : 'None');
-            if (rewards.trophies !== undefined) row('Trophies', signed(rewards.trophies));
-            row('Injured', rewards.injured.length ? `${rewards.injured.length} hero${rewards.injured.length > 1 ? 'es' : ''}, back in 15 min` : 'Nobody');
-        }
-        row('Battle time', `${s.seconds} s`);
-        row('First defence to fall', s.first_tower_lost ? BUILDING_INFO[s.first_tower_lost].name : '—');
-
-        const note = $('result-note');
+        $('result').className = `result ${won ? 'win' : 'loss'}`;
+        $('verdict').textContent = verdictText(defense, won);
         const next = rewards?.unlocked && this.data?.outposts.find((o) => o.id === rewards.unlocked);
-        note.textContent = resultNote(this.battle, next);
-        note.classList.toggle('plain', defense);
-        note.hidden = !note.textContent;
-        $('report-title').textContent = defense ? 'Raiders' : 'Squad report';
-        $('btn-new').textContent = defense ? 'Back to my city' : 'Back';
+        $('result-note').textContent = resultNote(this.battle, next);
+        $('result-ring').style.setProperty('--done', `${s.destruction}%`);
+        $('result-percent').textContent = `${s.destruction}%`;
+
+        const badges = $('result-badges');
+        badges.replaceChildren();
+        const badge = (text, kind, iconName) => {
+            const span = document.createElement('span');
+            span.className = kind;
+            if (iconName) span.append(icon(iconName));
+            span.append(text);
+            badges.append(span);
+        };
+        badge(s.core_destroyed ? 'Core destroyed' : 'Core standing', s.core_destroyed === !defense ? 'good' : 'bad', s.core_destroyed ? 'flame' : 'shield');
+        if (next) badge(`${next.name} unlocked`, 'good', 'lock');
+        if (rewards?.trophies !== undefined) badge(`${signed(rewards.trophies)} trophies`, rewards.trophies >= 0 ? 'good' : 'bad', 'trophy');
+        if (rewards?.injured.length) badge(`${rewards.injured.length} hurt · back in 15 min`, 'bad', 'hero');
+
+        const loot = $('result-loot');
+        loot.replaceChildren();
+        let delay = 0;
+        for (const [m, amount] of Object.entries(rewards?.loot ?? {})) {
+            if (!amount) continue;
+            const info = MATERIAL_INFO[m];
+            const tile = document.createElement('div');
+            tile.className = 'loot-tile';
+            tile.style.setProperty('--accent', info.color);
+            tile.style.animationDelay = `${0.3 + delay}s`;
+            tile.title = info.name;
+            tile.append(icon(info.icon), `+${amount}`);
+            loot.append(tile);
+            delay += 0.12;
+        }
 
         const report = $('report');
         report.replaceChildren();
         for (const hero of s.heroes) {
-            const info = HERO_INFO[hero.cls];
-            const tr = document.createElement('tr');
-            tr.style.setProperty('--accent', info.color);
-            for (const [text, cls] of [[info.name, 'name'], [hero.dealt], [hero.taken], [hero.survived ? 'Alive' : 'Down']]) {
-                const td = document.createElement('td');
-                td.textContent = String(text);
-                if (cls) td.className = cls;
-                tr.append(td);
-            }
-            report.append(tr);
+            const chip = heroChip(hero.cls, `${hero.dealt} dmg`);
+            chip.classList.toggle('down', !hero.survived);
+            chip.title = `${HERO_INFO[hero.cls].name}: dealt ${hero.dealt}, took ${hero.taken}${hero.survived ? '' : ', down'}`;
+            report.append(chip);
         }
+        const gotLoot = loot.childElementCount > 0;
+        $('btn-new').firstElementChild.textContent = defense ? 'Back to my city' : (gotLoot ? 'Collect' : 'Continue');
         this.#show('result');
     }
 }
@@ -467,47 +588,47 @@ export class BattleMode {
 function resultNote(battle, unlocked) {
     if (battle.defense) return battle.note;
     if (battle.rival) return battle.summary.victory ? `You raided ${battle.rival}!` : `${battle.rival}'s defense held.`;
-    return unlocked ? `Outpost cleared! ${unlocked.name} is now open.` : '';
+    if (unlocked) return 'Outpost cleared!';
+    return battle.summary.victory ? 'The outpost has fallen' : 'Your squad fell back';
 }
 
 function verdictText(defense, won) {
-    if (defense) return won ? 'DEFENSE HELD' : 'DEFENSE BREACHED';
-    return won ? 'VICTORY' : 'DEFEAT';
+    if (defense) return won ? 'Defense held' : 'Breached';
+    return won ? 'Victory' : 'Defeat';
 }
 
-function chip(label, pressed, onClick, accent) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'chip';
-    button.textContent = label;
-    button.setAttribute('aria-pressed', String(pressed));
-    if (accent) button.style.setProperty('--accent', accent);
-    button.addEventListener('click', onClick);
-    return button;
+function heroChip(cls, caption = null) {
+    const info = HERO_INFO[cls];
+    const chip = document.createElement('div');
+    chip.className = 'hero-chip';
+    chip.style.setProperty('--accent', info.color);
+    chip.title = info.name;
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    const fill = document.createElement('div');
+    fill.style.width = '100%';
+    bar.append(fill);
+    chip.append(thumbImg(heroThumb(cls, 46), '', info.name), bar);
+    if (caption) chip.append(caption);
+    return chip;
 }
 
-function renderClassLegend() {
-    const classes = $('classes');
-    if (classes.childElementCount) return;
-    for (const info of Object.values(HERO_INFO)) {
-        const item = document.createElement('li');
-        item.style.setProperty('--accent', info.color);
-        const title = document.createElement('b');
-        title.textContent = info.name;
-        item.append(title, ` · ${info.role}`);
-        classes.append(item);
-    }
+function renderOption(button, label, value, iconName) {
+    const text = document.createElement('span');
+    text.append(Object.assign(document.createElement('small'), { textContent: label }), Object.assign(document.createElement('b'), { textContent: value }));
+    button.replaceChildren(icon(iconName), text);
+    button.setAttribute('aria-label', `${label}: ${value}. Tap to change`);
 }
 
-function fillChoice(key, options, labelOf, setup, onChange) {
-    const container = $(key);
-    container.replaceChildren();
-    for (const [value, info] of Object.entries(options)) {
-        container.append(chip(labelOf(info), setup[key] === value, () => {
-            setup[key] = value;
-            onChange();
-        }));
-    }
+function paragraph(className, text) {
+    return Object.assign(document.createElement('p'), { className, textContent: text });
+}
+
+function lootLine(amounts) {
+    const line = paragraph('target-loot', 'Loot');
+    const got = Object.values(amounts).some((n) => n > 0);
+    line.append(got ? materialChips(amounts) : ' · nothing above their vault');
+    return line;
 }
 
 // The last setup is a convenience only: the game works without storage.

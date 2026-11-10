@@ -341,7 +341,8 @@ def public_state(state: PlayerState, now: float) -> dict:
         "forge": {"slots": state.city["forge"]["slots"], "jobs": jobs},
         "recipes": forge.public_recipes(state.city, state.heroes),
         "energy": outposts.public_energy(state.city["energy"], now),
-        "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies)},
+        "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies),
+                "next_league": pvp.next_league(state.trophies)},
         "version": state.version,
         "server_time": now,
     }

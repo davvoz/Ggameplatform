@@ -1,6 +1,8 @@
+import { icon, withIcon } from './icons.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import { buildingThumb, heroThumb, thumbImg } from './thumbs.js';
 
-/** DOM builders for the forge, storage and roster blocks of the city panel. */
+/** DOM builders for the forge sheet and the "ready to place" tray. */
 
 // ── pure helpers (tested) ──────────────────────────────────────────────
 export function formatDuration(seconds) {
@@ -33,6 +35,11 @@ export function itemName(item) {
     return BUILDING_INFO[item]?.name ?? HERO_INFO[item]?.name ?? item;
 }
 
+/** The picture of anything the forge makes. */
+export function itemThumb(item, px) {
+    return HERO_INFO[item] ? heroThumb(item, px) : buildingThumb(item, px);
+}
+
 // ── DOM ────────────────────────────────────────────────────────────────
 function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -41,12 +48,16 @@ function el(tag, className, text) {
     return node;
 }
 
-function costChips(cost, materials) {
+/** Material amounts with their icons; amounts the player cannot pay are struck through. */
+export function costChips(cost, materials) {
     const wrap = el('span', 'costs');
     for (const [m, amount] of Object.entries(cost)) {
-        const chip = el('span', 'cost', String(amount));
-        chip.style.setProperty('--accent', MATERIAL_INFO[m].color);
-        chip.title = MATERIAL_INFO[m].name;
+        if (!amount) continue;
+        const info = MATERIAL_INFO[m];
+        const chip = el('span', 'cost');
+        chip.append(icon(info.icon), String(amount));
+        chip.style.setProperty('--accent', info.color);
+        chip.title = info.name;
         if (materials && (materials[m] ?? 0) < amount) chip.classList.add('short');
         wrap.append(chip);
     }
@@ -60,62 +71,64 @@ export function renderForgeSlots(container, forge, serverNow, onClaim) {
         const slot = el('div', 'forge-slot');
         if (!job) {
             slot.classList.add('empty');
-            slot.append(el('span', 'job-name', 'Empty slot'));
+            slot.textContent = 'Free slot · pick something below';
             container.append(slot);
             continue;
         }
         const total = job.ready_at - job.started_at;
         const left = job.ready_at - serverNow;
         const ready = left <= 0;
-        slot.append(el('span', 'job-name', itemName(job.recipe)));
+        const ring = el('span', 'slot-ring');
+        ring.style.setProperty('--done', `${ready ? 100 : Math.round((100 * (total - left)) / total)}%`);
+        ring.append(thumbImg(itemThumb(job.recipe, 50), '', itemName(job.recipe)));
+        const text = el('span', 'slot-text');
+        text.append(el('span', '', itemName(job.recipe)));
         if (ready) {
-            const button = el('button', 'button primary small', 'Claim');
+            const button = withIcon(el('button', 'button primary small'), 'gift', 'Claim!');
+            button.type = 'button';
             button.addEventListener('click', () => onClaim(job.id));
-            slot.append(button);
+            text.append(button);
             slot.classList.add('ready');
         } else {
-            slot.append(el('span', 'job-left', formatCountdown(left)));
+            text.append(el('small', '', `${formatCountdown(left)} left`));
         }
-        const bar = el('div', 'job-bar');
-        const fill = el('div');
-        fill.style.width = `${ready ? 100 : (100 * (total - left)) / total}%`;
-        bar.append(fill);
-        slot.append(bar);
+        slot.append(ring, text);
         container.append(slot);
     }
 }
 
-export function renderRecipes(container, recipes, materials, freeSlots, onForge) {
+/** One big card per recipe of `kind`: picture, cost, time; tap to forge. */
+export function renderRecipes(container, recipes, materials, freeSlots, kind, onForge) {
     container.replaceChildren();
-    for (const kind of ['building', 'hero']) {
-        container.append(el('h3', 'recipe-group', kind === 'building' ? 'Buildings' : 'Heroes'));
-        for (const recipe of recipes.filter((r) => r.kind === kind)) {
-            const row = el('div', 'recipe');
-            const title = el('span', 'recipe-name', itemName(recipe.id) + (recipe.yields > 1 ? ` ×${recipe.yields}` : ''));
-            const meta = el('span', 'recipe-meta', `${formatDuration(recipe.seconds)} · ${recipe.owned}/${recipe.limit}`);
-            const blocker = forgeBlocker(recipe, materials, freeSlots);
-            const button = el('button', 'button small', 'Forge');
-            button.disabled = Boolean(blocker);
-            if (blocker) button.title = blocker;
-            button.addEventListener('click', () => onForge(recipe.id));
-            row.append(title, button, costChips(recipe.cost, materials), meta);
-            container.append(row);
-        }
+    for (const recipe of recipes.filter((r) => r.kind === kind)) {
+        const card = el('button', 'recipe');
+        card.type = 'button';
+        const time = el('span', 'recipe-time');
+        time.append(icon('clock'), formatDuration(recipe.seconds));
+        const ped = el('span', 'ped');
+        ped.append(thumbImg(itemThumb(recipe.id, 84), '', ''));
+        const name = el('span', 'recipe-name', itemName(recipe.id) + (recipe.yields > 1 ? ` ×${recipe.yields}` : ''));
+        const blocker = forgeBlocker(recipe, materials, freeSlots);
+        const foot = el('span', `recipe-foot${blocker ? ' blocked' : ''}`, blocker ?? `You own ${recipe.owned}/${recipe.limit}`);
+        card.append(time, ped, name, costChips(recipe.cost, materials), foot);
+        card.disabled = Boolean(blocker);
+        card.setAttribute('aria-label', `Forge ${itemName(recipe.id)}${blocker ? `: ${blocker}` : ''}`);
+        card.addEventListener('click', () => onForge(recipe.id));
+        container.append(card);
     }
 }
 
+/** Forged buildings waiting to be placed: tap one, then tap the map. */
 export function renderStorage(container, storage, placingType, onPlace) {
     container.replaceChildren();
-    const items = Object.entries(storage);
-    if (!items.length) {
-        container.append(el('p', 'hint', 'Forged buildings wait here until you place them.'));
-        return;
-    }
-    for (const [type, count] of items) {
-        const chip = el('button', 'chip', `${itemName(type)} ×${count}`);
+    for (const [type, count] of Object.entries(storage)) {
+        if (!count) continue;
+        const chip = el('button');
         chip.type = 'button';
+        chip.append(thumbImg(buildingThumb(type, 50), '', ''), el('span', '', itemName(type)), el('span', 'qty', `×${count}`));
         chip.setAttribute('aria-pressed', String(type === placingType));
-        chip.style.setProperty('--accent', BUILDING_INFO[type]?.glow ?? '#39e6ff');
+        chip.setAttribute('aria-label', `Place ${itemName(type)}`);
+        chip.style.setProperty('--accent', BUILDING_INFO[type]?.glow ?? '#ffb347');
         chip.addEventListener('click', () => onPlace(type));
         container.append(chip);
     }
@@ -125,10 +138,11 @@ export function renderRoster(container, heroes, limit) {
     container.replaceChildren();
     const counts = {};
     for (const h of heroes) counts[h.cls] = (counts[h.cls] ?? 0) + 1;
+    container.append(el('span', 'roster-total', `Your heroes ${heroes.length}/${limit}:`));
     for (const [cls, info] of Object.entries(HERO_INFO)) {
-        const item = el('span', 'roster-item', `${info.name} ×${counts[cls] ?? 0}`);
+        const item = el('span', 'roster-item');
+        item.append(thumbImg(heroThumb(cls, 40), '', info.name), el('span', '', `${info.tag} ×${counts[cls] ?? 0}`));
         item.style.setProperty('--accent', info.color);
         container.append(item);
     }
-    container.append(el('span', 'roster-total', `${heroes.length}/${limit} heroes`));
 }

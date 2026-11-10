@@ -1,9 +1,9 @@
 /** Display names, roles and colours. Gameplay numbers live on the server. */
 
 export const HERO_INFO = {
-    guardian: { name: 'Guardian', role: 'Tank · draws tower fire', color: '#5aa9ff', short: 'G' },
-    neon_blade: { name: 'Neon Blade', role: 'Assassin · leaps over walls', color: '#ff3d9a', short: 'B' },
-    technomancer: { name: 'Technomancer', role: 'Mage · ranged, area nova', color: '#a77bff', short: 'T' },
+    guardian: { name: 'Guardian', tag: 'Guardian', role: 'Tank · draws tower fire', color: '#5aa9ff', short: 'G' },
+    neon_blade: { name: 'Neon Blade', tag: 'Blade', role: 'Assassin · leaps over walls', color: '#ff3d9a', short: 'B' },
+    technomancer: { name: 'Technomancer', tag: 'Mage', role: 'Mage · ranged, area nova', color: '#a77bff', short: 'T' },
 };
 
 /**
@@ -26,10 +26,10 @@ export const BUILDING_INFO = {
 };
 
 export const MATERIAL_INFO = {
-    rune_stone: { name: 'Rune stone', color: '#ffb547' },
-    scrap: { name: 'Scrap', color: '#ff7a3d' },
-    mana: { name: 'Mana', color: '#a77bff' },
-    chips: { name: 'Chips', color: '#4dff9a' },
+    rune_stone: { name: 'Rune stone', color: '#ffb547', icon: 'gem' },
+    scrap: { name: 'Scrap', color: '#ff7a3d', icon: 'gear' },
+    mana: { name: 'Mana', color: '#b48cff', icon: 'drop' },
+    chips: { name: 'Chips', color: '#4dff9a', icon: 'chip' },
 };
 
 export const SIDE_INFO = {
@@ -52,4 +52,12 @@ export const AIM_INFO = {
     closest: { name: 'Closest', hint: 'Shoots the nearest hero.' },
     weakest: { name: 'Weakest', hint: 'Finishes off the hero with the least health.' },
     ranged: { name: 'Back line', hint: 'Hunts ranged heroes like the Technomancer first.' },
+};
+
+/** Icons for the attack plan choices (ids of the sprite in index.html). */
+export const CHOICE_ICONS = {
+    side: { north: 'arrow', east: 'arrow', south: 'arrow', west: 'arrow' },
+    priority: { towers: 'tower', core: 'flame', production: 'pick' },
+    tactic: { compact: 'compact', spread: 'spread', split: 'split' },
+    aim: { closest: 'aim', weakest: 'hero', ranged: 'bolt' },
 };

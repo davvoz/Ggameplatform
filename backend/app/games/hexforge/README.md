@@ -129,7 +129,25 @@ trophies, league, rank and the top 50 (players with at least 1 trophy).
 | --- | --- |
 | `GET /api/hexforge/me/leaderboard` | `{top: [{rank, name, trophies, league, me}], me: {trophies, rank, league, next_league}}` |
 
-Next: the defence log (who attacked you, with the replay).
+Step 4 (done): **raids on your city**. My city lists the latest 20 raids
+(who, when, breached or held, what they took, trophies lost or won). Raids
+you have not read light up the My city tab with a badge and a banner;
+**Got it** marks them read. **Watch** rebuilds the replay from the logged
+inputs (the battle is deterministic, so nothing heavy is stored).
+**Revenge**, for a day after a raid and while the raider can be attacked,
+scouts the raider directly and opens Attack → Rivals on them. The current
+shield is shown above the list. New columns on `hexforge_attacks`
+(`defender_trophies`, `seen`) are added by the same startup migration.
+
+| Route | What |
+| --- | --- |
+| `GET /api/hexforge/me/defenses` | `{raids: [...], unseen}` |
+| `POST /api/hexforge/me/defenses/seen` | mark every raid as read |
+| `GET /api/hexforge/me/defenses/{id}/replay` | the rebuilt replay; 400 `unknown_raid` if it was not on you |
+| `POST /api/hexforge/me/defenses/{id}/revenge` | scout the raider; 400 `revenge_unavailable` |
+
+Phase 3 PvP is complete. Next: register the game on the platform (Fun
+section, XP and daily quests).
 
 ## Layout
 

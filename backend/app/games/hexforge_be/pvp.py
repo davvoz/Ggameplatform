@@ -11,6 +11,8 @@ Hexforge: attacking other players.
            protection (30 % if the core falls): the rival loses what you take.
   shield   whoever is attacked cannot be attacked again for a while;
            attacking a player ends your own shield.
+  revenge  for a day after a raid, the defender may scout the raider
+           directly (if the raider can be attacked).
   trophies the PvP score, never reset. A win takes trophies from the rival,
            a defeat hands some to them; beating a stronger rival pays more.
            Leagues are names for trophy bands.
@@ -30,6 +32,7 @@ ARENA_OUTPOST = 1
 SHIELD_SECONDS = 3 * 3600
 VAULT_PROTECTS = 400          # per material, never lootable
 CLOSEST_RIVALS = 5            # the scout picks among this many of similar trophies
+REVENGE_SECONDS = 24 * 3600
 TROPHY_WIN, TROPHY_LOSS = 30, 20
 TROPHY_GAP_STEP = 25          # every 25 trophies of difference move the stakes by 1
 LEAGUES = ((2000, "Mythic"), (1000, "Neon"), (500, "Gold"), (200, "Silver"), (0, "Bronze"))
@@ -153,3 +156,9 @@ def settle_trophies(attacker: int, defender: int, victory: bool) -> tuple[int, i
         return attacker + stakes["win"], max(0, defender - stakes["win"]), stakes["win"]
     lost = min(stakes["loss"], attacker)
     return attacker - lost, defender + stakes["loss"], -lost
+
+
+def can_revenge(my_city: dict, raided_at: float, raider_city, now: float) -> bool:
+    """Whether the defender may scout this raider now."""
+    return (in_arena(my_city) and now - raided_at <= REVENGE_SECONDS
+            and raider_city is not None and attackable(raider_city, now))

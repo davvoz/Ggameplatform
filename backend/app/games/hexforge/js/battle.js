@@ -1,5 +1,4 @@
 import { Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle } from './api.js';
-import { describeWorst } from './defensePanel.js';
 import { formatCountdown } from './forgePanel.js';
 import { signed } from './leagues.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from './labels.js';
@@ -82,11 +81,19 @@ export class BattleMode {
         }
     }
 
-    /** Replay a raid on the player's own city (defence test); Back calls `onBack`. */
-    watch(raid, onBack) {
-        this.battle = { ...raid, rewards: null, defense: true };
+    /** Replay a raid on the player's own city (defence test or a real raid); Back calls `onBack`. */
+    watch(raid, onBack, note = '') {
+        this.battle = { ...raid, rewards: null, defense: true, note };
         this.returnTo = onBack;
         this.#startReplay();
+    }
+
+    /** Open the setup on the Rivals side (after a revenge has scouted the raider). */
+    showRivals() {
+        this.setup.mode = 'rivals';
+        saveSetup(this.setup);
+        this.returnTo = null;
+        this.view = 'setup';
     }
 
     /**
@@ -458,7 +465,7 @@ export class BattleMode {
 }
 
 function resultNote(battle, unlocked) {
-    if (battle.defense) return `Worst raid of the test: ${describeWorst(battle)}.`;
+    if (battle.defense) return battle.note;
     if (battle.rival) return battle.summary.victory ? `You raided ${battle.rival}!` : `${battle.rival}'s defense held.`;
     return unlocked ? `Outpost cleared! ${unlocked.name} is now open.` : '';
 }

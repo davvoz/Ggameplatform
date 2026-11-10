@@ -198,18 +198,75 @@ class PlayerService:
         summary = battle["summary"]
         loot = pvp.settle_attack(state.city, rival.city, state.materials, rival.materials, summary, now)
         injured = outposts.injure_fallen(state.heroes, hero_ids, summary, now)
+        rival_before = rival.trophies
         state.trophies, rival.trophies, trophies = pvp.settle_trophies(
             state.trophies, rival.trophies, summary["victory"])
         log = HexforgeAttack(
             attacker_id=user_id, defender_id=rival_id, created_at=now,
             setup_json=json.dumps({"squad": classes, "side": side, "priority": priority, "tactic": tactic}),
             city_json=json.dumps(target), summary_json=json.dumps(summary), loot_json=json.dumps(loot),
-            trophies=trophies,
+            trophies=trophies, defender_trophies=rival.trophies - rival_before,
         )
         self.save_together([state, rival], now, [log])
         name = self.names([rival_id])[rival_id]
         return state, {"rival": name, "city": target, **battle,
                        "rewards": {"loot": loot, "injured": injured, "trophies": trophies}}
+
+    # ── defence log ────────────────────────────────────────────────────
+    def defense_log(self, user_id: str, now: float, limit: int = 20) -> dict:
+        """The latest raids on your city, newest first."""
+        state = self.load(user_id, now)
+        rows = (self.db.query(HexforgeAttack).filter(HexforgeAttack.defender_id == user_id)
+                .order_by(HexforgeAttack.created_at.desc(), HexforgeAttack.id.desc()).limit(limit).all())
+        raider_ids = sorted({r.attacker_id for r in rows})
+        names = self.names(raider_ids)
+        raiders = {uid: self.existing(uid, now) for uid in raider_ids}
+        raids = []
+        for r in rows:
+            summary = json.loads(r.summary_json)
+            raider = raiders[r.attacker_id]
+            raids.append({
+                "id": r.id, "at": r.created_at, "raider": names[r.attacker_id],
+                "breached": summary["victory"], "destruction": summary["destruction"],
+                "core_destroyed": summary["core_destroyed"], "loot": json.loads(r.loot_json),
+                "trophies": r.defender_trophies, "seen": bool(r.seen),
+                "can_revenge": pvp.can_revenge(state.city, r.created_at, raider.city if raider else None, now),
+            })
+        unseen = (self.db.query(HexforgeAttack)
+                  .filter(HexforgeAttack.defender_id == user_id, HexforgeAttack.seen == 0).count())
+        return {"raids": raids, "unseen": unseen}
+
+    def mark_defenses_seen(self, user_id: str) -> None:
+        (self.db.query(HexforgeAttack)
+         .filter(HexforgeAttack.defender_id == user_id, HexforgeAttack.seen == 0)
+         .update({HexforgeAttack.seen: 1}, synchronize_session=False))
+        self.db.commit()
+
+    def _raid_on(self, user_id: str, raid_id: int) -> HexforgeAttack:
+        row = self.db.get(HexforgeAttack, raid_id)
+        if row is None or row.defender_id != user_id:
+            raise ActionError("unknown_raid")
+        return row
+
+    def defense_replay(self, user_id: str, raid_id: int) -> dict:
+        """Rebuild a raid's replay from its inputs: the battle is deterministic."""
+        row = self._raid_on(user_id, raid_id)
+        setup = json.loads(row.setup_json)
+        city = json.loads(row.city_json)
+        battle = simulate(city, setup["squad"], setup["side"], setup["priority"], setup["tactic"])
+        return {"raider": self.names([row.attacker_id])[row.attacker_id], "city": city, **setup, **battle}
+
+    def revenge(self, user_id: str, raid_id: int, now: float) -> PlayerState:
+        """Scout the player who raided you, skipping matchmaking."""
+        row = self._raid_on(user_id, raid_id)
+        state = self.load(user_id, now)
+        pvp.require_arena(state.city)
+        raider = self.existing(row.attacker_id, now)
+        if not pvp.can_revenge(state.city, row.created_at, raider.city if raider else None, now):
+            raise ActionError("revenge_unavailable")
+        state.city["pvp"]["scout"] = row.attacker_id
+        self.save(state, now)
+        return state
 
     def leaderboard(self, user_id: str, now: float, limit: int = 50) -> dict:
         """The best players by trophies, and where you stand."""

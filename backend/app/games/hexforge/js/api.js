@@ -95,3 +95,19 @@ export function attackRival(setup) {
 export function fetchLeaderboard() {
     return request('/me/leaderboard');
 }
+
+export function fetchDefenseLog() {
+    return request('/me/defenses');
+}
+
+export function markDefensesSeen() {
+    return post('/me/defenses/seen', {});
+}
+
+export function fetchRaidReplay(raidId) {
+    return request(`/me/defenses/${raidId}/replay`);
+}
+
+export function revengeRaid(raidId) {
+    return post(`/me/defenses/${raidId}/revenge`, {});
+}

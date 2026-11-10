@@ -19,6 +19,10 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/rivals/find            scout a player to attack
   POST /api/hexforge/me/rivals/attack          attack the scouted player
   GET  /api/hexforge/me/leaderboard            best players by trophies, and your rank
+  GET  /api/hexforge/me/defenses               raids on your city, newest first
+  POST /api/hexforge/me/defenses/seen          mark them all as read
+  GET  /api/hexforge/me/defenses/{id}/replay   watch a raid on your city
+  POST /api/hexforge/me/defenses/{id}/revenge  scout the raider
 
 The /me routes need the platform session cookie.
 """
@@ -207,3 +211,35 @@ def attack_rival(request: Request, body: AttackRequest, user_id: CurrentUserId, 
 @router.get("/me/leaderboard")
 def leaderboard(user_id: CurrentUserId, db: Db, now: Now):
     return PlayerService(db).leaderboard(user_id, now)
+
+
+
+# ── defence log ────────────────────────────────────────────────────────
+@router.get("/me/defenses")
+def defense_log(user_id: CurrentUserId, db: Db, now: Now):
+    return PlayerService(db).defense_log(user_id, now)
+
+
+@router.post("/me/defenses/seen")
+def mark_defenses_seen(user_id: CurrentUserId, db: Db):
+    PlayerService(db).mark_defenses_seen(user_id)
+    return {"ok": True}
+
+
+@router.get("/me/defenses/{raid_id}/replay")
+@limiter.limit("30/minute")
+def defense_replay(request: Request, raid_id: int, user_id: CurrentUserId, db: Db):
+    try:
+        return PlayerService(db).defense_replay(user_id, raid_id)
+    except ActionError as error:
+        raise _http_error(error) from error
+
+
+@router.post("/me/defenses/{raid_id}/revenge")
+def revenge(raid_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    service = PlayerService(db)
+    try:
+        state = service.revenge(user_id, raid_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return _attack_screen(service, state, now)

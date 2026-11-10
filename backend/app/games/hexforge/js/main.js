@@ -11,8 +11,12 @@ const $ = (id) => document.getElementById(id);
 const renderer = new Renderer($('view'));
 const modes = { city: new CityMode(renderer), battle: new BattleMode(renderer), ranking: new RankingMode(renderer) };
 modes.battle.onStateChanged = () => modes.city.invalidate();
-modes.city.onWatch = (battle) => {
-    modes.battle.watch(battle, () => void switchTo('city'));
+modes.city.onWatch = (battle, note) => {
+    modes.battle.watch(battle, () => void switchTo('city'), note);
+    void switchTo('battle');
+};
+modes.city.onRevenge = () => {
+    modes.battle.showRivals();
     void switchTo('battle');
 };
 let active = null;

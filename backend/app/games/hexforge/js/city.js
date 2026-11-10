@@ -1,11 +1,13 @@
 import {
     Refused, SignInRequired, claimJob, collect, dismantleBuilding, fetchMyState,
-    moveBuilding, placeBuilding, setAim, startForging, testDefense,
+    fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding, placeBuilding, revengeRaid,
+    setAim, startForging, testDefense,
 } from './api.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
-import { renderDefenseReport } from './defensePanel.js';
+import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { itemName, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
 import { AIM_INFO, BUILDING_INFO, MATERIAL_INFO } from './labels.js';
+import { renderRaidLog, timeAgo } from './raidLog.js';
 
 /**
  * "My city": the player's saved city.
@@ -13,6 +15,7 @@ import { AIM_INFO, BUILDING_INFO, MATERIAL_INFO } from './labels.js';
  *  - select a building to move or dismantle it
  *  - forge buildings and heroes; place forged buildings from storage
  *  - set each tower's aim; test the defenses against standard raids
+ *  - read who raided you, watch it, take revenge
  */
 
 const $ = (id) => document.getElementById(id);
@@ -31,6 +34,9 @@ const MESSAGES = {
     not_in_storage: 'Nothing like that in storage.',
     cannot_dismantle: 'The core and the vault cannot be dismantled.',
     not_a_tower: 'Only towers take an aim.',
+    revenge_unavailable: 'Revenge is not possible now: that raider is shielded or the raid is too old.',
+    unknown_raid: 'That raid is gone.',
+    arena_locked: 'Clear the first outpost to enter the arena.',
     unknown_aim: 'Unknown aim.',
 };
 const HINTS = {
@@ -56,6 +62,8 @@ export class CityMode {
         this.defense = null;          // last defence test, while the defenses are unchanged
         this.defenseKey = '';
         this.onWatch = () => {};      // set by the shell: replay a battle in the Attack view
+        this.onRevenge = () => {};    // set by the shell: open Attack on the scouted raider
+        this.raids = null;
         $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
         $('btn-collect-all').addEventListener('click', () => void this.#collect(null));
         $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
@@ -73,6 +81,7 @@ export class CityMode {
         $('resources').hidden = false;
         if (this.state) this.renderer.setCity(this.state.city);
         else await this.#reload();
+        void this.#loadRaids();
     }
 
     /** Another mode changed the saved state: reload on the next visit. */
@@ -264,8 +273,61 @@ export class CityMode {
         this.defense = report;
         const box = $('defense-report');
         box.hidden = !report;
-        if (report) renderDefenseReport(box, report, () => this.onWatch(report.worst));
+        if (report) {
+            renderDefenseReport(box, report,
+                () => this.onWatch(report.worst, `Worst raid of the test: ${describeWorst(report.worst)}.`));
+        }
         else $('btn-defense-test').textContent = 'Test my defenses';
+    }
+
+    // ── raids on the city ──────────────────────────────────────────────
+    async #loadRaids() {
+        if (!this.state) return;
+        try {
+            this.raids = await fetchDefenseLog();
+        } catch (error) {
+            if (!(error instanceof SignInRequired)) console.error('[Hexforge] raid log failed', error);
+            return;
+        }
+        this.#renderRaids();
+    }
+
+    #renderRaids() {
+        if (!this.raids || !this.state) return;
+        const unseen = this.raids.unseen;
+        const tab = document.querySelector('[data-tab="city"]');
+        if (unseen) tab.dataset.badge = String(unseen);
+        else delete tab.dataset.badge;
+        renderRaidLog({ banner: $('raid-banner'), list: $('raid-log') }, this.raids, this.state.pvp, this.#serverNow(), {
+            watch: (raid) => void this.#watchRaid(raid),
+            revenge: (raid) => void this.#revenge(raid),
+            seen: () => void this.#markSeen(),
+        });
+    }
+
+    async #markSeen() {
+        this.raids = { ...this.raids, unseen: 0, raids: this.raids.raids.map((r) => ({ ...r, seen: true })) };
+        this.#renderRaids();
+        try {
+            await markDefensesSeen();
+        } catch (error) {
+            console.error('[Hexforge] could not mark raids as seen', error);
+        }
+    }
+
+    async #watchRaid(raid) {
+        await this.#run(async () => {
+            const replay = await fetchRaidReplay(raid.id);
+            this.onWatch(replay, `${raid.raider} raided you ${timeAgo(this.#serverNow() - raid.at)}.`);
+        });
+    }
+
+    async #revenge(raid) {
+        await this.#run(async () => {
+            await revengeRaid(raid.id);
+            this.invalidate();
+            this.onRevenge();
+        });
     }
 
     async #run(action) {

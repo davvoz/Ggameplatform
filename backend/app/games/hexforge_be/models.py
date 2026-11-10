@@ -41,3 +41,5 @@ class HexforgeAttack(Base):
     summary_json = Column(Text, nullable=False)
     loot_json = Column(Text, nullable=False)
     trophies = Column(Integer, nullable=False, default=0)   # the attacker's change
+    defender_trophies = Column(Integer, nullable=False, default=0)
+    seen = Column(Integer, nullable=False, default=0)       # the defender has read it

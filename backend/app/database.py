@@ -122,7 +122,7 @@ def _migrate_users_ban_columns():
         print(f"⚠️  Users ban columns migration: {e}")
 
 def _migrate_hexforge_trophies():
-    """Add the Hexforge trophies column (PvP score) to saves made before it existed."""
+    """Add the Hexforge PvP columns (trophies, defence log) to tables made before they existed."""
     try:
         with engine.connect() as conn:
             result = conn.execute(text("PRAGMA table_info(hexforge_players)"))
@@ -134,6 +134,10 @@ def _migrate_hexforge_trophies():
             cols = {row[1] for row in result}
             if cols and "trophies" not in cols:
                 conn.execute(text("ALTER TABLE hexforge_attacks ADD COLUMN trophies INTEGER NOT NULL DEFAULT 0"))
+            if cols and "defender_trophies" not in cols:
+                conn.execute(text("ALTER TABLE hexforge_attacks ADD COLUMN defender_trophies INTEGER NOT NULL DEFAULT 0"))
+            if cols and "seen" not in cols:
+                conn.execute(text("ALTER TABLE hexforge_attacks ADD COLUMN seen INTEGER NOT NULL DEFAULT 0"))
             conn.commit()
     except Exception as e:
         print(f"⚠️  Hexforge trophies migration: {e}")

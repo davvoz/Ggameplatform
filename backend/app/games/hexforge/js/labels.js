@@ -1,9 +1,9 @@
-/** Display names, roles and colours. Gameplay numbers live on the server. */
+/** Display names, roles, what each thing is for (`what`, one short line; `job`, a word or two for hero tiles) and colours. Gameplay numbers live on the server. */
 
 export const HERO_INFO = {
-    guardian: { name: 'Guardian', tag: 'Guardian', role: 'Tank · draws tower fire', color: '#5aa9ff', short: 'G' },
-    neon_blade: { name: 'Neon Blade', tag: 'Blade', role: 'Assassin · leaps over walls', color: '#ff3d9a', short: 'B' },
-    technomancer: { name: 'Technomancer', tag: 'Mage', role: 'Mage · ranged, area nova', color: '#a77bff', short: 'T' },
+    guardian: { name: 'Guardian', tag: 'Guardian', role: 'Tank · draws tower fire', job: 'Tank', what: 'Tough tank: nearby towers shoot him, not the others.', color: '#5aa9ff', short: 'G' },
+    neon_blade: { name: 'Neon Blade', tag: 'Blade', role: 'Assassin · leaps over walls', job: 'Leaps walls', what: 'Fast, hits hard and leaps over walls.', color: '#ff3d9a', short: 'B' },
+    technomancer: { name: 'Technomancer', tag: 'Mage', role: 'Mage · ranged, area nova', job: 'Ranged', what: 'Hits from afar; every few seconds a blast on an area.', color: '#a77bff', short: 'T' },
 };
 
 /**
@@ -12,17 +12,17 @@ export const HERO_INFO = {
  * `glow`: the building's signature colour. Heights are unscaled pixels.
  */
 export const BUILDING_INFO = {
-    core: { name: 'Core', height: 44, pick: 84, glow: '#ff7a1a' },
-    wall: { name: 'Wall', height: 26, pick: 26, glow: '#ff8a2a' },
-    rune_tower: { name: 'Rune Tower', height: 68, pick: 96, glow: '#ffb347' },
-    lightning_tower: { name: 'Lightning Tower', height: 68, pick: 98, glow: '#6fd3ff' },
-    frost_tower: { name: 'Frost Tower', height: 68, pick: 94, glow: '#9fe3ff' },
-    rune_quarry: { name: 'Rune Quarry', height: 20, pick: 46, glow: '#ffb547' },
-    scrap_foundry: { name: 'Scrap Foundry', height: 30, pick: 66, glow: '#ff7a3d' },
-    mana_well: { name: 'Mana Well', height: 14, pick: 30, glow: '#b48cff' },
-    data_node: { name: 'Data Node', height: 46, pick: 56, glow: '#4dff9a' },
-    vault: { name: 'Vault', height: 34, pick: 40, glow: '#ffd75e' },
-    rune_trap: { name: 'Rune Trap', height: 0, pick: 0, glow: '#ff7a3d' },
+    core: { name: 'Core', what: 'The heart of your city: if it falls, the raider wins.', height: 44, pick: 84, glow: '#ff7a1a' },
+    wall: { name: 'Wall', what: 'Blocks the way: heroes must break it or go round.', height: 26, pick: 26, glow: '#ff8a2a' },
+    rune_tower: { name: 'Rune Tower', what: 'Shoots one hero, from far away.', height: 68, pick: 96, glow: '#ffb347' },
+    lightning_tower: { name: 'Lightning Tower', what: 'Lightning that jumps across up to 3 heroes.', height: 68, pick: 98, glow: '#6fd3ff' },
+    frost_tower: { name: 'Frost Tower', what: 'Hits a small area and slows heroes down.', height: 68, pick: 94, glow: '#9fe3ff' },
+    rune_quarry: { name: 'Rune Quarry', what: 'Makes rune stone for the forge. Tap to collect.', height: 20, pick: 46, glow: '#ffb547' },
+    scrap_foundry: { name: 'Scrap Foundry', what: 'Makes scrap for the forge. Tap to collect.', height: 30, pick: 66, glow: '#ff7a3d' },
+    mana_well: { name: 'Mana Well', what: 'Makes mana for the forge. Tap to collect.', height: 14, pick: 30, glow: '#b48cff' },
+    data_node: { name: 'Data Node', what: 'Makes chips for the forge. Tap to collect.', height: 46, pick: 56, glow: '#4dff9a' },
+    vault: { name: 'Vault', what: 'Keeps 400 of each material safe from raiders.', height: 34, pick: 40, glow: '#ffd75e' },
+    rune_trap: { name: 'Rune Trap', what: 'Hidden mine: blows up when a hero steps on it.', height: 0, pick: 0, glow: '#ff7a3d' },
 };
 
 export const MATERIAL_INFO = {

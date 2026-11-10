@@ -53,6 +53,37 @@ export function groundEllipse(camera, radius) {
     return { rx, ry: rx / 2 };
 }
 
+/**
+ * Turning the view: the field is turned a quarter at a time (`rot` 0..3)
+ * about its middle. The world never changes; drawing and picking go through
+ * the "view" coordinates these give, and the art is drawn there unturned.
+ */
+export function rotatePoint(x, y, grid, rot) {
+    switch (((rot % 4) + 4) % 4) {
+        case 1: return { x: grid - y, y: x };
+        case 2: return { x: grid - x, y: grid - y };
+        case 3: return { x: y, y: grid - x };
+        default: return { x, y };
+    }
+}
+
+/** A world direction in view coordinates. */
+export function rotateVector(dx, dy, rot) {
+    switch (((rot % 4) + 4) % 4) {
+        case 1: return { dx: -dy, dy: dx };
+        case 2: return { dx: -dx, dy: -dy };
+        case 3: return { dx: dy, dy: -dx };
+        default: return { dx, dy };
+    }
+}
+
+/** A world rectangle {x0, y0, x1, y1} in view coordinates (still axis-aligned). */
+export function rotateRect(rect, grid, rot) {
+    const a = rotatePoint(rect.x0, rect.y0, grid, rot);
+    const b = rotatePoint(rect.x1, rect.y1, grid, rot);
+    return { x0: Math.min(a.x, b.x), y0: Math.min(a.y, b.y), x1: Math.max(a.x, b.x), y1: Math.max(a.y, b.y) };
+}
+
 /** Painter's order: larger is nearer the viewer. */
 export function depthOf(x, y) {
     return x + y;

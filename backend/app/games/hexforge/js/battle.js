@@ -1,4 +1,5 @@
 import { Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle } from './api.js';
+import { play, playBattleEvent, setMode as setMusic } from './audio.js';
 import { formatCountdown } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
 import { regionAround } from './iso.js';
@@ -51,6 +52,7 @@ export class BattleMode {
         this.battle = null;
         this.replay = null;
         this.playTick = 0;
+        this.soundTick = 0;           // the last tick whose sounds have been played
         this.speed = 0;
         this.paused = false;
         this.second = -1;
@@ -64,6 +66,7 @@ export class BattleMode {
     }
 
     async enter() {
+        this.renderer.setRotation(0);        // other cities are always seen from the same side
         if (this.view === 'setup') await this.#reload();
         else this.renderer.setCity(this.battle.city);
         this.#show(this.view);
@@ -86,6 +89,7 @@ export class BattleMode {
         }
         if (this.view === 'battle' && !this.paused) {
             this.playTick += dt * this.replay.tickRate * SPEEDS[this.speed];
+            this.#sounds();
         }
         const state = this.replay.stateAt(this.playTick);
         this.renderer.draw(state, { time });
@@ -132,6 +136,7 @@ export class BattleMode {
             return;
         }
         this.playTick = Number(at) * this.replay.tickRate;
+        this.soundTick = this.playTick;
         this.paused = true;
         this.#renderPause();
     }
@@ -249,6 +254,7 @@ export class BattleMode {
 
     #show(view) {
         this.view = view;
+        setMusic(view === 'battle' ? 'battle' : 'city');
         $('hud-attack').hidden = view !== 'setup';
         $('hud-battle').hidden = view !== 'battle';
         $('result').hidden = view !== 'result';
@@ -399,13 +405,16 @@ export class BattleMode {
         const now = this.#serverNow();
         const { state, left } = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
         if (state === 'hurt') {
+            play('error');
             toast(`${name} is healing: ready again in ${formatHeal(left)}.`);
             return;
         }
         if (state === 'ready' && this.setup.heroIds.length >= SQUAD_SIZE) {
+            play('error');
             toast(`The squad is full (${SQUAD_SIZE}). Tap a hero in the squad to take it out first.`);
             return;
         }
+        if (state === 'ready') toast(`${name} joins the squad. ${HERO_INFO[hero.cls].what}`);
         this.#pick(toggleHero(this.setup.heroIds, hero.id));
     }
 
@@ -460,6 +469,7 @@ export class BattleMode {
         this.busy = true;
         button.firstElementChild.textContent = '…';
         this.error = '';
+        play('horn');
         try {
             const setup = {
                 hero_ids: this.setup.heroIds,
@@ -479,6 +489,7 @@ export class BattleMode {
             this.error = error instanceof Refused
                 ? (REFUSALS[error.code] ?? 'The server refused the attack.')
                 : 'The battle server did not answer. Try again in a moment.';
+            play('error');
             if (!(error instanceof Refused)) console.error('[Hexforge] attack failed', error);
         } finally {
             this.busy = false;
@@ -487,10 +498,24 @@ export class BattleMode {
         }
     }
 
+    /** Play what happened since the last frame, in the order it happened. */
+    #sounds() {
+        const from = this.soundTick;
+        const to = Math.min(this.playTick, this.replay.duration);
+        this.soundTick = to;
+        if (to - from > 25) return;   // a jump (skip, or the tab was asleep): stay quiet
+        for (const e of this.replay.events) {
+            if (e.t > to) break;
+            if (e.t <= from) continue;
+            playBattleEvent(e, this.replay.squad[e.hero]?.cls);
+        }
+    }
+
     #startReplay() {
         toast('');
         this.replay = createReplay(this.battle);
         this.playTick = 0;
+        this.soundTick = 0;
         this.paused = false;
         this.#renderPause();
         const city = this.battle.city;
@@ -540,6 +565,7 @@ export class BattleMode {
         const defense = Boolean(this.battle.defense);
         const won = defense ? !s.victory : s.victory;
         $('result').className = `result ${won ? 'win' : 'loss'}`;
+        play(won ? 'victory' : 'defeat');
         $('verdict').textContent = verdictText(defense, won);
         const next = rewards?.unlocked && this.data?.outposts.find((o) => o.id === rewards.unlocked);
         $('result-note').textContent = resultNote(this.battle, next);

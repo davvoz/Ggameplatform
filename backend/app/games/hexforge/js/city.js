@@ -5,6 +5,7 @@ import {
 } from './api.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
+import { play } from './audio.js';
 import { countUp, flyMaterial, flyPicture, rewardPop } from './fx.js';
 import { formatCountdown, itemName, itemThumb, renderForgeSlots, renderRecipes, renderRoster, renderStorage } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
@@ -30,6 +31,7 @@ const FLOAT_SECONDS = 1.4;
 const BUBBLE_FROM = 5;            // units before a building shows it has something to collect
 const EMPTY_CITY = { grid: 18, buildings: [] };
 const INSETS = { top: 80, right: 0, bottom: 160, left: 0 };
+const ROTATION_KEY = 'hexforge.cityRotation';
 const MESSAGES = {
     occupied: 'That spot is taken.',
     outside_city: 'Keep it inside the city limits.',
@@ -70,6 +72,7 @@ export class CityMode {
         this.raids = null;
         this.shownMaterials = {};
         this.heldMaterials = new Set();   // materials whose counter waits for flying gems
+        this.rot = loadRotation();        // quarter turns of the view, remembered on this device
         this.onWatch = () => {};      // set by the shell: replay a battle
         this.onRevenge = () => {};    // set by the shell: open the attack plan on the scouted raider
         this.onAttack = () => {};     // set by the shell: open the attack plan
@@ -79,6 +82,7 @@ export class CityMode {
 
     async enter() {
         $('hud-city').hidden = false;
+        this.renderer.setRotation(this.rot);
         if (this.state) this.renderer.setCity(this.state.city);
         else await this.#reload();
         this.#focus();
@@ -164,6 +168,7 @@ export class CityMode {
         $('btn-dismantle').addEventListener('click', () => void this.#dismantle());
         $('btn-deselect').addEventListener('click', () => this.#select(null));
         $('btn-cancel-place').addEventListener('click', () => this.#setMode('idle'));
+        $('btn-rotate').addEventListener('click', () => this.#turn());
         for (const tab of document.querySelectorAll('#forge-tabs [data-kind]')) {
             tab.addEventListener('click', () => {
                 this.forgeKind = tab.dataset.kind;
@@ -175,6 +180,19 @@ export class CityMode {
     #focus() {
         const city = this.state?.city ?? EMPTY_CITY;
         this.renderer.focus(regionAround(city.buildings, city.grid, 1.5, 9), INSETS);
+    }
+
+    /** A quarter turn of the view, so buildings hidden behind others come to the front. */
+    #turn() {
+        this.rot = (this.rot + 1) % 4;
+        saveRotation(this.rot);
+        this.renderer.setRotation(this.rot);
+        this.preview = null;
+        const view = $('view');
+        view.classList.remove('turning');
+        void view.offsetWidth;            // restart the fade
+        view.classList.add('turning');
+        this.#reveal();
     }
 
     #openForge() {
@@ -244,10 +262,12 @@ export class CityMode {
         const info = MATERIAL_INFO[key];
         const pill = document.querySelector(`#resources [data-material="${key}"]`);
         this.#float(b, `+${amount}`, info.color);
+        play('collect');
         flyMaterial(this.renderer.screenOf(b.x + b.size / 2, b.y + b.size / 2, 30), pill, {
             iconName: info.icon,
             color: info.color,
             count: Math.max(4, Math.min(10, Math.round(amount / 12))),
+            onGem: () => play('gem'),
             onLand: () => {
                 this.heldMaterials.delete(key);
                 const to = this.state.materials[key] ?? 0;
@@ -262,17 +282,20 @@ export class CityMode {
         const target = this.#previewAt(point);
         this.preview = target;
         if (!target.valid) {
+            play('error');
             toast(MESSAGES[target.error]);
             return;
         }
         await this.#run(async () => {
             if (this.mode === 'move') {
                 this.#apply(await moveBuilding(this.selectedId, target.x, target.y));
+                play('place');
                 this.#setMode('idle');
                 toast('Moved.');
             } else {
                 const type = this.placingType;
                 this.#apply(await placeBuilding(type, target.x, target.y));
+                play('place');
                 toast(`${itemName(type)} placed.`);
                 if (!this.state.storage[type]) this.#setMode('idle');
             }
@@ -283,6 +306,7 @@ export class CityMode {
         const picture = document.querySelector(`#recipes [data-recipe="${recipeId}"] img`);
         await this.#run(async () => {
             this.#apply(await startForging(recipeId));
+            play('forge');
             const slot = $('forge-slots').children[this.state.forge.jobs.length - 1];
             if (picture && slot) void flyPicture(picture.src, picture, slot, { size: 72 });
             toast(`The forge is making ${itemName(recipeId)}.`);
@@ -297,6 +321,7 @@ export class CityMode {
             claimed = result.claimed;
         });
         if (!claimed) return;
+        play('claim');
         const { item, kind, count } = claimed;
         const hero = kind === 'hero';
         await rewardPop({
@@ -324,6 +349,7 @@ export class CityMode {
         }
         await this.#run(async () => {
             const result = await dismantleBuilding(b.id);
+            play('dismantle');
             const gained = Object.entries(result.refund).map(([m, n]) => `+${n} ${MATERIAL_INFO[m].name}`).join('  ');
             if (gained) this.#float(b, gained, '#e6e9f5');
             this.#apply(result);
@@ -421,6 +447,7 @@ export class CityMode {
         try {
             await action();
         } catch (error) {
+            play('error');
             if (error instanceof Refused) {
                 toast(MESSAGES[error.code] ?? 'The server refused that.');
                 await this.#reload();
@@ -593,6 +620,7 @@ export class CityMode {
         this.#renderBottom();
         if (!b) return;
         $('sel-name').textContent = BUILDING_INFO[b.type].name;
+        $('sel-what').textContent = BUILDING_INFO[b.type].what;
         $('sel-thumb').src = buildingThumb(b.type, 64);
         const locked = b.type === 'core' || b.type === 'vault';
         const refund = this.#recipe(b.type)?.refund ?? {};
@@ -640,6 +668,21 @@ export class CityMode {
             $('sel-info').textContent = text;
         }
     }
+}
+
+function loadRotation() {
+    try {
+        const rot = Number(globalThis.localStorage?.getItem(ROTATION_KEY));
+        return Number.isInteger(rot) && rot >= 0 && rot < 4 ? rot : 0;
+    } catch {
+        return 0;
+    }
+}
+
+function saveRotation(rot) {
+    try {
+        globalThis.localStorage?.setItem(ROTATION_KEY, String(rot));
+    } catch { /* private mode: the turn is simply not remembered */ }
 }
 
 function bump(item) {

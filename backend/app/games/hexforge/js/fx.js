@@ -46,7 +46,7 @@ export function countUp(el, from, to, ms = 700) {
  * Gems of `material` (icon name, colour) burst from screen point `from` and
  * fly into `target`; `onLand` runs when the first one lands, `onDone` after the last.
  */
-export function flyMaterial(from, target, { iconName, color, count = 6, onLand = () => {}, onDone = () => {} }) {
+export function flyMaterial(from, target, { iconName, color, count = 6, onGem = () => {}, onLand = () => {}, onDone = () => {} }) {
     if (reduced() || !target) {
         onLand();
         onDone();
@@ -73,6 +73,7 @@ export function flyMaterial(from, target, { iconName, color, count = 6, onLand =
         anim.onfinish = () => {
             gem.remove();
             landed += 1;
+            onGem();
             if (landed === 1) onLand();
             if (landed === count) onDone();
         };

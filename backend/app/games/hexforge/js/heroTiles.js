@@ -47,12 +47,15 @@ export function heroTile(hero, name, status, onTap = null) {
     const label = document.createElement('span');
     label.className = 'ht-name';
     label.textContent = name;
+    const job = document.createElement('span');
+    job.className = 'ht-job';
+    job.textContent = info.job;
     const line = document.createElement('span');
     line.className = 'ht-status';
     line.textContent = { ready: 'Ready', picked: 'In squad', hurt: formatHeal(status.left) }[status.state];
-    tile.append(portrait, label, line);
+    tile.append(portrait, label, job, line);
     const what = { ready: 'ready, tap to add to the squad', picked: 'in the squad, tap to take out', hurt: `hurt, healed in ${formatHeal(status.left)}` };
-    tile.title = `${name}: ${what[status.state]}`;
+    tile.title = `${name} (${info.what}) ${what[status.state]}`;
     if (onTap) {
         tile.type = 'button';
         tile.setAttribute('aria-pressed', String(status.state === 'picked'));

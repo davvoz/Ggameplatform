@@ -385,6 +385,53 @@ button.round:disabled {
     text-decoration: line-through;
 }
 
+/* ── sound button ─────────────────────────────────────────────────────── */
+.sound-button {
+    position: absolute;
+    right: 12px;
+    top: calc(184px + var(--safe-top));
+    z-index: 6;
+}
+
+.sound-button[aria-pressed="false"] {
+    opacity: 0.7;
+    color: var(--muted);
+}
+
+@media (min-width: 900px) {
+    .sound-button {
+        top: calc(56px + var(--safe-top));
+    }
+}
+
+.rotate-button {
+    position: absolute;
+    right: 12px;
+    top: calc(240px + var(--safe-top));
+    z-index: 6;
+}
+
+@media (min-width: 900px) {
+    .rotate-button {
+        top: calc(112px + var(--safe-top));
+    }
+}
+
+#view.turning {
+    animation: turning 280ms ease-out;
+}
+
+@keyframes turning {
+    from { opacity: 0.35; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #view.turning {
+        animation: none;
+    }
+}
+
 /* ── toast ────────────────────────────────────────────────────────────── */
 .toast {
     position: absolute;
@@ -679,6 +726,13 @@ button.round:disabled {
     font-size: 23px;
     line-height: 1;
     color: var(--gold-hi);
+}
+
+.sel-what {
+    margin: 3px 0 0;
+    font-size: 13px;
+    line-height: 1.25;
+    color: var(--text);
 }
 
 .sel-info {
@@ -1063,6 +1117,14 @@ button.round:disabled {
 .recipe-time .icon {
     width: 12px;
     height: 12px;
+}
+
+.recipe-what {
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--text);
+    opacity: 0.85;
 }
 
 .recipe-foot {
@@ -1529,6 +1591,14 @@ button.round:disabled {
 .ht-portrait img {
     width: 52px;
     height: 52px;
+}
+
+.ht-job {
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--accent) 70%, #fff);
 }
 
 .ht-status {

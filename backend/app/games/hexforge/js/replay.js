@@ -130,7 +130,7 @@ export function createReplay(battle) {
         };
     }
 
-    return { duration: ticks, tickRate, stateAt };
+    return { duration: ticks, tickRate, stateAt, events, squad };
 }
 
 function isBlow(e) {

@@ -1,5 +1,7 @@
+import { isMuted, play, setMode as setMusic, setMuted, unlock } from './audio.js';
 import { BattleMode } from './battle.js';
 import { CityMode } from './city.js';
+import { icon } from './icons.js';
 import { RankingPanel } from './ranking.js';
 import { Renderer } from './render.js';
 import { closeSheet, isSheetOpen, wireSheets } from './sheets.js';
@@ -41,6 +43,7 @@ async function switchTo(name) {
     active?.leave();
     activeName = name;
     active = null;                       // no frames while the new mode loads
+    setMusic('city');                    // the attack mode starts the drums only while a battle plays
     try {
         await modes[name].enter();
         if (activeName === name) active = modes[name];
@@ -115,7 +118,33 @@ function wireMap() {
     }, { passive: false });
 }
 
+/** Sound: wakes on the first tap, every button clicks, the speaker button mutes. */
+function wireSound() {
+    const button = $('btn-sound');
+    const show = () => {
+        const on = !isMuted();
+        button.setAttribute('aria-pressed', String(on));
+        button.setAttribute('aria-label', on ? 'Sound on' : 'Sound off');
+        button.replaceChildren(icon(on ? 'sound' : 'mute'));
+    };
+    show();
+    // phones only let sound start on a finished tap (pointerup, touchend, click), desktops also on press
+    for (const type of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) {
+        globalThis.addEventListener(type, unlock, { passive: true, capture: true });
+    }
+    button.addEventListener('click', () => {
+        setMuted(!isMuted());
+        show();
+        if (!isMuted()) play('click');
+    });
+    document.addEventListener('click', (event) => {
+        const target = event.target.closest?.('button');
+        if (target && target.id !== 'btn-sound' && !target.disabled && !target.closest('.sheet [data-close]')) play('click');
+    });
+}
+
 function wire() {
+    wireSound();
     wireSheets();
     wireMap();
     globalThis.addEventListener('keydown', (event) => {

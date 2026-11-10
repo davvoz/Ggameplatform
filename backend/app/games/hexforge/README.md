@@ -208,6 +208,29 @@ a building goes straight to placing. Reduced motion skips the trips.
 The result waits for the last heroes to finish falling, and a defeat says
 the core still stands.
 
+Sound (`js/audio.js`), all synthesised with Web Audio, no files: button
+clicks, sheets opening, the forge's anvil, collect chimes and one note per
+gem landing, the claim fanfare, placing and dismantling; in battle every
+log event has its sound (hammer, daggers, mage bolt, nova, leap, fireball,
+lightning, frost, trap, a building collapsing, a hero falling), the war horn
+on Fight!, a victory fanfare or a defeat lament. A low forge drone plays in
+the city; war drums only while a battle plays. Levels were balanced by
+rendering each sound offline and measuring it. Sound starts on the first
+finished tap (phones only allow that), pauses with the tab hidden, and the
+speaker button mutes it and remembers the choice.
+
+Every building and hero says what it is for in one short line
+(`what` in `js/labels.js`): on the forge cards, under the name of a tapped
+building, and in a toast when a hero joins the squad. Hero tiles also carry
+a one- or two-word job (Tank, Leaps walls, Ranged).
+
+The city view turns a quarter at a time (the round button under the
+speaker), so buildings hidden behind others come to the front; the turn is
+remembered on the device. The world never turns: the renderer lays
+everything out in turned "view" coordinates (`rotatePoint`, `rotateRect`,
+`rotateVector` in `js/iso.js`) and draws the art there unturned, and taps
+are turned back to world cells. Attacks and replays are always seen unturned.
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 

@@ -1,5 +1,7 @@
 import { carryOver, clampCamera, panBy, zoomAt } from './camera.js';
-import { fitRegion, toScreen, toWorld, groundEllipse, depthOf } from './iso.js';
+import {
+    depthOf, fitRegion, groundEllipse, rotatePoint, rotateRect, rotateVector, toScreen, toWorld,
+} from './iso.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import {
     MAGE_ORB, drawBuilding, drawHero, drawRubble, drawTrapMark, flame, halo, hash, path, withAlpha,
@@ -10,6 +12,8 @@ import {
  * a basalt plain, iron buildings, embers in the air.
  * The art itself lives in forgeArt.js; this class lays it out, picks what
  * the pointer is on, and draws the battle effects and the city overlays.
+ * The view can be turned a quarter at a time (`rot`): everything is laid out
+ * in turned "view" coordinates, while callers always speak world cells.
  */
 
 const HERO_SCALE = 1.65;   // heroes are drawn larger than life so they read next to buildings
@@ -34,6 +38,7 @@ export class Renderer {
         this.ground = null;
         this.groundDirty = true;
         this.facings = new Map();     // which way each hero last looked, so standing heroes do not flip
+        this.rot = 0;                 // quarter turns of the view
         this.dpr = 1;
         this.w = 1;
         this.h = 1;
@@ -61,6 +66,35 @@ export class Renderer {
         this.groundDirty = true;
     }
 
+    /** Turn the view to `rot` quarter turns (0..3) and fit it again. */
+    setRotation(rot) {
+        const next = ((rot % 4) + 4) % 4;
+        if (next === this.rot) return;
+        this.rot = next;
+        this.facings.clear();
+        if (this.camera) this.focus(this.region, this.insets);
+    }
+
+    // ── world ↔ view ───────────────────────────────────────────────────
+    /** World cells (and height z) → canvas pixels, through the turned view. */
+    #at(x, y, z = 0) {
+        const v = rotatePoint(x, y, this.city.grid, this.rot);
+        return toScreen(this.camera, v.x, v.y, z);
+    }
+
+    /** Painter's depth of a world point in the turned view. */
+    #depth(x, y) {
+        const v = rotatePoint(x, y, this.city.grid, this.rot);
+        return depthOf(v.x, v.y);
+    }
+
+    /** A building moved to its footprint in the turned view (the art itself is never turned). */
+    #inView(b) {
+        if (this.rot === 0) return b;
+        const r = rotateRect({ x0: b.x, y0: b.y, x1: b.x + b.size, y1: b.y + b.size }, this.city.grid, this.rot);
+        return { ...b, x: r.x0, y: r.y0 };
+    }
+
     /** Pinch or wheel: zoom by `factor` around a point in CSS pixels. */
     zoomAt(factor, cssX, cssY) {
         if (!this.camera) return;
@@ -82,9 +116,10 @@ export class Renderer {
         const d = this.dpr;
         const { top = 0, right = 0, bottom = 0, left = 0 } = this.insets;
         const free = { top: top * d, right: right * d, bottom: bottom * d, left: left * d };
-        const whole = fitRegion({ x0: 0, y0: 0, x1: this.city.grid, y1: this.city.grid }, this.w, this.h, { ...free, headroom: 60 });
+        const g = this.city.grid;
+        const whole = fitRegion({ x0: 0, y0: 0, x1: g, y1: g }, this.w, this.h, { ...free, headroom: 60 });
         this.limits = { min: whole.scale * 0.8, max: Math.max(whole.scale * 4, 1.6 * d) };
-        const region = this.region ?? { x0: 0, y0: 0, x1: this.city.grid, y1: this.city.grid };
+        const region = rotateRect(this.region ?? { x0: 0, y0: 0, x1: g, y1: g }, g, this.rot);
         // on a tall phone screen the city may spill past the sides: bigger buildings, drag to see the edges
         const wide = this.h > this.w * 1.2 ? this.w * 1.4 : this.w;
         const fitted = fitRegion(region, wide, this.h, { ...free, headroom: 70 });
@@ -107,14 +142,15 @@ export class Renderer {
     /** Where a world point (cells, height z) is on the page, in CSS pixels. */
     screenOf(x, y, z = 0) {
         const rect = this.canvas.getBoundingClientRect();
-        const p = toScreen(this.camera, x, y, z);
+        const p = this.#at(x, y, z);
         return { x: rect.left + p.x / this.dpr, y: rect.top + p.y / this.dpr };
     }
 
     /** Slide the map up if building `b` sits below `limitY` (CSS px), e.g. under a panel. */
     reveal(b, limitY) {
         if (!this.camera) return;
-        const foot = toScreen(this.camera, b.x + b.size, b.y + b.size);
+        const v = this.#inView(b);
+        const foot = toScreen(this.camera, v.x + v.size, v.y + v.size);
         const y = foot.y / this.dpr + 8;
         if (y > limitY) this.panBy(0, limitY - y);
     }
@@ -128,8 +164,8 @@ export class Renderer {
         const g = this.city.grid;
         const mids = { north: [g / 2, 0.5], south: [g / 2, g - 0.5], west: [0.5, g / 2], east: [g - 0.5, g / 2] };
         const [x, y] = mids[side];
-        const p = toScreen(this.camera, x, y);
-        const c = toScreen(this.camera, g / 2, g / 2);
+        const p = this.#at(x, y);
+        const c = this.#at(g / 2, g / 2);
         const d = this.dpr;
         const { top = 0, right = 0, bottom = 0, left = 0 } = this.insets;
         const pad = 48;             // room for the button and its "Enter here" label
@@ -150,7 +186,9 @@ export class Renderer {
 
     /** World point on the ground under canvas pixels. */
     groundAt(point) {
-        return this.camera ? toWorld(this.camera, point.x, point.y) : null;
+        if (!this.camera) return null;
+        const v = toWorld(this.camera, point.x, point.y);
+        return rotatePoint(v.x, v.y, this.city.grid, -this.rot);
     }
 
     /** The building drawn under canvas pixels (nearest to the viewer first), or null. */
@@ -158,16 +196,17 @@ export class Renderer {
         if (!this.camera) return null;
         const standing = this.city.buildings
             .filter((b) => b.type !== 'rune_trap')
-            .sort((a, b) => (b.x + b.y + b.size) - (a.x + a.y + a.size));
-        for (const b of standing) {
-            if (pointInPolygon(point, this.#silhouette(b))) return b;
+            .map((b) => ({ b, v: this.#inView(b) }))
+            .sort((p, q) => (q.v.x + q.v.y + q.v.size) - (p.v.x + p.v.y + p.v.size));
+        for (const { b, v } of standing) {
+            if (pointInPolygon(point, this.#silhouette(v))) return b;
         }
         const cell = this.groundAt(point);
         return this.city.buildings.find((b) => b.type === 'rune_trap'
             && cell.x >= b.x && cell.x < b.x + 1 && cell.y >= b.y && cell.y < b.y + 1) ?? null;
     }
 
-    /** Clickable outline: the footprint raised to the top of the silhouette. */
+    /** Clickable outline of a building in view coordinates: the footprint raised to the top of the silhouette. */
     #silhouette(b) {
         const { camera } = this;
         const up = BUILDING_INFO[b.type].pick + 4;
@@ -232,16 +271,16 @@ export class Renderer {
         for (const b of this.city.buildings) {
             if (b.type === 'rune_trap') {
                 if (sprung.has(b.id)) this.#scorch(b);
-                else if (showTraps) drawTrapMark(this.ctx, this.camera, b, time, groundEllipse(this.camera, 0.42).rx);
+                else if (showTraps) drawTrapMark(this.ctx, this.camera, this.#inView(b), time, groundEllipse(this.camera, 0.42).rx);
             } else if (destroyed.has(b.id)) {
-                drawRubble(this.ctx, this.camera, b, time);
+                drawRubble(this.ctx, this.camera, this.#inView(b), time);
             } else {
                 const look = {
                     time,
                     firing: state ? this.#recentlyFired(b.id, state) : 0,
                     health: state ? (state.buildingHp.get(b.id) ?? b.hp) / b.hp : 1,
                 };
-                items.push({ depth: depthOf(b.x + b.size / 2, b.y + b.size / 2), draw: () => drawBuilding(this.ctx, this.camera, b, look) });
+                items.push({ depth: this.#depth(b.x + b.size / 2, b.y + b.size / 2), draw: () => drawBuilding(this.ctx, this.camera, this.#inView(b), look) });
             }
         }
         const falling = new Map();
@@ -249,8 +288,8 @@ export class Renderer {
             if (event.type === 'hero_down') falling.set(event.hero, age);
         }
         for (const hero of state?.heroes ?? []) {
-            if (hero.alive) items.push({ depth: depthOf(hero.x, hero.y) + 0.01, draw: () => this.#hero(hero, time) });
-            else if (falling.has(hero.id)) items.push({ depth: depthOf(hero.x, hero.y), draw: () => this.#fallen(hero, time, falling.get(hero.id)) });
+            if (hero.alive) items.push({ depth: this.#depth(hero.x, hero.y) + 0.01, draw: () => this.#hero(hero, time) });
+            else if (falling.has(hero.id)) items.push({ depth: this.#depth(hero.x, hero.y), draw: () => this.#fallen(hero, time, falling.get(hero.id)) });
         }
         return items;
     }
@@ -306,7 +345,7 @@ export class Renderer {
     }
 
     #tile(ctx, x, y, fill, stroke) {
-        const pts = [[x, y], [x + 1, y], [x + 1, y + 1], [x, y + 1]].map(([px, py]) => toScreen(this.camera, px, py));
+        const pts = [[x, y], [x + 1, y], [x + 1, y + 1], [x, y + 1]].map(([px, py]) => this.#at(px, py));
         path(ctx, pts);
         ctx.fillStyle = fill;
         ctx.fill();
@@ -316,14 +355,14 @@ export class Renderer {
     }
 
     #diamond(ctx, x, y, size, fill) {
-        const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => toScreen(this.camera, px, py));
+        const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => this.#at(px, py));
         path(ctx, pts);
         ctx.fillStyle = fill;
         ctx.fill();
     }
 
     #outline(ctx, x, y, size) {
-        const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => toScreen(this.camera, px, py));
+        const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => this.#at(px, py));
         path(ctx, pts);
         ctx.stroke();
     }
@@ -336,7 +375,7 @@ export class Renderer {
         };
         const [x, y, w, h] = strips[side];
         const pulse = 0.2 + 0.1 * Math.sin(time * 4);
-        const pts = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(([px, py]) => toScreen(this.camera, px, py));
+        const pts = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(([px, py]) => this.#at(px, py));
         path(ctx, pts);
         ctx.fillStyle = `rgba(255, 70, 30, ${pulse})`;
         ctx.fill();
@@ -353,9 +392,9 @@ export class Renderer {
             const tipY = cy + iy * (0.6 + shift);
             const px = -iy * 0.45;
             const py = ix * 0.45;
-            const a = toScreen(this.camera, tipX - ix * 0.45 + px, tipY - iy * 0.45 + py);
-            const b = toScreen(this.camera, tipX, tipY);
-            const c = toScreen(this.camera, tipX - ix * 0.45 - px, tipY - iy * 0.45 - py);
+            const a = this.#at(tipX - ix * 0.45 + px, tipY - iy * 0.45 + py);
+            const b = this.#at(tipX, tipY);
+            const c = this.#at(tipX - ix * 0.45 - px, tipY - iy * 0.45 - py);
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
@@ -369,7 +408,7 @@ export class Renderer {
         const { ctx, camera } = this;
         for (const b of this.city.buildings) {
             if (!b.range || (which !== 'all' && which !== b.id) || state?.destroyed.has(b.id)) continue;
-            const c = toScreen(camera, b.x + b.size / 2, b.y + b.size / 2);
+            const c = this.#at(b.x + b.size / 2, b.y + b.size / 2);
             const { rx, ry } = groundEllipse(camera, b.range);   // the simulation measures from the tower's centre
             const color = BUILDING_INFO[b.type].glow;
             ctx.save();
@@ -388,7 +427,7 @@ export class Renderer {
 
     #scorch(b) {
         const { ctx, camera } = this;
-        const c = toScreen(camera, b.x + 0.5, b.y + 0.5);
+        const c = this.#at(b.x + 0.5, b.y + 0.5);
         const { rx, ry } = groundEllipse(camera, 1.1);
         ctx.fillStyle = 'rgba(20, 8, 2, 0.7)';
         ctx.beginPath();
@@ -423,7 +462,7 @@ export class Renderer {
             if (!b) continue;
             const color = MATERIAL_INFO[bubble.material].color;
             const bob = Math.sin(time * 3 + id) * 3 * s;
-            const p = toScreen(camera, b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].pick + 26);
+            const p = this.#at(b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].pick + 26);
             const r = Math.max(12, 16 * s);
             halo(ctx, p.x, p.y + bob, r * 2.3, color, bubble.full ? 1 : 0.55);
             ctx.save();
@@ -458,7 +497,7 @@ export class Renderer {
     }
 
     #floater({ x, y, text, color, age }) {
-        const p = toScreen(this.camera, x, y, 80 + 50 * age);
+        const p = this.#at(x, y, 80 + 50 * age);
         this.#label(text, p.x, p.y, color, 1 - age * age);
     }
 
@@ -477,7 +516,7 @@ export class Renderer {
         const { ctx, camera } = this;
         const s = camera.scale * HERO_SCALE;
         const info = HERO_INFO[hero.cls];
-        const foot = toScreen(camera, hero.x, hero.y);
+        const foot = this.#at(hero.x, hero.y);
         const lift = hero.leap === null ? 0 : Math.sin(Math.PI * hero.leap) * 34 * s;
         const facing = this.#facing(hero, foot);
 
@@ -530,7 +569,7 @@ export class Renderer {
 
     #fallen(hero, time, age) {
         const s = this.camera.scale * HERO_SCALE;
-        const foot = toScreen(this.camera, hero.x, hero.y);
+        const foot = this.#at(hero.x, hero.y);
         drawHero(this.ctx, hero, foot.x, foot.y, s, HERO_INFO[hero.cls].color, time,
             { facing: this.facings.get(hero.id) ?? 1, down: age });
     }
@@ -538,8 +577,11 @@ export class Renderer {
     /** Face the blow's target while fighting, the way of travel while walking; otherwise keep looking where it was. */
     #facing(hero, foot) {
         let dx = 0;
-        if (hero.attack?.target) dx = toScreen(this.camera, hero.attack.target.x, hero.attack.target.y).x - foot.x;
-        else if (hero.heading) dx = hero.heading.dx - hero.heading.dy;
+        if (hero.attack?.target) dx = this.#at(hero.attack.target.x, hero.attack.target.y).x - foot.x;
+        else if (hero.heading) {
+            const h = rotateVector(hero.heading.dx, hero.heading.dy, this.rot);
+            dx = h.dx - h.dy;
+        }
         const facing = Math.abs(dx) > 0.01 ? Math.sign(dx) : (this.facings.get(hero.id) ?? 1);
         this.facings.set(hero.id, facing);
         return facing;
@@ -547,7 +589,7 @@ export class Renderer {
 
     /** Unit screen vector of where the hero is heading. */
     #screenHeading(hero) {
-        const h = hero.heading ?? { dx: 0, dy: 0 };
+        const h = rotateVector(hero.heading?.dx ?? 0, hero.heading?.dy ?? 0, this.rot);
         const x = h.dx - h.dy;
         const y = (h.dx + h.dy) / 2;
         const len = Math.hypot(x, y) || 1;
@@ -560,7 +602,7 @@ export class Renderer {
         if (k <= 0 || hero.attack.building === null || !this.byId.has(hero.attack.building)) return;
         const { ctx } = this;
         const s = this.camera.scale * HERO_SCALE;
-        const foot = toScreen(this.camera, hero.x, hero.y);
+        const foot = this.#at(hero.x, hero.y);
         const facing = this.facings.get(hero.id) ?? 1;
         const from = { x: foot.x + facing * MAGE_ORB.x * s, y: foot.y + MAGE_ORB.y * s };
         const to = this.#buildingPoint(hero.attack.building);
@@ -595,30 +637,30 @@ export class Renderer {
 
     #buildingBar(b, hp) {
         const info = BUILDING_INFO[b.type];
-        const p = toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, info.pick + 16);
+        const p = this.#at(b.x + b.size / 2, b.y + b.size / 2, info.pick + 16);
         const ratio = hp / b.hp;
         this.#bar(p.x, p.y, (18 + 10 * b.size) * this.camera.scale, ratio, ratio > 0.5 ? '#ffb347' : '#ff5040');
     }
 
     #heroBar(hero) {
-        const p = toScreen(this.camera, hero.x, hero.y, 48 * HERO_SCALE);
+        const p = this.#at(hero.x, hero.y, 48 * HERO_SCALE);
         this.#bar(p.x, p.y, 26 * this.camera.scale * HERO_SCALE, hero.hp / hero.maxHp, HERO_INFO[hero.cls].color);
     }
 
     #heroPoint(state, id, z = 16 * HERO_SCALE) {
         const h = state.heroes[id];
-        return toScreen(this.camera, h.x, h.y, z);
+        return this.#at(h.x, h.y, z);
     }
 
     #buildingPoint(id, zFactor = 0.6) {
         const b = this.byId.get(id);
         const info = BUILDING_INFO[b.type];
-        return toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, info.height * zFactor + 6);
+        return this.#at(b.x + b.size / 2, b.y + b.size / 2, info.height * zFactor + 6);
     }
 
     #towerMuzzle(id) {
         const b = this.byId.get(id);
-        return toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].pick - 14);
+        return this.#at(b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].pick - 14);
     }
 
     #effect({ event: e, age }, state, time) {
@@ -638,7 +680,7 @@ export class Renderer {
                 break;
             }
             case 'nova': {
-                const c = toScreen(camera, e.x, e.y);
+                const c = this.#at(e.x, e.y);
                 const { rx, ry } = groundEllipse(camera, e.radius * (0.3 + 0.7 * easeOut(age)));
                 ctx.fillStyle = withAlpha('#b48cff', 0.22 * fade);
                 ctx.strokeStyle = withAlpha('#e6d8ff', fade);
@@ -677,8 +719,8 @@ export class Renderer {
             }
             case 'frost': {
                 const from = this.#towerMuzzle(e.building);
-                const c = toScreen(camera, e.x, e.y);
-                if (age < 0.4) this.#fireball(from, toScreen(camera, e.x, e.y, 20), age / 0.4, s, '#f1fbff', '#3ab0ff');
+                const c = this.#at(e.x, e.y);
+                if (age < 0.4) this.#fireball(from, this.#at(e.x, e.y, 20), age / 0.4, s, '#f1fbff', '#3ab0ff');
                 const { rx, ry } = groundEllipse(camera, e.radius * (0.6 + 0.4 * age));
                 ctx.fillStyle = withAlpha('#9fe3ff', 0.25 * fade);
                 ctx.strokeStyle = withAlpha('#f1fbff', fade);
@@ -697,7 +739,7 @@ export class Renderer {
                 break;
             }
             case 'trap': {
-                const c = toScreen(camera, e.x, e.y);
+                const c = this.#at(e.x, e.y);
                 const { rx, ry } = groundEllipse(camera, e.radius * (0.3 + 0.7 * easeOut(age)));
                 ctx.fillStyle = withAlpha('#ff5a00', 0.45 * fade);
                 ctx.beginPath();
@@ -723,7 +765,7 @@ export class Renderer {
             }
             case 'hero_down': {
                 const h = state.heroes[e.hero];
-                const p = toScreen(camera, h.x, h.y, 20 + 50 * age);
+                const p = this.#at(h.x, h.y, 20 + 50 * age);
                 halo(ctx, p.x, p.y, 16 * s, HERO_INFO[h.cls].color, fade);
                 ctx.fillStyle = withAlpha('#f1eaff', fade);
                 ctx.beginPath();
@@ -781,7 +823,7 @@ export class Renderer {
         const b = this.byId.get(buildingId);
         if (!b) return;
         const { ctx } = this;
-        const c = toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2);
+        const c = this.#at(b.x + b.size / 2, b.y + b.size / 2);
         const { rx, ry } = groundEllipse(this.camera, b.size * 0.6 + 0.6 * easeOut(age));
         ctx.strokeStyle = withAlpha('#ffe6b0', 0.8 * (1 - age));
         ctx.lineWidth = 3 * s * (1 - age);

@@ -4,6 +4,8 @@
  * line at the top that fades away by itself.
  */
 
+import { play } from './audio.js';
+
 const $ = (id) => document.getElementById(id);
 let current = null;
 let whenClosed = null;
@@ -24,6 +26,7 @@ export function openSheet(id, onClose = null) {
     whenClosed = onClose;
     $(id).hidden = false;
     $('backdrop').hidden = false;
+    play('open');
 }
 
 export function closeSheet() {
@@ -33,6 +36,7 @@ export function closeSheet() {
     const callback = whenClosed;
     current = null;
     whenClosed = null;
+    play('close');
     callback?.();
 }
 

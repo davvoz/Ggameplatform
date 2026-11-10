@@ -36,6 +36,11 @@ export function itemName(item) {
     return BUILDING_INFO[item]?.name ?? HERO_INFO[item]?.name ?? item;
 }
 
+/** What anything the forge makes is for, in one short line. */
+export function itemWhat(item) {
+    return BUILDING_INFO[item]?.what ?? HERO_INFO[item]?.what ?? '';
+}
+
 /** The picture of anything the forge makes. */
 export function itemThumb(item, px) {
     return HERO_INFO[item] ? heroThumb(item, px) : buildingThumb(item, px);
@@ -112,7 +117,8 @@ export function renderRecipes(container, recipes, materials, freeSlots, kind, on
         const name = el('span', 'recipe-name', itemName(recipe.id) + (recipe.yields > 1 ? ` ×${recipe.yields}` : ''));
         const blocker = forgeBlocker(recipe, materials, freeSlots);
         const foot = el('span', `recipe-foot${blocker ? ' blocked' : ''}`, blocker ?? `You own ${recipe.owned}/${recipe.limit}`);
-        card.append(time, ped, name, costChips(recipe.cost, materials), foot);
+        const what = el('span', 'recipe-what', itemWhat(recipe.id));
+        card.append(time, ped, name, what, costChips(recipe.cost, materials), foot);
         card.disabled = Boolean(blocker);
         card.setAttribute('aria-label', `Forge ${itemName(recipe.id)}${blocker ? `: ${blocker}` : ''}`);
         card.addEventListener('click', () => onForge(recipe.id));

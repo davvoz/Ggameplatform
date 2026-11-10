@@ -91,7 +91,10 @@ def outpost_city(outpost_id: int) -> dict:
     buildings = []
     for index, (kind, x, y) in enumerate(outpost.layout):
         spec = BUILDINGS[kind]
-        buildings.append({"id": index, "type": kind, "x": x, "y": y, "size": spec.size, "hp": spec.hp})
+        item = {"id": index, "type": kind, "x": x, "y": y, "size": spec.size, "hp": spec.hp}
+        if spec.category == "tower":
+            item["range"] = spec.attack_range
+        buildings.append(item)
     return {"name": outpost.name, "grid": 18, "buildings": buildings}
 
 

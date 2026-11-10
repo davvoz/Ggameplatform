@@ -49,6 +49,7 @@ def battle_city(city: dict) -> dict:
         item = {"id": b["id"], "type": b["type"], "x": b["x"], "y": b["y"], "size": spec.size, "hp": spec.hp}
         if spec.category == "tower":
             item["aim"] = b.get("aim", DEFAULT_AIM)
+            item["range"] = spec.attack_range
         buildings.append(item)
     return {"grid": city["grid"], "buildings": buildings}
 

@@ -6,18 +6,23 @@ export const HERO_INFO = {
     technomancer: { name: 'Technomancer', role: 'Mage · ranged, area nova', color: '#a77bff', short: 'T' },
 };
 
+/**
+ * `height`: top of the body (bars sit above it); `pick`: top of the whole
+ * silhouette, chimneys and braziers included (clicks and bubbles use it);
+ * `glow`: the building's signature colour. Heights are unscaled pixels.
+ */
 export const BUILDING_INFO = {
-    core: { name: 'Core', height: 34, side: '#2a1430', top: '#47204f', glow: '#ff3db8' },
-    wall: { name: 'Wall', height: 20, side: '#1d2533', top: '#2c3a4f', glow: '#39e6ff' },
-    rune_tower: { name: 'Rune Tower', height: 62, side: '#2b2416', top: '#4a3a1d', glow: '#ffb547' },
-    lightning_tower: { name: 'Lightning Tower', height: 66, side: '#14262e', top: '#1d4250', glow: '#39e6ff' },
-    frost_tower: { name: 'Frost Tower', height: 58, side: '#18243a', top: '#2a4466', glow: '#9fe3ff' },
-    rune_quarry: { name: 'Rune Quarry', height: 26, side: '#24262b', top: '#3a3d44', glow: '#ffb547' },
-    scrap_foundry: { name: 'Scrap Foundry', height: 34, side: '#2e1d16', top: '#4a2c1e', glow: '#ff7a3d' },
-    mana_well: { name: 'Mana Well', height: 22, side: '#211a33', top: '#33285a', glow: '#a77bff' },
-    data_node: { name: 'Data Node', height: 40, side: '#13261c', top: '#1e3f2d', glow: '#4dff9a' },
-    vault: { name: 'Vault', height: 30, side: '#2b2512', top: '#4d401a', glow: '#ffd75e' },
-    rune_trap: { name: 'Rune Trap', height: 0, side: '#000', top: '#000', glow: '#ff7a3d' },
+    core: { name: 'Core', height: 44, pick: 84, glow: '#ff7a1a' },
+    wall: { name: 'Wall', height: 26, pick: 26, glow: '#ff8a2a' },
+    rune_tower: { name: 'Rune Tower', height: 68, pick: 96, glow: '#ffb347' },
+    lightning_tower: { name: 'Lightning Tower', height: 68, pick: 98, glow: '#6fd3ff' },
+    frost_tower: { name: 'Frost Tower', height: 68, pick: 94, glow: '#9fe3ff' },
+    rune_quarry: { name: 'Rune Quarry', height: 20, pick: 46, glow: '#ffb547' },
+    scrap_foundry: { name: 'Scrap Foundry', height: 30, pick: 66, glow: '#ff7a3d' },
+    mana_well: { name: 'Mana Well', height: 14, pick: 30, glow: '#b48cff' },
+    data_node: { name: 'Data Node', height: 46, pick: 56, glow: '#4dff9a' },
+    vault: { name: 'Vault', height: 34, pick: 40, glow: '#ffd75e' },
+    rune_trap: { name: 'Rune Trap', height: 0, pick: 0, glow: '#ff7a3d' },
 };
 
 export const MATERIAL_INFO = {

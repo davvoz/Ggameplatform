@@ -135,6 +135,7 @@ export class CityMode {
         this.renderer.draw(null, {
             time,
             selectedId: this.mode === 'place' ? null : this.selectedId,
+            ranges: this.mode === 'idle' ? this.selectedId : null,
             preview: this.mode === 'idle' ? null : this.preview,
             bubbles,
             floaters: this.floaters,

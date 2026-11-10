@@ -1,14 +1,23 @@
 import { fitCamera, toScreen, toWorld, groundEllipse, depthOf } from './iso.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import {
+    drawBuilding, drawHero, drawRubble, drawTrapMark, flame, halo, hash, path, withAlpha,
+} from './forgeArt.js';
 
 /**
- * Canvas renderer for the isometric battlefield. Placeholder art: every
- * building and hero is drawn from simple shapes (a CC0 sprite pack replaces
- * this once the battle loop proves fun).
+ * Canvas renderer for the isometric battlefield, "Forgia Infernale" style:
+ * a basalt plain, iron buildings, embers in the air.
+ * The art itself lives in forgeArt.js; this class lays it out, picks what
+ * the pointer is on, and draws the battle effects and the city overlays.
  */
 
 const HERO_SCALE = 1.5;   // heroes are drawn larger than life so they read next to buildings
 const INWARD = { north: [0, 1], south: [0, -1], west: [1, 0], east: [-1, 0] };
+const EMBERS = 46;
+const FONT = '"Chakra Petch", "Segoe UI", system-ui, sans-serif';
+const SELECT = '#ffb347';
+const FITS = '#7dff9a';
+const BLOCKED = '#ff5040';
 
 export class Renderer {
     constructor(canvas) {
@@ -48,33 +57,23 @@ export class Renderer {
             .filter((b) => b.type !== 'rune_trap')
             .sort((a, b) => (b.x + b.y + b.size) - (a.x + a.y + a.size));
         for (const b of standing) {
-            if (this.#silhouettes(b).some((shape) => pointInPolygon(point, shape))) return b;
+            if (pointInPolygon(point, this.#silhouette(b))) return b;
         }
         const cell = this.groundAt(point);
         return this.city.buildings.find((b) => b.type === 'rune_trap'
             && cell.x >= b.x && cell.x < b.x + 1 && cell.y >= b.y && cell.y < b.y + 1) ?? null;
     }
 
-    /** Clickable outlines: the box (plus a tower's head) and, for the core, its crystal. */
-    #silhouettes(b) {
+    /** Clickable outline: the footprint raised to the top of the silhouette. */
+    #silhouette(b) {
         const { camera } = this;
-        const info = BUILDING_INFO[b.type];
-        const up = info.height + (b.type.endsWith('_tower') ? 24 : 4);
+        const up = BUILDING_INFO[b.type].pick + 4;
         const s = b.size;
-        const box = [
+        return [
             toScreen(camera, b.x, b.y, up), toScreen(camera, b.x + s, b.y, up),
             toScreen(camera, b.x + s, b.y), toScreen(camera, b.x + s, b.y + s),
             toScreen(camera, b.x, b.y + s), toScreen(camera, b.x, b.y + s, up),
         ];
-        if (b.type !== 'core') return [box];
-        const top = toScreen(camera, b.x + s / 2, b.y + s / 2, info.height + 100);
-        const bottom = toScreen(camera, b.x + s / 2, b.y + s / 2, info.height + 20);
-        const half = 22 * camera.scale;
-        const crystal = [
-            { x: top.x - half, y: top.y }, { x: top.x + half, y: top.y },
-            { x: bottom.x + half, y: bottom.y }, { x: bottom.x - half, y: bottom.y },
-        ];
-        return [box, crystal];
     }
 
     resize() {
@@ -85,15 +84,16 @@ export class Renderer {
         this.canvas.width = this.w;
         this.canvas.height = this.h;
         if (!this.city) return;
-        this.camera = fitCamera(this.city.grid, this.w, this.h, { margin: 10 * dpr, headroom: 80 });
+        this.camera = fitCamera(this.city.grid, this.w, this.h, { margin: 10 * dpr, headroom: 90 });
         this.ground = this.#paintGround();
     }
 
     /**
      * `state` = replay.stateAt(tick), or null to show the untouched city.
-     * City mode options: `selectedId`, `preview` {x, y, size, valid},
-     * `bubbles` Map(id → {amount, material, full}), `floaters` [{x, y, text, color, age}],
-     * `showTraps` (the owner sees their own traps).
+     * Options: `side` (entry edge to highlight), `time`, `selectedId`,
+     * `preview` {x, y, size, valid}, `bubbles` Map(id → {amount, material, full}),
+     * `floaters` [{x, y, text, color, age}], `showTraps` (the owner sees their
+     * own traps), `ranges` ('all' or a building id whose reach to draw).
      */
     draw(state, options = {}) {
         const { ctx } = this;
@@ -103,16 +103,19 @@ export class Renderer {
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = 1;
         ctx.drawImage(this.ground, 0, 0);
+
         if (side) this.#entryEdge(side, time);
+        if (options.ranges !== undefined && options.ranges !== null) this.#ranges(options.ranges, state, time);
         const selected = selectedId === null ? null : this.byId.get(selectedId);
-        if (selected) this.#footprint(selected.x, selected.y, selected.size, '#39e6ff', 0.25 + 0.1 * Math.sin(time * 5));
-        if (preview) this.#footprint(preview.x, preview.y, preview.size, preview.valid ? '#4dff9a' : '#ff5d6c', 0.35);
+        if (selected) this.#footprint(selected.x, selected.y, selected.size, SELECT, 0.18 + 0.08 * Math.sin(time * 5));
+        if (preview) this.#footprint(preview.x, preview.y, preview.size, preview.valid ? FITS : BLOCKED, 0.3);
         const items = this.#standingItems(state, time, options.showTraps);
         items.sort((a, b) => a.depth - b.depth);
         for (const item of items) item.draw();
-        if (state) this.#overlays(state);
+        if (state) this.#overlays(state, time);
         if (options.bubbles) this.#bubbles(options.bubbles, time);
         for (const floater of options.floaters ?? []) this.#floater(floater);
+        this.#embers(time);
     }
 
     /** Draws what lies flat on the ground and returns what stands up, for depth sorting. */
@@ -123,11 +126,16 @@ export class Renderer {
         for (const b of this.city.buildings) {
             if (b.type === 'rune_trap') {
                 if (sprung.has(b.id)) this.#scorch(b);
-                else if (showTraps) this.#trapMark(b, time);
+                else if (showTraps) drawTrapMark(this.ctx, this.camera, b, time, groundEllipse(this.camera, 0.42).rx);
             } else if (destroyed.has(b.id)) {
-                this.#rubble(b);
+                drawRubble(this.ctx, this.camera, b, time);
             } else {
-                items.push({ depth: depthOf(b.x + b.size / 2, b.y + b.size / 2), draw: () => this.#building(b, state, time) });
+                const look = {
+                    time,
+                    firing: state ? this.#recentlyFired(b.id, state) : 0,
+                    health: state ? (state.buildingHp.get(b.id) ?? b.hp) / b.hp : 1,
+                };
+                items.push({ depth: depthOf(b.x + b.size / 2, b.y + b.size / 2), draw: () => drawBuilding(this.ctx, this.camera, b, look) });
             }
         }
         for (const hero of state?.heroes ?? []) {
@@ -136,7 +144,7 @@ export class Renderer {
         return items;
     }
 
-    #overlays(state) {
+    #overlays(state, time) {
         for (const b of this.city.buildings) {
             const hp = state.buildingHp.get(b.id);
             if (b.type !== 'rune_trap' && !state.destroyed.has(b.id) && hp < b.hp) this.#buildingBar(b, hp);
@@ -144,7 +152,7 @@ export class Renderer {
         for (const hero of state.heroes) {
             if (hero.alive) this.#heroBar(hero);
         }
-        for (const fx of state.effects) this.#effect(fx, state);
+        for (const fx of state.effects) this.#effect(fx, state, time);
     }
 
     // ── ground ─────────────────────────────────────────────────────────
@@ -154,49 +162,56 @@ export class Renderer {
         canvas.height = this.h;
         const ctx = canvas.getContext('2d');
         const bg = ctx.createLinearGradient(0, 0, 0, this.h);
-        bg.addColorStop(0, '#06070c');
-        bg.addColorStop(1, '#0c0f1c');
+        bg.addColorStop(0, '#0b0605');
+        bg.addColorStop(0.65, '#170c07');
+        bg.addColorStop(1, '#261006');
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, this.w, this.h);
 
         const { grid } = this.city;
         for (let x = 0; x < grid; x++) {
             for (let y = 0; y < grid; y++) {
-                this.#diamond(ctx, x, y, 1, tileColor(x, y, grid), 'rgba(57, 230, 255, 0.06)');
+                const outside = x === 0 || y === 0 || x === grid - 1 || y === grid - 1;
+                const v = (outside ? 15 : 27) + hash(x * 31 + y * 17) * 9;
+                this.#tile(ctx, x, y, `rgb(${Math.round(v + 5)}, ${Math.round(v - 2)}, ${Math.round(v - 7)})`, '#0a0605');
             }
         }
-        // a faint rune circuit around the city limits
-        ctx.lineWidth = 1.5 * this.camera.scale;
-        ctx.strokeStyle = 'rgba(57, 230, 255, 0.28)';
+        // iron rim around the city limits
+        ctx.lineWidth = 3 * this.camera.scale;
+        ctx.strokeStyle = '#3a2a20';
+        this.#outline(ctx, 1, 1, grid - 2);
+        ctx.lineWidth = 1 * this.camera.scale;
+        ctx.strokeStyle = 'rgba(255, 140, 60, 0.35)';
         this.#outline(ctx, 1, 1, grid - 2);
 
-        const vignette = ctx.createRadialGradient(this.w / 2, this.h / 2, this.h * 0.25, this.w / 2, this.h / 2, this.h * 0.85);
+        const vignette = ctx.createRadialGradient(this.w / 2, this.h * 0.55, this.h * 0.25, this.w / 2, this.h * 0.55, this.h * 0.9);
         vignette.addColorStop(0, 'rgba(0,0,0,0)');
-        vignette.addColorStop(1, 'rgba(0,0,0,0.55)');
+        vignette.addColorStop(1, 'rgba(8,2,0,0.65)');
         ctx.fillStyle = vignette;
         ctx.fillRect(0, 0, this.w, this.h);
         return canvas;
     }
 
-    #diamond(ctx, x, y, size, fill, stroke) {
-        const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => toScreen(this.camera, px, py));
-        ctx.beginPath();
-        pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-        ctx.closePath();
+    #tile(ctx, x, y, fill, stroke) {
+        const pts = [[x, y], [x + 1, y], [x + 1, y + 1], [x, y + 1]].map(([px, py]) => toScreen(this.camera, px, py));
+        path(ctx, pts);
         ctx.fillStyle = fill;
         ctx.fill();
-        if (stroke) {
-            ctx.strokeStyle = stroke;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-        }
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+    }
+
+    #diamond(ctx, x, y, size, fill) {
+        const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => toScreen(this.camera, px, py));
+        path(ctx, pts);
+        ctx.fillStyle = fill;
+        ctx.fill();
     }
 
     #outline(ctx, x, y, size) {
         const pts = [[x, y], [x + size, y], [x + size, y + size], [x, y + size]].map(([px, py]) => toScreen(this.camera, px, py));
-        ctx.beginPath();
-        pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-        ctx.closePath();
+        path(ctx, pts);
         ctx.stroke();
     }
 
@@ -207,16 +222,14 @@ export class Renderer {
             north: [0, 0, g, 1], south: [0, g - 1, g, 1], west: [0, 0, 1, g], east: [g - 1, 0, 1, g],
         };
         const [x, y, w, h] = strips[side];
-        const pulse = 0.18 + 0.1 * Math.sin(time * 4);
+        const pulse = 0.2 + 0.1 * Math.sin(time * 4);
         const pts = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map(([px, py]) => toScreen(this.camera, px, py));
-        ctx.beginPath();
-        pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-        ctx.closePath();
-        ctx.fillStyle = `rgba(255, 61, 154, ${pulse})`;
+        path(ctx, pts);
+        ctx.fillStyle = `rgba(255, 70, 30, ${pulse})`;
         ctx.fill();
 
         const [ix, iy] = INWARD[side];
-        ctx.strokeStyle = 'rgba(255, 120, 190, 0.9)';
+        ctx.strokeStyle = 'rgba(255, 170, 90, 0.95)';
         ctx.lineWidth = 3 * this.camera.scale;
         ctx.lineCap = 'round';
         for (const f of [0.25, 0.5, 0.75]) {
@@ -238,194 +251,25 @@ export class Renderer {
         }
     }
 
-    // ── buildings ──────────────────────────────────────────────────────
-    #building(b, state, time) {
-        const info = BUILDING_INFO[b.type];
-        const inset = b.type === 'wall' ? 0.04 : 0.12;
-        this.#box(b.x + inset, b.y + inset, b.size - 2 * inset, info.height, info.side, info.top, info.glow);
-        const cx = b.x + b.size / 2;
-        const cy = b.y + b.size / 2;
-        const firing = state ? this.#recentlyFired(b.id, state) : 0;
-        switch (b.type) {
-            case 'core': this.#coreCrystal(cx, cy, info, time); break;
-            case 'rune_tower':
-            case 'lightning_tower':
-            case 'frost_tower': this.#towerHead(b.type, cx, cy, info, time, firing); break;
-            case 'wall': break;
-            default: this.#productionDetail(b, cx, cy, info, time);
-        }
-    }
-
-    #box(x, y, size, height, sideColor, topColor, glow) {
+    /** Dashed rings showing how far towers reach: 'all', or one building id. */
+    #ranges(which, state, time) {
         const { ctx, camera } = this;
-        const s = camera.scale;
-        const A = toScreen(camera, x, y);
-        const B = toScreen(camera, x + size, y);
-        const C = toScreen(camera, x + size, y + size);
-        const D = toScreen(camera, x, y + size);
-        const up = height * s;
-        // left face
-        ctx.beginPath();
-        ctx.moveTo(D.x, D.y); ctx.lineTo(C.x, C.y); ctx.lineTo(C.x, C.y - up); ctx.lineTo(D.x, D.y - up);
-        ctx.closePath();
-        ctx.fillStyle = sideColor;
-        ctx.fill();
-        // right face, a shade darker
-        ctx.beginPath();
-        ctx.moveTo(C.x, C.y); ctx.lineTo(B.x, B.y); ctx.lineTo(B.x, B.y - up); ctx.lineTo(C.x, C.y - up);
-        ctx.closePath();
-        ctx.fillStyle = shade(sideColor, 0.7);
-        ctx.fill();
-        // top
-        ctx.beginPath();
-        ctx.moveTo(A.x, A.y - up); ctx.lineTo(B.x, B.y - up); ctx.lineTo(C.x, C.y - up); ctx.lineTo(D.x, D.y - up);
-        ctx.closePath();
-        ctx.fillStyle = topColor;
-        ctx.fill();
-        ctx.strokeStyle = withAlpha(glow, 0.55);
-        ctx.lineWidth = Math.max(1, 1.2 * s);
-        ctx.stroke();
-        // glowing seam on the front edge
-        ctx.beginPath();
-        ctx.moveTo(C.x, C.y - up); ctx.lineTo(C.x, C.y);
-        ctx.strokeStyle = withAlpha(glow, 0.35);
-        ctx.stroke();
-    }
-
-    #halo(x, y, radius, color, strength = 1) {
-        const { ctx } = this;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        g.addColorStop(0, withAlpha(color, 0.55 * strength));
-        g.addColorStop(1, withAlpha(color, 0));
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
-    }
-
-    #coreCrystal(cx, cy, info, time) {
-        const { ctx, camera } = this;
-        const s = camera.scale;
-        const bob = Math.sin(time * 2) * 4;
-        const base = info.height + 26 + bob;
-        const top = toScreen(camera, cx, cy, base + 70);
-        const mid = toScreen(camera, cx, cy, base + 34);
-        const bottom = toScreen(camera, cx, cy, base);
-        const half = 20 * s;
-        this.#halo(mid.x, mid.y, 70 * s, info.glow, 0.8 + 0.2 * Math.sin(time * 3));
-        const grad = ctx.createLinearGradient(mid.x - half, top.y, mid.x + half, bottom.y);
-        grad.addColorStop(0, '#ffd0f0');
-        grad.addColorStop(0.5, '#ff3db8');
-        grad.addColorStop(1, '#5a1050');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.moveTo(top.x, top.y);
-        ctx.lineTo(mid.x + half, mid.y);
-        ctx.lineTo(bottom.x, bottom.y);
-        ctx.lineTo(mid.x - half, mid.y);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 220, 245, 0.8)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        ctx.moveTo(top.x, top.y);
-        ctx.lineTo(bottom.x, bottom.y);
-        ctx.stroke();
-    }
-
-    #towerHead(type, cx, cy, info, time, firing) {
-        const { ctx, camera } = this;
-        const s = camera.scale;
-        const head = toScreen(camera, cx, cy, info.height + 14);
-        this.#halo(head.x, head.y, (26 + 22 * firing) * s, info.glow, 0.7 + firing);
-        if (type === 'lightning_tower') {
-            ctx.strokeStyle = info.glow;
-            ctx.lineWidth = 2.5 * s;
-            for (const dx of [-7, 7]) {
-                ctx.beginPath();
-                ctx.moveTo(head.x + dx * s, head.y + 12 * s);
-                ctx.lineTo(head.x + dx * 1.4 * s, head.y - 10 * s);
-                ctx.stroke();
-            }
-        } else if (type === 'frost_tower') {
-            ctx.fillStyle = '#dff6ff';
+        for (const b of this.city.buildings) {
+            if (!b.range || (which !== 'all' && which !== b.id) || state?.destroyed.has(b.id)) continue;
+            const c = toScreen(camera, b.x + b.size / 2, b.y + b.size / 2);
+            const { rx, ry } = groundEllipse(camera, b.range);   // the simulation measures from the tower's centre
+            const color = BUILDING_INFO[b.type].glow;
+            ctx.save();
             ctx.beginPath();
-            ctx.moveTo(head.x, head.y - 16 * s);
-            ctx.lineTo(head.x + 7 * s, head.y);
-            ctx.lineTo(head.x, head.y + 10 * s);
-            ctx.lineTo(head.x - 7 * s, head.y);
-            ctx.closePath();
+            ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fillStyle = withAlpha(color, which === 'all' ? 0.05 : 0.09);
             ctx.fill();
-        } else {
-            ctx.strokeStyle = info.glow;
-            ctx.lineWidth = 2 * s;
-            ctx.setLineDash([4 * s, 3 * s]);
-            ctx.lineDashOffset = -time * 20 * s;
-            ctx.beginPath();
-            ctx.ellipse(head.x, head.y + 4 * s, 13 * s, 6.5 * s, 0, 0, Math.PI * 2);
+            ctx.setLineDash([6 * camera.scale, 6 * camera.scale]);
+            ctx.lineDashOffset = -time * 14 * camera.scale;
+            ctx.strokeStyle = withAlpha(color, 0.55);
+            ctx.lineWidth = 1.5 * camera.scale;
             ctx.stroke();
-            ctx.setLineDash([]);
-        }
-        ctx.fillStyle = '#fff6e0';
-        ctx.beginPath();
-        ctx.arc(head.x, head.y, 4.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    #productionDetail(b, cx, cy, info, time) {
-        const { ctx, camera } = this;
-        const s = camera.scale;
-        const top = toScreen(camera, cx, cy, info.height);
-        switch (b.type) {
-            case 'scrap_foundry': {
-                this.#box(b.x + 0.35, b.y + 0.3, 0.5, info.height + 34, '#3a2318', '#5a3322', info.glow);
-                const flue = toScreen(camera, b.x + 0.6, b.y + 0.55, info.height + 40);
-                this.#halo(flue.x, flue.y, (16 + 4 * Math.sin(time * 6)) * s, info.glow);
-                break;
-            }
-            case 'mana_well': {
-                ctx.fillStyle = withAlpha(info.glow, 0.55 + 0.15 * Math.sin(time * 3));
-                ctx.beginPath();
-                ctx.ellipse(top.x, top.y, 22 * s, 11 * s, 0, 0, Math.PI * 2);
-                ctx.fill();
-                this.#halo(top.x, top.y, 34 * s, info.glow, 0.6);
-                break;
-            }
-            case 'data_node': {
-                for (let i = 0; i < 3; i++) {
-                    const on = Math.sin(time * 5 + i * 2.1) > 0;
-                    ctx.fillStyle = on ? info.glow : withAlpha(info.glow, 0.25);
-                    ctx.fillRect(top.x - 12 * s + i * 9 * s, top.y - 3 * s, 6 * s, 4 * s);
-                }
-                break;
-            }
-            case 'vault': {
-                ctx.strokeStyle = info.glow;
-                ctx.lineWidth = 2 * s;
-                ctx.beginPath();
-                ctx.ellipse(top.x, top.y, 14 * s, 7 * s, 0, 0, Math.PI * 2);
-                ctx.stroke();
-                break;
-            }
-            default: { // rune quarry: cut stones on the yard
-                this.#box(b.x + 0.4, b.y + 0.4, 0.45, info.height + 14, '#30333a', '#4a4e57', info.glow);
-                this.#box(b.x + 1.05, b.y + 0.9, 0.4, info.height + 8, '#30333a', '#4a4e57', info.glow);
-            }
-        }
-    }
-
-    #rubble(b) {
-        const { ctx, camera } = this;
-        this.#diamond(ctx, b.x + 0.1, b.y + 0.1, b.size - 0.2, b.type === 'wall' ? '#141822' : '#1a1712', null);
-        if (b.type === 'wall') return;
-        const s = camera.scale;
-        const spots = [[0.3, 0.4], [0.7, 0.3], [0.5, 0.75], [0.25, 0.8]];
-        ctx.fillStyle = '#2c2a26';
-        for (const [fx, fy] of spots) {
-            const p = toScreen(camera, b.x + fx * b.size, b.y + fy * b.size, 3);
-            ctx.fillRect(p.x - 4 * s, p.y - 3 * s, 8 * s, 5 * s);
+            ctx.restore();
         }
     }
 
@@ -433,11 +277,11 @@ export class Renderer {
         const { ctx, camera } = this;
         const c = toScreen(camera, b.x + 0.5, b.y + 0.5);
         const { rx, ry } = groundEllipse(camera, 1.1);
-        ctx.fillStyle = 'rgba(60, 25, 10, 0.55)';
+        ctx.fillStyle = 'rgba(20, 8, 2, 0.7)';
         ctx.beginPath();
         ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 122, 61, 0.35)';
+        ctx.strokeStyle = 'rgba(255, 110, 30, 0.45)';
         ctx.lineWidth = 1.5 * camera.scale;
         ctx.beginPath();
         ctx.ellipse(c.x, c.y, rx * 0.55, ry * 0.55, 0, 0, Math.PI * 2);
@@ -447,25 +291,17 @@ export class Renderer {
     // ── city mode ──────────────────────────────────────────────────────
     #footprint(x, y, size, color, alpha) {
         const { ctx } = this;
-        this.#diamond(ctx, x, y, size, withAlpha(color, alpha), null);
-        ctx.strokeStyle = withAlpha(color, 0.9);
+        this.#diamond(ctx, x, y, size, withAlpha(color, alpha));
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10 * this.camera.scale;
+        ctx.strokeStyle = withAlpha(color, 0.95);
         ctx.lineWidth = 2 * this.camera.scale;
         this.#outline(ctx, x, y, size);
+        ctx.restore();
     }
 
-    #trapMark(b, time) {
-        const { ctx, camera } = this;
-        const c = toScreen(camera, b.x + 0.5, b.y + 0.5);
-        const { rx, ry } = groundEllipse(camera, 0.38);
-        ctx.strokeStyle = withAlpha('#ff7a3d', 0.45 + 0.2 * Math.sin(time * 3));
-        ctx.lineWidth = 2 * camera.scale;
-        ctx.setLineDash([3 * camera.scale, 3 * camera.scale]);
-        ctx.beginPath();
-        ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
+    /** A forged-iron medallion over production buildings: what is waiting to be collected. */
     #bubbles(bubbles, time) {
         const { ctx, camera } = this;
         const s = camera.scale;
@@ -474,27 +310,42 @@ export class Renderer {
             if (!b) continue;
             const color = MATERIAL_INFO[bubble.material].color;
             const bob = Math.sin(time * 3 + id) * 3 * s;
-            const p = toScreen(camera, b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].height + 46);
-            const r = Math.max(11, 15 * s);
-            this.#halo(p.x, p.y + bob, r * 2.2, color, bubble.full ? 1 : 0.6);
-            ctx.fillStyle = 'rgba(10, 13, 24, 0.92)';
-            ctx.strokeStyle = color;
-            ctx.lineWidth = Math.max(1.5, 2 * s);
+            const p = toScreen(camera, b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].pick + 26);
+            const r = Math.max(12, 16 * s);
+            halo(ctx, p.x, p.y + bob, r * 2.3, color, bubble.full ? 1 : 0.55);
+            ctx.save();
+            ctx.fillStyle = '#1a120d';
+            ctx.strokeStyle = '#5a4434';
+            ctx.lineWidth = Math.max(3, 4 * s);
             ctx.beginPath();
             ctx.arc(p.x, p.y + bob, r, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(1.5, 2 * s);
+            ctx.beginPath();
+            const full = bubble.full ? 1 : 0.999;
+            ctx.arc(p.x, p.y + bob, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * full);
+            ctx.stroke();
+            // pointer to the building
+            ctx.fillStyle = '#5a4434';
+            ctx.beginPath();
+            ctx.moveTo(p.x - 5 * s, p.y + bob + r - 1);
+            ctx.lineTo(p.x + 5 * s, p.y + bob + r - 1);
+            ctx.lineTo(p.x, p.y + bob + r + 7 * s);
+            ctx.closePath();
+            ctx.fill();
             ctx.fillStyle = color;
-            ctx.font = `700 ${Math.max(10, r * 0.8)}px system-ui, sans-serif`;
+            ctx.font = `700 ${Math.max(10, r * 0.82)}px ${FONT}`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(String(bubble.amount), p.x, p.y + bob + 1);
-            ctx.textBaseline = 'alphabetic';
+            ctx.restore();
         }
     }
 
     #floater({ x, y, text, color, age }) {
-        const p = toScreen(this.camera, x, y, 70 + 50 * age);
+        const p = toScreen(this.camera, x, y, 80 + 50 * age);
         this.#label(text, p.x, p.y, color, 1 - age * age);
     }
 
@@ -514,115 +365,63 @@ export class Renderer {
         const s = camera.scale * HERO_SCALE;
         const info = HERO_INFO[hero.cls];
         const foot = toScreen(camera, hero.x, hero.y);
-        const bob = hero.moving ? Math.sin(time * 14 + hero.id * 1.7) * 2 * s : 0;
+        const bob = hero.moving ? Math.abs(Math.sin(time * 12 + hero.id * 1.7)) * -2 * s : 0;
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.beginPath();
-        ctx.ellipse(foot.x, foot.y, 11 * s, 5.5 * s, 0, 0, Math.PI * 2);
+        ctx.ellipse(foot.x, foot.y, 12 * s, 5.5 * s, 0, 0, Math.PI * 2);
         ctx.fill();
+        // a ring in the class colour under the feet: whose hero this is, at a glance
+        ctx.strokeStyle = withAlpha(info.color, 0.8);
+        ctx.lineWidth = 1.6 * camera.scale;
+        ctx.beginPath();
+        ctx.ellipse(foot.x, foot.y, 12 * s, 5.5 * s, 0, 0, Math.PI * 2);
+        ctx.stroke();
 
-        const y = foot.y + bob;
         if (hero.cls === 'neon_blade' && hero.moving) {
             for (const k of [2, 1]) {
-                ctx.globalAlpha = 0.18 * k;
-                this.#bladeBody(foot.x - hero.facing * k * 6 * s, y, s, info.color);
+                ctx.globalAlpha = 0.16 * k;
+                drawHero(ctx, hero, foot.x - (hero.facing || 1) * k * 7 * s, foot.y + bob, s, info.color, time);
             }
             ctx.globalAlpha = 1;
         }
-        this.#halo(foot.x, y - 14 * s, 20 * s, info.color, 0.5);
-        if (hero.cls === 'guardian') this.#guardianBody(foot.x, y, s, info.color, hero.facing);
-        else if (hero.cls === 'neon_blade') this.#bladeBody(foot.x, y, s, info.color);
-        else this.#mageBody(foot.x, y, s, info.color, time + hero.id);
-
+        drawHero(ctx, hero, foot.x, foot.y + bob, s, info.color, time);
         if (hero.slowed) {
-            ctx.fillStyle = 'rgba(159, 227, 255, 0.3)';
+            ctx.fillStyle = 'rgba(159, 227, 255, 0.28)';
             ctx.beginPath();
-            ctx.ellipse(foot.x, y - 12 * s, 13 * s, 16 * s, 0, 0, Math.PI * 2);
+            ctx.ellipse(foot.x, foot.y - 16 * s, 14 * s, 19 * s, 0, 0, Math.PI * 2);
             ctx.fill();
         }
-    }
-
-    #guardianBody(x, y, s, color, facing) {
-        const { ctx } = this;
-        ctx.fillStyle = shade(color, 0.55);
-        roundRect(ctx, x - 8 * s, y - 24 * s, 16 * s, 22 * s, 4 * s);
-        ctx.fill();
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        const sx = x + (facing || 1) * 6 * s;
-        ctx.ellipse(sx, y - 13 * s, 6 * s, 10 * s, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#d8e8ff';
-        ctx.beginPath();
-        ctx.arc(x, y - 28 * s, 5 * s, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    #bladeBody(x, y, s, color) {
-        const { ctx } = this;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(x, y - 32 * s);
-        ctx.lineTo(x + 6 * s, y - 14 * s);
-        ctx.lineTo(x, y - 2 * s);
-        ctx.lineTo(x - 6 * s, y - 14 * s);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = '#ffd0ea';
-        ctx.lineWidth = 1.5 * s;
-        ctx.beginPath();
-        ctx.moveTo(x + 7 * s, y - 26 * s);
-        ctx.lineTo(x + 13 * s, y - 8 * s);
-        ctx.stroke();
-    }
-
-    #mageBody(x, y, s, color, phase) {
-        const { ctx } = this;
-        ctx.fillStyle = shade(color, 0.6);
-        ctx.beginPath();
-        ctx.moveTo(x, y - 26 * s);
-        ctx.lineTo(x + 9 * s, y - 2 * s);
-        ctx.lineTo(x - 9 * s, y - 2 * s);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = '#e6dcff';
-        ctx.beginPath();
-        ctx.arc(x, y - 28 * s, 4.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-        const ox = x + Math.cos(phase * 3) * 12 * s;
-        const oy = y - 24 * s + Math.sin(phase * 3) * 3 * s;
-        this.#halo(ox, oy, 10 * s, color, 1);
-        ctx.fillStyle = '#f1eaff';
-        ctx.beginPath();
-        ctx.arc(ox, oy, 3 * s, 0, Math.PI * 2);
-        ctx.fill();
     }
 
     // ── bars and effects ───────────────────────────────────────────────
     #bar(x, y, width, ratio, color) {
         const { ctx } = this;
         const s = this.camera.scale;
-        const h = Math.max(3, 4 * s);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        const h = Math.max(4, 5 * s);
+        ctx.fillStyle = '#120b08';
+        ctx.fillRect(x - width / 2 - 2, y - 2, width + 4, h + 4);
+        ctx.fillStyle = '#3a2a20';
         ctx.fillRect(x - width / 2 - 1, y - 1, width + 2, h + 2);
+        ctx.fillStyle = '#120b08';
+        ctx.fillRect(x - width / 2, y, width, h);
         ctx.fillStyle = color;
         ctx.fillRect(x - width / 2, y, width * Math.max(0, ratio), h);
     }
 
     #buildingBar(b, hp) {
         const info = BUILDING_INFO[b.type];
-        const extra = b.type === 'core' ? 150 : 26;
-        const p = toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, info.height + extra);
+        const p = toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, info.pick + 16);
         const ratio = hp / b.hp;
-        this.#bar(p.x, p.y, (18 + 10 * b.size) * this.camera.scale, ratio, ratio > 0.5 ? '#4dff9a' : '#ffb547');
+        this.#bar(p.x, p.y, (18 + 10 * b.size) * this.camera.scale, ratio, ratio > 0.5 ? '#ffb347' : '#ff5040');
     }
 
     #heroBar(hero) {
-        const p = toScreen(this.camera, hero.x, hero.y, 44 * HERO_SCALE);
+        const p = toScreen(this.camera, hero.x, hero.y, 48 * HERO_SCALE);
         this.#bar(p.x, p.y, 26 * this.camera.scale * HERO_SCALE, hero.hp / hero.maxHp, HERO_INFO[hero.cls].color);
     }
 
-    #heroPoint(state, id, z = 14 * HERO_SCALE) {
+    #heroPoint(state, id, z = 16 * HERO_SCALE) {
         const h = state.heroes[id];
         return toScreen(this.camera, h.x, h.y, z);
     }
@@ -633,105 +432,116 @@ export class Renderer {
         return toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, info.height * zFactor + 6);
     }
 
-    #effect({ event: e, age }, state) {
+    #towerMuzzle(id) {
+        const b = this.byId.get(id);
+        return toScreen(this.camera, b.x + b.size / 2, b.y + b.size / 2, BUILDING_INFO[b.type].pick - 14);
+    }
+
+    #effect({ event: e, age }, state, time) {
         const { ctx, camera } = this;
         const s = camera.scale;
         const fade = 1 - age;
         ctx.lineCap = 'round';
         switch (e.type) {
             case 'strike': {
-                const from = this.#heroPoint(state, e.hero);
                 const to = this.#buildingPoint(e.building);
                 const color = HERO_INFO[state.heroes[e.hero].cls].color;
-                ctx.strokeStyle = withAlpha(color, fade);
-                ctx.lineWidth = 2.5 * s;
-                ctx.beginPath();
-                ctx.moveTo(from.x, from.y);
-                ctx.lineTo(to.x, to.y);
-                ctx.stroke();
-                this.#halo(to.x, to.y, 14 * s, color, fade);
+                this.#sparks(to, e.t + e.hero, age, s, ['#fff1c9', '#ffb347', color]);
+                halo(ctx, to.x, to.y, 16 * s, color, fade);
                 break;
             }
             case 'nova': {
                 const c = toScreen(camera, e.x, e.y);
                 const { rx, ry } = groundEllipse(camera, e.radius * (0.3 + 0.7 * easeOut(age)));
-                ctx.fillStyle = withAlpha('#a77bff', 0.22 * fade);
-                ctx.strokeStyle = withAlpha('#d9c7ff', fade);
+                ctx.fillStyle = withAlpha('#b48cff', 0.22 * fade);
+                ctx.strokeStyle = withAlpha('#e6d8ff', fade);
                 ctx.lineWidth = 3 * s;
                 ctx.beginPath();
                 ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+                halo(ctx, c.x, c.y - 10 * s, 50 * s * fade, '#b48cff', fade);
                 break;
             }
             case 'shot': {
-                const from = this.#buildingPoint(e.building, 1.25);
+                const from = this.#towerMuzzle(e.building);
                 const to = this.#heroPoint(state, e.hero);
-                ctx.strokeStyle = withAlpha('#ffb547', fade);
-                ctx.lineWidth = 2 * s;
-                ctx.beginPath();
-                ctx.moveTo(from.x, from.y);
-                ctx.lineTo(to.x, to.y);
-                ctx.stroke();
-                this.#halo(to.x, to.y, 12 * s, '#ffb547', fade);
+                this.#fireball(from, to, age, s, '#ffe08a', '#ff5a00');
                 break;
             }
             case 'bolt': {
-                let from = this.#buildingPoint(e.building, 1.25);
-                ctx.strokeStyle = withAlpha('#9ff4ff', fade);
-                ctx.lineWidth = 2.5 * s;
+                let from = this.#towerMuzzle(e.building);
+                ctx.save();
+                ctx.shadowColor = '#6fd3ff';
+                ctx.shadowBlur = 14 * s;
                 e.hits.forEach((hit, i) => {
                     const to = this.#heroPoint(state, hit.hero);
+                    ctx.strokeStyle = withAlpha('#6fd3ff', fade);
+                    ctx.lineWidth = 4 * s;
                     this.#zigzag(from, to, e.t + i, s);
-                    this.#halo(to.x, to.y, 14 * s, '#39e6ff', fade);
+                    ctx.strokeStyle = withAlpha('#ffffff', fade);
+                    ctx.lineWidth = 1.5 * s;
+                    this.#zigzag(from, to, e.t + i, s);
+                    halo(ctx, to.x, to.y, 16 * s, '#6fd3ff', fade);
                     from = to;
                 });
+                ctx.restore();
                 break;
             }
             case 'frost': {
+                const from = this.#towerMuzzle(e.building);
                 const c = toScreen(camera, e.x, e.y);
+                if (age < 0.4) this.#fireball(from, toScreen(camera, e.x, e.y, 20), age / 0.4, s, '#f1fbff', '#3ab0ff');
                 const { rx, ry } = groundEllipse(camera, e.radius * (0.6 + 0.4 * age));
-                ctx.fillStyle = withAlpha('#9fe3ff', 0.28 * fade);
-                ctx.strokeStyle = withAlpha('#dff6ff', fade);
+                ctx.fillStyle = withAlpha('#9fe3ff', 0.25 * fade);
+                ctx.strokeStyle = withAlpha('#f1fbff', fade);
                 ctx.lineWidth = 2 * s;
                 ctx.beginPath();
                 ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+                for (let i = 0; i < 6; i++) {        // ice shards
+                    const a = (i / 6) * Math.PI * 2 + e.t;
+                    const p = { x: c.x + Math.cos(a) * rx * 0.7, y: c.y + Math.sin(a) * ry * 0.7 };
+                    ctx.fillStyle = withAlpha('#e6f9ff', fade);
+                    path(ctx, [{ x: p.x, y: p.y - 9 * s * fade }, { x: p.x + 3 * s, y: p.y }, { x: p.x - 3 * s, y: p.y }]);
+                    ctx.fill();
+                }
                 break;
             }
             case 'trap': {
                 const c = toScreen(camera, e.x, e.y);
                 const { rx, ry } = groundEllipse(camera, e.radius * (0.3 + 0.7 * easeOut(age)));
-                ctx.fillStyle = withAlpha('#ff7a3d', 0.45 * fade);
+                ctx.fillStyle = withAlpha('#ff5a00', 0.45 * fade);
                 ctx.beginPath();
                 ctx.ellipse(c.x, c.y, rx, ry, 0, 0, Math.PI * 2);
                 ctx.fill();
-                this.#halo(c.x, c.y - 10 * s, 50 * s, '#ff7a3d', fade);
-                this.#label('RUNE TRAP', c.x, c.y - (40 + 30 * age) * s, '#ffb08a', fade);
+                flame(ctx, c, 38 * s * fade, time, e.building, '#ffe08a', '#ff3a00');
+                halo(ctx, c.x, c.y - 20 * s, 60 * s, '#ff5a00', fade);
+                this.#label('RUNE TRAP!', c.x, c.y - (56 + 30 * age) * s, '#ffcf8a', fade);
                 break;
             }
             case 'destroyed': {
                 const p = this.#buildingPoint(e.building, 0.5);
-                const glow = BUILDING_INFO[this.byId.get(e.building).type].glow;
-                this.#halo(p.x, p.y, (24 + 50 * easeOut(age)) * s, '#ffffff', fade);
-                this.#halo(p.x, p.y, (30 + 60 * easeOut(age)) * s, glow, fade);
-                ctx.fillStyle = withAlpha('#c8c2b8', fade);
-                for (let i = 0; i < 7; i++) {
-                    const a = (i / 7) * Math.PI * 2 + e.building;
-                    const r = (8 + 40 * easeOut(age)) * s;
-                    ctx.fillRect(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r * 0.6 - 20 * age * s, 3 * s, 3 * s);
+                halo(ctx, p.x, p.y, (30 + 60 * easeOut(age)) * s, '#fff1c9', fade);
+                halo(ctx, p.x, p.y, (40 + 80 * easeOut(age)) * s, '#ff5a00', fade);
+                ctx.fillStyle = withAlpha('#5b4a3c', fade);
+                for (let i = 0; i < 9; i++) {
+                    const a = (i / 9) * Math.PI * 2 + e.building;
+                    const r = (8 + 50 * easeOut(age)) * s;
+                    const lift = Math.sin(age * Math.PI) * 30 * s;
+                    ctx.fillRect(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r * 0.5 - lift, 4 * s, 4 * s);
                 }
                 break;
             }
             case 'hero_down': {
                 const h = state.heroes[e.hero];
-                const p = toScreen(camera, h.x, h.y, 20 + 30 * age);
-                ctx.strokeStyle = withAlpha('#c9d2e3', fade * 0.8);
-                ctx.lineWidth = 2 * s;
+                const p = toScreen(camera, h.x, h.y, 20 + 50 * age);
+                halo(ctx, p.x, p.y, 16 * s, HERO_INFO[h.cls].color, fade);
+                ctx.fillStyle = withAlpha('#f1eaff', fade);
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 9 * s, 0, Math.PI * 2);
-                ctx.stroke();
+                ctx.arc(p.x, p.y, 3 * s, 0, Math.PI * 2);
+                ctx.fill();
                 break;
             }
             default:
@@ -739,9 +549,55 @@ export class Renderer {
         }
     }
 
+    #fireball(from, to, k, s, core, glow) {
+        const { ctx } = this;
+        const lift = 40 * s;
+        const at = (q) => ({ x: from.x + (to.x - from.x) * q, y: from.y + (to.y - from.y) * q - Math.sin(q * Math.PI) * lift });
+        const p = at(Math.min(1, k * 1.6));
+        for (let i = 1; i <= 5; i++) {
+            const q = at(Math.max(0, Math.min(1, k * 1.6) - i * 0.05));
+            halo(ctx, q.x, q.y, (9 - i) * s, glow, 0.6 - i * 0.1);
+        }
+        halo(ctx, p.x, p.y, 16 * s, glow, 1);
+        ctx.fillStyle = core;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+        if (k * 1.6 >= 1) halo(ctx, to.x, to.y, 22 * s, glow, 1 - k);
+    }
+
+    #sparks(at, seed, age, s, colors) {
+        const { ctx } = this;
+        for (let i = 0; i < 7; i++) {
+            const a = hash(seed * 3 + i) * Math.PI * 2;
+            const r = (4 + 22 * easeOut(age)) * s * (0.6 + hash(seed + i));
+            ctx.fillStyle = withAlpha(colors[i % colors.length], 1 - age);
+            ctx.fillRect(at.x + Math.cos(a) * r, at.y + Math.sin(a) * r * 0.7 - age * 8 * s, 2.5 * s, 2.5 * s);
+        }
+    }
+
+    /** Embers drifting up over the whole field. */
+    #embers(time) {
+        const { ctx } = this;
+        const s = this.camera.scale;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < EMBERS; i++) {
+            const life = (time * (0.05 + hash(i) * 0.08) + hash(i + 5)) % 1;
+            const x = hash(i + 11) * this.w + Math.sin(time * 1.1 + i) * 16 * s * life;
+            const y = this.h * (1.02 - life * 1.05);
+            ctx.globalAlpha = (1 - life) * 0.75;
+            ctx.fillStyle = life < 0.5 ? '#ffb347' : '#ff5a00';
+            ctx.beginPath();
+            ctx.arc(x, y, (1.2 + (1 - life)) * Math.max(1, s), 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
     #zigzag(from, to, seed, s) {
         const { ctx } = this;
-        const steps = 5;
+        const steps = 6;
         const dx = to.x - from.x;
         const dy = to.y - from.y;
         const len = Math.hypot(dx, dy) || 1;
@@ -751,7 +607,7 @@ export class Renderer {
         ctx.moveTo(from.x, from.y);
         for (let i = 1; i < steps; i++) {
             const k = i / steps;
-            const jitter = Math.sin(seed * 12.9898 + i * 78.233) * 7 * s;
+            const jitter = Math.sin(seed * 12.9898 + i * 78.233) * 8 * s;
             ctx.lineTo(from.x + dx * k + nx * jitter, from.y + dy * k + ny * jitter);
         }
         ctx.lineTo(to.x, to.y);
@@ -761,18 +617,17 @@ export class Renderer {
     #label(text, x, y, color, alpha) {
         const { ctx } = this;
         const s = this.camera.scale;
-        ctx.globalAlpha = alpha;
-        ctx.font = `700 ${Math.max(10, 13 * s)}px system-ui, sans-serif`;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, alpha);
+        ctx.font = `700 ${Math.max(11, 14 * s)}px ${FONT}`;
         ctx.textAlign = 'center';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(10, 4, 0, 0.85)';
+        ctx.strokeText(text, x, y);
         ctx.fillStyle = color;
         ctx.fillText(text, x, y);
-        ctx.globalAlpha = 1;
+        ctx.restore();
     }
-}
-
-function tileColor(x, y, grid) {
-    if (x === 0 || y === 0 || x === grid - 1 || y === grid - 1) return '#0a0d15';
-    return (x + y) % 2 === 1 ? '#111725' : '#131a2a';
 }
 
 function pointInPolygon(p, polygon) {
@@ -787,31 +642,8 @@ function pointInPolygon(p, polygon) {
     return inside;
 }
 
-function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-}
-
 function easeOut(t) {
     return 1 - (1 - t) * (1 - t);
 }
 
-function hexToRgb(hex) {
-    const n = Number.parseInt(hex.slice(1), 16);
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-export function withAlpha(hex, alpha) {
-    const [r, g, b] = hexToRgb(hex);
-    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
-}
-
-export function shade(hex, factor) {
-    const [r, g, b] = hexToRgb(hex).map((c) => Math.round(c * factor));
-    return `rgb(${r}, ${g}, ${b})`;
-}
+export { withAlpha, shade } from './forgeArt.js';

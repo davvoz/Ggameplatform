@@ -146,7 +146,22 @@ shield is shown above the list. New columns on `hexforge_attacks`
 | `GET /api/hexforge/me/defenses/{id}/replay` | the rebuilt replay; 400 `unknown_raid` if it was not on you |
 | `POST /api/hexforge/me/defenses/{id}/revenge` | scout the raider; 400 `revenge_unavailable` |
 
-Phase 3 PvP is complete. Next: register the game on the platform (Fun
+Phase 3 PvP is complete.
+
+## Phase 4 (in progress): a real game
+
+Art direction chosen by the owner: **Forgia Infernale** (iron, basalt, molten
+metal, embers), over Neon Arcano and Ologramma Tattico. Step 1 (done): the
+city and the battles are drawn in it (`js/forgeArt.js`): a basalt plain, the core as a great forge with a molten pool, gothic
+towers with braziers (amber fire, copper horns with arcs, ice crystals), each
+producer with its material's glow, armoured heroes with a class-coloured ring
+at their feet, fireballs, lightning, frost bursts, explosions and embers.
+Towers now report their `range`: a selected tower shows its reach in My
+city, and the Attack setup shows every enemy tower's reach. The panel takes
+the same palette.
+
+Next: the interface (icons over text, big buttons, phone first), then a game
+that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 
 ## Layout
@@ -162,7 +177,8 @@ section, XP and daily quests).
 | `backend/app/games/hexforge_be/player_service.py` | Load/save a player's state with a version check; collect, move |
 | `backend/app/games/hexforge_be/models.py` | `hexforge_players`: one row per player, city/heroes/materials as JSON |
 | `js/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
-| `js/render.js` | Isometric canvas renderer, placeholder shapes |
+| `js/render.js` | Isometric canvas renderer: ground, picking, overlays, battle effects, embers |
+| `js/forgeArt.js` | The "Forgia Infernale" art: every building and hero drawn from shapes (no image files) |
 | `js/battle.js` | Setup panel, replay controls, report |
 
 ## Run

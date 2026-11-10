@@ -65,7 +65,7 @@ export class BattleMode {
 
     frame(time, dt) {
         if (this.view === 'setup') {
-            this.renderer.draw(null, { side: this.data ? this.setup.side : null, time });
+            this.renderer.draw(null, { side: this.data ? this.setup.side : null, time, ranges: 'all' });
             this.#tickSetup();
             return;
         }

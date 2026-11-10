@@ -330,6 +330,7 @@ def public_state(state: PlayerState, now: float) -> dict:
             }
         if defense.is_tower(b):
             item["aim"] = b.get("aim", DEFAULT_AIM)
+            item["range"] = spec.attack_range
         buildings.append(item)
     jobs = [{**job, "ready": job["ready_at"] <= now} for job in state.city["forge"]["jobs"]]
     return {

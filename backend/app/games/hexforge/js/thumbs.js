@@ -20,14 +20,15 @@ function paint(size, draw) {
     return canvas.toDataURL();
 }
 
-/** Picture of a building type, `px` CSS pixels square. */
-export function buildingThumb(type, px = 64) {
-    const key = `b:${type}:${px}`;
+/** Picture of a building type, `px` CSS pixels square; upgraded to `level` along `path` when given. */
+export function buildingThumb(type, px = 64, level = 1, path = null) {
+    const key = `b:${type}:${px}:${level}:${path ?? ''}`;
     if (!cache.has(key)) {
         const cells = SIZES[type] ?? (type === 'rune_trap' ? 1 : 2);
         const info = BUILDING_INFO[type];
-        // footprint is cells*64 wide and cells*32 tall, plus the silhouette above it
-        const scale = Math.min((px * 0.92) / (cells * 64), (px * 0.92) / (cells * 32 + info.pick + 6));
+        // footprint is cells*64 wide and cells*32 tall, plus the silhouette above it (and an upgrade's gear)
+        const extra = level > 1 ? 30 : 0;
+        const scale = Math.min((px * 0.92) / (cells * 64 + extra), (px * 0.92) / (cells * 32 + info.pick + 6 + extra));
         const height = (cells * 32 + info.pick) * scale;
         const camera = { scale, ox: px / 2, oy: (px - height) / 2 + info.pick * scale };
         cache.set(key, paint(px, (ctx) => {
@@ -35,7 +36,7 @@ export function buildingThumb(type, px = 64) {
                 trapIcon(ctx, px);
                 return;
             }
-            drawBuilding(ctx, camera, { id: 1, type, x: 0, y: 0, size: cells }, { time: 1.3, firing: 0, health: 1 });
+            drawBuilding(ctx, camera, { id: 1, type, x: 0, y: 0, size: cells, level, path }, { time: 1.3, firing: 0, health: 1 });
         }));
     }
     return cache.get(key);

@@ -134,6 +134,16 @@ export function evolveHero(heroId, form) {
     return post(`/me/heroes/${heroId}/evolve`, { form });
 }
 
+/** Let a hero go for a bonus: the state plus `gift`. */
+export function dismissHero(heroId) {
+    return post(`/me/heroes/${heroId}/dismiss`, {});
+}
+
+/** Send a building type to the forge to gain a level; `path` when it reaches level 3. */
+export function upgradeBuilding(buildingId, path = null) {
+    return post(`/me/buildings/${buildingId}/upgrade`, { path });
+}
+
 /** Send an Explorer on a mission: 'scout', 'expedition' or 'voyage'. */
 export function sendExplorer(heroId, mission) {
     return post(`/me/heroes/${heroId}/explore`, { mission });

@@ -11,6 +11,7 @@ and what it has made since is computed on read, up to CAP_HOURS of output.
 from __future__ import annotations
 
 from .catalog import BUILDINGS
+from .upgrades import cap_factor, rate_factor
 
 MATERIALS = ("rune_stone", "scrap", "mana", "chips")
 
@@ -68,14 +69,19 @@ def pending(building: dict, now: float) -> int:
     production = PRODUCTION.get(building["type"])
     if production is None:
         return 0
-    _, per_hour = production
+    per_hour = rate_of(building)
     hours = max(0.0, now - building["collected_at"]) / 3600
-    return int(min(hours, CAP_HOURS) * per_hour)
+    return int(min(hours, CAP_HOURS * cap_factor(building)) * per_hour)
 
 
-def capacity(building_type: str) -> int:
-    _, per_hour = PRODUCTION[building_type]
-    return CAP_HOURS * per_hour
+def rate_of(building: dict) -> float:
+    """Units per hour, upgrades included."""
+    return PRODUCTION[building["type"]][1] * rate_factor(building)
+
+
+def capacity(building_type: str, building: dict | None = None) -> int:
+    b = building or {"type": building_type}
+    return int(CAP_HOURS * cap_factor(b) * rate_of(b))
 
 
 def collect(city: dict, materials: dict, now: float, building_ids=None) -> dict:
@@ -92,11 +98,12 @@ def collect(city: dict, materials: dict, now: float, building_ids=None) -> dict:
         amount = pending(b, now)
         if amount <= 0:
             continue
-        material, per_hour = PRODUCTION[b["type"]]
+        material = PRODUCTION[b["type"]][0]
+        per_hour = rate_of(b)
         materials[material] = materials.get(material, 0) + amount
         gained[material] += amount
         # keep the fraction of a unit already made, unless the store was full
-        if now - b["collected_at"] >= CAP_HOURS * 3600:
+        if now - b["collected_at"] >= CAP_HOURS * cap_factor(b) * 3600:
             b["collected_at"] = now
         else:
             b["collected_at"] += amount * 3600 / per_hour

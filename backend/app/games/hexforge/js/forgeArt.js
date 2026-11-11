@@ -1,5 +1,6 @@
 import { toScreen } from './iso.js';
-import { FORM_INFO } from './labels.js';
+import { FORM_INFO, PATH_INFO } from './labels.js';
+import { drawUpgradeOver, drawUpgradeUnder } from './upgradeArt.js';
 
 /**
  * Hexforge art, "Forgia Infernale": iron, basalt and molten metal, drawn
@@ -131,7 +132,33 @@ const hash = (n) => {
  */
 export function drawBuilding(ctx, cam, b, look) {
     const painter = PAINTERS[b.type] ?? PAINTERS.rune_quarry;
+    const upgraded = b.level > 1 && b.type !== 'rune_trap';
+    if (upgraded) drawUpgradeUnder(ctx, cam, b, look.time ?? 0);
     painter(ctx, cam, b, look);
+    if (upgraded) drawUpgradeOver(ctx, cam, b, look.time ?? 0);
+    if (b.level > 1 && b.type !== 'wall' && b.type !== 'rune_trap') levelBadge(ctx, cam, b);
+}
+
+/** A small medal on the front corner: the level, ringed in the path's colour. */
+function levelBadge(ctx, cam, b) {
+    const s = cam.scale;
+    const p = toScreen(cam, b.x + b.size - 0.25, b.y + b.size - 0.25);
+    const r = 7.5 * s;
+    const ring = b.path ? PATH_INFO[b.path]?.accent ?? '#ffb347' : '#ffb347';
+    ctx.save();
+    ctx.fillStyle = '#140c07';
+    ctx.strokeStyle = ring;
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - r, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fff1d6';
+    ctx.font = `800 ${Math.round(10 * s)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(b.level), p.x, p.y - r + 0.5 * s);
+    ctx.restore();
 }
 
 const PAINTERS = {

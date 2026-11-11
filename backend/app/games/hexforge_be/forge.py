@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import economy, evolution, items, progress
+from . import economy, evolution, items, progress, upgrades
 from .catalog import BUILDINGS, HEROES
 from .errors import ActionError
 
@@ -91,6 +91,8 @@ def limit_of(city: dict, group: str) -> int:
     """How many of a group the player may own; heroes grow with the player's level."""
     if group == "heroes" and "progress" in city:
         return progress.hero_slots(city)
+    if group == "towers" and "progress" in city:
+        return progress.tower_slots(city)
     return LIMIT_GROUPS[group][1]
 
 
@@ -130,6 +132,9 @@ def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
     if job["recipe"] == "evolve":
         forge["jobs"].remove(job)
         return evolution.finish(job, heroes)
+    if job["recipe"] == "build_up":
+        forge["jobs"].remove(job)
+        return upgrades.finish(city, job)
     if job["recipe"] == "upgrade":
         forge["jobs"].remove(job)
         return items.finish_upgrade(city, job)
@@ -148,6 +153,44 @@ def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
     return {"item": recipe.item, "kind": recipe.kind, "count": recipe.yields, "seconds": recipe.seconds}
 
 
+# ── dismissing a hero for a bonus ──────────────────────────────────────
+SQUAD_MIN = 4
+# what a dismissed hero leaves behind, by tier (the Explorer has its own)
+DISMISS_GIFTS = {
+    "1": {"hourglass": 1, "salve": 1},
+    "2": {"golden_hourglass": 1, "hourglass": 1},
+    "3": {"golden_hourglass": 2, "flask": 1},
+    "explorer": {"hourglass": 1, "flask": 1},
+}
+
+
+def dismiss_gift(hero: dict) -> dict:
+    return DISMISS_GIFTS["explorer" if hero["cls"] == "explorer" else str(hero.get("tier", 1))]
+
+
+def dismiss_hero(city: dict, heroes: list, hero_id: int) -> dict:
+    """Let a hero go to free its slot; its items go back to the armoury. Returns the bonuses given."""
+    hero = next((h for h in heroes if h["id"] == hero_id), None)
+    if hero is None:
+        raise ActionError("unknown_hero")
+    if hero.get("evolving"):
+        raise ActionError("hero_evolving")
+    if hero.get("mission"):
+        raise ActionError("on_mission")
+    fighters = [h for h in heroes if h["cls"] != "explorer"]
+    if hero["cls"] != "explorer" and len(fighters) <= SQUAD_MIN:
+        raise ActionError("last_squad")
+    gift = dismiss_gift(hero)
+    for item in city.get("items", []):
+        if item.get("hero") == hero_id:
+            item["hero"] = None
+    heroes.remove(hero)
+    bonuses = city.setdefault("bonuses", {})
+    for bonus, n in gift.items():
+        bonuses[bonus] = bonuses.get(bonus, 0) + n
+    return gift
+
+
 # ── storage and dismantling ────────────────────────────────────────────
 def place(city: dict, building_type: str, x: int, y: int, now: float) -> dict:
     if city["storage"].get(building_type, 0) <= 0:
@@ -160,6 +203,7 @@ def place(city: dict, building_type: str, x: int, y: int, now: float) -> dict:
         building["collected_at"] = now
     city["next_id"] += 1
     city["buildings"].append(building)
+    upgrades.stamp(city)                    # it arrives at its type's level
     city["storage"][building_type] -= 1
     if city["storage"][building_type] == 0:
         del city["storage"][building_type]

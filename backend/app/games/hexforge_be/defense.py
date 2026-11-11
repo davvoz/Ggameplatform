@@ -16,6 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import product
 
+from .upgrades import building_spec
 from .catalog import BUILDINGS, PRIORITIES, SIDES, TACTICS
 from .errors import ActionError
 from .simulation import AIMS, DEFAULT_AIM, simulate
@@ -45,9 +46,13 @@ def battle_city(city: dict) -> dict:
     """A saved city in the shape the simulation reads."""
     buildings = []
     for b in city["buildings"]:
-        spec = BUILDINGS[b["type"]]
+        spec = building_spec(b)
         item = {"id": b["id"], "type": b["type"], "x": b["x"], "y": b["y"], "size": spec.size, "hp": spec.hp}
-        if spec.category == "tower":
+        if b.get("level", 1) > 1:
+            item["level"] = b["level"]
+            if b.get("path"):
+                item["path"] = b["path"]
+        if spec.category == "tower" or spec.attack_range:
             item["aim"] = b.get("aim", DEFAULT_AIM)
             item["range"] = spec.attack_range
         buildings.append(item)

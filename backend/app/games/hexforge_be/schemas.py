@@ -47,6 +47,11 @@ class EvolveRequest(BaseModel):
     form: Optional[Literal["bastion", "warlord", "phantom", "reaper", "archon", "arcanist"]] = None
 
 
+class UpgradeRequest(BaseModel):
+    """The path to take when the type reaches level 3 (ignored otherwise)."""
+    path: Optional[str] = None
+
+
 class ExploreRequest(BaseModel):
     """How long the Explorer goes away: 1 h, 4 h or 8 h."""
     mission: Literal["scout", "expedition", "voyage"]

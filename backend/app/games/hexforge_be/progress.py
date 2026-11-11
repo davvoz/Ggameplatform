@@ -13,6 +13,7 @@ were handed out, so a gift is never given twice.
 from __future__ import annotations
 
 BASE_HERO_SLOTS = 7            # + level: 8 hero slots at level 1
+BASE_TOWER_SLOTS = 7           # + level: 8 towers at level 1, one more each level
 FORGE_SLOT_LEVELS = {5: 3}     # level -> forge slots from then on
 
 XP_COLLECT_UNITS = 25          # 1 XP per this many units collected
@@ -39,6 +40,10 @@ def level_of(xp: int) -> tuple[int, int]:
 
 def hero_slots(city: dict) -> int:
     return BASE_HERO_SLOTS + level_of(city["progress"]["xp"])[0]
+
+
+def tower_slots(city: dict) -> int:
+    return BASE_TOWER_SLOTS + level_of(city["progress"]["xp"])[0]
 
 
 def level_gift(level: int) -> dict:
@@ -76,6 +81,7 @@ def gain(city: dict, materials: dict, xp: int) -> list[dict]:
         if slots and city.get("forge", {}).get("slots", 0) < slots:
             city["forge"]["slots"] = slots
         reached.append({"level": new, "gift": gift, "hero_slots": BASE_HERO_SLOTS + new,
+                        "tower_slots": BASE_TOWER_SLOTS + new,
                         "forge_slots": slots})
     return reached
 
@@ -85,6 +91,7 @@ def public_progress(city: dict) -> dict:
     level, into = level_of(xp)
     return {"level": level, "xp": xp, "into_level": into, "for_next": xp_for_next(level),
             "hero_slots": BASE_HERO_SLOTS + level,
+            "tower_slots": BASE_TOWER_SLOTS + level,
             # what reaching this level gave, for the client's celebration
             "gift": level_gift(level) if level > 1 else {},
             "unlocked_forge_slots": FORGE_SLOT_LEVELS.get(level),

@@ -373,3 +373,39 @@ nothing else.
 State: a hero may carry `mission: {kind, started_at, ready_at, seed}`;
 `missions` lists the trips. A squad with an Explorer is refused with
 `explorer_cannot_fight`.
+
+### Phase 5, step 6: building upgrades (`hexforge_be/upgrades.py`)
+
+Tap a building, then **Upgrade**. A level counts for the whole type (every
+Rune Tower, and the ones forged later): with up to 60 walls, one at a time
+would be a chore. Levels 1-5, each +10 % health, damage and production; no
+type may pass the **Core's** level. At **level 3** the player picks one of two
+paths, kept for levels 4-5: Rune Tower Sniper/Gatling, Lightning
+Storm/Overload, Frost Glacier/Blizzard, Wall Bulwark/Spiked (hurts the
+striker), Trap Inferno/Snare (holds heroes), producers Rich Vein/Deep Store,
+Vault Strongbox (keeps more safe)/Armored, Core Citadel/Beacon (shoots). An
+upgrade is a forge job (`build_up`): cost × (level - 1), 15 min × (level - 1),
+the Core twice as long; the buildings keep working meanwhile. Levels sit in
+`city["upgrades"]` and are stamped on each building (`level`, `path`), which
+the simulation, the economy and the loot read. Upgraded buildings show a
+level medal on the map.
+
+| Route | Effect |
+| --- | --- |
+| `POST /api/hexforge/me/buildings/{id}/upgrade` | `{path}` at level 3; 400 `core_too_low`, `unknown_path`, `max_level`, `already_upgrading`, `forge_busy`, `not_enough_materials` |
+
+**Towers grow with the player:** 8 at level 1, one more each level
+(`progress.tower_slots`). **Dismissing a hero** (hero card, two taps) frees
+its slot for bonuses: tier 1 Hourglass + Salve, tier 2 Golden hourglass +
+Hourglass, tier 3 two Golden hourglasses + Flask, Explorer Hourglass + Flask.
+Its items go back to the armoury; refused while it evolves, while an Explorer
+is away, or when it would leave fewer than 4 fighters (`last_squad`).
+`POST /api/hexforge/me/heroes/{id}/dismiss` returns the state plus `gift`.
+The gear picker lists free items first and says plainly when an item would be
+taken from another hero.
+
+**Tower reach** counts from the tower's edge, like a hero's reach to a
+building (it used to count from the centre, so mages hit most towers from
+outside their reach). Base reach: Rune 4.5, Lightning 3.5, Frost 3.0 cells;
++0.25 per upgrade level. Outpost 4 lost a lightning tower to keep the
+difficulty curve (wins out of 36 plans: 36, 27, 25, 16, 6).

@@ -70,7 +70,7 @@ OUTPOSTS: dict[int, Outpost] = {o.id: o for o in (
     )),
     Outpost(4, "Storm Spire", 4, _treasury(3.0), (
         ("core", 7, 7), ("lightning_tower", 10, 10), ("rune_tower", 6, 10), ("frost_tower", 10, 6),
-        ("lightning_tower", 2, 2), ("lightning_tower", 13, 13), ("rune_tower", 13, 2), ("frost_tower", 2, 13),
+        ("rune_quarry", 2, 2), ("lightning_tower", 13, 13), ("rune_tower", 13, 2), ("frost_tower", 2, 13),
         (TRAP, 8, 3), (TRAP, 3, 8), (TRAP, 14, 8),
         ("data_node", 7, 14), ("mana_well", 7, 1),
         *_ring(5, 12),

@@ -68,5 +68,35 @@ class ExplorerTest(unittest.TestCase):
         self.assertEqual(forge.owned(city, heroes, forge.LIMIT_GROUPS["heroes"][0]), len(heroes))
 
 
+class DismissTest(unittest.TestCase):
+    def test_a_dismissed_hero_frees_its_slot_for_a_bonus(self):
+        city, heroes, _ = setup()
+        heroes.append({"id": 10, "cls": "guardian", "form": "bastion", "tier": 2})
+        city["bonuses"] = {}
+        item = items.add(city, "ward_sigil")
+        items.equip(city, heroes, 10, item["id"])
+        gift = forge.dismiss_hero(city, heroes, 10)
+        self.assertEqual(gift, forge.DISMISS_GIFTS["2"])
+        self.assertEqual(city["bonuses"]["golden_hourglass"], 1)
+        self.assertIsNone(item["hero"])
+        self.assertNotIn(10, [h["id"] for h in heroes])
+
+    def test_four_fighters_stay_and_away_explorers_cannot_go(self):
+        city, heroes, _ = setup()
+        with self.assertRaises(ActionError) as caught:
+            forge.dismiss_hero(city, heroes, 1)
+        self.assertEqual(caught.exception.code, "last_squad")
+        explorers.start(city, heroes, 9, "scout", T0)
+        with self.assertRaises(ActionError) as caught:
+            forge.dismiss_hero(city, heroes, 9)
+        self.assertEqual(caught.exception.code, "on_mission")
+
+    def test_the_tower_limit_grows_with_the_level(self):
+        city, heroes, _ = setup()
+        before = forge.limit_of(city, "towers")
+        city["progress"]["xp"] = 100            # level 2
+        self.assertEqual(forge.limit_of(city, "towers"), before + 1)
+
+
 if __name__ == "__main__":
     unittest.main()

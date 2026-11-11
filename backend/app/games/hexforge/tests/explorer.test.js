@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { tripSeconds } from '../js/heroPanel.js';
+import { giftText, tripSeconds } from '../js/heroPanel.js';
+
+test('what a dismissed hero leaves, in words', () => {
+    assert.equal(giftText({ golden_hourglass: 2, flask: 1 }), 'Golden hourglass ×2 · Energy flask');
+});
 import { formatAway, heroStatus, tripProgress } from '../js/heroTiles.js';
 
 test('a trip bar fills from start to return', () => {

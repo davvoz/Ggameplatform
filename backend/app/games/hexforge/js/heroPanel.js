@@ -1,7 +1,7 @@
 import { costChips, formatDuration, itemEffect } from './forgePanel.js';
 import { stars, tripBar, tripLeft } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
-import { FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES } from './labels.js';
+import { BONUS_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES } from './labels.js';
 import { heroPortrait, heroThumb, itemPicture, thumbImg } from './thumbs.js';
 
 /**
@@ -105,7 +105,30 @@ function el(tag, className, text) {
  * far (tier 1 only); `onPick(form)` changes it, `onEvolve(form)` sends the
  * hero to the forge.
  */
-export function renderHeroCard(container, {
+export function renderHeroCard(container, data, actions) {
+    renderHeroBody(container, data, actions);
+    if (data.dismiss) container.append(dismissBox(data.dismiss, actions.onDismiss ?? (() => {})));
+}
+
+/** "Hourglass ×1 · Salve ×1" */
+export function giftText(gift) {
+    return Object.entries(gift).map(([b, n]) => `${BONUS_INFO[b].name}${n > 1 ? ` ×${n}` : ''}`).join(' · ');
+}
+
+/** Letting the hero go: what it leaves, why not now, and a second tap to be sure. */
+function dismissBox({ gift, blocker, confirming }, onDismiss) {
+    const box = el('div', 'dismiss');
+    const text = el('span', 'dismiss-text');
+    text.append(el('b', '', 'Free this slot'), el('small', '', blocker ?? `The hero leaves for good and gives you: ${giftText(gift)}. Its items go back to the armoury.`));
+    const button = withIcon(el('button', `button${confirming ? ' danger' : ''}`), 'hammer', confirming ? 'Sure? Tap again' : 'Dismiss');
+    button.type = 'button';
+    button.disabled = Boolean(blocker);
+    button.addEventListener('click', () => onDismiss());
+    box.append(text, button);
+    return box;
+}
+
+function renderHeroBody(container, {
     hero, name, table, materials, freeSlots, serverNow, job, picked, stats: now = null, gear = null, itemTable = null,
     missions = null,
 }, { onPick, onEvolve, onGear = () => {}, onExplore = () => {}, onReturn = () => {} }) {

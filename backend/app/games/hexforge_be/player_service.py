@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import defense, economy, evolution, explorers, forge, items, outposts, progress, pvp, rewards
+from . import defense, economy, evolution, explorers, forge, items, upgrades, outposts, progress, pvp, rewards
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -191,7 +191,7 @@ class PlayerService:
             return None
         return pvp.public_rival(self.names([rival_id])[rival_id], defense.battle_city(rival.city),
                                 rival.materials, pvp.attackable(rival.city, now),
-                                rival.trophies, state.trophies)
+                                rival.trophies, state.trophies, upgrades.vault_protects(rival.city))
 
     def attack_rival(self, user_id: str, hero_ids: list, side: str, priority: str, tactic: str,
                      now: float) -> tuple[PlayerState, dict]:
@@ -333,6 +333,20 @@ class PlayerService:
         self.save(state, now)
         return state
 
+    def dismiss_hero(self, user_id: str, hero_id: int, now: float) -> tuple[PlayerState, dict]:
+        """Let a hero go for a bonus."""
+        state = self.load(user_id, now)
+        gift = forge.dismiss_hero(state.city, state.heroes, hero_id)
+        self.save(state, now)
+        return state, gift
+
+    def upgrade_building(self, user_id: str, building_id: int, path, now: float) -> PlayerState:
+        """Send a building type to the forge to gain a level."""
+        state = self.load(user_id, now)
+        upgrades.start(state.city, state.materials, building_id, path, now)
+        self.save(state, now)
+        return state
+
     def explore(self, user_id: str, hero_id: int, mission: str, now: float) -> PlayerState:
         """Send an Explorer on a mission."""
         state = self.load(user_id, now)
@@ -394,6 +408,7 @@ def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
     progress.ensure_progress(state.city)
     rewards.ensure_rewards(state.city, row.user_id, now)
     items.ensure_items(state.city)
+    upgrades.ensure_upgrades(state.city)
     return state
 
 
@@ -421,17 +436,21 @@ def public_state(state: PlayerState, now: float) -> dict:
     """What the client sees: buildings with size, HP and what they have made."""
     buildings = []
     for b in state.city["buildings"]:
-        spec = BUILDINGS[b["type"]]
+        spec = upgrades.building_spec(b)
         item = {"id": b["id"], "type": b["type"], "x": b["x"], "y": b["y"],
-                "size": spec.size, "hp": spec.hp}
+                "size": spec.size, "hp": spec.hp, "level": b.get("level", 1)}
+        if b.get("path"):
+            item["path"] = b["path"]
         if b["type"] in economy.PRODUCTION:
-            material, per_hour = economy.PRODUCTION[b["type"]]
+            material = economy.PRODUCTION[b["type"]][0]
             item["production"] = {
                 "material": material,
-                "per_hour": per_hour,
+                "per_hour": round(economy.rate_of(b)),
                 "pending": economy.pending(b, now),
-                "capacity": economy.capacity(b["type"]),
+                "capacity": economy.capacity(b["type"], b),
             }
+        if spec.attack_range and not defense.is_tower(b):
+            item["range"] = spec.attack_range          # a beacon core
         if defense.is_tower(b):
             item["aim"] = b.get("aim", DEFAULT_AIM)
             item["range"] = spec.attack_range
@@ -451,6 +470,8 @@ def public_state(state: PlayerState, now: float) -> dict:
         "items": state.city["items"],
         "item_table": items.public_items(),
         "missions": explorers.public_missions(),
+        "dismiss_gifts": forge.DISMISS_GIFTS,
+        "upgrades": upgrades.public_upgrades(state.city),
         "hero_stats": {str(h["id"]): _hero_stats(state.city, h) for h in state.heroes},
         "rewards": {**rewards.public_rewards(state.city, now),
                     "ready": rewards.ready_count(state.city, now)},

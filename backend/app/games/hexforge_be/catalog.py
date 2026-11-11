@@ -58,18 +58,19 @@ class BuildingType:
     slow_factor: float = 1.0
     slow_seconds: float = 0.0
     trigger_radius: float = 0.0
+    thorns: int = 0          # spiked walls: damage back to the hero striking it
 
 
 BUILDINGS: dict[str, BuildingType] = {
     CORE: BuildingType(size=3, hp=3200, category="core"),
     WALL: BuildingType(size=1, hp=650, category="wall"),
     "rune_tower": BuildingType(size=2, hp=950, category="tower",
-                               attack_range=5.0, damage=70, cooldown=1.0),
+                               attack_range=4.5, damage=70, cooldown=1.0),
     "lightning_tower": BuildingType(size=2, hp=850, category="tower",
-                                    attack_range=4.0, damage=55, cooldown=1.5,
+                                    attack_range=3.5, damage=55, cooldown=1.5,
                                     chain_targets=2, chain_radius=2.5),
     "frost_tower": BuildingType(size=2, hp=900, category="tower",
-                                attack_range=3.5, damage=30, cooldown=1.2,
+                                attack_range=3.0, damage=30, cooldown=1.2,
                                 splash_radius=1.5, slow_factor=0.5, slow_seconds=2.0),
     TRAP: BuildingType(size=1, hp=1, category="trap",
                        damage=380, splash_radius=1.6, trigger_radius=0.8),

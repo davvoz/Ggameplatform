@@ -4,7 +4,7 @@ import { CityMode } from './city.js';
 import { icon } from './icons.js';
 import { RankingPanel } from './ranking.js';
 import { Renderer } from './render.js';
-import { closeSheet, isSheetOpen, wireSheets } from './sheets.js';
+import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './sheets.js';
 
 /**
  * App shell: the two full-screen modes (my city, attack), the ranking sheet,
@@ -139,7 +139,7 @@ function wireSound() {
     });
     document.addEventListener('click', (event) => {
         const target = event.target.closest?.('button');
-        if (target && target.id !== 'btn-sound' && !target.disabled && !target.closest('.sheet [data-close]')) play('click');
+        if (target && target.id !== 'btn-sound' && !target.disabled && !sheetJustSounded()) play('click');
     });
 }
 

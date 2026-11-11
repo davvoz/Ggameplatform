@@ -50,6 +50,7 @@ export function itemThumb(item, px) {
 
 /** A forge job's name: what it makes, or the hero evolving ("Bastion ★★"). */
 export function jobName(job) {
+    if (job.recipe === 'build_up') return `${BUILDING_INFO[job.type].name} Lv ${job.level}`;
     if (job.recipe === 'upgrade') return `${ITEM_INFO[job.type].name} Lv ${job.level}`;
     if (job.recipe !== 'evolve') return itemName(job.recipe);
     return `${FORM_INFO[job.form].name} ${'★'.repeat(job.tier)}`;
@@ -57,6 +58,7 @@ export function jobName(job) {
 
 /** A forge job's picture. */
 export function jobThumb(job, px) {
+    if (job.recipe === 'build_up') return buildingThumb(job.type, px);
     if (job.recipe === 'upgrade') return itemPicture(job.type, px);
     if (job.recipe !== 'evolve') return itemThumb(job.recipe, px);
     return heroThumb(FORM_INFO[job.form].cls, px, job.form, job.tier);

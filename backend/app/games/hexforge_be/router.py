@@ -28,6 +28,8 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/rewards/chest          the weekly chest
   POST /api/hexforge/me/bonuses/use            spend a bonus on a job, a hero or the energy
   POST /api/hexforge/me/heroes/{id}/evolve     send a hero to the forge to evolve or ascend
+  POST /api/hexforge/me/buildings/{id}/upgrade send a building type to the forge to gain a level
+  POST /api/hexforge/me/heroes/{id}/dismiss    let a hero go for a bonus, freeing its slot
   POST /api/hexforge/me/heroes/{id}/explore    send an Explorer on a mission
   POST /api/hexforge/me/heroes/{id}/return     bring an Explorer home with its loot
   POST /api/hexforge/me/heroes/{id}/equip      give a hero an item from the armoury
@@ -53,7 +55,7 @@ from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
 from .schemas import (
-    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest,
+    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest, UpgradeRequest,
     MoveRequest, PlaceRequest,
 )
 from .simulation import simulate
@@ -304,6 +306,24 @@ def evolve_hero(hero_id: int, body: EvolveRequest, user_id: CurrentUserId, db: D
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return public_state(state, now)
+
+
+@router.post("/me/buildings/{building_id}/upgrade")
+def upgrade_building(building_id: int, body: UpgradeRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).upgrade_building(user_id, building_id, body.path, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/heroes/{hero_id}/dismiss")
+def dismiss_hero(hero_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, gift = PlayerService(db).dismiss_hero(user_id, hero_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {**public_state(state, now), "gift": gift}
 
 
 @router.post("/me/heroes/{hero_id}/explore")

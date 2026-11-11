@@ -29,6 +29,7 @@ from .catalog import BUILDINGS, TRAP
 from .economy import MATERIALS
 from .errors import ActionError
 from .simulation import LOOT_WIN
+from .upgrades import vault_protects
 
 ARENA_OUTPOST = 1
 SHIELD_SECONDS = 3 * 3600
@@ -63,12 +64,12 @@ def attackable(city: dict, now: float) -> bool:
     return shield_until(city) <= now and has_tower
 
 
-def lootable(materials: dict) -> dict:
-    return {m: max(0, materials.get(m, 0) - VAULT_PROTECTS) for m in MATERIALS}
+def lootable(materials: dict, protects: int = VAULT_PROTECTS) -> dict:
+    return {m: max(0, materials.get(m, 0) - protects) for m in MATERIALS}
 
 
-def loot_for(materials: dict, percent: int) -> dict:
-    return {m: int(amount * percent / 100) for m, amount in lootable(materials).items()}
+def loot_for(materials: dict, percent: int, protects: int = VAULT_PROTECTS) -> dict:
+    return {m: int(amount * percent / 100) for m, amount in lootable(materials, protects).items()}
 
 
 def choose_rival(my_city: dict, my_trophies: int, candidates: list, now: float,
@@ -92,7 +93,7 @@ def choose_rival(my_city: dict, my_trophies: int, candidates: list, now: float,
 
 
 def public_rival(name: str, battle_city: dict, materials: dict, available: bool,
-                 trophies: int = 0, my_trophies: int = 0) -> dict:
+                 trophies: int = 0, my_trophies: int = 0, protects: int = VAULT_PROTECTS) -> dict:
     """What the attacker may see: the layout without tower aims or traps, and the loot at stake."""
     buildings = [{k: v for k, v in b.items() if k != "aim"}
                  for b in battle_city["buildings"] if b["type"] != TRAP]
@@ -104,7 +105,7 @@ def public_rival(name: str, battle_city: dict, materials: dict, available: bool,
         "trophies": trophies,
         "league": league(trophies),
         "stakes": trophy_stakes(my_trophies, trophies),
-        "loot_on_win": loot_for(materials, LOOT_WIN),
+        "loot_on_win": loot_for(materials, LOOT_WIN, protects),
     }
 
 
@@ -112,7 +113,7 @@ def settle_attack(attacker_city: dict, defender_city: dict, attacker_materials: 
                   defender_materials: dict, summary: dict, now: float) -> dict:
     """Move the loot, raise the defender's shield, drop the attacker's; returns the loot."""
     if summary["victory"]:
-        loot = loot_for(defender_materials, summary["loot_percent"])
+        loot = loot_for(defender_materials, summary["loot_percent"], vault_protects(defender_city))
     else:
         loot = dict.fromkeys(MATERIALS, 0)
     for m, amount in loot.items():

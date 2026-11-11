@@ -1,7 +1,7 @@
 import {
     Refused, SignInRequired, claimJob, claimLoginReward, claimTaskReward, claimWeeklyChest, collect,
     dismantleBuilding, fetchMyState, fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding,
-    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn,
+    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn, upgradeBuilding, dismissHero,
     upgradeItem,
 } from './api.js';
 import { openBonusPicker, openItemPicker } from './bonusPicker.js';
@@ -13,13 +13,15 @@ import {
     formatCountdown, itemEffect, itemName, itemThumb, jobName, renderArmoury, renderForgeSlots, renderRecipes,
     renderRoster, renderStorage,
 } from './forgePanel.js';
-import { fittingItems, renderHeroCard } from './heroPanel.js';
+import { fittingItems, giftText, renderHeroCard } from './heroPanel.js';
+import { renderUpgradeCard, upgradeBonuses } from './upgradePanel.js';
 import { evolveReady, heroNames, updateTrips } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
 import { Compass } from './compass.js';
 import { regionAround } from './iso.js';
 import {
     AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, FORM_INFO, HERO_INFO, ITEM_INFO, MATERIAL_INFO, MISSION_INFO,
+    PATH_INFO,
 } from './labels.js';
 import { LEAGUE_COLORS } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
@@ -27,7 +29,7 @@ import {
     formatLong, medal, renderBonuses, renderCalendar, renderChest, renderTasks, rewardChips, usableBonuses,
 } from './rewardsPanel.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
-import { buildingThumb, heroThumb, itemPicture } from './thumbs.js';
+import { buildingThumb, heroPortrait, heroThumb, itemPicture } from './thumbs.js';
 
 /**
  * "My city": the player's saved city, full screen.
@@ -84,6 +86,10 @@ const MESSAGES = {
     unknown_hero: 'That hero is gone.',
     unknown_item: 'That item is gone.',
     on_mission: 'That Explorer is already away.',
+    core_too_low: 'Upgrade the Core first.',
+    last_squad: 'Keep at least 4 fighters for a squad.',
+    cannot_upgrade: 'That cannot be upgraded.',
+    unknown_path: 'Pick a path first.',
     not_an_explorer: 'Only an Explorer goes on missions.',
     cannot_evolve: 'The Explorer does not evolve.',
     wrong_class: 'That weapon is for another class.',
@@ -217,6 +223,7 @@ export class CityMode {
         $('btn-deselect').addEventListener('click', () => this.#select(null));
         $('btn-cancel-place').addEventListener('click', () => this.#setMode('idle'));
         $('btn-rotate').addEventListener('click', () => this.#turn());
+        $('btn-upgrade').addEventListener('click', () => this.#openUpgrade());
         for (const tab of document.querySelectorAll('#forge-tabs [data-kind]')) {
             tab.addEventListener('click', () => {
                 this.forgeKind = tab.dataset.kind;
@@ -244,11 +251,11 @@ export class CityMode {
         this.#reveal();
     }
 
-    #openForge() {
+    #openForge(silent = false) {
         if (!this.state) return;
         this.#select(null);
         this.#renderForge();
-        openSheet('sheet-forge');
+        openSheet('sheet-forge', null, { silent });
     }
 
     // ── hero card ──────────────────────────────────────────────────────
@@ -256,12 +263,13 @@ export class CityMode {
         if (!this.state) return;
         this.heroId = heroId;
         this.heroForm = null;
+        this.dismissing = false;
         openSheet('sheet-hero', () => {
             this.heroId = null;
             this.forgeKind = 'hero';
             // back to the forge's heroes, unless another sheet took over or the city was left
             setTimeout(() => {
-                if (!isSheetOpen() && !$('hud-city').hidden) this.#openForge();
+                if (!isSheetOpen() && !$('hud-city').hidden) this.#openForge(true);   // the close already sounded
             }, 0);
         });
         this.#renderHero();
@@ -289,7 +297,20 @@ export class CityMode {
             } : null,
             itemTable: this.state.item_table,
             missions: this.state.missions ?? null,
+            dismiss: this.state.dismiss_gifts ? {
+                gift: this.state.dismiss_gifts[hero.cls === 'explorer' ? 'explorer' : String(hero.tier ?? 1)],
+                blocker: dismissBlocker(hero, this.state.heroes), confirming: this.dismissing,
+            } : null,
         }, {
+            onDismiss: () => {
+                if (!this.dismissing) {
+                    this.dismissing = true;
+                    play('click');
+                    this.#renderHero();
+                    return;
+                }
+                void this.#dismiss(hero, name);
+            },
             onExplore: (kind) => void this.#explore(hero, name, kind),
             onReturn: () => void this.#explorerBack(name, hero),
             onGear: (slot) => this.#pickGear(hero, name, slot, carried.find((i) => slotOf(i) === slot) ?? null),
@@ -306,23 +327,30 @@ export class CityMode {
     #pickGear(hero, name, slot, current) {
         const names = heroNames(this.state.heroes);
         const table = this.state.item_table;
+        // free items first; one carried by another hero says so plainly, since taking it leaves them without
         const options = fittingItems(this.state.items, table, hero.cls, slot)
             .filter((i) => i.id !== current?.id)
-            .sort((a, b) => b.level - a.level)
+            .sort((a, b) => Number(Boolean(a.hero)) - Number(Boolean(b.hero)) || b.level - a.level)
             .map((i) => ({
                 id: i.id,
                 picture: itemPicture(i.type, 40),
-                title: `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
-                line: itemEffect(table, i) + (i.hero ? ` · now with ${names.get(i.hero)}` : ''),
+                title: i.hero ? `Take from ${names.get(i.hero)}: ${ITEM_INFO[i.type].name} · Lv ${i.level}`
+                    : `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
+                line: i.hero ? `${itemEffect(table, i)} · ${names.get(i.hero)} will be left without it`
+                    : `${itemEffect(table, i)} · in the armoury`,
                 accent: ITEM_INFO[i.type].color,
             }));
+        const taken = (id) => {
+            const item = this.state.items.find((i) => i.id === id);
+            return item?.hero ? `Equipped. Taken from ${names.get(item.hero)}.` : 'Equipped.';
+        };
         const what = slot === 'weapon' ? `weapon for a ${HERO_INFO[hero.cls].name}` : 'spell';
         openItemPicker({
             title: `${name}: ${slot}`,
             line: current ? `Now: ${ITEM_INFO[current.type].name} · Lv ${current.level}` : '',
             options,
             empty: `No other ${what} yet: forge one in the forge's Items tab.`,
-            onPick: (id) => void this.#gear(() => equipItem(hero.id, id), 'Equipped.'),
+            onPick: (id) => void this.#gear(() => equipItem(hero.id, id), taken(id)),
             onClear: current ? () => void this.#gear(() => unequipItem(current.id), 'Back in the armoury.') : null,
         });
     }
@@ -341,6 +369,66 @@ export class CityMode {
             this.#apply(await upgradeItem(itemId));
             play('forge');
             if (item) toast(`${ITEM_INFO[item.type].name} went into the forge to reach level ${item.level + 1}.`);
+        });
+    }
+
+    async #dismiss(hero, name) {
+        let shown = null;
+        await this.#run(async () => {
+            const result = await dismissHero(hero.id);
+            shown = this.#queuePop(() => {
+                play('claim');
+                return rewardPop({
+                    src: heroPortrait(hero, 150), title: `${name} has left`,
+                    line: `Slot free · ${giftText(result.gift)}`, color: HERO_INFO[hero.cls].color,
+                });
+            });
+            this.#apply(result);
+        });
+        if (shown) {
+            closeSheet();
+            await shown;
+        }
+    }
+
+    // ── building upgrades ──────────────────────────────────────────────
+    #openUpgrade() {
+        const b = this.#building(this.selectedId);
+        if (!b || !this.state.upgrades) return;
+        this.upgradeType = b.type;
+        this.upgradeBuildingId = b.id;
+        this.upgradePath = null;
+        this.#renderUpgrade();
+        openSheet('sheet-upgrade');
+    }
+
+    #renderUpgrade() {
+        const type = this.upgradeType;
+        if (!type || !this.state?.upgrades) return;
+        $('upgrade-title').textContent = `Upgrade: ${BUILDING_INFO[type].name}`;
+        const job = this.state.forge.jobs.find((j) => j.recipe === 'build_up' && j.type === type) ?? null;
+        renderUpgradeCard($('upgrade-card'), {
+            type, upgrades: this.state.upgrades, materials: this.state.materials,
+            freeSlots: this.state.forge.slots - this.state.forge.jobs.length, serverNow: this.#serverNow(),
+            job, picked: this.upgradePath, count: this.state.city.buildings.filter((b) => b.type === type).length,
+        }, {
+            onPick: (path) => {
+                this.upgradePath = path;
+                play('click');
+                this.#renderUpgrade();
+            },
+            onUpgrade: (path) => void this.#upgradeBuilding(path),
+        });
+    }
+
+    async #upgradeBuilding(path) {
+        const type = this.upgradeType;
+        await this.#run(async () => {
+            this.#apply(await upgradeBuilding(this.upgradeBuildingId, path));
+            play('forge');
+            const level = this.state.forge.jobs.find((j) => j.recipe === 'build_up' && j.type === type)?.level;
+            toast(`${BUILDING_INFO[type].name} went into the forge to reach level ${level}.`);
+            this.#renderUpgrade();
         });
     }
 
@@ -563,13 +651,21 @@ export class CityMode {
         await this.#run(async () => {
             const result = await claimJob(jobId);
             claimed = result.claimed;
+            if (claimed.kind === 'build_up') {
+                // an upgrade is already on the map: no card to close, no building to place, just say so
+                play('levelup');
+                const path = claimed.path ? ` · ${PATH_INFO[claimed.path].name}` : '';
+                toast(`Every ${BUILDING_INFO[claimed.item].name} is now level ${claimed.level}${path}.`);
+                this.#apply(result);
+                return;
+            }
             shown = this.#queuePop(() => {             // before #apply, so a level-up card comes after it
                 play(claimed.kind === 'evolution' ? 'levelup' : 'claim');
                 return rewardPop(claimCard(claimed));
             });
             this.#apply(result);
         });
-        if (!claimed) return;
+        if (!claimed || claimed.kind === 'build_up') return;
         await shown;
         const tab = { hero: 'hero', evolution: 'hero', item: 'item', upgrade: 'item' }[claimed.kind];
         if (tab) {
@@ -951,9 +1047,11 @@ export class CityMode {
         const b = this.#building(this.selectedId);
         this.#renderBottom();
         if (!b) return;
-        $('sel-name').textContent = BUILDING_INFO[b.type].name;
+        $('sel-name').textContent = BUILDING_INFO[b.type].name;      // the level and path sit on their own line
+        $('btn-upgrade').hidden = !this.state.upgrades?.table[b.type];
         $('sel-what').textContent = BUILDING_INFO[b.type].what;
-        $('sel-thumb').src = buildingThumb(b.type, 64);
+        $('sel-thumb').src = buildingThumb(b.type, 64, b.level ?? 1, b.path ?? null);
+        this.#renderUpgradeLine(b);
         const locked = b.type === 'core' || b.type === 'vault';
         const refund = this.#recipe(b.type)?.refund ?? {};
         const refundText = Object.entries(refund).map(([m, n]) => `+${n} ${MATERIAL_INFO[m].name.toLowerCase()}`).join(' ');
@@ -969,6 +1067,22 @@ export class CityMode {
         if (b.aim) this.#renderAim(b);
         this.infoText = '';
         this.#updateInfo();
+    }
+
+    /** An upgraded building says its level, its path and what they add. */
+    #renderUpgradeLine(b) {
+        const line = $('sel-upgrade');
+        const table = this.state.upgrades?.table[b.type];
+        line.hidden = !table || !(b.level > 1);
+        if (line.hidden) return;
+        const path = b.path ? PATH_INFO[b.path] : null;
+        line.style.setProperty('--accent', path?.accent ?? '#ffb347');
+        const tag = document.createElement('b');
+        tag.textContent = `★ Level ${b.level}${path ? ` · ${path.name}` : ''}`;
+        const bonuses = document.createElement('span');
+        bonuses.textContent = upgradeBonuses(table, b.level, b.path ?? null).join(' · ');
+        line.replaceChildren(tag, bonuses);
+        if (path) line.title = path.what;
     }
 
     #renderAim(b) {
@@ -1015,6 +1129,15 @@ function saveRotation(rot) {
     try {
         globalThis.localStorage?.setItem(ROTATION_KEY, String(rot));
     } catch { /* private mode: the turn is simply not remembered */ }
+}
+
+/** Why a hero cannot be let go now, or null. */
+function dismissBlocker(hero, heroes) {
+    if (hero.evolving) return 'It is at the forge: wait until it is done.';
+    if (hero.mission) return 'It is on a mission: bring it home first.';
+    const fighters = heroes.filter((h) => h.cls !== 'explorer').length;
+    if (hero.cls !== 'explorer' && fighters <= 4) return 'You need at least 4 fighters for a squad.';
+    return null;
 }
 
 /** The card for what an Explorer brought home. */

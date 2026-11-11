@@ -116,6 +116,26 @@ export const ITEM_INFO = {
     trail_boots: { name: 'Trail Boots', what: 'Explorer only: shorter missions.', icon: 'boot', color: '#c9a36b' },
 };
 
+/** The two paths each building type may take at level 3. */
+export const PATH_INFO = {
+    sniper: { name: 'Sniper', what: 'Shoots farther and harder.', accent: '#ffb347' },
+    gatling: { name: 'Gatling', what: 'Shoots much more often.', accent: '#ff6a3d' },
+    storm: { name: 'Storm', what: 'Lightning jumps to more heroes.', accent: '#8fd6ff' },
+    overload: { name: 'Overload', what: 'One huge bolt.', accent: '#c58bff' },
+    glacier: { name: 'Glacier', what: 'Slows heroes more, for longer.', accent: '#9fe3ff' },
+    blizzard: { name: 'Blizzard', what: 'A wider, harder frost blast.', accent: '#e8f6ff' },
+    bulwark: { name: 'Bulwark', what: 'Much tougher walls.', accent: '#c9a36b' },
+    spiked: { name: 'Spiked', what: 'Hurts every hero that strikes it.', accent: '#ff5a4a' },
+    inferno: { name: 'Inferno', what: 'A bigger, hotter blast.', accent: '#ff7a3d' },
+    snare: { name: 'Snare', what: 'Holds the heroes it catches.', accent: '#7dff9a' },
+    rich_vein: { name: 'Rich Vein', what: 'Makes materials faster.', accent: '#ffd36b' },
+    deep_store: { name: 'Deep Store', what: 'Holds far more before it is full.', accent: '#5aa9ff' },
+    strongbox: { name: 'Strongbox', what: 'Keeps more of each material safe from raiders.', accent: '#ffd75e' },
+    armored: { name: 'Armored', what: 'Much harder to break.', accent: '#a7b3c2' },
+    citadel: { name: 'Citadel', what: 'A much tougher Core.', accent: '#ffb347' },
+    beacon: { name: 'Beacon', what: 'The Core shoots heroes that come close.', accent: '#ff3d9a' },
+};
+
 /** The Explorer's missions: how long, and a hint of what they may bring. */
 export const MISSION_INFO = {
     scout: { name: 'Scouting', line: 'A quick look around: some materials, maybe a bonus.' },

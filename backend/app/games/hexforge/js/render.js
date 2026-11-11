@@ -409,7 +409,7 @@ export class Renderer {
         for (const b of this.city.buildings) {
             if (!b.range || (which !== 'all' && which !== b.id) || state?.destroyed.has(b.id)) continue;
             const c = this.#at(b.x + b.size / 2, b.y + b.size / 2);
-            const { rx, ry } = groundEllipse(camera, b.range);   // the simulation measures from the tower's centre
+            const { rx, ry } = groundEllipse(camera, b.range + b.size / 2);   // the simulation measures from the tower's edge
             const color = BUILDING_INFO[b.type].glow;
             ctx.save();
             ctx.beginPath();

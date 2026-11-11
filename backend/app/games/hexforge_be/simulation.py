@@ -18,6 +18,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional
 
+from .upgrades import building_spec
 from .catalog import BUILDINGS, CORE, TRAP, WALL, BuildingType, HeroClass
 from .evolution import parse_unit, spec_of
 from .items import apply as apply_items
@@ -89,6 +90,7 @@ class _Hero:
     ready_tick: int = 0
     nova_ready_tick: int = 0
     slow_until: int = -1
+    slow_factor: float = 1.0
     leap: Optional[tuple] = None   # (x0, y0, x1, y1, start tick, end tick, path cells it clears)
     dealt: int = 0
     taken: int = 0
@@ -104,7 +106,7 @@ class Battle:
         self.priority = priority
         self.tactic = tactic
         self.buildings = [
-            _Building(id=b["id"], type=b["type"], spec=BUILDINGS[b["type"]],
+            _Building(id=b["id"], type=b["type"], spec=building_spec(b),
                       x=b["x"], y=b["y"], size=b["size"], hp=b["hp"],
                       aim=b.get("aim", DEFAULT_AIM))
             for b in city["buildings"]
@@ -173,8 +175,8 @@ class Battle:
                 self._hero_step(hero)
         self._traps_step()
         for b in self.buildings:
-            if b.alive and b.spec.category == "tower":
-                self._tower_step(b)
+            if b.alive and b.spec.damage and b.spec.attack_range and b.spec.category in ("tower", "core"):
+                self._tower_step(b)          # a beacon core shoots like a tower
         if self.tick % FRAME_STRIDE == 0:
             self._record_frame()
 
@@ -310,7 +312,7 @@ class Battle:
             # the group marches at the pace of its slowest member until the first blow
             speed = min(h.spec.speed for h in self.heroes if h.group == hero.group and h.alive)
         if self.tick <= hero.slow_until:
-            speed *= BUILDINGS["frost_tower"].slow_factor
+            speed *= hero.slow_factor
         return speed
 
     def _hero_attack(self, hero: _Hero, target: _Building) -> None:
@@ -337,6 +339,10 @@ class Battle:
             if splash:
                 hit["splash"] = splash
             self._event("strike", hero=hero.id, **hit)
+            if target.spec.thorns and hero.alive:
+                # a spiked wall bites back
+                self._event("shot", building=target.id, thorns=True, **self._damage_hero(hero, target.spec.thorns))
+                self._finalise_dead()
         hero.ready_tick = self.tick + round(spec.cooldown * TICK_RATE)
         self._finalise_destroyed()
 
@@ -368,9 +374,13 @@ class Battle:
                        for h in self.heroes):
                 continue
             trap.alive = False
-            hits = [self._damage_hero(h, trap.spec.damage)
-                    for h in self.heroes
-                    if h.alive and math.hypot(h.x - trap.cx, h.y - trap.cy) <= trap.spec.splash_radius]
+            caught = [h for h in self.heroes
+                      if h.alive and math.hypot(h.x - trap.cx, h.y - trap.cy) <= trap.spec.splash_radius]
+            hits = [self._damage_hero(h, trap.spec.damage) for h in caught]
+            if trap.spec.slow_seconds:          # a snare: caught heroes are held fast
+                for h in caught:
+                    h.slow_until = self.tick + round(trap.spec.slow_seconds * TICK_RATE)
+                    h.slow_factor = trap.spec.slow_factor
             self._event("trap", building=trap.id, x=trap.cx, y=trap.cy,
                         radius=trap.spec.splash_radius, hits=hits)
             self._finalise_dead()
@@ -416,13 +426,15 @@ class Battle:
             if h.alive and math.hypot(h.x - target.x, h.y - target.y) <= spec.splash_radius:
                 hits.append(self._damage_hero(h, spec.damage))
                 h.slow_until = self.tick + round(spec.slow_seconds * TICK_RATE)
+                h.slow_factor = spec.slow_factor
         self._event("frost", building=tower.id, x=round(target.x, 2), y=round(target.y, 2),
                     radius=spec.splash_radius, hits=hits)
 
     def _tower_target(self, tower: _Building) -> Optional[_Hero]:
         """A guardian close by draws the fire; otherwise the tower follows its aim."""
+        # reach is measured from the tower's edge, like a hero's reach to a building
         in_range = [h for h in self.heroes
-                    if h.alive and math.hypot(h.x - tower.cx, h.y - tower.cy) <= tower.spec.attack_range]
+                    if h.alive and tower.distance_to(h.x, h.y) <= tower.spec.attack_range]
         if not in_range:
             return None
 

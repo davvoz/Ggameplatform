@@ -115,6 +115,7 @@
                         <div>
                             <h2 id="sel-name">Building</h2>
                             <p id="sel-what" class="sel-what"></p>
+                            <p id="sel-upgrade" class="sel-upgrade" hidden></p>
                             <p id="sel-info" class="sel-info"></p>
                         </div>
                     </div>
@@ -124,6 +125,7 @@
                     </div>
                     <div class="actions">
                         <button id="btn-move" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg></span><span class="action-label">Move</span></button>
+                        <button id="btn-upgrade" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></span><span class="action-label">Upgrade</span></button>
                         <button id="btn-aim" class="action" type="button" hidden><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-aim"/></svg></span><span class="action-label">Aim</span></button>
                         <button id="btn-dismantle" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-hammer"/></svg></span><span class="action-label">Dismantle</span></button>
                         <button id="btn-deselect" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></span><span class="action-label">Close</span></button>
@@ -262,6 +264,15 @@
                 <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
             </header>
             <div id="hero-card" class="sheet-body hero-card"></div>
+        </section>
+
+        <section id="sheet-upgrade" class="sheet" aria-labelledby="upgrade-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg>
+                <h2 id="upgrade-title">Upgrade</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            </header>
+            <div id="upgrade-card" class="sheet-body hero-card"></div>
         </section>
 
         <section id="sheet-rewards" class="sheet" aria-labelledby="rewards-title" hidden>

@@ -440,3 +440,4 @@ RELAZIONE_TECNICA_.md
 backend/scripts/seed_community_stats_data.py
 backend/app/games/survivor-arena/js/offusca_game.bat
 SKILL.md
+.mcp.json

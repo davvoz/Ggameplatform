@@ -393,6 +393,20 @@ button.round:disabled {
     z-index: 6;
 }
 
+/* left of the sound button: the platform's real full screen (its top bar goes too) */
+.fullscreen-button {
+    position: absolute;
+    right: 68px;
+    top: calc(184px + var(--safe-top));
+    z-index: 6;
+}
+
+@media (min-width: 900px) {
+    .fullscreen-button {
+        top: calc(56px + var(--safe-top));
+    }
+}
+
 .sound-button[aria-pressed="false"] {
     opacity: 0.7;
     color: var(--muted);

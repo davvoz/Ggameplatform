@@ -16,6 +16,17 @@ export async function connectPlatform() {
     }
 }
 
+/** Full screen: inside the platform it asks the platform (its top bar goes too), alone the browser. */
+export function toggleFullscreen() {
+    if (sdk()?.toggleFullscreen) {
+        sdk().toggleFullscreen();
+    } else if (document.fullscreenElement) {
+        void document.exitFullscreen();
+    } else {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+    }
+}
+
 export function attackStarted() {
     sdk()?.resetSession?.()?.catch?.((error) => console.error('[Hexforge] session start failed', error));
 }

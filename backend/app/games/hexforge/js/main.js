@@ -2,7 +2,7 @@ import { isMuted, play, setMode as setMusic, setMuted, unlock } from './audio.js
 import { BattleMode } from './battle.js';
 import { CityMode } from './city.js';
 import { icon } from './icons.js';
-import { connectPlatform } from './platform.js';
+import { connectPlatform, toggleFullscreen } from './platform.js';
 import { RankingPanel } from './ranking.js';
 import { Renderer } from './render.js';
 import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './sheets.js';
@@ -146,6 +146,7 @@ function wireSound() {
 
 function wire() {
     wireSound();
+    $('btn-fullscreen').addEventListener('click', () => toggleFullscreen());
     wireSheets();
     wireMap();
     globalThis.addEventListener('keydown', (event) => {

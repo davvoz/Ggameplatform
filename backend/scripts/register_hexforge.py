@@ -60,6 +60,8 @@ GAME_DATA = {
     "status_id": FUN_STATUS_ID,
     "steem_rewards_enabled": 0,  # only for a new game, see above
     "extra_data": json.dumps({
+        # the whole player area on desktop, upright and never turned on phones
+        "orientation": "any",
         "controls": "Touch or mouse: tap buildings, drag to pan, pinch or wheel to zoom",
         "modes": ["City", "Outposts", "PvP raids"],
         "features": [

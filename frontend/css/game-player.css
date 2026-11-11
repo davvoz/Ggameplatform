@@ -93,8 +93,10 @@
     will-change: transform;
 }
 
-/* Games that declare "orientation": "landscape" use the whole area */
-#game-iframe.is-landscape {
+/* Games that declare "orientation": "landscape" use the whole area; so do games
+   that fit any shape ("orientation": "any"), which are never turned on phones */
+#game-iframe.is-landscape,
+#game-iframe.is-fluid {
     width: 100%;
     height: 100%;
     aspect-ratio: auto;

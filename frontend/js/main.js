@@ -957,6 +957,7 @@ export async function renderGamePlayer(params) {
         const iframe = document.getElementById('game-iframe');
         const gameUrl = getGameResourceUrl(gameId, game.entry_point);
         iframe.classList.toggle('is-landscape', game.metadata?.orientation === 'landscape');
+        iframe.classList.toggle('is-fluid', game.metadata?.orientation === 'any');
         iframe.src = gameUrl;
 
         // Set up control buttons

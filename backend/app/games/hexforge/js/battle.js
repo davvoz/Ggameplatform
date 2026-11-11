@@ -3,6 +3,7 @@ import {
 } from './api.js';
 import { openBonusPicker } from './bonusPicker.js';
 import { attackEnded, attackStarted } from './platform.js';
+import { paintBattleCard } from './shareCard.js';
 import { play, playBattleEvent, setMode as setMusic } from './audio.js';
 import { formatCountdown } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
@@ -74,6 +75,7 @@ export class BattleMode {
         this.onStateChanged = () => {};
         this.onExit = () => {};       // set by the shell: back to the city
         this.returnTo = null;         // set while replaying a raid on the player's city
+        this.ending = null;           // an attack the platform has not heard the end of yet
         this.sideButtons = {};
         this.#wire();
     }
@@ -86,6 +88,7 @@ export class BattleMode {
     }
 
     leave() {
+        if (this.ending) void this.#reportToPlatform();      // left before the report: still one finished attack
         if (this.returnTo) {
             this.returnTo = null;
             this.view = 'setup';
@@ -546,9 +549,12 @@ export class BattleMode {
                 tactic: this.setup.tactic,
             };
             attackStarted();
-            const answer = this.#rivals() ? await attackRival(setup) : await attackOutpost(this.setup.outpost, setup);
-            attackEnded(answer.battle.summary, this.#rivals());
+            const pvp = this.#rivals();
+            const target = pvp ? null : this.#outpost()?.name;
+            const answer = pvp ? await attackRival(setup) : await attackOutpost(this.setup.outpost, setup);
             this.battle = answer.battle;
+            // the platform hears of it when the replay is over (the "Post on Pings" button comes then)
+            this.ending = { pvp, opponent: answer.battle.rival ?? target ?? 'an outpost' };
             const data = { ...answer };
             delete data.battle;
             this.#apply(data);
@@ -673,6 +679,27 @@ export class BattleMode {
         const gotLoot = loot.childElementCount > 0;
         $('btn-new').firstElementChild.textContent = defense ? 'Back to my city' : (gotLoot ? 'Collect' : 'Continue');
         this.#show('result');
+        void this.#reportToPlatform();
+    }
+
+    /** Once per attack, at its report: the session ends, with a picture of the battle for a ping. */
+    async #reportToPlatform() {
+        const ending = this.ending;
+        if (!ending) return;
+        this.ending = null;
+        const s = this.battle.summary;
+        let image = null;
+        try {
+            image = await paintBattleCard({
+                view: $('view'), won: s.victory, coreDown: s.core_destroyed, destruction: s.destruction,
+                opponent: ending.opponent, pvp: ending.pvp, loot: this.battle.rewards?.loot ?? {},
+                trophies: this.battle.rewards?.trophies ?? null,
+                heroes: s.heroes.map((h, i) => ({ ...h, fusion: this.battle.squad?.[i]?.fusion, grade: this.battle.squad?.[i]?.grade })),
+            });
+        } catch (error) {
+            console.error('[Hexforge] battle picture failed', error);
+        }
+        attackEnded(s, ending, image);
     }
 }
 

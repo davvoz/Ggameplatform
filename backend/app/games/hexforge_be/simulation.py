@@ -94,6 +94,7 @@ class _Hero:
     nova_ready_tick: int = 0
     slow_until: int = -1
     slow_factor: float = 1.0
+    unreachable: set = field(default_factory=set)   # targets with no spot to strike from, until something falls
     leap: Optional[tuple] = None   # (x0, y0, x1, y1, start tick, end tick, path cells it clears)
     dealt: int = 0
     taken: int = 0
@@ -249,7 +250,7 @@ class Battle:
             del hero.path[:cleared]
 
     def _choose_target(self, hero: _Hero) -> Optional[_Building]:
-        alive = [b for b in self.buildings if b.alive and b.counts]
+        alive = [b for b in self.buildings if b.alive and b.counts and b.id not in hero.unreachable]
         if hero.cls == "guardian":
             wanted = "tower"
         else:
@@ -261,6 +262,29 @@ class Battle:
         return min(pool, key=lambda b: (math.hypot(b.cx - hero.x, b.cy - hero.y), b.id))
 
     def _plan_path(self, hero: _Hero, target: _Building) -> None:
+        start = (min(max(int(hero.x), 0), self.grid - 1), min(max(int(hero.y), 0), self.grid - 1))
+        path = self._route(hero, target, start)
+        if path is None and target.type != WALL:
+            # walled in tight (a ring of walls touching it): no cell to strike from, so breach the ring first
+            for wall in self._ring_walls(hero, target):
+                path = self._route(hero, wall, start)
+                if path is not None:
+                    hero.target = wall.id
+                    break
+        if path is None:
+            # out of reach for now: pick something else, and think again after the next destruction
+            hero.unreachable.add(target.id)
+            hero.target = None
+            hero.path = []
+            hero.needs_path = True
+            return
+        if path == []:
+            path = [start]        # already in a goal cell: step to its centre, which is in range
+        hero.path = path
+        hero.needs_path = False
+
+    def _route(self, hero: _Hero, target: _Building, start: tuple) -> Optional[list]:
+        """Cells to a spot the hero can strike `target` from ([] if there already), or None."""
         jumps = hero.spec.jumps_walls
         reach = hero.spec.attack_range
 
@@ -269,18 +293,18 @@ class Battle:
 
         def is_goal(cx: int, cy: int) -> bool:
             # a hero never stops on top of a standing wall
-            return cost(cx, cy) is not None and self._wall_at(cx, cy) is None and \
-                target.distance_to(cx + 0.5, cy + 0.5) <= reach
+            return cost(cx, cy) is not None and self._wall_at(cx, cy) is None and                 target.distance_to(cx + 0.5, cy + 0.5) <= reach
 
         def heuristic(cx: int, cy: int) -> float:
             return max(0.0, math.hypot(target.cx - cx - 0.5, target.cy - cy - 0.5) - reach)
 
-        start = (min(max(int(hero.x), 0), self.grid - 1), min(max(int(hero.y), 0), self.grid - 1))
-        path = find_path(start, cost, is_goal, heuristic)
-        if path == []:
-            path = [start]        # already in a goal cell: step to its centre, which is in range
-        hero.path = path or []    # None: no route this tick, retried after the next destruction
-        hero.needs_path = False
+        return find_path(start, cost, is_goal, heuristic)
+
+    def _ring_walls(self, hero: _Hero, target: _Building) -> list:
+        """The standing walls touching `target`, closest to the hero first."""
+        ring = [b for b in self.buildings
+                if b.alive and b.type == WALL and target.distance_to(b.cx, b.cy) <= 1.0]
+        return sorted(ring, key=lambda b: (math.hypot(b.cx - hero.x, b.cy - hero.y), b.id))
 
     def _cell_cost(self, cx: int, cy: int, jumps_walls: bool) -> Optional[float]:
         """Path cost of stepping onto a cell; None = impassable."""
@@ -373,6 +397,7 @@ class Battle:
                     self.first_tower_lost = b.type
                 for h in self.heroes:
                     h.needs_path = True
+                    h.unreachable.clear()     # a gap may have opened
 
     # ── defences ────────────────────────────────────────────────────────
     def _traps_step(self) -> None:

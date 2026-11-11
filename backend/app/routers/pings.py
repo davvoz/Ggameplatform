@@ -4,7 +4,10 @@ Pings Router - share a finished game as a ping on cur8.fun
 A ping is a top-level comment under the latest "wall", a root post the wall
 account (micro.cur8) publishes every day. Any game can be shared: the ping
 text is built here from the ended game session (score and XP as the server
-recorded them), so a client cannot post a result it did not get.
+recorded them), so a client cannot post a result it did not get. A game
+whose result is not points has its own wording (_GAME_RESULTS); the game may
+also send its own picture of the result, which the dialog shows instead of
+the platform's card.
 
 A ping costs PING_COST_COINS and a player can post at most
 PINGS_PER_DAY a day (UTC). Coins are spent only after the ping is on the
@@ -233,10 +236,56 @@ def _format_duration(seconds: int) -> str:
     return f"{minutes}m {secs:02d}s" if minutes else f"{secs}s"
 
 
+def _session_data(session: GameSession) -> Dict[str, Any]:
+    try:
+        data = json.loads(session.extra_data or "{}")
+    except (TypeError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _plain_name(value: Any, limit: int = 40) -> str:
+    """A name a game sent, safe inside a ping: one line, no mentions or hashtags."""
+    text = re.sub(r"[@#\r\n\t\[\]()<>*_`|]", "", str(value or ""))
+    return re.sub(r"\s+", " ", text).strip()[:limit]
+
+
+def _hexforge_result(session: GameSession) -> Dict[str, str]:
+    """A raid, not points: whom it hit and how much fell."""
+    data = _session_data(session)
+    destroyed = max(0, min(100, int(data.get("destruction", session.score or 0) or 0)))
+    opponent = _plain_name(data.get("opponent")) or "a city"
+    if data.get("core_destroyed"):
+        headline = f"I brought down the core of {opponent} in Hexforge! 💥 {destroyed}% destroyed"
+    else:
+        headline = f"I raided {opponent} in Hexforge: {destroyed}% destroyed ⚔️"
+    return {"headline": headline, "label": "DESTRUCTION", "value": f"{destroyed}%"}
+
+
+# Games whose result is not a score of points: how their ping says it
+_GAME_RESULTS = {"hexforge": _hexforge_result}
+
+
+def _result_of(game: Game, session: GameSession) -> Optional[Dict[str, str]]:
+    describe = _GAME_RESULTS.get(game.game_id)
+    return describe(session) if describe else None
+
+
+def _result_words(game: Game, session: GameSession) -> str:
+    """The result in a few words: "87%" for a raid, "1,234 points" for a score."""
+    result = _result_of(game, session)
+    if result:
+        return result["value"]
+    return f"{session.score or 0:,} points"
+
+
 def build_ping_text(game: Game, session: GameSession) -> str:
     """Who scored what in which game, how it went, where to play, the hashtags; within 280 characters."""
     score = session.score or 0
-    headline = f"I scored {score:,} {'point' if score == 1 else 'points'} in {game.title} on Cur8 Games! 🎮"
+    result = _result_of(game, session)
+    headline = result["headline"] if result else (
+        f"I scored {score:,} {'point' if score == 1 else 'points'} in {game.title} on Cur8 Games! 🎮"
+    )
     details = [f"⭐ +{_format_xp(session.xp_earned)} XP"]
     if session.duration_seconds:
         details.append(f"⏱️ {_format_duration(session.duration_seconds)}")
@@ -282,7 +331,7 @@ def _spend_for_ping(coin_service: CoinService, user_id: str, session: GameSessio
         amount=PING_COST_COINS,
         transaction_type=PING_TRANSACTION_TYPE,
         source_id=session.session_id,
-        description=f"Ping: {game.title} ({session.score or 0:,} points)",
+        description=f"Ping: {game.title} ({_result_words(game, session)})",
         extra_data={"game_id": game.game_id, "post_url": post_url},
     )
     if not transaction:
@@ -327,6 +376,7 @@ async def pings_status(db: DbSession, coin_service: CoinServiceDep, current_user
 async def preview_ping(session_id: str, db: DbSession, coin_service: CoinServiceDep, current_user_id: CurrentUserId):
     """The ping for an ended game: its text, and what its picture shows."""
     user, session, game = _shareable_session(db, current_user_id, session_id)
+    result = _result_of(game, session)
     return {
         "text": build_ping_text(game, session),
         "already_shared": _already_pinged(db, current_user_id, session_id),
@@ -335,6 +385,9 @@ async def preview_ping(session_id: str, db: DbSession, coin_service: CoinService
             "game_title": game.title,
             "thumbnail": game.thumbnail or "",
             "score": session.score or 0,
+            # a game whose result is not points says what it is ("DESTRUCTION", "87%")
+            "score_label": result["label"] if result else None,
+            "score_text": result["value"] if result else None,
             "xp_earned": round(session.xp_earned or 0, 2),
             "duration_seconds": session.duration_seconds or 0,
             "username": user.steem_username,

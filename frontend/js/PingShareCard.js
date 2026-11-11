@@ -173,10 +173,11 @@ function drawResult(ctx, card) {
     y += 70;
     ctx.fillStyle = COLORS.muted;
     ctx.font = `700 22px ${FONT}`;
-    ctx.fillText('S C O R E', x, y);
+    ctx.fillText((card.score_label || 'SCORE').split('').join(' '), x, y);
 
     y += 108;
-    const score = Number(card.score || 0).toLocaleString('en-US');
+    // a game whose result is not points sends its own words for it ("87%")
+    const score = card.score_text || Number(card.score || 0).toLocaleString('en-US');
     ctx.font = `900 ${fitFontSize(ctx, score, width, 120, 900)}px ${FONT}`;
     const gold = ctx.createLinearGradient(0, y - 100, 0, y);
     gold.addColorStop(0, '#ffe082');

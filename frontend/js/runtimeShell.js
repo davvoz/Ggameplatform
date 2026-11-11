@@ -23,6 +23,7 @@ const PROTOCOL_VERSION = '1.0.0';
 const GAME_MESSAGE_TYPES = {
     SCORE_UPDATE: 'scoreUpdate',
     GAME_OVER: 'gameOver',
+    SHARE_CARD: 'shareCard',     // the game's own picture of its result, for a ping (sent before gameOver)
     LEVEL_COMPLETED: 'levelCompleted',
     REQUEST_FULLSCREEN: 'requestFullScreen',
     LOG: 'log',
@@ -169,6 +170,10 @@ export default class RuntimeShell {
 
             case GAME_MESSAGE_TYPES.LOG:
                 //Qua puoi mettere i log
+                break;
+
+            case GAME_MESSAGE_TYPES.SHARE_CARD:
+                // kept by the "Post on Pings" button, which listens to it (emitted below)
                 break;
 
             case GAME_MESSAGE_TYPES.RESET_SESSION:

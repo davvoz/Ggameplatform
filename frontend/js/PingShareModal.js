@@ -50,8 +50,11 @@ class PingShareModal {
     /**
      * Open the dialog for an ended game session
      * @param {string} sessionId - Ended game session ID
+     * @param {Object} [options]
+     * @param {{dataUrl: string, base64: string}|null} [options.picture] - the game's own picture of its result,
+     *   used instead of the platform's card (Hexforge sends its battle report)
      */
-    async show(sessionId) {
+    async show(sessionId, { picture = null } = {}) {
         this.sessionId = sessionId;
         this.uploadedImageUrl = null;
         this.exitFullscreen();
@@ -59,7 +62,7 @@ class PingShareModal {
 
         try {
             this.preview = await this.pingsAPI.preview(sessionId);
-            [this.picture] = await Promise.all([paintPingCard(this.preview.card), this.resolveSigning()]);
+            [this.picture] = await Promise.all([picture ?? paintPingCard(this.preview.card), this.resolveSigning()]);
             this.renderPreview();
         } catch (error) {
             this.renderError(error.message);

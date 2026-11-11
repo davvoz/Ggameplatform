@@ -1034,7 +1034,17 @@ function setupPingShareButton(runtime) {
     container.appendChild(shareButton);
 
     let endedSession = null;
+    let gamePicture = null;       // a picture the game painted of its result (sent just before its game over)
+    let endedPicture = null;
     const hide = () => { shareButton.hidden = true; };
+
+    runtime.on('shareCard', (payload) => {
+        gamePicture = sharePictureOf(payload);
+    });
+    runtime.on('gameOver', () => {
+        endedPicture = gamePicture;
+        gamePicture = null;
+    });
 
     const onSessionEnded = (event) => {
         // The listener is global: drop it once this game's page is gone
@@ -1044,7 +1054,8 @@ function setupPingShareButton(runtime) {
         }
         const session = event.detail?.session;
         if (!AuthManager.getUser()?.steem_username || !session?.session_id) return;
-        endedSession = session;
+        endedSession = { ...session, picture: endedPicture };
+        endedPicture = null;
         shareButton.hidden = false;
     };
     globalThis.addEventListener('gameSessionEnded', onSessionEnded);
@@ -1059,8 +1070,18 @@ function setupPingShareButton(runtime) {
     shareButton.querySelector('.ping-share-btn-main').addEventListener('click', () => {
         if (!endedSession) return;
         const modal = new PingShareModal(new PingsAPI(), AuthManager, { onShared: hide });
-        modal.show(endedSession.session_id);
+        modal.show(endedSession.session_id, { picture: endedSession.picture });
     });
+}
+
+const SHARE_PICTURE_MAX = 2_000_000;   // characters of a data URL (about 1.5 MB of JPEG)
+
+/** A game's own result picture: a JPEG or PNG data URL of a sane size, else null. */
+function sharePictureOf(payload) {
+    const image = payload?.image;
+    if (typeof image !== 'string' || image.length > SHARE_PICTURE_MAX) return null;
+    const match = /^data:image\/(jpeg|png);base64,([A-Za-z0-9+/=]+)$/.exec(image);
+    return match ? { dataUrl: image, base64: match[2] } : null;
 }
 
 /**

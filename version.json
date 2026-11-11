@@ -1,8 +1,18 @@
 {
-  "version": "5.20.0",
-  "timestamp": "2026-11-11T02:43:03.026Z",
-  "buildNumber": 617,
+  "version": "5.20.1",
+  "timestamp": "2026-11-11T02:50:12.494Z",
+  "buildNumber": 618,
   "changelog": [
+    {
+      "version": "5.20.1",
+      "date": "2026-11-11",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix: add fullscreen button and functionality in Hexforge",
+        "🔖 Bump version to 5.20.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.20.0",
       "date": "2026-11-11",
@@ -88,16 +98,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: hide fullscreen button on touch devices to prevent orientation issues",
         "🔖 Bump version to 5.17.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.17.1",
-      "date": "2026-11-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "dix:[RRS]banner xp , rotation mobile",
-        "🔖 Bump version to 5.17.0 [skip-version]"
       ]
     }
   ]

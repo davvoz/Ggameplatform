@@ -1,8 +1,17 @@
 {
-  "version": "5.21.0",
-  "timestamp": "2026-11-11T10:58:06.294Z",
-  "buildNumber": 619,
+  "version": "5.22.0",
+  "timestamp": "2026-11-11T12:12:05.486Z",
+  "buildNumber": 620,
   "changelog": [
+    {
+      "version": "5.22.0",
+      "date": "2026-11-11",
+      "type": "minor",
+      "changes": [
+        "feat: Hexforge gains a forge slot every 5 player levels, with an unlock animation",
+        "🔖 Bump version to 5.21.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.21.0",
       "date": "2026-11-11",
@@ -88,15 +97,6 @@
       "changes": [
         "feat: add Nonna Commando, a ranked pixel-art run-and-gun",
         "🔖 Bump version to 5.17.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.17.3",
-      "date": "2026-11-05",
-      "type": "patch",
-      "changes": [
-        "fix: adjust ping-share-btn positioning for landscape mode",
-        "🔖 Bump version to 5.17.2 [skip-version]"
       ]
     }
   ]

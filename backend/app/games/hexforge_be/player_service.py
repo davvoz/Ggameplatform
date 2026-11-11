@@ -433,6 +433,7 @@ def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
     outposts.ensure_campaign(state.city, now)
     pvp.ensure_pvp(state.city)
     progress.ensure_progress(state.city)
+    progress.sync_forge_slots(state.city)
     rewards.ensure_rewards(state.city, row.user_id, now)
     items.ensure_items(state.city)
     upgrades.ensure_upgrades(state.city)

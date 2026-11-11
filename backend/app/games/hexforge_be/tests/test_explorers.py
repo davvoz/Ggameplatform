@@ -100,3 +100,27 @@ class DismissTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ForgeSlotsTest(unittest.TestCase):
+    """A forge slot every fifth level; saves that are behind catch up, none loses one."""
+
+    def test_every_fifth_level_opens_a_forge_slot(self):
+        from app.games.hexforge_be import progress
+        self.assertEqual([progress.forge_slots_at(lv) for lv in (1, 4, 5, 9, 10, 15)], [2, 2, 3, 3, 4, 5])
+        city = {"progress": {"xp": 0, "granted": 1}, "forge": {"slots": 2, "jobs": [], "next_job_id": 1}}
+        xp = sum(progress.xp_for_next(lv) for lv in range(1, 10))      # straight to level 10
+        reached = progress.gain(city, {}, xp)
+        self.assertEqual(city["forge"]["slots"], 4)
+        self.assertEqual([r["forge_slots"] for r in reached if r["forge_slots"]], [3, 4])
+        self.assertEqual(progress.public_progress(city)["forge_slots"], 4)
+
+    def test_old_saves_catch_up_and_never_lose_a_slot(self):
+        from app.games.hexforge_be import progress
+        xp = sum(progress.xp_for_next(lv) for lv in range(1, 12))      # level 12
+        behind = {"progress": {"xp": xp, "granted": 12}, "forge": {"slots": 3}}
+        progress.sync_forge_slots(behind)
+        self.assertEqual(behind["forge"]["slots"], 4)
+        ahead = {"progress": {"xp": 0, "granted": 1}, "forge": {"slots": 4}}
+        progress.sync_forge_slots(ahead)
+        self.assertEqual(ahead["forge"]["slots"], 4)

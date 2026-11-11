@@ -7,6 +7,8 @@ import { icon } from './icons.js';
  *  - flyPicture: a picture glides from one place on screen to another
  *  - rewardPop: a big "forged!" card with rays, for what the forge made
  *    (or any picture: the level-up shield)
+ *  - forgeSlotPop: a new forge slot drops onto the anvil with a slam,
+ *    sparks and a shake (every fifth level)
  * Everything respects "reduce motion": the result is shown without the trip.
  */
 
@@ -140,5 +142,65 @@ export function rewardPop({ src, picture = null, title, extra = null, line, colo
         };
         card.addEventListener('click', close);
         setTimeout(close, reduced() ? 900 : ms);
+    });
+}
+
+const SPARKS = 18;
+const SLAM_MS = 380;           // when the falling slot hits the anvil (matches the CSS)
+
+/**
+ * "New forge slot!": an iron slot falls onto the anvil, slams (sparks, a
+ * shake, a ring of fire), and says how many jobs the forge now takes.
+ * `onSlam` runs at the impact (for the sound). Resolves when it is gone.
+ */
+export function forgeSlotPop(slots, { onSlam = () => {}, ms = 3400 } = {}) {
+    const box = layer();
+    const scene = document.createElement('div');
+    scene.className = `slot-unlock${reduced() ? ' still' : ''}`;
+    scene.setAttribute('role', 'status');
+    const ring = document.createElement('span');
+    ring.className = 'slot-unlock-ring';
+    const slot = document.createElement('div');
+    slot.className = 'slot-unlock-slot';
+    const number = document.createElement('strong');
+    number.textContent = String(slots);
+    slot.append(icon('anvil'), number);
+    const anvil = document.createElement('span');
+    anvil.className = 'slot-unlock-anvil';
+    anvil.append(icon('anvil'));
+    const sparks = document.createElement('span');
+    sparks.className = 'slot-unlock-sparks';
+    for (let i = 0; i < SPARKS; i++) {
+        const spark = document.createElement('i');
+        const angle = -Math.PI + (Math.PI * (i + 0.5)) / SPARKS + (Math.sin(i * 7.3) * 0.15);
+        const reach = 70 + ((i * 37) % 60);
+        spark.style.setProperty('--dx', `${Math.cos(angle) * reach}px`);
+        spark.style.setProperty('--dy', `${Math.sin(angle) * reach * 0.9}px`);
+        spark.style.animationDelay = `${SLAM_MS + (i % 4) * 25}ms`;
+        sparks.append(spark);
+    }
+    const title = document.createElement('b');
+    title.textContent = 'New forge slot!';
+    const line = document.createElement('span');
+    line.className = 'slot-unlock-line';
+    line.textContent = `The forge now works ${slots} jobs at once`;
+    scene.append(ring, anvil, slot, sparks, title, line);
+    box.append(scene);
+    const slam = setTimeout(onSlam, reduced() ? 0 : SLAM_MS);
+    return new Promise((resolve) => {
+        let done = false;
+        const close = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(slam);
+            const out = scene.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.85) translateY(40px)' }],
+                { duration: reduced() ? 1 : 280, easing: 'ease-in', fill: 'forwards' });
+            out.onfinish = () => {
+                scene.remove();
+                resolve();
+            };
+        };
+        scene.addEventListener('click', close);
+        setTimeout(close, reduced() ? 1200 : ms);
     });
 }

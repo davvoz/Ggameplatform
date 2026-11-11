@@ -242,7 +242,7 @@ Step 1, the player's level (`hexforge_be/progress.py`): playing earns XP:
 collecting (1 per 25 units), forging (about 1 per minute of the job),
 attacking (outpost 40 for a win / 15 for a loss, players 50 / 20). Level 1
 needs 100 XP, each next level 50 more. Each level adds one hero slot (8 at
-level 1) and a gift of materials; level 5 also opens a third forge slot.
+level 1) and a gift of materials; every fifth level also opens a forge slot (2 at the start, 3 at level 5, 4 at level 10, ...), shown by a slot slamming onto the anvil.
 Progress lives in `city["progress"]` (`granted` = last level whose gift was
 handed out, so gifts are never doubled). In the city the shield shows the
 level with the XP bar under the name; every gain shows "+N XP", and a new

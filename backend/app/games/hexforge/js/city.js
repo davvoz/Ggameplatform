@@ -10,7 +10,7 @@ import { openBonusPicker, openItemPicker } from './bonusPicker.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { play } from './audio.js';
-import { countUp, flyMaterial, flyPicture, rewardPop } from './fx.js';
+import { countUp, flyMaterial, flyPicture, forgeSlotPop, rewardPop } from './fx.js';
 import {
     formatCountdown, itemEffect, itemName, itemThumb, jobName, renderArmoury, renderForgeSlots, renderRecipes,
     renderRoster, renderStorage,
@@ -64,7 +64,7 @@ const MESSAGES = {
     outside_city: 'Keep it inside the city limits.',
     unknown_building: 'That building is gone. Reloading your city…',
     state_changed_retry: 'Your city changed meanwhile. Try again.',
-    forge_busy: 'Both forge slots are busy.',
+    forge_busy: 'All forge slots are busy.',
     limit_reached: 'You already own as many of those as allowed.',
     not_enough_materials: 'Not enough materials.',
     not_ready: 'Not ready yet.',
@@ -1054,6 +1054,11 @@ export class CityMode {
         if (!before) return;
         if (progress.xp > before.xp) this.#xpPop(progress.xp - before.xp);
         if (progress.level > before.level) void this.#queuePop(() => this.#levelPop(progress));
+        // every fifth level the forge opens a slot: its own scene, after the level card
+        if ((progress.forge_slots ?? 0) > (before.forge_slots ?? progress.forge_slots ?? 0)) {
+            const slots = progress.forge_slots;
+            void this.#queuePop(() => forgeSlotPop(slots, { onSlam: () => play('slam') }));
+        }
     }
 
     /** Big cards one after the other, never on top of each other. */

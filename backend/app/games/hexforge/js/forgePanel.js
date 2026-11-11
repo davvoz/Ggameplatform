@@ -26,7 +26,7 @@ export function formatCountdown(seconds) {
 
 /** Why this recipe cannot be forged right now, or null. */
 export function forgeBlocker(recipe, materials, freeSlots) {
-    if (freeSlots <= 0) return 'Both forge slots are busy';
+    if (freeSlots <= 0) return 'All forge slots are busy';
     if (recipe.owned + recipe.yields > recipe.limit) return 'Limit reached';
     const short = Object.entries(recipe.cost).some(([m, amount]) => (materials[m] ?? 0) < amount);
     return short ? 'Not enough materials' : null;
@@ -234,7 +234,7 @@ export function renderArmoury(container, { items, table, heroNameOf, materials, 
             const button = withIcon(el('button', 'button small'), 'anvil', `Lv ${item.level + 1}`);
             button.type = 'button';
             button.disabled = short || freeSlots <= 0;
-            button.title = short ? 'Not enough materials' : freeSlots <= 0 ? 'Both forge slots are busy' : `Upgrade to level ${item.level + 1}`;
+            button.title = short ? 'Not enough materials' : freeSlots <= 0 ? 'All forge slots are busy' : `Upgrade to level ${item.level + 1}`;
             button.addEventListener('click', () => onUpgrade(item.id));
             const price = el('span', 'armoury-price');
             price.append(costChips(next.cost, materials), withIcon(el('span', 'evolve-time'), 'clock', formatDuration(next.seconds)));

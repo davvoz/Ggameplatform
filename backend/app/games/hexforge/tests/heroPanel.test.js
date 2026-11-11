@@ -37,7 +37,7 @@ test('why a hero cannot evolve yet', () => {
     const ctx = { table: TABLE, materials: { scrap: 1000 }, freeSlots: 1, serverNow: 1000 };
     assert.match(evolveBlocker({ ...ctx, hero: { cls: 'guardian', xp: 100 } }), /50 more/);
     assert.equal(evolveBlocker({ ...ctx, hero: { cls: 'guardian', xp: 150 } }), null);
-    assert.equal(evolveBlocker({ ...ctx, freeSlots: 0, hero: { cls: 'guardian', xp: 150 } }), 'Both forge slots are busy');
+    assert.equal(evolveBlocker({ ...ctx, freeSlots: 0, hero: { cls: 'guardian', xp: 150 } }), 'All forge slots are busy');
     assert.equal(evolveBlocker({ ...ctx, materials: {}, hero: { cls: 'guardian', xp: 150 } }), 'Not enough materials');
     assert.equal(evolveBlocker({ ...ctx, hero: { cls: 'guardian', xp: 150, injured_until: 2000 } }), 'Hurt: wait until healed');
     assert.equal(evolveBlocker({ ...ctx, hero: { cls: 'guardian', xp: 900, tier: 3, form: 'bastion' } }), 'Fully ascended');

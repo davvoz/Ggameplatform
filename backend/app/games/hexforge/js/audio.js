@@ -178,6 +178,15 @@ const SOUNDS = {
         noise(0.9, { vol: 0.05, from: 4000, to: 9000, type: 'bandpass', q: 0.8, at: 0.35 });
         clang(1046, 1.6, 0.1, 0.4);
     },
+    // a forge slot slams down on the anvil, then the new fire catches
+    slam: () => {
+        tone(70, 0.5, { type: 'sine', vol: 0.35, slide: 40 });
+        noise(0.4, { vol: 0.22, from: 2400, to: 300, type: 'lowpass' });
+        clang(310, 1.4, 0.3);
+        clang(465, 1.1, 0.18, 0.05);
+        [392, 523, 659, 784].forEach((f, i) => tone(f, 0.7, { type: 'triangle', vol: 0.08, at: 0.35 + i * 0.08 }));
+        noise(0.8, { vol: 0.05, from: 900, to: 5000, type: 'bandpass', q: 0.9, at: 0.3 });
+    },
     boost: () => {
         noise(0.4, { vol: 0.07, from: 1500, to: 7000, type: 'bandpass', q: 1.4 });
         [660, 880, 1175].forEach((f, i) => tone(f, 0.3, { type: 'sine', vol: 0.1, at: i * 0.05, slide: f * 1.5 }));
@@ -262,7 +271,7 @@ const SOUNDS = {
 
 /** Makeup gain per sound, so everything lands at a similar loudness (measured by rendering each one). */
 const LEVEL = {
-    click: 6, open: 6, close: 6, error: 4, gem: 5, collect: 2.5, forge: 0.75, claim: 0.8, levelup: 0.9, boost: 3, place: 3, dismantle: 2.5,
+    click: 6, open: 6, close: 6, error: 4, gem: 5, collect: 2.5, forge: 0.75, claim: 0.8, levelup: 0.9, slam: 1, boost: 3, place: 3, dismantle: 2.5,
     horn: 2, strike_guardian: 1.5, strike_blade: 5, strike_technomancer: 4, nova: 2, leap: 10, shot: 6, bolt: 2.5,
     frost: 2.5, trap: 1.5, destroyed: 1.2, hero_down: 2.5, victory: 0.9, defeat: 1,
 };

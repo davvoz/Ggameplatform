@@ -87,7 +87,7 @@ export function evolveBlocker({ hero, table, materials, freeSlots, serverNow }) 
     const need = table.tier_xp[String(next)];
     if ((hero.xp ?? 0) < need) return `Needs ${need} XP: ${need - (hero.xp ?? 0)} more from fighting`;
     if (hero.injured_until && hero.injured_until > serverNow) return 'Hurt: wait until healed';
-    if (freeSlots <= 0) return 'Both forge slots are busy';
+    if (freeSlots <= 0) return 'All forge slots are busy';
     const { cost } = table.costs[hero.cls][String(next)];
     if (Object.entries(cost).some(([m, n]) => (materials[m] ?? 0) < n)) return 'Not enough materials';
     return null;

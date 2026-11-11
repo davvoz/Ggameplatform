@@ -3,7 +3,8 @@ Hexforge: the player's level.
 
 Playing earns experience (XP): collecting, forging, attacking. Levels follow
 a gentle curve; every level adds one hero slot (8 at level 1) and a gift of
-materials, and some levels unlock more (a third forge slot at level 5).
+materials; every fifth level also opens a forge slot (2 at the start,
+3 at level 5, 4 at level 10, ...).
 
 Progress lives inside the city JSON (`city["progress"]`), added by
 `ensure_progress` to older saves. `granted` is the highest level whose gifts
@@ -14,7 +15,8 @@ from __future__ import annotations
 
 BASE_HERO_SLOTS = 7            # + level: 8 hero slots at level 1
 BASE_TOWER_SLOTS = 7           # + level: 8 towers at level 1, one more each level
-FORGE_SLOT_LEVELS = {5: 3}     # level -> forge slots from then on
+BASE_FORGE_SLOTS = 2
+FORGE_SLOT_EVERY = 5           # one more forge slot every this many levels
 
 XP_COLLECT_UNITS = 25          # 1 XP per this many units collected
 XP_ATTACK = {"outpost": (40, 15), "rival": (50, 20)}   # (win, loss)
@@ -36,6 +38,22 @@ def level_of(xp: int) -> tuple[int, int]:
         xp -= xp_for_next(level)
         level += 1
     return level, xp
+
+
+def forge_slots_at(level: int) -> int:
+    return BASE_FORGE_SLOTS + level // FORGE_SLOT_EVERY
+
+
+def unlocks_forge_slot(level: int) -> bool:
+    return level % FORGE_SLOT_EVERY == 0
+
+
+def sync_forge_slots(city: dict) -> None:
+    """Saves from before the rule (or with a bonus slot) never lose one, and catch up if they are behind."""
+    level = level_of(city["progress"]["xp"])[0]
+    forge = city.get("forge")
+    if forge is not None and forge.get("slots", 0) < forge_slots_at(level):
+        forge["slots"] = forge_slots_at(level)
 
 
 def hero_slots(city: dict) -> int:
@@ -77,7 +95,7 @@ def gain(city: dict, materials: dict, xp: int) -> list[dict]:
         gift = level_gift(new)
         for material, amount in gift.items():
             materials[material] = materials.get(material, 0) + amount
-        slots = FORGE_SLOT_LEVELS.get(new)
+        slots = forge_slots_at(new) if unlocks_forge_slot(new) else None
         if slots and city.get("forge", {}).get("slots", 0) < slots:
             city["forge"]["slots"] = slots
         reached.append({"level": new, "gift": gift, "hero_slots": BASE_HERO_SLOTS + new,
@@ -94,11 +112,13 @@ def public_progress(city: dict) -> dict:
             "tower_slots": BASE_TOWER_SLOTS + level,
             # what reaching this level gave, for the client's celebration
             "gift": level_gift(level) if level > 1 else {},
-            "unlocked_forge_slots": FORGE_SLOT_LEVELS.get(level),
+            "unlocked_forge_slots": forge_slots_at(level) if unlocks_forge_slot(level) else None,
+            "forge_slots": city.get("forge", {}).get("slots", forge_slots_at(level)),
             "next_unlock": _next_unlock(level)}
 
 
 def _next_unlock(level: int) -> dict | None:
     """What the next level adds besides a hero slot and its gift, if anything."""
-    slots = FORGE_SLOT_LEVELS.get(level + 1)
-    return {"level": level + 1, "forge_slots": slots} if slots else None
+    if not unlocks_forge_slot(level + 1):
+        return None
+    return {"level": level + 1, "forge_slots": forge_slots_at(level + 1)}

@@ -21,7 +21,7 @@ test('the forge button explains why it is off', () => {
     const tower = { cost: { rune_stone: 120, scrap: 60 }, owned: 2, limit: 8, yields: 1 };
     const rich = { rune_stone: 500, scrap: 500 };
     assert.equal(forgeBlocker(tower, rich, 1), null);
-    assert.equal(forgeBlocker(tower, rich, 0), 'Both forge slots are busy');
+    assert.equal(forgeBlocker(tower, rich, 0), 'All forge slots are busy');
     assert.equal(forgeBlocker({ ...tower, owned: 8 }, rich, 1), 'Limit reached');
     assert.equal(forgeBlocker(tower, { rune_stone: 119, scrap: 500 }, 1), 'Not enough materials');
     const walls = { cost: { rune_stone: 60 }, owned: 56, limit: 60, yields: 5 };

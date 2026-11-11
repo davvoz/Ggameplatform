@@ -1,8 +1,17 @@
 {
-  "version": "5.20.1",
-  "timestamp": "2026-11-11T02:50:12.494Z",
-  "buildNumber": 618,
+  "version": "5.21.0",
+  "timestamp": "2026-11-11T10:58:06.294Z",
+  "buildNumber": 619,
   "changelog": [
+    {
+      "version": "5.21.0",
+      "date": "2026-11-11",
+      "type": "minor",
+      "changes": [
+        "feat: Hexforge pings show the battle report; walled-in targets get breached",
+        "🔖 Bump version to 5.20.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.20.1",
       "date": "2026-11-11",
@@ -88,16 +97,6 @@
       "changes": [
         "fix: adjust ping-share-btn positioning for landscape mode",
         "🔖 Bump version to 5.17.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.17.2",
-      "date": "2026-11-05",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: hide fullscreen button on touch devices to prevent orientation issues",
-        "🔖 Bump version to 5.17.1 [skip-version]"
       ]
     }
   ]

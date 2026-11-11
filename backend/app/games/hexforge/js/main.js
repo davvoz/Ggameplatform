@@ -2,6 +2,7 @@ import { isMuted, play, setMode as setMusic, setMuted, unlock } from './audio.js
 import { BattleMode } from './battle.js';
 import { CityMode } from './city.js';
 import { icon } from './icons.js';
+import { connectPlatform } from './platform.js';
 import { RankingPanel } from './ranking.js';
 import { Renderer } from './render.js';
 import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './sheets.js';
@@ -156,6 +157,7 @@ function wire() {
 }
 
 async function boot() {
+    void connectPlatform();              // inside the platform: XP and quests per attack; never blocks the game
     wire();
     requestAnimationFrame(frame);
     const params = new URLSearchParams(globalThis.location.search);

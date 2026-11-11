@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import economy, evolution, items, progress, upgrades
+from . import economy, evolution, fusion, items, progress, upgrades
 from .catalog import BUILDINGS, HEROES
 from .errors import ActionError
 
@@ -138,6 +138,9 @@ def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
     if job["recipe"] == "upgrade":
         forge["jobs"].remove(job)
         return items.finish_upgrade(city, job)
+    if job["recipe"] == "fuse":
+        forge["jobs"].remove(job)
+        return fusion.finish(city, heroes, job, now)
     recipe = RECIPES[job["recipe"]]
     forge["jobs"].remove(job)
     if recipe.kind == "hero":
@@ -223,6 +226,8 @@ def dismantle(city: dict, materials: dict, building_id: int, now: float) -> dict
         raise ActionError("unknown_building")
     if building["type"] in UNDISMANTLABLE:
         raise ActionError("cannot_dismantle")
+    if building.get("fusing"):
+        raise ActionError("building_fusing")
     economy.collect(city, materials, now, building_ids=[building_id])
     refund = refund_of(building["type"])
     for m, amount in refund.items():

@@ -29,6 +29,10 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/bonuses/use            spend a bonus on a job, a hero or the energy
   POST /api/hexforge/me/heroes/{id}/evolve     send a hero to the forge to evolve or ascend
   POST /api/hexforge/me/buildings/{id}/upgrade send a building type to the forge to gain a level
+  POST /api/hexforge/me/fuse                   three maxed buildings or heroes forged into one
+  POST /api/hexforge/me/fuse/preview           what that fusion would make (changes nothing)
+  POST /api/hexforge/me/forge/{id}/hammer      a round at the anvil: time off a forge job
+  POST /api/hexforge/me/merchant/{id}/buy      buy one of the merchant's offers of the day
   POST /api/hexforge/me/heroes/{id}/dismiss    let a hero go for a bonus, freeing its slot
   POST /api/hexforge/me/heroes/{id}/explore    send an Explorer on a mission
   POST /api/hexforge/me/heroes/{id}/return     bring an Explorer home with its loot
@@ -55,7 +59,7 @@ from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
 from .schemas import (
-    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest, UpgradeRequest,
+    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest, FuseRequest, HammerRequest, UpgradeRequest,
     MoveRequest, PlaceRequest,
 )
 from .simulation import simulate
@@ -315,6 +319,41 @@ def upgrade_building(building_id: int, body: UpgradeRequest, user_id: CurrentUse
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return public_state(state, now)
+
+
+@router.post("/me/fuse")
+def fuse(body: FuseRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).fuse(user_id, body.kind, body.base, body.donors, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/fuse/preview")
+def fuse_preview(body: FuseRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        return PlayerService(db).fusion_preview(user_id, body.kind, body.base, body.donors, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+
+
+@router.post("/me/forge/{job_id}/hammer")
+def hammer(job_id: int, body: HammerRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, result = PlayerService(db).hammer(user_id, job_id, body.perfect, body.good, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {**public_state(state, now), "hammer": result}
+
+
+@router.post("/me/merchant/{offer_id}/buy")
+def buy_offer(offer_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, offer = PlayerService(db).buy_offer(user_id, offer_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {**public_state(state, now), "bought": offer}
 
 
 @router.post("/me/heroes/{hero_id}/dismiss")

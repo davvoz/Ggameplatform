@@ -28,7 +28,7 @@ PATH_LEVEL = 3
 GROWTH = 0.10                 # health, damage and production per level above 1
 REACH_GROWTH = 0.25           # cells of reach per level above 1, for anything that shoots
 VAULT_BASE = 400              # what a level-1 vault keeps safe, per material
-UPGRADE_SECONDS = 900         # times (new level - 1); the Core takes twice as long
+UPGRADE_SECONDS = {2: 300, 3: 900, 4: 1800, 5: 3600}   # by new level: early levels come quickly; the Core takes twice as long
 
 PATHS = {
     "rune_tower": ("sniper", "gatling"),
@@ -131,6 +131,9 @@ def spec_of(building_type: str, level: int = 1, path=None) -> BuildingType:
 
 
 def building_spec(building: dict) -> BuildingType:
+    if building.get("fusion"):
+        from .fusion import fused_body          # late: fusion builds on this module
+        return fused_body(building)
     return spec_of(building["type"], building.get("level", 1), building.get("path"))
 
 
@@ -159,7 +162,7 @@ def cost_of(building_type: str, level: int) -> dict:
 
 
 def seconds_of(building_type: str, level: int) -> int:
-    return UPGRADE_SECONDS * (level - 1) * (2 if building_type == CORE else 1)
+    return UPGRADE_SECONDS[level] * (2 if building_type == CORE else 1)
 
 
 def start(city: dict, materials: dict, building_id: int, path, now: float) -> dict:

@@ -47,6 +47,19 @@ class EvolveRequest(BaseModel):
     form: Optional[Literal["bastion", "warlord", "phantom", "reaper", "archon", "arcanist"]] = None
 
 
+class HammerRequest(BaseModel):
+    """A round at the anvil: how many of the 5 strikes were perfect, how many good."""
+    perfect: int = Field(ge=0, le=5)
+    good: int = Field(ge=0, le=5)
+
+
+class FuseRequest(BaseModel):
+    """Three maxed buildings (or heroes) of the same grade: the base keeps its body, the donors give their powers."""
+    kind: Literal["building", "hero"]
+    base: int = Field(ge=1)
+    donors: list[int] = Field(min_length=2, max_length=2)
+
+
 class UpgradeRequest(BaseModel):
     """The path to take when the type reaches level 3 (ignored otherwise)."""
     path: Optional[str] = None

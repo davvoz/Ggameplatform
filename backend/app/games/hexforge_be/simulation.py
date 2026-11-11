@@ -18,9 +18,9 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .upgrades import building_spec
-from .catalog import BUILDINGS, CORE, TRAP, WALL, BuildingType, HeroClass
-from .evolution import parse_unit, spec_of
+from .catalog import CORE, TRAP, WALL, BuildingType, HeroClass
+from .evolution import parse_unit
+from .fusion import building_kit, unit_spec
 from .items import apply as apply_items
 from .pathfinding import find_path
 
@@ -48,7 +48,8 @@ class _Building:
     hp: int
     aim: str = DEFAULT_AIM
     alive: bool = True
-    ready_tick: int = 0
+    weapons: list = field(default_factory=list)   # [spec, ready tick]: a fused building may have several
+    blasts: list = field(default_factory=list)    # a fused-in trap: one blast each, for the first hero close by
 
     @property
     def cx(self) -> float:
@@ -80,7 +81,9 @@ class _Hero:
     form: Optional[str] = None
     tier: int = 1
     items: list = field(default_factory=list)
-    shield: int = 0                # an item's barrier, soaked before health
+    fusion: Optional[list] = None  # a fused hero's parts (for the replay to draw)
+    grade: int = 0
+    shield: int = 0               # an item's barrier, soaked before health
     regen_due: float = 0.0         # health regained but not yet a whole point
     hp: int = 0
     alive: bool = True
@@ -105,12 +108,12 @@ class Battle:
         self.grid = city["grid"]
         self.priority = priority
         self.tactic = tactic
-        self.buildings = [
-            _Building(id=b["id"], type=b["type"], spec=building_spec(b),
-                      x=b["x"], y=b["y"], size=b["size"], hp=b["hp"],
-                      aim=b.get("aim", DEFAULT_AIM))
-            for b in city["buildings"]
-        ]
+        self.buildings = []
+        for b in city["buildings"]:
+            body, weapons, blasts = building_kit(b)
+            self.buildings.append(_Building(
+                id=b["id"], type=b["type"], spec=body, x=b["x"], y=b["y"], size=b["size"], hp=b["hp"],
+                aim=b.get("aim", DEFAULT_AIM), weapons=[[w, 0] for w in weapons], blasts=list(blasts)))
         self.by_id = {b.id: b for b in self.buildings}
         self.occupant: dict[tuple[int, int], int] = {}
         for b in self.buildings:
@@ -141,8 +144,10 @@ class Battle:
                 # small offsets so heroes sharing a spawn point do not overlap exactly
                 fraction += (i - 1.5) * 0.035
             x, y = self._edge_point(side, fraction)
-            heroes.append(_Hero(id=i, cls=cls, spec=apply_items(spec_of(cls, form, tier), carried), x=x, y=y,
-                                group=group, form=form if tier > 1 else None, tier=tier, items=carried))
+            heroes.append(_Hero(id=i, cls=cls, spec=apply_items(unit_spec(unit), carried), x=x, y=y,
+                                group=group, form=form if tier > 1 else None, tier=tier, items=carried,
+                                fusion=unit.get("fusion") if isinstance(unit, dict) else None,
+                                grade=unit.get("grade", 0) if isinstance(unit, dict) else 0))
         return heroes
 
     def _edge_point(self, side: str, fraction: float) -> tuple[float, float]:
@@ -175,8 +180,12 @@ class Battle:
                 self._hero_step(hero)
         self._traps_step()
         for b in self.buildings:
-            if b.alive and b.spec.damage and b.spec.attack_range and b.spec.category in ("tower", "core"):
-                self._tower_step(b)          # a beacon core shoots like a tower
+            if not b.alive:
+                continue
+            if b.blasts:
+                self._blast_step(b)
+            for weapon in b.weapons:         # a beacon core shoots like a tower; a fused one may shoot several ways
+                self._tower_step(b, weapon)
         if self.tick % FRAME_STRIDE == 0:
             self._record_frame()
 
@@ -385,24 +394,42 @@ class Battle:
                         radius=trap.spec.splash_radius, hits=hits)
             self._finalise_dead()
 
-    def _tower_step(self, tower: _Building) -> None:
-        if self.tick < tower.ready_tick:
+    def _blast_step(self, b: _Building) -> None:
+        """A trap fused into a building: it goes off once, the first time a hero comes close."""
+        for blast in list(b.blasts):
+            near = [h for h in self.heroes if h.alive and b.distance_to(h.x, h.y) <= blast.trigger_radius]
+            if not near:
+                continue
+            b.blasts.remove(blast)
+            first = min(near, key=lambda h: (b.distance_to(h.x, h.y), h.id))
+            caught = [h for h in self.heroes
+                      if h.alive and math.hypot(h.x - first.x, h.y - first.y) <= blast.splash_radius]
+            hits = [self._damage_hero(h, blast.damage) for h in caught]
+            if blast.slow_seconds:
+                for h in caught:
+                    h.slow_until = self.tick + round(blast.slow_seconds * TICK_RATE)
+                    h.slow_factor = blast.slow_factor
+            self._event("trap", building=b.id, x=round(first.x, 2), y=round(first.y, 2),
+                        radius=blast.splash_radius, hits=hits, fused=True)
+            self._finalise_dead()
+
+    def _tower_step(self, tower: _Building, weapon: list) -> None:
+        spec, ready_tick = weapon
+        if self.tick < ready_tick:
             return
-        target = self._tower_target(tower)
+        target = self._tower_target(tower, spec)
         if target is None:
             return
-        spec = tower.spec
         if spec.chain_targets:
-            self._fire_lightning(tower, target)
+            self._fire_lightning(tower, spec, target)
         elif spec.splash_radius:
-            self._fire_frost(tower, target)
+            self._fire_frost(tower, spec, target)
         else:
             self._event("shot", building=tower.id, **self._damage_hero(target, spec.damage))
-        tower.ready_tick = self.tick + round(spec.cooldown * TICK_RATE)
+        weapon[1] = self.tick + round(spec.cooldown * TICK_RATE)
         self._finalise_dead()
 
-    def _fire_lightning(self, tower: _Building, first: _Hero) -> None:
-        spec = tower.spec
+    def _fire_lightning(self, tower: _Building, spec: BuildingType, first: _Hero) -> None:
         chain = [first]
         while len(chain) <= spec.chain_targets:
             nxt = self._nearest_hero(chain[-1], exclude=chain, radius=spec.chain_radius)
@@ -419,8 +446,7 @@ class Battle:
         near = [h for h in self.heroes if h.alive and h not in exclude and distance(h) <= radius]
         return min(near, key=lambda h: (distance(h), h.id)) if near else None
 
-    def _fire_frost(self, tower: _Building, target: _Hero) -> None:
-        spec = tower.spec
+    def _fire_frost(self, tower: _Building, spec: BuildingType, target: _Hero) -> None:
         hits = []
         for h in self.heroes:
             if h.alive and math.hypot(h.x - target.x, h.y - target.y) <= spec.splash_radius:
@@ -430,11 +456,12 @@ class Battle:
         self._event("frost", building=tower.id, x=round(target.x, 2), y=round(target.y, 2),
                     radius=spec.splash_radius, hits=hits)
 
-    def _tower_target(self, tower: _Building) -> Optional[_Hero]:
+    def _tower_target(self, tower: _Building, spec: Optional[BuildingType] = None) -> Optional[_Hero]:
         """A guardian close by draws the fire; otherwise the tower follows its aim."""
+        spec = spec or tower.spec
         # reach is measured from the tower's edge, like a hero's reach to a building
         in_range = [h for h in self.heroes
-                    if h.alive and tower.distance_to(h.x, h.y) <= tower.spec.attack_range]
+                    if h.alive and tower.distance_to(h.x, h.y) <= spec.attack_range]
         if not in_range:
             return None
 
@@ -497,7 +524,8 @@ class Battle:
             "frame_stride": FRAME_STRIDE,
             "ticks": self.tick,
             "squad": [{"id": h.id, "cls": h.cls, "form": h.form, "tier": h.tier, "hp": h.spec.hp,
-                       "barrier": h.spec.barrier, "items": h.items} for h in self.heroes],
+                       "barrier": h.spec.barrier, "items": h.items,
+                       **({"fusion": h.fusion, "grade": h.grade} if h.fusion else {})} for h in self.heroes],
             "frames": self.frames,
             "events": self.events,
             "summary": {

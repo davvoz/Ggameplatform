@@ -123,7 +123,7 @@ export function heroTile(hero, name, status, onTap = null) {
     const line = document.createElement('span');
     line.className = 'ht-status';
     line.textContent = {
-        ready: 'Ready', picked: 'In squad', hurt: formatHeal(status.left), forge: 'Evolving',
+        ready: 'Ready', picked: 'In squad', hurt: formatHeal(status.left), forge: hero.fusing ? 'Fusing' : 'Evolving',
         home: 'At home', away: formatAway(status.left), back: 'Back!',
     }[status.state];
     tile.append(portrait, label, job, line);
@@ -133,7 +133,7 @@ export function heroTile(hero, name, status, onTap = null) {
     }
     const what = {
         ready: 'ready, tap to add to the squad', picked: 'in the squad, tap to take out',
-        hurt: `hurt, healed in ${formatHeal(status.left)}`, forge: 'evolving at the forge',
+        hurt: `hurt, healed in ${formatHeal(status.left)}`, forge: hero.fusing ? 'fusing at the forge' : 'evolving at the forge',
         home: 'at home, tap to send on a mission', away: `on a mission, back in ${formatAway(status.left)}`,
         back: 'back from a mission with loot',
     };

@@ -1,5 +1,6 @@
 import { costChips, formatDuration, itemEffect } from './forgePanel.js';
 import { stars, tripBar, tripLeft } from './heroTiles.js';
+import { partName } from './fusionPanel.js';
 import { icon, withIcon } from './icons.js';
 import { BONUS_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES } from './labels.js';
 import { heroPortrait, heroThumb, itemPicture, thumbImg } from './thumbs.js';
@@ -144,9 +145,11 @@ function renderHeroBody(container, {
     const art = el('span', 'hero-art');
     art.append(thumbImg(heroPortrait(hero, 104), '', ''));
     const who = el('div', 'hero-who');
+    const fused = hero.fusion
+        ? `Fusion ${'◆'.repeat(hero.fusion.grade)}: ${hero.fusion.parts.map(partName).join(' + ')}` : null;
     who.append(el('b', 'hero-name', name),
-        el('span', 'hero-form', hero.cls === 'explorer' ? info.role : `${form ? form.name : info.name} ${stars(tier)} · ${TIER_NAMES[tier]}`),
-        el('small', 'hero-what', form ? form.what : info.what));
+        el('span', 'hero-form', hero.cls === 'explorer' ? info.role : `${form ? form.name : info.name} ${stars(tier)} · ${fused ? 'Fused' : TIER_NAMES[tier]}`),
+        el('small', 'hero-what', fused ?? (form ? form.what : info.what)));
     head.append(art, who);
     container.append(head);
 
@@ -189,7 +192,8 @@ function renderHeroBody(container, {
     if (hero.evolving) {
         const left = job ? job.ready_at - serverNow : 0;
         const tip = el('p', 'tip');
-        tip.append(icon('anvil'), `At the forge: ${tier + 1 === 3 ? 'ascending' : 'evolving'}, ready in ${formatDuration(left)}. An hourglass speeds it up.`);
+        const doing = hero.fusing ? 'fusing' : tier + 1 === 3 ? 'ascending' : 'evolving';
+        tip.append(icon('anvil'), `At the forge: ${doing}, ready in ${formatDuration(left)}. An hourglass speeds it up.`);
         container.append(tip);
         return;
     }

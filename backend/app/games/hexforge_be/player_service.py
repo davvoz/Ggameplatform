@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import defense, economy, evolution, explorers, forge, items, upgrades, outposts, progress, pvp, rewards
+from . import anvil, defense, economy, evolution, explorers, forge, fusion, items, merchant, upgrades, outposts, progress, pvp, rewards
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -333,6 +333,20 @@ class PlayerService:
         self.save(state, now)
         return state
 
+    def hammer(self, user_id: str, job_id: int, perfect: int, good: int, now: float) -> tuple[PlayerState, dict]:
+        """A round at the anvil: time off a forge job."""
+        state = self.load(user_id, now)
+        result = anvil.hammer(state.city, job_id, perfect, good, now)
+        self.save(state, now)
+        return state, result
+
+    def buy_offer(self, user_id: str, offer_id: int, now: float) -> tuple[PlayerState, dict]:
+        """Buy one of the merchant's offers of the day."""
+        state = self.load(user_id, now)
+        offer = merchant.buy(state.city, state.materials, user_id, offer_id, now)
+        self.save(state, now)
+        return state, offer
+
     def dismiss_hero(self, user_id: str, hero_id: int, now: float) -> tuple[PlayerState, dict]:
         """Let a hero go for a bonus."""
         state = self.load(user_id, now)
@@ -346,6 +360,19 @@ class PlayerService:
         upgrades.start(state.city, state.materials, building_id, path, now)
         self.save(state, now)
         return state
+
+    def fuse(self, user_id: str, kind: str, base_id: int, donor_ids: list, now: float) -> PlayerState:
+        """Send three maxed buildings (or heroes) to the forge to become one."""
+        state = self.load(user_id, now)
+        fusion.start(state.city, state.heroes, state.materials, kind, base_id, donor_ids, now)
+        rewards.record(state.city, "forge")
+        self.save(state, now)
+        return state
+
+    def fusion_preview(self, user_id: str, kind: str, base_id: int, donor_ids: list, now: float) -> dict:
+        """Read only: what a fusion would make."""
+        state = self.load(user_id, now)
+        return fusion.preview(state.city, state.heroes, kind, base_id, donor_ids)
 
     def explore(self, user_id: str, hero_id: int, mission: str, now: float) -> PlayerState:
         """Send an Explorer on a mission."""
@@ -416,7 +443,7 @@ def _hero_stats(city: dict, hero: dict) -> dict:
     """What a hero fights with now: class, form, tier and the items it carries."""
     if explorers.is_explorer(hero):
         return {}
-    spec = evolution.spec_of(hero["cls"], hero.get("form"), hero.get("tier", 1))
+    spec = fusion.hero_spec_of(hero)
     spec = items.apply(spec, items.carried_by(city, hero["id"]))
     return {**evolution.stats_of(spec), "barrier": spec.barrier, "regen": spec.regen}
 
@@ -441,13 +468,19 @@ def public_state(state: PlayerState, now: float) -> dict:
                 "size": spec.size, "hp": spec.hp, "level": b.get("level", 1)}
         if b.get("path"):
             item["path"] = b["path"]
-        if b["type"] in economy.PRODUCTION:
-            material = economy.PRODUCTION[b["type"]][0]
+        if b.get("fusion"):
+            item["fusion"] = {**b["fusion"], "stats": fusion.building_stats(b)}
+        if b.get("fusing"):
+            item["fusing"] = True
+        made = economy.outputs(b)
+        if made and "collected_at" in b:
+            # the main material leads (it is what the bubble shows); `pending` counts them all
+            material, per_hour, _ = max(made, key=lambda row: row[1])
             item["production"] = {
                 "material": material,
-                "per_hour": round(economy.rate_of(b)),
+                "per_hour": round(per_hour),
                 "pending": economy.pending(b, now),
-                "capacity": economy.capacity(b["type"], b),
+                "capacity": int(sum(r * h for _, r, h in made)),
             }
         if spec.attack_range and not defense.is_tower(b):
             item["range"] = spec.attack_range          # a beacon core
@@ -471,7 +504,10 @@ def public_state(state: PlayerState, now: float) -> dict:
         "item_table": items.public_items(),
         "missions": explorers.public_missions(),
         "dismiss_gifts": forge.DISMISS_GIFTS,
+        "merchant": merchant.public_merchant(state.city, state.user_id, now),
+        "anvil_rounds": anvil.ROUNDS_PER_JOB,
         "upgrades": upgrades.public_upgrades(state.city),
+        "fusion": fusion.public_fusion(),
         "hero_stats": {str(h["id"]): _hero_stats(state.city, h) for h in state.heroes},
         "rewards": {**rewards.public_rewards(state.city, now),
                     "ready": rewards.ready_count(state.city, now)},

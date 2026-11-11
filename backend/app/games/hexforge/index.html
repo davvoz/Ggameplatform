@@ -53,6 +53,7 @@
             <symbol id="i-test" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5"/></symbol>
             <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol>
             <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 16.9l-5.4 2.9 1.1-6.1-4.5-4.3 6.1-.8z"/></symbol>
+            <symbol id="i-fuse" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.6"/><circle cx="18" cy="7" r="2.6"/><circle cx="12" cy="19" r="2.6"/><path d="M8 8.6 11 12M16 8.6 13 12M12 16.4V13"/><circle cx="12" cy="12" r="1.4"/></symbol>
             <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3v3l5 6 5-6V3M7 21v-3l5-6 5 6v3"/></symbol>
             <symbol id="i-salve" viewBox="0 0 24 24"><path d="M7 9h10v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2zM8 5h8v4H8zM12 12v6M9 15h6"/></symbol>
             <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 3h4M10 3v5l-5 9a3 3 0 0 0 2.6 4.5h8.8A3 3 0 0 0 19 17l-5-9V3M7.5 14h9"/></symbol>
@@ -126,6 +127,7 @@
                     <div class="actions">
                         <button id="btn-move" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg></span><span class="action-label">Move</span></button>
                         <button id="btn-upgrade" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></span><span class="action-label">Upgrade</span></button>
+                        <button id="btn-fuse" class="action fuse-action" type="button" hidden><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-fuse"/></svg></span><span class="action-label">Fuse</span></button>
                         <button id="btn-aim" class="action" type="button" hidden><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-aim"/></svg></span><span class="action-label">Aim</span></button>
                         <button id="btn-dismantle" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-hammer"/></svg></span><span class="action-label">Dismantle</span></button>
                         <button id="btn-deselect" class="action" type="button"><span class="round"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></span><span class="action-label">Close</span></button>
@@ -275,6 +277,15 @@
             <div id="upgrade-card" class="sheet-body hero-card"></div>
         </section>
 
+        <section id="sheet-fuse" class="sheet" aria-labelledby="fuse-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-fuse"/></svg>
+                <h2 id="fuse-title">Fusion</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            </header>
+            <div id="fuse-card" class="sheet-body fuse-card"></div>
+        </section>
+
         <section id="sheet-rewards" class="sheet" aria-labelledby="rewards-title" hidden>
             <header class="sheet-head">
                 <svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg>
@@ -282,6 +293,10 @@
                 <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
             </header>
             <div class="sheet-body">
+                <div class="panel merchant-panel">
+                    <h3><svg class="icon" aria-hidden="true"><use href="#i-chest"/></svg>The merchant<small id="merchant-note" class="panel-note"></small></h3>
+                    <div id="merchant" class="offers"></div>
+                </div>
                 <div class="panel">
                     <h3><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>Daily gift<small id="login-note" class="panel-note"></small></h3>
                     <div id="calendar" class="calendar"></div>
@@ -337,6 +352,7 @@
             </div>
         </section>
     </div>
+    <script src="../../sdk/platformsdk.obf.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

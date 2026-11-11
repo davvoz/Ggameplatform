@@ -1,6 +1,7 @@
 import { toScreen } from './iso.js';
-import { FORM_INFO, PATH_INFO } from './labels.js';
+import { FORM_INFO, HERO_INFO } from './labels.js';
 import { drawUpgradeOver, drawUpgradeUnder } from './upgradeArt.js';
+import { drawFusionOver, drawFusionUnder, drawHeroFusionOver, drawHeroFusionUnder } from './fusionArt.js';
 
 /**
  * Hexforge art, "Forgia Infernale": iron, basalt and molten metal, drawn
@@ -133,32 +134,12 @@ const hash = (n) => {
 export function drawBuilding(ctx, cam, b, look) {
     const painter = PAINTERS[b.type] ?? PAINTERS.rune_quarry;
     const upgraded = b.level > 1 && b.type !== 'rune_trap';
+    const fused = Boolean(b.fusion?.parts?.length);
+    if (fused) drawFusionUnder(ctx, cam, b, look.time ?? 0);
     if (upgraded) drawUpgradeUnder(ctx, cam, b, look.time ?? 0);
     painter(ctx, cam, b, look);
     if (upgraded) drawUpgradeOver(ctx, cam, b, look.time ?? 0);
-    if (b.level > 1 && b.type !== 'wall' && b.type !== 'rune_trap') levelBadge(ctx, cam, b);
-}
-
-/** A small medal on the front corner: the level, ringed in the path's colour. */
-function levelBadge(ctx, cam, b) {
-    const s = cam.scale;
-    const p = toScreen(cam, b.x + b.size - 0.25, b.y + b.size - 0.25);
-    const r = 7.5 * s;
-    const ring = b.path ? PATH_INFO[b.path]?.accent ?? '#ffb347' : '#ffb347';
-    ctx.save();
-    ctx.fillStyle = '#140c07';
-    ctx.strokeStyle = ring;
-    ctx.lineWidth = 2 * s;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y - r, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#fff1d6';
-    ctx.font = `800 ${Math.round(10 * s)}px system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(b.level), p.x, p.y - r + 0.5 * s);
-    ctx.restore();
+    if (fused) drawFusionOver(ctx, cam, b, look.time ?? 0);
 }
 
 const PAINTERS = {
@@ -491,13 +472,37 @@ export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
         ctx.globalAlpha *= Math.max(0, 1 - pose.down);
         ctx.rotate(-Math.min(1, pose.down * 3) * Math.PI / 2);   // topples backwards
     }
+    const fused = hero.fusion?.length > 0 && pose.down == null;
     if (tier > 1) ctx.scale(1 + 0.05 * (tier - 1), 1 + 0.05 * (tier - 1));
+    if (fused) ctx.scale(1.08, 1.08);
+    if (fused) drawHeroFusionUnder(ctx, hero.fusion, p.t);
     if (tier === 3) halo(ctx, 0, -24, 34, p.accent, 0.4 + 0.12 * Math.sin(p.t * 3));
-    if (hero.cls === 'guardian') guardian(ctx, color, p);
-    else if (hero.cls === 'neon_blade') blade(ctx, color, p);
-    else if (hero.cls === 'explorer') explorer(ctx, color, p);
-    else mage(ctx, color, p);
+    if (fused) donorSpirits(ctx, hero.fusion.slice(1), p);
+    paintHero(ctx, hero.cls, color, p);
+    if (fused) drawHeroFusionOver(ctx, hero.fusion, hero.grade ?? 1, p.t);
     ctx.restore();
+}
+
+function paintHero(ctx, cls, color, p) {
+    if (cls === 'guardian') guardian(ctx, color, p);
+    else if (cls === 'neon_blade') blade(ctx, color, p);
+    else if (cls === 'explorer') explorer(ctx, color, p);
+    else mage(ctx, color, p);
+}
+
+/** A fused hero's donors stand behind it as see-through spirits, in their own form and colours. */
+function donorSpirits(ctx, donors, p) {
+    donors.forEach((part, i) => {
+        const color = HERO_INFO[part.type]?.color ?? '#ffffff';
+        ctx.save();
+        ctx.globalAlpha *= 0.4 + 0.08 * Math.sin(p.t * 2 + i);
+        ctx.translate(i === 0 ? -10 : 10, -3 + Math.sin(p.t * 1.6 + i * 2) * 1.5);
+        ctx.scale(0.86, 0.86);
+        paintHero(ctx, part.type, color, {
+            ...p, form: part.form ?? null, tier: 3, accent: FORM_INFO[part.form]?.accent ?? color, attack: null, nova: false,
+        });
+        ctx.restore();
+    });
 }
 
 const WALK_RATE = { guardian: 8, neon_blade: 15, technomancer: 4, explorer: 9 };

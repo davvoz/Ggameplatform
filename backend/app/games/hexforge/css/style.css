@@ -3621,3 +3621,438 @@ button.form-card {
     color: #9ff0b8;
     font-weight: 700;
 }
+
+/* ── the anvil ───────────────────────────────────────────────────────── */
+.anvil-game {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(8, 4, 2, 0.82);
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.anvil-card {
+    position: relative;
+    width: min(420px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 18px 22px;
+    border-radius: 22px;
+    border: 2px solid var(--brass);
+    background: radial-gradient(circle at 50% 30%, #3a2416, #120a06 75%);
+    box-shadow: 0 0 40px rgba(255, 122, 26, 0.25);
+}
+
+.anvil-card h2 {
+    margin: 0;
+    font-family: 'Grenze Gotisch', serif;
+    font-size: 30px;
+    color: var(--gold-hi);
+}
+
+.anvil-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.anvil-job {
+    margin: -6px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.anvil-art {
+    position: relative;
+    width: 180px;
+    height: 110px;
+    margin-top: 14px;
+}
+
+.anvil-art svg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 180px;
+    height: 105px;
+}
+
+.anvil-hammer {
+    position: absolute;
+    left: 74px;
+    top: -6px;
+    width: 46px;
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(#8a8f96, #4a4f56);
+    transform-origin: 90% 50%;
+    transform: rotate(-35deg);
+}
+
+.anvil-hammer::after {
+    content: '';
+    position: absolute;
+    left: 38px;
+    top: 4px;
+    width: 46px;
+    height: 7px;
+    border-radius: 3px;
+    background: #6b4a2b;
+}
+
+.anvil-art.hit .anvil-hammer {
+    animation: anvil-swing 260ms ease-out;
+}
+
+@keyframes anvil-swing {
+    0% { transform: rotate(-35deg); }
+    40% { transform: rotate(8deg); }
+    100% { transform: rotate(-35deg); }
+}
+
+.anvil-sparks {
+    position: absolute;
+    left: 70px;
+    top: 26px;
+    width: 40px;
+    height: 20px;
+    opacity: 0;
+    background: radial-gradient(circle, #fff3c0 0 2px, transparent 3px) 0 0 / 10px 10px;
+    filter: drop-shadow(0 0 6px #ffb347);
+}
+
+.anvil-art.hit .anvil-sparks {
+    animation: anvil-sparks 420ms ease-out;
+}
+
+.anvil-art.perfect .anvil-sparks {
+    animation-duration: 650ms;
+    transform: scale(1.8);
+}
+
+@keyframes anvil-sparks {
+    0% { opacity: 1; transform: translateY(0) scale(0.6); }
+    100% { opacity: 0; transform: translateY(-26px) scale(1.6); }
+}
+
+.anvil-bar {
+    position: relative;
+    width: 100%;
+    height: 26px;
+    border-radius: 13px;
+    border: 2px solid #5a3d22;
+    background: #1c120b;
+    overflow: hidden;
+}
+
+.anvil-good,
+.anvil-perfect {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.anvil-good {
+    background: rgba(255, 179, 71, 0.28);
+}
+
+.anvil-perfect {
+    background: linear-gradient(90deg, #ffb347, #fff1b0, #ffb347);
+    box-shadow: 0 0 12px #ffb347;
+}
+
+.anvil-marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 6px;
+    margin-left: -3px;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 0 10px #fff, 0 0 18px #ff7a1a;
+}
+
+.anvil-word {
+    margin: 0;
+    min-height: 26px;
+    font-weight: 900;
+    font-size: 15px;
+    color: var(--text);
+    text-align: center;
+}
+
+.anvil-word.perfect {
+    font-size: 22px;
+    color: #fff1b0;
+    text-shadow: 0 0 12px #ffb347;
+}
+
+.anvil-word.good {
+    font-size: 19px;
+    color: var(--gold-hi);
+}
+
+.anvil-word.miss {
+    font-size: 17px;
+    color: #ff8a7a;
+}
+
+.anvil-word.anvil-done {
+    font-size: 19px;
+    color: #9ff0b8;
+}
+
+.anvil-pips {
+    display: flex;
+    gap: 8px;
+}
+
+.anvil-pips .pip {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #5a3d22;
+    background: #1c120b;
+}
+
+.anvil-pips .pip.perfect {
+    background: #ffd36b;
+    border-color: #fff1b0;
+    box-shadow: 0 0 8px #ffb347;
+}
+
+.anvil-pips .pip.good {
+    background: #b07a35;
+}
+
+.anvil-pips .pip.miss {
+    background: #5a1c14;
+}
+
+.anvil-strike {
+    width: 100%;
+    padding: 16px;
+    border-radius: 18px;
+    background: var(--molten);
+    color: #2a0d00;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255, 122, 26, 0.45);
+}
+
+.slot-hammer {
+    color: #ffd36b;
+}
+
+/* ── the merchant ────────────────────────────────────────────────────── */
+.offers {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.offer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 179, 71, 0.35);
+    background: #1a100a;
+}
+
+.offer.sold {
+    opacity: 0.5;
+}
+
+.offer > img,
+.offer-icon {
+    width: 44px;
+    height: 44px;
+    flex: none;
+}
+
+.offer-icon {
+    --accent: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, #2c1d13), #120a06);
+    color: var(--accent);
+}
+
+.offer-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.offer-text b {
+    font-size: 14px;
+}
+
+.offer-text small {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.offer-side {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+/* ── fusion ─────────────────────────────────────────────────────────── */
+.fuse-action .round {
+    border-color: #c77dff;
+    box-shadow: 0 0 14px rgba(199, 125, 255, 0.55);
+}
+
+.fuse-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 8px;
+}
+
+.fuse-tile {
+    --accent: var(--gold);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 4px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    background: #1a100a;
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+}
+
+.fuse-tile img {
+    width: 64px;
+    height: 64px;
+}
+
+.fuse-tile b {
+    font-size: 12px;
+    line-height: 1.15;
+    color: var(--accent);
+}
+
+.fuse-tile small {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.fuse-tile[aria-pressed="true"] {
+    border: 2px solid var(--accent);
+    background: radial-gradient(circle at 50% 25%, color-mix(in srgb, var(--accent) 28%, #1a100a), #1a100a 70%);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.fuse-tile:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.fuse-pick {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 13px;
+    color: #1a0f08;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+}
+
+.fuse-result {
+    border-color: #c77dff;
+    background: radial-gradient(circle at 20% 0%, rgba(199, 125, 255, 0.18), transparent 60%), linear-gradient(#2c1d13, #160e09);
+}
+
+.fuse-preview {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.fuse-big {
+    width: 120px;
+    height: 120px;
+    flex: none;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, rgba(199, 125, 255, 0.3), #120a06 70%);
+    box-shadow: 0 0 22px rgba(199, 125, 255, 0.45);
+    animation: fuse-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes fuse-pulse {
+    50% { box-shadow: 0 0 34px rgba(199, 125, 255, 0.75); }
+}
+
+.fuse-facts {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.fuse-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.fuse-part {
+    --accent: var(--gold);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    background: color-mix(in srgb, var(--accent) 12%, #140c07);
+}
+
+.fuse-lines {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.fuse-box {
+    align-items: flex-start;
+    border-color: #c77dff;
+}
+
+@media (max-width: 420px) {
+    .fuse-preview {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

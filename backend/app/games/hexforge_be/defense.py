@@ -52,6 +52,8 @@ def battle_city(city: dict) -> dict:
             item["level"] = b["level"]
             if b.get("path"):
                 item["path"] = b["path"]
+        if b.get("fusion"):
+            item["fusion"] = b["fusion"]
         if spec.category == "tower" or spec.attack_range:
             item["aim"] = b.get("aim", DEFAULT_AIM)
             item["range"] = spec.attack_range

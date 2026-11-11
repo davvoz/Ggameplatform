@@ -2,6 +2,7 @@ import {
     Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle, useBonus,
 } from './api.js';
 import { openBonusPicker } from './bonusPicker.js';
+import { attackEnded, attackStarted } from './platform.js';
 import { play, playBattleEvent, setMode as setMusic } from './audio.js';
 import { formatCountdown } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
@@ -544,7 +545,9 @@ export class BattleMode {
                 priority: this.setup.priority,
                 tactic: this.setup.tactic,
             };
+            attackStarted();
             const answer = this.#rivals() ? await attackRival(setup) : await attackOutpost(this.setup.outpost, setup);
+            attackEnded(answer.battle.summary, this.#rivals());
             this.battle = answer.battle;
             const data = { ...answer };
             delete data.battle;

@@ -109,6 +109,8 @@ export function createReplay(battle) {
                 cls: h.cls,
                 form: h.form ?? null,
                 tier: h.tier ?? 1,
+                fusion: h.fusion ?? null,
+                grade: h.grade ?? 0,
                 maxHp: h.hp,
                 hp: heroHp[k],
                 shield: Math.max(0, shield[k]),
@@ -214,7 +216,7 @@ function applyEvent(e, s) {
                 s.shield[hit.hero] -= hit.soaked ?? 0;
                 s.lastHit[hit.hero] = e.t;
             }
-            if (e.type === 'trap') s.sprung.add(e.building);
+            if (e.type === 'trap' && !e.fused) s.sprung.add(e.building);   // a fused-in trap leaves its building standing
             break;
         case 'frost':
             for (const hit of e.hits) {

@@ -50,6 +50,7 @@ export function itemThumb(item, px) {
 
 /** A forge job's name: what it makes, or the hero evolving ("Bastion ★★"). */
 export function jobName(job) {
+    if (job.recipe === 'fuse') return `Fusion ${'◆'.repeat(job.grade)} ${BUILDING_INFO[job.type]?.name ?? HERO_INFO[job.type].name}`;
     if (job.recipe === 'build_up') return `${BUILDING_INFO[job.type].name} Lv ${job.level}`;
     if (job.recipe === 'upgrade') return `${ITEM_INFO[job.type].name} Lv ${job.level}`;
     if (job.recipe !== 'evolve') return itemName(job.recipe);
@@ -58,6 +59,11 @@ export function jobName(job) {
 
 /** A forge job's picture. */
 export function jobThumb(job, px) {
+    if (job.recipe === 'fuse') {
+        const fusion = { grade: job.grade, parts: job.parts };
+        return job.kind === 'building' ? buildingThumb(job.type, px, 5, job.path ?? null, fusion)
+            : heroThumb(job.type, px, job.form ?? null, 3, fusion);
+    }
     if (job.recipe === 'build_up') return buildingThumb(job.type, px);
     if (job.recipe === 'upgrade') return itemPicture(job.type, px);
     if (job.recipe !== 'evolve') return itemThumb(job.recipe, px);
@@ -89,7 +95,7 @@ export function costChips(cost, materials) {
 }
 
 /** The forge's slots; `onSpeedUp(jobId)` (or null) offers an hourglass on a job still running. */
-export function renderForgeSlots(container, forge, serverNow, onClaim, onSpeedUp = null) {
+export function renderForgeSlots(container, forge, serverNow, onClaim, onSpeedUp = null, onHammer = null, rounds = 3) {
     container.replaceChildren();
     for (let i = 0; i < forge.slots; i++) {
         const job = forge.jobs[i];
@@ -116,6 +122,13 @@ export function renderForgeSlots(container, forge, serverNow, onClaim, onSpeedUp
             slot.classList.add('ready');
         } else {
             text.append(el('small', '', `${formatCountdown(left)} left`));
+            const roundsLeft = rounds - (job.hammered ?? 0);
+            if (onHammer && roundsLeft > 0) {
+                const hammer = withIcon(el('button', 'slot-speed slot-hammer'), 'anvil', `Hammer ×${roundsLeft}`);
+                hammer.type = 'button';
+                hammer.addEventListener('click', () => onHammer(job.id));
+                text.append(hammer);
+            }
             if (onSpeedUp) {
                 const speed = withIcon(el('button', 'slot-speed'), 'hourglass', 'Speed up');
                 speed.type = 'button';

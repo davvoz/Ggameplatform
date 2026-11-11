@@ -409,3 +409,47 @@ building (it used to count from the centre, so mages hit most towers from
 outside their reach). Base reach: Rune 4.5, Lightning 3.5, Frost 3.0 cells;
 +0.25 per upgrade level. Outpost 4 lost a lightning tower to keep the
 difficulty curve (wins out of 36 plans: 36, 27, 25, 16, 6).
+
+### While you wait: the anvil, the merchant, quicker early timers
+
+**The anvil** (`hexforge_be/anvil.py`, `js/anvil.js`): "Hammer" on a forge
+job opens a little timing game, 5 strikes on a swinging marker. Perfect takes
+2 % of the job's time off, good 0.8 %; 3 rounds per job (30 % at most); five
+perfect strikes may leave an Hourglass. `POST /api/hexforge/me/forge/{id}/hammer`
+`{perfect, good}` returns the state plus `hammer` {cut, bonus, rounds_left}.
+
+**The merchant** (`hexforge_be/merchant.py`, in the Rewards sheet): four offers
+a day per player (two hourglass deals, a salve or flask, a hero item delivered at once
+at 70 % of its forge cost), each bought once, new at midnight UTC.
+`POST /api/hexforge/me/merchant/{id}/buy`.
+
+**Timers:** building upgrades take 5 min / 15 min / 30 min / 1 h for levels
+2-5 (the Core twice as long); evolving takes 1 h, ascending 3 h.
+
+### Fusion: three maxed into one
+
+`hexforge_be/fusion.py`, `js/fusionPanel.js`, `js/fusionArt.js`. Buildings whose
+type is at level 5 (towers, mines, walls; a trap only as a donor; never the
+Core or the Vault) and ascended heroes (tier 3) fuse three at a time, of any
+kind. The player picks the **base**: it keeps its body (type, size, place,
+class, form). The two **donors** are used up and each adds its power: a
+lightning tower fused into a rune tower adds its chain bolts (the building
+fires every weapon on its own timer), a mana well adds mana production, a
+wall adds spikes, a trap a one-time blast at the first hero close by; a
+guardian fused into a blade lends its taunt, a technomancer its nova, a
+phantom its speed, an arcanist its reach. Health and damage add up.
+
+A fused element stores `fusion: {grade, parts: [{type, path|form, power}]}`
+(power 1.0 = one maxed element). Every fusion multiplies the power of what went
+in by 1.2, so the result beats the three together. Three of the same grade make
+the next grade (plain maxed = grade 0); at most 3 different parts, more power
+of a kind adds up, a new kind beyond three feeds the body. It is a forge job
+(cost 600/600/400/300 × grade, 4 h, 8 h, then 12 h); building donors leave the
+map at once and the base keeps working; a hero base waits at the forge. A
+fused tower counts once against the tower limit, freeing slots.
+
+On the map: a turning rune ring in the parts' colours, the donors floating
+beside the body as small copies tied by a tether, one gem per grade. A fused
+hero has a ring at its feet, the donors as see-through spirits behind it and
+orbiting wisps. `POST /api/hexforge/me/fuse` `{kind, base, donors}` starts it,
+`POST /api/hexforge/me/fuse/preview` shows the result's stats without saving.

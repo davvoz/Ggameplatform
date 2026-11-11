@@ -1,9 +1,11 @@
 import {
     Refused, SignInRequired, claimJob, claimLoginReward, claimTaskReward, claimWeeklyChest, collect,
     dismantleBuilding, fetchMyState, fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding,
-    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn, upgradeBuilding, dismissHero,
+    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn, upgradeBuilding, dismissHero, hammerJob,
+    buyOffer, fuse, fusePreview,
     upgradeItem,
 } from './api.js';
+import { canFuse, fusionCandidates, partName, renderFusionCard, togglePick } from './fusionPanel.js';
 import { openBonusPicker, openItemPicker } from './bonusPicker.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
@@ -15,6 +17,8 @@ import {
 } from './forgePanel.js';
 import { fittingItems, giftText, renderHeroCard } from './heroPanel.js';
 import { renderUpgradeCard, upgradeBonuses } from './upgradePanel.js';
+import { openAnvil } from './anvil.js';
+import { offerGives, renderMerchant } from './merchantPanel.js';
 import { evolveReady, heroNames, updateTrips } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
 import { Compass } from './compass.js';
@@ -88,6 +92,10 @@ const MESSAGES = {
     on_mission: 'That Explorer is already away.',
     core_too_low: 'Upgrade the Core first.',
     last_squad: 'Keep at least 4 fighters for a squad.',
+    no_rounds_left: 'No more rounds at the anvil for this job.',
+    already_ready: 'It is ready already: claim it!',
+    sold_out: 'Sold out today.',
+    armoury_full: 'The armoury is full.',
     cannot_upgrade: 'That cannot be upgraded.',
     unknown_path: 'Pick a path first.',
     not_an_explorer: 'Only an Explorer goes on missions.',
@@ -95,6 +103,13 @@ const MESSAGES = {
     wrong_class: 'That weapon is for another class.',
     max_level: 'That item is at its top level.',
     already_upgrading: 'That item is already at the forge.',
+    not_max_level: 'Only buildings at level 5 and ascended heroes can fuse.',
+    grade_mismatch: 'All three must be of the same fusion grade.',
+    cannot_fuse: 'That one cannot fuse.',
+    already_fusing: 'That one is already at the forge, fusing.',
+    building_fusing: 'It is fusing at the forge: wait until it is done.',
+    bad_fusion: 'Pick two others to fuse with it.',
+    hero_evolving: 'That hero is at the forge.',
 };
 
 export class CityMode {
@@ -224,6 +239,9 @@ export class CityMode {
         $('btn-cancel-place').addEventListener('click', () => this.#setMode('idle'));
         $('btn-rotate').addEventListener('click', () => this.#turn());
         $('btn-upgrade').addEventListener('click', () => this.#openUpgrade());
+        $('btn-fuse').addEventListener('click', () => {
+            if (this.selectedId !== null) this.#openFusion('building', this.selectedId);
+        });
         for (const tab of document.querySelectorAll('#forge-tabs [data-kind]')) {
             tab.addEventListener('click', () => {
                 this.forgeKind = tab.dataset.kind;
@@ -284,7 +302,8 @@ export class CityMode {
         }
         const name = heroNames(this.state.heroes).get(hero.id);
         $('hero-title').textContent = name;
-        const job = this.state.forge.jobs.find((j) => j.recipe === 'evolve' && j.hero === hero.id) ?? null;
+        const job = this.state.forge.jobs.find((j) => (j.recipe === 'evolve' && j.hero === hero.id)
+            || (j.recipe === 'fuse' && j.kind === 'hero' && j.base === hero.id)) ?? null;
         const carried = (this.state.items ?? []).filter((i) => i.hero === hero.id);
         const slotOf = (i) => this.state.item_table.items[i.type].slot;
         renderHeroCard($('hero-card'), {
@@ -320,6 +339,92 @@ export class CityMode {
                 this.#renderHero();
             },
             onEvolve: (form) => void this.#evolve(hero, name, form),
+        });
+        if (canFuse('hero', hero, this.state)) {
+            const box = document.createElement('div');
+            box.className = 'evolve fuse-box';
+            const line = document.createElement('small');
+            line.className = 'evolve-note';
+            line.textContent = 'Fuse it with two more ascended heroes: it keeps its body and gains their powers.';
+            const button = withIcon(document.createElement('button'), 'fuse', 'Fuse');
+            button.type = 'button';
+            button.className = 'button primary';
+            button.addEventListener('click', () => this.#openFusion('hero', hero.id));
+            box.append(button, line);
+            $('hero-card').append(box);
+        }
+    }
+
+    // ── fusion ─────────────────────────────────────────────────────────
+    #openFusion(kind, baseId) {
+        if (!this.state?.fusion) return;
+        this.fusion = { kind, baseId, picked: [], preview: null, asked: '' };
+        openSheet('sheet-fuse', () => {
+            this.fusion = null;
+        });
+        this.#renderFusion();
+    }
+
+    #fusionBase() {
+        const f = this.fusion;
+        if (!f) return null;
+        return f.kind === 'building' ? this.#building(f.baseId) : this.state.heroes.find((h) => h.id === f.baseId) ?? null;
+    }
+
+    #renderFusion() {
+        const f = this.fusion;
+        if (!f || !isSheetOpen('sheet-fuse')) return;
+        const base = this.#fusionBase();
+        if (!base) {
+            closeSheet();
+            return;
+        }
+        const candidates = fusionCandidates(f.kind, base, this.state);
+        f.picked = f.picked.filter((id) => candidates.some((c) => c.id === id));
+        $('fuse-title').textContent = f.kind === 'building' ? 'Fuse buildings' : 'Fuse heroes';
+        renderFusionCard($('fuse-card'), {
+            kind: f.kind, base, candidates, picked: f.picked, preview: f.picked.length === 2 ? f.preview : null,
+            materials: this.state.materials, freeSlots: this.state.forge.slots - this.state.forge.jobs.length,
+            fighters: this.state.heroes.filter((h) => h.cls !== 'explorer').length, table: this.state.fusion,
+            names: heroNames(this.state.heroes), busy: this.busy,
+        }, {
+            onToggle: (ids) => {
+                f.picked = togglePick(f.picked, ids);
+                f.preview = null;
+                play('click');
+                this.#renderFusion();
+                if (f.picked.length === 2) void this.#askPreview();
+            },
+            onFuse: () => void this.#fuse(),
+        });
+    }
+
+    async #askPreview() {
+        const f = this.fusion;
+        const key = `${f.kind}:${f.baseId}:${f.picked.join(',')}`;
+        f.asked = key;
+        try {
+            const preview = await fusePreview(f.kind, f.baseId, f.picked);
+            if (this.fusion !== f || f.asked !== key) return;      // the choice moved on meanwhile
+            f.preview = preview;
+        } catch (error) {
+            if (this.fusion !== f || f.asked !== key) return;
+            f.picked = f.picked.slice(0, 1);
+            play('error');
+            toast(error instanceof Refused ? (MESSAGES[error.code] ?? 'That fusion is not possible.') : 'Could not reach the forge.');
+        }
+        this.#renderFusion();
+    }
+
+    async #fuse() {
+        const f = this.fusion;
+        if (!f || f.picked.length !== 2) return;
+        await this.#run(async () => {
+            this.#apply(await fuse(f.kind, f.baseId, f.picked));
+            play('forge');
+            toast(f.kind === 'building' ? 'Fusing at the forge. The base keeps working meanwhile.'
+                : 'Fusing at the forge. Your hero will be back stronger than ever.');
+            closeSheet();
         });
     }
 
@@ -482,12 +587,14 @@ export class CityMode {
         renderTasks($('tasks'), r.tasks, (id) => void this.#claimReward('task', id));
         renderChest($('chest'), r.weekly, this.#serverNow(), () => void this.#claimReward('chest'));
         renderBonuses($('bonus-list'), this.state.bonuses);
+        if (this.state.merchant) renderMerchant($('merchant'), this.state.merchant, this.state.materials, (id) => void this.#buyOffer(id));
         this.#tickRewards(this.#serverNow());
     }
 
     #tickRewards(now) {
         if (!this.state?.rewards || !isSheetOpen('sheet-rewards')) return;
         $('tasks-note').textContent = `new in ${formatLong(this.state.rewards.tasks_reset_at - now)}`;
+        if (this.state.merchant) $('merchant-note').textContent = `new offers in ${formatLong(this.state.merchant.next_at - now)}`;
         const reset = document.querySelector('#chest .chest-reset');
         if (reset) reset.textContent = `new in ${formatLong(this.state.rewards.weekly.reset_at - now)}`;
     }
@@ -659,14 +766,21 @@ export class CityMode {
                 this.#apply(result);
                 return;
             }
+            const card = claimed.kind === 'fusion' ? this.#fusionCard(claimed, result) : claimCard(claimed);
             shown = this.#queuePop(() => {             // before #apply, so a level-up card comes after it
-                play(claimed.kind === 'evolution' ? 'levelup' : 'claim');
-                return rewardPop(claimCard(claimed));
+                play(claimed.kind === 'evolution' || claimed.kind === 'fusion' ? 'levelup' : 'claim');
+                return rewardPop(card);
             });
             this.#apply(result);
         });
         if (!claimed || claimed.kind === 'build_up') return;
         await shown;
+        if (claimed.kind === 'fusion') {
+            // already on the map (or in the roster): nothing to place
+            this.forgeKind = claimed.hero ? 'hero' : this.forgeKind;
+            this.#renderForge();
+            return;
+        }
         const tab = { hero: 'hero', evolution: 'hero', item: 'item', upgrade: 'item' }[claimed.kind];
         if (tab) {
             this.forgeKind = tab;
@@ -675,6 +789,29 @@ export class CityMode {
         }
         closeSheet();
         this.#setMode('place', claimed.item);
+    }
+
+    /** The "you got" card for a finished fusion, drawn from the fused element in the new state. */
+    #fusionCard(claimed, state) {
+        const grade = '◆'.repeat(claimed.grade);
+        if (claimed.hero) {
+            const hero = state.heroes.find((h) => h.id === claimed.hero);
+            if (hero) {
+                return {
+                    src: heroPortrait(hero, 150), title: `Fusion ${grade}`,
+                    line: `${hero.fusion.parts.map(partName).join(' + ')}: one hero, every power`,
+                    color: HERO_INFO[hero.cls].color,
+                };
+            }
+        }
+        const b = state.city.buildings.find((x) => x.id === claimed.building);
+        if (b) {
+            return {
+                src: buildingThumb(b.type, 150, b.level ?? 1, b.path ?? null, b.fusion), title: `Fusion ${grade}`,
+                line: `${b.fusion.parts.map(partName).join(' + ')}: all at once`, color: BUILDING_INFO[b.type].glow,
+            };
+        }
+        return { src: itemThumb(claimed.item, 150), title: 'Fusion', line: 'The base was gone: nothing came out.', color: '#ffb347' };
     }
 
     async #dismantle() {
@@ -888,6 +1025,7 @@ export class CityMode {
         this.#renderForge();
         this.#renderRewards();
         this.#renderHero();
+        this.#renderFusion();
         this.second = -1;
         this.#tick();
     }
@@ -989,7 +1127,7 @@ export class CityMode {
         this.second = second;
         const hourglass = usableBonuses('job', this.state.bonuses).length > 0;
         renderForgeSlots($('forge-slots'), this.state.forge, now, (id) => void this.#claim(id),
-            hourglass ? (id) => this.#speedUpJob(id) : null);
+            hourglass ? (id) => this.#speedUpJob(id) : null, (id) => void this.#hammer(id), this.state.anvil_rounds ?? 3);
         this.#tickRewards(now);
         this.#tickTrips(now);
         const ready = this.state.forge.jobs.filter((j) => j.ready_at <= now).length;
@@ -1010,6 +1148,35 @@ export class CityMode {
             if (this.heroId !== null) this.#renderHero();
         }
         this.tripsBack = back;
+    }
+
+    /** A round at the anvil: the little game, then the time it took off. */
+    async #hammer(jobId) {
+        const job = this.state.forge.jobs.find((j) => j.id === jobId);
+        if (!job || this.busy) return;
+        const game = openAnvil({ title: jobName(job), roundsLeft: (this.state.anvil_rounds ?? 3) - (job.hammered ?? 0) });
+        const score = await game.score;
+        if (!score) return;
+        let line = null;
+        await this.#run(async () => {
+            const result = await hammerJob(jobId, score.perfect, score.good);
+            this.#apply(result);
+            const { cut, bonus } = result.hammer;
+            line = cut > 0 ? `−${formatCountdown(cut)} off ${jobName(job)}!` : 'No time off this round.';
+            if (bonus) line += ` And a ${BONUS_INFO[bonus].name}!`;
+            play(cut > 0 ? 'boost' : 'error');
+        });
+        game.finish(line ?? 'The forge did not answer. Try again.');
+    }
+
+    async #buyOffer(offerId) {
+        const offer = this.state.merchant.offers.find((o) => o.id === offerId);
+        await this.#run(async () => {
+            this.#apply(await buyOffer(offerId));
+            play('claim');
+            toast(`Bought: ${offerGives(offer.gives)}.`);
+            this.#renderRewards();
+        });
     }
 
     #speedUpJob(jobId) {
@@ -1048,10 +1215,12 @@ export class CityMode {
         this.#renderBottom();
         if (!b) return;
         $('sel-name').textContent = BUILDING_INFO[b.type].name;      // the level and path sit on their own line
-        $('btn-upgrade').hidden = !this.state.upgrades?.table[b.type];
-        $('sel-what').textContent = BUILDING_INFO[b.type].what;
-        $('sel-thumb').src = buildingThumb(b.type, 64, b.level ?? 1, b.path ?? null);
-        this.#renderUpgradeLine(b);
+        $('btn-upgrade').hidden = !this.state.upgrades?.table[b.type] || Boolean(b.fusion);
+        $('btn-fuse').hidden = !canFuse('building', b, this.state);
+        $('sel-what').textContent = b.fusing ? 'Fusing at the forge: it keeps working meanwhile.' : BUILDING_INFO[b.type].what;
+        $('sel-thumb').src = buildingThumb(b.type, 64, b.level ?? 1, b.path ?? null, b.fusion ?? null);
+        if (b.fusion) this.#renderFusionLine(b);
+        else this.#renderUpgradeLine(b);
         const locked = b.type === 'core' || b.type === 'vault';
         const refund = this.#recipe(b.type)?.refund ?? {};
         const refundText = Object.entries(refund).map(([m, n]) => `+${n} ${MATERIAL_INFO[m].name.toLowerCase()}`).join(' ');
@@ -1067,6 +1236,19 @@ export class CityMode {
         if (b.aim) this.#renderAim(b);
         this.infoText = '';
         this.#updateInfo();
+    }
+
+    /** A fused building says its grade and what it is made of. */
+    #renderFusionLine(b) {
+        const line = $('sel-upgrade');
+        line.hidden = false;
+        line.style.setProperty('--accent', BUILDING_INFO[b.type].glow);
+        const tag = document.createElement('b');
+        tag.textContent = `◆ Fusion ${'◆'.repeat(b.fusion.grade)}`;
+        const parts = document.createElement('span');
+        parts.textContent = b.fusion.parts.map(partName).join(' + ');
+        line.replaceChildren(tag, parts);
+        line.title = 'Every part works at once: it shoots, makes and bites back with all of them.';
     }
 
     /** An upgraded building says its level, its path and what they add. */
@@ -1109,6 +1291,11 @@ export class CityMode {
             text += ` · +${b.production.per_hour} ${material}/h · holds ${this.#pendingOf(b)}/${b.production.capacity}`;
         }
         if (b.range) text += ` · reach ${b.range} cells`;
+        const weapons = b.fusion?.stats?.weapons?.length ?? 0;
+        if (weapons > 1) text += ` · ${weapons} weapons`;
+        if (b.fusion?.stats?.produces?.length > 1) {
+            text += ` · makes ${b.fusion.stats.produces.map((p) => MATERIAL_INFO[p.material].name.toLowerCase()).join(' + ')}`;
+        }
         if (text !== this.infoText) {
             this.infoText = text;
             $('sel-info').textContent = text;

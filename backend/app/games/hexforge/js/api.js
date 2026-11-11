@@ -134,6 +134,16 @@ export function evolveHero(heroId, form) {
     return post(`/me/heroes/${heroId}/evolve`, { form });
 }
 
+/** A round at the anvil on a forge job: the state plus `hammer` {cut, bonus, rounds_left}. */
+export function hammerJob(jobId, perfect, good) {
+    return post(`/me/forge/${jobId}/hammer`, { perfect, good });
+}
+
+/** Buy one of the merchant's offers of the day: the state plus `bought`. */
+export function buyOffer(offerId) {
+    return post(`/me/merchant/${offerId}/buy`, {});
+}
+
 /** Let a hero go for a bonus: the state plus `gift`. */
 export function dismissHero(heroId) {
     return post(`/me/heroes/${heroId}/dismiss`, {});
@@ -142,6 +152,16 @@ export function dismissHero(heroId) {
 /** Send a building type to the forge to gain a level; `path` when it reaches level 3. */
 export function upgradeBuilding(buildingId, path = null) {
     return post(`/me/buildings/${buildingId}/upgrade`, { path });
+}
+
+/** Fuse three maxed buildings or heroes ('building' | 'hero'): `base` keeps its body, `donors` (2 ids) are used up. */
+export function fuse(kind, base, donors) {
+    return post('/me/fuse', { kind, base, donors });
+}
+
+/** What that fusion would make, with its stats; changes nothing. */
+export function fusePreview(kind, base, donors) {
+    return post('/me/fuse/preview', { kind, base, donors });
 }
 
 /** Send an Explorer on a mission: 'scout', 'expedition' or 'voyage'. */

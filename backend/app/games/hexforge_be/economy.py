@@ -65,13 +65,35 @@ def starter_heroes() -> list[dict]:
 
 # ── production ─────────────────────────────────────────────────────────
 def pending(building: dict, now: float) -> int:
-    """Units a production building has made since it was last collected."""
-    production = PRODUCTION.get(building["type"])
-    if production is None:
-        return 0
-    per_hour = rate_of(building)
+    """Units a production building has made since it was last collected (all materials together)."""
+    return sum(pending_all(building, now).values())
+
+
+def outputs(building: dict) -> list[tuple[str, float, float]]:
+    """[(material, units per hour, hours before full)]: one row for a plain producer,
+    one per producing part for a fused building (see fusion.py)."""
+    if not building.get("fusion"):
+        made = PRODUCTION.get(building["type"])
+        return [(made[0], rate_of(building), CAP_HOURS * cap_factor(building))] if made else []
+    rows = []
+    for part in building["fusion"]["parts"]:
+        made = PRODUCTION.get(part["type"])
+        if made is None:
+            continue
+        probe = {"type": part["type"], "level": 5, "path": part.get("path")}
+        rows.append((made[0], made[1] * rate_factor(probe) * part["power"], CAP_HOURS * cap_factor(probe)))
+    return rows
+
+
+def pending_all(building: dict, now: float) -> dict:
+    """{material: units made since the last collection}."""
+    if "collected_at" not in building:
+        return {}
     hours = max(0.0, now - building["collected_at"]) / 3600
-    return int(min(hours, CAP_HOURS * cap_factor(building)) * per_hour)
+    made: dict = {}
+    for material, per_hour, cap_hours in outputs(building):
+        made[material] = made.get(material, 0) + int(min(hours, cap_hours) * per_hour)
+    return made
 
 
 def rate_of(building: dict) -> float:
@@ -93,20 +115,20 @@ def collect(city: dict, materials: dict, now: float, building_ids=None) -> dict:
     gained = dict.fromkeys(MATERIALS, 0)
     wanted = None if building_ids is None else set(building_ids)
     for b in city["buildings"]:
-        if b["type"] not in PRODUCTION or (wanted is not None and b["id"] not in wanted):
+        if wanted is not None and b["id"] not in wanted:
             continue
-        amount = pending(b, now)
-        if amount <= 0:
+        made = {m: n for m, n in pending_all(b, now).items() if n > 0}
+        if not made:
             continue
-        material = PRODUCTION[b["type"]][0]
-        per_hour = rate_of(b)
-        materials[material] = materials.get(material, 0) + amount
-        gained[material] += amount
-        # keep the fraction of a unit already made, unless the store was full
-        if now - b["collected_at"] >= CAP_HOURS * cap_factor(b) * 3600:
-            b["collected_at"] = now
+        for material, amount in made.items():
+            materials[material] = materials.get(material, 0) + amount
+            gained[material] += amount
+        rows = outputs(b)
+        if len(rows) > 1 or now - b["collected_at"] >= rows[0][2] * 3600:
+            b["collected_at"] = now        # a full store (or several materials) starts again from now
         else:
-            b["collected_at"] += amount * 3600 / per_hour
+            # keep the fraction of a unit already made
+            b["collected_at"] += made[rows[0][0]] * 3600 / rows[0][1]
     return gained
 
 

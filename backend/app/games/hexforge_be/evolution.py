@@ -36,7 +36,7 @@ FORMS = {
     "archon": "technomancer", "arcanist": "technomancer",
 }
 
-EVOLVE_SECONDS = {2: 7200, 3: 14400}
+EVOLVE_SECONDS = {2: 3600, 3: 10800}       # evolving is quicker than ascending
 EVOLVE_COST = {
     "guardian": {"scrap": 300, "rune_stone": 200, "mana": 100},
     "neon_blade": {"scrap": 250, "chips": 150, "mana": 100},
@@ -78,11 +78,14 @@ def spec_of(cls: str, form: str | None = None, tier: int = 1) -> HeroClass:
 
 def unit_of(hero: dict, carried: list | None = None):
     """The squad entry the simulation gets for this hero (and the items it carries)."""
-    if hero.get("tier", 1) <= 1 and not carried:
+    if hero.get("tier", 1) <= 1 and not carried and not hero.get("fusion"):
         return hero["cls"]
     unit = {"cls": hero["cls"]}
     if hero.get("tier", 1) > 1:
         unit.update(form=hero["form"], tier=hero["tier"])
+    if hero.get("fusion"):
+        unit["fusion"] = hero["fusion"]["parts"]
+        unit["grade"] = hero["fusion"]["grade"]
     if carried:
         unit["items"] = carried
     return unit

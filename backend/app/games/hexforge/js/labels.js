@@ -3,6 +3,7 @@
 export const HERO_INFO = {
     guardian: { name: 'Guardian', tag: 'Guardian', role: 'Tank · draws tower fire', job: 'Tank', what: 'Tough tank: nearby towers shoot him, not the others.', color: '#5aa9ff', short: 'G' },
     neon_blade: { name: 'Neon Blade', tag: 'Blade', role: 'Assassin · leaps over walls', job: 'Leaps walls', what: 'Fast, hits hard and leaps over walls.', color: '#ff3d9a', short: 'B' },
+    explorer: { name: 'Explorer', tag: 'Scout', role: 'Scout · never fights', job: 'Missions', what: 'Goes on missions and comes back with surprise loot.', color: '#3fd0a0', short: 'X' },
     technomancer: { name: 'Technomancer', tag: 'Mage', role: 'Mage · ranged, area nova', job: 'Ranged', what: 'Hits from afar; every few seconds a blast on an area.', color: '#a77bff', short: 'T' },
 };
 
@@ -99,3 +100,42 @@ export const FORM_INFO = {
 
 /** Tier names: 1 base, 2 evolved, 3 ascended. */
 export const TIER_NAMES = { 1: 'Recruit', 2: 'Evolved', 3: 'Ascended' };
+
+/** Hero items: name, one line on what they do, icon and colour. Numbers come from the server's table. */
+export const ITEM_INFO = {
+    rune_maul: { name: 'Rune Maul', what: 'A heavier hammer: more damage.', icon: 'hammer', color: '#ff8a3d' },
+    aegis_plate: { name: 'Aegis Plate', what: 'Rune-forged plate: more health.', icon: 'shield', color: '#5aa9ff' },
+    plasma_edge: { name: 'Plasma Edge', what: 'A hotter blade: more damage.', icon: 'dagger', color: '#ff3d9a' },
+    flux_daggers: { name: 'Flux Daggers', what: 'Lighter daggers: faster blows.', icon: 'daggers', color: '#ff7ad1' },
+    storm_staff: { name: 'Storm Staff', what: 'More damage, and a stronger nova.', icon: 'staff', color: '#a77bff' },
+    focus_lens: { name: 'Focus Lens', what: 'Sees farther: longer reach.', icon: 'eye', color: '#4dfff0' },
+    ward_sigil: { name: 'Ward Sigil', what: 'A shield that soaks the first blows.', icon: 'ward', color: '#6fd3ff' },
+    mending_rune: { name: 'Mending Rune', what: 'Heals the hero during the fight.', icon: 'heart', color: '#4dd98a' },
+    haste_rune: { name: 'Haste Rune', what: 'Moves faster.', icon: 'wing', color: '#ffd27a' },
+    treasure_map: { name: 'Treasure Map', what: 'Explorer only: more loot from every mission.', icon: 'map', color: '#3fd0a0' },
+    trail_boots: { name: 'Trail Boots', what: 'Explorer only: shorter missions.', icon: 'boot', color: '#c9a36b' },
+};
+
+/** The Explorer's missions: how long, and a hint of what they may bring. */
+export const MISSION_INFO = {
+    scout: { name: 'Scouting', line: 'A quick look around: some materials, maybe a bonus.' },
+    expedition: { name: 'Expedition', line: 'Further out: more materials, often a bonus, sometimes an item.' },
+    voyage: { name: 'Long voyage', line: 'Deep into the wilds: lots of materials, bonuses, a good chance of an item.' },
+};
+
+/** What an item's effect amounts to, in words: effectText('hp_pct', 18) → '+18% health'. */
+export function effectText(effect, value) {
+    switch (effect) {
+        case 'damage_pct': return `+${value}% damage`;
+        case 'loot_pct': return `+${value}% loot`;
+        case 'trip_pct': return `−${value}% mission time`;
+        case 'hp_pct': return `+${value}% health`;
+        case 'haste_pct': return `blows ${value}% faster`;
+        case 'spell_pct': return `+${value}% damage and nova`;
+        case 'range': return `+${value} reach`;
+        case 'barrier_pct': return `shield of ${value}% health`;
+        case 'regen_pct': return `heals ${value}% health a second`;
+        case 'speed_pct': return `+${value}% speed`;
+        default: return '';
+    }
+}

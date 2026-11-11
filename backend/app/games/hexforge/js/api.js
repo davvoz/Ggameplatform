@@ -133,3 +133,28 @@ export function useBonus(bonus, target) {
 export function evolveHero(heroId, form) {
     return post(`/me/heroes/${heroId}/evolve`, { form });
 }
+
+/** Send an Explorer on a mission: 'scout', 'expedition' or 'voyage'. */
+export function sendExplorer(heroId, mission) {
+    return post(`/me/heroes/${heroId}/explore`, { mission });
+}
+
+/** Bring an Explorer home: the state plus `loot`. */
+export function explorerReturn(heroId) {
+    return post(`/me/heroes/${heroId}/return`, {});
+}
+
+/** Give a hero an item from the armoury. */
+export function equipItem(heroId, itemId) {
+    return post(`/me/heroes/${heroId}/equip`, { item_id: itemId });
+}
+
+/** Put an item back in the armoury. */
+export function unequipItem(itemId) {
+    return post(`/me/items/${itemId}/unequip`, {});
+}
+
+/** Send an item to the forge to gain a level. */
+export function upgradeItem(itemId) {
+    return post(`/me/items/${itemId}/upgrade`, {});
+}

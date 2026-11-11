@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from . import economy, evolution, progress
+from . import economy, evolution, items, progress
 from .catalog import BUILDINGS, HEROES
 from .errors import ActionError
 
@@ -51,6 +51,8 @@ RECIPES: dict[str, Recipe] = {r.item: r for r in (
     _r("guardian", "hero", 3600, scrap=150, rune_stone=60),
     _r("neon_blade", "hero", 3600, scrap=100, chips=60),
     _r("technomancer", "hero", 5400, mana=120, chips=50),
+    _r("explorer", "hero", 2700, scrap=80, mana=60, chips=40),
+    *(_r(item, "item", seconds, **cost) for item, (seconds, cost) in items.RECIPES.items()),
 )}
 
 # How many of a kind a player may own (placed + stored + being forged).
@@ -62,7 +64,8 @@ LIMIT_GROUPS: dict[str, tuple[tuple[str, ...], int]] = {
     "scrap_foundry": (("scrap_foundry",), 2),
     "mana_well": (("mana_well",), 2),
     "data_node": (("data_node",), 2),
-    "heroes": (tuple(HEROES), 8),     # the real limit grows with the player's level
+    "heroes": ((*HEROES, "explorer"), 8),   # the real limit grows with the player's level
+    "items": (tuple(items.ITEMS), items.ITEM_LIMIT),
 }
 _GROUP_OF = {item: name for name, (items, _) in LIMIT_GROUPS.items() for item in items}
 
@@ -73,13 +76,14 @@ def ensure_forge(city: dict) -> None:
 
 
 # ── counting and limits ───────────────────────────────────────────────
-def owned(city: dict, heroes: list, items) -> int:
-    """Placed + stored + being forged, for these items."""
-    items = set(items)
-    count = sum(1 for b in city["buildings"] if b["type"] in items)
-    count += sum(n for item, n in city["storage"].items() if item in items)
-    count += sum(1 for h in heroes if h["cls"] in items)
-    count += sum(RECIPES[j["recipe"]].yields for j in city["forge"]["jobs"] if j["recipe"] in items)
+def owned(city: dict, heroes: list, kinds) -> int:
+    """Placed + stored + in the armoury + being forged, for these kinds."""
+    kinds = set(kinds)
+    count = sum(1 for b in city["buildings"] if b["type"] in kinds)
+    count += sum(n for kind, n in city["storage"].items() if kind in kinds)
+    count += sum(1 for h in heroes if h["cls"] in kinds)
+    count += sum(1 for i in city.get("items", []) if i["type"] in kinds)
+    count += sum(RECIPES[j["recipe"]].yields for j in city["forge"]["jobs"] if j["recipe"] in kinds)
     return count
 
 
@@ -126,12 +130,19 @@ def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
     if job["recipe"] == "evolve":
         forge["jobs"].remove(job)
         return evolution.finish(job, heroes)
+    if job["recipe"] == "upgrade":
+        forge["jobs"].remove(job)
+        return items.finish_upgrade(city, job)
     recipe = RECIPES[job["recipe"]]
     forge["jobs"].remove(job)
     if recipe.kind == "hero":
         next_id = max((h["id"] for h in heroes), default=0) + 1
         for i in range(recipe.yields):
             heroes.append({"id": next_id + i, "cls": recipe.item})
+    elif recipe.kind == "item":
+        items.ensure_items(city)
+        made = items.add(city, recipe.item)
+        return {"item": recipe.item, "kind": "item", "count": 1, "item_id": made["id"], "seconds": recipe.seconds}
     else:
         city["storage"][recipe.item] = city["storage"].get(recipe.item, 0) + recipe.yields
     return {"item": recipe.item, "kind": recipe.kind, "count": recipe.yields, "seconds": recipe.seconds}
@@ -180,12 +191,12 @@ def public_recipes(city: dict, heroes: list) -> list[dict]:
     rows = []
     for recipe in RECIPES.values():
         group = _GROUP_OF[recipe.item]
-        items, limit = LIMIT_GROUPS[group][0], limit_of(city, group)
+        kinds, limit = LIMIT_GROUPS[group][0], limit_of(city, group)
         rows.append({
             "id": recipe.item, "kind": recipe.kind, "cost": recipe.cost,
             "seconds": recipe.seconds, "yields": recipe.yields,
             "size": BUILDINGS[recipe.item].size if recipe.kind == "building" else None,
             "refund": refund_of(recipe.item) if recipe.kind == "building" else None,
-            "group": _GROUP_OF[recipe.item], "owned": owned(city, heroes, items), "limit": limit,
+            "group": _GROUP_OF[recipe.item], "owned": owned(city, heroes, kinds), "limit": limit,
         })
     return rows

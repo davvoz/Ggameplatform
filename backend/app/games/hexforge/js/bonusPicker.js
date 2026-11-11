@@ -60,3 +60,66 @@ export function openBonusPicker({ title, line = '', options, owned, onPick }) {
     open = shade;
     row.querySelector('button')?.focus();
 }
+
+/**
+ * The same card, listing items: `options` = [{ id, picture, title, line, accent }].
+ * `onPick(id)` equips one; `onClear` (optional) adds "Take it off".
+ */
+export function openItemPicker({ title, line = '', options, onPick, onClear = null, empty = '' }) {
+    closeBonusPicker();
+    const shade = document.createElement('div');
+    shade.className = 'picker-shade';
+    shade.addEventListener('click', (event) => {
+        if (event.target === shade) closeBonusPicker();
+    });
+    const card = document.createElement('div');
+    card.className = 'bonus-picker';
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', title);
+    card.append(Object.assign(document.createElement('b'), { textContent: title }));
+    if (line) card.append(Object.assign(document.createElement('small'), { textContent: line }));
+    const list = document.createElement('div');
+    list.className = 'picker-list';
+    for (const option of options) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'picker-row';
+        button.style.setProperty('--accent', option.accent);
+        const img = document.createElement('img');
+        img.src = option.picture;
+        img.alt = '';
+        const text = document.createElement('span');
+        text.append(Object.assign(document.createElement('b'), { textContent: option.title }),
+            Object.assign(document.createElement('small'), { textContent: option.line }));
+        button.append(img, text);
+        button.addEventListener('click', () => {
+            closeBonusPicker();
+            onPick(option.id);
+        });
+        list.append(button);
+    }
+    if (!options.length && empty) list.append(Object.assign(document.createElement('p'), { className: 'hint', textContent: empty }));
+    const buttons = document.createElement('div');
+    buttons.className = 'picker-buttons';
+    if (onClear) {
+        const clear = document.createElement('button');
+        clear.type = 'button';
+        clear.className = 'button small';
+        clear.textContent = 'Take it off';
+        clear.addEventListener('click', () => {
+            closeBonusPicker();
+            onClear();
+        });
+        buttons.append(clear);
+    }
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'button small';
+    cancel.textContent = 'Cancel';
+    cancel.addEventListener('click', closeBonusPicker);
+    buttons.append(cancel);
+    card.append(list, buttons);
+    shade.append(card);
+    document.getElementById('app').append(shade);
+    open = shade;
+}

@@ -5,6 +5,8 @@
  * it works out how each hero should be posed: winding up or following
  * through a blow, in the air over a wall, just hit, which way it faces, and
  * nudged apart from the others so heroes never stand inside each other.
+ * Items: a ward's shield shrinks with what it soaks; a mending hero's health
+ * is read from the frames (it heals between events).
  */
 
 /** How long each kind of event stays on screen, in ticks. */
@@ -70,6 +72,7 @@ export function createReplay(battle) {
         const t = Math.min(Math.max(tick, 0), ticks + AFTER_TICKS);
         const buildingHp = new Map(city.buildings.map((b) => [b.id, b.hp]));
         const heroHp = squad.map((h) => h.hp);
+        const shield = squad.map((h) => h.barrier ?? 0);
         const slowUntil = squad.map(() => -1);
         const lastHit = squad.map(() => -Infinity);
         const lastBlow = squad.map(() => null);
@@ -86,7 +89,7 @@ export function createReplay(battle) {
                 if (isBlow(e) && nextBlow[e.hero] === null) nextBlow[e.hero] = e;
                 continue;
             }
-            applyEvent(e, { buildingHp, heroHp, slowUntil, destroyed, sprung, down, lastHit });
+            applyEvent(e, { buildingHp, heroHp, shield, slowUntil, destroyed, sprung, down, lastHit });
             if (isBlow(e)) lastBlow[e.hero] = e;
             if (e.type === 'leap' && t <= e.until) leaps[e.hero] = e;
             const life = EFFECT_TICKS[e.type];
@@ -94,6 +97,10 @@ export function createReplay(battle) {
         }
 
         const positions = heroPositions(t);
+        const frame = frames[Math.min(Math.floor(Math.min(t, ticks) / stride), frames.length - 1)];
+        squad.forEach((h, k) => {
+            if (mends(h) && !down.has(h.id)) heroHp[k] = frame[k][2];
+        });
         const heroes = squad.map((h, k) => {
             const blow = poseOfBlow(lastBlow[k], nextBlow[k], t);
             const leap = leaps[k];
@@ -104,6 +111,9 @@ export function createReplay(battle) {
                 tier: h.tier ?? 1,
                 maxHp: h.hp,
                 hp: heroHp[k],
+                shield: Math.max(0, shield[k]),
+                maxShield: h.barrier ?? 0,
+                mending: mends(h),
                 alive: !down.has(h.id),
                 slowed: t <= slowUntil[k],
                 hurt: Math.max(0, 1 - (t - lastHit[k]) / HURT_TICKS),
@@ -133,6 +143,10 @@ export function createReplay(battle) {
     }
 
     return { duration: ticks, tickRate, stateAt, events, squad };
+}
+
+function mends(hero) {
+    return (hero.items ?? []).some((i) => i.type === 'mending_rune');
 }
 
 function isBlow(e) {
@@ -190,12 +204,14 @@ function applyEvent(e, s) {
             break;
         case 'shot':
             s.heroHp[e.hero] = e.hp;
+            s.shield[e.hero] -= e.soaked ?? 0;
             s.lastHit[e.hero] = e.t;
             break;
         case 'bolt':
         case 'trap':
             for (const hit of e.hits) {
                 s.heroHp[hit.hero] = hit.hp;
+                s.shield[hit.hero] -= hit.soaked ?? 0;
                 s.lastHit[hit.hero] = e.t;
             }
             if (e.type === 'trap') s.sprung.add(e.building);
@@ -203,6 +219,7 @@ function applyEvent(e, s) {
         case 'frost':
             for (const hit of e.hits) {
                 s.heroHp[hit.hero] = hit.hp;
+                s.shield[hit.hero] -= hit.soaked ?? 0;
                 s.slowUntil[hit.hero] = e.t + SLOW_TICKS;
                 s.lastHit[hit.hero] = e.t;
             }

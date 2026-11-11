@@ -1,8 +1,9 @@
 """
 Hexforge: attacking other players.
 
-  arena    opens when you clear the first outpost. Until then you cannot
-           attack players and nobody can attack you.
+  arena    opens when you clear the first outpost: until then you cannot
+           attack players. Anyone can be attacked, guests too, from the
+           start (a city with a tower and no shield).
   scouting "Find a rival" picks a player of similar strength who can be
            attacked; asking again picks another. Only the scouted rival can
            be attacked. The rival's towers keep their aim secret.
@@ -57,8 +58,9 @@ def strength(city: dict) -> int:
 
 
 def attackable(city: dict, now: float) -> bool:
+    """Every player, arena or not, while unshielded and with a tower to fight."""
     has_tower = any(BUILDINGS[b["type"]].category == "tower" for b in city["buildings"])
-    return in_arena(city) and shield_until(city) <= now and has_tower
+    return shield_until(city) <= now and has_tower
 
 
 def lootable(materials: dict) -> dict:

@@ -3,6 +3,7 @@
 export const SQUAD_SIZE = 4;
 
 export function isAvailable(hero, serverNow) {
+    if (hero.cls === 'explorer') return false;   // never fights
     if (hero.evolving) return false;             // at the forge
     return !hero.injured_until || hero.injured_until <= serverNow;
 }

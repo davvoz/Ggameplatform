@@ -1,7 +1,7 @@
 import { icon, withIcon } from './icons.js';
-import { BUILDING_INFO, FORM_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import { BUILDING_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MATERIAL_INFO, effectText } from './labels.js';
 import { evolveReady, heroNames, heroStatus, heroTile } from './heroTiles.js';
-import { buildingThumb, heroThumb, thumbImg } from './thumbs.js';
+import { buildingThumb, heroThumb, itemPicture, thumbImg } from './thumbs.js';
 
 /** DOM builders for the forge sheet and the "ready to place" tray. */
 
@@ -33,27 +33,31 @@ export function forgeBlocker(recipe, materials, freeSlots) {
 }
 
 export function itemName(item) {
-    return BUILDING_INFO[item]?.name ?? HERO_INFO[item]?.name ?? item;
+    return BUILDING_INFO[item]?.name ?? HERO_INFO[item]?.name ?? ITEM_INFO[item]?.name ?? item;
 }
 
 /** What anything the forge makes is for, in one short line. */
 export function itemWhat(item) {
-    return BUILDING_INFO[item]?.what ?? HERO_INFO[item]?.what ?? '';
+    return BUILDING_INFO[item]?.what ?? HERO_INFO[item]?.what ?? ITEM_INFO[item]?.what ?? '';
 }
 
 /** The picture of anything the forge makes. */
 export function itemThumb(item, px) {
-    return HERO_INFO[item] ? heroThumb(item, px) : buildingThumb(item, px);
+    if (HERO_INFO[item]) return heroThumb(item, px);
+    if (ITEM_INFO[item]) return itemPicture(item, px);
+    return buildingThumb(item, px);
 }
 
 /** A forge job's name: what it makes, or the hero evolving ("Bastion ★★"). */
 export function jobName(job) {
+    if (job.recipe === 'upgrade') return `${ITEM_INFO[job.type].name} Lv ${job.level}`;
     if (job.recipe !== 'evolve') return itemName(job.recipe);
     return `${FORM_INFO[job.form].name} ${'★'.repeat(job.tier)}`;
 }
 
 /** A forge job's picture. */
 export function jobThumb(job, px) {
+    if (job.recipe === 'upgrade') return itemPicture(job.type, px);
     if (job.recipe !== 'evolve') return itemThumb(job.recipe, px);
     return heroThumb(FORM_INFO[job.form].cls, px, job.form, job.tier);
 }
@@ -176,4 +180,53 @@ export function renderRoster(container, heroes, limit, serverNow, tierXp = null,
     }
     if (onTap) head.append(el('small', '', ready ? ` · ${ready} can evolve: tap them` : ' · tap a hero for its card'));
     container.append(tiles);
+}
+
+/** "+18% health" for an item at its level, from the server's table. */
+export function itemEffect(table, item) {
+    const row = table.items[item.type];
+    return effectText(row.effect, row.levels[item.level - 1]);
+}
+
+/**
+ * The armoury: every item owned, its level and effect, who carries it, and
+ * Upgrade (cost and time) unless it is at the top level or at the forge.
+ */
+export function renderArmoury(container, { items, table, heroNameOf, materials, freeSlots, jobs }, onUpgrade) {
+    container.replaceChildren();
+    container.append(el('span', 'roster-total', `Your armoury ${items.length}/${table.limit}`));
+    if (!items.length) {
+        container.append(el('p', 'hint', 'Forge a weapon or a spell above, then give it to a hero from the hero\'s card.'));
+        return;
+    }
+    const list = el('div', 'armoury');
+    const upgrading = new Set(jobs.filter((j) => j.recipe === 'upgrade').map((j) => j.item));
+    for (const item of [...items].sort((a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : b.level - a.level))) {
+        const info = ITEM_INFO[item.type];
+        const row = el('div', 'armoury-item');
+        row.style.setProperty('--accent', info.color);
+        const text = el('span', 'armoury-text');
+        text.append(el('b', '', `${info.name} · Lv ${item.level}`), el('small', '', itemEffect(table, item)),
+            el('small', 'carrier', item.hero ? `Carried by ${heroNameOf(item.hero)}` : 'In the armoury'));
+        const side = el('span', 'armoury-side');
+        if (upgrading.has(item.id)) {
+            side.append(el('small', '', 'At the forge'));
+        } else if (item.level >= table.max_level) {
+            side.append(el('small', '', 'Top level'));
+        } else {
+            const next = table.items[item.type].upgrades[String(item.level + 1)];
+            const short = Object.entries(next.cost).some(([m, n]) => (materials[m] ?? 0) < n);
+            const button = withIcon(el('button', 'button small'), 'anvil', `Lv ${item.level + 1}`);
+            button.type = 'button';
+            button.disabled = short || freeSlots <= 0;
+            button.title = short ? 'Not enough materials' : freeSlots <= 0 ? 'Both forge slots are busy' : `Upgrade to level ${item.level + 1}`;
+            button.addEventListener('click', () => onUpgrade(item.id));
+            const price = el('span', 'armoury-price');
+            price.append(costChips(next.cost, materials), withIcon(el('span', 'evolve-time'), 'clock', formatDuration(next.seconds)));
+            side.append(button, price);
+        }
+        row.append(thumbImg(itemPicture(item.type, 46), '', ''), text, side);
+        list.append(row);
+    }
+    container.append(list);
 }

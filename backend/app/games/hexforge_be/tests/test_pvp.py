@@ -55,9 +55,9 @@ class LootTest(unittest.TestCase):
 
 
 class ArenaTest(unittest.TestCase):
-    def test_only_arena_players_with_a_tower_and_no_shield_can_be_attacked(self):
+    def test_anyone_with_a_tower_and_no_shield_can_be_attacked(self):
         self.assertTrue(pvp.attackable(city(), T0))
-        self.assertFalse(pvp.attackable(city(arena=False), T0))
+        self.assertTrue(pvp.attackable(city(arena=False), T0))      # even before their first outpost
         self.assertFalse(pvp.attackable(city(towers=0), T0))
         self.assertFalse(pvp.attackable(city(shield=T0 + 60), T0))
         self.assertTrue(pvp.attackable(city(shield=T0 + 60), T0 + 60))
@@ -77,7 +77,8 @@ class ArenaTest(unittest.TestCase):
         self.assertEqual(pvp.choose_rival(me, 0, [("bob", city(), 0)], T0, random.Random(0)), "bob")
 
     def test_nobody_to_attack(self):
-        self.assertIsNone(pvp.choose_rival(city(), 0, [("bob", city(arena=False), 0)], T0))
+        self.assertIsNone(pvp.choose_rival(city(), 0, [("bob", city(shield=T0 + 60), 0), ("eve", city(towers=0), 0)], T0))
+        self.assertEqual(pvp.choose_rival(city(), 0, [("cid", city(arena=False), 0)], T0), "cid")
 
     def test_the_attacker_sees_no_aims_and_no_traps(self):
         target = {"grid": 18, "buildings": [

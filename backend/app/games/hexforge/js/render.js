@@ -559,6 +559,30 @@ export class Renderer {
             drawHero(ctx, hero, foot.x, foot.y - lift, s, info.color, time, pose);
             ctx.restore();
         }
+        if (hero.shield > 0) {
+            // a ward sigil: a bubble that fades as it soaks blows
+            const k = 0.35 + 0.65 * (hero.shield / (hero.maxShield || 1));
+            ctx.save();
+            ctx.fillStyle = `rgba(111, 211, 255, ${0.12 * k})`;
+            ctx.strokeStyle = `rgba(160, 230, 255, ${0.75 * k})`;
+            ctx.lineWidth = 1.5 * camera.scale;
+            ctx.beginPath();
+            ctx.ellipse(foot.x, foot.y - lift - 22 * s, 17 * s, 27 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+        if (hero.mending && hero.hp < hero.maxHp) {
+            // a mending rune: green motes rising while it heals
+            ctx.save();
+            ctx.fillStyle = '#7dff9a';
+            for (let i = 0; i < 3; i++) {
+                const phase = (time * 0.9 + i / 3 + hero.id * 0.17) % 1;
+                ctx.globalAlpha = 0.8 * (1 - phase);
+                ctx.fillRect(foot.x + (i - 1) * 7 * s - 1.5 * s, foot.y - lift - (8 + 40 * phase) * s, 3 * s, 3 * s);
+            }
+            ctx.restore();
+        }
         if (hero.slowed) {
             ctx.fillStyle = 'rgba(159, 227, 255, 0.28)';
             ctx.beginPath();

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import defense, economy, evolution, forge, outposts, progress, pvp, rewards
+from . import defense, economy, evolution, explorers, forge, items, outposts, progress, pvp, rewards
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -50,6 +50,7 @@ class PlayerService:
             outposts.ensure_campaign(city, now)
             pvp.ensure_pvp(city)
             progress.ensure_progress(city)
+            items.ensure_items(city)
             row = HexforgePlayer(
                 user_id=user_id,
                 city_json=json.dumps(city),
@@ -202,7 +203,7 @@ class PlayerService:
         rival = self.existing(rival_id, now)
         if rival is None or not pvp.attackable(rival.city, now):
             raise ActionError("rival_unavailable")
-        classes = outposts.squad_classes(state.heroes, hero_ids, now)
+        classes = outposts.squad_classes(state.heroes, hero_ids, now, state.city)
         outposts.spend_energy(state.city, now)
 
         target = defense.battle_city(rival.city)
@@ -332,6 +333,39 @@ class PlayerService:
         self.save(state, now)
         return state
 
+    def explore(self, user_id: str, hero_id: int, mission: str, now: float) -> PlayerState:
+        """Send an Explorer on a mission."""
+        state = self.load(user_id, now)
+        explorers.start(state.city, state.heroes, hero_id, mission, now)
+        self.save(state, now)
+        return state
+
+    def explorer_return(self, user_id: str, hero_id: int, now: float) -> tuple[PlayerState, dict]:
+        """Bring an Explorer home with its loot."""
+        state = self.load(user_id, now)
+        loot = explorers.claim(state.city, state.heroes, state.materials, hero_id, now)
+        self.save(state, now)
+        return state, loot
+
+    def equip_item(self, user_id: str, hero_id: int, item_id: int, now: float) -> PlayerState:
+        state = self.load(user_id, now)
+        items.equip(state.city, state.heroes, hero_id, item_id)
+        self.save(state, now)
+        return state
+
+    def unequip_item(self, user_id: str, item_id: int, now: float) -> PlayerState:
+        state = self.load(user_id, now)
+        items.unequip(state.city, item_id)
+        self.save(state, now)
+        return state
+
+    def upgrade_item(self, user_id: str, item_id: int, now: float) -> PlayerState:
+        state = self.load(user_id, now)
+        items.start_upgrade(state.city, state.materials, item_id, now)
+        rewards.record(state.city, "forge")
+        self.save(state, now)
+        return state
+
     def use_bonus(self, user_id: str, bonus: str, now: float, **target) -> tuple[PlayerState, dict]:
         state = self.load(user_id, now)
         used = rewards.use_bonus(state.city, state.heroes, bonus, now, **target)
@@ -359,7 +393,17 @@ def _state_of(row: HexforgePlayer, now: float) -> PlayerState:
     pvp.ensure_pvp(state.city)
     progress.ensure_progress(state.city)
     rewards.ensure_rewards(state.city, row.user_id, now)
+    items.ensure_items(state.city)
     return state
+
+
+def _hero_stats(city: dict, hero: dict) -> dict:
+    """What a hero fights with now: class, form, tier and the items it carries."""
+    if explorers.is_explorer(hero):
+        return {}
+    spec = evolution.spec_of(hero["cls"], hero.get("form"), hero.get("tier", 1))
+    spec = items.apply(spec, items.carried_by(city, hero["id"]))
+    return {**evolution.stats_of(spec), "barrier": spec.barrier, "regen": spec.regen}
 
 
 def _record_attack(state: PlayerState, victory: bool) -> None:
@@ -404,6 +448,10 @@ def public_state(state: PlayerState, now: float) -> dict:
         "progress": progress.public_progress(state.city),
         "bonuses": state.city["bonuses"],
         "evolution": evolution.public_evolution(),
+        "items": state.city["items"],
+        "item_table": items.public_items(),
+        "missions": explorers.public_missions(),
+        "hero_stats": {str(h["id"]): _hero_stats(state.city, h) for h in state.heroes},
         "rewards": {**rewards.public_rewards(state.city, now),
                     "ready": rewards.ready_count(state.city, now)},
         "pvp": {**_public_pvp(state.city, now), "trophies": state.trophies, "league": pvp.league(state.trophies),

@@ -1,20 +1,20 @@
-import { costChips, formatDuration } from './forgePanel.js';
-import { stars } from './heroTiles.js';
+import { costChips, formatDuration, itemEffect } from './forgePanel.js';
+import { stars, tripBar, tripLeft } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
-import { FORM_INFO, HERO_INFO, TIER_NAMES } from './labels.js';
-import { heroPortrait, heroThumb, thumbImg } from './thumbs.js';
+import { FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES } from './labels.js';
+import { heroPortrait, heroThumb, itemPicture, thumbImg } from './thumbs.js';
 
 /**
  * The hero card (a sheet): portrait, form and stars, XP towards the next
  * tier, fighting stats, and the evolution: the two forms to pick from (with
  * what changes), or the ascension, and the button that sends the hero to
- * the forge.
+ * the forge. Plus its gear: one weapon of its class and one spell.
  */
 
 const STAT_LABELS = {
     hp: 'Health', damage: 'Damage', speed: 'Speed', range: 'Reach', cooldown: 'Blow every',
     nova_damage: 'Nova', nova_radius: 'Nova area', taunt_radius: 'Draws fire', splash_radius: 'Hammer area',
-    tower_bonus: 'vs towers',
+    tower_bonus: 'vs towers', barrier: 'Shield', regen: 'Heals',
 };
 
 // ── pure helpers (tested) ──────────────────────────────────────────────
@@ -27,6 +27,7 @@ export function statsOf(table, cls, form = null, tier = 1) {
 export function formatStat(key, value) {
     if (key === 'cooldown') return `${value} s`;
     if (key === 'tower_bonus') return `×${value}`;
+    if (key === 'regen') return `${value}/s`;
     if (key.endsWith('radius') || key === 'range') return `${value} cells`;
     return String(value);
 }
@@ -39,14 +40,42 @@ export function shownStats(cls, stats) {
     if (cls === 'technomancer') keys.push('nova_damage');
     if (stats.splash_radius > 0) keys.push('splash_radius');
     if (stats.tower_bonus > 1) keys.push('tower_bonus');
+    if (stats.barrier > 0) keys.push('barrier');
+    if (stats.regen > 0) keys.push('regen');
     return keys;
 }
 
 /** What changes from `from` to `to`: [{ key, label, from, to }] for every stat that moved. */
 export function statChanges(from, to) {
     return Object.keys(STAT_LABELS)
-        .filter((key) => to[key] !== from[key])
+        .filter((key) => key in to && key in from && to[key] !== from[key])
         .map((key) => ({ key, label: STAT_LABELS[key], from: formatStat(key, from[key]), to: formatStat(key, to[key]) }));
+}
+
+/**
+ * The stats of a new form or tier, carrying the same gear: each stat keeps
+ * the share the items add now (`base` = without items, `shown` = with them).
+ */
+export function withGear(target, base, shown) {
+    const out = { ...target };
+    for (const key of Object.keys(target)) {
+        if (!(key in shown) || !(key in base) || typeof target[key] !== 'number') continue;
+        if (key === 'barrier' || key === 'regen') continue;
+        const ratio = base[key] ? shown[key] / base[key] : 1;
+        const value = base[key] ? target[key] * ratio : target[key] + (shown[key] - base[key]);
+        out[key] = Number.isInteger(target[key]) ? Math.round(value) : Math.round(value * 100) / 100;
+    }
+    return out;
+}
+
+/** The items that fit `slot` of a hero of `cls`: weapons of its class, or any spell. */
+export function fittingItems(items, table, cls, slot) {
+    return items.filter((i) => {
+        const row = table.items[i.type];
+        if (row.slot !== slot) return false;
+        if (cls === 'explorer') return row.cls === 'explorer';      // the Explorer carries only its own gear
+        return row.cls === null || row.cls === cls;
+    });
 }
 
 /** Why the hero cannot go to the forge now, or null. */
@@ -76,8 +105,10 @@ function el(tag, className, text) {
  * far (tier 1 only); `onPick(form)` changes it, `onEvolve(form)` sends the
  * hero to the forge.
  */
-export function renderHeroCard(container, { hero, name, table, materials, freeSlots, serverNow, job, picked },
-    { onPick, onEvolve }) {
+export function renderHeroCard(container, {
+    hero, name, table, materials, freeSlots, serverNow, job, picked, stats: now = null, gear = null, itemTable = null,
+    missions = null,
+}, { onPick, onEvolve, onGear = () => {}, onExplore = () => {}, onReturn = () => {} }) {
     container.replaceChildren();
     const info = HERO_INFO[hero.cls];
     const tier = hero.tier ?? 1;
@@ -91,10 +122,16 @@ export function renderHeroCard(container, { hero, name, table, materials, freeSl
     art.append(thumbImg(heroPortrait(hero, 104), '', ''));
     const who = el('div', 'hero-who');
     who.append(el('b', 'hero-name', name),
-        el('span', 'hero-form', `${form ? form.name : info.name} ${stars(tier)} · ${TIER_NAMES[tier]}`),
+        el('span', 'hero-form', hero.cls === 'explorer' ? info.role : `${form ? form.name : info.name} ${stars(tier)} · ${TIER_NAMES[tier]}`),
         el('small', 'hero-what', form ? form.what : info.what));
     head.append(art, who);
     container.append(head);
+
+    if (hero.cls === 'explorer') {
+        if (gear && itemTable) container.append(gearBox(gear, itemTable, onGear));
+        if (missions) container.append(missionBox(hero, missions, gear, itemTable, serverNow, onExplore, onReturn));
+        return;
+    }
 
     // XP
     const next = tier + 1;
@@ -112,15 +149,18 @@ export function renderHeroCard(container, { hero, name, table, materials, freeSl
     }
     container.append(xpBox);
 
-    // stats
+    // stats: as it fights now (items included), else from the table
     const stats = statsOf(table, hero.cls, hero.form, tier);
+    const shown = now ?? stats;
     const grid = el('div', 'hero-stats');
-    for (const key of shownStats(hero.cls, stats)) {
+    for (const key of shownStats(hero.cls, shown)) {
         const cell = el('span', 'hero-stat');
-        cell.append(el('small', '', STAT_LABELS[key]), el('b', '', formatStat(key, stats[key])));
+        cell.append(el('small', '', STAT_LABELS[key]), el('b', '', formatStat(key, shown[key])));
         grid.append(cell);
     }
     container.append(grid);
+
+    if (gear && itemTable) container.append(gearBox(gear, itemTable, onGear));
 
     // evolution
     if (hero.evolving) {
@@ -131,7 +171,88 @@ export function renderHeroCard(container, { hero, name, table, materials, freeSl
         return;
     }
     if (next > 3) return;
+    container.append(evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats, shown, form, onPick, onEvolve }));
+}
 
+/** How long a mission takes for this Explorer: the Trail Boots shorten it. */
+export function tripSeconds(seconds, gear, itemTable) {
+    const boots = gear?.spell?.type === 'trail_boots' ? gear.spell : null;
+    const cut = boots ? itemTable.items.trail_boots.levels[boots.level - 1] : 0;
+    return Math.round(seconds * (1 - cut / 100));
+}
+
+/** The Explorer's trips: three to pick from, the one under way, or the loot waiting. */
+function missionBox(hero, missions, gear, itemTable, serverNow, onExplore, onReturn) {
+    const section = el('div', 'evolve missions');
+    const trip = hero.mission;
+    if (trip) {
+        const left = trip.ready_at - serverNow;
+        const what = MISSION_INFO[trip.kind].name;
+        if (left > 0) {
+            section.append(el('h3', '', `Away: ${what}`));
+            const row = el('div', 'trip-row');
+            const when = el('b', 'trip-when');
+            const countdown = tripLeft(el('span'), trip, 'Back in ');
+            countdown.textContent = `Back in ${formatDuration(left)}`;
+            when.append(icon('clock'), countdown);
+            row.append(when, tripBar(trip, serverNow));
+            section.append(row, el('small', 'evolve-note', 'What it brings is a surprise!'));
+        } else {
+            section.append(el('h3', '', `Back from: ${what}`));
+            const button = withIcon(el('button', 'button primary'), 'chest', 'See what it found');
+            button.type = 'button';
+            button.addEventListener('click', () => onReturn());
+            section.append(button);
+        }
+        return section;
+    }
+    section.append(el('h3', '', 'Send on a mission'));
+    const row = el('div', 'mission-cards');
+    for (const [kind, m] of Object.entries(missions)) {
+        const card = el('button', 'mission-card');
+        card.type = 'button';
+        const odds = `Bonus ${Math.round(m.bonus_chance * 100)}% · Item ${Math.round(m.item_chance * 100)}%`;
+        card.append(withIcon(el('b', 'mission-time'), 'clock', formatDuration(tripSeconds(m.seconds, gear, itemTable))),
+            el('b', '', MISSION_INFO[kind].name), el('small', 'form-what', MISSION_INFO[kind].line),
+            el('small', 'mission-odds', odds));
+        card.addEventListener('click', () => onExplore(kind));
+        row.append(card);
+    }
+    section.append(row, el('small', 'evolve-note', 'The Explorer never fights. The loot stays a surprise until it is back.'));
+    return section;
+}
+
+function gearBox(gear, itemTable, onGear) {
+    {
+        const box = el('div', 'gear');
+        for (const [slot, label] of [['weapon', 'Weapon'], ['spell', 'Spell']]) {
+            const item = gear[slot];
+            const cell = el('button', `gear-slot${item ? '' : ' empty'}`);
+            cell.type = 'button';
+            if (item) {
+                const info = ITEM_INFO[item.type];
+                cell.style.setProperty('--accent', info.color);
+                const text = el('span', 'gear-text');
+                text.append(el('small', '', label), el('b', '', `${info.name} · Lv ${item.level}`),
+                    el('small', 'gear-effect', itemEffect(itemTable, item)));
+                cell.append(thumbImg(itemPicture(item.type, 44), '', ''), text);
+                cell.setAttribute('aria-label', `${label}: ${info.name}, level ${item.level}. Tap to change`);
+            } else {
+                const plus = el('span', 'gear-plus');
+                plus.append(icon('plus'));
+                const text = el('span', 'gear-text');
+                text.append(el('small', '', label), el('b', '', 'Empty'), el('small', 'gear-effect', 'Tap to equip'));
+                cell.append(plus, text);
+            }
+            cell.addEventListener('click', () => onGear(slot));
+            box.append(cell);
+        }
+        return box;
+    }
+}
+
+function evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats, shown, form, onPick, onEvolve }) {
+    const next = (hero.tier ?? 1) + 1;
     const section = el('div', 'evolve');
     section.append(el('h3', '', next === 2 ? 'Evolve: pick a form' : `Ascend: a stronger ${form.name}`));
     const options = next === 2 ? table.forms[hero.cls] : [hero.form];
@@ -147,7 +268,8 @@ export function renderHeroCard(container, { hero, name, table, materials, freeSl
             card.addEventListener('click', () => onPick(f));
         }
         const changes = el('span', 'form-changes');
-        for (const c of statChanges(stats, statsOf(table, hero.cls, f, next)).slice(0, 4)) {
+        const target = withGear(statsOf(table, hero.cls, f, next), stats, shown);
+        for (const c of statChanges(shown, target).slice(0, 4)) {
             const line = el('span', 'change');
             line.append(el('small', '', c.label), el('b', '', `${c.from} → ${c.to}`));
             changes.append(line);
@@ -172,6 +294,6 @@ export function renderHeroCard(container, { hero, name, table, materials, freeSl
     let note = blocker;
     if (!note && next === 2 && !choice) note = 'Tap a form to choose it';
     if (note) section.append(el('small', 'evolve-note', note));
-    container.append(section);
+    return section;
 }
 

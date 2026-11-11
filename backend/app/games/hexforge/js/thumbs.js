@@ -1,5 +1,5 @@
 import { drawBuilding, drawHero } from './forgeArt.js';
-import { BUILDING_INFO, FORM_INFO, HERO_INFO } from './labels.js';
+import { BUILDING_INFO, FORM_INFO, HERO_INFO, ITEM_INFO } from './labels.js';
 
 /**
  * Small pictures of buildings and heroes, painted with the game's own art
@@ -64,6 +64,29 @@ export function heroThumb(cls, px = 56, form = null, tier = 1) {
 /** The portrait of one owned hero, as it is now. */
 export function heroPortrait(hero, px = 56) {
     return heroThumb(hero.cls, px, hero.form ?? null, hero.tier ?? 1);
+}
+
+/**
+ * Picture of a hero item: its icon (from the page's SVG sprite) glowing on a
+ * forged-iron disc in the item's colour, as an SVG data URL.
+ */
+export function itemPicture(type, px = 64) {
+    const key = `i:${type}:${px}`;
+    if (!cache.has(key)) {
+        const info = ITEM_INFO[type];
+        const symbol = document.getElementById(`i-${info.icon}`);
+        const shape = symbol ? symbol.innerHTML : '';
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" height="${px}" viewBox="0 0 48 48">`
+            + '<defs><radialGradient id="g" cx="50%" cy="40%" r="60%">'
+            + `<stop offset="0" stop-color="${info.color}" stop-opacity="0.55"/>`
+            + '<stop offset="0.6" stop-color="#2c1d13"/><stop offset="1" stop-color="#120a06"/></radialGradient></defs>'
+            + `<circle cx="24" cy="24" r="22" fill="url(#g)" stroke="${info.color}" stroke-width="2"/>`
+            + `<g transform="translate(10 10) scale(1.17)" fill="none" stroke="#fff6e8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${shape}</g>`
+            + `<g transform="translate(10 10) scale(1.17)" fill="none" stroke="${info.color}" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">${shape}</g>`
+            + '</svg>';
+        cache.set(key, `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    }
+    return cache.get(key);
 }
 
 function trapIcon(ctx, px) {

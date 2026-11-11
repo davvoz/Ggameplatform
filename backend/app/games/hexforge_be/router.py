@@ -28,6 +28,11 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/rewards/chest          the weekly chest
   POST /api/hexforge/me/bonuses/use            spend a bonus on a job, a hero or the energy
   POST /api/hexforge/me/heroes/{id}/evolve     send a hero to the forge to evolve or ascend
+  POST /api/hexforge/me/heroes/{id}/explore    send an Explorer on a mission
+  POST /api/hexforge/me/heroes/{id}/return     bring an Explorer home with its loot
+  POST /api/hexforge/me/heroes/{id}/equip      give a hero an item from the armoury
+  POST /api/hexforge/me/items/{id}/unequip     put an item back in the armoury
+  POST /api/hexforge/me/items/{id}/upgrade     send an item to the forge to gain a level
 
 The /me routes need the platform session cookie.
 """
@@ -48,7 +53,7 @@ from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
 from .schemas import (
-    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EvolveRequest, ForgeRequest,
+    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest,
     MoveRequest, PlaceRequest,
 )
 from .simulation import simulate
@@ -296,6 +301,52 @@ def use_bonus(body: BonusRequest, user_id: CurrentUserId, db: Db, now: Now):
 def evolve_hero(hero_id: int, body: EvolveRequest, user_id: CurrentUserId, db: Db, now: Now):
     try:
         state = PlayerService(db).evolve_hero(user_id, hero_id, body.form, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/heroes/{hero_id}/explore")
+def explore(hero_id: int, body: ExploreRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).explore(user_id, hero_id, body.mission, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/heroes/{hero_id}/return")
+def explorer_return(hero_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, loot = PlayerService(db).explorer_return(user_id, hero_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {**public_state(state, now), "loot": loot}
+
+
+# ── items ──────────────────────────────────────────────────────────────
+@router.post("/me/heroes/{hero_id}/equip")
+def equip_item(hero_id: int, body: EquipRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).equip_item(user_id, hero_id, body.item_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/items/{item_id}/unequip")
+def unequip_item(item_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).unequip_item(user_id, item_id, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return public_state(state, now)
+
+
+@router.post("/me/items/{item_id}/upgrade")
+def upgrade_item(item_id: int, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state = PlayerService(db).upgrade_item(user_id, item_id, now)
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return public_state(state, now)

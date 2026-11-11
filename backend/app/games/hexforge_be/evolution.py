@@ -76,17 +76,22 @@ def spec_of(cls: str, form: str | None = None, tier: int = 1) -> HeroClass:
     return _form_special(spec, form, tier)
 
 
-def unit_of(hero: dict):
-    """The squad entry the simulation gets for this hero."""
-    if hero.get("tier", 1) <= 1:
+def unit_of(hero: dict, carried: list | None = None):
+    """The squad entry the simulation gets for this hero (and the items it carries)."""
+    if hero.get("tier", 1) <= 1 and not carried:
         return hero["cls"]
-    return {"cls": hero["cls"], "form": hero["form"], "tier": hero["tier"]}
+    unit = {"cls": hero["cls"]}
+    if hero.get("tier", 1) > 1:
+        unit.update(form=hero["form"], tier=hero["tier"])
+    if carried:
+        unit["items"] = carried
+    return unit
 
 
-def parse_unit(unit) -> tuple[str, str | None, int]:
+def parse_unit(unit) -> tuple[str, str | None, int, list]:
     if isinstance(unit, str):
-        return unit, None, 1
-    return unit["cls"], unit.get("form"), int(unit.get("tier", 1))
+        return unit, None, 1, []
+    return unit["cls"], unit.get("form"), int(unit.get("tier", 1)), list(unit.get("items", []))
 
 
 # ── hero XP ────────────────────────────────────────────────────────────
@@ -112,6 +117,8 @@ def next_tier(hero: dict) -> int | None:
 
 
 def can_evolve(hero: dict) -> bool:
+    if hero["cls"] not in HEROES:          # the Explorer does not evolve
+        return False
     nxt = next_tier(hero)
     return nxt is not None and hero.get("xp", 0) >= TIER_XP[nxt] and not hero.get("evolving")
 
@@ -126,6 +133,8 @@ def start(city: dict, heroes: list, materials: dict, hero_id: int, form: str | N
     hero = next((h for h in heroes if h["id"] == hero_id), None)
     if hero is None:
         raise ActionError("unknown_hero")
+    if hero["cls"] not in HEROES:
+        raise ActionError("cannot_evolve")
     tier = next_tier(hero)
     if tier is None:
         raise ActionError("fully_evolved")
@@ -169,6 +178,11 @@ def finish(job: dict, heroes: list) -> dict:
 
 
 # ── what the client sees ───────────────────────────────────────────────
+def stats_of(spec: HeroClass) -> dict:
+    """The stats the client shows for a hero."""
+    return _stats(spec)
+
+
 def _stats(spec: HeroClass) -> dict:
     return {"hp": spec.hp, "damage": spec.damage, "speed": spec.speed, "range": spec.attack_range,
             "cooldown": spec.cooldown, "nova_damage": spec.nova_damage, "nova_radius": spec.nova_radius,

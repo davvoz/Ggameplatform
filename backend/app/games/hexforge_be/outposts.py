@@ -20,6 +20,7 @@ from .catalog import BUILDINGS, TRAP, WALL
 from .economy import MATERIALS
 from .errors import ActionError
 from .evolution import unit_of
+from .items import carried_by
 from .simulation import LOOT_WIN, simulate
 
 ENERGY_MAX = 5
@@ -153,7 +154,7 @@ def loot_for(outpost: Outpost, percent: int, already_cleared: bool) -> dict:
 
 
 # ── the attack ─────────────────────────────────────────────────────────
-def squad_classes(heroes: list, hero_ids: list, now: float) -> list:
+def squad_classes(heroes: list, hero_ids: list, now: float, city: dict | None = None) -> list:
     """The squad entries of 4 different, fit heroes the player owns (or a refusal)."""
     if len(hero_ids) != SQUAD_SIZE or len(set(hero_ids)) != SQUAD_SIZE:
         raise ActionError("bad_squad")
@@ -164,7 +165,9 @@ def squad_classes(heroes: list, hero_ids: list, now: float) -> list:
         raise ActionError("hero_injured")
     if any(by_id[i].get("evolving") for i in hero_ids):
         raise ActionError("hero_evolving")
-    return [unit_of(by_id[i]) for i in hero_ids]
+    if any(by_id[i]["cls"] == "explorer" for i in hero_ids):
+        raise ActionError("explorer_cannot_fight")
+    return [unit_of(by_id[i], carried_by(city, i) if city else None) for i in hero_ids]
 
 
 def spend_energy(city: dict, now: float) -> None:
@@ -198,7 +201,7 @@ def attack(city: dict, heroes: list, materials: dict, outpost_id: int, hero_ids:
     campaign = city["campaign"]
     if not is_unlocked(campaign, outpost_id):
         raise ActionError("outpost_locked")
-    classes = squad_classes(heroes, hero_ids, now)
+    classes = squad_classes(heroes, hero_ids, now, city)
     spend_energy(city, now)
 
     target = outpost_city(outpost_id)

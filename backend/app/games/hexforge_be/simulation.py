@@ -20,6 +20,7 @@ from typing import Optional
 
 from .catalog import BUILDINGS, CORE, TRAP, WALL, BuildingType, HeroClass
 from .evolution import parse_unit, spec_of
+from .items import apply as apply_items
 from .pathfinding import find_path
 
 TICK_RATE = 10                 # ticks per second
@@ -77,6 +78,9 @@ class _Hero:
     group: int
     form: Optional[str] = None
     tier: int = 1
+    items: list = field(default_factory=list)
+    shield: int = 0                # an item's barrier, soaked before health
+    regen_due: float = 0.0         # health regained but not yet a whole point
     hp: int = 0
     alive: bool = True
     target: Optional[int] = None
@@ -91,6 +95,7 @@ class _Hero:
 
     def __post_init__(self):
         self.hp = self.spec.hp
+        self.shield = self.spec.barrier
 
 
 class Battle:
@@ -123,7 +128,7 @@ class Battle:
         """`squad`: class names, or {"cls", "form", "tier"} for evolved heroes."""
         heroes = []
         for i, unit in enumerate(squad):
-            cls, form, tier = parse_unit(unit)
+            cls, form, tier, carried = parse_unit(unit)
             if self.tactic == "spread":
                 fraction, group = 0.2 + 0.2 * i, i
             elif self.tactic == "split":
@@ -134,8 +139,8 @@ class Battle:
                 # small offsets so heroes sharing a spawn point do not overlap exactly
                 fraction += (i - 1.5) * 0.035
             x, y = self._edge_point(side, fraction)
-            heroes.append(_Hero(id=i, cls=cls, spec=spec_of(cls, form, tier), x=x, y=y, group=group,
-                                form=form if tier > 1 else None, tier=tier))
+            heroes.append(_Hero(id=i, cls=cls, spec=apply_items(spec_of(cls, form, tier), carried), x=x, y=y,
+                                group=group, form=form if tier > 1 else None, tier=tier, items=carried))
         return heroes
 
     def _edge_point(self, side: str, fraction: float) -> tuple[float, float]:
@@ -164,6 +169,7 @@ class Battle:
         self.tick += 1
         for hero in self.heroes:
             if hero.alive:
+                self._regenerate(hero)
                 self._hero_step(hero)
         self._traps_step()
         for b in self.buildings:
@@ -432,12 +438,28 @@ class Battle:
             return min(in_range, key=lambda h: (-h.spec.attack_range, distance(h), h.id))
         return min(in_range, key=lambda h: (distance(h), h.id))
 
+    def _regenerate(self, hero: _Hero) -> None:
+        """A mending rune gives health back, a little every tick."""
+        if not hero.spec.regen or hero.hp >= hero.spec.hp:
+            return
+        hero.regen_due += hero.spec.regen / TICK_RATE
+        whole = int(hero.regen_due)
+        if whole:
+            hero.regen_due -= whole
+            hero.hp = min(hero.spec.hp, hero.hp + whole)
+
     def _damage_hero(self, hero: _Hero, amount: int) -> dict:
+        soaked = min(hero.shield, amount)       # a ward sigil takes the first blows
+        hero.shield -= soaked
+        amount -= soaked
         dealt = min(amount, hero.hp)
         hero.hp -= dealt
         hero.taken += dealt
         self.engaged = True
-        return {"hero": hero.id, "dmg": dealt, "hp": hero.hp}
+        hit = {"hero": hero.id, "dmg": dealt, "hp": hero.hp}
+        if soaked:
+            hit["soaked"] = soaked
+        return hit
 
     def _finalise_dead(self) -> None:
         for h in self.heroes:
@@ -462,8 +484,8 @@ class Battle:
             "tick_rate": TICK_RATE,
             "frame_stride": FRAME_STRIDE,
             "ticks": self.tick,
-            "squad": [{"id": h.id, "cls": h.cls, "form": h.form, "tier": h.tier, "hp": h.spec.hp}
-                      for h in self.heroes],
+            "squad": [{"id": h.id, "cls": h.cls, "form": h.form, "tier": h.tier, "hp": h.spec.hp,
+                       "barrier": h.spec.barrier, "items": h.items} for h in self.heroes],
             "frames": self.frames,
             "events": self.events,
             "summary": {

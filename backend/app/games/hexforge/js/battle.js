@@ -51,6 +51,7 @@ const REFUSALS = {
     nothing_to_speed_up: 'Nothing to speed up there.',
     energy_full: 'Your energy is already full.',
     hero_evolving: 'One of your heroes is evolving at the forge.',
+    explorer_cannot_fight: 'The Explorer never fights.',
 };
 
 export class BattleMode {
@@ -387,7 +388,7 @@ export class BattleMode {
         const now = this.#serverNow();
         const names = heroNames(this.data.heroes);
         const order = Object.keys(HERO_INFO);
-        const heroes = [...this.data.heroes].sort((a, b) => order.indexOf(a.cls) - order.indexOf(b.cls) || a.id - b.id);
+        const heroes = this.data.heroes.filter((h) => h.cls !== 'explorer').sort((a, b) => order.indexOf(a.cls) - order.indexOf(b.cls) || a.id - b.id);
         for (const hero of heroes) {
             const status = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
             list.append(heroTile(hero, names.get(hero.id), status, () => this.#tapHero(hero, names.get(hero.id))));

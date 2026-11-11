@@ -1,28 +1,33 @@
 import {
     Refused, SignInRequired, claimJob, claimLoginReward, claimTaskReward, claimWeeklyChest, collect,
     dismantleBuilding, fetchMyState, fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding,
-    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero,
+    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn,
+    upgradeItem,
 } from './api.js';
-import { openBonusPicker } from './bonusPicker.js';
+import { openBonusPicker, openItemPicker } from './bonusPicker.js';
 import { anchorFor, estimatePending, placementError } from './cityRules.js';
 import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { play } from './audio.js';
 import { countUp, flyMaterial, flyPicture, rewardPop } from './fx.js';
 import {
-    formatCountdown, itemName, itemThumb, jobName, renderForgeSlots, renderRecipes, renderRoster, renderStorage,
+    formatCountdown, itemEffect, itemName, itemThumb, jobName, renderArmoury, renderForgeSlots, renderRecipes,
+    renderRoster, renderStorage,
 } from './forgePanel.js';
-import { renderHeroCard } from './heroPanel.js';
-import { evolveReady, heroNames } from './heroTiles.js';
+import { fittingItems, renderHeroCard } from './heroPanel.js';
+import { evolveReady, heroNames, updateTrips } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
+import { Compass } from './compass.js';
 import { regionAround } from './iso.js';
-import { AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, FORM_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
+import {
+    AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, FORM_INFO, HERO_INFO, ITEM_INFO, MATERIAL_INFO, MISSION_INFO,
+} from './labels.js';
 import { LEAGUE_COLORS } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
 import {
     formatLong, medal, renderBonuses, renderCalendar, renderChest, renderTasks, rewardChips, usableBonuses,
 } from './rewardsPanel.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
-import { buildingThumb, heroThumb } from './thumbs.js';
+import { buildingThumb, heroThumb, itemPicture } from './thumbs.js';
 
 /**
  * "My city": the player's saved city, full screen.
@@ -31,8 +36,10 @@ import { buildingThumb, heroThumb } from './thumbs.js';
  *  - Forge (sheet): forge buildings and heroes; claimed buildings go to the
  *    "ready to place" tray, then onto the map
  *  - Defense (sheet): defence test, raids on your city, replay and revenge
- *  - hero card (sheet, from the forge's Heroes tab): XP, stats, and the
- *    evolution into one of two forms, then the ascension, at the forge
+ *  - hero card (sheet, from the forge's Heroes tab): XP, stats, its gear
+ *    (a weapon and a spell), and the evolution into one of two forms, then
+ *    the ascension, at the forge
+ *  - Items (forge tab): forge weapons and spells; the armoury upgrades them
  *  - Rewards (sheet): the 7-day calendar, today's tasks, the weekly chest
  *    and the bonus inventory; an hourglass speeds up a forge job
  *  - the big Attack button opens the attack plan
@@ -75,6 +82,13 @@ const MESSAGES = {
     unknown_form: 'Pick one of the two forms.',
     hero_injured: 'That hero is hurt: wait until it heals.',
     unknown_hero: 'That hero is gone.',
+    unknown_item: 'That item is gone.',
+    on_mission: 'That Explorer is already away.',
+    not_an_explorer: 'Only an Explorer goes on missions.',
+    cannot_evolve: 'The Explorer does not evolve.',
+    wrong_class: 'That weapon is for another class.',
+    max_level: 'That item is at its top level.',
+    already_upgrading: 'That item is already at the forge.',
 };
 
 export class CityMode {
@@ -100,6 +114,7 @@ export class CityMode {
         this.shownMaterials = {};
         this.heldMaterials = new Set();   // materials whose counter waits for flying gems
         this.rot = loadRotation();        // quarter turns of the view, remembered on this device
+        this.compass = new Compass($('compass-rose'));
         this.progress = null;             // last level and XP seen, kept across reloads to spot gains
         this.pops = Promise.resolve();    // big cards (forged, level up) wait for each other
         this.heroId = null;               // the hero whose card is open
@@ -114,6 +129,7 @@ export class CityMode {
     async enter() {
         $('hud-city').hidden = false;
         this.renderer.setRotation(this.rot);
+        this.compass.show(this.rot);
         if (this.state) this.renderer.setCity(this.state.city);
         else await this.#reload();
         this.#focus();
@@ -219,6 +235,7 @@ export class CityMode {
         this.rot = (this.rot + 1) % 4;
         saveRotation(this.rot);
         this.renderer.setRotation(this.rot);
+        this.compass.show(this.rot);
         this.preview = null;
         const view = $('view');
         view.classList.remove('turning');
@@ -260,11 +277,22 @@ export class CityMode {
         const name = heroNames(this.state.heroes).get(hero.id);
         $('hero-title').textContent = name;
         const job = this.state.forge.jobs.find((j) => j.recipe === 'evolve' && j.hero === hero.id) ?? null;
+        const carried = (this.state.items ?? []).filter((i) => i.hero === hero.id);
+        const slotOf = (i) => this.state.item_table.items[i.type].slot;
         renderHeroCard($('hero-card'), {
             hero, name, table: this.state.evolution, materials: this.state.materials,
             freeSlots: this.state.forge.slots - this.state.forge.jobs.length, serverNow: this.#serverNow(),
-            job, picked: this.heroForm,
+            job, picked: this.heroForm, stats: this.state.hero_stats?.[String(hero.id)] ?? null,
+            gear: this.state.item_table ? {
+                weapon: carried.find((i) => slotOf(i) === 'weapon') ?? null,
+                spell: carried.find((i) => slotOf(i) === 'spell') ?? null,
+            } : null,
+            itemTable: this.state.item_table,
+            missions: this.state.missions ?? null,
         }, {
+            onExplore: (kind) => void this.#explore(hero, name, kind),
+            onReturn: () => void this.#explorerBack(name, hero),
+            onGear: (slot) => this.#pickGear(hero, name, slot, carried.find((i) => slotOf(i) === slot) ?? null),
             onPick: (form) => {
                 this.heroForm = form;
                 play('click');
@@ -272,6 +300,69 @@ export class CityMode {
             },
             onEvolve: (form) => void this.#evolve(hero, name, form),
         });
+    }
+
+    /** Choose what goes in a hero's weapon or spell slot. */
+    #pickGear(hero, name, slot, current) {
+        const names = heroNames(this.state.heroes);
+        const table = this.state.item_table;
+        const options = fittingItems(this.state.items, table, hero.cls, slot)
+            .filter((i) => i.id !== current?.id)
+            .sort((a, b) => b.level - a.level)
+            .map((i) => ({
+                id: i.id,
+                picture: itemPicture(i.type, 40),
+                title: `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
+                line: itemEffect(table, i) + (i.hero ? ` · now with ${names.get(i.hero)}` : ''),
+                accent: ITEM_INFO[i.type].color,
+            }));
+        const what = slot === 'weapon' ? `weapon for a ${HERO_INFO[hero.cls].name}` : 'spell';
+        openItemPicker({
+            title: `${name}: ${slot}`,
+            line: current ? `Now: ${ITEM_INFO[current.type].name} · Lv ${current.level}` : '',
+            options,
+            empty: `No other ${what} yet: forge one in the forge's Items tab.`,
+            onPick: (id) => void this.#gear(() => equipItem(hero.id, id), 'Equipped.'),
+            onClear: current ? () => void this.#gear(() => unequipItem(current.id), 'Back in the armoury.') : null,
+        });
+    }
+
+    async #gear(call, line) {
+        await this.#run(async () => {
+            this.#apply(await call());
+            play('place');
+            toast(line);
+        });
+    }
+
+    async #upgradeItem(itemId) {
+        const item = this.state.items.find((i) => i.id === itemId);
+        await this.#run(async () => {
+            this.#apply(await upgradeItem(itemId));
+            play('forge');
+            if (item) toast(`${ITEM_INFO[item.type].name} went into the forge to reach level ${item.level + 1}.`);
+        });
+    }
+
+    async #explore(hero, name, kind) {
+        await this.#run(async () => {
+            this.#apply(await sendExplorer(hero.id, kind));
+            play('boost');
+            toast(`${name} set off: ${MISSION_INFO[kind].name}.`);
+        });
+    }
+
+    async #explorerBack(name, hero) {
+        let shown = null;
+        await this.#run(async () => {
+            const result = await explorerReturn(hero.id);
+            shown = this.#queuePop(() => {
+                play('claim');
+                return rewardPop(lootCard(name, result.loot));
+            });
+            this.#apply(result);
+        });
+        if (shown) await shown;
     }
 
     async #evolve(hero, name, form) {
@@ -472,39 +563,22 @@ export class CityMode {
         await this.#run(async () => {
             const result = await claimJob(jobId);
             claimed = result.claimed;
-            const { item, kind, count } = claimed;
-            const hero = kind === 'hero';
             shown = this.#queuePop(() => {             // before #apply, so a level-up card comes after it
-                play(kind === 'evolution' ? 'levelup' : 'claim');
-                if (kind === 'evolution') {
-                    const form = FORM_INFO[claimed.form];
-                    return rewardPop({
-                        src: heroThumb(item, 150, claimed.form, claimed.tier),
-                        title: `${form.name} ${'★'.repeat(claimed.tier)}`,
-                        line: claimed.tier === 3 ? 'ascended! Stronger than ever' : 'evolved! A new form',
-                        color: form.accent,
-                    });
-                }
-                return rewardPop({
-                    src: itemThumb(item, 150),
-                    title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
-                    line: hero ? 'joined your heroes!' : 'forged! Now place it on the map',
-                    color: hero ? HERO_INFO[item].color : (BUILDING_INFO[item]?.glow ?? '#ffb347'),
-                });
+                play(claimed.kind === 'evolution' ? 'levelup' : 'claim');
+                return rewardPop(claimCard(claimed));
             });
             this.#apply(result);
         });
         if (!claimed) return;
         await shown;
-        const hero = claimed.kind === 'hero' || claimed.kind === 'evolution';
-        const { item } = claimed;
-        if (hero) {
-            this.forgeKind = 'hero';
+        const tab = { hero: 'hero', evolution: 'hero', item: 'item', upgrade: 'item' }[claimed.kind];
+        if (tab) {
+            this.forgeKind = tab;
             this.#renderForge();
             return;
         }
         closeSheet();
-        this.#setMode('place', item);
+        this.#setMode('place', claimed.item);
     }
 
     async #dismantle() {
@@ -795,6 +869,14 @@ export class CityMode {
         renderRecipes($('recipes'), this.state.recipes, this.state.materials, freeSlots, this.forgeKind, (id) => void this.#forge(id));
         const heroLimit = this.state.recipes.find((r) => r.kind === 'hero')?.limit ?? 0;
         $('roster').hidden = this.forgeKind !== 'hero';
+        $('armoury').hidden = this.forgeKind !== 'item';
+        if (this.state.item_table) {
+            const names = heroNames(this.state.heroes);
+            renderArmoury($('armoury'), {
+                items: this.state.items, table: this.state.item_table, heroNameOf: (id) => names.get(id) ?? 'a hero',
+                materials: this.state.materials, freeSlots, jobs: this.state.forge.jobs,
+            }, (id) => void this.#upgradeItem(id));
+        }
         const tierXp = this.state.evolution?.tier_xp;
         renderRoster($('roster'), this.state.heroes, heroLimit, this.#serverNow(), tierXp, (id) => this.#openHero(id));
         const evolvable = this.state.heroes.filter((h) => evolveReady(h, tierXp)).length;
@@ -813,6 +895,7 @@ export class CityMode {
         renderForgeSlots($('forge-slots'), this.state.forge, now, (id) => void this.#claim(id),
             hourglass ? (id) => this.#speedUpJob(id) : null);
         this.#tickRewards(now);
+        this.#tickTrips(now);
         const ready = this.state.forge.jobs.filter((j) => j.ready_at <= now).length;
         const badge = $('forge-badge');
         badge.hidden = ready === 0;
@@ -820,6 +903,17 @@ export class CityMode {
         const { charges, max, next_at: nextAt } = this.state.energy;
         const energy = $('city-energy');
         energy.replaceChildren(icon('bolt'), `${charges}/${max}${nextAt && charges < max ? ` · ${formatCountdown(nextAt - now)}` : ''}`);
+    }
+
+    /** Explorer bars and countdowns move every second; a return redraws the roster and the card. */
+    #tickTrips(now) {
+        updateTrips(document, now);
+        const back = this.state.heroes.filter((h) => h.mission && h.mission.ready_at <= now).length;
+        if (this.tripsBack !== undefined && back !== this.tripsBack) {
+            this.#renderForge();
+            if (this.heroId !== null) this.#renderHero();
+        }
+        this.tripsBack = back;
     }
 
     #speedUpJob(jobId) {
@@ -921,6 +1015,45 @@ function saveRotation(rot) {
     try {
         globalThis.localStorage?.setItem(ROTATION_KEY, String(rot));
     } catch { /* private mode: the turn is simply not remembered */ }
+}
+
+/** The card for what an Explorer brought home. */
+function lootCard(name, loot) {
+    const parts = [];
+    const total = Object.values(loot.materials).reduce((a, b) => a + b, 0);
+    parts.push(`+${total} materials`);
+    for (const [bonus, n] of Object.entries(loot.bonuses)) parts.push(`${BONUS_INFO[bonus].name}${n > 1 ? ` ×${n}` : ''}`);
+    if (loot.item) parts.push(`${ITEM_INFO[loot.item].name}!`);
+    return {
+        src: loot.item ? itemPicture(loot.item, 150) : heroThumb('explorer', 150),
+        title: `${name} is back!`, line: parts.join(' · '), color: HERO_INFO.explorer.color,
+    };
+}
+
+/** The "you got" card for a claimed forge job. */
+function claimCard(claimed) {
+    const { item, kind, count } = claimed;
+    if (kind === 'evolution') {
+        const form = FORM_INFO[claimed.form];
+        return {
+            src: heroThumb(item, 150, claimed.form, claimed.tier), title: `${form.name} ${'★'.repeat(claimed.tier)}`,
+            line: claimed.tier === 3 ? 'ascended! Stronger than ever' : 'evolved! A new form', color: form.accent,
+        };
+    }
+    if (kind === 'item' || kind === 'upgrade') {
+        const info = ITEM_INFO[item];
+        return {
+            src: itemPicture(item, 150), title: kind === 'upgrade' ? `${info.name} Lv ${claimed.level}` : info.name,
+            line: kind === 'upgrade' ? 'upgraded! Stronger in every fight' : 'forged! Give it to a hero from their card',
+            color: info.color,
+        };
+    }
+    const hero = kind === 'hero';
+    return {
+        src: itemThumb(item, 150), title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
+        line: hero ? 'joined your heroes!' : 'forged! Now place it on the map',
+        color: hero ? HERO_INFO[item].color : (BUILDING_INFO[item]?.glow ?? '#ffb347'),
+    };
 }
 
 function bumpOnce(el) {

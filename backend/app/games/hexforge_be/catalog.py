@@ -30,6 +30,8 @@ class HeroClass:
     nova_cooldown: float = 0.0
     splash_radius: float = 0.0   # evolved: a blow also hits buildings this close to the target, at half damage
     tower_bonus: float = 1.0     # evolved: damage multiplier against towers
+    barrier: int = 0             # items: damage soaked before health is lost
+    regen: float = 0.0           # items: health won back per second
 
 
 HEROES: dict[str, HeroClass] = {

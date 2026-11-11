@@ -417,6 +417,60 @@ button.round:disabled {
     }
 }
 
+/* the compass under the turn button: a round brass dial pointing at the city's north */
+.compass {
+    position: absolute;
+    right: 8px;
+    top: calc(290px + var(--safe-top));
+    z-index: 6;
+    width: 92px;
+    height: 92px;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.7));
+}
+
+.compass svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.cp-ring {
+    fill: none;
+    stroke: rgba(214, 166, 90, 0.45);
+    stroke-width: 0.8;
+}
+
+.cp-tick {
+    stroke: rgba(240, 200, 140, 0.5);
+    stroke-width: 0.8;
+}
+
+.cp-tick-big {
+    stroke: #f0c88c;
+    stroke-width: 1.4;
+}
+
+.cp-letter {
+    font: 900 11px/1 system-ui, sans-serif;
+    fill: #f6e2b8;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+.cp-letter.cp-north {
+    font-size: 14px;
+    fill: #ff6a4a;
+}
+
+@media (min-width: 900px) {
+    .compass {
+        top: calc(166px + var(--safe-top));
+        width: 116px;
+        height: 116px;
+    }
+}
+
 #view.turning {
     animation: turning 280ms ease-out;
 }
@@ -3212,4 +3266,294 @@ button.form-card {
 
 .chip-xp.ready {
     color: #4dd98a;
+}
+
+/* ── items: armoury, gear slots, item picker ─────────────────────────── */
+.armoury {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.armoury-item {
+    --accent: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--edge));
+    background: #1a100a;
+}
+
+.armoury-item > img {
+    width: 46px;
+    height: 46px;
+    flex: none;
+}
+
+.armoury-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.armoury-text b {
+    font-size: 13px;
+}
+
+.armoury-text small {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.armoury-text .carrier {
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.armoury-side {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.armoury-price {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gear {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.gear-slot {
+    --accent: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: #1a100a;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.gear-slot.empty {
+    border-style: dashed;
+    border-color: rgba(255, 179, 71, 0.45);
+}
+
+.gear-slot > img {
+    width: 44px;
+    height: 44px;
+    flex: none;
+}
+
+.gear-plus {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(255, 179, 71, 0.6);
+    color: var(--gold-hi);
+}
+
+.gear-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.gear-text small:first-child {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.gear-text b {
+    font-size: 13px;
+    line-height: 1.15;
+}
+
+.gear-effect {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.picker-list {
+    width: 100%;
+    max-height: 50dvh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.picker-row {
+    --accent: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+    background: #1a100a;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.picker-row:hover,
+.picker-row:focus-visible {
+    border-color: var(--accent);
+}
+
+.picker-row img {
+    width: 40px;
+    height: 40px;
+    flex: none;
+}
+
+.picker-row span {
+    display: flex;
+    flex-direction: column;
+}
+
+.picker-row small {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.picker-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* ── the Explorer's missions ─────────────────────────────────────────── */
+.mission-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.mission-card {
+    --accent: #3fd0a0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--accent) 22%, #1a100a), #1a100a 70%);
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.mission-card:hover,
+.mission-card:focus-visible {
+    border-color: var(--accent);
+}
+
+.mission-card .mission-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.mission-card .mission-time .icon {
+    width: 15px;
+    height: 15px;
+}
+
+.mission-card .form-what {
+    font-size: 11px;
+    line-height: 1.25;
+}
+
+.mission-odds {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--gold-hi);
+}
+
+.trip-bar {
+    display: block;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(63, 208, 160, 0.18);
+    border: 1px solid rgba(63, 208, 160, 0.4);
+    overflow: hidden;
+}
+
+.trip-bar > span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #1f8a68, #3fd0a0 70%, #b8ffe6);
+    box-shadow: 0 0 6px rgba(63, 208, 160, 0.7);
+    transition: width 0.9s linear;
+}
+
+.trip-bar.done > span {
+    background: linear-gradient(90deg, #ffb347, #ffe08a);
+}
+
+.hero-tile .trip-bar {
+    margin-top: 3px;
+    height: 5px;
+}
+
+.hero-tile.away .ht-status {
+    color: #3fd0a0;
+    font-variant-numeric: tabular-nums;
+}
+
+.trip-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.trip-row .trip-bar {
+    height: 12px;
+    border-radius: 6px;
+}
+
+.trip-when {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #3fd0a0;
+    font-variant-numeric: tabular-nums;
 }

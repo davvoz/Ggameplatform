@@ -84,6 +84,29 @@ export function rotateRect(rect, grid, rot) {
     return { x0: Math.min(a.x, b.x), y0: Math.min(a.y, b.y), x1: Math.max(a.x, b.x), y1: Math.max(a.y, b.y) };
 }
 
+/** The city's compass points as world directions: north is the y = 0 edge. */
+export const COMPASS = { N: [0, -1], E: [1, 0], S: [0, 1], W: [-1, 0] };
+
+/** Which way north points on screen after `turns` quarter turns: degrees clockwise from straight up, 0..360. */
+export function northBearing(turns) {
+    const p = compassOffset(...COMPASS.N, turns);
+    return (Math.atan2(p.x, -p.y) * 180 / Math.PI + 360) % 360;
+}
+
+/**
+ * Where a ground direction (dx, dy) lies on screen after `turns` quarter
+ * turns of the view (fractions in between, for a smooth turn): an iso offset,
+ * x ±1 and y ±0.5 for the compass points. Whole turns agree with rotateVector.
+ */
+export function compassOffset(dx, dy, turns) {
+    const a = turns * Math.PI / 2;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    const x = dx * c - dy * s;
+    const y = dx * s + dy * c;
+    return { x: x - y, y: (x + y) / 2 };
+}
+
 /** Painter's order: larger is nearer the viewer. */
 export function depthOf(x, y) {
     return x + y;

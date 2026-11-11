@@ -1,8 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-    TILE_H, TILE_W, fitCamera, groundEllipse, project, rotatePoint, rotateRect, rotateVector, toScreen,
+    COMPASS, TILE_H, TILE_W, compassOffset, fitCamera, groundEllipse, northBearing, project, rotatePoint,
+    rotateRect, rotateVector, toScreen,
 } from '../js/iso.js';
+
+test('the compass points where the turned map says, and turns smoothly in between', () => {
+    const near = (a, b) => assert.ok(Math.abs(a.x - b.x) < 1e-9 && Math.abs(a.y - b.y) < 1e-9, `${JSON.stringify(a)} ≠ ${JSON.stringify(b)}`);
+    near(compassOffset(...COMPASS.N, 0), { x: 1, y: -0.5 });          // north: up-right
+    for (let rot = 0; rot < 4; rot++) {
+        for (const [dx, dy] of Object.values(COMPASS)) {
+            const v = rotateVector(dx, dy, rot);
+            const p = project(v.dx, v.dy);
+            near(compassOffset(dx, dy, rot), { x: p.x / (TILE_W / 2), y: p.y / (TILE_W / 2) });
+        }
+    }
+    const half = compassOffset(...COMPASS.N, 0.5);                    // halfway through a turn: due right
+    near(half, { x: Math.SQRT2, y: 0 });
+});
+
+test('north bearing: up-right at first, clockwise with each turn', () => {
+    const deg = Math.atan2(1, 0.5) * 180 / Math.PI;                  // ≈ 63.4°
+    assert.ok(Math.abs(northBearing(0) - deg) < 1e-9);
+    assert.ok(Math.abs(northBearing(0.5) - 90) < 1e-9);
+    assert.ok(Math.abs(northBearing(1) - (180 - deg)) < 1e-9);
+    assert.ok(Math.abs(northBearing(2) - (180 + deg)) < 1e-9);
+    assert.ok(Math.abs(northBearing(4) - deg) < 1e-9);
+});
 
 test('one step along x goes down-right, one along y goes down-left', () => {
     assert.deepEqual(project(1, 0), { x: TILE_W / 2, y: TILE_H / 2 });

@@ -23,6 +23,7 @@ export function heroNames(heroes) {
 
 /** True when the hero has the XP for its next tier and is not at the forge already. */
 export function evolveReady(hero, tierXp) {
+    if (hero.cls === 'explorer') return false;
     const next = (hero.tier ?? 1) + 1;
     return next <= 3 && !hero.evolving && (hero.xp ?? 0) >= (tierXp?.[next] ?? Infinity);
 }
@@ -34,10 +35,60 @@ export function stars(tier = 1) {
 
 /** 'forge' while evolving, 'hurt' while healing, else 'picked' or 'ready'; plus the seconds left to heal. */
 export function heroStatus(hero, picked, serverNow) {
+    if (hero.cls === 'explorer') {
+        if (!hero.mission) return { state: 'home', left: 0, healed: 1 };
+        const left = hero.mission.ready_at - serverNow;
+        return left > 0 ? { state: 'away', left, healed: 1 } : { state: 'back', left: 0, healed: 1 };
+    }
     if (hero.evolving) return { state: 'forge', left: 0, healed: 1 };
     const left = hero.injured_until ? hero.injured_until - serverNow : 0;
     if (left > 0) return { state: 'hurt', left, healed: Math.max(0, Math.min(1, 1 - left / INJURY_SECONDS)) };
     return { state: picked ? 'picked' : 'ready', left: 0, healed: 1 };
+}
+
+/** How far through its trip an Explorer is, 0..1. */
+export function tripProgress(trip, now) {
+    const span = trip.ready_at - trip.started_at;
+    return span > 0 ? Math.max(0, Math.min(1, (now - trip.started_at) / span)) : 1;
+}
+
+/** A bar filling up while the Explorer is away; `updateTrips` keeps it moving. */
+export function tripBar(trip, now) {
+    const bar = document.createElement('span');
+    bar.className = 'trip-bar';
+    bar.dataset.start = String(trip.started_at);
+    bar.dataset.ready = String(trip.ready_at);
+    bar.append(document.createElement('span'));
+    updateTrips(bar.parentElement ?? document.createElement('div'), now, [bar]);
+    return bar;
+}
+
+/** "Back in 3h 20m" text that `updateTrips` keeps counting down. */
+export function tripLeft(el, trip, prefix = '') {
+    el.classList.add('trip-left');
+    el.dataset.ready = String(trip.ready_at);
+    el.dataset.prefix = prefix;
+    return el;
+}
+
+/** Move every trip bar and countdown under `root` to `now`. */
+export function updateTrips(root, now, bars = root.querySelectorAll('.trip-bar')) {
+    for (const bar of bars) {
+        const trip = { started_at: Number(bar.dataset.start), ready_at: Number(bar.dataset.ready) };
+        bar.firstElementChild.style.width = `${(tripProgress(trip, now) * 100).toFixed(1)}%`;
+        bar.classList.toggle('done', now >= trip.ready_at);
+    }
+    for (const text of root.querySelectorAll('.trip-left')) {
+        const left = Number(text.dataset.ready) - now;
+        text.textContent = left > 0 ? `${text.dataset.prefix}${formatAway(left)}` : 'Back!';
+    }
+}
+
+/** Time left on a mission: 3h 20m, or 12:05 under an hour. */
+export function formatAway(seconds) {
+    const s = Math.max(0, Math.ceil(seconds));
+    if (s >= 3600) return `${Math.floor(s / 3600)}h ${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}m`;
+    return formatHeal(s);
 }
 
 export function formatHeal(seconds) {
@@ -60,6 +111,7 @@ export function heroTile(hero, name, status, onTap = null) {
     if (status.state === 'picked') portrait.append(badge('check', 'ht-badge picked'));
     if (status.state === 'hurt') portrait.append(badge('plus', 'ht-badge hurt'));
     if (status.state === 'forge') portrait.append(badge('anvil', 'ht-badge forge'));
+    if (status.state === 'back') portrait.append(badge('chest', 'ht-badge evolve'));
     if (status.evolve && status.state !== 'forge') portrait.append(badge('arrow', 'ht-badge evolve'));
     const label = document.createElement('span');
     label.className = 'ht-name';
@@ -70,11 +122,20 @@ export function heroTile(hero, name, status, onTap = null) {
     if (form) job.style.color = form.accent;
     const line = document.createElement('span');
     line.className = 'ht-status';
-    line.textContent = { ready: 'Ready', picked: 'In squad', hurt: formatHeal(status.left), forge: 'Evolving' }[status.state];
+    line.textContent = {
+        ready: 'Ready', picked: 'In squad', hurt: formatHeal(status.left), forge: 'Evolving',
+        home: 'At home', away: formatAway(status.left), back: 'Back!',
+    }[status.state];
     tile.append(portrait, label, job, line);
+    if (status.state === 'away') {
+        tripLeft(line, hero.mission);
+        tile.append(tripBar(hero.mission, hero.mission.ready_at - status.left));
+    }
     const what = {
         ready: 'ready, tap to add to the squad', picked: 'in the squad, tap to take out',
         hurt: `hurt, healed in ${formatHeal(status.left)}`, forge: 'evolving at the forge',
+        home: 'at home, tap to send on a mission', away: `on a mission, back in ${formatAway(status.left)}`,
+        back: 'back from a mission with loot',
     };
     tile.title = `${name} (${form ? form.what : info.what}) ${what[status.state]}${status.evolve ? '. Can evolve!' : ''}`;
     if (onTap) {

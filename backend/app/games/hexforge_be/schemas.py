@@ -47,6 +47,16 @@ class EvolveRequest(BaseModel):
     form: Optional[Literal["bastion", "warlord", "phantom", "reaper", "archon", "arcanist"]] = None
 
 
+class ExploreRequest(BaseModel):
+    """How long the Explorer goes away: 1 h, 4 h or 8 h."""
+    mission: Literal["scout", "expedition", "voyage"]
+
+
+class EquipRequest(BaseModel):
+    """Give this item (from the armoury) to the hero."""
+    item_id: int = Field(ge=1)
+
+
 class BonusRequest(BaseModel):
     """Use one bonus on exactly one target: a forge job, a hurt hero or the energy."""
     bonus: Literal["hourglass", "golden_hourglass", "salve", "flask"]

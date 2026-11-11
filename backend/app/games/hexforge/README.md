@@ -96,8 +96,9 @@ score always means a better city.
 
 Step 2 (done): **attack other players** (`hexforge_be/pvp.py`). The Attack
 tab has two targets, **Outposts** and **Rivals**. The arena opens when you
-clear the first outpost; until then you cannot attack players and nobody can
-attack you. **Find a rival** picks one of the 5 attackable players nearest in
+clear the first outpost; until then you cannot attack players. Anyone can be
+attacked from the start, guests too, unless their shield is up (a city needs
+a tower to be raided). **Find a rival** picks one of the 5 attackable players nearest in
 strength (towers and traps); asking again picks another. The attacker sees
 the rival's layout without traps and without tower aims, and the loot at
 stake. A raid costs 1 energy; a win takes 20 % (30 % if the core falls) of
@@ -287,6 +288,22 @@ every hero opens its card (stats, XP, the two forms with what changes, the
 cost); an arrow badge marks those that can evolve. The battle report shows
 the XP each hero earned.
 
+Step 4, hero items (`hexforge_be/items.py`). Every hero carries one weapon of
+its class and one spell (any class). Weapons: Rune Maul (+damage) and Aegis
+Plate (+health) for the Guardian, Plasma Edge (+damage) and Flux Daggers
+(faster blows) for the Neon Blade, Storm Staff (+damage and nova) and Focus
+Lens (+reach) for the Technomancer. Spells: Ward Sigil (a shield that soaks
+the first blows), Mending Rune (heals during the fight), Haste Rune (speed).
+Items are forged like anything else (forge tab Items, 20-25 min) and land in
+the armoury (`city["items"]`, up to 24) at level 1; an upgrade is a forge job
+up to level 5 (the recipe times the new level, 20 min times the level), and
+the item keeps working meanwhile. Effects grow linearly with the level: a
+full level-5 kit is worth about one evolution. The hero card shows the two
+gear slots (tap to equip, swap or take off) and the stats with the items;
+the squad carries its items into the simulation as {type, level}, so replays
+rebuild the same fight. In battle a ward is a bubble that fades as it soaks,
+and a mending hero sheds green motes while its health climbs back.
+
 Next: a game that explains itself (first-game guide, previews before every choice). Next: register the game on the platform (Fun
 section, XP and daily quests).
 
@@ -335,3 +352,24 @@ simulation, regenerate it from `backend/`:
 ```bash
 python -c "import json; from app.games.hexforge_be.simulation import simulate; from app.games.hexforge_be.demo_city import demo_city; c = demo_city(); b = simulate(c, ['guardian','neon_blade','neon_blade','technomancer'], 'south', 'production', 'spread'); b['city'] = c; json.dump(b, open('app/games/hexforge/tests/fixtures/battle.json', 'w'), separators=(',', ':'))"
 ```
+
+### Phase 5, step 5: the Explorer (`hexforge_be/explorers.py`)
+
+A hero forged like the others (it takes a hero slot; several are allowed)
+that **never fights**: it is left out of every squad and does not evolve.
+From its hero card it goes on a mission the player picks: **Scouting** (1 h),
+**Expedition** (4 h) or **Long voyage** (8 h). The loot stays a surprise
+until it comes back: materials, often bonuses, sometimes a hero item, plus
+player XP. The loot is drawn from a seed fixed when the trip starts, so it
+cannot be re-rolled. Its own items: **Treasure Map** (weapon, +10 % loot per
+level) and **Trail Boots** (spell, −6 % mission time per level); it carries
+nothing else.
+
+| Route | Effect |
+| --- | --- |
+| `POST /api/hexforge/me/heroes/{id}/explore` | `{mission: scout\|expedition\|voyage}`; 400 `not_an_explorer`, `on_mission` |
+| `POST /api/hexforge/me/heroes/{id}/return` | the state plus `loot` {materials, bonuses, item, xp, levels}; 400 `not_ready`, `no_mission` |
+
+State: a hero may carry `mission: {kind, started_at, ready_at, seed}`;
+`missions` lists the trips. A squad with an Explorer is refused with
+`explorer_cannot_fight`.

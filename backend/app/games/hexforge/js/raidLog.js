@@ -42,9 +42,7 @@ export function renderRaidLog({ banner, list }, log, pvp, serverNow, actions) {
         list.append(hint(`Shield up: nobody can raid you for ${formatCountdown(pvp.shield_until - serverNow)}.`));
     }
     if (!log.raids.length) {
-        list.append(hint(pvp?.arena
-            ? 'No raids yet. Test your defenses to be ready.'
-            : 'Nobody can raid you until you clear the first outpost.'));
+        list.append(hint('No raids yet. Test your defenses to be ready.'));
         return;
     }
     for (const raid of log.raids) list.append(raidCard(raid, serverNow, actions));

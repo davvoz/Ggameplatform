@@ -1,8 +1,20 @@
 {
-  "version": "5.18.4",
-  "timestamp": "2026-11-09T21:39:31.237Z",
-  "buildNumber": 615,
+  "version": "5.19.0",
+  "timestamp": "2026-11-11T02:36:58.173Z",
+  "buildNumber": 616,
   "changelog": [
+    {
+      "version": "5.19.0",
+      "date": "2026-11-11",
+      "type": "minor",
+      "changes": [
+        "Merge branch 'feat/hexforge-battle-prototype': Hexforge",
+        "feat: Hexforge fusion, anvil, merchant, and the Fun section",
+        "feat: Hexforge building upgrades, hero dismissal, tower reach",
+        "feat: Hexforge phase 5 steps 4-5, hero items and the Explorer",
+        "feat: Hexforge phase 5 step 3, hero evolution"
+      ]
+    },
     {
       "version": "5.18.4",
       "date": "2026-11-09",
@@ -86,15 +98,6 @@
       "changes": [
         "feat: add Rainbow Rush Stormrun ranked endless runner",
         "🔖 Bump version to 5.16.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.16.2",
-      "date": "2026-10-26",
-      "type": "patch",
-      "changes": [
-        "fix: implement STEEM rewards management for processed weeks with new endpoints and UI updates",
-        "🔖 Bump version to 5.16.1 [skip-version]"
       ]
     }
   ]

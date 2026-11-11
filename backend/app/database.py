@@ -121,9 +121,31 @@ def _migrate_users_ban_columns():
     except Exception as e:
         print(f"⚠️  Users ban columns migration: {e}")
 
+def _migrate_hexforge_trophies():
+    """Add the Hexforge PvP columns (trophies, defence log) to tables made before they existed."""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("PRAGMA table_info(hexforge_players)"))
+            cols = {row[1] for row in result}
+            if cols and "trophies" not in cols:
+                conn.execute(text("ALTER TABLE hexforge_players ADD COLUMN trophies INTEGER NOT NULL DEFAULT 0"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_hexforge_players_trophies ON hexforge_players (trophies)"))
+            result = conn.execute(text("PRAGMA table_info(hexforge_attacks)"))
+            cols = {row[1] for row in result}
+            if cols and "trophies" not in cols:
+                conn.execute(text("ALTER TABLE hexforge_attacks ADD COLUMN trophies INTEGER NOT NULL DEFAULT 0"))
+            if cols and "defender_trophies" not in cols:
+                conn.execute(text("ALTER TABLE hexforge_attacks ADD COLUMN defender_trophies INTEGER NOT NULL DEFAULT 0"))
+            if cols and "seen" not in cols:
+                conn.execute(text("ALTER TABLE hexforge_attacks ADD COLUMN seen INTEGER NOT NULL DEFAULT 0"))
+            conn.commit()
+    except Exception as e:
+        print(f"⚠️  Hexforge trophies migration: {e}")
+
 def init_db():
     """Initialize the database with required tables."""
     Base.metadata.create_all(bind=engine)
+    _migrate_hexforge_trophies()
     _migrate_private_messages_edit_columns()
     _migrate_community_reply_columns()
     _migrate_private_messages_reply_columns()

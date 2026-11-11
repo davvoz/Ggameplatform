@@ -1,0 +1,251 @@
+"""
+Hexforge: the forge, the storage and dismantling.
+
+Everything new is forged from a fixed recipe: exact cost, exact result, no
+randomness. A job takes real time; when it is ready the player claims it.
+Forged buildings go to storage and are placed on the grid from there;
+forged heroes join the roster.
+
+The forge and the storage live inside the city JSON (`city["forge"]`,
+`city["storage"]`); `ensure_forge` adds them to cities saved before they
+existed. All functions mutate the dicts they get and raise ActionError on a
+broken rule, leaving them untouched.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from . import economy, evolution, fusion, items, progress, upgrades
+from .catalog import BUILDINGS, HEROES
+from .errors import ActionError
+
+FORGE_SLOTS = 2
+REFUND_SHARE = 0.5
+UNDISMANTLABLE = ("core", "vault")
+
+
+@dataclass(frozen=True)
+class Recipe:
+    item: str
+    kind: str              # building | hero
+    cost: dict
+    seconds: int
+    yields: int = 1
+
+
+def _r(item, kind, seconds, yields=1, **cost):
+    return Recipe(item=item, kind=kind, cost=cost, seconds=seconds, yields=yields)
+
+
+RECIPES: dict[str, Recipe] = {r.item: r for r in (
+    _r("wall", "building", 120, yields=5, rune_stone=60),
+    _r("rune_tower", "building", 600, rune_stone=120, scrap=60),
+    _r("lightning_tower", "building", 900, scrap=80, chips=60, mana=40),
+    _r("frost_tower", "building", 900, mana=100, rune_stone=60),
+    _r("rune_trap", "building", 300, mana=40, chips=20),
+    _r("rune_quarry", "building", 480, scrap=80),
+    _r("scrap_foundry", "building", 480, rune_stone=80),
+    _r("mana_well", "building", 600, rune_stone=60, scrap=40),
+    _r("data_node", "building", 720, scrap=80, mana=40),
+    _r("guardian", "hero", 3600, scrap=150, rune_stone=60),
+    _r("neon_blade", "hero", 3600, scrap=100, chips=60),
+    _r("technomancer", "hero", 5400, mana=120, chips=50),
+    _r("explorer", "hero", 2700, scrap=80, mana=60, chips=40),
+    *(_r(item, "item", seconds, **cost) for item, (seconds, cost) in items.RECIPES.items()),
+)}
+
+# How many of a kind a player may own (placed + stored + being forged).
+LIMIT_GROUPS: dict[str, tuple[tuple[str, ...], int]] = {
+    "walls": (("wall",), 60),
+    "towers": (("rune_tower", "lightning_tower", "frost_tower"), 8),
+    "traps": (("rune_trap",), 6),
+    "rune_quarry": (("rune_quarry",), 2),
+    "scrap_foundry": (("scrap_foundry",), 2),
+    "mana_well": (("mana_well",), 2),
+    "data_node": (("data_node",), 2),
+    "heroes": ((*HEROES, "explorer"), 8),   # the real limit grows with the player's level
+    "items": (tuple(items.ITEMS), items.ITEM_LIMIT),
+}
+_GROUP_OF = {item: name for name, (items, _) in LIMIT_GROUPS.items() for item in items}
+
+
+def ensure_forge(city: dict) -> None:
+    city.setdefault("forge", {"slots": FORGE_SLOTS, "jobs": [], "next_job_id": 1})
+    city.setdefault("storage", {})
+
+
+# ── counting and limits ───────────────────────────────────────────────
+def owned(city: dict, heroes: list, kinds) -> int:
+    """Placed + stored + in the armoury + being forged, for these kinds."""
+    kinds = set(kinds)
+    count = sum(1 for b in city["buildings"] if b["type"] in kinds)
+    count += sum(n for kind, n in city["storage"].items() if kind in kinds)
+    count += sum(1 for h in heroes if h["cls"] in kinds)
+    count += sum(1 for i in city.get("items", []) if i["type"] in kinds)
+    count += sum(RECIPES[j["recipe"]].yields for j in city["forge"]["jobs"] if j["recipe"] in kinds)
+    return count
+
+
+def limit_of(city: dict, group: str) -> int:
+    """How many of a group the player may own; heroes grow with the player's level."""
+    if group == "heroes" and "progress" in city:
+        return progress.hero_slots(city)
+    if group == "towers" and "progress" in city:
+        return progress.tower_slots(city)
+    return LIMIT_GROUPS[group][1]
+
+
+def room_for(city: dict, heroes: list, item: str) -> int:
+    group = _GROUP_OF[item]
+    return limit_of(city, group) - owned(city, heroes, LIMIT_GROUPS[group][0])
+
+
+# ── forging ────────────────────────────────────────────────────────────
+def start(city: dict, heroes: list, materials: dict, recipe_id: str, now: float) -> dict:
+    recipe = RECIPES.get(recipe_id)
+    if recipe is None:
+        raise ActionError("unknown_recipe")
+    forge = city["forge"]
+    if len(forge["jobs"]) >= forge["slots"]:
+        raise ActionError("forge_busy")
+    if room_for(city, heroes, recipe.item) < recipe.yields:
+        raise ActionError("limit_reached")
+    if any(materials.get(m, 0) < amount for m, amount in recipe.cost.items()):
+        raise ActionError("not_enough_materials")
+    for m, amount in recipe.cost.items():
+        materials[m] -= amount
+    job = {"id": forge["next_job_id"], "recipe": recipe_id,
+           "started_at": now, "ready_at": now + recipe.seconds}
+    forge["next_job_id"] += 1
+    forge["jobs"].append(job)
+    return job
+
+
+def claim(city: dict, heroes: list, job_id: int, now: float) -> dict:
+    forge = city["forge"]
+    job = next((j for j in forge["jobs"] if j["id"] == job_id), None)
+    if job is None:
+        raise ActionError("unknown_job")
+    if job["ready_at"] > now:
+        raise ActionError("not_ready")
+    if job["recipe"] == "evolve":
+        forge["jobs"].remove(job)
+        return evolution.finish(job, heroes)
+    if job["recipe"] == "build_up":
+        forge["jobs"].remove(job)
+        return upgrades.finish(city, job)
+    if job["recipe"] == "upgrade":
+        forge["jobs"].remove(job)
+        return items.finish_upgrade(city, job)
+    if job["recipe"] == "fuse":
+        forge["jobs"].remove(job)
+        return fusion.finish(city, heroes, job, now)
+    recipe = RECIPES[job["recipe"]]
+    forge["jobs"].remove(job)
+    if recipe.kind == "hero":
+        next_id = max((h["id"] for h in heroes), default=0) + 1
+        for i in range(recipe.yields):
+            heroes.append({"id": next_id + i, "cls": recipe.item})
+    elif recipe.kind == "item":
+        items.ensure_items(city)
+        made = items.add(city, recipe.item)
+        return {"item": recipe.item, "kind": "item", "count": 1, "item_id": made["id"], "seconds": recipe.seconds}
+    else:
+        city["storage"][recipe.item] = city["storage"].get(recipe.item, 0) + recipe.yields
+    return {"item": recipe.item, "kind": recipe.kind, "count": recipe.yields, "seconds": recipe.seconds}
+
+
+# ── dismissing a hero for a bonus ──────────────────────────────────────
+SQUAD_MIN = 4
+# what a dismissed hero leaves behind, by tier (the Explorer has its own)
+DISMISS_GIFTS = {
+    "1": {"hourglass": 1, "salve": 1},
+    "2": {"golden_hourglass": 1, "hourglass": 1},
+    "3": {"golden_hourglass": 2, "flask": 1},
+    "explorer": {"hourglass": 1, "flask": 1},
+}
+
+
+def dismiss_gift(hero: dict) -> dict:
+    return DISMISS_GIFTS["explorer" if hero["cls"] == "explorer" else str(hero.get("tier", 1))]
+
+
+def dismiss_hero(city: dict, heroes: list, hero_id: int) -> dict:
+    """Let a hero go to free its slot; its items go back to the armoury. Returns the bonuses given."""
+    hero = next((h for h in heroes if h["id"] == hero_id), None)
+    if hero is None:
+        raise ActionError("unknown_hero")
+    if hero.get("evolving"):
+        raise ActionError("hero_evolving")
+    if hero.get("mission"):
+        raise ActionError("on_mission")
+    fighters = [h for h in heroes if h["cls"] != "explorer"]
+    if hero["cls"] != "explorer" and len(fighters) <= SQUAD_MIN:
+        raise ActionError("last_squad")
+    gift = dismiss_gift(hero)
+    for item in city.get("items", []):
+        if item.get("hero") == hero_id:
+            item["hero"] = None
+    heroes.remove(hero)
+    bonuses = city.setdefault("bonuses", {})
+    for bonus, n in gift.items():
+        bonuses[bonus] = bonuses.get(bonus, 0) + n
+    return gift
+
+
+# ── storage and dismantling ────────────────────────────────────────────
+def place(city: dict, building_type: str, x: int, y: int, now: float) -> dict:
+    if city["storage"].get(building_type, 0) <= 0:
+        raise ActionError("not_in_storage")
+    error = economy.placement_error(city, building_type, x, y)
+    if error:
+        raise ActionError(error)
+    building = {"id": city["next_id"], "type": building_type, "x": x, "y": y}
+    if building_type in economy.PRODUCTION:
+        building["collected_at"] = now
+    city["next_id"] += 1
+    city["buildings"].append(building)
+    upgrades.stamp(city)                    # it arrives at its type's level
+    city["storage"][building_type] -= 1
+    if city["storage"][building_type] == 0:
+        del city["storage"][building_type]
+    return building
+
+
+def refund_of(building_type: str) -> dict:
+    recipe = RECIPES.get(building_type)
+    if recipe is None:
+        return {}
+    return {m: int(amount * REFUND_SHARE / recipe.yields) for m, amount in recipe.cost.items()}
+
+
+def dismantle(city: dict, materials: dict, building_id: int, now: float) -> dict:
+    building = next((b for b in city["buildings"] if b["id"] == building_id), None)
+    if building is None:
+        raise ActionError("unknown_building")
+    if building["type"] in UNDISMANTLABLE:
+        raise ActionError("cannot_dismantle")
+    if building.get("fusing"):
+        raise ActionError("building_fusing")
+    economy.collect(city, materials, now, building_ids=[building_id])
+    refund = refund_of(building["type"])
+    for m, amount in refund.items():
+        materials[m] = materials.get(m, 0) + amount
+    city["buildings"].remove(building)
+    return refund
+
+
+def public_recipes(city: dict, heroes: list) -> list[dict]:
+    rows = []
+    for recipe in RECIPES.values():
+        group = _GROUP_OF[recipe.item]
+        kinds, limit = LIMIT_GROUPS[group][0], limit_of(city, group)
+        rows.append({
+            "id": recipe.item, "kind": recipe.kind, "cost": recipe.cost,
+            "seconds": recipe.seconds, "yields": recipe.yields,
+            "size": BUILDINGS[recipe.item].size if recipe.kind == "building" else None,
+            "refund": refund_of(recipe.item) if recipe.kind == "building" else None,
+            "group": _GROUP_OF[recipe.item], "owned": owned(city, heroes, kinds), "limit": limit,
+        })
+    return rows

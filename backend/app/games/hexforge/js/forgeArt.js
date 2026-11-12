@@ -1,4 +1,4 @@
-import { toScreen } from './iso.js';
+import { TILE_W, toScreen } from './iso.js';
 import { FORM_INFO, HERO_INFO } from './labels.js';
 import { drawUpgradeOver, drawUpgradeUnder } from './upgradeArt.js';
 import { drawFusionOver, drawFusionUnder, drawHeroFusionOver, drawHeroFusionUnder } from './fusionArt.js';
@@ -44,6 +44,52 @@ export function prism(ctx, cam, x, y, w, d, z0, h, mat, edge = EDGE) {
     ctx.beginPath();
     ctx.moveTo(t[3].x, t[3].y); ctx.lineTo(t[2].x, t[2].y); ctx.lineTo(t[1].x, t[1].y);
     ctx.stroke();
+}
+
+/**
+ * Draw flat on a wall. `face` 'left' is the plane y = ay (the wall runs along
+ * x), 'right' the plane x = ax (it runs along y). The returned W(u, z) maps
+ * u screen pixels across the wall (positive to the right on screen) and a
+ * height z to the canvas: doors, windows and lights drawn through it follow
+ * the wall's slope instead of sitting level on the screen.
+ */
+export function onWall(cam, face, ax, ay) {
+    const cells = (u) => u / (TILE_W / 2);
+    return face === 'right'
+        ? (u, z) => toScreen(cam, ax, ay - cells(u), z)
+        : (u, z) => toScreen(cam, ax + cells(u), ay, z);
+}
+
+/** An arched opening on a wall: sides from z0 to z1, the arch peaking at zTop. */
+function wallArch(ctx, W, half, z0, z1, zTop) {
+    const a = W(-half, z0);
+    const b = W(-half, z1);
+    const peak = W(0, zTop);
+    const c = W(half, z1);
+    const d = W(half, z0);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.quadraticCurveTo(peak.x, peak.y, c.x, c.y);
+    ctx.lineTo(d.x, d.y);
+    ctx.closePath();
+}
+
+/** A ring on a wall (a circle seen on the wall's slant), centre height z. */
+function wallRing(ctx, W, rx, rz, z, steps = 28) {
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+        const a = (Math.PI * 2 * i) / steps;
+        const p = W(Math.cos(a) * rx, z + Math.sin(a) * rz);
+        if (i) ctx.lineTo(p.x, p.y);
+        else ctx.moveTo(p.x, p.y);
+    }
+    ctx.closePath();
+}
+
+/** A rectangle on a wall, from u0 to u1 across and z0 to z1 up. */
+export function wallRect(ctx, W, u0, u1, z0, z1) {
+    path(ctx, [W(u0, z0), W(u1, z0), W(u1, z1), W(u0, z1)]);
 }
 
 export function path(ctx, pts) {
@@ -269,18 +315,14 @@ const PAINTERS = {
         prism(ctx, cam, x + 0.2, y + 0.25, 1.5, 1.5, 0, 30, IRON);
         seam(ctx, cam, x + 0.2, y + 0.25, 1.5, 1.5, 24, withAlpha('#ff7a3d', 0.7));
         // furnace mouth on the front-left face
-        const m = toScreen(cam, x + 0.95, y + 1.75, 6);
+        const mouth = onWall(cam, 'left', x + 0.95, y + 1.75);
+        const m = mouth(0, 6);
         const flick = 0.75 + 0.25 * Math.sin(time * 11 + b.id);
         ctx.save();
         ctx.shadowColor = '#ff7a3d';
         ctx.shadowBlur = 14 * s;
         ctx.fillStyle = `rgba(255, ${140 + Math.round(60 * flick)}, 50, 1)`;
-        ctx.beginPath();
-        ctx.moveTo(m.x - 9 * s, m.y + 4 * s);
-        ctx.lineTo(m.x - 9 * s, m.y - 8 * s);
-        ctx.quadraticCurveTo(m.x, m.y - 18 * s, m.x + 9 * s, m.y - 8 * s);
-        ctx.lineTo(m.x + 9 * s, m.y + 4 * s);
-        ctx.closePath();
+        wallArch(ctx, mouth, 9, 2, 14, 24);
         ctx.fill();
         ctx.restore();
         halo(ctx, m.x, m.y, 26 * s * flick, '#ff7a3d', 0.7);
@@ -335,11 +377,12 @@ const PAINTERS = {
             for (let col = 0; col < 3; col++) {
                 const on = Math.sin(time * 4 + row * 1.7 + col * 2.9 + b.id) > 0.1;
                 const z = 14 + row * 8;
-                const pl = toScreen(cam, x + 0.62 + col * 0.26, y + 1.45, z);
-                const pr = toScreen(cam, x + 1.45, y + 1.28 - col * 0.26, z);
                 ctx.fillStyle = on ? '#4dff9a' : 'rgba(77, 255, 154, 0.18)';
-                ctx.fillRect(pl.x - 2 * s, pl.y - 2 * s, 4 * s, 3 * s);
-                ctx.fillRect(pr.x - 2 * s, pr.y - 2 * s, 4 * s, 3 * s);
+                for (const light of [onWall(cam, 'left', x + 0.62 + col * 0.26, y + 1.45),
+                    onWall(cam, 'right', x + 1.45, y + 1.28 - col * 0.26)]) {
+                    wallRect(ctx, light, -2, 2, z - 1, z + 2);
+                    ctx.fill();
+                }
             }
         }
         const top = toScreen(cam, x + 1, y + 1, 50);
@@ -353,18 +396,19 @@ const PAINTERS = {
         prism(ctx, cam, x + 0.2, y + 0.2, 1.6, 1.6, 0, 28, IRON);
         for (const z of [8, 20]) seam(ctx, cam, x + 0.2, y + 0.2, 1.6, 1.6, z, '#ffd75e', 1.2);
         prism(ctx, cam, x + 0.35, y + 0.35, 1.3, 1.3, 28, 6, { top: '#6a5638', left: '#45371f', right: '#342916' });
-        const door = toScreen(cam, x + 1, y + 1.8, 14);
+        const door = onWall(cam, 'left', x + 1, y + 1.8);
         ctx.save();
         ctx.strokeStyle = '#ffd75e';
         ctx.lineWidth = 2 * s;
         ctx.shadowColor = '#ffd75e';
         ctx.shadowBlur = 8 * s;
-        ctx.beginPath();
-        ctx.ellipse(door.x, door.y, 9 * s, 10 * s, 0, 0, Math.PI * 2);
+        wallRing(ctx, door, 9, 10, 14);
         ctx.stroke();
+        // the wheel's spokes: one along the wall, one upright
+        const [l, r, up, down] = [door(-5, 14), door(5, 14), door(0, 19), door(0, 9)];
         ctx.beginPath();
-        ctx.moveTo(door.x - 5 * s, door.y); ctx.lineTo(door.x + 5 * s, door.y);
-        ctx.moveTo(door.x, door.y - 5 * s); ctx.lineTo(door.x, door.y + 5 * s);
+        ctx.moveTo(l.x, l.y); ctx.lineTo(r.x, r.y);
+        ctx.moveTo(up.x, up.y); ctx.lineTo(down.x, down.y);
         ctx.stroke();
         ctx.restore();
         const top = toScreen(cam, x + 1, y + 1, 34);
@@ -379,17 +423,11 @@ function towerBody(ctx, cam, b, shaftMat, rune, { time, firing }) {
     prism(ctx, cam, x + 0.5, y + 0.5, 1.0, 1.0, 12, 44, shaftMat);
     seam(ctx, cam, x + 0.5, y + 0.5, 1.0, 1.0, 34, withAlpha(rune, 0.6 + 0.4 * Math.max(firing, 0.5 + 0.5 * Math.sin(time * 2 + b.id))));
     // arrow-slit window on the front face
-    const w = toScreen(cam, x + 1.0, y + 1.5, 20);
     ctx.save();
     ctx.shadowColor = rune;
     ctx.shadowBlur = 8 * s;
     ctx.fillStyle = withAlpha(rune, 0.9);
-    ctx.beginPath();
-    ctx.moveTo(w.x - 2.5 * s, w.y + 2 * s);
-    ctx.lineTo(w.x - 2.5 * s, w.y - 7 * s);
-    ctx.quadraticCurveTo(w.x, w.y - 11 * s, w.x + 2.5 * s, w.y - 7 * s);
-    ctx.lineTo(w.x + 2.5 * s, w.y + 2 * s);
-    ctx.closePath();
+    wallArch(ctx, onWall(cam, 'left', x + 1.0, y + 1.5), 2.5, 18, 27, 31);
     ctx.fill();
     ctx.restore();
     // crenellated crown

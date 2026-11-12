@@ -32,6 +32,19 @@ export function forgeBlocker(recipe, materials, freeSlots) {
     return short ? 'Not enough materials' : null;
 }
 
+/** The limits that several kinds share, named the way the player says them. */
+const GROUP_NAMES = { heroes: 'heroes', towers: 'towers', items: 'items' };
+
+/**
+ * "You own 2/2" when the limit is this kind's own; "You own 2 · heroes 8/14"
+ * when it is shared, so the group total is not read as this kind's count.
+ */
+export function ownedText(recipe) {
+    const group = GROUP_NAMES[recipe.group];
+    if (!group || recipe.mine === undefined) return `You own ${recipe.owned}/${recipe.limit}`;
+    return `You own ${recipe.mine} · ${group} ${recipe.owned}/${recipe.limit}`;
+}
+
 export function itemName(item) {
     return BUILDING_INFO[item]?.name ?? HERO_INFO[item]?.name ?? ITEM_INFO[item]?.name ?? item;
 }
@@ -154,7 +167,7 @@ export function renderRecipes(container, recipes, materials, freeSlots, kind, on
         ped.append(thumbImg(itemThumb(recipe.id, 84), '', ''));
         const name = el('span', 'recipe-name', itemName(recipe.id) + (recipe.yields > 1 ? ` ×${recipe.yields}` : ''));
         const blocker = forgeBlocker(recipe, materials, freeSlots);
-        const foot = el('span', `recipe-foot${blocker ? ' blocked' : ''}`, blocker ?? `You own ${recipe.owned}/${recipe.limit}`);
+        const foot = el('span', `recipe-foot${blocker ? ' blocked' : ''}`, blocker ?? ownedText(recipe));
         const what = el('span', 'recipe-what', itemWhat(recipe.id));
         card.append(time, ped, name, what, costChips(recipe.cost, materials), foot);
         card.disabled = Boolean(blocker);
@@ -180,8 +193,11 @@ export function renderStorage(container, storage, placingType, onPlace) {
     }
 }
 
-/** Every hero you own; tap one for its card. `tierXp` marks those that can evolve. */
-export function renderRoster(container, heroes, limit, serverNow, tierXp = null, onTap = null) {
+/**
+ * Every hero you own; tap one for its card. `tierXp` marks those that can evolve;
+ * `jobs` (the forge's) tells what an evolving hero is becoming.
+ */
+export function renderRoster(container, heroes, limit, serverNow, tierXp = null, onTap = null, jobs = []) {
     container.replaceChildren();
     const head = el('span', 'roster-total', `Your heroes ${heroes.length}/${limit}`);
     container.append(head);
@@ -189,7 +205,11 @@ export function renderRoster(container, heroes, limit, serverNow, tierXp = null,
     const tiles = el('div', 'roster-tiles');
     let ready = 0;
     for (const hero of heroes) {
-        const status = { ...heroStatus(hero, false, serverNow), evolve: evolveReady(hero, tierXp) };
+        const job = jobs.find((j) => j.recipe === 'evolve' && j.hero === hero.id);
+        const status = {
+            ...heroStatus(hero, false, serverNow), evolve: evolveReady(hero, tierXp),
+            next: job ? { form: job.form, tier: job.tier } : null,
+        };
         if (status.evolve) ready += 1;
         tiles.append(heroTile(hero, names.get(hero.id), status, onTap ? () => onTap(hero.id) : null));
     }

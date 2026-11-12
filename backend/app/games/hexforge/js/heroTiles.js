@@ -33,6 +33,19 @@ export function stars(tier = 1) {
     return '★'.repeat(tier);
 }
 
+/** The stars of the tier to come: those already earned, then the new ones lit up. */
+export function nextStars(have, next) {
+    const row = document.createElement('span');
+    row.className = 'next-stars';
+    for (let i = 1; i <= next; i++) {
+        const star = document.createElement('span');
+        star.className = i > have ? 'star new' : 'star';
+        star.textContent = '★';
+        row.append(star);
+    }
+    return row;
+}
+
 /** 'forge' while evolving, 'hurt' while healing, else 'picked' or 'ready'; plus the seconds left to heal. */
 export function heroStatus(hero, picked, serverNow) {
     if (hero.cls === 'explorer') {
@@ -96,12 +109,15 @@ export function formatHeal(seconds) {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 
-/** A tile; `onTap` makes it a button. `status.evolve` adds the "can evolve" badge. */
+/**
+ * A tile; `onTap` makes it a button. `status.evolve` adds the "can evolve" badge;
+ * `status.next` ({ form, tier }) is what a hero at the forge is becoming.
+ */
 export function heroTile(hero, name, status, onTap = null) {
     const info = HERO_INFO[hero.cls];
     const form = (hero.tier ?? 1) > 1 ? FORM_INFO[hero.form] : null;
     const tile = document.createElement(onTap ? 'button' : 'div');
-    tile.className = `hero-tile ${status.state}`;
+    tile.className = `hero-tile ${status.state}${(hero.tier ?? 1) >= 3 ? ' ascended' : ''}`;
     tile.dataset.hero = String(hero.id);
     tile.style.setProperty('--accent', info.color);
     tile.style.setProperty('--healed', `${Math.round(status.healed * 100)}%`);
@@ -118,8 +134,15 @@ export function heroTile(hero, name, status, onTap = null) {
     label.textContent = name;
     const job = document.createElement('span');
     job.className = 'ht-job';
-    job.textContent = form ? `${form.name} ${stars(hero.tier)}` : info.job;
-    if (form) job.style.color = form.accent;
+    const coming = status.state === 'forge' && status.next ? FORM_INFO[status.next.form] : null;
+    if (coming) {
+        // at the forge: show what it is becoming, the new star lit up
+        job.append(`${coming.name} `, nextStars(hero.tier ?? 1, status.next.tier));
+        job.style.color = coming.accent;
+    } else {
+        job.textContent = hero.cls === 'explorer' ? info.job : `${form ? form.name : info.job} ${stars(hero.tier ?? 1)}`;
+        if (form) job.style.color = form.accent;
+    }
     const line = document.createElement('span');
     line.className = 'ht-status';
     line.textContent = {

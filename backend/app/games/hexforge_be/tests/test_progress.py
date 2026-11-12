@@ -76,6 +76,13 @@ class GainTest(unittest.TestCase):
         hero_row = next(r for r in forge.public_recipes(city, heroes) if r["id"] == "guardian")
         self.assertEqual(hero_row["limit"], 9)
 
+    def test_a_shared_limit_also_counts_each_kind(self):
+        city = fresh_city()
+        heroes = [{"id": 1, "cls": "guardian"}, {"id": 2, "cls": "guardian"}, {"id": 3, "cls": "neon_blade"}]
+        rows = {r["id"]: r for r in forge.public_recipes(city, heroes)}
+        self.assertEqual((rows["guardian"]["mine"], rows["guardian"]["owned"]), (2, 3))
+        self.assertEqual((rows["neon_blade"]["mine"], rows["neon_blade"]["owned"]), (1, 3))
+
 
 class ServiceTest(unittest.TestCase):
     def test_an_old_save_starts_at_level_one(self):

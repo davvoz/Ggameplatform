@@ -61,6 +61,7 @@ TASKS = {
     "claim": ("claim", 2, _reward(25, mana=60, chips=40)),
     "attack": ("attack", 2, _reward(25, {"flask": 1})),
     "win": ("win", 1, _reward(30, {"salve": 1})),
+    "train": ("train", 3, _reward(25, {"hourglass": 1})),
 }
 TASKS_PER_DAY = 3
 

@@ -53,6 +53,17 @@ class HammerRequest(BaseModel):
     good: int = Field(ge=0, le=5)
 
 
+class GremlinsRequest(BaseModel):
+    """The gremlins' raid: how many were caught."""
+    caught: int = Field(ge=0, le=12)
+
+
+class TrainRequest(BaseModel):
+    """A session with the training dummy: how many of the 10 beats were perfect, how many good."""
+    perfect: int = Field(ge=0, le=10)
+    good: int = Field(ge=0, le=10)
+
+
 class FuseRequest(BaseModel):
     """Three maxed buildings (or heroes) of the same grade: the base keeps its body, the donors give their powers."""
     kind: Literal["building", "hero"]
@@ -85,3 +96,7 @@ class BonusRequest(BaseModel):
 
 class AimRequest(BaseModel):
     aim: Literal["closest", "weakest", "ranged"]
+
+
+class DefenseTestRequest(BaseModel):
+    stage: Optional[int] = Field(default=None, ge=1)   # None: the highest unlocked

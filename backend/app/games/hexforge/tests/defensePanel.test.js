@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { adviceFor, describeWorst, percentHeld, ratingOf, weakestSide } from '../js/defensePanel.js';
+import { adviceFor, describeWorst, percentHeld, ratingOf, stageNote, stageTitle, weakestSide } from '../js/defensePanel.js';
 
 const sides = (n, e, s, w) => ({
     north: { held: n, total: 36 }, east: { held: e, total: 36 },
@@ -31,4 +31,13 @@ test('the advice points at what to do next', () => {
 test('the worst raid reads as a sentence', () => {
     const worst = { raid_name: 'Blade rush', side: 'north', priority: 'towers', tactic: 'spread' };
     assert.equal(describeWorst(worst), 'Blade rush from the north, going for towers, spread');
+});
+
+test('the stage note says what the test unlocked, or what is left to hold', () => {
+    const next = { number: 4, name: 'Ascended, items Lv 2' };
+    const stage = { number: 3, name: 'Ascended ★★★' };
+    assert.equal(stageTitle(stage), 'Stage 3 · Ascended ★★★');
+    assert.match(stageNote({ stage, next, held: 144, total: 144, unlocked: 4, advanced: true }), /stage 4 unlocked/);
+    assert.match(stageNote({ stage, next, held: 141, total: 144, unlocked: 3, advanced: false }), /Hold 3 more raids to unlock stage 4/);
+    assert.match(stageNote({ stage, next, held: 100, total: 144, unlocked: 6, advanced: false }), /top is stage 6/);
 });

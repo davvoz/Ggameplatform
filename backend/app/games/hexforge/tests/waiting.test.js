@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { markerAt, rateStrike, zones } from '../js/anvil.js';
+import { anvilStars, markerAt, rateStrike, zones } from '../js/anvil.js';
 
 test('a strike in the middle is perfect, near it good, far off a miss', () => {
     assert.equal(rateStrike(0.5, 0), 'perfect');
@@ -19,4 +19,11 @@ test('the marker swings back and forth across the bar', () => {
         const p = markerAt(t, 2);
         assert.ok(p >= 0 && p <= 1);
     }
+});
+
+test('anvil stars: perfect blows count double', () => {
+    assert.equal(anvilStars(0, 2), 0);
+    assert.equal(anvilStars(1, 1), 1);
+    assert.equal(anvilStars(3, 0), 2);
+    assert.equal(anvilStars(4, 1), 3);
 });

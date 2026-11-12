@@ -1,5 +1,5 @@
 import { costChips, formatDuration, itemEffect } from './forgePanel.js';
-import { stars, tripBar, tripLeft } from './heroTiles.js';
+import { nextStars, stars, tripBar, tripLeft } from './heroTiles.js';
 import { partName } from './fusionPanel.js';
 import { icon, withIcon } from './icons.js';
 import { BONUS_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES } from './labels.js';
@@ -85,7 +85,7 @@ export function evolveBlocker({ hero, table, materials, freeSlots, serverNow }) 
     if (next > 3) return 'Fully ascended';
     if (hero.evolving) return 'Already at the forge';
     const need = table.tier_xp[String(next)];
-    if ((hero.xp ?? 0) < need) return `Needs ${need} XP: ${need - (hero.xp ?? 0)} more from fighting`;
+    if ((hero.xp ?? 0) < need) return `${need - (hero.xp ?? 0)} more XP from fighting`;
     if (hero.injured_until && hero.injured_until > serverNow) return 'Hurt: wait until healed';
     if (freeSlots <= 0) return 'All forge slots are busy';
     const { cost } = table.costs[hero.cls][String(next)];
@@ -131,8 +131,8 @@ function dismissBox({ gift, blocker, confirming }, onDismiss) {
 
 function renderHeroBody(container, {
     hero, name, table, materials, freeSlots, serverNow, job, picked, stats: now = null, gear = null, itemTable = null,
-    missions = null,
-}, { onPick, onEvolve, onGear = () => {}, onExplore = () => {}, onReturn = () => {} }) {
+    missions = null, training = null,
+}, { onPick, onEvolve, onGear = () => {}, onExplore = () => {}, onReturn = () => {}, onTrain = () => {} }) {
     container.replaceChildren();
     const info = HERO_INFO[hero.cls];
     const tier = hero.tier ?? 1;
@@ -170,10 +170,13 @@ function renderHeroBody(container, {
         fill.style.width = `${Math.min(100, Math.round((100 * xp) / need))}%`;
         meter.append(fill);
         xpBox.append(el('small', '', `${Math.min(xp, need)} / ${need} XP to ${next === 2 ? 'evolve' : 'ascend'}`), meter);
+    } else if (training) {
+        xpBox.append(...masteryLine(hero, training));
     } else {
         xpBox.append(el('small', '', `${xp} XP · fully ascended`));
     }
     container.append(xpBox);
+    if (training) container.append(trainBox(hero, training, serverNow, onTrain));
 
     // stats: as it fights now (items included), else from the table
     const stats = statsOf(table, hero.cls, hero.form, tier);
@@ -199,6 +202,52 @@ function renderHeroBody(container, {
     }
     if (next > 3) return;
     container.append(evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats, shown, form, onPick, onEvolve }));
+}
+
+/** A top-tier hero's mastery: its level, what it adds, and the bar inside the level. */
+export function masteryOf(points, { perLevel, levels, bonus }) {
+    const level = Math.min(levels, Math.floor(points / perLevel));
+    const maxed = level >= levels;
+    return { level, maxed, into: maxed ? perLevel : points - level * perLevel, pct: Math.round(bonus * 100 * level) };
+}
+
+function masteryLine(hero, training) {
+    const m = masteryOf(hero.mastery ?? 0, training);
+    const text = m.maxed
+        ? `Mastery ${m.level} · the top: +${m.pct}% health and damage`
+        : `Mastery ${m.level}${m.level ? ` · +${m.pct}% health and damage` : ''} · ${m.into} / ${training.perLevel} to the next`;
+    const meter = el('span', 'xp-meter wide mastery');
+    const fill = el('span');
+    fill.style.width = `${Math.round((100 * m.into) / training.perLevel)}%`;
+    meter.append(fill);
+    return [el('small', '', text), meter];
+}
+
+/** Why this hero cannot train right now, or null. */
+export function trainBlocker(hero, training, serverNow) {
+    if (hero.evolving) return 'At the forge';
+    if (hero.injured_until && hero.injured_until > serverNow) return 'Hurt: heal first';
+    if (training.left <= 0) return 'Rested for today: back tomorrow';
+    return null;
+}
+
+function trainPrize(training) {
+    return training.maxMastery ? `+${training.maxMastery} mastery` : `+${training.maxXp} XP`;
+}
+
+/** The training box: sessions left today and the XP or mastery at stake; tap to play. */
+function trainBox(hero, training, serverNow, onTrain) {
+    const box = el('div', 'train-box');
+    const text = el('span', 'train-text');
+    const blocker = trainBlocker(hero, training, serverNow);
+    text.append(el('b', '', 'Training'),
+        el('small', '', blocker ?? `${training.left} of ${training.sessions} left today · up to ${trainPrize(training)}`));
+    const button = withIcon(el('button', 'button small primary'), 'dagger', 'Train');
+    button.type = 'button';
+    button.disabled = Boolean(blocker);
+    button.addEventListener('click', onTrain);
+    box.append(icon('dagger'), text, button);
+    return box;
 }
 
 /** How long a mission takes for this Explorer: the Trail Boots shorten it. */
@@ -301,7 +350,10 @@ function evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats
             line.append(el('small', '', c.label), el('b', '', `${c.from} → ${c.to}`));
             changes.append(line);
         }
-        card.append(thumbImg(heroThumb(hero.cls, 84, f, next), '', ''), el('b', '', `${finfo.name} ${stars(next)}`),
+        const title = el('b', 'form-title', `${finfo.name} `);
+        title.append(nextStars(next - 1, next));
+        title.setAttribute('aria-label', `${finfo.name}, ${TIER_NAMES[next]}: ${stars(next)}`);
+        card.append(el('span', 'form-next', 'Next'), thumbImg(heroThumb(hero.cls, 84, f, next), '', ''), title,
             el('small', 'form-what', finfo.what), changes);
         row.append(card);
     }

@@ -149,14 +149,16 @@ def hero_spec(cls: str, form, tier: int, parts: list | None) -> HeroClass:
 
 
 def hero_spec_of(hero: dict) -> HeroClass:
-    return hero_spec(hero["cls"], hero.get("form"), hero.get("tier", 1), hero.get("fusion", {}).get("parts"))
+    spec = hero_spec(hero["cls"], hero.get("form"), hero.get("tier", 1), hero.get("fusion", {}).get("parts"))
+    return evolution.with_mastery(spec, evolution.mastery_level(hero))
 
 
 def unit_spec(unit) -> HeroClass:
     """The stats of a squad entry (items not included)."""
     cls, form, tier, _ = evolution.parse_unit(unit)
     parts = unit.get("fusion") if isinstance(unit, dict) else None
-    return hero_spec(cls, form, tier, parts)
+    mastery = unit.get("mastery", 0) if isinstance(unit, dict) else 0
+    return evolution.with_mastery(hero_spec(cls, form, tier, parts), mastery)
 
 
 # ── choosing and checking ──────────────────────────────────────────────

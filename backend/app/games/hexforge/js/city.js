@@ -1,7 +1,7 @@
 import {
     Refused, SignInRequired, claimJob, claimLoginReward, claimTaskReward, claimWeeklyChest, collect,
     dismantleBuilding, fetchMyState, fetchDefenseLog, fetchRaidReplay, markDefensesSeen, moveBuilding,
-    placeBuilding, revengeRaid, setAim, startForging, testDefense, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn, upgradeBuilding, dismissHero, hammerJob,
+    placeBuilding, revengeRaid, setAim, startForging, testDefense, trainHero, catchGremlins, useBonus, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn, upgradeBuilding, dismissHero, hammerJob,
     buyOffer, fuse, fusePreview,
     upgradeItem,
 } from './api.js';
@@ -12,12 +12,14 @@ import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { play } from './audio.js';
 import { countUp, flyMaterial, flyPicture, forgeSlotPop, rewardPop } from './fx.js';
 import {
-    formatCountdown, itemEffect, itemName, itemThumb, jobName, renderArmoury, renderForgeSlots, renderRecipes,
+    formatCountdown, itemEffect, itemName, itemThumb, jobName, jobThumb, renderArmoury, renderForgeSlots, renderRecipes,
     renderRoster, renderStorage,
 } from './forgePanel.js';
 import { fittingItems, giftText, renderHeroCard } from './heroPanel.js';
 import { renderUpgradeCard, upgradeBonuses } from './upgradePanel.js';
 import { openAnvil } from './anvil.js';
+import { openTraining } from './training.js';
+import { openGremlins } from './gremlins.js';
 import { offerGives, renderMerchant } from './merchantPanel.js';
 import { evolveReady, heroNames, updateTrips } from './heroTiles.js';
 import { icon, withIcon } from './icons.js';
@@ -75,6 +77,7 @@ const MESSAGES = {
     unknown_raid: 'That raid is gone.',
     arena_locked: 'Clear the first outpost to enter the arena.',
     unknown_aim: 'Unknown aim.',
+    stage_locked: 'Hold every raid of the stage before to unlock this one.',
     already_claimed: 'Already claimed.',
     not_done: 'Not done yet.',
     unknown_task: 'That task is over: a new day has begun.',
@@ -110,6 +113,10 @@ const MESSAGES = {
     building_fusing: 'It is fusing at the forge: wait until it is done.',
     bad_fusion: 'Pick two others to fuse with it.',
     hero_evolving: 'That hero is at the forge.',
+    no_sessions_left: 'That hero has trained enough today: back tomorrow.',
+    fully_ascended: 'That hero is fully ascended: nothing more to learn.',
+    cannot_train: 'That hero does not fight, so it does not train.',
+    gremlins_away: 'The gremlins are gone for now: they come back in a few hours.',
 };
 
 export class CityMode {
@@ -227,6 +234,7 @@ export class CityMode {
         $('btn-open-forge').addEventListener('click', () => this.#openForge());
         $('btn-open-defense').addEventListener('click', () => this.#openDefense());
         $('btn-open-rewards').addEventListener('click', () => this.#openRewards());
+        $('btn-gremlins').addEventListener('click', () => void this.#gremlins());
         $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
         $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
         $('btn-aim').addEventListener('click', () => {
@@ -301,7 +309,6 @@ export class CityMode {
             return;
         }
         const name = heroNames(this.state.heroes).get(hero.id);
-        $('hero-title').textContent = name;
         const job = this.state.forge.jobs.find((j) => (j.recipe === 'evolve' && j.hero === hero.id)
             || (j.recipe === 'fuse' && j.kind === 'hero' && j.base === hero.id)) ?? null;
         const carried = (this.state.items ?? []).filter((i) => i.hero === hero.id);
@@ -316,6 +323,15 @@ export class CityMode {
             } : null,
             itemTable: this.state.item_table,
             missions: this.state.missions ?? null,
+            training: this.state.training ? {
+                sessions: this.state.training.sessions,
+                left: this.state.training.left[String(hero.id)] ?? 0,
+                maxXp: this.state.training.max_xp[String(hero.id)] ?? 0,
+                maxMastery: this.state.training.max_mastery?.[String(hero.id)] ?? 0,
+                perLevel: this.state.training.mastery_per_level ?? 100,
+                levels: this.state.training.mastery_levels ?? 10,
+                bonus: this.state.training.mastery_bonus ?? 0.01,
+            } : null,
             dismiss: this.state.dismiss_gifts ? {
                 gift: this.state.dismiss_gifts[hero.cls === 'explorer' ? 'explorer' : String(hero.tier ?? 1)],
                 blocker: dismissBlocker(hero, this.state.heroes), confirming: this.dismissing,
@@ -339,6 +355,7 @@ export class CityMode {
                 this.#renderHero();
             },
             onEvolve: (form) => void this.#evolve(hero, name, form),
+            onTrain: () => void this.#train(hero.id, name),
         });
         if (canFuse('hero', hero, this.state)) {
             const box = document.createElement('div');
@@ -676,6 +693,7 @@ export class CityMode {
         if (this.selectedId !== null && !this.#building(this.selectedId)) this.#select(null);
         if (this.mode === 'place' && !state.storage[this.placingType]) this.#setMode('idle');
         if (this.defense && defenseKey(state.city) !== this.defenseKey) this.#showDefense(null);
+        this.#defenseLabel();
         this.#renderAll();
     }
 
@@ -841,18 +859,29 @@ export class CityMode {
         });
     }
 
-    async #testDefense() {
+    /** `stage`: a stage to re-run; null tests the highest unlocked. */
+    async #testDefense(stage = null) {
         if (this.busy || !this.state) return;
         const button = $('btn-defense-test');
         button.disabled = true;
         withIcon(button, 'test', 'Running the raids…');
         await this.#run(async () => {
-            const report = await testDefense();
+            const report = await testDefense(stage);
+            this.state.defense_stage = report.unlocked;
             this.defenseKey = defenseKey(this.state.city);
             this.#showDefense(report);
+            if (report.advanced) toast(`Every raid held! Stage ${report.unlocked} unlocked: ${report.next.name}.`);
         });
         button.disabled = false;
-        withIcon(button, 'test', this.defense ? 'Test again' : 'Test my defenses');
+        this.#defenseLabel();
+    }
+
+    /** The test button always runs the highest stage unlocked. */
+    #defenseLabel() {
+        const button = $('btn-defense-test');
+        if (button.disabled) return;
+        const top = this.state?.defense_stage ?? 1;
+        withIcon(button, 'test', top > 1 ? `Test stage ${top}` : (this.defense ? 'Test again' : 'Test my defenses'));
     }
 
     #showDefense(report) {
@@ -861,10 +890,10 @@ export class CityMode {
         box.hidden = !report;
         if (report) {
             renderDefenseReport(box, report,
-                () => this.onWatch(report.worst, `Worst raid of the test: ${describeWorst(report.worst)}.`));
-        } else {
-            withIcon($('btn-defense-test'), 'test', 'Test my defenses');
+                () => this.onWatch(report.worst, `Worst raid of the test: ${describeWorst(report.worst)}.`),
+                (stage) => void this.#testDefense(stage));
         }
+        this.#defenseLabel();
     }
 
     // ── raids on the city ──────────────────────────────────────────────
@@ -1117,7 +1146,8 @@ export class CityMode {
             }, (id) => void this.#upgradeItem(id));
         }
         const tierXp = this.state.evolution?.tier_xp;
-        renderRoster($('roster'), this.state.heroes, heroLimit, this.#serverNow(), tierXp, (id) => this.#openHero(id));
+        renderRoster($('roster'), this.state.heroes, heroLimit, this.#serverNow(), tierXp, (id) => this.#openHero(id),
+            this.state.forge.jobs);
         const evolvable = this.state.heroes.filter((h) => evolveReady(h, tierXp)).length;
         const tab = document.querySelector('#forge-tabs [data-kind="hero"]');
         tab.classList.toggle('alert', evolvable > 0);
@@ -1135,6 +1165,7 @@ export class CityMode {
             hourglass ? (id) => this.#speedUpJob(id) : null, (id) => void this.#hammer(id), this.state.anvil_rounds ?? 3);
         this.#tickRewards(now);
         this.#tickTrips(now);
+        $('btn-gremlins').hidden = this.gremlinsOn || !this.state.gremlins || this.state.gremlins.ready_at > now;
         const ready = this.state.forge.jobs.filter((j) => j.ready_at <= now).length;
         const badge = $('forge-badge');
         badge.hidden = ready === 0;
@@ -1155,23 +1186,94 @@ export class CityMode {
         this.tripsBack = back;
     }
 
+    /** The gremlins' raid on the map: the little game, then what the caught ones dropped. */
+    async #gremlins() {
+        if (this.busy || !this.state?.gremlins || this.gremlinsOn) return;
+        if (isSheetOpen()) closeSheet();
+        this.#select(null);
+        this.gremlinsOn = true;
+        $('btn-gremlins').hidden = true;
+        const { total, loot_each: lootEach, hours } = this.state.gremlins;
+        const game = openGremlins({
+            renderer: this.renderer, buildings: this.state.city.buildings, grid: this.state.city.grid,
+            total, lootEach, hours,
+        });
+        const caught = await game.score;
+        this.gremlinsOn = false;
+        if (caught === null) return;
+        let outcome = null;
+        await this.#run(async () => {
+            const result = await catchGremlins(caught);
+            this.#apply(result);
+            const { loot, bonus, ready_at: readyAt } = result.gremlins_result;
+            outcome = { loot, bonus, readyAt };
+        });
+        game.finish(outcome ?? { error: 'The gremlins got away with the loot: try again later.' });
+    }
+
+    /** A session with the training dummy: the little game, then the XP it gave on its result screen. */
+    async #train(heroId, name) {
+        const hero = this.state.heroes.find((h) => h.id === heroId);
+        if (!hero || this.busy || !this.state.training) return;
+        const tier = hero.tier ?? 1;
+        const t = this.state.training;
+        const master = tier >= 3;
+        const points = hero.mastery ?? 0;
+        const level = Math.min(t.mastery_levels, Math.floor(points / t.mastery_per_level));
+        const game = openTraining({
+            hero, name,
+            left: t.left[String(heroId)] ?? 0,
+            maxXp: (master ? t.max_mastery : t.max_xp)[String(heroId)] ?? 0,
+            xp: master ? points - level * t.mastery_per_level : hero.xp ?? 0,
+            need: master ? t.mastery_per_level : this.state.evolution?.tier_xp?.[String(tier + 1)] ?? 1,
+            unit: master ? 'mastery' : 'XP',
+            onAgain: () => void this.#train(heroId, name),
+        });
+        const score = await game.score;
+        if (!score) return;
+        let outcome = null;
+        await this.#run(async () => {
+            const result = await trainHero(heroId, score.perfect, score.good);
+            this.#apply(result);
+            const r = result.training_result;
+            outcome = { xp: r.xp, ready: r.ready, sessionsLeft: r.sessions_left };
+            if (master) {
+                const per = t.mastery_per_level;
+                const pct = Math.round(t.mastery_bonus * 100 * r.mastery_level);
+                const maxed = r.mastery_level >= t.mastery_levels;
+                outcome.xp = r.mastery;
+                outcome.label = maxed
+                    ? `+${r.mastery} mastery · Mastery ${r.mastery_level}: the top`
+                    : `+${r.mastery} mastery · Mastery ${r.mastery_level}: ${r.mastery_points - r.mastery_level * per} / ${per}`;
+                outcome.ready = r.level_up ? `Mastery ${r.mastery_level}! +${pct}% health and damage` : false;
+            }
+        });
+        game.finish(outcome ?? { error: 'The training ground did not answer. Try again.' });
+    }
+
     /** A round at the anvil: the little game, then the time it took off. */
     async #hammer(jobId) {
         const job = this.state.forge.jobs.find((j) => j.id === jobId);
         if (!job || this.busy) return;
-        const game = openAnvil({ title: jobName(job), roundsLeft: (this.state.anvil_rounds ?? 3) - (job.hammered ?? 0) });
+        const now = this.#serverNow();
+        const game = openAnvil({
+            title: jobName(job), picture: jobThumb(job, 96),
+            roundsLeft: (this.state.anvil_rounds ?? 3) - (job.hammered ?? 0),
+            left: Math.max(0, job.ready_at - now),
+            full: job.full ?? Math.max(1, job.ready_at - job.started_at),
+            onAgain: () => void this.#hammer(jobId),
+        });
         const score = await game.score;
         if (!score) return;
-        let line = null;
+        let outcome = null;
         await this.#run(async () => {
             const result = await hammerJob(jobId, score.perfect, score.good);
             this.#apply(result);
-            const { cut, bonus } = result.hammer;
-            line = cut > 0 ? `−${formatCountdown(cut)} off ${jobName(job)}!` : 'No time off this round.';
-            if (bonus) line += ` And a ${BONUS_INFO[bonus].name}!`;
-            play(cut > 0 ? 'boost' : 'error');
+            const { cut, bonus, rounds_left: roundsLeft } = result.hammer;
+            const after = this.state.forge.jobs.find((j) => j.id === jobId);
+            outcome = { cut, bonus, roundsLeft, left: after ? Math.max(0, after.ready_at - this.#serverNow()) : 0 };
         });
-        game.finish(line ?? 'The forge did not answer. Try again.');
+        game.finish(outcome ?? { error: 'The forge did not answer. Try again.' });
     }
 
     async #buyOffer(offerId) {

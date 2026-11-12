@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import anvil, defense, economy, evolution, explorers, forge, fusion, items, merchant, upgrades, outposts, progress, pvp, rewards
+from . import anvil, defense, economy, evolution, explorers, forge, fusion, gremlins, items, merchant, upgrades, outposts, progress, pvp, rewards, training
 from .catalog import BUILDINGS
 from .errors import ActionError, StaleState
 from .models import HexforgeAttack, HexforgePlayer
@@ -118,6 +118,13 @@ class PlayerService:
             self.save(state, now)
         return state, gained, earned
 
+    def catch_gremlins(self, user_id: str, caught: int, now: float) -> tuple[PlayerState, dict]:
+        """The gremlins' raid on the map: what the caught ones dropped."""
+        state = self.load(user_id, now)
+        result = gremlins.catch(state.city, state.materials, caught, now)
+        self.save(state, now)
+        return state, result
+
     def move_building(self, user_id: str, building_id: int, x: int, y: int, now: float) -> PlayerState:
         state = self.load(user_id, now)
         building = next((b for b in state.city["buildings"] if b["id"] == building_id), None)
@@ -168,9 +175,13 @@ class PlayerService:
         self.save(state, now)
         return state
 
-    def defense_test(self, user_id: str, now: float) -> dict:
-        """Read only: the city is tested as saved, nothing changes."""
-        return defense.run_defense_test(self.load(user_id, now).city)
+    def defense_test(self, user_id: str, now: float, stage: int | None = None) -> dict:
+        """The city is tested as saved; it is saved again only when the test unlocks the next stage."""
+        state = self.load(user_id, now)
+        report = defense.run_defense_test(state.city, stage)
+        if report["advanced"]:
+            self.save(state, now)
+        return report
 
     # ── PvP ────────────────────────────────────────────────────────────
     def find_rival(self, user_id: str, now: float, rng: random.Random | None = None) -> PlayerState:
@@ -340,6 +351,14 @@ class PlayerService:
         self.save(state, now)
         return state, result
 
+    def train(self, user_id: str, hero_id: int, perfect: int, good: int, now: float) -> tuple[PlayerState, dict]:
+        """A session with the training dummy: XP for a hero."""
+        state = self.load(user_id, now)
+        result = training.train(state.heroes, hero_id, perfect, good, now)
+        rewards.record(state.city, "train")
+        self.save(state, now)
+        return state, result
+
     def buy_offer(self, user_id: str, offer_id: int, now: float) -> tuple[PlayerState, dict]:
         """Buy one of the merchant's offers of the day."""
         state = self.load(user_id, now)
@@ -492,6 +511,7 @@ def public_state(state: PlayerState, now: float) -> dict:
     jobs = [{**job, "ready": job["ready_at"] <= now} for job in state.city["forge"]["jobs"]]
     return {
         "city": {"grid": state.city["grid"], "buildings": buildings},
+        "defense_stage": defense.unlocked_stage(state.city),
         "heroes": state.heroes,
         "materials": state.materials,
         "storage": state.city["storage"],
@@ -507,6 +527,14 @@ def public_state(state: PlayerState, now: float) -> dict:
         "dismiss_gifts": forge.DISMISS_GIFTS,
         "merchant": merchant.public_merchant(state.city, state.user_id, now),
         "anvil_rounds": anvil.ROUNDS_PER_JOB,
+        "gremlins": {"ready_at": gremlins.ready_at(state.city), "total": gremlins.TOTAL,
+                     "hours": gremlins.GREMLIN_HOURS, "loot_each": gremlins.loot_per_gremlin(state.city)},
+        "training": {"sessions": training.SESSIONS_PER_DAY, "beats": training.BEATS,
+                     "left": {str(h["id"]): training.sessions_left(h, now) for h in state.heroes},
+                     "max_xp": {str(h["id"]): training.max_xp(h) for h in state.heroes},
+                     "max_mastery": {str(h["id"]): training.max_mastery(h) for h in state.heroes},
+                     "mastery_per_level": evolution.MASTERY_PER_LEVEL, "mastery_levels": evolution.MASTERY_LEVELS,
+                     "mastery_bonus": evolution.MASTERY_BONUS},
         "upgrades": upgrades.public_upgrades(state.city),
         "fusion": fusion.public_fusion(),
         "hero_stats": {str(h["id"]): _hero_stats(state.city, h) for h in state.heroes},

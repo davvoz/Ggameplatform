@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { forgeBlocker, formatCountdown, formatDuration, itemName } from '../js/forgePanel.js';
+import { forgeBlocker, formatCountdown, formatDuration, itemName, ownedText } from '../js/forgePanel.js';
 
 test('durations read like a person would say them', () => {
     assert.equal(formatDuration(45), '45 s');
@@ -31,4 +31,9 @@ test('the forge button explains why it is off', () => {
 test('items are named for people', () => {
     assert.equal(itemName('frost_tower'), 'Frost Tower');
     assert.equal(itemName('neon_blade'), 'Neon Blade');
+});
+
+test('a shared limit shows this kind and the group apart', () => {
+    assert.equal(ownedText({ group: 'heroes', mine: 2, owned: 8, limit: 14 }), 'You own 2 · heroes 8/14');
+    assert.equal(ownedText({ group: 'mana_well', mine: 1, owned: 1, limit: 2 }), 'You own 1/2');
 });

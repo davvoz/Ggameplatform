@@ -247,5 +247,6 @@ def public_recipes(city: dict, heroes: list) -> list[dict]:
             "size": BUILDINGS[recipe.item].size if recipe.kind == "building" else None,
             "refund": refund_of(recipe.item) if recipe.kind == "building" else None,
             "group": _GROUP_OF[recipe.item], "owned": owned(city, heroes, kinds), "limit": limit,
+            "mine": owned(city, heroes, (recipe.item,)),
         })
     return rows

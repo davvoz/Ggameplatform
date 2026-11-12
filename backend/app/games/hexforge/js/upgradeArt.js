@@ -1,4 +1,4 @@
-import { halo, path, prism, withAlpha } from './forgeArt.js';
+import { halo, onWall, path, prism, wallRect, withAlpha } from './forgeArt.js';
 import { toScreen } from './iso.js';
 import { BUILDING_INFO, PATH_INFO } from './labels.js';
 
@@ -274,13 +274,20 @@ const PATH_ART = {
         const s = cam.scale;
         band(ctx, cam, b.x - 0.03, b.y - 0.03, b.size + 0.06, b.size + 0.06, 6, 2 + k, GOLD);
         if (k >= 2) band(ctx, cam, b.x - 0.03, b.y - 0.03, b.size + 0.06, b.size + 0.06, 22, 2 + k, GOLD);
-        const p = toScreen(cam, b.x + b.size / 2, b.y + b.size, 20);
+        const lock = onWall(cam, 'left', b.x + b.size / 2, b.y + b.size);
         ctx.fillStyle = '#ffd36b';
-        ctx.fillRect(p.x - 4 * s, p.y - 4 * s, 8 * s, 7 * s);
+        wallRect(ctx, lock, -4, 4, 17, 24);
+        ctx.fill();
+        // the shackle: a half ring on the wall above the body
         ctx.strokeStyle = '#ffd36b';
         ctx.lineWidth = 1.6 * s;
         ctx.beginPath();
-        ctx.arc(p.x, p.y - 4 * s, 3 * s, Math.PI, 0);
+        for (let i = 0; i <= 12; i++) {
+            const a = (Math.PI * i) / 12;
+            const q = lock(-3 * Math.cos(a), 24 + 3 * Math.sin(a));
+            if (i) ctx.lineTo(q.x, q.y);
+            else ctx.moveTo(q.x, q.y);
+        }
         ctx.stroke();
     },
     // steel plates bolted on, thicker each level

@@ -14,9 +14,14 @@ Hexforge: heroes grow by fighting and evolve at the forge.
             technomancer  archon  (bigger, stronger, more frequent nova)
                           arcanist (reaches much farther, hits harder)
 
-A hero dict gains "xp", "form", "tier" (1 = base) and, while at the forge,
-"evolving" (the job id). A squad entry for the simulation is the class name
-for a base hero, or {"cls", "form", "tier"} for an evolved one.
+  mastery   a hero at the top tier keeps growing by training: every
+            MASTERY_PER_LEVEL points are a mastery level, +MASTERY_BONUS
+            health and damage each, up to MASTERY_LEVELS.
+
+A hero dict gains "xp", "form", "tier" (1 = base), "mastery" (points) and,
+while at the forge, "evolving" (the job id). A squad entry for the simulation
+is the class name for a base hero, or {"cls", "form", "tier", "mastery"} for
+an evolved one (mastery: the level, only when above 0).
 Pure functions over plain dicts.
 """
 
@@ -28,6 +33,9 @@ from .catalog import HEROES, HeroClass
 from .errors import ActionError
 
 TIER_XP = {2: 150, 3: 600}                 # total hero XP needed to evolve, then to ascend
+MASTERY_PER_LEVEL = 100
+MASTERY_LEVELS = 10
+MASTERY_BONUS = 0.01                       # health and damage per mastery level
 TIER_GROWTH = {1: 1.0, 2: 1.1, 3: 1.25}    # health and damage, for both forms
 
 FORMS = {
@@ -76,11 +84,27 @@ def spec_of(cls: str, form: str | None = None, tier: int = 1) -> HeroClass:
     return _form_special(spec, form, tier)
 
 
+def mastery_level(hero: dict) -> int:
+    return min(MASTERY_LEVELS, hero.get("mastery", 0) // MASTERY_PER_LEVEL)
+
+
+def with_mastery(spec: HeroClass, level: int) -> HeroClass:
+    """A hero's stats with its mastery: more health and damage."""
+    if level <= 0:
+        return spec
+    k = 1 + MASTERY_BONUS * level
+    return replace(spec, hp=round(spec.hp * k), damage=round(spec.damage * k),
+                   nova_damage=round(spec.nova_damage * k))
+
+
 def unit_of(hero: dict, carried: list | None = None):
     """The squad entry the simulation gets for this hero (and the items it carries)."""
-    if hero.get("tier", 1) <= 1 and not carried and not hero.get("fusion"):
+    mastery = mastery_level(hero)
+    if hero.get("tier", 1) <= 1 and not carried and not hero.get("fusion") and not mastery:
         return hero["cls"]
     unit = {"cls": hero["cls"]}
+    if mastery:
+        unit["mastery"] = mastery
     if hero.get("tier", 1) > 1:
         unit.update(form=hero["form"], tier=hero["tier"])
     if hero.get("fusion"):

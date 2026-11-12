@@ -80,8 +80,9 @@ export function setAim(id, aim) {
     return post(`/me/buildings/${id}/aim`, { aim });
 }
 
-export function testDefense() {
-    return post('/me/defense/test', {});
+/** Run the defence test at `stage` (the highest unlocked when null). */
+export function testDefense(stage = null) {
+    return post('/me/defense/test', stage ? { stage } : {});
 }
 
 export function findRival() {
@@ -137,6 +138,16 @@ export function evolveHero(heroId, form) {
 /** A round at the anvil on a forge job: the state plus `hammer` {cut, bonus, rounds_left}. */
 export function hammerJob(jobId, perfect, good) {
     return post(`/me/forge/${jobId}/hammer`, { perfect, good });
+}
+
+/** The gremlins' raid on the map: the state plus `gremlins_result` ({ loot, bonus, caught, ready_at }). */
+export function catchGremlins(caught) {
+    return post('/me/gremlins', { caught });
+}
+
+/** A session with the training dummy: the state plus `training_result` ({ xp, ready, sessions_left }). */
+export function trainHero(heroId, perfect, good) {
+    return post(`/me/heroes/${heroId}/train`, { perfect, good });
 }
 
 /** Buy one of the merchant's offers of the day: the state plus `bought`. */

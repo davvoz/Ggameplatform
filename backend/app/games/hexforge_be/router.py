@@ -32,6 +32,8 @@ Hexforge API (mounted in main.py).
   POST /api/hexforge/me/fuse                   three maxed buildings or heroes forged into one
   POST /api/hexforge/me/fuse/preview           what that fusion would make (changes nothing)
   POST /api/hexforge/me/forge/{id}/hammer      a round at the anvil: time off a forge job
+  POST /api/hexforge/me/heroes/{id}/train      a session with the training dummy: XP for a hero
+  POST /api/hexforge/me/gremlins               the gremlins' raid on the map: loot for the caught ones
   POST /api/hexforge/me/merchant/{id}/buy      buy one of the merchant's offers of the day
   POST /api/hexforge/me/heroes/{id}/dismiss    let a hero go for a bonus, freeing its slot
   POST /api/hexforge/me/heroes/{id}/explore    send an Explorer on a mission
@@ -59,7 +61,7 @@ from .demo_city import demo_city
 from . import outposts
 from .player_service import ActionError, PlayerService, StaleState, public_state
 from .schemas import (
-    AimRequest, AttackRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest, FuseRequest, HammerRequest, UpgradeRequest,
+    AimRequest, AttackRequest, DefenseTestRequest, BattleRequest, BonusRequest, CollectRequest, EquipRequest, EvolveRequest, ExploreRequest, ForgeRequest, FuseRequest, GremlinsRequest, HammerRequest, TrainRequest, UpgradeRequest,
     MoveRequest, PlaceRequest,
 )
 from .simulation import simulate
@@ -116,6 +118,15 @@ def collect_materials(body: CollectRequest, user_id: CurrentUserId, db: Db, now:
     except StaleState as error:
         raise _http_error(error) from error
     return {"gained": gained, **earned, **public_state(state, now)}
+
+
+@router.post("/me/gremlins")
+def catch_gremlins(body: GremlinsRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, result = PlayerService(db).catch_gremlins(user_id, body.caught, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {"gremlins_result": result, **public_state(state, now)}
 
 
 @router.post("/me/buildings/{building_id}/move")
@@ -194,8 +205,12 @@ def set_tower_aim(building_id: int, body: AimRequest, user_id: CurrentUserId, db
 
 @router.post("/me/defense/test")
 @limiter.limit("20/minute")
-def run_my_defense_test(request: Request, user_id: CurrentUserId, db: Db, now: Now):
-    return PlayerService(db).defense_test(user_id, now)
+def run_my_defense_test(request: Request, user_id: CurrentUserId, db: Db, now: Now,
+                        body: DefenseTestRequest | None = None):
+    try:
+        return PlayerService(db).defense_test(user_id, now, body.stage if body else None)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
 
 
 # ── PvP ────────────────────────────────────────────────────────────────
@@ -345,6 +360,15 @@ def hammer(job_id: int, body: HammerRequest, user_id: CurrentUserId, db: Db, now
     except (ActionError, StaleState) as error:
         raise _http_error(error) from error
     return {**public_state(state, now), "hammer": result}
+
+
+@router.post("/me/heroes/{hero_id}/train")
+def train_hero(hero_id: int, body: TrainRequest, user_id: CurrentUserId, db: Db, now: Now):
+    try:
+        state, result = PlayerService(db).train(user_id, hero_id, body.perfect, body.good, now)
+    except (ActionError, StaleState) as error:
+        raise _http_error(error) from error
+    return {**public_state(state, now), "training_result": result}
 
 
 @router.post("/me/merchant/{offer_id}/buy")

@@ -41,8 +41,29 @@ export function adviceFor(report) {
     return 'Try another aim on your towers, or move them, and test again.';
 }
 
-export function renderDefenseReport(container, report, onWatch) {
+/** "Stage 3 · Ascended ★★★" */
+export function stageTitle(stage) {
+    return `Stage ${stage.number} · ${stage.name}`;
+}
+
+/** What the stage result means: the next stage unlocked, or how far there is still to go. */
+export function stageNote(report) {
+    if (report.advanced) return `Every raid held: stage ${report.unlocked} unlocked, ${report.next.name}. The next test sends them.`;
+    if (report.stage.number < report.unlocked) return `You already passed this stage: your top is stage ${report.unlocked}.`;
+    const left = report.total - report.held;
+    return `Hold ${left} more raid${left > 1 ? 's' : ''} to unlock stage ${report.unlocked + 1}: ${report.next.name}.`;
+}
+
+export function renderDefenseReport(container, report, onWatch, onStage = () => {}) {
     container.replaceChildren();
+    const head = document.createElement('p');
+    head.className = 'defense-stage';
+    head.textContent = stageTitle(report.stage);
+
+    const note = document.createElement('p');
+    note.className = `stage-note${report.advanced ? ' advanced' : ''}`;
+    note.textContent = stageNote(report);
+
     const score = document.createElement('p');
     score.className = 'defense-score';
     const rating = document.createElement('b');
@@ -76,7 +97,28 @@ export function renderDefenseReport(container, report, onWatch) {
     watch.textContent = 'Watch the worst raid';
     watch.addEventListener('click', onWatch);
 
-    container.append(score, stats, advice, worst, watch);
+    container.append(head, score, note, stats, advice, worst, watch);
+    if (report.unlocked > 1) container.append(stagePicker(report, onStage));
+}
+
+/** One chip per unlocked stage: tap one to run that stage again. */
+function stagePicker(report, onStage) {
+    const wrap = document.createElement('div');
+    wrap.className = 'stage-picker';
+    const label = document.createElement('small');
+    label.textContent = 'Run a stage:';
+    wrap.append(label);
+    for (let n = 1; n <= report.unlocked; n++) {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'stage-chip';
+        chip.textContent = String(n);
+        chip.setAttribute('aria-pressed', String(n === report.stage.number));
+        chip.setAttribute('aria-label', `Run stage ${n}`);
+        chip.addEventListener('click', () => onStage(n));
+        wrap.append(chip);
+    }
+    return wrap;
 }
 
 function squadChips(squad, text) {

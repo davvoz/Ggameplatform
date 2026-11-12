@@ -6,6 +6,7 @@ Hexforge phase 3, step 1: tower aim and the defence test.
 
 import itertools
 import unittest
+from unittest import mock
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -123,6 +124,61 @@ class DefenseTestTest(unittest.TestCase):
         self.assertEqual(again["worst"]["events"], self.fortress["worst"]["events"])
 
 
+def held_everywhere(city, squad, side, priority, tactic):
+    """A stand-in battle the city always wins."""
+    return {"summary": {"victory": False, "core_destroyed": False, "destruction": 0, "seconds": 90,
+                        "heroes": [{"survived": False} for _ in squad]},
+            "squad": squad, "frames": [[]], "events": []}
+
+
+class DefenseStageTest(unittest.TestCase):
+    def test_every_stage_sends_better_farmed_heroes(self):
+        balanced = defense.RAIDS[0]
+        self.assertEqual(defense.stage_squad(balanced, defense.stage_of(1)), list(balanced.squad))
+        evolved = defense.stage_squad(balanced, defense.stage_of(2))
+        self.assertEqual([u["tier"] for u in evolved], [2, 2, 2, 2])
+        self.assertEqual([u["form"] for u in evolved], ["warlord", "reaper", "phantom", "archon"])
+        self.assertTrue(all("items" not in u for u in evolved))
+        armed = defense.stage_squad(balanced, defense.stage_of(5))
+        self.assertEqual({i["level"] for u in armed for i in u["items"]}, {5})
+        self.assertTrue(all("fusion" not in u for u in armed))
+
+    def test_fusions_come_one_hero_at_a_time(self):
+        balanced = defense.RAIDS[0]
+        grades = [[u.get("grade", 0) for u in defense.stage_squad(balanced, defense.stage_of(n))]
+                  for n in (6, 7, 9, 10, 13)]
+        self.assertEqual(grades, [[1, 0, 0, 0], [1, 1, 0, 0], [1, 1, 1, 1], [2, 1, 1, 1], [2, 2, 2, 2]])
+        self.assertEqual(defense.stage_of(6).name, "1 hero fused \u25c6")
+        self.assertEqual(defense.stage_of(13).name, "All heroes fused \u25c6\u25c6")
+
+    def test_a_fused_raider_is_stronger_than_an_ascended_one(self):
+        from app.games.hexforge_be.fusion import unit_spec
+        ascended, fused = (defense.stage_squad(defense.RAIDS[0], defense.stage_of(n))[0] for n in (3, 6))
+        self.assertGreater(unit_spec(fused).hp, unit_spec(ascended).hp)
+
+    def test_holding_every_raid_unlocks_the_next_stage(self):
+        city = economy.starter_city(T0)
+        with mock.patch.object(defense, "simulate", held_everywhere):
+            first = defense.run_defense_test(city)
+            self.assertEqual((first["stage"]["number"], first["advanced"], first["unlocked"]), (1, True, 2))
+            self.assertEqual(city["defense"]["stage"], 2)
+            self.assertEqual(defense.run_defense_test(city)["stage"]["number"], 2)
+            again = defense.run_defense_test(city, 1)     # a lower stage unlocks nothing more
+            self.assertEqual((again["advanced"], city["defense"]["stage"]), (False, 3))
+
+    def test_a_stage_not_unlocked_cannot_be_run(self):
+        with self.assertRaises(ActionError) as caught:
+            defense.run_defense_test(economy.starter_city(T0), 2)
+        self.assertEqual(caught.exception.code, "stage_locked")
+
+    def test_a_raid_that_breaks_through_unlocks_nothing(self):
+        city = economy.starter_city(T0)
+        report = defense.run_defense_test(city)
+        self.assertLess(report["held"], report["total"])
+        self.assertFalse(report["advanced"])
+        self.assertNotIn("defense", city)
+
+
 class DefenseApiTest(unittest.TestCase):
     def setUp(self):
         sessions = memory_db()
@@ -162,7 +218,20 @@ class DefenseApiTest(unittest.TestCase):
         before = self.client.get("/api/hexforge/me").json()
         report = self.client.post("/api/hexforge/me/defense/test").json()
         self.assertEqual(report["total"], len(defense.RAIDS) * len(COMBOS))
+        self.assertFalse(report["advanced"])
         self.assertEqual(self.client.get("/api/hexforge/me").json()["version"], before["version"])
+
+    def test_an_unlocked_stage_is_saved(self):
+        self.assertEqual(self.client.get("/api/hexforge/me").json()["defense_stage"], 1)
+        with mock.patch.object(defense, "simulate", held_everywhere):
+            report = self.client.post("/api/hexforge/me/defense/test", json={}).json()
+        self.assertTrue(report["advanced"])
+        self.assertEqual(self.client.get("/api/hexforge/me").json()["defense_stage"], 2)
+
+    def test_a_locked_stage_is_refused(self):
+        response = self.client.post("/api/hexforge/me/defense/test", json={"stage": 3})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "stage_locked")
 
 
 if __name__ == "__main__":

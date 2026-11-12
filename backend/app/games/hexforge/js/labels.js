@@ -2,7 +2,7 @@
 
 export const HERO_INFO = {
     guardian: { name: 'Guardian', tag: 'Guardian', role: 'Tank · draws tower fire', job: 'Tank', what: 'Tough tank: nearby towers shoot him, not the others.', color: '#5aa9ff', short: 'G' },
-    neon_blade: { name: 'Neon Blade', tag: 'Blade', role: 'Assassin · leaps over walls', job: 'Leaps walls', what: 'Fast, hits hard and leaps over walls.', color: '#ff3d9a', short: 'B' },
+    neon_blade: { name: 'Neon Blade', tag: 'Blade', role: 'Assassin · leaps over walls', job: 'Assassin', what: 'Fast, hits hard and leaps over walls.', color: '#ff3d9a', short: 'B' },
     explorer: { name: 'Explorer', tag: 'Scout', role: 'Scout · never fights', job: 'Missions', what: 'Goes on missions and comes back with surprise loot.', color: '#3fd0a0', short: 'X' },
     technomancer: { name: 'Technomancer', tag: 'Mage', role: 'Mage · ranged, area nova', job: 'Ranged', what: 'Hits from afar; every few seconds a blast on an area.', color: '#a77bff', short: 'T' },
 };
@@ -86,6 +86,7 @@ export const TASK_INFO = {
     claim: { text: (goal) => `Claim ${goal} forged items`, icon: 'gift' },
     attack: { text: (goal) => `Attack ${goal} times`, icon: 'attack' },
     win: { text: (goal) => (goal === 1 ? 'Win an attack' : `Win ${goal} attacks`), icon: 'trophy' },
+    train: { text: (goal) => `Train your heroes ${goal} times`, icon: 'dagger' },
 };
 
 /** Evolved forms: name, class, what they are good at, and their accent colour. */

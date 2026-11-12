@@ -112,7 +112,8 @@ def _item(city: dict, item_id: int) -> dict:
 
 
 def equip(city: dict, heroes: list, hero_id: int, item_id: int) -> dict:
-    """Give an item to a hero (taking it from whoever had it); it replaces what was in that slot."""
+    """Give a free item to a hero; it replaces what was in that slot. An item another hero
+    carries stays with it: it comes back to the armoury when that hero takes it off or leaves."""
     hero = next((h for h in heroes if h["id"] == hero_id), None)
     if hero is None:
         raise ActionError("unknown_hero")
@@ -122,6 +123,9 @@ def equip(city: dict, heroes: list, hero_id: int, item_id: int) -> dict:
         raise ActionError("wrong_class")
     if cls is None and hero["cls"] == "explorer":      # the Explorer carries only its own gear
         raise ActionError("wrong_class")
+    carrier = item.get("hero")
+    if carrier not in (None, hero_id) and any(h["id"] == carrier for h in heroes):
+        raise ActionError("item_in_use")
     for other in city["items"]:
         if other["hero"] == hero_id and ITEMS[other["type"]][0] == slot:
             other["hero"] = None

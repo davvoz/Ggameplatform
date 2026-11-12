@@ -3560,6 +3560,13 @@ button.form-card {
     cursor: pointer;
 }
 
+/* an item another hero carries: shown, but it cannot be picked */
+.picker-row.busy {
+    opacity: 0.5;
+    cursor: default;
+    filter: grayscale(0.6);
+}
+
 .picker-row:hover,
 .picker-row:focus-visible {
     border-color: var(--accent);

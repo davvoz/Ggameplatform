@@ -113,6 +113,7 @@ const MESSAGES = {
     building_fusing: 'It is fusing at the forge: wait until it is done.',
     bad_fusion: 'Pick two others to fuse with it.',
     hero_evolving: 'That hero is at the forge.',
+    item_in_use: 'Another hero carries that item: take it off there first.',
     no_sessions_left: 'That hero has trained enough today: back tomorrow.',
     fully_ascended: 'That hero is fully ascended: nothing more to learn.',
     cannot_train: 'That hero does not fight, so it does not train.',
@@ -449,30 +450,27 @@ export class CityMode {
     #pickGear(hero, name, slot, current) {
         const names = heroNames(this.state.heroes);
         const table = this.state.item_table;
-        // free items first; one carried by another hero says so plainly, since taking it leaves them without
+        // free items can be picked; one another hero carries is shown greyed: it stays with that hero
+        const carrier = (i) => (i.hero && names.has(i.hero) ? i.hero : null);
         const options = fittingItems(this.state.items, table, hero.cls, slot)
             .filter((i) => i.id !== current?.id)
-            .sort((a, b) => Number(Boolean(a.hero)) - Number(Boolean(b.hero)) || b.level - a.level)
+            .sort((a, b) => Number(Boolean(carrier(a))) - Number(Boolean(carrier(b))) || b.level - a.level)
             .map((i) => ({
                 id: i.id,
                 picture: itemPicture(i.type, 40),
-                title: i.hero ? `Take from ${names.get(i.hero)}: ${ITEM_INFO[i.type].name} · Lv ${i.level}`
-                    : `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
-                line: i.hero ? `${itemEffect(table, i)} · ${names.get(i.hero)} will be left without it`
+                title: `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
+                line: carrier(i) ? `Carried by ${names.get(i.hero)}: take it off there first`
                     : `${itemEffect(table, i)} · in the armoury`,
                 accent: ITEM_INFO[i.type].color,
+                disabled: Boolean(carrier(i)),
             }));
-        const taken = (id) => {
-            const item = this.state.items.find((i) => i.id === id);
-            return item?.hero ? `Equipped. Taken from ${names.get(item.hero)}.` : 'Equipped.';
-        };
         const what = slot === 'weapon' ? `weapon for a ${HERO_INFO[hero.cls].name}` : 'spell';
         openItemPicker({
             title: `${name}: ${slot}`,
             line: current ? `Now: ${ITEM_INFO[current.type].name} · Lv ${current.level}` : '',
             options,
             empty: `No other ${what} yet: forge one in the forge's Items tab.`,
-            onPick: (id) => void this.#gear(() => equipItem(hero.id, id), taken(id)),
+            onPick: (id) => void this.#gear(() => equipItem(hero.id, id), 'Equipped.'),
             onClear: current ? () => void this.#gear(() => unequipItem(current.id), 'Back in the armoury.') : null,
         });
     }

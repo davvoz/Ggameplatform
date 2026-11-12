@@ -78,10 +78,20 @@ class ArmouryTest(unittest.TestCase):
         items.equip(self.city, self.heroes, guardian, plate["id"])           # replaces the maul
         self.assertIsNone(maul["hero"])
         self.assertEqual(sorted(i["type"] for i in items.carried_by(self.city, guardian)), ["aegis_plate", "ward_sigil"])
-        items.equip(self.city, self.heroes, blade, ward["id"])                # a spell moves to another hero
-        self.assertEqual(ward["hero"], blade)
-        items.unequip(self.city, ward["id"])
+        with self.assertRaises(ActionError) as error:                         # the guardian carries it
+            items.equip(self.city, self.heroes, blade, ward["id"])
+        self.assertEqual(error.exception.code, "item_in_use")
+        self.assertEqual(ward["hero"], guardian)
+        items.unequip(self.city, ward["id"])                                  # taken off: free again
         self.assertIsNone(ward["hero"])
+        items.equip(self.city, self.heroes, blade, ward["id"])
+        self.assertEqual(ward["hero"], blade)
+
+    def test_an_item_whose_hero_is_gone_is_free(self):
+        ward = items.add(self.city, "ward_sigil")
+        ward["hero"] = 999                                                    # a hero no longer there
+        items.equip(self.city, self.heroes, self.heroes[0]["id"], ward["id"])
+        self.assertEqual(ward["hero"], self.heroes[0]["id"])
 
     def test_upgrading_costs_more_each_level_and_stops_at_five(self):
         maul = items.add(self.city, "rune_maul")

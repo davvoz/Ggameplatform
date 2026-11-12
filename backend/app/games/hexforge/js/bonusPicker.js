@@ -83,7 +83,8 @@ export function openItemPicker({ title, line = '', options, onPick, onClear = nu
     for (const option of options) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'picker-row';
+        button.className = `picker-row${option.disabled ? ' busy' : ''}`;
+        button.disabled = Boolean(option.disabled);
         button.style.setProperty('--accent', option.accent);
         const img = document.createElement('img');
         img.src = option.picture;

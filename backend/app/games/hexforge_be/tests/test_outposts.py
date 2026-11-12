@@ -53,11 +53,55 @@ class LayoutTest(unittest.TestCase):
 
     def test_difficulty_rises_from_one_outpost_to_the_next(self):
         wins = [sum(simulate(outposts.outpost_city(oid), STARTER, *c)["summary"]["victory"] for c in COMBOS)
-                for oid in sorted(outposts.OUTPOSTS)]
+                for oid in outposts.world_ids(1)]
         self.assertEqual(wins[0], len(COMBOS), "the first outpost is a tutorial")
         for easier, harder in zip(wins[1:], wins[2:]):
             self.assertGreater(easier, harder, wins)
         self.assertLess(wins[-1], len(COMBOS) // 2, wins)
+
+
+class WorldsTest(unittest.TestCase):
+    def test_worlds_of_five_outposts_in_order(self):
+        self.assertEqual(len(outposts.OUTPOSTS), outposts.WORLDS * outposts.STAGES)
+        self.assertGreaterEqual(outposts.WORLDS, 10)
+        for oid, o in outposts.OUTPOSTS.items():
+            self.assertEqual(oid, (o.world - 1) * 5 + o.stage)
+        self.assertEqual(outposts.OUTPOSTS[1].name, "Scrap Hollow")       # world 1 is the hand-built one
+        self.assertEqual(outposts.OUTPOSTS[5].name, "The Black Bastion")
+        self.assertEqual(len({o.name for o in outposts.OUTPOSTS.values()}), len(outposts.OUTPOSTS))
+
+    def test_every_outpost_holds_more_than_the_one_before(self):
+        rune = [outposts.OUTPOSTS[i].treasury["rune_stone"] for i in sorted(outposts.OUTPOSTS)]
+        for before, after in zip(rune, rune[1:]):
+            self.assertGreater(after, before)
+
+    def test_buildings_grow_from_world_to_world(self):
+        powers = [outposts.world_power(w) for w in range(1, outposts.WORLDS + 1)]
+        self.assertEqual(powers[0], (1, 0, 0))
+        for before, after in zip(powers, powers[1:]):
+            self.assertGreater(after, before)
+        last = outposts.outpost_city(outposts.LAST)
+        self.assertTrue(any(b.get("fusion") for b in last["buildings"]))
+        self.assertTrue(all(b.get("level") == 5 for b in last["buildings"]))
+
+    def test_a_later_world_is_harder_for_the_same_squad(self):
+        def wins(oid):
+            return sum(simulate(outposts.outpost_city(oid), STARTER, *c)["summary"]["victory"] for c in COMBOS)
+        self.assertLess(wins(outposts.world_ids(3)[2]), wins(outposts.world_ids(1)[2]))
+
+    def test_the_list_shows_the_world_the_player_is_in(self):
+        city, _, _ = player()
+        self.assertEqual([o["id"] for o in outposts.public_outposts(city)], [1, 2, 3, 4, 5])
+        self.assertEqual(outposts.public_world(city)["number"], 1)
+        city["campaign"]["cleared"] = [1, 2, 3, 4, 5, 6]
+        rows = outposts.public_outposts(city)
+        self.assertEqual([o["id"] for o in rows], [6, 7, 8, 9, 10])
+        self.assertEqual([o["cleared"] for o in rows], [True, False, False, False, False])
+        self.assertEqual([o["unlocked"] for o in rows], [True, True, False, False, False])
+        self.assertEqual(outposts.public_world(city)["number"], 2)
+        city["campaign"]["cleared"] = list(outposts.OUTPOSTS)
+        self.assertTrue(outposts.public_world(city)["complete"])
+        self.assertEqual(rows[0]["world"], 2)
 
 
 class EnergyTest(unittest.TestCase):
@@ -98,17 +142,25 @@ class AttackTest(unittest.TestCase):
         self.assertTrue(result["summary"]["victory"])
         self.assertTrue(rewards["first_clear"])
         self.assertEqual(rewards["unlocked"], 2)
-        expected = outposts.loot_for(outposts.OUTPOSTS[1], result["summary"]["loot_percent"], False)
+        expected = outposts.loot_for(outposts.OUTPOSTS[1], result["summary"]["loot_percent"])
         self.assertEqual(rewards["loot"], expected)
         for m, amount in expected.items():
             self.assertEqual(self.materials[m], before[m] + amount)
         self.assertTrue(outposts.is_unlocked(self.city["campaign"], 2))
 
-    def test_a_cleared_outpost_pays_half(self):
-        first = self.attack()["rewards"]["loot"]
-        again = self.attack(now=T0 + 1)["rewards"]
-        self.assertFalse(again["first_clear"])
-        self.assertEqual(again["loot"], {m: v // 2 for m, v in first.items()})
+    def test_a_cleared_outpost_cannot_be_raided_again(self):
+        self.attack()
+        charges = self.city["energy"]["charges"]
+        self.refused("outpost_cleared", now=T0 + 1)
+        self.assertEqual(self.city["energy"]["charges"], charges)       # a refusal costs nothing
+
+    def test_the_last_outpost_of_a_world_opens_the_next_world(self):
+        self.city["campaign"]["cleared"] = [1, 2, 3, 4]
+        squad = [{"id": i + 1, "cls": "guardian", "form": "warlord", "tier": 3} for i in range(4)]
+        result = outposts.attack(self.city, squad, self.materials, 5, [1, 2, 3, 4], "south", "core", "compact", T0)
+        self.assertTrue(result["summary"]["victory"])
+        self.assertEqual(result["rewards"]["unlocked"], 6)
+        self.assertEqual(result["rewards"]["new_world"], 2)
 
     def test_a_defeat_pays_nothing_and_injures_the_fallen(self):
         self.city["campaign"]["cleared"] = [1, 2, 3, 4]
@@ -128,7 +180,7 @@ class AttackTest(unittest.TestCase):
 
     def test_outposts_open_in_order(self):
         self.refused("outpost_locked", oid=2)
-        self.refused("unknown_outpost", oid=99)
+        self.refused("unknown_outpost", oid=outposts.LAST + 1)
 
     def test_the_squad_is_four_different_heroes_you_own(self):
         self.refused("bad_squad", squad=self.squad[:3] + [self.squad[0]])
@@ -137,6 +189,7 @@ class AttackTest(unittest.TestCase):
     def test_each_attack_costs_one_charge(self):
         for i in range(outposts.ENERGY_MAX):
             self.attack(now=T0 + i)
+            self.city["campaign"]["cleared"].clear()         # attack the same outpost again
         self.refused("no_energy", now=T0 + 10)
         self.attack(now=T0 + HOUR)          # the first charge spent is back after an hour
 

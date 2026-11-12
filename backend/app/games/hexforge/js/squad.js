@@ -33,3 +33,8 @@ export function launchBlocker({ blocked, picked, energy }) {
     if (energy.charges < 1) return 'No energy left';
     return null;
 }
+
+/** The first outpost of the world still to take (the last one when all are taken). */
+export function frontierOf(outposts) {
+    return (outposts.find((o) => o.unlocked && !o.cleared) ?? outposts.at(-1)).id;
+}

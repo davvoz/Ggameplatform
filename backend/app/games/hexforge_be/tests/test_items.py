@@ -144,7 +144,7 @@ class BattleTest(unittest.TestCase):
         equipped = [{"cls": c, "items": [{"type": gear[c], "level": 5}, {"type": "ward_sigil", "level": 5}]}
                     for c in BASE_SQUAD]
         better = 0
-        for outpost_id in outposts.OUTPOSTS:
+        for outpost_id in outposts.world_ids(1):
             city = outposts.outpost_city(outpost_id)
             base = simulate(city, BASE_SQUAD, "south", "core", "compact")["summary"]
             strong = simulate(city, equipped, "south", "core", "compact")["summary"]

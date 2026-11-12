@@ -1,7 +1,8 @@
 import {
-    Refused, SignInRequired, attackOutpost, attackRival, fetchDemoCity, fetchOutposts, findRival, runBattle, useBonus,
+    Refused, SignInRequired, attackOutpost, attackRival, equipItem, fetchDemoCity, fetchOutposts, findRival, runBattle,
+    unequipItem, useBonus,
 } from './api.js';
-import { openBonusPicker } from './bonusPicker.js';
+import { openBonusPicker, openItemPicker } from './bonusPicker.js';
 import { attackEnded, attackStarted } from './platform.js';
 import { paintBattleCard } from './shareCard.js';
 import { play, playBattleEvent, setMode as setMusic } from './audio.js';
@@ -15,9 +16,10 @@ import { LEAGUE_COLORS, signed, stakesText } from './leagues.js';
 import { createReplay } from './replay.js';
 import { usableBonuses } from './rewardsPanel.js';
 import { materialChips, rivalBlocker } from './rivalPanel.js';
-import { toast } from './sheets.js';
-import { SQUAD_SIZE, launchBlocker, settleSquad, toggleHero } from './squad.js';
+import { closeSheet, isSheetOpen, openSheet, toast } from './sheets.js';
+import { SQUAD_SIZE, frontierOf, launchBlocker, settleSquad, toggleHero } from './squad.js';
 import { formatHeal, heroNames, heroStatus, heroTile } from './heroTiles.js';
+import { gearChoices, renderSquadCard } from './heroPanel.js';
 import { heroThumb, thumbImg } from './thumbs.js';
 
 /**
@@ -44,6 +46,9 @@ const REFUSALS = {
     no_energy: 'No energy left. A charge comes back every hour.',
     hero_injured: 'One of your heroes is still injured.',
     outpost_locked: 'Beat the previous outpost first.',
+    outpost_cleared: 'You already took that outpost: on to the next one.',
+    item_in_use: 'Another hero carries that item: take it off there first.',
+    wrong_class: 'That weapon is for another class.',
     bad_squad: 'Pick 4 different heroes.',
     arena_locked: 'Clear Scrap Hollow to enter the arena.',
     no_rival: 'Find a rival first.',
@@ -180,7 +185,8 @@ export class BattleMode {
     #apply(data) {
         this.data = data;
         this.receivedAt = performance.now();
-        if (!data.outposts.some((o) => o.id === this.setup.outpost && o.unlocked)) this.setup.outpost = 1;
+        const chosen = data.outposts.find((o) => o.id === this.setup.outpost);
+        if (!chosen || chosen.cleared || !chosen.unlocked) this.setup.outpost = frontierOf(data.outposts);
         this.setup.heroIds = settleSquad(this.setup.heroIds, data.heroes, this.#serverNow());
         if (!MODES.includes(this.setup.mode)) this.setup.mode = 'outposts';
         this.#setTarget();
@@ -216,6 +222,8 @@ export class BattleMode {
         if (this.#rivals()) return rivalBlocker(this.data.pvp, this.data.rival);
         const o = this.#outpost();
         if (!o) return 'Choose an outpost';
+        if (this.data.world?.complete) return 'Every world is conquered!';
+        if (o.cleared) return 'Already taken: an outpost falls only once';
         return o.unlocked ? null : 'Beat the previous outpost first';
     }
 
@@ -328,13 +336,15 @@ export class BattleMode {
         $('btn-next-target').disabled = o.id === ids.at(-1);
         const plate = $('target-plate');
         plate.replaceChildren();
+        const world = this.data.world;
         const name = paragraph('target-name', o.name);
-        const sub = paragraph('target-sub', `Outpost ${o.id} · `);
-        sub.append(Object.assign(document.createElement('span'), { className: 'pips', textContent: '◆'.repeat(o.difficulty) + '◇'.repeat(5 - o.difficulty) }));
+        const sub = paragraph('target-sub', `World ${o.world}${world ? `/${world.total}` : ''} · `);
+        sub.append(Object.assign(document.createElement('span'), { className: 'pips', textContent: '◆'.repeat(o.stage) + '◇'.repeat(5 - o.stage) }));
         if (!o.unlocked) sub.append(' · ', icon('lock'), ' locked');
-        else if (o.cleared) sub.append(` · best ${o.best}% · loot halved`);
+        else if (o.cleared) sub.append(' · ', icon('check'), ' taken');
         else if (o.best) sub.append(` · best ${o.best}%`);
-        plate.append(name, sub, lootLine(o.loot_on_win));
+        plate.append(name, sub);
+        if (!o.cleared) plate.append(lootLine(o.loot_on_win));
     }
 
     #renderRivalPlate() {
@@ -395,7 +405,7 @@ export class BattleMode {
         const heroes = this.data.heroes.filter((h) => h.cls !== 'explorer').sort((a, b) => order.indexOf(a.cls) - order.indexOf(b.cls) || a.id - b.id);
         for (const hero of heroes) {
             const status = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
-            list.append(heroTile(hero, names.get(hero.id), status, () => this.#tapHero(hero, names.get(hero.id))));
+            list.append(heroTile(hero, names.get(hero.id), status, () => this.#openHero(hero.id)));
         }
         const count = this.setup.heroIds.length;
         $('squad-count').textContent = `${count}/${SQUAD_SIZE}`;
@@ -416,6 +426,119 @@ export class BattleMode {
             tile.querySelector('.ht-status').textContent = formatHeal(status.left);
             tile.style.setProperty('--healed', `${Math.round(status.healed * 100)}%`);
         }
+    }
+
+    /** A tap on a hero opens its card: fusion, mastery, stats, items, and the squad button. */
+    #openHero(heroId) {
+        play('click');
+        this.heroId = heroId;
+        openSheet('sheet-squad-hero', () => { this.heroId = null; }, { silent: true });
+        this.#renderHeroCard();
+    }
+
+    #renderHeroCard() {
+        if (this.heroId == null || !isSheetOpen('sheet-squad-hero')) return;
+        const hero = this.data.heroes.find((h) => h.id === this.heroId);
+        if (!hero) {
+            closeSheet();
+            return;
+        }
+        const name = heroNames(this.data.heroes).get(hero.id);
+        const items = this.data.items ?? [];
+        const table = this.data.item_table;
+        const carried = items.filter((i) => i.hero === hero.id);
+        const slotOf = (i) => table?.items[i.type]?.slot;
+        const t = this.data.training;
+        const container = $('squad-hero-card');
+        renderSquadCard(container, {
+            hero, name, table: this.data.evolution, stats: this.data.hero_stats?.[String(hero.id)] ?? null,
+            gear: table ? {
+                weapon: carried.find((i) => slotOf(i) === 'weapon') ?? null,
+                spell: carried.find((i) => slotOf(i) === 'spell') ?? null,
+            } : null,
+            itemTable: table,
+            training: t ? { perLevel: t.mastery_per_level ?? 100, levels: t.mastery_levels ?? 10, bonus: t.mastery_bonus ?? 0.01 } : null,
+        }, {
+            onGear: hero.evolving ? null : (slot) => this.#pickGear(hero, name, slot, carried.find((i) => slotOf(i) === slot) ?? null),
+        });
+        container.append(this.#squadAction(hero, name));
+    }
+
+    /** The big button under the card: in, out, heal, or why not. */
+    #squadAction(hero, name) {
+        const now = this.#serverNow();
+        const { state, left } = heroStatus(hero, this.setup.heroIds.includes(hero.id), now);
+        const box = document.createElement('div');
+        box.className = 'squad-action';
+        const button = document.createElement('button');
+        button.type = 'button';
+        const note = document.createElement('small');
+        note.className = 'evolve-note';
+        if (state === 'picked') {
+            button.className = 'button wide';
+            withIcon(button, 'close', 'Take out of the squad');
+            button.addEventListener('click', () => this.#cardPick(hero, name));
+        } else if (state === 'ready') {
+            const full = this.setup.heroIds.length >= SQUAD_SIZE;
+            button.className = 'button primary wide';
+            withIcon(button, 'check', 'Add to the squad');
+            button.disabled = full;
+            note.textContent = full ? `The squad is full (${SQUAD_SIZE}): take a hero out first.` : `${this.setup.heroIds.length}/${SQUAD_SIZE} in the squad.`;
+            button.addEventListener('click', () => this.#cardPick(hero, name));
+        } else if (state === 'hurt') {
+            const salve = usableBonuses('hero', this.data.bonuses).length > 0;
+            button.className = 'button primary wide';
+            withIcon(button, 'plus', salve ? 'Heal now' : `Healing: ${formatHeal(left)}`);
+            button.disabled = !salve;
+            note.textContent = salve ? `Ready again in ${formatHeal(left)} by itself, or now with a bonus.` : 'Salves from the daily rewards heal at once.';
+            button.addEventListener('click', () => {
+                closeSheet({ silent: true });
+                this.#tapHero(hero, name);
+            });
+        } else {
+            button.className = 'button wide';
+            withIcon(button, 'anvil', hero.fusing ? 'Fusing at the forge' : 'Evolving at the forge');
+            button.disabled = true;
+        }
+        box.append(button, note);
+        return box;
+    }
+
+    /** The same item picker as the Forge's hero card. */
+    #pickGear(hero, name, slot, current) {
+        openItemPicker({
+            ...gearChoices({
+                items: this.data.items ?? [], table: this.data.item_table, names: heroNames(this.data.heroes),
+                hero, name, slot, current,
+            }),
+            onPick: (id) => void this.#gear(() => equipItem(hero.id, id), 'Equipped.'),
+            onClear: current ? () => void this.#gear(() => unequipItem(current.id), 'Back in the armoury.') : null,
+        });
+    }
+
+    async #gear(call, line) {
+        if (this.busy) return;
+        this.busy = true;
+        try {
+            this.data = { ...this.data, ...(await call()) };      // keeps the outposts and the rival
+            this.receivedAt = performance.now();
+            play('place');
+            toast(line);
+            this.onStateChanged();
+            this.#renderSquad();
+            this.#renderHeroCard();
+        } catch (error) {
+            if (!(error instanceof Refused)) throw error;
+            play('error');
+            toast(REFUSALS[error.code] ?? 'That did not work.');
+        } finally {
+            this.busy = false;
+        }
+    }
+
+    #cardPick(hero, name) {
+        this.#tapHero(hero, name);
+        closeSheet();
     }
 
     #tapHero(hero, name) {
@@ -706,6 +829,7 @@ export class BattleMode {
 function resultNote(battle, unlocked) {
     if (battle.defense) return battle.note;
     if (battle.rival) return battle.summary.victory ? `You raided ${battle.rival}!` : `${battle.rival}'s core still stands`;
+    if (battle.rewards?.new_world) return `World ${battle.rewards.new_world - 1} conquered!`;
     if (unlocked) return 'Outpost cleared!';
     return battle.summary.victory ? 'The core has fallen' : 'The core still stands: bring it down to win';
 }
@@ -758,7 +882,8 @@ function renderBadges(badges, s, rewards, defense, next) {
         badges.append(span);
     };
     badge(s.core_destroyed ? 'Core destroyed' : 'Core standing', s.core_destroyed === !defense ? 'good' : 'bad', s.core_destroyed ? 'flame' : 'shield');
-    if (next) badge(`${next.name} unlocked`, 'good', 'lock');
+    if (rewards?.new_world) badge(`World ${rewards.new_world} unlocked`, 'good', 'lock');
+    else if (next) badge(`${next.name} unlocked`, 'good', 'lock');
     if (rewards?.trophies !== undefined) badge(`${signed(rewards.trophies)} trophies`, rewards.trophies >= 0 ? 'good' : 'bad', 'trophy');
     if (rewards?.xp) badge(`+${rewards.xp} XP`, 'good', 'star');
     if (rewards?.levels?.length) badge(`Level ${rewards.levels.at(-1).level}!`, 'good', 'star');

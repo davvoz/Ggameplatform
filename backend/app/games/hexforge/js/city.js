@@ -12,10 +12,10 @@ import { describeWorst, renderDefenseReport } from './defensePanel.js';
 import { play } from './audio.js';
 import { countUp, flyMaterial, flyPicture, forgeSlotPop, rewardPop } from './fx.js';
 import {
-    formatCountdown, itemEffect, itemName, itemThumb, jobName, jobThumb, renderArmoury, renderForgeSlots, renderRecipes,
+    formatCountdown, itemName, itemThumb, jobName, jobThumb, renderArmoury, renderForgeSlots, renderRecipes,
     renderRoster, renderStorage,
 } from './forgePanel.js';
-import { fittingItems, giftText, renderHeroCard } from './heroPanel.js';
+import { gearChoices, giftText, renderHeroCard } from './heroPanel.js';
 import { renderUpgradeCard, upgradeBonuses } from './upgradePanel.js';
 import { openAnvil } from './anvil.js';
 import { openTraining } from './training.js';
@@ -236,6 +236,7 @@ export class CityMode {
         $('btn-open-defense').addEventListener('click', () => this.#openDefense());
         $('btn-open-rewards').addEventListener('click', () => this.#openRewards());
         $('btn-gremlins').addEventListener('click', () => void this.#gremlins());
+        $('btn-collect-all').addEventListener('click', () => void this.#collect(null));
         $('btn-defense-test').addEventListener('click', () => void this.#testDefense());
         $('btn-move').addEventListener('click', () => this.#setMode(this.mode === 'move' ? 'idle' : 'move'));
         $('btn-aim').addEventListener('click', () => {
@@ -448,28 +449,11 @@ export class CityMode {
 
     /** Choose what goes in a hero's weapon or spell slot. */
     #pickGear(hero, name, slot, current) {
-        const names = heroNames(this.state.heroes);
-        const table = this.state.item_table;
-        // free items can be picked; one another hero carries is shown greyed: it stays with that hero
-        const carrier = (i) => (i.hero && names.has(i.hero) ? i.hero : null);
-        const options = fittingItems(this.state.items, table, hero.cls, slot)
-            .filter((i) => i.id !== current?.id)
-            .sort((a, b) => Number(Boolean(carrier(a))) - Number(Boolean(carrier(b))) || b.level - a.level)
-            .map((i) => ({
-                id: i.id,
-                picture: itemPicture(i.type, 40),
-                title: `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
-                line: carrier(i) ? `Carried by ${names.get(i.hero)}: take it off there first`
-                    : `${itemEffect(table, i)} · in the armoury`,
-                accent: ITEM_INFO[i.type].color,
-                disabled: Boolean(carrier(i)),
-            }));
-        const what = slot === 'weapon' ? `weapon for a ${HERO_INFO[hero.cls].name}` : 'spell';
         openItemPicker({
-            title: `${name}: ${slot}`,
-            line: current ? `Now: ${ITEM_INFO[current.type].name} · Lv ${current.level}` : '',
-            options,
-            empty: `No other ${what} yet: forge one in the forge's Items tab.`,
+            ...gearChoices({
+                items: this.state.items, table: this.state.item_table, names: heroNames(this.state.heroes),
+                hero, name, slot, current,
+            }),
             onPick: (id) => void this.#gear(() => equipItem(hero.id, id), 'Equipped.'),
             onClear: current ? () => void this.#gear(() => unequipItem(current.id), 'Back in the armoury.') : null,
         });
@@ -1164,6 +1148,9 @@ export class CityMode {
         this.#tickRewards(now);
         this.#tickTrips(now);
         $('btn-gremlins').hidden = this.gremlinsOn || !this.state.gremlins || this.state.gremlins.ready_at > now;
+        const full = this.state.city.buildings.filter((b) => this.#pendingOf(b) >= BUBBLE_FROM).length;
+        $('btn-collect-all').hidden = this.gremlinsOn || full === 0;
+        $('collect-badge').textContent = String(full);
         const ready = this.state.forge.jobs.filter((j) => j.ready_at <= now).length;
         const badge = $('forge-badge');
         badge.hidden = ready === 0;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isAvailable, launchBlocker, settleSquad, toggleHero } from '../js/squad.js';
+import { frontierOf, isAvailable, launchBlocker, settleSquad, toggleHero } from '../js/squad.js';
 
 const NOW = 1000;
 const heroes = [
@@ -37,4 +37,14 @@ test('launch explains what is missing', () => {
     assert.equal(launchBlocker({ blocked: open, picked: [1, 3, 5], energy: { charges: 5 } }), 'Pick 1 more hero');
     assert.equal(launchBlocker({ blocked: open, picked: full, energy: { charges: 0 } }), 'No energy left');
     assert.equal(launchBlocker({ blocked: open, picked: full, energy: { charges: 1 } }), null);
+});
+
+test('the plan opens on the first outpost still to take', () => {
+    const world = [
+        { id: 6, unlocked: true, cleared: true },
+        { id: 7, unlocked: true, cleared: false },
+        { id: 8, unlocked: false, cleared: false },
+    ];
+    assert.equal(frontierOf(world), 7);
+    assert.equal(frontierOf(world.map((o) => ({ ...o, unlocked: true, cleared: true }))), 8);
 });

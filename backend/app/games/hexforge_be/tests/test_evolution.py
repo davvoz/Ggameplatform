@@ -139,7 +139,7 @@ class BattleTest(unittest.TestCase):
                     {"cls": "neon_blade", "form": "reaper", "tier": 3},
                     {"cls": "neon_blade", "form": "phantom", "tier": 3},
                     {"cls": "technomancer", "form": "archon", "tier": 3}]
-        for outpost_id in outposts.OUTPOSTS:
+        for outpost_id in outposts.world_ids(1):
             city = outposts.outpost_city(outpost_id)
             base = simulate(city, BASE_SQUAD, "south", "core", "compact")["summary"]
             strong = simulate(city, ascended, "south", "core", "compact")["summary"]

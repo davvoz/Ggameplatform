@@ -542,11 +542,12 @@ export class Renderer {
             leap: hero.leap,
         };
         if (hero.cls === 'neon_blade' && (hero.moving || lift > 0)) {
-            // afterimages trailing the assassin
+            // afterimages trailing the assassin: the bare silhouette, so a fused one stays sharp
             const back = this.#screenHeading(hero);
+            const bare = { ...hero, fusion: null };
             for (const k of [2, 1]) {
                 ctx.globalAlpha = 0.14 * k;
-                drawHero(ctx, hero, foot.x - back.x * k * 6 * s, foot.y - lift - back.y * k * 6 * s, s, info.color, time - k * 0.04, pose);
+                drawHero(ctx, bare, foot.x - back.x * k * 6 * s, foot.y - lift - back.y * k * 6 * s, s, info.color, time - k * 0.04, pose);
             }
             ctx.globalAlpha = 1;
         }

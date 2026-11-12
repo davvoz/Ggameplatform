@@ -149,6 +149,10 @@
             </div>
 
             <div class="corner left">
+                <button id="btn-collect-all" class="action big collect-all" type="button" hidden>
+                    <span class="round"><svg class="icon" aria-hidden="true"><use href="#i-collect"/></svg><span id="collect-badge" class="badge good"></span></span>
+                    <span class="action-label">Collect all</span>
+                </button>
                 <button id="btn-attack" class="attack-button" type="button">
                     <svg class="icon" aria-hidden="true"><use href="#i-attack"/></svg><span>Attack</span>
                 </button>
@@ -275,6 +279,15 @@
                 <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
             </header>
             <div id="hero-card" class="sheet-body hero-card"></div>
+        </section>
+
+        <section id="sheet-squad-hero" class="sheet" aria-labelledby="squad-hero-title" hidden>
+            <header class="sheet-head">
+                <svg class="icon" aria-hidden="true"><use href="#i-hero"/></svg>
+                <h2 id="squad-hero-title">Hero</h2>
+                <button class="round small" type="button" data-close aria-label="Close"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            </header>
+            <div id="squad-hero-card" class="sheet-body hero-card"></div>
         </section>
 
         <section id="sheet-upgrade" class="sheet" aria-labelledby="upgrade-title" hidden>

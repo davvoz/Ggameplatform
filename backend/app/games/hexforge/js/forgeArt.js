@@ -113,7 +113,7 @@ export function halo(ctx, x, y, radius, color, strength = 1) {
 }
 
 /** A glowing seam across the two front faces of a box at height z. */
-function seam(ctx, cam, x, y, w, d, z, color, width = 1.6) {
+export function seam(ctx, cam, x, y, w, d, z, color, width = 1.6) {
     const a = toScreen(cam, x, y + d, z);
     const b = toScreen(cam, x + w, y + d, z);
     const c = toScreen(cam, x + w, y, z);
@@ -149,7 +149,7 @@ export function flame(ctx, c, size, time, seed, hot, mid) {
     ctx.restore();
 }
 
-function smoke(ctx, c, time, seed, s, count = 4) {
+export function smoke(ctx, c, time, seed, s, count = 4) {
     for (let i = 0; i < count; i++) {
         const life = (time * 0.35 + i / count + seed) % 1;
         ctx.fillStyle = `rgba(70, 62, 58, ${0.32 * (1 - life)})`;
@@ -159,7 +159,7 @@ function smoke(ctx, c, time, seed, s, count = 4) {
     }
 }
 
-function gem(ctx, c, r, light, dark) {
+export function gem(ctx, c, r, light, dark) {
     path(ctx, [{ x: c.x, y: c.y - r * 1.3 }, { x: c.x + r, y: c.y }, { x: c.x, y: c.y + r }, { x: c.x - r, y: c.y }]);
     ctx.fillStyle = dark;
     ctx.fill();
@@ -500,6 +500,7 @@ export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
         form: tier > 1 ? hero.form : null,
         tier,
         accent: tier > 1 ? FORM_INFO[hero.form]?.accent ?? color : color,
+        marks: [],
     };
     ctx.save();
     ctx.translate(x, y);
@@ -511,14 +512,112 @@ export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
         ctx.rotate(-Math.min(1, pose.down * 3) * Math.PI / 2);   // topples backwards
     }
     const fused = hero.fusion?.length > 0 && pose.down == null;
+    const style = globalThis.__fusionStyle ?? 'current';
+    const grade = hero.grade ?? 1;
+    const donors = fused ? hero.fusion.slice(1).filter((part) => FORM_INFO[part.form]) : [];
+    const colors = donors.map((d) => FORM_INFO[d.form].accent);
+    if (fused && style === 'current') p.marks = donors.map((d) => d.form);
+    if (fused && style === 'one' && donors.length) p.marks = [donors.reduce((a, b) => (b.power > a.power ? b : a)).form];
     if (tier > 1) ctx.scale(1 + 0.05 * (tier - 1), 1 + 0.05 * (tier - 1));
-    if (fused) ctx.scale(1.08, 1.08);
-    if (fused) drawHeroFusionUnder(ctx, hero.fusion, p.t);
+    if (fused) {
+        const grow = style === 'current' ? 1.08 : 1.04 + 0.05 * Math.min(grade, 4);
+        ctx.scale(grow, grow);
+    }
+    if (fused && style === 'current') drawHeroFusionUnder(ctx, hero.fusion, p.t);
+    if (fused && style !== 'current') cleanRing(ctx, colors.length ? colors : [p.accent], p.t);
+    if (fused && style === 'forged') auraFlames(ctx, colors.length ? colors : [p.accent], p.t, grade);
     if (tier === 3) halo(ctx, 0, -24, 34, p.accent, 0.4 + 0.12 * Math.sin(p.t * 3));
-    if (fused) donorSpirits(ctx, hero.fusion.slice(1), p);
     paintHero(ctx, hero.cls, color, p);
-    if (fused) drawHeroFusionOver(ctx, hero.fusion, hero.grade ?? 1, p.t);
+    if (fused && style === 'forged') veins(ctx, colors.length ? colors : [p.accent], p.t);
+    if (fused && style === 'current') drawHeroFusionOver(ctx, hero.fusion, grade, p.t);
+    if (fused && style !== 'current') gradePips(ctx, grade, colors[0] ?? p.accent);
     ctx.restore();
+}
+
+/** A thin glowing ring at the feet, half in each donor's colour. */
+function cleanRing(ctx, colors, t) {
+    ctx.save();
+    ctx.lineWidth = 1.4;
+    const n = colors.length;
+    for (let i = 0; i < n; i++) {
+        const from = t * 0.8 + (i / n) * Math.PI * 2;
+        ctx.strokeStyle = colors[i];
+        ctx.shadowColor = colors[i];
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 14, 5, 0, from, from + (Math.PI * 2) / n);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+/** Tongues of light rising behind the body, in the donors' colours: taller with the grade. */
+function auraFlames(ctx, colors, t, grade) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const tall = 40 + 6 * Math.min(grade, 4);
+    for (let i = 0; i < 5; i++) {
+        const x = -10 + i * 5;
+        const h = tall * (0.7 + 0.3 * Math.sin(t * 5 + i * 1.9)) * (i === 2 ? 1.1 : 0.85);
+        const g = ctx.createLinearGradient(0, 0, 0, -h);
+        const c = colors[i % colors.length];
+        g.addColorStop(0, withAlpha(c, 0.45));
+        g.addColorStop(1, withAlpha(c, 0));
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(x - 5, -2);
+        ctx.quadraticCurveTo(x - 3, -h * 0.55, x + Math.sin(t * 4 + i) * 2, -h);
+        ctx.quadraticCurveTo(x + 3, -h * 0.55, x + 5, -2);
+        ctx.closePath();
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+/** Glowing seams across the body, like metal welded together: one per donor colour. */
+function veins(ctx, colors, t) {
+    const lines = [
+        [[-6, -28], [-3, -24], [-6, -20], [-2, -16]],
+        [[4, -29], [1, -25], [4, -21], [1, -17]],
+    ];
+    ctx.save();
+    ctx.lineWidth = 1.3;
+    ctx.lineCap = 'round';
+    lines.forEach((pts, i) => {
+        const c = colors[i % colors.length];
+        ctx.strokeStyle = withAlpha('#ffffff', 0.9);
+        ctx.shadowColor = c;
+        ctx.shadowBlur = 6 + 3 * Math.sin(t * 4 + i);
+        ctx.beginPath();
+        pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.stroke();
+        ctx.strokeStyle = c;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.lineWidth = 1.3;
+    });
+    ctx.restore();
+}
+
+/** The grade as small diamonds in a row over the head. */
+function gradePips(ctx, grade, color) {
+    const n = Math.min(grade, 5);
+    for (let i = 0; i < n; i++) {
+        const x = (i - (n - 1) / 2) * 6;
+        const y = -54;
+        halo(ctx, x, y, 6, color, 0.7);
+        ctx.fillStyle = '#fff6e0';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 3.2);
+        ctx.lineTo(x + 2.2, y);
+        ctx.lineTo(x, y + 2.4);
+        ctx.lineTo(x - 2.2, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+    }
 }
 
 function paintHero(ctx, cls, color, p) {
@@ -528,19 +627,48 @@ function paintHero(ctx, cls, color, p) {
     else mage(ctx, color, p);
 }
 
-/** A fused hero's donors stand behind it as see-through spirits, in their own form and colours. */
-function donorSpirits(ctx, donors, p) {
-    donors.forEach((part, i) => {
-        const color = HERO_INFO[part.type]?.color ?? '#ffffff';
-        ctx.save();
-        ctx.globalAlpha *= 0.4 + 0.08 * Math.sin(p.t * 2 + i);
-        ctx.translate(i === 0 ? -10 : 10, -3 + Math.sin(p.t * 1.6 + i * 2) * 1.5);
-        ctx.scale(0.86, 0.86);
-        paintHero(ctx, part.type, color, {
-            ...p, form: part.form ?? null, tier: 3, accent: FORM_INFO[part.form]?.accent ?? color, attack: null, nova: false,
-        });
-        ctx.restore();
-    });
+/**
+ * A fused hero wears what its donors were known for, in their form's colour:
+ * the Warlord's cape, the Bastion's shield on the back, the Phantom's wings,
+ * the Reaper's horns, the Archon's rune ring, the Arcanist's shards.
+ * `backMarks` goes behind the body, `headMarks` on the head at (x, y).
+ */
+function backMarks(ctx, p) {
+    for (const form of p.marks) {
+        const accent = FORM_INFO[form].accent;
+        if (form === 'warlord') cape(ctx, accent, p.t, -5, -31, 22);
+        else if (form === 'phantom') wings(ctx, accent, p.t);
+        else if (form === 'bastion') backShield(ctx, accent);
+        else if (form === 'arcanist') shards(ctx, accent, p.t);
+    }
+}
+
+function headMarks(ctx, p, x, y) {
+    for (const form of p.marks) {
+        const accent = FORM_INFO[form].accent;
+        if (form === 'reaper') horns(ctx, accent, x, y);
+        else if (form === 'archon') runeRing(ctx, accent, p.t, 2);
+    }
+}
+
+/** A kite shield slung on the back, its rim in the Bastion's gold. */
+function backShield(ctx, trim) {
+    ctx.save();
+    ctx.fillStyle = shade(HERO_INFO.guardian.color, 0.5);
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-18, -34);
+    ctx.lineTo(-7, -32);
+    ctx.lineTo(-7, -15);
+    ctx.quadraticCurveTo(-12, -6, -18, -13);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = trim;
+    ctx.fillRect(-13.4, -30, 1.8, 14);
+    ctx.fillRect(-17, -24, 9, 1.8);
+    ctx.restore();
 }
 
 const WALK_RATE = { guardian: 8, neon_blade: 15, technomancer: 4, explorer: 9 };
@@ -609,6 +737,7 @@ function guardian(ctx, color, p) {
     const steel = '#5b5f69';
     const dark = '#2a2c33';
 
+    backMarks(ctx, p);
     if (p.form === 'warlord') cape(ctx, p.accent, p.t, -2, -30, 16);
     leg(ctx, -2, -15, 15, -step * 0.5, dark, 5);
     // hammer arm behind the body while resting or winding up
@@ -661,6 +790,7 @@ function guardian(ctx, color, p) {
         ctx.stroke();
     }
     if (p.tier === 3) horns(ctx, p.form === 'warlord' ? '#2a2c33' : p.accent, 0, -41);
+    headMarks(ctx, p, 0, -41);
 
     if (striking) hammer(ctx, color, arm, head, p.accent);
     const big = p.form === 'bastion' ? 1.2 + 0.15 * (p.tier - 2) : 1;
@@ -758,6 +888,7 @@ function blade(ctx, color, p) {
 
     // scarf and cloak streaming behind
     const wave = Math.sin(p.t * (running ? 14 : 4));
+    backMarks(ctx, p);
     if (p.tier === 3 && p.form === 'phantom') wings(ctx, p.accent, p.t);
     if (p.form === 'phantom') {
         ctx.strokeStyle = p.accent;
@@ -804,6 +935,7 @@ function blade(ctx, color, p) {
     ctx.fillStyle = p.form ? p.accent : '#ffe0ef';
     ctx.fillRect(2.5, -34, 2.6, 1.3);
     if (p.tier === 3 && p.form === 'reaper') horns(ctx, p.accent, 0, -40);
+    headMarks(ctx, p, 0, -40);
     dagger(ctx, edge, swing(p.attack, 1.2, -1.2, 2.4), { x: 2, y: -26 }, reach);
     if (p.attack !== null && p.attack > -0.35 && p.attack < 0.8) slash(ctx, edge, p.attack);
 }
@@ -860,6 +992,7 @@ function slash(ctx, color, a) {
 function mage(ctx, color, p) {
     const hover = -3 + Math.sin(p.t * 2.2) * 1.5;
     ctx.translate(lunge(p.attack) * 2, hover);
+    backMarks(ctx, p);
     const robe = ctx.createLinearGradient(0, -30, 0, 0);
     robe.addColorStop(0, shade(color, 0.55));
     robe.addColorStop(1, shade(color, 0.25));
@@ -902,6 +1035,7 @@ function mage(ctx, color, p) {
     ctx.fillRect(1.2, -33, 3, 1.3);
     if (p.form === 'archon') runeRing(ctx, p.accent, p.t, p.tier);
     if (p.tier === 3 && p.form === 'arcanist') shards(ctx, p.accent, p.t);
+    headMarks(ctx, p, 0.5, -40);
     staff(ctx, color, p);
 }
 

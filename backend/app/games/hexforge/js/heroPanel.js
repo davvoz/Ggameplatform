@@ -79,6 +79,34 @@ export function fittingItems(items, table, cls, slot) {
     });
 }
 
+/**
+ * What the item picker shows for a hero's slot: the items that fit, free ones
+ * first; one another hero carries is greyed (it stays with that hero).
+ * `names` maps hero ids to names. Returns { title, line, options, empty }.
+ */
+export function gearChoices({ items, table, names, hero, name, slot, current }) {
+    const carrier = (i) => (i.hero && names.has(i.hero) ? i.hero : null);
+    const options = fittingItems(items, table, hero.cls, slot)
+        .filter((i) => i.id !== current?.id)
+        .sort((a, b) => Number(Boolean(carrier(a))) - Number(Boolean(carrier(b))) || b.level - a.level)
+        .map((i) => ({
+            id: i.id,
+            picture: itemPicture(i.type, 40),
+            title: `${ITEM_INFO[i.type].name} · Lv ${i.level}`,
+            line: carrier(i) ? `Carried by ${names.get(i.hero)}: take it off there first`
+                : `${itemEffect(table, i)} · in the armoury`,
+            accent: ITEM_INFO[i.type].color,
+            disabled: Boolean(carrier(i)),
+        }));
+    const what = slot === 'weapon' ? `weapon for a ${HERO_INFO[hero.cls].name}` : 'spell';
+    return {
+        title: `${name}: ${slot}`,
+        line: current ? `Now: ${ITEM_INFO[current.type].name} · Lv ${current.level}` : '',
+        options,
+        empty: `No other ${what} yet: forge one in the forge's Items tab.`,
+    };
+}
+
 /** Why the hero cannot go to the forge now, or null. */
 export function evolveBlocker({ hero, table, materials, freeSlots, serverNow }) {
     const next = (hero.tier ?? 1) + 1;
@@ -129,19 +157,32 @@ function dismissBox({ gift, blocker, confirming }, onDismiss) {
     return box;
 }
 
-function renderHeroBody(container, {
-    hero, name, table, materials, freeSlots, serverNow, job, picked, stats: now = null, gear = null, itemTable = null,
-    missions = null, training = null,
-}, { onPick, onEvolve, onGear = () => {}, onExplore = () => {}, onReturn = () => {}, onTrain = () => {} }) {
+/**
+ * The card a hero shows on the attack screen: who it is, its fusion, its
+ * mastery, how it fights now and what it carries. `onGear(slot)` lets a tap
+ * on a slot change the item. The caller adds the squad button.
+ */
+export function renderSquadCard(container, { hero, name, table, stats = null, gear = null, itemTable = null, training = null },
+    { onGear = null } = {}) {
     container.replaceChildren();
+    container.append(heroHead(hero, name));
+    const tier = hero.tier ?? 1;
+    if (tier >= 3 && training) {
+        const box = el('div', 'hero-xp');
+        box.append(...masteryLine(hero, training));
+        container.append(box);
+    }
+    container.append(statsGrid(hero, table, stats));
+    if (gear && itemTable) container.append(gearBox(gear, itemTable, onGear));
+}
+
+/** Portrait, name, form and stars, and the fusion's parts if it is fused. */
+function heroHead(hero, name) {
     const info = HERO_INFO[hero.cls];
     const tier = hero.tier ?? 1;
     const form = tier > 1 ? FORM_INFO[hero.form] : null;
-    const accent = form?.accent ?? info.color;
-
-    // who
     const head = el('div', 'hero-head');
-    head.style.setProperty('--accent', accent);
+    head.style.setProperty('--accent', form?.accent ?? info.color);
     const art = el('span', 'hero-art');
     art.append(thumbImg(heroPortrait(hero, 104), '', ''));
     const who = el('div', 'hero-who');
@@ -151,7 +192,29 @@ function renderHeroBody(container, {
         el('span', 'hero-form', hero.cls === 'explorer' ? info.role : `${form ? form.name : info.name} ${stars(tier)} · ${fused ? 'Fused' : TIER_NAMES[tier]}`),
         el('small', 'hero-what', fused ?? (form ? form.what : info.what)));
     head.append(art, who);
-    container.append(head);
+    return head;
+}
+
+/** How it fights now (items, fusion and mastery included), else from the table. */
+function statsGrid(hero, table, now) {
+    const shown = now ?? statsOf(table, hero.cls, hero.form, hero.tier ?? 1);
+    const grid = el('div', 'hero-stats');
+    for (const key of shownStats(hero.cls, shown)) {
+        const cell = el('span', 'hero-stat');
+        cell.append(el('small', '', STAT_LABELS[key]), el('b', '', formatStat(key, shown[key])));
+        grid.append(cell);
+    }
+    return grid;
+}
+
+function renderHeroBody(container, {
+    hero, name, table, materials, freeSlots, serverNow, job, picked, stats: now = null, gear = null, itemTable = null,
+    missions = null, training = null,
+}, { onPick, onEvolve, onGear = () => {}, onExplore = () => {}, onReturn = () => {}, onTrain = () => {} }) {
+    container.replaceChildren();
+    const tier = hero.tier ?? 1;
+    const form = tier > 1 ? FORM_INFO[hero.form] : null;
+    container.append(heroHead(hero, name));
 
     if (hero.cls === 'explorer') {
         if (gear && itemTable) container.append(gearBox(gear, itemTable, onGear));
@@ -181,13 +244,7 @@ function renderHeroBody(container, {
     // stats: as it fights now (items included), else from the table
     const stats = statsOf(table, hero.cls, hero.form, tier);
     const shown = now ?? stats;
-    const grid = el('div', 'hero-stats');
-    for (const key of shownStats(hero.cls, shown)) {
-        const cell = el('span', 'hero-stat');
-        cell.append(el('small', '', STAT_LABELS[key]), el('b', '', formatStat(key, shown[key])));
-        grid.append(cell);
-    }
-    container.append(grid);
+    container.append(statsGrid(hero, table, now));
 
     if (gear && itemTable) container.append(gearBox(gear, itemTable, onGear));
 
@@ -303,8 +360,8 @@ function gearBox(gear, itemTable, onGear) {
         const box = el('div', 'gear');
         for (const [slot, label] of [['weapon', 'Weapon'], ['spell', 'Spell']]) {
             const item = gear[slot];
-            const cell = el('button', `gear-slot${item ? '' : ' empty'}`);
-            cell.type = 'button';
+            const cell = el(onGear ? 'button' : 'div', `gear-slot${item ? '' : ' empty'}${onGear ? '' : ' still'}`);
+            if (onGear) cell.type = 'button';
             if (item) {
                 const info = ITEM_INFO[item.type];
                 cell.style.setProperty('--accent', info.color);
@@ -312,15 +369,16 @@ function gearBox(gear, itemTable, onGear) {
                 text.append(el('small', '', label), el('b', '', `${info.name} · Lv ${item.level}`),
                     el('small', 'gear-effect', itemEffect(itemTable, item)));
                 cell.append(thumbImg(itemPicture(item.type, 44), '', ''), text);
-                cell.setAttribute('aria-label', `${label}: ${info.name}, level ${item.level}. Tap to change`);
+                if (onGear) cell.setAttribute('aria-label', `${label}: ${info.name}, level ${item.level}. Tap to change`);
             } else {
                 const plus = el('span', 'gear-plus');
                 plus.append(icon('plus'));
                 const text = el('span', 'gear-text');
-                text.append(el('small', '', label), el('b', '', 'Empty'), el('small', 'gear-effect', 'Tap to equip'));
+                text.append(el('small', '', label), el('b', '', 'Empty'),
+                    el('small', 'gear-effect', onGear ? 'Tap to equip' : 'Equip it from its card in the Forge'));
                 cell.append(plus, text);
             }
-            cell.addEventListener('click', () => onGear(slot));
+            if (onGear) cell.addEventListener('click', () => onGear(slot));
             box.append(cell);
         }
         return box;

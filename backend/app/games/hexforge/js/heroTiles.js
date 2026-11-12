@@ -112,12 +112,14 @@ export function formatHeal(seconds) {
 /**
  * A tile; `onTap` makes it a button. `status.evolve` adds the "can evolve" badge;
  * `status.next` ({ form, tier }) is what a hero at the forge is becoming.
+ * A fused hero has its own frame and a ◆ badge with its grade.
  */
 export function heroTile(hero, name, status, onTap = null) {
     const info = HERO_INFO[hero.cls];
     const form = (hero.tier ?? 1) > 1 ? FORM_INFO[hero.form] : null;
     const tile = document.createElement(onTap ? 'button' : 'div');
-    tile.className = `hero-tile ${status.state}${(hero.tier ?? 1) >= 3 ? ' ascended' : ''}`;
+    const grade = hero.fusion?.grade ?? 0;
+    tile.className = `hero-tile ${status.state}${(hero.tier ?? 1) >= 3 ? ' ascended' : ''}${grade ? ' fused' : ''}`;
     tile.dataset.hero = String(hero.id);
     tile.style.setProperty('--accent', info.color);
     tile.style.setProperty('--healed', `${Math.round(status.healed * 100)}%`);
@@ -129,6 +131,7 @@ export function heroTile(hero, name, status, onTap = null) {
     if (status.state === 'forge') portrait.append(badge('anvil', 'ht-badge forge'));
     if (status.state === 'back') portrait.append(badge('chest', 'ht-badge evolve'));
     if (status.evolve && status.state !== 'forge') portrait.append(badge('arrow', 'ht-badge evolve'));
+    if (grade) portrait.append(Object.assign(document.createElement('span'), { className: 'ht-grade', textContent: `◆${grade}` }));
     const label = document.createElement('span');
     label.className = 'ht-name';
     label.textContent = name;
@@ -160,7 +163,7 @@ export function heroTile(hero, name, status, onTap = null) {
         home: 'at home, tap to send on a mission', away: `on a mission, back in ${formatAway(status.left)}`,
         back: 'back from a mission with loot',
     };
-    tile.title = `${name} (${form ? form.what : info.what}) ${what[status.state]}${status.evolve ? '. Can evolve!' : ''}`;
+    tile.title = `${name} (${form ? form.what : info.what})${grade ? `, fused ${'◆'.repeat(grade)}` : ''}, ${what[status.state]}${status.evolve ? '. Can evolve!' : ''}`;
     if (onTap) {
         tile.type = 'button';
         tile.setAttribute('aria-pressed', String(status.state === 'picked'));

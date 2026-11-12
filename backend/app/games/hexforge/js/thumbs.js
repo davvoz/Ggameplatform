@@ -62,7 +62,7 @@ export function heroThumb(cls, px = 56, form = null, tier = 1, fusion = null) {
             ctx.fillRect(0, 0, px, px);
             const hero = { cls, id: 0, facing: 1, form: evolved ? form : null, tier: evolved ? tier : 1,
                 fusion: fusion?.parts ?? null, grade: fusion?.grade ?? 0 };
-            const k = fusion ? 0.74 : 1;                                       // room for the spirits, the ring and the gems
+            const k = fusion ? 0.74 : 1;                                       // room for the donor marks, the ring and the gems
             const feet = fusion ? 0.84 : evolved ? 0.95 : 0.92;
             drawHero(ctx, hero, px / 2 - 3 * s * k, px * feet, s * k, HERO_INFO[cls].color, 0.6);
         }));

@@ -216,7 +216,8 @@ def run_my_defense_test(request: Request, user_id: CurrentUserId, db: Db, now: N
 # ── PvP ────────────────────────────────────────────────────────────────
 def _attack_screen(service: PlayerService, state, now: float) -> dict:
     """Everything the Attack tab shows: outposts, the scouted rival, your state."""
-    return {"outposts": outposts.public_outposts(state.city), "rival": service.rival_view(state, now),
+    return {"outposts": outposts.public_outposts(state.city), "world": outposts.public_world(state.city),
+            "rival": service.rival_view(state, now),
             **public_state(state, now)}
 
 

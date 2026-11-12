@@ -1,8 +1,17 @@
 {
-  "version": "5.22.2",
-  "timestamp": "2026-11-12T10:54:12.963Z",
-  "buildNumber": 622,
+  "version": "5.22.3",
+  "timestamp": "2026-11-12T14:42:16.652Z",
+  "buildNumber": 623,
   "changelog": [
+    {
+      "version": "5.22.3",
+      "date": "2026-11-12",
+      "type": "patch",
+      "changes": [
+        "fix: [H]enhance hero tiles with fusion grades and update rendering logic",
+        "🔖 Bump version to 5.22.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.22.2",
       "date": "2026-11-12",
@@ -88,17 +97,6 @@
       "changes": [
         "fix: use the path check SonarCloud recognises in the backup scripts",
         "🔖 Bump version to 5.18.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.18.2",
-      "date": "2026-11-09",
-      "type": "patch",
-      "changes": [
-        "build: install backend dependencies from a hashed lock file; pin ssh-agent",
-        "fix: resolve SonarCloud vulnerabilities (log injection, path traversal, postMessage origin)",
-        "fix: chat online list no longer drops users who are still connected",
-        "🔖 Bump version to 5.18.1 [skip-version]"
       ]
     }
   ]

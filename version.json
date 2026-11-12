@@ -1,8 +1,18 @@
 {
-  "version": "5.22.1",
-  "timestamp": "2026-11-12T00:29:51.023Z",
-  "buildNumber": 621,
+  "version": "5.22.2",
+  "timestamp": "2026-11-12T10:54:12.963Z",
+  "buildNumber": 622,
   "changelog": [
+    {
+      "version": "5.22.2",
+      "date": "2026-11-12",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[H]enhance item handling with visual indicators for busy items and error handling for equipped items",
+        "🔖 Bump version to 5.22.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.22.1",
       "date": "2026-11-12",
@@ -89,15 +99,6 @@
         "fix: resolve SonarCloud vulnerabilities (log injection, path traversal, postMessage origin)",
         "fix: chat online list no longer drops users who are still connected",
         "🔖 Bump version to 5.18.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.18.1",
-      "date": "2026-11-09",
-      "type": "patch",
-      "changes": [
-        "fix: admin game edit no longer wipes extra_data; register scripts keep the STEEM rotation",
-        "🔖 Bump version to 5.18.0 [skip-version]"
       ]
     }
   ]

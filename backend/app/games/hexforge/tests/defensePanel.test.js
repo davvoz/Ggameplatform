@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { adviceFor, describeWorst, percentHeld, ratingOf, stageNote, stageTitle, weakestSide } from '../js/defensePanel.js';
+import { adviceFor, describeWorst, ratingOf, stageNote, stageTitle } from '../js/ui/panels/defensePanel.js';
+import { percentHeld } from '../js/core/defense.js';
 
 const sides = (n, e, s, w) => ({
     north: { held: n, total: 36 }, east: { held: e, total: 36 },
@@ -15,11 +16,6 @@ test('the rating follows the share of raids held', () => {
     assert.equal(ratingOf(report(72)), 'Strong');
     assert.equal(ratingOf(report(144)), 'Fortress');
     assert.equal(percentHeld(report(36)), 25);
-});
-
-test('the weakest side is the one holding the fewest raids', () => {
-    assert.equal(weakestSide(sides(20, 24, 3, 22)), 'south');
-    assert.equal(weakestSide(sides(9, 9, 9, 9)), null);
 });
 
 test('the advice points at what to do next', () => {

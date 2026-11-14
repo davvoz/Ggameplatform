@@ -1,10 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { edgePoint, gangSchedule, gremlinSpeed, gremlinStars } from '../js/gremlins.js';
+import { edgePoint, gangSchedule, gremlinSpeed, gremlinStars } from '../js/core/minigames/gremlins.js';
 
 test('the gang sets off one after another, faster and faster', () => {
     let s = 7;
-    const rng = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+    const rng = () => {
+        s = (s * 16807) % 2147483647;
+        return s / 2147483647;
+    };
     const times = gangSchedule(12, rng);
     assert.equal(times.length, 12);
     for (let i = 1; i < times.length; i++) assert.ok(times[i] > times[i - 1]);

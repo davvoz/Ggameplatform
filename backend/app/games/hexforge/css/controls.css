@@ -1,0 +1,382 @@
+/* ── shared pieces ────────────────────────────────────────────────────── */
+.round {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--brass);
+    background: radial-gradient(circle at 35% 30%, #4a3426, #1c120c 70%);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.55), 0 6px 14px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 220, 170, 0.25);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffcf8a;
+    padding: 0;
+    flex: none;
+}
+
+.round .icon {
+    width: 24px;
+    height: 24px;
+}
+
+.round.small {
+    width: 40px;
+    height: 40px;
+}
+
+.round.small .icon {
+    width: 20px;
+    height: 20px;
+}
+
+button.round:disabled {
+    opacity: 0.35;
+}
+
+.action {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    min-width: 56px;
+}
+
+.action-label,
+.under-label {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #ffe2b8;
+    text-shadow: 0 2px 3px #000, 0 0 8px #000;
+    white-space: nowrap;
+}
+
+.action .round {
+    width: 52px;
+    height: 52px;
+}
+
+.action.big .round {
+    width: 68px;
+    height: 68px;
+}
+
+.action.big .round .icon {
+    width: 32px;
+    height: 32px;
+}
+
+.action:hover .round,
+.round:hover:not(:disabled) {
+    border-color: var(--gold-hi);
+}
+
+.action[aria-pressed="true"] .round {
+    border-color: var(--gold-hi);
+    background: var(--molten);
+    color: #2a0d00;
+}
+
+.action.danger .round {
+    border-color: #ffb0a0;
+    background: radial-gradient(circle at 40% 30%, #ff8a6a, #c42a12 70%);
+    color: #fff;
+}
+
+.badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+    border: 2px solid #1a0f08;
+    animation: pulse 1.6s ease-in-out infinite;
+}
+
+.badge.alert {
+    background: #e0442a;
+}
+
+.badge.good {
+    background: #2fa865;
+}
+
+@keyframes pulse {
+    50% {
+        transform: scale(1.12);
+    }
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 18px;
+    border-radius: 14px;
+    border: 2px solid var(--brass);
+    background: linear-gradient(#3a2618, #1a100a);
+    color: #ffe2b8;
+    font-weight: 700;
+}
+
+.button.primary {
+    border-color: var(--gold-hi);
+    background: var(--molten);
+    color: #2a0d00;
+    box-shadow: 0 0 18px rgba(255, 122, 26, 0.55);
+}
+
+.button.small {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 14px;
+    border-radius: 11px;
+}
+
+.button.wide,
+.button.wide-plain {
+    width: 100%;
+}
+
+.button:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+}
+
+/* A primary button that cannot be pressed loses its molten look, so it does not invite a tap. */
+.button.primary:disabled {
+    opacity: 1;
+    border-color: var(--edge);
+    background: #2a1d14;
+    color: var(--muted);
+}
+
+.segmented {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    padding: 4px;
+    gap: 4px;
+    border-radius: 14px;
+    background: rgba(12, 7, 5, 0.92);
+    border: 1px solid #4a3020;
+}
+
+.segmented button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: #e8d3b8;
+    font-weight: 700;
+}
+
+.segmented button[aria-pressed="true"] {
+    border-color: var(--gold-hi);
+    background: linear-gradient(#ff9a3a, #c4500f);
+    color: #2a0d00;
+}
+
+.segmented.small button {
+    min-height: 34px;
+    font-size: 13px;
+}
+
+.hint {
+    margin: 6px 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.error {
+    margin: 6px 0;
+    color: #ff9a8a;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.costs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px 9px;
+}
+
+.cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent);
+}
+
+.cost .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.cost.short {
+    color: #ff7a6a;
+    text-decoration: line-through;
+}
+
+/* ── sound button ─────────────────────────────────────────────────────── */
+.sound-button {
+    position: absolute;
+    right: 12px;
+    top: calc(184px + var(--safe-top));
+    z-index: 6;
+}
+
+/* left of the sound button: the platform's real full screen (its top bar goes too) */
+.fullscreen-button {
+    position: absolute;
+    right: 68px;
+    top: calc(184px + var(--safe-top));
+    z-index: 6;
+}
+
+@media (min-width: 900px) {
+    .fullscreen-button {
+        top: calc(56px + var(--safe-top));
+    }
+}
+
+.sound-button[aria-pressed="false"] {
+    opacity: 0.7;
+    color: var(--muted);
+}
+
+@media (min-width: 900px) {
+    .sound-button {
+        top: calc(56px + var(--safe-top));
+    }
+}
+
+.rotate-button {
+    position: absolute;
+    right: 12px;
+    top: calc(240px + var(--safe-top));
+    z-index: 6;
+}
+
+@media (min-width: 900px) {
+    .rotate-button {
+        top: calc(112px + var(--safe-top));
+    }
+}
+
+/* the compass under the turn button: a round brass dial pointing at the city's north */
+.compass {
+    position: absolute;
+    right: 8px;
+    top: calc(290px + var(--safe-top));
+    z-index: 6;
+    width: 92px;
+    height: 92px;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.7));
+}
+
+.compass svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.cp-ring {
+    fill: none;
+    stroke: rgba(214, 166, 90, 0.45);
+    stroke-width: 0.8;
+}
+
+.cp-tick {
+    stroke: rgba(240, 200, 140, 0.5);
+    stroke-width: 0.8;
+}
+
+.cp-tick-big {
+    stroke: #f0c88c;
+    stroke-width: 1.4;
+}
+
+.cp-letter {
+    font: 900 11px/1 system-ui, sans-serif;
+    fill: #f6e2b8;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+.cp-letter.cp-north {
+    font-size: 14px;
+    fill: #ff6a4a;
+}
+
+@media (min-width: 900px) {
+    .compass {
+        top: calc(166px + var(--safe-top));
+        width: 116px;
+        height: 116px;
+    }
+}
+
+#view.turning {
+    animation: turning 280ms ease-out;
+}
+
+@keyframes turning {
+    from { opacity: 0.35; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #view.turning {
+        animation: none;
+    }
+}
+
+/* ── toast ────────────────────────────────────────────────────────────── */
+.toast {
+    position: absolute;
+    left: 50%;
+    top: calc(116px + var(--safe-top));
+    z-index: 30;
+    max-width: min(92vw, 460px);
+    transform: translate(-50%, -8px);
+    padding: 10px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 179, 71, 0.5);
+    background: var(--soot);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}

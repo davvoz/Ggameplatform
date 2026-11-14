@@ -1,12 +1,13 @@
-import { isMuted, play, setMode as setMusic, setMuted, unlock } from './audio.js';
-import { BattleMode } from './battle.js';
-import { CityMode } from './city.js';
-import { icon } from './icons.js';
-import { FrameWatch, detectPerf, perf } from './perf.js';
-import { connectPlatform, toggleFullscreen } from './platform.js';
-import { RankingPanel } from './ranking.js';
-import { Renderer } from './render.js';
-import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './sheets.js';
+import { isMuted, play, setMode as setMusic, setMuted, unlock } from './fx/audio.js';
+import { BattleMode } from './modes/battle/BattleMode.js';
+import { CityMode } from './modes/city/CityMode.js';
+import { icon } from './ui/icons.js';
+import { FrameWatch, detectPerf, perf } from './render/perf.js';
+import { connectPlatform } from './net/platform.js';
+import { toggleFullscreen } from './ui/fullscreen.js';
+import { RankingPanel } from './ui/ranking.js';
+import { Renderer } from './render/battlefield/Renderer.js';
+import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './ui/sheets.js';
 
 /**
  * App shell: the two full-screen modes (my city, attack), the ranking sheet,

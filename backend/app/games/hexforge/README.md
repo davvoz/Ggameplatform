@@ -10,6 +10,27 @@ hand-built test city and the client plays the replay.
 
 The game is not registered on the platform yet and gives no XP.
 
+## Code layout
+
+| Folder | What lives there | May import |
+| --- | --- | --- |
+| `js/core/` | Game logic: camera, iso maths, placement rules, replay, squad, leagues, heroes, forge, upgrades, fusion, defense tests, and the minigames' rules (`core/minigames/`). Pure, no DOM, no canvas, unit tested | `core/`, `data/` |
+| `js/data/` | Names, colours, descriptions (`labels.js`) | nothing |
+| `js/net/` | Server API and the platform bridge | `core/`, `data/` |
+| `js/render/` | Canvas drawing: the renderer, the art, thumbnails, the share card, performance mode | `core/`, `data/`, `render/` |
+| `js/fx/` | DOM animations and synthesised sound | anything but `modes/` |
+| `js/ui/` | Shared widgets: icons, sheets, hero tiles, pickers, ranking, raid log, compass, full screen | anything but `modes/` |
+| `js/ui/panels/` | The sheets' content (forge, heroes, fusion, upgrades, defense, rewards, merchant, rivals): layout and words; the rules they show come from `core/` | anything but `modes/` |
+| `js/minigames/` | Anvil, training, gremlins: screens and animation; their scoring lives in `core/minigames/` | anything but `modes/` |
+| `js/modes/` | The two screens, my city and the attack: they wire everything together | anything |
+| `js/modes/city/` | My city, split by concern: `CityMode.js` runs the mode (state, server calls, input, frame), `selection.js` the selected building and placing, `hud.js` level, XP, materials and the big cards, `sheets/` one class per sheet (forge, hero, fusion, upgrade, rewards, defense). Each part gets the `CityMode` as `city` and reaches the others through it | anything |
+| `js/modes/battle/` | The attack, split the same way: `BattleMode.js` runs the mode, `plan.js` the target and the plan, `squadPicker.js` the squad and the bonuses, `replayView.js` the replay and the result. Parts reach the mode as `mode` | anything |
+| `js/main.js` | Entry point: the shell, input on the map, the frame loop | anything |
+| `css/` | One stylesheet per area (base, map, controls, city, sheets, attack, battle, animations, wide screens, rewards, heroes, minigames, merchant, fusion, forge slot). `index.html` links them in this order and the order matters: later files override earlier ones | – |
+
+Logic never imports graphics: `core/`, `data/` and `net/` must stay free of
+DOM and canvas, so they can be tested in Node.
+
 ## Phase 2 (in progress): your own city
 
 Step 1 (done, API only): every signed-in player gets a saved starter city,
@@ -35,9 +56,9 @@ Signed-out players see a notice and can still use **Test battle**.
 | Path | What |
 | --- | --- |
 | `js/main.js` | Shell: tabs, input routing, frame loop |
-| `js/city.js` | My city: collect, select, move |
-| `js/battle.js` | Test battle: setup, replay, report |
-| `js/cityRules.js` | Client copy of the placement rules (preview only; the server decides) |
+| `js/modes/city/CityMode.js` | My city: collect, select, move |
+| `js/modes/battle/BattleMode.js` | Test battle: setup, replay, report |
+| `js/core/cityRules.js` | Client copy of the placement rules (preview only; the server decides) |
 
 Step 3 (done): **the forge**. Fixed recipes (`hexforge_be/forge.py`): exact
 cost, exact time, no randomness. Two jobs run at once; a finished job is
@@ -154,7 +175,7 @@ Phase 3 PvP is complete.
 
 Art direction chosen by the owner: **Forgia Infernale** (iron, basalt, molten
 metal, embers), over Neon Arcano and Ologramma Tattico. Step 1 (done): the
-city and the battles are drawn in it (`js/forgeArt.js`): a basalt plain, the core as a great forge with a molten pool, gothic
+city and the battles are drawn in it (`js/render/art/`): a basalt plain, the core as a great forge with a molten pool, gothic
 towers with braziers (amber fire, copper horns with arcs, ice crystals), each
 producer with its material's glow, armoured heroes with a class-coloured ring
 at their feet, fireballs, lightning, frost bursts, explosions and embers.
@@ -165,14 +186,14 @@ the same palette.
 Step 2 (done): **the interface**, made to feel like a mobile city-builder
 (the owner turned down a first side-panel version as "too much like a
 management tool"). The map fills the screen and can be dragged, pinched or
-wheel-zoomed (`js/camera.js`); it opens framed on the city, a little wider
+wheel-zoomed (`js/core/camera.js`); it opens framed on the city, a little wider
 than a tall phone so buildings read well. Over it float the player plate
 (name, trophies, league bar; tap for the ranking), the material pills, a big
 molten **Attack** button and round **Defense** and **Forge** buttons with
 badges. Tapping a building shows its name and round actions (Move, Aim,
 Dismantle) and slides the map so it stays in sight. Forge, Defense and
 Ranking are sheets rising from the bottom (a side panel on wide screens,
-`js/sheets.js`): the forge is a grid of picture cards; a claimed building
+`js/ui/sheets.js`): the forge is a grid of picture cards; a claimed building
 goes straight to placing. The attack plan shows the target full screen with
 arrows on the map edges for the entry side, a hero card per class (tap to
 add, − to remove), one-tap choices for target and formation and a Fight!
@@ -184,23 +205,23 @@ Chakra Petch for numbers (Google Fonts); icons are an inline SVG sprite.
 screenshots.
 
 Heroes, redone: each is drawn in profile with a pose (`drawHero` in
-`js/forgeArt.js`): walking legs, the Guardian's overhead hammer smash behind
+`js/render/art/heroes.js`): walking legs, the Guardian's overhead hammer smash behind
 a tower shield, the Neon Blade's twin dagger cuts with a glowing arc and a
 front flip over walls, the Technomancer's floating robe, staff and charged
 orb that throws a bolt. Blows are wound up before they land and followed
-through after (`poseOfBlow` in `js/replay.js`); heroes flash when hit,
+through after (`poseOfBlow` in `js/core/replay.js`); heroes flash when hit,
 topple when downed, face their target, and are nudged apart so they never
 stand inside each other (drawing only). On the server the Neon Blade now
 really **leaps**: a `leap` event (from, to, until) carries it over the walls
 in one arc, and no hero ever stops on top of a standing wall.
 
-The squad is picked hero by hero (`js/heroTiles.js`): each hero has its own
+The squad is picked hero by hero (`js/ui/heroTiles.js`): each hero has its own
 tile and name (Blade 1, Blade 2…) and shows whether it is ready, in the
 squad (lit, with a check) or hurt (greyed, a red cross, the time left and a
 ring that fills as it heals). Tapping a hurt hero or a full squad says why
 nothing happened. The forge's Heroes tab shows the same tiles.
 
-Animations (`js/fx.js`): collecting makes the material's gems burst out of
+Animations (`js/fx/fx.js`): collecting makes the material's gems burst out of
 the building and fly into their counter at the top, which bumps and counts
 up as they land; tapping a recipe sends its picture flying into the forge
 slot; claiming pops a "forged!" card with spinning rays (tap to skip), then
@@ -209,7 +230,7 @@ a building goes straight to placing. Reduced motion skips the trips.
 The result waits for the last heroes to finish falling, and a defeat says
 the core still stands.
 
-Sound (`js/audio.js`), all synthesised with Web Audio, no files: button
+Sound (`js/fx/audio.js`), all synthesised with Web Audio, no files: button
 clicks, sheets opening, the forge's anvil, collect chimes and one note per
 gem landing, the claim fanfare, placing and dismantling; in battle every
 log event has its sound (hammer, daggers, mage bolt, nova, leap, fireball,
@@ -221,7 +242,7 @@ finished tap (phones only allow that), pauses with the tab hidden, and the
 speaker button mutes it and remembers the choice.
 
 Every building and hero says what it is for in one short line
-(`what` in `js/labels.js`): on the forge cards, under the name of a tapped
+(`what` in `js/data/labels.js`): on the forge cards, under the name of a tapped
 building, and in a toast when a hero joins the squad. Hero tiles also carry
 a one- or two-word job (Tank, Leaps walls, Ranged).
 
@@ -229,7 +250,7 @@ The city view turns a quarter at a time (the round button under the
 speaker), so buildings hidden behind others come to the front; the turn is
 remembered on the device. The world never turns: the renderer lays
 everything out in turned "view" coordinates (`rotatePoint`, `rotateRect`,
-`rotateVector` in `js/iso.js`) and draws the art there unturned, and taps
+`rotateVector` in `js/core/iso.js`) and draws the art there unturned, and taps
 are turned back to world cells. Attacks and replays are always seen unturned.
 
 ## Phase 5 (in progress): progression
@@ -249,8 +270,8 @@ level with the XP bar under the name; every gain shows "+N XP", and a new
 level pops a card with its gifts and a fanfare. The battle result shows
 the XP earned and a reached level.
 
-Step 2, bonuses and rewards (`hexforge_be/rewards.py`, `js/rewardsPanel.js`,
-`js/bonusPicker.js`). Bonuses stay in an inventory until used: Hourglass
+Step 2, bonuses and rewards (`hexforge_be/rewards.py`, `js/ui/panels/rewardsPanel.js`,
+`js/ui/bonusPicker.js`). Bonuses stay in an inventory until used: Hourglass
 (−15 min) and Golden hourglass (−1 h) on a forge job, a hurt hero or the
 energy; Healing salve heals a hero at once; Energy flask gives a charge (never
 above the maximum). The Rewards button (badge = what waits to be claimed)
@@ -266,7 +287,7 @@ Days and weeks are UTC, weeks start on Monday. A running forge job shows
 bonus picker. Rewards pop a card with what was won (then a level-up card if
 their XP reached one).
 
-Step 3, hero evolution (`hexforge_be/evolution.py`, `js/heroPanel.js`).
+Step 3, hero evolution (`hexforge_be/evolution.py`, `js/ui/panels/heroPanel.js`).
 Every hero who fights earns its own XP (10, +1 per 100 damage up to 30, +5
 if it survived, +10 for a victory). At 150 XP it can evolve into one of two
 forms of its class; at 600 that form ascends:
@@ -319,12 +340,12 @@ section, XP and daily quests).
 | `backend/app/games/hexforge_be/economy.py` | Materials, lazy production (capped at 8 h), starter city, placement rules |
 | `backend/app/games/hexforge_be/player_service.py` | Load/save a player's state with a version check; collect, move |
 | `backend/app/games/hexforge_be/models.py` | `hexforge_players`: one row per player, city/heroes/materials as JSON |
-| `js/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
-| `js/render.js` | Isometric canvas renderer: ground, picking, overlays, battle effects, embers |
-| `js/forgeArt.js` | The "Forgia Infernale" art: every building and hero drawn from shapes (no image files) |
-| `js/battle.js` | Attack plan, replay controls, result |
-| `js/city.js` | My city: selection, placing, forge and defense sheets |
-| `js/camera.js` | Zoom and pan of the map (pure, tested) |
+| `js/core/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
+| `js/render/battlefield/` | Isometric canvas renderer: `Renderer.js` owns the camera, picking and the frame order; `ground.js` the tiles (cached in performance mode), `heroes.js`, `effects.js` (battle effects, embers) and `marks.js` (selection, reach, medallions, bars, labels) draw beside it. Parts reach it as `renderer` |
+| `js/render/art/` | The "Forgia Infernale" art, every building and hero drawn from shapes (no image files): `primitives.js` (materials, boxes, glows, colours), `buildings.js` with `upgradeArt.js` and `fusionArt.js` around them, `heroes.js` (pose, form, fusion) handing each hero to its class painter, `heroGear.js` for the pieces classes share |
+| `js/modes/battle/` | Attack plan, replay controls, result |
+| `js/modes/city/` | My city: selection, placing, forge and defense sheets |
+| `js/core/camera.js` | Zoom and pan of the map (pure, tested) |
 
 ## Run
 
@@ -412,7 +433,7 @@ difficulty curve (wins out of 36 plans: 36, 27, 25, 16, 6).
 
 ### While you wait: the anvil, the merchant, quicker early timers
 
-**The anvil** (`hexforge_be/anvil.py`, `js/anvil.js`): "Hammer" on a forge
+**The anvil** (`hexforge_be/anvil.py`, `js/minigames/anvil.js`): "Hammer" on a forge
 job opens a little timing game, 5 strikes on a swinging marker. Perfect takes
 2 % of the job's time off, good 0.8 %; 3 rounds per job (30 % at most); five
 perfect strikes may leave an Hourglass. `POST /api/hexforge/me/forge/{id}/hammer`
@@ -428,7 +449,7 @@ at 70 % of its forge cost), each bought once, new at midnight UTC.
 
 ### Fusion: three maxed into one
 
-`hexforge_be/fusion.py`, `js/fusionPanel.js`, `js/fusionArt.js`. Buildings whose
+`hexforge_be/fusion.py`, `js/ui/panels/fusionPanel.js`, `js/render/art/fusionArt.js`. Buildings whose
 type is at level 5 (towers, mines, walls; a trap only as a donor; never the
 Core or the Vault) and ascended heroes (tier 3) fuse three at a time, of any
 kind. The player picks the **base**: it keeps its body (type, size, place,

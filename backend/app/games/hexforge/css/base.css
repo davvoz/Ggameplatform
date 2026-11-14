@@ -1,0 +1,85 @@
+/*
+ * Hexforge, "Forgia Infernale" interface.
+ * The map fills the screen like in any city-builder: the interface floats
+ * over it. Round forged-iron buttons in the corners, plates for names and
+ * numbers, molten gold for what you act on, and sheets that rise from the
+ * bottom (a side panel on wide screens) for the forge, the defense and the
+ * ranking. Gothic type for names, a technical face for numbers.
+ */
+:root {
+    --bg: #0b0706;
+    --iron-hi: #3a2b21;
+    --iron: #251b15;
+    --iron-lo: #140d0a;
+    --soot: rgba(16, 9, 6, 0.88);
+    --edge: #6b4526;
+    --brass: #c8853a;
+    --text: #fff3e0;
+    --muted: #c9b29a;
+    --gold: #ffb347;
+    --gold-hi: #ffd27a;
+    --ember: #ff5a2a;
+    --molten: linear-gradient(180deg, #ffcf6a 0%, #ff7a1a 50%, #b8380c 100%);
+    --good: #4dd98a;
+    --bad: #ff5a4a;
+    --display: "Grenze Gotisch", "Palatino Linotype", Georgia, serif;
+    --ui: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    color-scheme: dark;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 15px;
+    line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+html [hidden][hidden] {
+    display: none;
+}
+
+button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: default;
+}
+
+button:focus-visible {
+    outline: 2px solid var(--gold-hi);
+    outline-offset: 2px;
+}
+
+.sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.icon {
+    width: 1.25em;
+    height: 1.25em;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { frontierOf, isAvailable, launchBlocker, settleSquad, toggleHero } from '../js/squad.js';
+import { frontierOf, isAvailable, launchBlocker, settleSquad, toggleHero } from '../js/core/squad.js';
 
 const NOW = 1000;
 const heroes = [

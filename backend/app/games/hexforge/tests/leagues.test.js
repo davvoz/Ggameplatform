@@ -1,20 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { progressText, rankText, signed, stakesText } from '../js/leagues.js';
+import { leagueProgress, rivalBlocker } from '../js/core/leagues.js';
 
-test('trophy changes read with their sign', () => {
-    assert.equal(signed(30), '+30');
-    assert.equal(signed(-20), '−20');
-    assert.equal(signed(0), '0');
+const rival = { name: 'Raider BOB', available: true };
+
+test('the league bar fills from the floor of the league to the next one', () => {
+    assert.equal(leagueProgress(200, 'Silver', { name: 'Gold', at: 500 }), 0);
+    assert.equal(leagueProgress(350, 'Silver', { name: 'Gold', at: 500 }), 0.5);
+    assert.equal(leagueProgress(2500, 'Mythic', null), 1);
 });
 
-test('the next league and the rank read as sentences', () => {
-    assert.equal(progressText({ trophies: 140, next_league: { name: 'Silver', at: 200 } }), 'Silver at 200 · 60 to go');
-    assert.equal(progressText({ trophies: 2400, next_league: null }), 'Top league reached.');
-    assert.equal(rankText({ rank: 3 }), 'Rank #3');
-    assert.match(rankText({ rank: null }), /Not ranked yet/);
-});
-
-test('a rival card says what the raid is worth', () => {
-    assert.equal(stakesText({ win: 40, loss: 10 }), 'Win +40 · lose −10 trophies');
+test('a rival can be attacked only from the arena, once scouted and unshielded', () => {
+    assert.equal(rivalBlocker({ arena: false }, rival), 'Clear Scrap Hollow to enter the arena');
+    assert.equal(rivalBlocker({ arena: true }, null), 'Find a rival first');
+    assert.equal(rivalBlocker({ arena: true }, { ...rival, available: false }), 'This rival is shielded now. Find another');
+    assert.equal(rivalBlocker({ arena: true }, rival), null);
 });

@@ -1,13 +1,33 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { EFFECT_TICKS, createReplay, poseOfBlow, separate } from '../js/replay.js';
+import { EFFECT_TICKS, createReplay, poseOfBlow, separate } from '../js/core/replay.js';
 
-// A real battle produced by the server simulation (south, production, spread).
-// Regenerate it after changing the simulation:
-//   see "Test fixture" in the README.
 const battle = JSON.parse(readFileSync(new URL('./fixtures/battle.json', import.meta.url), 'utf8'));
 const replay = createReplay(battle);
+
+test('a ward soaks hits in the replay, a mending hero heals from the frames', () => {
+    const battle = {
+        frame_stride: 2, ticks: 6, tick_rate: 10,
+        city: { buildings: [] },
+        squad: [
+            { id: 0, cls: 'guardian', hp: 100, barrier: 30, items: [{ type: 'ward_sigil', level: 1 }] },
+            { id: 1, cls: 'neon_blade', hp: 100, barrier: 0, items: [{ type: 'mending_rune', level: 1 }] },
+        ],
+        frames: [[[0, 0, 100], [0, 0, 100]], [[0, 0, 100], [0, 0, 80]], [[0, 0, 95], [0, 0, 85]], [[0, 0, 95], [0, 0, 90]]],
+        events: [
+            { t: 2, type: 'shot', hero: 0, building: 9, dmg: 0, hp: 100, soaked: 20 },
+            { t: 2, type: 'shot', hero: 1, building: 9, dmg: 20, hp: 80 },
+            { t: 4, type: 'shot', hero: 0, building: 9, dmg: 5, hp: 95, soaked: 10 },
+        ],
+    };
+    const replay = createReplay(battle);
+    assert.equal(replay.stateAt(3).heroes[0].shield, 10);
+    assert.equal(replay.stateAt(5).heroes[0].shield, 0);
+    assert.equal(replay.stateAt(2).heroes[1].hp, 80);
+    assert.equal(replay.stateAt(6).heroes[1].hp, 90);
+    assert.equal(replay.stateAt(6).heroes[1].mending, true);
+});
 
 test('the first moment puts every hero on its spawn point', () => {
     const state = replay.stateAt(0);

@@ -1,0 +1,480 @@
+/* ── sheets ───────────────────────────────────────────────────────────── */
+.backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: rgba(9, 5, 4, 0.6);
+}
+
+/* on a phone a sheet takes the whole screen; on wide screens it is a side panel */
+.sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 21;
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--safe-top);
+    background: linear-gradient(#24170f, #120b07 220px);
+    box-shadow: 0 -10px 30px #000, inset 0 1px 0 rgba(255, 217, 160, 0.33);
+    animation: rise 0.22s ease-out;
+}
+
+@keyframes rise {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+}
+
+.sheet-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px 8px;
+    position: relative;
+}
+
+.sheet-head > .icon {
+    width: 30px;
+    height: 30px;
+    color: var(--gold);
+}
+
+.sheet-head h2 {
+    flex: 1;
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 32px;
+    line-height: 1;
+    color: var(--gold-hi);
+    text-shadow: 0 0 12px rgba(255, 122, 26, 0.55);
+}
+
+.sheet-body {
+    overflow-y: auto;
+    padding: 6px 16px calc(20px + var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    user-select: text;
+}
+
+.panel {
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid var(--edge);
+    background: linear-gradient(#2c1d13, #160e09);
+}
+
+.panel h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: var(--gold-hi);
+}
+
+.tip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255, 179, 71, 0.1);
+    border: 1px dashed rgba(255, 179, 71, 0.45);
+    font-size: 13px;
+}
+
+.tip .icon {
+    color: var(--gold);
+}
+
+/* forge */
+.forge-slots {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.forge-slot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 76px;
+    padding: 8px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background: #1a100a;
+}
+
+.forge-slot.empty {
+    justify-content: center;
+    border-style: dashed;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+.forge-slot.ready {
+    border: 2px solid var(--gold);
+    background: radial-gradient(circle at 25% 50%, rgba(255, 138, 42, 0.3), #1a100a 70%);
+    box-shadow: 0 0 16px rgba(255, 138, 42, 0.45);
+}
+
+.slot-ring {
+    --done: 0%;
+    width: 58px;
+    height: 58px;
+    flex: none;
+    border-radius: 50%;
+    background: conic-gradient(var(--gold) 0 var(--done), rgba(255, 255, 255, 0.1) var(--done) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slot-ring img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #1a100a;
+}
+
+.slot-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.slot-text small {
+    color: var(--gold-hi);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.recipe {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 8px;
+    border-radius: 14px;
+    border: 1px solid var(--edge);
+    background: linear-gradient(#2c1d13, #160e09);
+    box-shadow: inset 0 1px 0 rgba(255, 217, 160, 0.2), 0 4px 10px rgba(0, 0, 0, 0.65);
+    text-align: center;
+}
+
+.recipe:hover:not(:disabled) {
+    border-color: var(--gold);
+}
+
+.recipe:disabled {
+    opacity: 0.6;
+}
+
+.recipe:disabled img {
+    filter: grayscale(0.7);
+}
+
+.recipe .ped {
+    width: 100%;
+    height: 84px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 85%, rgba(255, 138, 42, 0.33), rgba(255, 138, 42, 0) 65%);
+}
+
+.recipe img {
+    width: 84px;
+    height: 84px;
+}
+
+.recipe-name {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.recipe-time {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #e8d3b8;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.recipe-time .icon {
+    width: 12px;
+    height: 12px;
+}
+
+.recipe-what {
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--text);
+    opacity: 0.85;
+}
+
+.recipe-foot {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.recipe-foot.blocked {
+    color: #ff9a8a;
+    font-weight: 700;
+}
+
+.roster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.roster-total {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+/* defense */
+.defense-report {
+    margin-top: 10px;
+}
+
+.defense-score {
+    margin: 0 0 6px;
+    font-size: 15px;
+}
+
+.defense-stage {
+    margin: 0 0 4px;
+    font-family: var(--display);
+    font-size: 17px;
+    color: var(--gold-hi);
+}
+
+.stage-note {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.stage-note.advanced {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 211, 107, 0.6);
+    background: rgba(255, 211, 107, 0.12);
+    color: #ffe2a0;
+    font-weight: 700;
+}
+
+.stage-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.stage-picker small {
+    color: var(--muted);
+    margin-right: 2px;
+}
+
+.stage-chip {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 999px;
+    border: 1px solid var(--edge);
+    background: #2a1d14;
+    color: var(--text);
+    font-weight: 700;
+}
+
+.stage-chip[aria-pressed="true"] {
+    border-color: var(--gold-hi);
+    background: color-mix(in srgb, var(--gold-hi) 25%, #2a1d14);
+    color: var(--gold-hi);
+}
+
+.defense-score b {
+    font-family: var(--display);
+    font-size: 26px;
+    color: var(--gold-hi);
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.stats dt {
+    color: var(--muted);
+}
+
+.stats dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.raid-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.raid-hero {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: #120a06;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.raid-log {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.raid {
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--edge);
+    background: #1a100a;
+}
+
+.raid.breached {
+    border-color: rgba(255, 90, 74, 0.6);
+}
+
+.raid.held {
+    border-color: rgba(77, 217, 138, 0.5);
+}
+
+.raid.unseen {
+    box-shadow: 0 0 14px rgba(255, 90, 42, 0.5);
+}
+
+.raid-head {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+}
+
+.raid-head span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.raid-outcome {
+    margin: 2px 0;
+    font-size: 13px;
+}
+
+.loot-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 4px 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+/* ranking */
+.ranking-me {
+    padding: 14px;
+    border-radius: 16px;
+    border: 2px solid var(--accent, var(--brass));
+    background: linear-gradient(#2c1d13, #160e09);
+    text-align: center;
+}
+
+.ranking-trophies {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 34px;
+    color: var(--gold-hi);
+}
+
+.ranking-league {
+    margin: 0;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.ranking-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ranking-list li {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #1a100a;
+    border-left: 3px solid var(--accent);
+}
+
+.ranking-list li.me {
+    background: rgba(255, 179, 71, 0.16);
+}
+
+.ranking-list .rank {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.ranking-list .score {
+    font-weight: 700;
+    color: var(--gold-hi);
+}

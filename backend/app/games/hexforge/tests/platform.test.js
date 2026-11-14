@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { attackReport } from '../js/platform.js';
+import { attackReport } from '../js/net/platform.js';
 
 test('an attack reports its destruction as the score and counts for the quests', () => {
     const summary = { victory: true, core_destroyed: true, destruction: 87, heroes: [{ survived: true }, { survived: false }] };

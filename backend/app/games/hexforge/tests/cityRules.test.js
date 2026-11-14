@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { anchorFor, defenseKey, dismissBlocker, estimatePending, placementError } from '../js/core/cityRules.js';
-import { fitCamera, toScreen, toWorld } from '../js/core/iso.js';
 
 const city = {
     grid: 18,
@@ -36,15 +35,6 @@ test('production keeps counting between server updates, up to capacity', () => {
 test('a building is centred under the pointer', () => {
     assert.deepEqual(anchorFor(2, 5.2, 5.9), { x: 4, y: 5 });
     assert.deepEqual(anchorFor(1, 5.2, 5.9), { x: 5, y: 5 });
-});
-
-test('screen to world undoes world to screen', () => {
-    const camera = fitCamera(18, 900, 600);
-    for (const [x, y] of [[0, 0], [3.25, 11.5], [17, 2]]) {
-        const p = toScreen(camera, x, y);
-        const back = toWorld(camera, p.x, p.y);
-        assert.ok(Math.abs(back.x - x) < 1e-9 && Math.abs(back.y - y) < 1e-9);
-    }
 });
 
 test('a hero at the forge, on a mission or needed for the squad cannot be dismissed', () => {

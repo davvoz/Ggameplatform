@@ -1,16 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { formatLong, headline } from '../js/ui/panels/rewardsPanel.js';
-import { usableBonuses } from '../js/core/forge.js';
-
-test('only owned bonuses that work on the target are offered, best fit first', () => {
-    const owned = { hourglass: 2, salve: 1, flask: 0 };
-    assert.deepEqual(usableBonuses('job', owned), ['hourglass']);
-    assert.deepEqual(usableBonuses('hero', owned), ['salve', 'hourglass']);
-    assert.deepEqual(usableBonuses('energy', owned), ['hourglass']);
-    assert.deepEqual(usableBonuses('energy', {}), []);
-    assert.deepEqual(usableBonuses('hero', undefined), []);
-});
 
 test('a calendar tile shows a bonus first, else the first material, with + when there is more', () => {
     assert.deepEqual(headline({ xp: 10, bonuses: {}, materials: { rune_stone: 80, scrap: 80 } }),

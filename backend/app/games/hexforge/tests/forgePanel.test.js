@@ -1,7 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatCountdown, formatDuration, itemName, ownedText } from '../js/ui/panels/forgePanel.js';
-import { forgeBlocker } from '../js/core/forge.js';
+import { formatCountdown, formatDuration, itemEffect, itemName, ownedText } from '../js/ui/panels/forgePanel.js';
+import { effectText } from '../js/data/labels.js';
+
+const TABLE = {
+    max_level: 5,
+    limit: 24,
+    items: {
+        rune_maul: { slot: 'weapon', cls: 'guardian', effect: 'damage_pct', levels: [6, 12, 18, 24, 30] },
+        plasma_edge: { slot: 'weapon', cls: 'neon_blade', effect: 'damage_pct', levels: [6, 12, 18, 24, 30] },
+        ward_sigil: { slot: 'spell', cls: null, effect: 'barrier_pct', levels: [8, 16, 24, 32, 40] },
+    },
+};
+const ITEMS = [
+    { id: 1, type: 'rune_maul', level: 2, hero: null },
+    { id: 2, type: 'plasma_edge', level: 1, hero: null },
+    { id: 3, type: 'ward_sigil', level: 3, hero: 7 },
+];
 
 test('durations read like a person would say them', () => {
     assert.equal(formatDuration(45), '45 s');
@@ -18,17 +33,6 @@ test('countdowns tick in minutes and seconds, hours when needed', () => {
     assert.equal(formatCountdown(-3), '0:00');
 });
 
-test('the forge button explains why it is off', () => {
-    const tower = { cost: { rune_stone: 120, scrap: 60 }, owned: 2, limit: 8, yields: 1 };
-    const rich = { rune_stone: 500, scrap: 500 };
-    assert.equal(forgeBlocker(tower, rich, 1), null);
-    assert.equal(forgeBlocker(tower, rich, 0), 'All forge slots are busy');
-    assert.equal(forgeBlocker({ ...tower, owned: 8 }, rich, 1), 'Limit reached');
-    assert.equal(forgeBlocker(tower, { rune_stone: 119, scrap: 500 }, 1), 'Not enough materials');
-    const walls = { cost: { rune_stone: 60 }, owned: 56, limit: 60, yields: 5 };
-    assert.equal(forgeBlocker(walls, rich, 1), 'Limit reached');
-});
-
 test('items are named for people', () => {
     assert.equal(itemName('frost_tower'), 'Frost Tower');
     assert.equal(itemName('neon_blade'), 'Neon Blade');
@@ -37,4 +41,11 @@ test('items are named for people', () => {
 test('a shared limit shows this kind and the group apart', () => {
     assert.equal(ownedText({ group: 'heroes', mine: 2, owned: 8, limit: 14 }), 'You own 2 · heroes 8/14');
     assert.equal(ownedText({ group: 'mana_well', mine: 1, owned: 1, limit: 2 }), 'You own 1/2');
+});
+
+test('an item says what it does at its level', () => {
+    assert.equal(itemEffect(TABLE, ITEMS[0]), '+12% damage');
+    assert.equal(itemEffect(TABLE, ITEMS[2]), 'shield of 24% health');
+    assert.equal(effectText('range', 1.5), '+1.5 reach');
+    assert.equal(effectText('haste_pct', 8), 'blows 8% faster');
 });

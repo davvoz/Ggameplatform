@@ -1,5 +1,5 @@
 import { formatCountdown } from './panels/forgePanel.js';
-import { signed } from '../core/leagues.js';
+import { signed } from '../data/labels.js';
 import { materialChips } from './panels/rivalPanel.js';
 
 /** "Raids on your city" in the My city panel: who attacked, what it cost, replay and revenge. */

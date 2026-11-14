@@ -1,5 +1,5 @@
 import { SignInRequired, fetchLeaderboard } from '../net/api.js';
-import { LEAGUE_COLORS, progressText, rankText } from '../core/leagues.js';
+import { LEAGUE_COLORS, progressText, rankText } from '../data/labels.js';
 import { openSheet } from './sheets.js';
 
 /** The ranking sheet: your trophies and league, and the best players. */

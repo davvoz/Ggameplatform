@@ -1,8 +1,7 @@
 import { play } from '../../fx/audio.js';
 import { forgeSlotPop, rewardPop } from '../../fx/fx.js';
 import { icon } from '../../ui/icons.js';
-import { MATERIAL_INFO } from '../../data/labels.js';
-import { LEAGUE_COLORS } from '../../core/leagues.js';
+import { LEAGUE_COLORS, MATERIAL_INFO } from '../../data/labels.js';
 import { $, bump } from './shared.js';
 
 function bumpOnce(el) {

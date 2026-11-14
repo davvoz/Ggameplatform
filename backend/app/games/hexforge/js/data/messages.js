@@ -57,3 +57,22 @@ export const MESSAGES = {
     cannot_train: 'That hero does not fight, so it does not train.',
     gremlins_away: 'The gremlins are gone for now: they come back in a few hours.',
 };
+
+export const REFUSALS = {
+    no_energy: 'No energy left. A charge comes back every hour.',
+    hero_injured: 'One of your heroes is still injured.',
+    outpost_locked: 'Beat the previous outpost first.',
+    outpost_cleared: 'You already took that outpost: on to the next one.',
+    item_in_use: 'Another hero carries that item: take it off there first.',
+    wrong_class: 'That weapon is for another class.',
+    bad_squad: 'Pick 4 different heroes.',
+    arena_locked: 'Clear Scrap Hollow to enter the arena.',
+    no_rival: 'Find a rival first.',
+    rival_unavailable: 'That rival just got a shield. Find another one.',
+    state_changed_retry: 'Your city changed meanwhile. Try again.',
+    no_bonus: 'You have none of those left.',
+    nothing_to_speed_up: 'Nothing to speed up there.',
+    energy_full: 'Your energy is already full.',
+    hero_evolving: 'One of your heroes is evolving at the forge.',
+    explorer_cannot_fight: 'The Explorer never fights.',
+};

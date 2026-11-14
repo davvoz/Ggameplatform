@@ -1,5 +1,5 @@
 import { isMuted, play, setMode as setMusic, setMuted, unlock } from './fx/audio.js';
-import { BattleMode } from './modes/battle.js';
+import { BattleMode } from './modes/battle/BattleMode.js';
 import { CityMode } from './modes/city/CityMode.js';
 import { icon } from './ui/icons.js';
 import { FrameWatch, detectPerf, perf } from './render/perf.js';

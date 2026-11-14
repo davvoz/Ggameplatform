@@ -24,6 +24,7 @@ The game is not registered on the platform yet and gives no XP.
 | `js/minigames/` | Anvil, training, gremlins | anything but `modes/` |
 | `js/modes/` | The two screens, my city and the attack: they wire everything together | anything |
 | `js/modes/city/` | My city, split by concern: `CityMode.js` runs the mode (state, server calls, input, frame), `selection.js` the selected building and placing, `hud.js` level, XP, materials and the big cards, `sheets/` one class per sheet (forge, hero, fusion, upgrade, rewards, defense). Each part gets the `CityMode` as `city` and reaches the others through it | anything |
+| `js/modes/battle/` | The attack, split the same way: `BattleMode.js` runs the mode, `plan.js` the target and the plan, `squadPicker.js` the squad and the bonuses, `replayView.js` the replay and the result. Parts reach the mode as `mode` | anything |
 | `js/main.js` | Entry point: the shell, input on the map, the frame loop | anything |
 
 Logic never imports graphics: `core/`, `data/` and `net/` must stay free of
@@ -55,7 +56,7 @@ Signed-out players see a notice and can still use **Test battle**.
 | --- | --- |
 | `js/main.js` | Shell: tabs, input routing, frame loop |
 | `js/modes/city/CityMode.js` | My city: collect, select, move |
-| `js/modes/battle.js` | Test battle: setup, replay, report |
+| `js/modes/battle/BattleMode.js` | Test battle: setup, replay, report |
 | `js/core/cityRules.js` | Client copy of the placement rules (preview only; the server decides) |
 
 Step 3 (done): **the forge**. Fixed recipes (`hexforge_be/forge.py`): exact
@@ -341,7 +342,7 @@ section, XP and daily quests).
 | `js/core/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
 | `js/render/render.js` | Isometric canvas renderer: ground, picking, overlays, battle effects, embers |
 | `js/render/forgeArt.js` | The "Forgia Infernale" art: every building and hero drawn from shapes (no image files) |
-| `js/modes/battle.js` | Attack plan, replay controls, result |
+| `js/modes/battle/` | Attack plan, replay controls, result |
 | `js/modes/city/` | My city: selection, placing, forge and defense sheets |
 | `js/core/camera.js` | Zoom and pan of the map (pure, tested) |
 

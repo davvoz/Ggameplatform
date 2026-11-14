@@ -1,8 +1,17 @@
 {
-  "version": "5.22.3",
-  "timestamp": "2026-11-12T14:42:16.652Z",
-  "buildNumber": 623,
+  "version": "5.22.4",
+  "timestamp": "2026-11-14T13:03:57.685Z",
+  "buildNumber": 624,
   "changelog": [
+    {
+      "version": "5.22.4",
+      "date": "2026-11-14",
+      "type": "patch",
+      "changes": [
+        "fix:[H] implement performance mode with adaptive rendering and frame monitoring",
+        "🔖 Bump version to 5.22.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.22.3",
       "date": "2026-11-12",
@@ -88,15 +97,6 @@
       "changes": [
         "fix: clear the three SonarCloud CSS blockers",
         "🔖 Bump version to 5.18.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.18.3",
-      "date": "2026-11-09",
-      "type": "patch",
-      "changes": [
-        "fix: use the path check SonarCloud recognises in the backup scripts",
-        "🔖 Bump version to 5.18.2 [skip-version]"
       ]
     }
   ]

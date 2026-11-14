@@ -1,8 +1,20 @@
 {
-  "version": "5.22.5",
-  "timestamp": "2026-11-14T13:45:52.604Z",
-  "buildNumber": 625,
+  "version": "5.22.6",
+  "timestamp": "2026-11-14T15:19:26.162Z",
+  "buildNumber": 626,
   "changelog": [
+    {
+      "version": "5.22.6",
+      "date": "2026-11-14",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'refactor/hexforge-layout': Hexforge split into role folders, smaller modules, rules in core, CSS by area",
+        "refactor:[H] split the Hexforge stylesheet by area",
+        "refactor:[H] drop the unused fused-hero styles",
+        "refactor:[H] tidy Hexforge: league wording to data, tests by module, drop the gallery",
+        "refactor:[H] move Hexforge game rules out of the panels into core"
+      ]
+    },
     {
       "version": "5.22.5",
       "date": "2026-11-14",
@@ -86,18 +98,6 @@
       "changes": [
         "feat: full-screen player for games that fit any shape; Hexforge uses it",
         "🔖 Bump version to 5.19.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.19.0",
-      "date": "2026-11-11",
-      "type": "minor",
-      "changes": [
-        "Merge branch 'feat/hexforge-battle-prototype': Hexforge",
-        "feat: Hexforge fusion, anvil, merchant, and the Fun section",
-        "feat: Hexforge building upgrades, hero dismissal, tower reach",
-        "feat: Hexforge phase 5 steps 4-5, hero items and the Explorer",
-        "feat: Hexforge phase 5 step 3, hero evolution"
       ]
     }
   ]

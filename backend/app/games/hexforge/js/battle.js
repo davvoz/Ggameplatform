@@ -35,7 +35,7 @@ import { heroThumb, thumbImg } from './thumbs.js';
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'hexforge.attack';
 const DEFAULT_SETUP = { mode: 'outposts', side: 'south', priority: 'core', tactic: 'compact', outpost: 1, heroIds: [] };
-const MODES = ['outposts', 'rivals'];
+const MODES = new Set(['outposts', 'rivals']);
 const SIDES = ['north', 'east', 'south', 'west'];
 const EMPTY_CITY = { grid: 18, buildings: [] };
 const SPEEDS = [1, 2, 4];
@@ -188,7 +188,7 @@ export class BattleMode {
         const chosen = data.outposts.find((o) => o.id === this.setup.outpost);
         if (!chosen || chosen.cleared || !chosen.unlocked) this.setup.outpost = frontierOf(data.outposts);
         this.setup.heroIds = settleSquad(this.setup.heroIds, data.heroes, this.#serverNow());
-        if (!MODES.includes(this.setup.mode)) this.setup.mode = 'outposts';
+        if (!MODES.has(this.setup.mode)) this.setup.mode = 'outposts';
         this.#setTarget();
         this.#renderSetup();
     }
@@ -338,7 +338,8 @@ export class BattleMode {
         plate.replaceChildren();
         const world = this.data.world;
         const name = paragraph('target-name', o.name);
-        const sub = paragraph('target-sub', `World ${o.world}${world ? `/${world.total}` : ''} · `);
+        const worlds = world ? `/${world.total}` : '';
+        const sub = paragraph('target-sub', `World ${o.world}${worlds} · `);
         sub.append(Object.assign(document.createElement('span'), { className: 'pips', textContent: '◆'.repeat(o.stage) + '◇'.repeat(5 - o.stage) }));
         if (!o.unlocked) sub.append(' · ', icon('lock'), ' locked');
         else if (o.cleared) sub.append(' · ', icon('check'), ' taken');
@@ -795,12 +796,13 @@ export class BattleMode {
             const gain = rewards?.hero_xp?.[i];
             const chip = heroChip(hero, `${hero.dealt} dmg`, gain);
             chip.classList.toggle('down', !hero.survived);
-            chip.title = `${chipName(hero)}: dealt ${hero.dealt}, took ${hero.taken}${hero.survived ? '' : ', down'}`
-                + (gain ? `, +${gain.xp} XP${gain.ready ? ', can evolve' : ''}` : '');
+            chip.title = chipTitle(hero, gain);
             report.append(chip);
         });
-        const gotLoot = loot.childElementCount > 0;
-        $('btn-new').firstElementChild.textContent = defense ? 'Back to my city' : (gotLoot ? 'Collect' : 'Continue');
+        let onward = 'Continue';
+        if (defense) onward = 'Back to my city';
+        else if (loot.childElementCount > 0) onward = 'Collect';
+        $('btn-new').firstElementChild.textContent = onward;
         this.#show('result');
         void this.#reportToPlatform();
     }
@@ -841,6 +843,17 @@ function verdictText(defense, won) {
 
 function chipName(hero) {
     return (hero.tier ?? 1) > 1 ? FORM_INFO[hero.form].name : HERO_INFO[hero.cls].name;
+}
+
+/** The report chip's tooltip: what the hero dealt and took, whether it fell, the XP it earned. */
+function chipTitle(hero, gain) {
+    let title = `${chipName(hero)}: dealt ${hero.dealt}, took ${hero.taken}`;
+    if (!hero.survived) title += ', down';
+    if (gain) {
+        title += `, +${gain.xp} XP`;
+        if (gain.ready) title += ', can evolve';
+    }
+    return title;
 }
 
 /** A hero of the fight (`{cls, form, tier}`): portrait, health bar, a caption, and the XP it earned. */

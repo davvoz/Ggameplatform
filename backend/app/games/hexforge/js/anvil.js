@@ -57,6 +57,10 @@ function el(tag, className, text) {
     return node;
 }
 
+function wait(ms) {
+    return new Promise((done) => setTimeout(done, ms));
+}
+
 function removeLater(node, ms) {
     setTimeout(() => node.remove(), ms);
 }
@@ -251,18 +255,20 @@ export function openAnvil({ title, picture = null, roundsLeft, left = 0, full = 
             live = false;
             onStrikeKey = null;
             $('.anvil-strike').disabled = true;
-            setTimeout(() => {
-                if (over) return;
-                stopGame();
-                showBanner('DONE!', 'time');
-                play('slam');
-                setTimeout(() => {
-                    const perfect = results.filter((r) => r === 'perfect').length;
-                    const good = results.filter((r) => r === 'good').length;
-                    resolve({ perfect, good });
-                    result(perfect, good);
-                }, 1000);
-            }, 350);
+            void endRound();
+        };
+        /** The last blow has landed: DONE!, then the score and the result screen. */
+        const endRound = async () => {
+            await wait(350);
+            if (over) return;
+            stopGame();
+            showBanner('DONE!', 'time');
+            play('slam');
+            await wait(1000);
+            const perfect = results.filter((r) => r === 'perfect').length;
+            const good = results.filter((r) => r === 'good').length;
+            resolve({ perfect, good });
+            result(perfect, good);
         };
         $('.av-play').addEventListener('pointerdown', (event) => {
             event.preventDefault();

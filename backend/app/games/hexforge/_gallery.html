@@ -12,8 +12,8 @@ ctx.font = 'bold 18px sans-serif';
   ctx.fillStyle = '#ffe2b8'; ctx.textAlign = 'left'; ctx.fillText(label, 14, y0 + 26);
   heroes.forEach((h, i) => {
     const x = 120 + i * 190;
-    drawHero(ctx, h, x, y0 + 250, 2.9, HERO_INFO[h.cls].color, 1.2, { facing: 1 });
-    drawHero(ctx, h, x + 72, y0 + 270, 1.2, HERO_INFO[h.cls].color, 1.2, { facing: 1, walking: true });
+    drawHero(ctx, h, { x, y: y0 + 250, s: 2.9, color: HERO_INFO[h.cls].color, time: 1.2, pose: { facing: 1 } });
+    drawHero(ctx, h, { x: x + 72, y: y0 + 270, s: 1.2, color: HERO_INFO[h.cls].color, time: 1.2, pose: { facing: 1, walking: true } });
   });
 });
 ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#c8b89a';

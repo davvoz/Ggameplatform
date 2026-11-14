@@ -171,7 +171,8 @@ export function renderRecipes(container, recipes, materials, freeSlots, kind, on
         const what = el('span', 'recipe-what', itemWhat(recipe.id));
         card.append(time, ped, name, what, costChips(recipe.cost, materials), foot);
         card.disabled = Boolean(blocker);
-        card.setAttribute('aria-label', `Forge ${itemName(recipe.id)}${blocker ? `: ${blocker}` : ''}`);
+        const why = blocker ? `: ${blocker}` : '';
+        card.setAttribute('aria-label', `Forge ${itemName(recipe.id)}${why}`);
         card.addEventListener('click', () => onForge(recipe.id));
         container.append(card);
     }
@@ -236,7 +237,7 @@ export function renderArmoury(container, { items, table, heroNameOf, materials, 
     }
     const list = el('div', 'armoury');
     const upgrading = new Set(jobs.filter((j) => j.recipe === 'upgrade').map((j) => j.item));
-    for (const item of [...items].sort((a, b) => (a.type < b.type ? -1 : a.type > b.type ? 1 : b.level - a.level))) {
+    for (const item of [...items].sort(byTypeThenLevel)) {
         const info = ITEM_INFO[item.type];
         const row = el('div', 'armoury-item');
         row.style.setProperty('--accent', info.color);
@@ -254,7 +255,10 @@ export function renderArmoury(container, { items, table, heroNameOf, materials, 
             const button = withIcon(el('button', 'button small'), 'anvil', `Lv ${item.level + 1}`);
             button.type = 'button';
             button.disabled = short || freeSlots <= 0;
-            button.title = short ? 'Not enough materials' : freeSlots <= 0 ? 'All forge slots are busy' : `Upgrade to level ${item.level + 1}`;
+            let title = `Upgrade to level ${item.level + 1}`;
+            if (short) title = 'Not enough materials';
+            else if (freeSlots <= 0) title = 'All forge slots are busy';
+            button.title = title;
             button.addEventListener('click', () => onUpgrade(item.id));
             const price = el('span', 'armoury-price');
             price.append(costChips(next.cost, materials), withIcon(el('span', 'evolve-time'), 'clock', formatDuration(next.seconds)));
@@ -264,4 +268,10 @@ export function renderArmoury(container, { items, table, heroNameOf, materials, 
         list.append(row);
     }
     container.append(list);
+}
+
+/** Armoury order: by item type, then the highest level first. */
+function byTypeThenLevel(a, b) {
+    if (a.type !== b.type) return a.type < b.type ? -1 : 1;
+    return b.level - a.level;
 }

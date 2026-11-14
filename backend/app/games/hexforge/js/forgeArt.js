@@ -21,7 +21,11 @@ const COPPER = { top: '#6b4630', left: '#45291b', right: '#321d13' };
 const EDGE = '#0b0705';
 
 // ── primitives ──────────────────────────────────────────────────────────
-export function prism(ctx, cam, x, y, w, d, z0, h, mat, edge = EDGE) {
+/**
+ * An iso box: footprint x, y, w (along x), d (along y) in cells, from height
+ * z0 up by h (unscaled px), faces in `mat` {top, left, right}, outlined in `edge`.
+ */
+export function prism(ctx, cam, { x, y, w, d, z0, h, mat, edge = EDGE }) {
     const P = (px, py, pz) => toScreen(cam, px, py, pz);
     const faces = [
         [mat.left, [P(x, y + d, z0), P(x + w, y + d, z0), P(x + w, y + d, z0 + h), P(x, y + d, z0 + h)]],
@@ -147,7 +151,7 @@ function haloSprite(ctx, x, y, radius, color, strength) {
 }
 
 /** A glowing seam across the two front faces of a box at height z. */
-export function seam(ctx, cam, x, y, w, d, z, color, width = 1.6) {
+export function seam(ctx, cam, { x, y, w, d, z, color, width = 1.6 }) {
     const a = toScreen(cam, x, y + d, z);
     const b = toScreen(cam, x + w, y + d, z);
     const c = toScreen(cam, x + w, y, z);
@@ -225,9 +229,9 @@ const PAINTERS = {
     core(ctx, cam, b, { time, health }) {
         const s = cam.scale;
         const { x, y } = b;
-        prism(ctx, cam, x + 0.12, y + 0.12, 2.76, 2.76, 0, 22, IRON);
-        seam(ctx, cam, x + 0.12, y + 0.12, 2.76, 2.76, 9, withAlpha('#ff7a1a', 0.55 + 0.35 * health));
-        prism(ctx, cam, x + 0.45, y + 0.45, 2.1, 2.1, 22, 14, IRON);
+        prism(ctx, cam, { x: x + 0.12, y: y + 0.12, w: 2.76, d: 2.76, z0: 0, h: 22, mat: IRON });
+        seam(ctx, cam, { x: x + 0.12, y: y + 0.12, w: 2.76, d: 2.76, z: 9, color: withAlpha('#ff7a1a', 0.55 + 0.35 * health) });
+        prism(ctx, cam, { x: x + 0.45, y: y + 0.45, w: 2.1, d: 2.1, z0: 22, h: 14, mat: IRON });
         // the molten pool
         const pool = [[0.75, 0.75], [2.25, 0.75], [2.25, 2.25], [0.75, 2.25]].map(([dx, dy]) => toScreen(cam, x + dx, y + dy, 36.5));
         const c = toScreen(cam, x + 1.5, y + 1.5, 36.5);
@@ -241,11 +245,11 @@ const PAINTERS = {
         ctx.fill();
         halo(ctx, c.x, c.y - 6 * s, (60 + 12 * pulse) * s, '#ff7a1a', 0.5 + 0.5 * health);
         // the anvil standing in the pool
-        prism(ctx, cam, x + 1.3, y + 1.35, 0.4, 0.3, 36.5, 5, IRON);
-        prism(ctx, cam, x + 1.12, y + 1.28, 0.76, 0.44, 41.5, 4, { top: '#6b5a4c', left: '#3d3129', right: '#2d241e' });
+        prism(ctx, cam, { x: x + 1.3, y: y + 1.35, w: 0.4, d: 0.3, z0: 36.5, h: 5, mat: IRON });
+        prism(ctx, cam, { x: x + 1.12, y: y + 1.28, w: 0.76, d: 0.44, z0: 41.5, h: 4, mat: { top: '#6b5a4c', left: '#3d3129', right: '#2d241e' } });
         // chimneys on the side corners, clear of the pool
         for (const [dx, dy, seed] of [[0.2, 2.38, 0], [2.38, 0.2, 0.37]]) {
-            prism(ctx, cam, x + dx, y + dy, 0.42, 0.42, 22, 56, IRON);
+            prism(ctx, cam, { x: x + dx, y: y + dy, w: 0.42, d: 0.42, z0: 22, h: 56, mat: IRON });
             const top = toScreen(cam, x + dx + 0.21, y + dy + 0.21, 80);
             halo(ctx, top.x, top.y, 12 * s, '#ff7a1a', 0.6);
             smoke(ctx, top, time, seed, s);
@@ -254,9 +258,9 @@ const PAINTERS = {
 
     wall(ctx, cam, b) {
         const { x, y } = b;
-        prism(ctx, cam, x + 0.04, y + 0.04, 0.92, 0.92, 0, 18, BASALT);
+        prism(ctx, cam, { x: x + 0.04, y: y + 0.04, w: 0.92, d: 0.92, z0: 0, h: 18, mat: BASALT });
         for (const [mx, my] of [[0.04, 0.04], [0.56, 0.04], [0.04, 0.56], [0.56, 0.56]]) {
-            prism(ctx, cam, x + mx, y + my, 0.4, 0.4, 18, 8, { top: '#4a4440', left: '#2d2926', right: '#211e1c' });
+            prism(ctx, cam, { x: x + mx, y: y + my, w: 0.4, d: 0.4, z0: 18, h: 8, mat: { top: '#4a4440', left: '#2d2926', right: '#211e1c' } });
         }
     },
 
@@ -315,10 +319,10 @@ const PAINTERS = {
     rune_quarry(ctx, cam, b, { time }) {
         const s = cam.scale;
         const { x, y } = b;
-        prism(ctx, cam, x + 0.1, y + 0.1, 1.8, 1.8, 0, 6, BASALT);
+        prism(ctx, cam, { x: x + 0.1, y: y + 0.1, w: 1.8, d: 1.8, z0: 0, h: 6, mat: BASALT });
         const stone = { top: '#6d655d', left: '#433d38', right: '#322d29' };
         for (const [dx, dy, w, h] of [[0.3, 0.35, 0.55, 14], [1.0, 0.3, 0.45, 10], [0.4, 1.05, 0.5, 12]]) {
-            prism(ctx, cam, x + dx, y + dy, w, w, 6, h, stone);
+            prism(ctx, cam, { x: x + dx, y: y + dy, w, d: w, z0: 6, h, mat: stone });
             const glint = toScreen(cam, x + dx + w / 2, y + dy + w / 2, 6 + h + 1);
             halo(ctx, glint.x, glint.y, 7 * s, '#ffb547', 0.6 + 0.4 * Math.sin(time * 3 + dx * 7));
             gem(ctx, glint, 2.6 * s, '#ffe3a6', '#ff9a1f');
@@ -344,8 +348,8 @@ const PAINTERS = {
     scrap_foundry(ctx, cam, b, { time }) {
         const s = cam.scale;
         const { x, y } = b;
-        prism(ctx, cam, x + 0.2, y + 0.25, 1.5, 1.5, 0, 30, IRON);
-        seam(ctx, cam, x + 0.2, y + 0.25, 1.5, 1.5, 24, withAlpha('#ff7a3d', 0.7));
+        prism(ctx, cam, { x: x + 0.2, y: y + 0.25, w: 1.5, d: 1.5, z0: 0, h: 30, mat: IRON });
+        seam(ctx, cam, { x: x + 0.2, y: y + 0.25, w: 1.5, d: 1.5, z: 24, color: withAlpha('#ff7a3d', 0.7) });
         // furnace mouth on the front-left face
         const mouth = onWall(cam, 'left', x + 0.95, y + 1.75);
         const m = mouth(0, 6);
@@ -357,7 +361,7 @@ const PAINTERS = {
         ctx.fill();
         ctx.restore();
         halo(ctx, m.x, m.y, 26 * s * flick, '#ff7a3d', 0.7);
-        prism(ctx, cam, x + 1.25, y + 0.35, 0.38, 0.38, 30, 34, IRON);
+        prism(ctx, cam, { x: x + 1.25, y: y + 0.35, w: 0.38, d: 0.38, z0: 30, h: 34, mat: IRON });
         const top = toScreen(cam, x + 1.44, y + 0.54, 64);
         halo(ctx, top.x, top.y, 10 * s, '#ff7a3d', 0.6);
         smoke(ctx, top, time, b.id * 0.13, s);
@@ -366,7 +370,7 @@ const PAINTERS = {
     mana_well(ctx, cam, b, { time }) {
         const s = cam.scale;
         const { x, y } = b;
-        prism(ctx, cam, x + 0.2, y + 0.2, 1.6, 1.6, 0, 14, BASALT);
+        prism(ctx, cam, { x: x + 0.2, y: y + 0.2, w: 1.6, d: 1.6, z0: 0, h: 14, mat: BASALT });
         const c = toScreen(cam, x + 1, y + 1, 14.5);
         const rx = 26 * s;
         ctx.save();
@@ -401,8 +405,8 @@ const PAINTERS = {
     data_node(ctx, cam, b, { time }) {
         const s = cam.scale;
         const { x, y } = b;
-        prism(ctx, cam, x + 0.25, y + 0.25, 1.5, 1.5, 0, 8, BASALT);
-        prism(ctx, cam, x + 0.55, y + 0.55, 0.9, 0.9, 8, 38, { top: '#2f3a33', left: '#1b231e', right: '#131915' });
+        prism(ctx, cam, { x: x + 0.25, y: y + 0.25, w: 1.5, d: 1.5, z0: 0, h: 8, mat: BASALT });
+        prism(ctx, cam, { x: x + 0.55, y: y + 0.55, w: 0.9, d: 0.9, z0: 8, h: 38, mat: { top: '#2f3a33', left: '#1b231e', right: '#131915' } });
         // rune lights on the two front faces
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 3; col++) {
@@ -424,9 +428,9 @@ const PAINTERS = {
     vault(ctx, cam, b, { time }) {
         const s = cam.scale;
         const { x, y } = b;
-        prism(ctx, cam, x + 0.2, y + 0.2, 1.6, 1.6, 0, 28, IRON);
-        for (const z of [8, 20]) seam(ctx, cam, x + 0.2, y + 0.2, 1.6, 1.6, z, '#ffd75e', 1.2);
-        prism(ctx, cam, x + 0.35, y + 0.35, 1.3, 1.3, 28, 6, { top: '#6a5638', left: '#45371f', right: '#342916' });
+        prism(ctx, cam, { x: x + 0.2, y: y + 0.2, w: 1.6, d: 1.6, z0: 0, h: 28, mat: IRON });
+        for (const z of [8, 20]) seam(ctx, cam, { x: x + 0.2, y: y + 0.2, w: 1.6, d: 1.6, z, color: '#ffd75e', width: 1.2 });
+        prism(ctx, cam, { x: x + 0.35, y: y + 0.35, w: 1.3, d: 1.3, z0: 28, h: 6, mat: { top: '#6a5638', left: '#45371f', right: '#342916' } });
         const door = onWall(cam, 'left', x + 1, y + 1.8);
         ctx.save();
         ctx.strokeStyle = '#ffd75e';
@@ -449,9 +453,12 @@ const PAINTERS = {
 function towerBody(ctx, cam, b, shaftMat, rune, { time, firing }) {
     const s = cam.scale;
     const { x, y } = b;
-    prism(ctx, cam, x + 0.22, y + 0.22, 1.56, 1.56, 0, 12, BASALT);
-    prism(ctx, cam, x + 0.5, y + 0.5, 1.0, 1.0, 12, 44, shaftMat);
-    seam(ctx, cam, x + 0.5, y + 0.5, 1.0, 1.0, 34, withAlpha(rune, 0.6 + 0.4 * Math.max(firing, 0.5 + 0.5 * Math.sin(time * 2 + b.id))));
+    prism(ctx, cam, { x: x + 0.22, y: y + 0.22, w: 1.56, d: 1.56, z0: 0, h: 12, mat: BASALT });
+    prism(ctx, cam, { x: x + 0.5, y: y + 0.5, w: 1.0, d: 1.0, z0: 12, h: 44, mat: shaftMat });
+    seam(ctx, cam, {
+        x: x + 0.5, y: y + 0.5, w: 1.0, d: 1.0, z: 34,
+        color: withAlpha(rune, 0.6 + 0.4 * Math.max(firing, 0.5 + 0.5 * Math.sin(time * 2 + b.id))),
+    });
     // arrow-slit window on the front face
     ctx.save();
     softGlow(ctx, rune, 8 * s);
@@ -460,9 +467,9 @@ function towerBody(ctx, cam, b, shaftMat, rune, { time, firing }) {
     ctx.fill();
     ctx.restore();
     // crenellated crown
-    prism(ctx, cam, x + 0.38, y + 0.38, 1.24, 1.24, 56, 6, shaftMat);
+    prism(ctx, cam, { x: x + 0.38, y: y + 0.38, w: 1.24, d: 1.24, z0: 56, h: 6, mat: shaftMat });
     for (const [mx, my] of [[0.38, 0.38], [1.36, 0.38], [0.38, 1.36], [1.36, 1.36]]) {
-        prism(ctx, cam, x + mx, y + my, 0.26, 0.26, 62, 6, shaftMat);
+        prism(ctx, cam, { x: x + mx, y: y + my, w: 0.26, d: 0.26, z0: 62, h: 6, mat: shaftMat });
     }
 }
 
@@ -499,7 +506,7 @@ export function drawRubble(ctx, cam, b, time) {
     for (let i = 0; i < n; i++) {
         const dx = 0.2 + hash(b.id * 7 + i) * (b.size - 0.6);
         const dy = 0.2 + hash(b.id * 13 + i) * (b.size - 0.6);
-        prism(ctx, cam, b.x + dx, b.y + dy, 0.28, 0.24, 0, 4 + hash(i + b.id) * 6, stone);
+        prism(ctx, cam, { x: b.x + dx, y: b.y + dy, w: 0.28, d: 0.24, z0: 0, h: 4 + hash(i + b.id) * 6, mat: stone });
     }
     const c = toScreen(cam, b.x + b.size / 2, b.y + b.size / 2, 4);
     halo(ctx, c.x, c.y, 18 * s * b.size, '#ff5a00', 0.25 + 0.15 * Math.sin(time * 2 + b.id));
@@ -517,50 +524,97 @@ export function drawRubble(ctx, cam, b, time) {
  * gear in the form's accent colour; an ascended one is a little taller
  * and burns with an aura.
  */
-export function drawHero(ctx, hero, x, y, s, color, time, pose = {}) {
-    const facing = (pose.facing ?? hero.facing ?? 1) < 0 ? -1 : 1;
+export function drawHero(ctx, hero, { x, y, s, color, time, pose = {} }) {
+    const p = heroLook(hero, color, time, pose);
+    const fusion = heroFusion(hero, pose, p.accent);
+    if (fusion) p.marks = fusion.marks;
+    ctx.save();
+    placeHero(ctx, hero, { x, y, s, pose });
+    if (p.tier > 1) ctx.scale(1 + 0.05 * (p.tier - 1), 1 + 0.05 * (p.tier - 1));
+    if (fusion) {
+        ctx.scale(fusion.grow, fusion.grow);
+        fusionUnder(ctx, hero, fusion, p.t);
+    }
+    if (p.tier === 3) halo(ctx, 0, -24, 34, p.accent, 0.4 + 0.12 * Math.sin(p.t * 3));
+    paintHero(ctx, hero.cls, color, p);
+    if (fusion) fusionOver(ctx, hero, fusion, p.t);
+    ctx.restore();
+}
+
+/** What the class painters need: animation clocks, the pose, the evolved form and its accent. */
+function heroLook(hero, color, time, pose) {
+    const id = hero.id ?? 0;
     const tier = hero.form ? (hero.tier ?? 1) : 1;
-    const p = {
-        t: time + (hero.id ?? 0) * 0.37,
-        walk: pose.walking ? time * WALK_RATE[hero.cls] + (hero.id ?? 0) : null,
+    const evolved = tier > 1;
+    return {
+        t: time + id * 0.37,
+        walk: pose.walking ? time * WALK_RATE[hero.cls] + id : null,
         attack: pose.attack ?? null,
         nova: Boolean(pose.nova),
         leap: pose.leap ?? null,
-        form: tier > 1 ? hero.form : null,
+        form: evolved ? hero.form : null,
         tier,
-        accent: tier > 1 ? FORM_INFO[hero.form]?.accent ?? color : color,
+        accent: evolved ? FORM_INFO[hero.form]?.accent ?? color : color,
         marks: [],
     };
-    ctx.save();
+}
+
+/** Moves the canvas to the hero's feet, facing its way; a falling hero fades and topples backwards. */
+function placeHero(ctx, hero, { x, y, s, pose }) {
+    const facing = (pose.facing ?? hero.facing ?? 1) < 0 ? -1 : 1;
     ctx.translate(x, y);
     ctx.scale(facing * s, s);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     if (pose.down !== undefined && pose.down !== null) {
         ctx.globalAlpha *= Math.max(0, 1 - pose.down);
-        ctx.rotate(-Math.min(1, pose.down * 3) * Math.PI / 2);   // topples backwards
+        ctx.rotate(-Math.min(1, pose.down * 3) * Math.PI / 2);
     }
-    const fused = hero.fusion?.length > 0 && pose.down == null;
+}
+
+/**
+ * How a fused hero is dressed, or null (not fused, or falling). `style`
+ * comes from the fusion gallery's switch: 'current', 'one' or 'forged'.
+ */
+function heroFusion(hero, pose, accent) {
+    if (!hero.fusion?.length || pose.down != null) return null;
     const style = globalThis.__fusionStyle ?? 'current';
     const grade = hero.grade ?? 1;
-    const donors = fused ? hero.fusion.slice(1).filter((part) => FORM_INFO[part.form]) : [];
+    const donors = hero.fusion.slice(1).filter((part) => FORM_INFO[part.form]);
     const colors = donors.map((d) => FORM_INFO[d.form].accent);
-    if (fused && style === 'current') p.marks = donors.map((d) => d.form);
-    if (fused && style === 'one' && donors.length) p.marks = [donors.reduce((a, b) => (b.power > a.power ? b : a)).form];
-    if (tier > 1) ctx.scale(1 + 0.05 * (tier - 1), 1 + 0.05 * (tier - 1));
-    if (fused) {
-        const grow = style === 'current' ? 1.08 : 1.04 + 0.05 * Math.min(grade, 4);
-        ctx.scale(grow, grow);
+    return {
+        style,
+        grade,
+        tint: colors.length ? colors : [accent],
+        pip: colors[0] ?? accent,
+        marks: fusionMarks(style, donors),
+        grow: style === 'current' ? 1.08 : 1.04 + 0.05 * Math.min(grade, 4),
+    };
+}
+
+/** The donor marks the body carries: every donor, only the strongest, or none. */
+function fusionMarks(style, donors) {
+    if (style === 'current') return donors.map((d) => d.form);
+    if (style === 'one' && donors.length) return [donors.reduce((a, b) => (b.power > a.power ? b : a)).form];
+    return [];
+}
+
+function fusionUnder(ctx, hero, fusion, t) {
+    if (fusion.style === 'current') {
+        drawHeroFusionUnder(ctx, hero.fusion, t);
+        return;
     }
-    if (fused && style === 'current') drawHeroFusionUnder(ctx, hero.fusion, p.t);
-    if (fused && style !== 'current') cleanRing(ctx, colors.length ? colors : [p.accent], p.t);
-    if (fused && style === 'forged') auraFlames(ctx, colors.length ? colors : [p.accent], p.t, grade);
-    if (tier === 3) halo(ctx, 0, -24, 34, p.accent, 0.4 + 0.12 * Math.sin(p.t * 3));
-    paintHero(ctx, hero.cls, color, p);
-    if (fused && style === 'forged') veins(ctx, colors.length ? colors : [p.accent], p.t);
-    if (fused && style === 'current') drawHeroFusionOver(ctx, hero.fusion, grade, p.t);
-    if (fused && style !== 'current') gradePips(ctx, grade, colors[0] ?? p.accent);
-    ctx.restore();
+    cleanRing(ctx, fusion.tint, t);
+    if (fusion.style === 'forged') auraFlames(ctx, fusion.tint, t, fusion.grade);
+}
+
+function fusionOver(ctx, hero, fusion, t) {
+    if (fusion.style === 'current') {
+        drawHeroFusionOver(ctx, hero.fusion, fusion.grade, t);
+        return;
+    }
+    if (fusion.style === 'forged') veins(ctx, fusion.tint, t);
+    gradePips(ctx, fusion.grade, fusion.pip);
 }
 
 /** A thin glowing ring at the feet, half in each donor's colour. */
@@ -899,23 +953,46 @@ function shield(ctx, color, push, size = 1, trim = '#d9a441') {
 }
 
 // ── Neon Blade: hooded assassin, twin energy daggers ───────────────────
+const BLADE_DARK = '#1d1418';
+
 function blade(ctx, color, p) {
     const running = p.walk !== null;
     const step = running ? Math.sin(p.walk) : 0;
-    const push = lunge(p.attack) * 7;
-    ctx.translate(push, running ? -Math.abs(Math.cos(p.walk)) * 1.5 : 0);
+    bladeStance(ctx, p, running);
+    const tuck = p.leap === null ? 1 : 0.55;
+    bladeCloak(ctx, color, p, running);
+
+    leg(ctx, -1, -13, 13 * tuck, -step * 0.9, BLADE_DARK, 3.6);
+    const reach = p.form === 'reaper' ? 1.35 + 0.15 * (p.tier - 2) : 1;
+    const edge = p.form === 'reaper' ? p.accent : color;
+    dagger(ctx, edge, swing(p.attack, 0.9, -1.6, 2.1) - 0.5, { x: -2, y: -26 }, reach);
+    // slim body
+    ctx.fillStyle = '#2b1f27';
+    path(ctx, [{ x: -5, y: -13 }, { x: -4, y: -29 }, { x: 4, y: -29 }, { x: 5, y: -13 }]);
+    ctx.fill();
+    ctx.fillStyle = color;
+    path(ctx, [{ x: -1, y: -28 }, { x: 2, y: -28 }, { x: 3, y: -14 }, { x: -2, y: -14 }]);
+    ctx.fill();
+    leg(ctx, 1, -13, 13 * tuck, step * 0.9, '#2b1f27', 3.6);
+    bladeHood(ctx, color, p);
+    dagger(ctx, edge, swing(p.attack, 1.2, -1.2, 2.4), { x: 2, y: -26 }, reach);
+    if (p.attack !== null && p.attack > -0.35 && p.attack < 0.8) slash(ctx, edge, p.attack);
+}
+
+/** Lunging into a blow, bobbing and leaning while running, or a tucked front flip over a wall. */
+function bladeStance(ctx, p, running) {
+    ctx.translate(lunge(p.attack) * 7, running ? -Math.abs(Math.cos(p.walk)) * 1.5 : 0);
     if (p.leap !== null) {
-        // a front flip over the wall, tucked
         ctx.translate(0, -16);
         ctx.rotate(p.leap * Math.PI * 2);
         ctx.translate(0, 16);
     } else if (running) {
-        ctx.rotate(0.22);                         // leaning into the run
+        ctx.rotate(0.22);
     }
-    const tuck = p.leap === null ? 1 : 0.55;
-    const dark = '#1d1418';
+}
 
-    // scarf and cloak streaming behind
+/** Scarf and cloak streaming behind (and the Phantom's ribbon and wings). */
+function bladeCloak(ctx, color, p, running) {
     const wave = Math.sin(p.t * (running ? 14 : 4));
     backMarks(ctx, p);
     if (p.tier === 3 && p.form === 'phantom') wings(ctx, p.accent, p.t);
@@ -936,20 +1013,10 @@ function blade(ctx, color, p) {
     ctx.moveTo(-1, -29);
     ctx.quadraticCurveTo(-9, -31 + wave * 2, -16, -27 - wave * 2);
     ctx.stroke();
+}
 
-    leg(ctx, -1, -13, 13 * tuck, -step * 0.9, dark, 3.6);
-    const reach = p.form === 'reaper' ? 1.35 + 0.15 * (p.tier - 2) : 1;
-    const edge = p.form === 'reaper' ? p.accent : color;
-    dagger(ctx, edge, swing(p.attack, 0.9, -1.6, 2.1) - 0.5, { x: -2, y: -26 }, reach);
-    // slim body
-    ctx.fillStyle = '#2b1f27';
-    path(ctx, [{ x: -5, y: -13 }, { x: -4, y: -29 }, { x: 4, y: -29 }, { x: 5, y: -13 }]);
-    ctx.fill();
-    ctx.fillStyle = color;
-    path(ctx, [{ x: -1, y: -28 }, { x: 2, y: -28 }, { x: 3, y: -14 }, { x: -2, y: -14 }]);
-    ctx.fill();
-    leg(ctx, 1, -13, 13 * tuck, step * 0.9, '#2b1f27', 3.6);
-    // hood with burning eyes
+/** Hood with burning eyes (the ascended Reaper grows horns). */
+function bladeHood(ctx, color, p) {
     ctx.fillStyle = shade(color, 0.6);
     ctx.beginPath();
     ctx.moveTo(-5, -28);
@@ -957,7 +1024,7 @@ function blade(ctx, color, p) {
     ctx.quadraticCurveTo(7, -38, 5, -28);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = dark;
+    ctx.fillStyle = BLADE_DARK;
     ctx.beginPath();
     ctx.ellipse(2.5, -33, 3, 3.6, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -965,8 +1032,6 @@ function blade(ctx, color, p) {
     ctx.fillRect(2.5, -34, 2.6, 1.3);
     if (p.tier === 3 && p.form === 'reaper') horns(ctx, p.accent, 0, -40);
     headMarks(ctx, p, 0, -40);
-    dagger(ctx, edge, swing(p.attack, 1.2, -1.2, 2.4), { x: 2, y: -26 }, reach);
-    if (p.attack !== null && p.attack > -0.35 && p.attack < 0.8) slash(ctx, edge, p.attack);
 }
 
 /** Two thin wings of light (the ascended Phantom). */

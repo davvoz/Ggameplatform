@@ -2,7 +2,7 @@ import { costChips, formatDuration, itemEffect } from './forgePanel.js';
 import { nextStars, stars, tripBar, tripLeft } from './heroTiles.js';
 import { partName } from './fusionPanel.js';
 import { icon, withIcon } from './icons.js';
-import { BONUS_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES } from './labels.js';
+import { BONUS_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES, times } from './labels.js';
 import { heroPortrait, heroThumb, itemPicture, thumbImg } from './thumbs.js';
 
 /**
@@ -141,7 +141,7 @@ export function renderHeroCard(container, data, actions) {
 
 /** "Hourglass ×1 · Salve ×1" */
 export function giftText(gift) {
-    return Object.entries(gift).map(([b, n]) => `${BONUS_INFO[b].name}${n > 1 ? ` ×${n}` : ''}`).join(' · ');
+    return Object.entries(gift).map(([b, n]) => BONUS_INFO[b].name + times(n)).join(' · ');
 }
 
 /** Letting the hero go: what it leaves, why not now, and a second tap to be sure. */
@@ -188,9 +188,13 @@ function heroHead(hero, name) {
     const who = el('div', 'hero-who');
     const fused = hero.fusion
         ? `Fusion ${'◆'.repeat(hero.fusion.grade)}: ${hero.fusion.parts.map(partName).join(' + ')}` : null;
-    who.append(el('b', 'hero-name', name),
-        el('span', 'hero-form', hero.cls === 'explorer' ? info.role : `${form ? form.name : info.name} ${stars(tier)} · ${fused ? 'Fused' : TIER_NAMES[tier]}`),
-        el('small', 'hero-what', fused ?? (form ? form.what : info.what)));
+    let formLine = info.role;
+    if (hero.cls !== 'explorer') {
+        const formName = form ? form.name : info.name;
+        formLine = `${formName} ${stars(tier)} · ${fused ? 'Fused' : TIER_NAMES[tier]}`;
+    }
+    const what = form ? form.what : info.what;
+    who.append(el('b', 'hero-name', name), el('span', 'hero-form', formLine), el('small', 'hero-what', fused ?? what));
     head.append(art, who);
     return head;
 }
@@ -222,23 +226,8 @@ function renderHeroBody(container, {
         return;
     }
 
-    // XP
     const next = tier + 1;
-    const xp = hero.xp ?? 0;
-    const xpBox = el('div', 'hero-xp');
-    if (next <= 3) {
-        const need = table.tier_xp[String(next)];
-        const meter = el('span', 'xp-meter wide');
-        const fill = el('span');
-        fill.style.width = `${Math.min(100, Math.round((100 * xp) / need))}%`;
-        meter.append(fill);
-        xpBox.append(el('small', '', `${Math.min(xp, need)} / ${need} XP to ${next === 2 ? 'evolve' : 'ascend'}`), meter);
-    } else if (training) {
-        xpBox.append(...masteryLine(hero, training));
-    } else {
-        xpBox.append(el('small', '', `${xp} XP · fully ascended`));
-    }
-    container.append(xpBox);
+    container.append(xpBox(hero, table, training));
     if (training) container.append(trainBox(hero, training, serverNow, onTrain));
 
     // stats: as it fights now (items included), else from the table
@@ -250,15 +239,41 @@ function renderHeroBody(container, {
 
     // evolution
     if (hero.evolving) {
-        const left = job ? job.ready_at - serverNow : 0;
-        const tip = el('p', 'tip');
-        const doing = hero.fusing ? 'fusing' : tier + 1 === 3 ? 'ascending' : 'evolving';
-        tip.append(icon('anvil'), `At the forge: ${doing}, ready in ${formatDuration(left)}. An hourglass speeds it up.`);
-        container.append(tip);
+        container.append(forgeTip(hero, job, serverNow));
         return;
     }
     if (next > 3) return;
     container.append(evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats, shown, form, onPick, onEvolve }));
+}
+
+/** XP towards the next tier; at the top, mastery (or just the XP when there is no training). */
+function xpBox(hero, table, training) {
+    const next = (hero.tier ?? 1) + 1;
+    const xp = hero.xp ?? 0;
+    const box = el('div', 'hero-xp');
+    if (next <= 3) {
+        const need = table.tier_xp[String(next)];
+        const meter = el('span', 'xp-meter wide');
+        const fill = el('span');
+        fill.style.width = `${Math.min(100, Math.round((100 * xp) / need))}%`;
+        meter.append(fill);
+        box.append(el('small', '', `${Math.min(xp, need)} / ${need} XP to ${next === 2 ? 'evolve' : 'ascend'}`), meter);
+    } else if (training) {
+        box.append(...masteryLine(hero, training));
+    } else {
+        box.append(el('small', '', `${xp} XP · fully ascended`));
+    }
+    return box;
+}
+
+/** A hero at the forge: what it is becoming and when it is ready. */
+function forgeTip(hero, job, serverNow) {
+    const left = job ? job.ready_at - serverNow : 0;
+    const tip = el('p', 'tip');
+    let doing = (hero.tier ?? 1) + 1 === 3 ? 'ascending' : 'evolving';
+    if (hero.fusing) doing = 'fusing';
+    tip.append(icon('anvil'), `At the forge: ${doing}, ready in ${formatDuration(left)}. An hourglass speeds it up.`);
+    return tip;
 }
 
 /** A top-tier hero's mastery: its level, what it adds, and the bar inside the level. */
@@ -270,9 +285,7 @@ export function masteryOf(points, { perLevel, levels, bonus }) {
 
 function masteryLine(hero, training) {
     const m = masteryOf(hero.mastery ?? 0, training);
-    const text = m.maxed
-        ? `Mastery ${m.level} · the top: +${m.pct}% health and damage`
-        : `Mastery ${m.level}${m.level ? ` · +${m.pct}% health and damage` : ''} · ${m.into} / ${training.perLevel} to the next`;
+    const text = masteryText(m, training.perLevel);
     const meter = el('span', 'xp-meter wide mastery');
     const fill = el('span');
     fill.style.width = `${Math.round((100 * m.into) / training.perLevel)}%`;
@@ -356,33 +369,36 @@ function missionBox(hero, missions, gear, itemTable, serverNow, onExplore, onRet
 }
 
 function gearBox(gear, itemTable, onGear) {
-    {
-        const box = el('div', 'gear');
-        for (const [slot, label] of [['weapon', 'Weapon'], ['spell', 'Spell']]) {
-            const item = gear[slot];
-            const cell = el(onGear ? 'button' : 'div', `gear-slot${item ? '' : ' empty'}${onGear ? '' : ' still'}`);
-            if (onGear) cell.type = 'button';
-            if (item) {
-                const info = ITEM_INFO[item.type];
-                cell.style.setProperty('--accent', info.color);
-                const text = el('span', 'gear-text');
-                text.append(el('small', '', label), el('b', '', `${info.name} · Lv ${item.level}`),
-                    el('small', 'gear-effect', itemEffect(itemTable, item)));
-                cell.append(thumbImg(itemPicture(item.type, 44), '', ''), text);
-                if (onGear) cell.setAttribute('aria-label', `${label}: ${info.name}, level ${item.level}. Tap to change`);
-            } else {
-                const plus = el('span', 'gear-plus');
-                plus.append(icon('plus'));
-                const text = el('span', 'gear-text');
-                text.append(el('small', '', label), el('b', '', 'Empty'),
-                    el('small', 'gear-effect', onGear ? 'Tap to equip' : 'Equip it from its card in the Forge'));
-                cell.append(plus, text);
-            }
-            if (onGear) cell.addEventListener('click', () => onGear(slot));
-            box.append(cell);
-        }
-        return box;
+    const box = el('div', 'gear');
+    for (const [slot, label] of [['weapon', 'Weapon'], ['spell', 'Spell']]) {
+        box.append(gearSlot(slot, label, gear[slot], itemTable, onGear));
     }
+    return box;
+}
+
+/** One gear slot: the item and what it does, or an empty slot; a button when `onGear` can change it. */
+function gearSlot(slot, label, item, itemTable, onGear) {
+    const empty = item ? '' : ' empty';
+    const still = onGear ? '' : ' still';
+    const cell = el(onGear ? 'button' : 'div', `gear-slot${empty}${still}`);
+    if (onGear) cell.type = 'button';
+    const text = el('span', 'gear-text');
+    if (item) {
+        const info = ITEM_INFO[item.type];
+        cell.style.setProperty('--accent', info.color);
+        text.append(el('small', '', label), el('b', '', `${info.name} · Lv ${item.level}`),
+            el('small', 'gear-effect', itemEffect(itemTable, item)));
+        cell.append(thumbImg(itemPicture(item.type, 44), '', ''), text);
+        if (onGear) cell.setAttribute('aria-label', `${label}: ${info.name}, level ${item.level}. Tap to change`);
+    } else {
+        const plus = el('span', 'gear-plus');
+        plus.append(icon('plus'));
+        text.append(el('small', '', label), el('b', '', 'Empty'),
+            el('small', 'gear-effect', onGear ? 'Tap to equip' : 'Equip it from its card in the Forge'));
+        cell.append(plus, text);
+    }
+    if (onGear) cell.addEventListener('click', () => onGear(slot));
+    return cell;
 }
 
 function evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats, shown, form, onPick, onEvolve }) {
@@ -434,3 +450,10 @@ function evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats
     return section;
 }
 
+
+/** The mastery line: the level, its bonus and the way to the next one. */
+function masteryText(m, perLevel) {
+    if (m.maxed) return `Mastery ${m.level} · the top: +${m.pct}% health and damage`;
+    const bonus = m.level ? ` · +${m.pct}% health and damage` : '';
+    return `Mastery ${m.level}${bonus} · ${m.into} / ${perLevel} to the next`;
+}

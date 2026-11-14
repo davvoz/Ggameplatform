@@ -84,7 +84,9 @@ export function fusionBlocker({ kind, picked, cost, materials, freeSlots, fighte
 /** A part in words: "Lightning Tower ×1.2". */
 export function partName(part) {
     const name = BUILDING_INFO[part.type]?.name ?? HERO_INFO[part.type]?.name ?? part.type;
-    const style = part.path ? PATH_INFO[part.path]?.name : part.form ? FORM_INFO[part.form]?.name : null;
+    let style = null;
+    if (part.path) style = PATH_INFO[part.path]?.name;
+    else if (part.form) style = FORM_INFO[part.form]?.name;
     return `${style && HERO_INFO[part.type] ? style : name} ×${Math.round(part.power * 100) / 100}`;
 }
 
@@ -143,77 +145,70 @@ function gradeText(grade) {
 }
 
 export function renderFusionCard(container, view, { onToggle, onFuse }) {
-    const { kind, base, candidates, picked, preview, materials, freeSlots, fighters, table, names, busy } = view;
+    const { kind, base, candidates, picked, names, busy } = view;
     container.replaceChildren();
     const grade = gradeOf(base);
-    const accent = kind === 'building' ? BUILDING_INFO[base.type].glow : HERO_INFO[base.cls].color;
-
-    const head = el('div', 'hero-head');
-    head.style.setProperty('--accent', accent);
-    const art = el('span', 'hero-art');
-    art.append(thumbImg(pictureOf(kind, base, 104), '', ''));
-    const who = el('div', 'hero-who');
-    who.append(el('b', 'hero-name', nameOf(kind, base, names)), el('span', 'hero-form', `Base · ${gradeText(grade)}`),
-        el('small', 'hero-what', 'It keeps its body and its place. The two you add are used up: each gives it its power.'));
-    head.append(art, who);
-    container.append(head);
+    container.append(fusionHead(kind, base, names, grade));
 
     const pick = el('div', 'evolve');
     pick.append(el('h3', '', `Add 2 more · ${gradeText(grade).toLowerCase()}, any kind`));
     if (!candidates.length) {
         const tip = el('p', 'tip');
-        tip.append(icon('info'), kind === 'building'
-            ? `Nothing to add yet: bring other buildings to level ${grade ? 'the same fusion grade' : '5'} first (towers, mines, walls, traps).`
-            : `No other hero ready: ${grade ? 'fuse more heroes to the same grade' : 'ascend more heroes (★★★)'} first.`);
+        tip.append(icon('info'), noCandidatesText(kind, grade));
         pick.append(tip);
         container.append(pick);
         return;
     }
     const grid = el('div', 'fuse-grid');
     for (const g of groupCandidates(kind, candidates, picked)) {
-        const c = g.items[0];
-        const tile = el('button', 'fuse-tile');
-        tile.type = 'button';
-        tile.setAttribute('aria-pressed', String(g.picked > 0));
-        tile.style.setProperty('--accent', kind === 'building' ? BUILDING_INFO[c.type].glow : HERO_INFO[c.cls].color);
-        tile.append(thumbImg(pictureOf(kind, c, 64), '', ''), el('b', '', nameOf(kind, c, names)));
-        if (kind === 'hero' && c.form) tile.append(el('small', '', FORM_INFO[c.form]?.name ?? ''));
-        if (g.ids.length > 1) tile.append(el('small', '', `you have ${g.ids.length}`));
-        if (g.picked) tile.append(el('span', 'fuse-pick', g.picked > 1 ? `×${g.picked}` : '✓'));
-        tile.disabled = busy || (!g.picked && picked.length >= 2);
-        tile.addEventListener('click', () => onToggle(g.ids));
-        grid.append(tile);
+        grid.append(candidateTile(kind, g, { picked, names, busy, onToggle }));
     }
     pick.append(grid);
     container.append(pick);
+    container.append(fusionResult(view, grade, onFuse));
+}
 
+function accentOf(kind, x) {
+    return kind === 'building' ? BUILDING_INFO[x.type].glow : HERO_INFO[x.cls].color;
+}
+
+/** The base: portrait, name, grade, and what fusing does to it. */
+function fusionHead(kind, base, names, grade) {
+    const head = el('div', 'hero-head');
+    head.style.setProperty('--accent', accentOf(kind, base));
+    const art = el('span', 'hero-art');
+    art.append(thumbImg(pictureOf(kind, base, 104), '', ''));
+    const who = el('div', 'hero-who');
+    who.append(el('b', 'hero-name', nameOf(kind, base, names)), el('span', 'hero-form', `Base · ${gradeText(grade)}`),
+        el('small', 'hero-what', 'It keeps its body and its place. The two you add are used up: each gives it its power.'));
+    head.append(art, who);
+    return head;
+}
+
+/** One kind of candidate (alike ones grouped): tap to add or take out. */
+function candidateTile(kind, g, { picked, names, busy, onToggle }) {
+    const c = g.items[0];
+    const tile = el('button', 'fuse-tile');
+    tile.type = 'button';
+    tile.setAttribute('aria-pressed', String(g.picked > 0));
+    tile.style.setProperty('--accent', accentOf(kind, c));
+    tile.append(thumbImg(pictureOf(kind, c, 64), '', ''), el('b', '', nameOf(kind, c, names)));
+    if (kind === 'hero' && c.form) tile.append(el('small', '', FORM_INFO[c.form]?.name ?? ''));
+    if (g.ids.length > 1) tile.append(el('small', '', `you have ${g.ids.length}`));
+    if (g.picked) tile.append(el('span', 'fuse-pick', g.picked > 1 ? `×${g.picked}` : '✓'));
+    tile.disabled = busy || (!g.picked && picked.length >= 2);
+    tile.addEventListener('click', () => onToggle(g.ids));
+    return tile;
+}
+
+/** What the fusion becomes, its price and the Fuse button. */
+function fusionResult(view, grade, onFuse) {
+    const { kind, base, picked, preview, materials, freeSlots, fighters, table, busy } = view;
     const { cost, seconds } = table.costs[String(grade + 1)];
     const result = el('div', 'evolve fuse-result');
     result.append(el('h3', '', `Becomes: ${gradeText(grade + 1)}`));
-    if (preview) {
-        const show = el('div', 'fuse-preview');
-        const fusion = { grade: preview.grade, parts: preview.parts };
-        const src = kind === 'building'
-            ? buildingThumb(base.type, 120, 5, base.path ?? null, fusion)
-            : heroThumb(base.cls, 120, base.form ?? null, 3, fusion);
-        show.append(thumbImg(src, 'fuse-big', ''));
-        const facts = el('div', 'fuse-facts');
-        const chips = el('div', 'fuse-parts');
-        for (const part of preview.parts) {
-            const chip = el('span', 'fuse-part', partName(part));
-            chip.style.setProperty('--accent', partColor(part));
-            chips.append(chip);
-        }
-        facts.append(chips);
-        const lines = kind === 'building' ? buildingLines(preview.stats) : heroLines(preview.stats);
-        const list = el('ul', 'fuse-lines');
-        for (const line of lines) list.append(el('li', '', line));
-        facts.append(list);
-        show.append(facts);
-        result.append(show);
-    } else {
-        result.append(el('p', 'tip', picked.length < 2 ? 'Tap two to see what they make together.' : 'Working it out…'));
-    }
+    if (preview) result.append(fusionPreview(kind, base, preview));
+    else result.append(el('p', 'tip', picked.length < 2 ? 'Tap two to see what they make together.' : 'Working it out…'));
     const blocker = fusionBlocker({ kind, picked, cost, materials, freeSlots, fighters });
     const foot = el('div', 'evolve-foot');
     const price = el('span', 'evolve-price');
@@ -224,8 +219,43 @@ export function renderFusionCard(container, view, { onToggle, onFuse }) {
     button.addEventListener('click', () => onFuse());
     foot.append(price, button);
     result.append(foot);
-    result.append(el('small', 'evolve-note', blocker ?? (kind === 'hero'
+    const note = kind === 'hero'
         ? 'The base waits at the forge; the other two leave for good.'
-        : 'The base keeps working meanwhile; the other two leave the map now.')));
-    container.append(result);
+        : 'The base keeps working meanwhile; the other two leave the map now.';
+    result.append(el('small', 'evolve-note', blocker ?? note));
+    return result;
+}
+
+/** The fused picture, its parts and how it will fight or produce. */
+function fusionPreview(kind, base, preview) {
+    const show = el('div', 'fuse-preview');
+    const fusion = { grade: preview.grade, parts: preview.parts };
+    const src = kind === 'building'
+        ? buildingThumb(base.type, 120, 5, base.path ?? null, fusion)
+        : heroThumb(base.cls, 120, base.form ?? null, 3, fusion);
+    show.append(thumbImg(src, 'fuse-big', ''));
+    const facts = el('div', 'fuse-facts');
+    const chips = el('div', 'fuse-parts');
+    for (const part of preview.parts) {
+        const chip = el('span', 'fuse-part', partName(part));
+        chip.style.setProperty('--accent', partColor(part));
+        chips.append(chip);
+    }
+    facts.append(chips);
+    const lines = kind === 'building' ? buildingLines(preview.stats) : heroLines(preview.stats);
+    const list = el('ul', 'fuse-lines');
+    for (const line of lines) list.append(el('li', '', line));
+    facts.append(list);
+    show.append(facts);
+    return show;
+}
+
+/** Why there is nothing to fuse with yet, and what to do about it. */
+function noCandidatesText(kind, grade) {
+    if (kind === 'building') {
+        const level = grade ? 'the same fusion grade' : '5';
+        return `Nothing to add yet: bring other buildings to level ${level} first (towers, mines, walls, traps).`;
+    }
+    const todo = grade ? 'fuse more heroes to the same grade' : 'ascend more heroes (★★★)';
+    return `No other hero ready: ${todo} first.`;
 }

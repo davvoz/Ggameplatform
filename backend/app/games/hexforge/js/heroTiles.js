@@ -119,51 +119,25 @@ export function heroTile(hero, name, status, onTap = null) {
     const form = (hero.tier ?? 1) > 1 ? FORM_INFO[hero.form] : null;
     const tile = document.createElement(onTap ? 'button' : 'div');
     const grade = hero.fusion?.grade ?? 0;
-    tile.className = `hero-tile ${status.state}${(hero.tier ?? 1) >= 3 ? ' ascended' : ''}${grade ? ' fused' : ''}`;
+    tile.className = tileClass(hero, status, grade);
     tile.dataset.hero = String(hero.id);
     tile.style.setProperty('--accent', info.color);
     tile.style.setProperty('--healed', `${Math.round(status.healed * 100)}%`);
-    const portrait = document.createElement('span');
-    portrait.className = 'ht-portrait';
-    portrait.append(thumbImg(heroPortrait(hero, 52), '', ''));
-    if (status.state === 'picked') portrait.append(badge('check', 'ht-badge picked'));
-    if (status.state === 'hurt') portrait.append(badge('plus', 'ht-badge hurt'));
-    if (status.state === 'forge') portrait.append(badge('anvil', 'ht-badge forge'));
-    if (status.state === 'back') portrait.append(badge('chest', 'ht-badge evolve'));
-    if (status.evolve && status.state !== 'forge') portrait.append(badge('arrow', 'ht-badge evolve'));
-    if (grade) portrait.append(Object.assign(document.createElement('span'), { className: 'ht-grade', textContent: `◆${grade}` }));
     const label = document.createElement('span');
     label.className = 'ht-name';
     label.textContent = name;
-    const job = document.createElement('span');
-    job.className = 'ht-job';
-    const coming = status.state === 'forge' && status.next ? FORM_INFO[status.next.form] : null;
-    if (coming) {
-        // at the forge: show what it is becoming, the new star lit up
-        job.append(`${coming.name} `, nextStars(hero.tier ?? 1, status.next.tier));
-        job.style.color = coming.accent;
-    } else {
-        job.textContent = hero.cls === 'explorer' ? info.job : `${form ? form.name : info.job} ${stars(hero.tier ?? 1)}`;
-        if (form) job.style.color = form.accent;
-    }
     const line = document.createElement('span');
     line.className = 'ht-status';
     line.textContent = {
         ready: 'Ready', picked: 'In squad', hurt: formatHeal(status.left), forge: hero.fusing ? 'Fusing' : 'Evolving',
         home: 'At home', away: formatAway(status.left), back: 'Back!',
     }[status.state];
-    tile.append(portrait, label, job, line);
+    tile.append(tilePortrait(hero, status, grade), label, tileJob(hero, status, form), line);
     if (status.state === 'away') {
         tripLeft(line, hero.mission);
         tile.append(tripBar(hero.mission, hero.mission.ready_at - status.left));
     }
-    const what = {
-        ready: 'ready, tap to add to the squad', picked: 'in the squad, tap to take out',
-        hurt: `hurt, healed in ${formatHeal(status.left)}`, forge: hero.fusing ? 'fusing at the forge' : 'evolving at the forge',
-        home: 'at home, tap to send on a mission', away: `on a mission, back in ${formatAway(status.left)}`,
-        back: 'back from a mission with loot',
-    };
-    tile.title = `${name} (${form ? form.what : info.what})${grade ? `, fused ${'◆'.repeat(grade)}` : ''}, ${what[status.state]}${status.evolve ? '. Can evolve!' : ''}`;
+    tile.title = tileTitle(hero, name, status, form, grade);
     if (onTap) {
         tile.type = 'button';
         tile.setAttribute('aria-pressed', String(status.state === 'picked'));
@@ -171,6 +145,62 @@ export function heroTile(hero, name, status, onTap = null) {
         tile.addEventListener('click', onTap);
     }
     return tile;
+}
+
+function tileClass(hero, status, grade) {
+    const ascended = (hero.tier ?? 1) >= 3 ? ' ascended' : '';
+    const fused = grade ? ' fused' : '';
+    return `hero-tile ${status.state}${ascended}${fused}`;
+}
+
+/** The portrait with its badges: picked, hurt, at the forge, back with loot, can evolve, fusion grade. */
+function tilePortrait(hero, status, grade) {
+    const portrait = document.createElement('span');
+    portrait.className = 'ht-portrait';
+    portrait.append(thumbImg(heroPortrait(hero, 52), '', ''));
+    const STATE_BADGES = {
+        picked: ['check', 'ht-badge picked'], hurt: ['plus', 'ht-badge hurt'],
+        forge: ['anvil', 'ht-badge forge'], back: ['chest', 'ht-badge evolve'],
+    };
+    const stateBadge = STATE_BADGES[status.state];
+    if (stateBadge) portrait.append(badge(...stateBadge));
+    if (status.evolve && status.state !== 'forge') portrait.append(badge('arrow', 'ht-badge evolve'));
+    if (grade) portrait.append(Object.assign(document.createElement('span'), { className: 'ht-grade', textContent: `◆${grade}` }));
+    return portrait;
+}
+
+/** Its job (or form) and stars; at the forge, what it is becoming with the new star lit up. */
+function tileJob(hero, status, form) {
+    const info = HERO_INFO[hero.cls];
+    const job = document.createElement('span');
+    job.className = 'ht-job';
+    const coming = status.state === 'forge' && status.next ? FORM_INFO[status.next.form] : null;
+    if (coming) {
+        job.append(`${coming.name} `, nextStars(hero.tier ?? 1, status.next.tier));
+        job.style.color = coming.accent;
+        return job;
+    }
+    if (hero.cls === 'explorer') {
+        job.textContent = info.job;
+        return job;
+    }
+    job.textContent = `${form ? form.name : info.job} ${stars(hero.tier ?? 1)}`;
+    if (form) job.style.color = form.accent;
+    return job;
+}
+
+/** The tooltip (and the button's label): who it is and what tapping does. */
+function tileTitle(hero, name, status, form, grade) {
+    const info = HERO_INFO[hero.cls];
+    const what = {
+        ready: 'ready, tap to add to the squad', picked: 'in the squad, tap to take out',
+        hurt: `hurt, healed in ${formatHeal(status.left)}`, forge: hero.fusing ? 'fusing at the forge' : 'evolving at the forge',
+        home: 'at home, tap to send on a mission', away: `on a mission, back in ${formatAway(status.left)}`,
+        back: 'back from a mission with loot',
+    };
+    const fused = grade ? `, fused ${'◆'.repeat(grade)}` : '';
+    const evolve = status.evolve ? '. Can evolve!' : '';
+    return `${name} (${form ? form.what : info.what})${fused}, ${what[status.state]}${evolve}`;
 }
 
 function badge(name, className) {

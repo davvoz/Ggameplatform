@@ -160,3 +160,8 @@ export function effectText(effect, value) {
         default: return '';
     }
 }
+
+/** " ×n" after a name when there is more than one. */
+export function times(n) {
+    return n > 1 ? ` ×${n}` : '';
+}

@@ -1,6 +1,6 @@
 import { costChips } from './forgePanel.js';
 import { icon, withIcon } from './icons.js';
-import { BONUS_INFO, ITEM_INFO, MATERIAL_INFO } from './labels.js';
+import { BONUS_INFO, ITEM_INFO, MATERIAL_INFO, times } from './labels.js';
 import { itemPicture, thumbImg } from './thumbs.js';
 
 /** The merchant's four offers of the day, in the Rewards sheet. */
@@ -10,7 +10,7 @@ export function offerGives(gives) {
     if (gives.item) return ITEM_INFO[gives.item].name;
     const [[key, n]] = Object.entries(gives.materials ?? gives.bonuses);
     if (gives.materials) return `${n} ${MATERIAL_INFO[key].name}`;
-    return `${BONUS_INFO[key].name}${n > 1 ? ` ×${n}` : ''}`;
+    return BONUS_INFO[key].name + times(n);
 }
 
 function el(tag, className, text) {
@@ -40,7 +40,9 @@ export function renderMerchant(container, merchant, materials, onBuy) {
     for (const offer of merchant.offers) {
         const row = el('div', `offer${offer.bought ? ' sold' : ''}`);
         const text = el('span', 'offer-text');
-        const kind = offer.gives.item ? 'Hero item, ready now' : offer.gives.bonuses ? 'Bonus' : 'Swap';
+        let kind = 'Swap';
+        if (offer.gives.item) kind = 'Hero item, ready now';
+        else if (offer.gives.bonuses) kind = 'Bonus';
         text.append(el('b', '', offerGives(offer.gives)), el('small', '', kind));
         const side = el('span', 'offer-side');
         side.append(costChips(offer.cost, materials));

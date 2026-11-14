@@ -343,7 +343,8 @@ export function openGremlins({ renderer, buildings, grid, total, lootEach, hours
         for (let i = 0; i < 3; i++) stars.append(el('span', 'tr-star', '★'));
         const big = el('div', 'tr-bighits');
         big.append(el('b', '', `${caught}`), el('span', '', ` / ${total} caught`));
-        const sub = el('p', 'tr-sub', `${escaped} got away${fastest >= 3 ? ` · best streak ×${fastest}` : ''}`);
+        const streak = fastest >= 3 ? ` · best streak ×${fastest}` : '';
+        const sub = el('p', 'tr-sub', `${escaped} got away${streak}`);
         const lootBox = el('div', 'tr-xpbox gr-lootbox');
         const label = el('small', 'tr-xplabel', caught ? 'Counting the loot…' : 'They all got away: nothing dropped.');
         const list = el('div', 'gr-loot');

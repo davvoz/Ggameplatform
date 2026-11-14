@@ -108,21 +108,9 @@ export function renderUpgradeCard(container, { type, upgrades, materials, freeSl
     const info = BUILDING_INFO[type];
     const table = upgrades.table[type];
     const { level, path } = upgrades.levels[type];
-    const coreLevel = upgrades.levels.core.level;
-    const maxLevel = upgrades.max_level;
     const pathInfo = path ? PATH_INFO[path] : null;
     const accent = pathInfo?.accent ?? info.glow ?? '#ffb347';
-
-    const head = el('div', 'hero-head');
-    head.style.setProperty('--accent', accent);
-    const art = el('span', 'hero-art');
-    art.append(thumbImg(buildingThumb(type, 104, level, path), '', ''));
-    const who = el('div', 'hero-who');
-    who.append(el('b', 'hero-name', info.name),
-        el('span', 'hero-form', `Level ${level}${pathInfo ? ` · ${pathInfo.name}` : ''}`),
-        el('small', 'hero-what', pathInfo ? pathInfo.what : info.what));
-    head.append(art, who);
-    container.append(head);
+    container.append(upgradeHead(type, level, path, accent));
 
     const now = statsAt(table, level, path);
     container.append(statGrid(now));
@@ -133,44 +121,26 @@ export function renderUpgradeCard(container, { type, upgrades, materials, freeSl
         container.append(tip);
         return;
     }
-    if (level >= maxLevel) {
+    if (level >= upgrades.max_level) {
         container.append(el('p', 'tip', 'Top level reached.'));
         return;
     }
 
     const next = level + 1;
     const choosing = next === upgrades.path_level;
+    const choice = choosing ? picked : path;
     const section = el('div', 'evolve');
     section.append(el('h3', '', choosing ? `Level ${next}: pick a path` : `Level ${next}`));
     const row = el('div', 'form-cards');
-    const options = choosing ? table.paths : [path];
-    const choice = choosing ? picked : path;
-    for (const p of options) {
-        const target = statsAt(table, next, p);
-        const card = el(choosing ? 'button' : 'div', 'form-card');
-        const pinfo = p ? PATH_INFO[p] : null;
-        card.style.setProperty('--accent', pinfo?.accent ?? accent);
-        if (choosing) {
-            card.type = 'button';
-            card.setAttribute('aria-pressed', String(p === choice));
-            card.addEventListener('click', () => onPick(p));
-        }
-        const changes = el('span', 'form-changes');
-        for (const c of buildingChanges(now, target).slice(0, 4)) {
-            const line = el('span', 'change');
-            line.append(el('small', '', c.label), el('b', '', `${c.from} → ${c.to}`));
-            changes.append(line);
-        }
-        card.append(thumbImg(buildingThumb(type, 84, next, p), '', ''),
-            el('b', '', pinfo ? `${pinfo.name} · Lv ${next}` : `Level ${next}`));
-        if (pinfo) card.append(el('small', 'form-what', pinfo.what));
-        card.append(changes);
-        row.append(card);
+    for (const p of choosing ? table.paths : [path]) {
+        row.append(pathCard({ type, table, now, next, p, accent }, choosing ? { chosen: p === choice, onPick } : null));
     }
     section.append(row);
 
     const { cost, seconds } = table.costs[String(next)];
-    const blocker = upgradeBlocker({ type, level, coreLevel, maxLevel, cost, materials, freeSlots, busy: false });
+    const blocker = upgradeBlocker({
+        type, level, coreLevel: upgrades.levels.core.level, maxLevel: upgrades.max_level, cost, materials, freeSlots, busy: false,
+    });
     const foot = el('div', 'evolve-foot');
     const price = el('span', 'evolve-price');
     price.append(costChips(cost, materials), withIcon(el('span', 'evolve-time'), 'clock', formatDuration(seconds)));
@@ -180,9 +150,54 @@ export function renderUpgradeCard(container, { type, upgrades, materials, freeSl
     button.addEventListener('click', () => onUpgrade(choosing ? choice : null));
     foot.append(price, button);
     section.append(foot);
-    let note = blocker;
-    if (!note && choosing && !choice) note = 'Tap a path to choose it';
-    if (!note) note = count > 1 ? `All ${count} of them get the new level, and so will new ones.` : 'New ones you build will have this level too.';
-    section.append(el('small', 'evolve-note', note));
+    section.append(el('small', 'evolve-note', upgradeNote(blocker, choosing && !choice, count)));
     container.append(section);
+}
+
+/** The building as it is: picture, level, path. */
+function upgradeHead(type, level, path, accent) {
+    const info = BUILDING_INFO[type];
+    const pathInfo = path ? PATH_INFO[path] : null;
+    const head = el('div', 'hero-head');
+    head.style.setProperty('--accent', accent);
+    const art = el('span', 'hero-art');
+    art.append(thumbImg(buildingThumb(type, 104, level, path), '', ''));
+    const who = el('div', 'hero-who');
+    const pathName = pathInfo ? ` · ${pathInfo.name}` : '';
+    who.append(el('b', 'hero-name', info.name),
+        el('span', 'hero-form', `Level ${level}${pathName}`),
+        el('small', 'hero-what', pathInfo ? pathInfo.what : info.what));
+    head.append(art, who);
+    return head;
+}
+
+/** The next level along path `p`, with what changes; `pick` ({ chosen, onPick }) makes it a choice. */
+function pathCard({ type, table, now, next, p, accent }, pick) {
+    const target = statsAt(table, next, p);
+    const card = el(pick ? 'button' : 'div', 'form-card');
+    const pinfo = p ? PATH_INFO[p] : null;
+    card.style.setProperty('--accent', pinfo?.accent ?? accent);
+    if (pick) {
+        card.type = 'button';
+        card.setAttribute('aria-pressed', String(pick.chosen));
+        card.addEventListener('click', () => pick.onPick(p));
+    }
+    const changes = el('span', 'form-changes');
+    for (const c of buildingChanges(now, target).slice(0, 4)) {
+        const line = el('span', 'change');
+        line.append(el('small', '', c.label), el('b', '', `${c.from} → ${c.to}`));
+        changes.append(line);
+    }
+    card.append(thumbImg(buildingThumb(type, 84, next, p), '', ''),
+        el('b', '', pinfo ? `${pinfo.name} · Lv ${next}` : `Level ${next}`));
+    if (pinfo) card.append(el('small', 'form-what', pinfo.what));
+    card.append(changes);
+    return card;
+}
+
+/** Under the button: why it cannot start, a nudge to pick a path, or who gets the new level. */
+function upgradeNote(blocker, mustPick, count) {
+    if (blocker) return blocker;
+    if (mustPick) return 'Tap a path to choose it';
+    return count > 1 ? `All ${count} of them get the new level, and so will new ones.` : 'New ones you build will have this level too.';
 }

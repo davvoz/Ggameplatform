@@ -21,8 +21,8 @@ const step = (level) => Math.max(0, level - 2);      // 0 at level 2, then 1, 2,
 export function drawUpgradeUnder(ctx, cam, b, time) {
     const { x, y, size: n } = b;
     const pad = b.type === 'wall' ? 0.04 : 0.1;
-    prism(ctx, cam, x - pad, y - pad, n + pad * 2, n + pad * 2, 0, 2.5, BRASS);
-    if (b.level >= 4 && b.type !== 'wall') prism(ctx, cam, x - pad * 2, y - pad * 2, n + pad * 4, n + pad * 4, -2.5, 2.5, BRASS);
+    prism(ctx, cam, { x: x - pad, y: y - pad, w: n + pad * 2, d: n + pad * 2, z0: 0, h: 2.5, mat: BRASS });
+    if (b.level >= 4 && b.type !== 'wall') prism(ctx, cam, { x: x - pad * 2, y: y - pad * 2, w: n + pad * 4, d: n + pad * 4, z0: -2.5, h: 2.5, mat: BRASS });
     if (b.level >= 3 && b.path) {
         const color = accent(b);
         const a = toScreen(cam, x - pad, y + n + pad, 2.5);
@@ -149,7 +149,7 @@ const PATH_ART = {
         const spots = [[b.x + 0.2, b.y + b.size - 0.2], [b.x + b.size - 0.2, b.y + 0.2], [b.x + b.size - 0.2, b.y + b.size - 0.2]]
             .slice(0, 1 + k);
         const tops = spots.map(([px, py]) => {
-            prism(ctx, cam, px - 0.12, py - 0.12, 0.24, 0.24, 0, 22, STEEL);
+            prism(ctx, cam, { x: px - 0.12, y: py - 0.12, w: 0.24, d: 0.24, z0: 0, h: 22, mat: STEEL });
             const t = toScreen(cam, px, py, 26);
             halo(ctx, t.x, t.y, 7 * s, '#8fd6ff', 0.9);
             ctx.fillStyle = '#e8f8ff';
@@ -266,7 +266,7 @@ const PATH_ART = {
     // extra storage bins beside the building, one more each level
     deep_store(ctx, cam, b, time, k) {
         for (let i = 0; i < k; i++) {
-            prism(ctx, cam, b.x + b.size - 0.05, b.y + 0.15 + i * 0.6, 0.45, 0.5, 0, 10 + 3 * i, { top: '#4a6a8a', left: '#2e4560', right: '#223348' });
+            prism(ctx, cam, { x: b.x + b.size - 0.05, y: b.y + 0.15 + i * 0.6, w: 0.45, d: 0.5, z0: 0, h: 10 + 3 * i, mat: { top: '#4a6a8a', left: '#2e4560', right: '#223348' } });
         }
     },
     // gold bands and a padlock
@@ -298,8 +298,8 @@ const PATH_ART = {
     citadel(ctx, cam, b, time, k) {
         const corners = [[b.x, b.y + b.size - 0.5], [b.x + b.size - 0.5, b.y], [b.x + b.size - 0.5, b.y + b.size - 0.5], [b.x, b.y]];
         for (const [px, py] of corners.slice(0, 1 + k)) {
-            prism(ctx, cam, px, py, 0.5, 0.5, 0, 34, BRASS);
-            prism(ctx, cam, px - 0.05, py - 0.05, 0.6, 0.6, 34, 4, GOLD);
+            prism(ctx, cam, { x: px, y: py, w: 0.5, d: 0.5, z0: 0, h: 34, mat: BRASS });
+            prism(ctx, cam, { x: px - 0.05, y: py - 0.05, w: 0.6, d: 0.6, z0: 34, h: 4, mat: GOLD });
         }
     },
     // a beam of light rising from the Core, wider each level

@@ -1,4 +1,4 @@
-import { IRON, BASALT, flame, gem, halo, onWall, prism, seam, smoke, wallRect, withAlpha } from './forgeArt.js';
+import { IRON,  flame, gem, halo, onWall, prism, seam, smoke, wallRect, withAlpha } from './forgeArt.js';
 import { toScreen } from './iso.js';
 import { softGlow } from './perf.js';
 import { BUILDING_INFO, HERO_INFO } from './labels.js';
@@ -43,7 +43,10 @@ export function drawFusionOver(ctx, cam, b, time) {
     parts.slice(1, 3).forEach((part, i) => {
         const color = partColor(part);
         const z = body.z0 + (body.z1 - body.z0) * (i ? 0.78 : 0.22);
-        seam(ctx, cam, body.x0, body.y0, body.w, body.w, z, withAlpha(color, 0.75 + 0.25 * Math.sin(time * 2.4 + i * 2)), 2.2);
+        seam(ctx, cam, {
+            x: body.x0, y: body.y0, w: body.w, d: body.w, z,
+            color: withAlpha(color, 0.75 + 0.25 * Math.sin(time * 2.4 + i * 2)), width: 2.2,
+        });
         MARKS[part.type]?.(ctx, cam, markPlace(cam, body, i ? 'right' : 'left'), { time, s, seed: b.id * 1.7 + i, color });
     });
     const top = BUILDING_INFO[b.type]?.height ?? 40;
@@ -94,7 +97,7 @@ const MARKS = {
     /** A small iron brazier on the corner, its flame the Rune Tower's. */
     rune_tower(ctx, cam, m, { time, s, seed }) {
         const [cx, cy, cz] = m.corner;
-        prism(ctx, cam, cx - 0.12, cy - 0.12, 0.24, 0.24, cz, 4, IRON);
+        prism(ctx, cam, { x: cx - 0.12, y: cy - 0.12, w: 0.24, d: 0.24, z0: cz, h: 4, mat: IRON });
         const top = toScreen(cam, cx, cy, cz + 4);
         halo(ctx, top.x, top.y - 4 * s, 18 * s, '#ff8a2a', 0.8);
         flame(ctx, top, 6 * s, time, seed, '#ffe08a', '#ff5a00');
@@ -209,7 +212,7 @@ const MARKS = {
     /** A little smoking chimney, the foundry's. */
     scrap_foundry(ctx, cam, m, { time, s, seed }) {
         const [cx, cy, cz] = m.corner;
-        prism(ctx, cam, cx - 0.1, cy - 0.1, 0.2, 0.2, cz, 14, IRON);
+        prism(ctx, cam, { x: cx - 0.1, y: cy - 0.1, w: 0.2, d: 0.2, z0: cz, h: 14, mat: IRON });
         const top = toScreen(cam, cx, cy, cz + 14);
         halo(ctx, top.x, top.y, 9 * s, '#ff7a3d', 0.6);
         smoke(ctx, top, time, seed * 0.13, s * 0.6, 3);

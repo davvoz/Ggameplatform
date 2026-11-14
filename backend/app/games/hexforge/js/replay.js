@@ -70,77 +70,40 @@ export function createReplay(battle) {
 
     function stateAt(tick) {
         const t = Math.min(Math.max(tick, 0), ticks + AFTER_TICKS);
-        const buildingHp = new Map(city.buildings.map((b) => [b.id, b.hp]));
-        const heroHp = squad.map((h) => h.hp);
-        const shield = squad.map((h) => h.barrier ?? 0);
-        const slowUntil = squad.map(() => -1);
-        const lastHit = squad.map(() => -Infinity);
-        const lastBlow = squad.map(() => null);
-        const nextBlow = squad.map(() => null);
-        const leaps = squad.map(() => null);
-        const destroyed = new Set();
-        const sprung = new Set();
-        const down = new Set();
-        const effects = [];
-
-        for (const e of events) {
-            if (e.t > t + WINDUP) break;
-            if (e.t > t) {
-                if (isBlow(e) && nextBlow[e.hero] === null) nextBlow[e.hero] = e;
-                continue;
-            }
-            applyEvent(e, { buildingHp, heroHp, shield, slowUntil, destroyed, sprung, down, lastHit });
-            if (isBlow(e)) lastBlow[e.hero] = e;
-            if (e.type === 'leap' && t <= e.until) leaps[e.hero] = e;
-            const life = EFFECT_TICKS[e.type];
-            if (life && t - e.t <= life) effects.push({ event: e, age: (t - e.t) / life });
-        }
+        const s = {
+            buildingHp: new Map(city.buildings.map((b) => [b.id, b.hp])),
+            heroHp: squad.map((h) => h.hp),
+            shield: squad.map((h) => h.barrier ?? 0),
+            slowUntil: squad.map(() => -1),
+            lastHit: squad.map(() => -Infinity),
+            lastBlow: squad.map(() => null),
+            nextBlow: squad.map(() => null),
+            leaps: squad.map(() => null),
+            destroyed: new Set(),
+            sprung: new Set(),
+            down: new Set(),
+            effects: [],
+        };
+        replayEvents(events, t, s);
 
         const positions = heroPositions(t);
         const frame = frames[Math.min(Math.floor(Math.min(t, ticks) / stride), frames.length - 1)];
         squad.forEach((h, k) => {
-            if (mends(h) && !down.has(h.id)) heroHp[k] = frame[k][2];
+            if (mends(h) && !s.down.has(h.id)) s.heroHp[k] = frame[k][2];
         });
-        const heroes = squad.map((h, k) => {
-            const blow = poseOfBlow(lastBlow[k], nextBlow[k], t);
-            const leap = leaps[k];
-            return {
-                id: h.id,
-                cls: h.cls,
-                form: h.form ?? null,
-                tier: h.tier ?? 1,
-                fusion: h.fusion ?? null,
-                grade: h.grade ?? 0,
-                maxHp: h.hp,
-                hp: heroHp[k],
-                shield: Math.max(0, shield[k]),
-                maxShield: h.barrier ?? 0,
-                mending: mends(h),
-                alive: !down.has(h.id),
-                slowed: t <= slowUntil[k],
-                hurt: Math.max(0, 1 - (t - lastHit[k]) / HURT_TICKS),
-                ...positions[k],
-                leap: leap ? Math.min(1, (t - leap.t) / Math.max(1, leap.until - leap.t)) : null,
-                attack: blow && {
-                    phase: blow.phase,
-                    nova: blow.event.type === 'nova',
-                    target: blow.event.type === 'nova' ? { x: blow.event.x, y: blow.event.y } : centres.get(blow.event.building),
-                    building: blow.event.building ?? null,
-                },
-            };
-        });
+        const heroes = squad.map((h, k) => heroView(h, k, t, s, positions[k], centres));
         separate(heroes);
-        const destroyedCounted = counted.filter((id) => destroyed.has(id)).length;
+        const destroyedCounted = counted.filter((id) => s.destroyed.has(id)).length;
         return {
             tick: Math.min(t, ticks),
             seconds: Math.min(t, ticks) / tickRate,
             heroes,
-            buildingHp,
-            destroyed,
-            sprung,
-            effects,
+            buildingHp: s.buildingHp,
+            destroyed: s.destroyed,
+            sprung: s.sprung,
+            effects: s.effects,
             destruction: counted.length ? Math.round((100 * destroyedCounted) / counted.length) : 0,
-            coreDestroyed: core ? destroyed.has(core.id) : false,
+            coreDestroyed: core ? s.destroyed.has(core.id) : false,
         };
     }
 
@@ -165,34 +128,93 @@ export function poseOfBlow(last, next, t) {
     return null;
 }
 
+/**
+ * Play the log up to tick `t` into the trackers `s`; blows a little ahead
+ * are only noted, so the heroes can wind up for them.
+ */
+function replayEvents(events, t, s) {
+    for (const e of events) {
+        if (e.t > t + WINDUP) break;
+        if (e.t > t) noteComing(e, s);
+        else replayEvent(e, t, s);
+    }
+}
+
+function noteComing(e, s) {
+    if (isBlow(e) && s.nextBlow[e.hero] === null) s.nextBlow[e.hero] = e;
+}
+
+function replayEvent(e, t, s) {
+    applyEvent(e, s);
+    if (isBlow(e)) s.lastBlow[e.hero] = e;
+    if (e.type === 'leap' && t <= e.until) s.leaps[e.hero] = e;
+    const life = EFFECT_TICKS[e.type];
+    if (life && t - e.t <= life) s.effects.push({ event: e, age: (t - e.t) / life });
+}
+
+/** Hero `h` (squad slot `k`) as drawn at tick `t`. */
+function heroView(h, k, t, s, position, centres) {
+    const leap = s.leaps[k];
+    return {
+        id: h.id,
+        cls: h.cls,
+        form: h.form ?? null,
+        tier: h.tier ?? 1,
+        fusion: h.fusion ?? null,
+        grade: h.grade ?? 0,
+        maxHp: h.hp,
+        hp: s.heroHp[k],
+        shield: Math.max(0, s.shield[k]),
+        maxShield: h.barrier ?? 0,
+        mending: mends(h),
+        alive: !s.down.has(h.id),
+        slowed: t <= s.slowUntil[k],
+        hurt: Math.max(0, 1 - (t - s.lastHit[k]) / HURT_TICKS),
+        ...position,
+        leap: leap ? Math.min(1, (t - leap.t) / Math.max(1, leap.until - leap.t)) : null,
+        attack: attackPose(poseOfBlow(s.lastBlow[k], s.nextBlow[k], t), centres),
+    };
+}
+
+function attackPose(blow, centres) {
+    if (!blow) return blow;
+    const nova = blow.event.type === 'nova';
+    return {
+        phase: blow.phase,
+        nova,
+        target: nova ? { x: blow.event.x, y: blow.event.y } : centres.get(blow.event.building),
+        building: blow.event.building ?? null,
+    };
+}
+
 /** Push heroes standing too close apart (drawing only; the battle itself is decided on the server). */
 export function separate(heroes) {
     for (let pass = 0; pass < 3; pass++) {
         for (let i = 0; i < heroes.length; i++) {
-            for (let j = i + 1; j < heroes.length; j++) {
-                const a = heroes[i];
-                const b = heroes[j];
-                if (!a.alive || !b.alive || a.leap !== null || b.leap !== null) continue;
-                let dx = b.x - a.x;
-                let dy = b.y - a.y;
-                const d = Math.hypot(dx, dy);
-                if (d >= PERSONAL_SPACE) continue;
-                if (d < 1e-6) {
-                    const angle = 2.4 * (i + 1) + j;     // a fixed direction, so it never flickers
-                    dx = Math.cos(angle);
-                    dy = Math.sin(angle);
-                } else {
-                    dx /= d;
-                    dy /= d;
-                }
-                const push = (PERSONAL_SPACE - d) / 2;
-                a.x -= dx * push;
-                a.y -= dy * push;
-                b.x += dx * push;
-                b.y += dy * push;
-            }
+            for (let j = i + 1; j < heroes.length; j++) pushApart(heroes[i], heroes[j], 2.4 * (i + 1) + j);
         }
     }
+}
+
+/** Two heroes on their feet closer than PERSONAL_SPACE step away from each other; `angle` breaks a perfect overlap. */
+function pushApart(a, b, angle) {
+    if (!a.alive || !b.alive || a.leap !== null || b.leap !== null) return;
+    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    const d = Math.hypot(dx, dy);
+    if (d >= PERSONAL_SPACE) return;
+    if (d < 1e-6) {
+        dx = Math.cos(angle);                   // a fixed direction, so it never flickers
+        dy = Math.sin(angle);
+    } else {
+        dx /= d;
+        dy /= d;
+    }
+    const push = (PERSONAL_SPACE - d) / 2;
+    a.x -= dx * push;
+    a.y -= dy * push;
+    b.x += dx * push;
+    b.y += dy * push;
 }
 
 function applyEvent(e, s) {

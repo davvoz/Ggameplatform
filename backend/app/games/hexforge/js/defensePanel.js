@@ -25,7 +25,7 @@ export function weakestSide(sides) {
     const entries = Object.entries(sides);
     const counts = entries.map(([, s]) => s.held);
     if (counts.every((n) => n === counts[0])) return null;
-    return entries.reduce((low, entry) => (entry[1].held < low[1].held ? entry : low))[0];
+    return entries.reduce((low, entry) => (entry[1].held < low[1].held ? entry : low), entries[0])[0];
 }
 
 export function describeWorst(worst) {

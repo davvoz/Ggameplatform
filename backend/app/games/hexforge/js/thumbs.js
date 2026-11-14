@@ -50,7 +50,8 @@ function fusionKey(fusion) {
 /** Portrait of a hero class (evolved into `form` at `tier`, if given; fused when `fusion` {grade, parts}), `px` CSS pixels square. */
 export function heroThumb(cls, px = 56, form = null, tier = 1, fusion = null) {
     const evolved = form && tier > 1;
-    const key = `h:${cls}:${px}:${evolved ? `${form}${tier}` : ''}:${fusionKey(fusion)}`;
+    const look = evolved ? form + tier : '';
+    const key = `h:${cls}:${px}:${look}:${fusionKey(fusion)}`;
     if (!cache.has(key)) {
         cache.set(key, paint(px, (ctx) => {
             const s = (px / 48) * (evolved ? 0.9 - 0.06 * (tier - 2) : 1);     // room for the taller evolved gear
@@ -63,8 +64,9 @@ export function heroThumb(cls, px = 56, form = null, tier = 1, fusion = null) {
             const hero = { cls, id: 0, facing: 1, form: evolved ? form : null, tier: evolved ? tier : 1,
                 fusion: fusion?.parts ?? null, grade: fusion?.grade ?? 0 };
             const k = fusion ? 0.74 : 1;                                       // room for the donor marks, the ring and the gems
-            const feet = fusion ? 0.84 : evolved ? 0.95 : 0.92;
-            drawHero(ctx, hero, px / 2 - 3 * s * k, px * feet, s * k, HERO_INFO[cls].color, 0.6);
+            let feet = evolved ? 0.95 : 0.92;
+            if (fusion) feet = 0.84;
+            drawHero(ctx, hero, { x: px / 2 - 3 * s * k, y: px * feet, s: s * k, color: HERO_INFO[cls].color, time: 0.6 });
         }));
     }
     return cache.get(key);

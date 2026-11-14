@@ -27,7 +27,7 @@ import { Compass } from './compass.js';
 import { regionAround } from './iso.js';
 import {
     AIM_INFO, BONUS_INFO, BUILDING_INFO, CHOICE_ICONS, FORM_INFO, HERO_INFO, ITEM_INFO, MATERIAL_INFO, MISSION_INFO,
-    PATH_INFO,
+    PATH_INFO, times,
 } from './labels.js';
 import { LEAGUE_COLORS } from './leagues.js';
 import { renderRaidLog, timeAgo } from './raidLog.js';
@@ -274,7 +274,7 @@ export class CityMode {
         this.preview = null;
         const view = $('view');
         view.classList.remove('turning');
-        void view.offsetWidth;            // restart the fade
+        view.getBoundingClientRect();     // force a layout: restarts the fade
         view.classList.add('turning');
         this.#reveal();
     }
@@ -437,7 +437,7 @@ export class CityMode {
 
     async #fuse() {
         const f = this.fusion;
-        if (!f || f.picked.length !== 2) return;
+        if (f?.picked.length !== 2) return;
         await this.#run(async () => {
             this.#apply(await fuse(f.kind, f.baseId, f.picked));
             play('forge');
@@ -477,10 +477,9 @@ export class CityMode {
     }
 
     async #dismiss(hero, name) {
-        let shown = null;
-        await this.#run(async () => {
+        const done = await this.#run(async () => {
             const result = await dismissHero(hero.id);
-            shown = this.#queuePop(() => {
+            const shown = this.#queuePop(() => {
                 play('claim');
                 return rewardPop({
                     src: heroPortrait(hero, 150), title: `${name} has left`,
@@ -488,10 +487,11 @@ export class CityMode {
                 });
             });
             this.#apply(result);
+            return { shown };
         });
-        if (shown) {
+        if (done) {
             closeSheet();
-            await shown;
+            await done.shown;
         }
     }
 
@@ -545,16 +545,16 @@ export class CityMode {
     }
 
     async #explorerBack(name, hero) {
-        let shown = null;
-        await this.#run(async () => {
+        const done = await this.#run(async () => {
             const result = await explorerReturn(hero.id);
-            shown = this.#queuePop(() => {
+            const shown = this.#queuePop(() => {
                 play('claim');
                 return rewardPop(lootCard(name, result.loot));
             });
             this.#apply(result);
+            return { shown };
         });
-        if (shown) await shown;
+        if (done) await done.shown;
     }
 
     async #evolve(hero, name, form) {
@@ -605,11 +605,10 @@ export class CityMode {
             chest: () => ({ icon: 'chest', title: 'Weekly chest!' }),
         };
         const card = CARDS[kind]();
-        let shown = null;
-        await this.#run(async () => {
+        const done = await this.#run(async () => {
             const call = { login: claimLoginReward, task: () => claimTaskReward(taskId), chest: claimWeeklyChest }[kind];
             const result = await call();
-            shown = this.#queuePop(() => {            // before #apply, so a level-up card comes after it
+            const shown = this.#queuePop(() => {      // before #apply, so a level-up card comes after it
                 play('claim');
                 return rewardPop({
                     picture: medal(card.icon), title: card.title,
@@ -617,8 +616,9 @@ export class CityMode {
                 });
             });
             this.#apply(result);
+            return { shown };
         });
-        await shown;
+        await done?.shown;
     }
 
     /** Offer the bonuses that work on `target` ('job' | 'hero' | 'energy'), then use the one picked. */
@@ -753,28 +753,28 @@ export class CityMode {
     }
 
     async #claim(jobId) {
-        let claimed = null;
-        let shown = null;
-        await this.#run(async () => {
+        const done = await this.#run(async () => {
             const result = await claimJob(jobId);
-            claimed = result.claimed;
+            const { claimed } = result;
             if (claimed.kind === 'build_up') {
                 // an upgrade is already on the map: no card to close, no building to place, just say so
                 play('levelup');
                 const path = claimed.path ? ` · ${PATH_INFO[claimed.path].name}` : '';
                 toast(`Every ${BUILDING_INFO[claimed.item].name} is now level ${claimed.level}${path}.`);
                 this.#apply(result);
-                return;
+                return null;
             }
             const card = claimed.kind === 'fusion' ? this.#fusionCard(claimed, result) : claimCard(claimed);
-            shown = this.#queuePop(() => {             // before #apply, so a level-up card comes after it
+            const shown = this.#queuePop(() => {       // before #apply, so a level-up card comes after it
                 play(claimed.kind === 'evolution' || claimed.kind === 'fusion' ? 'levelup' : 'claim');
                 return rewardPop(card);
             });
             this.#apply(result);
+            return { claimed, shown };
         });
-        if (!claimed || claimed.kind === 'build_up') return;
-        await shown;
+        if (!done) return;
+        const { claimed } = done;
+        await done.shown;
         if (claimed.kind === 'fusion') {
             // already on the map (or in the roster): nothing to place
             this.forgeKind = claimed.hero ? 'hero' : this.forgeKind;
@@ -863,7 +863,10 @@ export class CityMode {
         const button = $('btn-defense-test');
         if (button.disabled) return;
         const top = this.state?.defense_stage ?? 1;
-        withIcon(button, 'test', top > 1 ? `Test stage ${top}` : (this.defense ? 'Test again' : 'Test my defenses'));
+        let label = 'Test my defenses';
+        if (top > 1) label = `Test stage ${top}`;
+        else if (this.defense) label = 'Test again';
+        withIcon(button, 'test', label);
     }
 
     #showDefense(report) {
@@ -928,10 +931,16 @@ export class CityMode {
         });
     }
 
+    /**
+     * Runs a server action with the city marked busy. Returns what `action`
+     * returned, or undefined if it failed (the player has been told why).
+     * Wrap a promise you want back (a card still showing) in an object, or
+     * it would be waited for here, keeping the city busy.
+     */
     async #run(action) {
         this.busy = true;
         try {
-            await action();
+            return await action();
         } catch (error) {
             play('error');
             if (error instanceof Refused) {
@@ -1157,7 +1166,8 @@ export class CityMode {
         badge.textContent = String(ready);
         const { charges, max, next_at: nextAt } = this.state.energy;
         const energy = $('city-energy');
-        energy.replaceChildren(icon('bolt'), `${charges}/${max}${nextAt && charges < max ? ` · ${formatCountdown(nextAt - now)}` : ''}`);
+        const refill = nextAt && charges < max ? ` · ${formatCountdown(nextAt - now)}` : '';
+        energy.replaceChildren(icon('bolt'), `${charges}/${max}${refill}`);
     }
 
     /** Explorer bars and countdowns move every second; a return redraws the roster and the card. */
@@ -1347,12 +1357,13 @@ export class CityMode {
     #renderUpgradeLine(b) {
         const line = $('sel-upgrade');
         const table = this.state.upgrades?.table[b.type];
-        line.hidden = !table || !(b.level > 1);
+        line.hidden = !table || (b.level ?? 1) <= 1;
         if (line.hidden) return;
         const path = b.path ? PATH_INFO[b.path] : null;
         line.style.setProperty('--accent', path?.accent ?? '#ffb347');
         const tag = document.createElement('b');
-        tag.textContent = `★ Level ${b.level}${path ? ` · ${path.name}` : ''}`;
+        const pathName = path ? ` · ${path.name}` : '';
+        tag.textContent = `★ Level ${b.level}${pathName}`;
         const bonuses = document.createElement('span');
         bonuses.textContent = upgradeBonuses(table, b.level, b.path ?? null).join(' · ');
         line.replaceChildren(tag, bonuses);
@@ -1424,7 +1435,7 @@ function lootCard(name, loot) {
     const parts = [];
     const total = Object.values(loot.materials).reduce((a, b) => a + b, 0);
     parts.push(`+${total} materials`);
-    for (const [bonus, n] of Object.entries(loot.bonuses)) parts.push(`${BONUS_INFO[bonus].name}${n > 1 ? ` ×${n}` : ''}`);
+    for (const [bonus, n] of Object.entries(loot.bonuses)) parts.push(BONUS_INFO[bonus].name + times(n));
     if (loot.item) parts.push(`${ITEM_INFO[loot.item].name}!`);
     return {
         src: loot.item ? itemPicture(loot.item, 150) : heroThumb('explorer', 150),
@@ -1452,7 +1463,7 @@ function claimCard(claimed) {
     }
     const hero = kind === 'hero';
     return {
-        src: itemThumb(item, 150), title: `${itemName(item)}${count > 1 ? ` ×${count}` : ''}`,
+        src: itemThumb(item, 150), title: itemName(item) + times(count),
         line: hero ? 'joined your heroes!' : 'forged! Now place it on the map',
         color: hero ? HERO_INFO[item].color : (BUILDING_INFO[item]?.glow ?? '#ffb347'),
     };
@@ -1460,14 +1471,14 @@ function claimCard(claimed) {
 
 function bumpOnce(el) {
     el.classList.remove('bump');
-    void el.offsetWidth;              // restart the animation
+    el.getBoundingClientRect();       // force a layout: restarts the animation
     el.classList.add('bump');
     el.addEventListener('animationend', () => el.classList.remove('bump'), { once: true });
 }
 
 function bump(item) {
     item.classList.remove('bump');
-    void item.offsetWidth;            // restart the animation
+    item.getBoundingClientRect();     // force a layout: restarts the animation
     item.classList.add('bump');
 }
 

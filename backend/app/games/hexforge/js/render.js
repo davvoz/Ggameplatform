@@ -24,7 +24,8 @@ const FONT = '"Chakra Petch", "Segoe UI", system-ui, sans-serif';
 const SELECT = '#ffb347';
 const FITS = '#7dff9a';
 const BLOCKED = '#ff5040';
-const ZOOM_SETTLE_MS = 150;  // performance mode: the ground is redrawn sharp once a pinch has rested this long
+const ZOOM_SETTLE_MS = 150;
+const NONE = new Set();  // performance mode: the ground is redrawn sharp once a pinch has rested this long
 
 export class Renderer {
     constructor(canvas) {
@@ -272,24 +273,37 @@ export class Renderer {
 
     /** Draws what lies flat on the ground and returns what stands up, for depth sorting. */
     #standingItems(state, time, showTraps = false) {
-        const destroyed = state?.destroyed ?? new Set();
-        const sprung = state?.sprung ?? new Set();
         const items = [];
         for (const b of this.city.buildings) {
-            if (b.type === 'rune_trap') {
-                if (sprung.has(b.id)) this.#scorch(b);
-                else if (showTraps) drawTrapMark(this.ctx, this.camera, this.#inView(b), time, groundEllipse(this.camera, 0.42).rx);
-            } else if (destroyed.has(b.id)) {
-                drawRubble(this.ctx, this.camera, this.#inView(b), time);
-            } else {
-                const look = {
-                    time,
-                    firing: state ? this.#recentlyFired(b.id, state) : 0,
-                    health: state ? (state.buildingHp.get(b.id) ?? b.hp) / b.hp : 1,
-                };
-                items.push({ depth: this.#depth(b.x + b.size / 2, b.y + b.size / 2), draw: () => drawBuilding(this.ctx, this.camera, this.#inView(b), look) });
-            }
+            const item = this.#buildingItem(b, state, time, showTraps);
+            if (item) items.push(item);
         }
+        items.push(...this.#heroItems(state, time));
+        return items;
+    }
+
+    /** A trap or rubble is drawn flat right away (null); a standing building is returned for depth sorting. */
+    #buildingItem(b, state, time, showTraps) {
+        if (b.type === 'rune_trap') {
+            if ((state?.sprung ?? NONE).has(b.id)) this.#scorch(b);
+            else if (showTraps) drawTrapMark(this.ctx, this.camera, this.#inView(b), time, groundEllipse(this.camera, 0.42).rx);
+            return null;
+        }
+        if ((state?.destroyed ?? NONE).has(b.id)) {
+            drawRubble(this.ctx, this.camera, this.#inView(b), time);
+            return null;
+        }
+        const look = {
+            time,
+            firing: state ? this.#recentlyFired(b.id, state) : 0,
+            health: state ? (state.buildingHp.get(b.id) ?? b.hp) / b.hp : 1,
+        };
+        return { depth: this.#depth(b.x + b.size / 2, b.y + b.size / 2), draw: () => drawBuilding(this.ctx, this.camera, this.#inView(b), look) };
+    }
+
+    /** Heroes on their feet, and the ones still falling. */
+    #heroItems(state, time) {
+        const items = [];
         const falling = new Map();
         for (const { event, age } of state?.effects ?? []) {
             if (event.type === 'hero_down') falling.set(event.hero, age);
@@ -387,12 +401,7 @@ export class Renderer {
         ctx.fillStyle = this.sky.sky;
         ctx.fillRect(0, 0, this.w, this.h);
         let t = this.tiles;
-        const settled = performance.now() - this.zoomedAt > ZOOM_SETTLE_MS;
-        const k = t ? camera.scale / t.cam.scale : 1;
-        if (!t || t.rot !== this.rot || t.grid !== this.city.grid || (k !== 1 && (settled || k < 0.6 || k > 1.7))
-            || !this.#tilesCover(t, camera)) {
-            t = this.#cacheTiles(t);
-        }
+        if (this.#tilesStale(t, camera)) t = this.#cacheTiles(t);
         if (t.w > 0 && t.h > 0) {
             const s = camera.scale / t.cam.scale;
             ctx.drawImage(t.canvas, 0, 0, t.w, t.h,
@@ -400,6 +409,18 @@ export class Renderer {
         }
         ctx.fillStyle = this.sky.vignette;
         ctx.fillRect(0, 0, this.w, this.h);
+    }
+
+    /**
+     * The cache must be repainted: none yet, the view turned, another field,
+     * a pinch that has rested (or stretched it too far), or the view runs past it.
+     */
+    #tilesStale(t, camera) {
+        if (t?.rot !== this.rot || t.grid !== this.city.grid) return true;
+        const k = camera.scale / t.cam.scale;
+        const settled = performance.now() - this.zoomedAt > ZOOM_SETTLE_MS;
+        if (k !== 1 && (settled || k < 0.6 || k > 1.7)) return true;
+        return !this.#tilesCover(t, camera);
     }
 
     /** Screen box of the whole field (with room for the rim) through `camera`; turning does not change it. */
@@ -647,17 +668,21 @@ export class Renderer {
             const bare = { ...hero, fusion: null };
             for (const k of [2, 1]) {
                 ctx.globalAlpha = 0.14 * k;
-                drawHero(ctx, bare, foot.x - back.x * k * 6 * s, foot.y - lift - back.y * k * 6 * s, s, info.color, time - k * 0.04, pose);
+                drawHero(ctx, bare, {
+                    x: foot.x - back.x * k * 6 * s, y: foot.y - lift - back.y * k * 6 * s,
+                    s, color: info.color, time: time - k * 0.04, pose,
+                });
             }
             ctx.globalAlpha = 1;
         }
-        drawHero(ctx, hero, foot.x, foot.y - lift, s, info.color, time, pose);
+        const look = { x: foot.x, y: foot.y - lift, s, color: info.color, time, pose };
+        drawHero(ctx, hero, look);
         if (hero.hurt > 0) {
             // flash when hit
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             ctx.globalAlpha = hero.hurt * 0.6;
-            drawHero(ctx, hero, foot.x, foot.y - lift, s, info.color, time, pose);
+            drawHero(ctx, hero, look);
             ctx.restore();
         }
         if (hero.shield > 0) {
@@ -695,8 +720,10 @@ export class Renderer {
     #fallen(hero, time, age) {
         const s = this.camera.scale * HERO_SCALE;
         const foot = this.#at(hero.x, hero.y);
-        drawHero(this.ctx, hero, foot.x, foot.y, s, HERO_INFO[hero.cls].color, time,
-            { facing: this.facings.get(hero.id) ?? 1, down: age });
+        drawHero(this.ctx, hero, {
+            x: foot.x, y: foot.y, s, color: HERO_INFO[hero.cls].color, time,
+            pose: { facing: this.facings.get(hero.id) ?? 1, down: age },
+        });
     }
 
     /** Face the blow's target while fighting, the way of travel while walking; otherwise keep looking where it was. */

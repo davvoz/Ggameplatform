@@ -1,8 +1,17 @@
 {
-  "version": "5.22.6",
-  "timestamp": "2026-11-14T15:19:26.162Z",
-  "buildNumber": 626,
+  "version": "5.23.0",
+  "timestamp": "2026-11-14T21:23:36.004Z",
+  "buildNumber": 627,
   "changelog": [
+    {
+      "version": "5.23.0",
+      "date": "2026-11-14",
+      "type": "minor",
+      "changes": [
+        "feat:[NM]add NM",
+        "🔖 Bump version to 5.22.6 [skip-version]"
+      ]
+    },
     {
       "version": "5.22.6",
       "date": "2026-11-14",
@@ -89,15 +98,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix: add fullscreen button and functionality in Hexforge",
         "🔖 Bump version to 5.20.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.20.0",
-      "date": "2026-11-11",
-      "type": "minor",
-      "changes": [
-        "feat: full-screen player for games that fit any shape; Hexforge uses it",
-        "🔖 Bump version to 5.19.0 [skip-version]"
       ]
     }
   ]

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Heightmap Editor — Multi-Layer</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: #1a1a2e;
+        color: #e0e0e0;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    h1 {
+        color: #00d4ff;
+        margin-bottom: 10px;
+        font-size: 22px;
+    }
+    .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    button {
+        background: #16213e;
+        color: #00d4ff;
+        border: 1px solid #00d4ff;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    button:hover {
+        background: #00d4ff;
+        color: #1a1a2e;
+    }
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    button.danger {
+        border-color: #ff4757;
+        color: #ff4757;
+    }
+    button.danger:hover {
+        background: #ff4757;
+        color: #fff;
+    }
+    button.active-tool {
+        background: #00d4ff;
+        color: #1a1a2e;
+        font-weight: bold;
+    }
+    button.success {
+        border-color: #2ed573;
+        color: #2ed573;
+    }
+    button.success:hover {
+        background: #2ed573;
+        color: #1a1a2e;
+    }
+    label {
+        font-size: 13px;
+        color: #aaa;
+    }
+    input[type="file"] { display: none; }
+    .canvas-wrap {
+        position: relative;
+        border: 2px solid #333;
+        border-radius: 4px;
+        cursor: crosshair;
+        margin-bottom: 12px;
+    }
+    canvas { display: block; }
+    .info {
+        display: flex;
+        gap: 20px;
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 8px;
+    }
+    .info span { color: #00d4ff; }
+    .status {
+        font-size: 13px;
+        color: #2ed573;
+        min-height: 20px;
+        margin-bottom: 10px;
+    }
+    .instructions {
+        max-width: 960px;
+        font-size: 13px;
+        color: #666;
+        line-height: 1.6;
+        text-align: center;
+    }
+    .settings {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        font-size: 13px;
+    }
+    .settings input[type="number"] {
+        background: #16213e;
+        border: 1px solid #444;
+        color: #e0e0e0;
+        padding: 4px 8px;
+        border-radius: 3px;
+        width: 70px;
+    }
+    .layers-bar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        font-size: 13px;
+    }
+    .layers-bar .layer-label { color: #aaa; font-weight: bold; }
+    #layerButtons { display: flex; gap: 4px; }
+    .layer-btn {
+        padding: 5px 12px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid;
+        background: #16213e;
+    }
+    .layer-btn.active {
+        box-shadow: 0 0 8px currentColor;
+    }
+    .layer-btn-small {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+</style>
+</head>
+<body>
+
+<h1>Heightmap Editor — Multi-Layer</h1>
+
+<div class="toolbar">
+    <button id="btnLoad">Carica Background</button>
+    <input type="file" id="fileInput" accept="image/*">
+    <button id="btnImport">Importa JSON</button>
+    <input type="file" id="jsonInput" accept=".json">
+    <button id="btnClear" class="danger" disabled>Cancella Layer</button>
+    <button id="btnUndo" disabled>Undo</button>
+    <button id="btnStraight">Linea Dritta</button>
+    <button id="btnExport" class="success" disabled>Esporta JSON</button>
+</div>
+
+<div class="settings">
+    <label>Canvas W: <input type="number" id="canvasW" value="960"></label>
+    <label>Canvas H: <input type="number" id="canvasH" value="540"></label>
+    <label>Linea: <input type="number" id="lineWidth" value="3" min="1" max="10"></label>
+</div>
+
+<div class="layers-bar">
+    <span class="layer-label">Layers:</span>
+    <div id="layerButtons"></div>
+    <button id="btnAddLayer" class="layer-btn-small success">+ Layer</button>
+    <button id="btnDelLayer" class="layer-btn-small danger" disabled>- Layer</button>
+</div>
+
+<div class="info" id="infoBar">
+    <div>Mouse: <span id="mousePos">—</span></div>
+    <div>Layer: <span id="activeLayerInfo">0 (Ground)</span></div>
+    <div>Punti: <span id="pointCount">0</span></div>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="canvas-wrap">
+    <canvas id="editor" width="960" height="540"></canvas>
+</div>
+
+<div class="instructions">
+    <b>Istruzioni:</b> Carica un'immagine di background. Seleziona il layer attivo e disegna le superfici.<br>
+    <b>Layer 0</b> = terreno base (coprire tutta la larghezza).
+    Aggiungi layer per piattaforme che coprono solo parte della larghezza.<br>
+    Puoi <b>importare</b> un JSON esistente per modificarlo, poi <b>esportare</b> il multi-layer heightmap.
+</div>
+
+<script>
+const canvas = document.getElementById('editor');
+const ctx = canvas.getContext('2d');
+
+const btnLoad    = document.getElementById('btnLoad');
+const btnImport  = document.getElementById('btnImport');
+const btnClear   = document.getElementById('btnClear');
+const btnUndo    = document.getElementById('btnUndo');
+const btnExport  = document.getElementById('btnExport');
+const fileInput  = document.getElementById('fileInput');
+const jsonInput  = document.getElementById('jsonInput');
+const statusEl   = document.getElementById('status');
+const mousePosEl         = document.getElementById('mousePos');
+const activeLayerInfoEl  = document.getElementById('activeLayerInfo');
+const pointCountEl       = document.getElementById('pointCount');
+const canvasWInput       = document.getElementById('canvasW');
+const canvasHInput       = document.getElementById('canvasH');
+const layerButtonsEl     = document.getElementById('layerButtons');
+const btnAddLayer        = document.getElementById('btnAddLayer');
+const btnDelLayer        = document.getElementById('btnDelLayer');
+const btnStraight        = document.getElementById('btnStraight');
+
+const LAYER_COLORS = [
+    '#ff3333', '#33ccff', '#ffcc33', '#ff33ff',
+    '#33ff99', '#ff9933', '#9966ff', '#66ffcc',
+];
+
+let bgImage  = null;
+let bgFileName = '';
+let drawing = false;
+let straightLineMode = false;
+let straightStart = null;   // {x, y} — first click in straight-line mode
+let straightPreview = null; // {x, y} — current mouse pos for preview
+
+// ── Layer data ──────────────────────────────────────────────
+// Each layer: { strokes: [[{x,y}, ...], ...], color: string }
+let layers = [{ strokes: [], color: LAYER_COLORS[0] }];
+let activeLayerIndex = 0;
+let currentStroke = [];
+
+// ═══════════════════════════════════════════════════════════════
+// FILE LOADING
+// ═══════════════════════════════════════════════════════════════
+btnLoad.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    bgFileName = file.name.replace(/\.[^.]+$/, '');
+    const img = new Image();
+    img.onload = () => {
+        bgImage = img;
+        canvas.width  = parseInt(canvasWInput.value) || 960;
+        canvas.height = parseInt(canvasHInput.value) || 540;
+        redraw();
+        updateUI();
+        showStatus(`Caricato: ${file.name} (${img.naturalWidth}×${img.naturalHeight}) → canvas ${canvas.width}×${canvas.height}`);
+    };
+    img.src = URL.createObjectURL(file);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// JSON IMPORT
+// ═══════════════════════════════════════════════════════════════
+btnImport.addEventListener('click', () => jsonInput.click());
+jsonInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            canvas.width  = data.canvasWidth  || 960;
+            canvas.height = data.canvasHeight || 540;
+            canvasWInput.value = canvas.width;
+            canvasHInput.value = canvas.height;
+
+            let rawLayers;
+            if (data.layers && data.layers.length > 0) {
+                rawLayers = data.layers;
+            } else if (data.heightmap) {
+                rawLayers = [data.heightmap];
+            } else {
+                showStatus('JSON non contiene heightmap o layers');
+                return;
+            }
+
+            layers = rawLayers.map((hm, i) => ({
+                strokes: heightmapToStrokes(hm),
+                color: LAYER_COLORS[i % LAYER_COLORS.length],
+            }));
+            if (layers.length === 0) {
+                layers = [{ strokes: [], color: LAYER_COLORS[0] }];
+            }
+            activeLayerIndex = 0;
+
+            const name = file.name.replace(/_heightmap\.json$/, '').replace(/\.json$/, '');
+            if (name) bgFileName = name;
+
+            redraw();
+            updateUI();
+            showStatus(`Importato: ${file.name} (${rawLayers.length} layer)`);
+        } catch (err) {
+            showStatus(`Errore import: ${err.message}`);
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+/** Convert a heightmap array (with possible nulls) into drawable strokes. */
+function heightmapToStrokes(heightmap) {
+    const strokes = [];
+    let cur = [];
+    for (let x = 0; x < heightmap.length; x++) {
+        if (heightmap[x] != null) {
+            cur.push({ x, y: heightmap[x] });
+        } else if (cur.length > 0) {
+            strokes.push(cur);
+            cur = [];
+        }
+    }
+    if (cur.length > 0) strokes.push(cur);
+    return strokes;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STRAIGHT LINE TOGGLE
+// ═══════════════════════════════════════════════════════════════
+btnStraight.addEventListener('click', () => {
+    straightLineMode = !straightLineMode;
+    btnStraight.classList.toggle('active-tool', straightLineMode);
+    // Reset any in-progress straight line
+    straightStart = null;
+    straightPreview = null;
+    redraw();
+    showStatus(straightLineMode ? 'Modalità linea dritta: clicca punto iniziale, poi punto finale' : 'Modalità disegno libero');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// DRAWING
+// ═══════════════════════════════════════════════════════════════
+canvas.addEventListener('mousedown', (e) => {
+    if (straightLineMode) {
+        const pt = getCanvasPoint(e);
+        if (!straightStart) {
+            straightStart = pt;
+            showStatus(`Inizio linea: (${pt.x}, ${pt.y}) — clicca per il punto finale`);
+        } else {
+            const stroke = [straightStart, pt];
+            layers[activeLayerIndex].strokes.push(stroke);
+            straightStart = null;
+            straightPreview = null;
+            redraw();
+            updateUI();
+            showStatus(`Linea dritta aggiunta`);
+        }
+        return;
+    }
+    drawing = true;
+    currentStroke = [];
+    addPoint(e);
+});
+canvas.addEventListener('mousemove', (e) => {
+    updateMousePos(e);
+    if (straightLineMode) {
+        if (straightStart) {
+            straightPreview = getCanvasPoint(e);
+            redraw();
+        }
+        return;
+    }
+    if (!drawing) return;
+    addPoint(e);
+    redraw();
+});
+canvas.addEventListener('mouseup', () => {
+    if (straightLineMode) return;
+    if (!drawing) return;
+    drawing = false;
+    if (currentStroke.length > 1) {
+        layers[activeLayerIndex].strokes.push([...currentStroke]);
+    }
+    currentStroke = [];
+    updateUI();
+});
+canvas.addEventListener('mouseleave', () => {
+    if (straightLineMode) return;
+    if (!drawing) return;
+    drawing = false;
+    if (currentStroke.length > 1) {
+        layers[activeLayerIndex].strokes.push([...currentStroke]);
+    }
+    currentStroke = [];
+    updateUI();
+});
+
+function getCanvasPoint(e) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width  / rect.width;
+    const sy = canvas.height / rect.height;
+    return {
+        x: Math.round((e.clientX - rect.left) * sx),
+        y: Math.round((e.clientY - rect.top)  * sy),
+    };
+}
+
+function addPoint(e) {
+    currentStroke.push(getCanvasPoint(e));
+}
+function updateMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = canvas.width  / rect.width;
+    const sy = canvas.height / rect.height;
+    const x = Math.round((e.clientX - rect.left) * sx);
+    const y = Math.round((e.clientY - rect.top)  * sy);
+    mousePosEl.textContent = `${x}, ${y}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LAYER MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+btnAddLayer.addEventListener('click', () => {
+    const idx = layers.length;
+    layers.push({ strokes: [], color: LAYER_COLORS[idx % LAYER_COLORS.length] });
+    activeLayerIndex = idx;
+    redraw();
+    updateUI();
+    showStatus(`Layer ${idx} aggiunto`);
+});
+btnDelLayer.addEventListener('click', () => {
+    if (layers.length <= 1) return;
+    layers.splice(activeLayerIndex, 1);
+    layers.forEach((l, i) => l.color = LAYER_COLORS[i % LAYER_COLORS.length]);
+    if (activeLayerIndex >= layers.length) activeLayerIndex = layers.length - 1;
+    redraw();
+    updateUI();
+    showStatus('Layer eliminato');
+});
+
+function selectLayer(i) {
+    activeLayerIndex = i;
+    redraw();
+    updateUI();
+}
+
+function renderLayerButtons() {
+    layerButtonsEl.innerHTML = '';
+    layers.forEach((layer, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'layer-btn' + (i === activeLayerIndex ? ' active' : '');
+        btn.style.color = layer.color;
+        btn.style.borderColor = layer.color;
+        btn.style.background = i === activeLayerIndex ? layer.color + '22' : '#16213e';
+        btn.textContent = `L${i}`;
+        btn.title = `Layer ${i}` + (i === 0 ? ' (Ground)' : '');
+        btn.addEventListener('click', () => selectLayer(i));
+        layerButtonsEl.appendChild(btn);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDERING
+// ═══════════════════════════════════════════════════════════════
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (bgImage) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+    const lw = parseInt(document.getElementById('lineWidth').value) || 3;
+    ctx.lineCap  = 'round';
+    ctx.lineJoin = 'round';
+
+    // Draw all layers
+    for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i];
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth   = (i === activeLayerIndex) ? lw + 1 : lw;
+        ctx.globalAlpha = (i === activeLayerIndex) ? 1.0 : 0.5;
+        for (const stroke of layer.strokes) drawStroke(stroke);
+    }
+
+    // Current stroke (active layer)
+    if (currentStroke.length > 1) {
+        ctx.strokeStyle = layers[activeLayerIndex].color;
+        ctx.lineWidth   = lw + 1;
+        ctx.globalAlpha = 1.0;
+        drawStroke(currentStroke);
+    }
+
+    // Straight line preview
+    if (straightLineMode && straightStart && straightPreview) {
+        ctx.strokeStyle = layers[activeLayerIndex].color;
+        ctx.lineWidth   = lw + 1;
+        ctx.globalAlpha = 0.6;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(straightStart.x, straightStart.y);
+        ctx.lineTo(straightPreview.x, straightPreview.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Draw start point marker
+        ctx.fillStyle = layers[activeLayerIndex].color;
+        ctx.globalAlpha = 1.0;
+        ctx.beginPath();
+        ctx.arc(straightStart.x, straightStart.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+}
+
+function drawStroke(points) {
+    if (points.length < 2) return;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI UPDATES
+// ═══════════════════════════════════════════════════════════════
+function updateUI() {
+    const active = layers[activeLayerIndex];
+    const hasActiveStrokes = active.strokes.length > 0;
+    const hasAny = layers.some(l => l.strokes.length > 0);
+
+    btnClear.disabled   = !hasActiveStrokes;
+    btnUndo.disabled    = !hasActiveStrokes;
+    btnExport.disabled  = !hasAny;
+    btnDelLayer.disabled = layers.length <= 1;
+
+    pointCountEl.textContent = active.strokes.flat().length;
+    activeLayerInfoEl.textContent = `${activeLayerIndex}${activeLayerIndex === 0 ? ' (Ground)' : ''}`;
+    activeLayerInfoEl.style.color = active.color;
+
+    renderLayerButtons();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ACTIONS
+// ═══════════════════════════════════════════════════════════════
+btnClear.addEventListener('click', () => {
+    layers[activeLayerIndex].strokes = [];
+    currentStroke = [];
+    redraw(); updateUI();
+    showStatus(`Layer ${activeLayerIndex} cancellato`);
+});
+btnUndo.addEventListener('click', () => {
+    layers[activeLayerIndex].strokes.pop();
+    redraw(); updateUI();
+    showStatus('Undo: ultimo tratto rimosso');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════════════
+btnExport.addEventListener('click', () => {
+    const cw = canvas.width;
+    const ch = canvas.height;
+
+    const exportLayers = [];
+    for (const layer of layers) {
+        const hm = buildLayerHeightmap(layer.strokes, cw);
+        if (hm) exportLayers.push(hm);
+    }
+    if (exportLayers.length === 0) {
+        showStatus('Nessun dato da esportare');
+        return;
+    }
+
+    const data = { canvasWidth: cw, canvasHeight: ch, layers: exportLayers };
+    const json = JSON.stringify(data);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+
+    const name = bgFileName ? `${bgFileName}_heightmap.json` : 'heightmap.json';
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    const stats = exportLayers.map((hm, i) => {
+        const vals = hm.filter(v => v !== null);
+        if (vals.length === 0) return `L${i}: vuoto`;
+        return `L${i}: ${vals.length}px Y=${Math.min(...vals)}–${Math.max(...vals)}`;
+    }).join(' | ');
+    showStatus(`Esportato: ${name} (${exportLayers.length} layers) — ${stats}`);
+});
+
+/**
+ * Build a heightmap array for one layer from its strokes.
+ * Pixels covered by strokes are interpolated; gaps between strokes stay null.
+ */
+function buildLayerHeightmap(strokes, canvasWidth) {
+    if (strokes.length === 0) return null;
+
+    const hm = new Array(canvasWidth).fill(null);
+
+    for (const stroke of strokes) {
+        if (stroke.length === 0) continue;
+        if (stroke.length === 1) {
+            const p = stroke[0];
+            if (p.x >= 0 && p.x < canvasWidth) hm[p.x] = p.y;
+            continue;
+        }
+        for (let i = 0; i < stroke.length - 1; i++) {
+            const p1 = stroke[i];
+            const p2 = stroke[i + 1];
+            const steps = Math.max(Math.abs(p2.x - p1.x), 1);
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps;
+                const x = Math.round(p1.x + (p2.x - p1.x) * t);
+                const y = Math.round(p1.y + (p2.y - p1.y) * t);
+                if (x >= 0 && x < canvasWidth) hm[x] = y;
+            }
+        }
+    }
+
+    return hm.some(v => v !== null) ? hm : null;
+}
+
+function showStatus(msg) {
+    statusEl.textContent = msg;
+    setTimeout(() => { statusEl.textContent = ''; }, 5000);
+}
+
+// ── Init ────────────────────────────────────────────────────
+redraw();
+updateUI();
+</script>
+</body>
+</html>

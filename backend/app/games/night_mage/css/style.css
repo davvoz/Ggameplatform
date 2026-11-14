@@ -1,0 +1,200 @@
+/* Night Mage: the page is a stage for the canvas. */
+:root {
+    --night: #07040e;
+    --ink: #1a0a2e;
+    --gold: #ffd27a;
+    --pink: #ff9ad5;
+    --cream: #fff8ec;
+    --red: #ff5a3c;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--night);
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+#stage {
+    position: fixed;
+    inset: 0;
+}
+
+#game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+}
+
+/* ---- round buttons, top right, out of the HUD's way */
+.chrome {
+    position: absolute;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    display: flex;
+    gap: 8px;
+    z-index: 3;
+    transform: translateY(44px);
+}
+
+.round-btn {
+    width: 40px;
+    height: 40px;
+    padding: 10px;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    background: rgba(255, 248, 236, 0.88);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    touch-action: none;
+}
+
+.round-btn:active { transform: translateY(2px); box-shadow: none; }
+
+.round-btn svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: var(--ink);
+}
+
+#btn-sound .off,
+#btn-sound[aria-pressed="true"] .on { display: none; }
+#btn-sound[aria-pressed="true"] .off { display: inline; }
+
+body:not([data-mode="play"]) #btn-pause { display: none; }
+body[data-mode="loading"] .chrome { display: none; }
+
+/* the browser's full screen fights the platform's rotation on phones */
+@media (pointer: coarse) {
+    #btn-fullscreen { display: none; }
+}
+
+/* ---- XP and level up from the platform */
+.rewards {
+    position: absolute;
+    top: 110px;
+    right: 14px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    pointer-events: none;
+    line-height: 1.2;
+}
+
+.sticker {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 4px 14px 6px;
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    background: var(--gold);
+    color: var(--ink);
+    box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.45);
+    font-size: 18px;
+    font-weight: 800;
+    text-align: right;
+    text-transform: uppercase;
+    animation: stick-on 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+}
+
+.sticker.is-level { background: var(--pink); }
+.sticker.is-level span + span { font-size: 0.7em; font-weight: 500; }
+.sticker.is-leaving { animation: peel-off 0.3s ease-in forwards; }
+
+@keyframes stick-on {
+    from { opacity: 0; transform: translateY(-14px) rotate(10deg) scale(0.6); }
+}
+
+@keyframes peel-off {
+    to { opacity: 0; transform: translateY(-12px) scale(0.8); }
+}
+
+/* ---- loading */
+.loading {
+    position: fixed;
+    inset: 0;
+    z-index: 8;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 16px;
+    background: radial-gradient(circle at 50% 40%, #241046, var(--night) 70%);
+    color: var(--cream);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.loading[hidden] { display: none; }
+
+.orb {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 20%, #ff6a3c 45%, rgba(255, 60, 30, 0) 70%);
+    animation: pulse 0.9s ease-in-out infinite alternate;
+}
+
+.loading-track {
+    width: 180px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+#loading-bar {
+    width: 0;
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.15s;
+}
+
+@keyframes pulse {
+    to { transform: scale(1.35); opacity: 0.7; }
+}
+
+/* ---- phones held upright */
+.rotate-guard {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    place-content: center;
+    gap: 12px;
+    background: var(--night);
+    color: var(--cream);
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.is-upright .rotate-guard { display: grid; }
+
+.rotate-guard svg {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    fill: none;
+    stroke: var(--cream);
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.rotate-guard .phone { animation: turn 2s infinite; transform-origin: 60px 55px; }
+
+@keyframes turn {
+    40%, 100% { transform: rotate(-90deg); }
+}

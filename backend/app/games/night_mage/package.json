@@ -1,0 +1,9 @@
+{
+  "name": "night-mage",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "measure": "node tests/support/measure.js"
+  }
+}

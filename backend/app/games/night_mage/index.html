@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#07040e">
+    <title>Night Mage</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-mode="loading">
+    <main id="stage">
+        <canvas id="game-canvas" aria-label="Night Mage"></canvas>
+        <div class="chrome">
+            <button id="btn-pause" class="round-btn" aria-label="Pause">
+                <svg viewBox="0 0 8 8" aria-hidden="true"><rect x="1.5" y="1" width="1.8" height="6"/><rect x="4.7" y="1" width="1.8" height="6"/></svg>
+            </button>
+            <button id="btn-sound" class="round-btn" aria-label="Sound off" aria-pressed="false">
+                <svg viewBox="0 0 8 8" aria-hidden="true">
+                    <path class="on" d="M0 3h2l2-2v6L2 5H0zM5 2h1v1H5zM6 3h1v2H6zM5 5h1v1H5z"/>
+                    <path class="off" d="M0 3h2l2-2v6L2 5H0zM5 2l3 3-1 1-3-3zM7 2l1 1-3 3-1-1z"/>
+                </svg>
+            </button>
+            <button id="btn-fullscreen" class="round-btn" aria-label="Full screen">
+                <svg viewBox="0 0 8 8" aria-hidden="true"><path d="M0 0h3v1H1v2H0zM5 0h3v3H7V1H5zM0 5h1v2h2v1H0zM7 5h1v3H5V7h2z"/></svg>
+            </button>
+        </div>
+        <div id="rewards" class="rewards" aria-live="polite"></div>
+
+        <div id="loading" class="loading">
+            <div class="orb" aria-hidden="true"></div>
+            <p>THE FOREST IS WAKING UP</p>
+            <div class="loading-track"><div id="loading-bar"></div></div>
+        </div>
+
+        <div class="rotate-guard" aria-hidden="true">
+            <svg viewBox="0 0 120 120">
+                <rect class="phone" x="42" y="22" width="36" height="66" rx="6"/>
+                <path class="turn" d="M28 96a44 44 0 0 0 64 0M88 86l4 10-10 3"/>
+            </svg>
+            <p>TURN YOUR PHONE</p>
+        </div>
+    </main>
+
+    <script src="../../sdk/platformsdk.obf.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

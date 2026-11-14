@@ -1,7 +1,7 @@
-import { halo, onWall, path, prism, wallRect, withAlpha } from './forgeArt.js';
-import { toScreen } from '../core/iso.js';
-import { softGlow } from './perf.js';
-import { BUILDING_INFO, PATH_INFO } from '../data/labels.js';
+import { halo, onWall, path, prism, wallRect, withAlpha } from './primitives.js';
+import { toScreen } from '../../core/iso.js';
+import { softGlow } from '../perf.js';
+import { BUILDING_INFO, PATH_INFO } from '../../data/labels.js';
 
 /**
  * What an upgrade looks like on the map, drawn around the building's own art:

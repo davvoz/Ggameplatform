@@ -1,6 +1,6 @@
 import { groundEllipse } from '../../core/iso.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from '../../data/labels.js';
-import { halo, path, withAlpha } from '../forgeArt.js';
+import { halo, path, withAlpha } from '../art/primitives.js';
 import { HERO_SCALE } from './shared.js';
 
 const INWARD = { north: [0, 1], south: [0, -1], west: [1, 0], east: [-1, 0] };

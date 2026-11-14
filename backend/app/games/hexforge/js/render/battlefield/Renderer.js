@@ -1,7 +1,7 @@
 import { carryOver, clampCamera, panBy, zoomAt } from '../../core/camera.js';
 import { depthOf, fitRegion, groundEllipse, rotatePoint, rotateRect, toScreen, toWorld } from '../../core/iso.js';
 import { BUILDING_INFO } from '../../data/labels.js';
-import { drawBuilding, drawRubble, drawTrapMark } from '../forgeArt.js';
+import { drawBuilding, drawRubble, drawTrapMark } from '../art/buildings.js';
 import { perf } from '../perf.js';
 import { GroundLayer } from './ground.js';
 import { HeroPainter } from './heroes.js';
@@ -28,7 +28,7 @@ function pointInPolygon(p, polygon) {
 /**
  * Canvas renderer for the isometric battlefield, "Forgia Infernale" style:
  * a basalt plain, iron buildings, embers in the air.
- * The art itself lives in forgeArt.js; this class owns the camera, picks what
+ * The art itself lives in render/art/; this class owns the camera, picks what
  * the pointer is on, and lays out a frame in depth order. Beside it:
  *  - ground.js: the sky, the basalt tiles and their cache in performance mode
  *  - heroes.js: heroes standing, falling, shielded, and the Technomancer's bolt

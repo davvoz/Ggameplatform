@@ -1,5 +1,5 @@
 import { TILE_H, TILE_W } from '../../core/iso.js';
-import { hash, path } from '../forgeArt.js';
+import { hash, path } from '../art/primitives.js';
 import { perf } from '../perf.js';
 
 const ZOOM_SETTLE_MS = 150;   // performance mode: the ground is redrawn sharp once a pinch has rested this long

@@ -1,6 +1,6 @@
 import { groundEllipse } from '../../core/iso.js';
 import { BUILDING_INFO, HERO_INFO } from '../../data/labels.js';
-import { flame, halo, hash, path, withAlpha } from '../forgeArt.js';
+import { flame, halo, hash, path, withAlpha } from '../art/primitives.js';
 import { perf } from '../perf.js';
 import { HERO_SCALE } from './shared.js';
 

@@ -1,6 +1,8 @@
 import { rotateVector } from '../../core/iso.js';
 import { HERO_INFO } from '../../data/labels.js';
-import { MAGE_ORB, drawHero, halo, withAlpha } from '../forgeArt.js';
+import { MAGE_ORB } from '../art/technomancer.js';
+import { drawHero } from '../art/heroes.js';
+import { halo, withAlpha } from '../art/primitives.js';
 import { HERO_SCALE } from './shared.js';
 
 /** Heroes on the field: shadow, afterimages, hit flash, ward, mending, frost, the fall, and which way each one looks. */

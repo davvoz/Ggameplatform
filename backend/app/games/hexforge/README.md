@@ -174,7 +174,7 @@ Phase 3 PvP is complete.
 
 Art direction chosen by the owner: **Forgia Infernale** (iron, basalt, molten
 metal, embers), over Neon Arcano and Ologramma Tattico. Step 1 (done): the
-city and the battles are drawn in it (`js/render/forgeArt.js`): a basalt plain, the core as a great forge with a molten pool, gothic
+city and the battles are drawn in it (`js/render/art/`): a basalt plain, the core as a great forge with a molten pool, gothic
 towers with braziers (amber fire, copper horns with arcs, ice crystals), each
 producer with its material's glow, armoured heroes with a class-coloured ring
 at their feet, fireballs, lightning, frost bursts, explosions and embers.
@@ -204,7 +204,7 @@ Chakra Petch for numbers (Google Fonts); icons are an inline SVG sprite.
 screenshots.
 
 Heroes, redone: each is drawn in profile with a pose (`drawHero` in
-`js/render/forgeArt.js`): walking legs, the Guardian's overhead hammer smash behind
+`js/render/art/heroes.js`): walking legs, the Guardian's overhead hammer smash behind
 a tower shield, the Neon Blade's twin dagger cuts with a glowing arc and a
 front flip over walls, the Technomancer's floating robe, staff and charged
 orb that throws a bolt. Blows are wound up before they land and followed
@@ -341,7 +341,7 @@ section, XP and daily quests).
 | `backend/app/games/hexforge_be/models.py` | `hexforge_players`: one row per player, city/heroes/materials as JSON |
 | `js/core/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
 | `js/render/battlefield/` | Isometric canvas renderer: `Renderer.js` owns the camera, picking and the frame order; `ground.js` the tiles (cached in performance mode), `heroes.js`, `effects.js` (battle effects, embers) and `marks.js` (selection, reach, medallions, bars, labels) draw beside it. Parts reach it as `renderer` |
-| `js/render/forgeArt.js` | The "Forgia Infernale" art: every building and hero drawn from shapes (no image files) |
+| `js/render/art/` | The "Forgia Infernale" art, every building and hero drawn from shapes (no image files): `primitives.js` (materials, boxes, glows, colours), `buildings.js` with `upgradeArt.js` and `fusionArt.js` around them, `heroes.js` (pose, form, fusion) handing each hero to its class painter, `heroGear.js` for the pieces classes share |
 | `js/modes/battle/` | Attack plan, replay controls, result |
 | `js/modes/city/` | My city: selection, placing, forge and defense sheets |
 | `js/core/camera.js` | Zoom and pan of the map (pure, tested) |
@@ -448,7 +448,7 @@ at 70 % of its forge cost), each bought once, new at midnight UTC.
 
 ### Fusion: three maxed into one
 
-`hexforge_be/fusion.py`, `js/ui/panels/fusionPanel.js`, `js/render/fusionArt.js`. Buildings whose
+`hexforge_be/fusion.py`, `js/ui/panels/fusionPanel.js`, `js/render/art/fusionArt.js`. Buildings whose
 type is at level 5 (towers, mines, walls; a trap only as a donor; never the
 Core or the Vault) and ascended heroes (tier 3) fuse three at a time, of any
 kind. The player picks the **base**: it keeps its body (type, size, place,

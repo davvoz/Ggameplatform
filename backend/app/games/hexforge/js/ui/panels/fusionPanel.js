@@ -1,7 +1,7 @@
 import { costChips, formatDuration } from './forgePanel.js';
 import { icon, withIcon } from '../icons.js';
 import { BUILDING_INFO, FORM_INFO, HERO_INFO, MATERIAL_INFO, PATH_INFO } from '../../data/labels.js';
-import { partColor } from '../../render/fusionArt.js';
+import { partColor } from '../../render/art/fusionArt.js';
 import { buildingThumb, heroPortrait, heroThumb, thumbImg } from '../../render/thumbs.js';
 
 /**

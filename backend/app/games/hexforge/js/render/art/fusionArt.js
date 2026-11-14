@@ -1,7 +1,7 @@
-import { IRON,  flame, gem, halo, onWall, prism, seam, smoke, wallRect, withAlpha } from './forgeArt.js';
-import { toScreen } from '../core/iso.js';
-import { softGlow } from './perf.js';
-import { BUILDING_INFO, HERO_INFO } from '../data/labels.js';
+import { IRON, flame, gem, halo, onWall, prism, seam, smoke, wallRect, withAlpha } from './primitives.js';
+import { toScreen } from '../../core/iso.js';
+import { softGlow } from '../perf.js';
+import { BUILDING_INFO, HERO_INFO } from '../../data/labels.js';
 
 /**
  * What a fusion looks like.
@@ -13,7 +13,7 @@ import { BUILDING_INFO, HERO_INFO } from '../data/labels.js';
  *             a Wall's spikes and armour, and so on. One gem per grade
  *             circles above.
  *   hero      a ring at its feet in the parts' colours, and it wears what
- *             its donors were known for (forgeArt.js: backMarks, headMarks),
+ *             its donors were known for (heroGear.js: backMarks, headMarks),
  *             plus the gems.
  * `parts` are the server's fusion parts ([{type, path|form, power}]); the
  * first is the body.

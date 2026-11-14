@@ -1,4 +1,5 @@
-import { drawBuilding, drawHero } from './forgeArt.js';
+import { drawBuilding } from './art/buildings.js';
+import { drawHero } from './art/heroes.js';
 import { BUILDING_INFO, FORM_INFO, HERO_INFO, ITEM_INFO } from '../data/labels.js';
 
 /**

@@ -6,7 +6,7 @@ import { FrameWatch, detectPerf, perf } from './render/perf.js';
 import { connectPlatform } from './net/platform.js';
 import { toggleFullscreen } from './ui/fullscreen.js';
 import { RankingPanel } from './ui/ranking.js';
-import { Renderer } from './render/render.js';
+import { Renderer } from './render/battlefield/Renderer.js';
 import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './ui/sheets.js';
 
 /**

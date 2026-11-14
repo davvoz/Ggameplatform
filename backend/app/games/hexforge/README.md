@@ -340,7 +340,7 @@ section, XP and daily quests).
 | `backend/app/games/hexforge_be/player_service.py` | Load/save a player's state with a version check; collect, move |
 | `backend/app/games/hexforge_be/models.py` | `hexforge_players`: one row per player, city/heroes/materials as JSON |
 | `js/core/replay.js` | Rebuilds the battlefield at any moment from the battle log (no simulation in the client) |
-| `js/render/render.js` | Isometric canvas renderer: ground, picking, overlays, battle effects, embers |
+| `js/render/battlefield/` | Isometric canvas renderer: `Renderer.js` owns the camera, picking and the frame order; `ground.js` the tiles (cached in performance mode), `heroes.js`, `effects.js` (battle effects, embers) and `marks.js` (selection, reach, medallions, bars, labels) draw beside it. Parts reach it as `renderer` |
 | `js/render/forgeArt.js` | The "Forgia Infernale" art: every building and hero drawn from shapes (no image files) |
 | `js/modes/battle/` | Attack plan, replay controls, result |
 | `js/modes/city/` | My city: selection, placing, forge and defense sheets |

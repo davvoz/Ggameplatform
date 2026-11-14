@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rivalBlocker } from '../js/rivalPanel.js';
+import { rivalBlocker } from '../js/ui/panels/rivalPanel.js';
 
 const rival = { name: 'Raider BOB', available: true };
 

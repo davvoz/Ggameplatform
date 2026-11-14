@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FrameWatch, detectPerf, perf } from '../js/perf.js';
+import { FrameWatch, detectPerf, perf } from '../js/render/perf.js';
 
 const media = (coarse, fine) => (query) => ({ matches: query.includes('coarse') ? coarse : fine });
 

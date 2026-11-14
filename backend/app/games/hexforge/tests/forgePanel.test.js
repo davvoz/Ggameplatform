@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { forgeBlocker, formatCountdown, formatDuration, itemName, ownedText } from '../js/forgePanel.js';
+import { forgeBlocker, formatCountdown, formatDuration, itemName, ownedText } from '../js/ui/panels/forgePanel.js';
 
 test('durations read like a person would say them', () => {
     assert.equal(formatDuration(45), '45 s');

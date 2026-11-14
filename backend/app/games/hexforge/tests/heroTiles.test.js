@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { INJURY_SECONDS, formatHeal, heroNames, heroStatus } from '../js/heroTiles.js';
+import { INJURY_SECONDS, formatHeal, heroNames, heroStatus } from '../js/ui/heroTiles.js';
 
 test('heroes of the same class are numbered in forging order', () => {
     const names = heroNames([

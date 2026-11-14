@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
     COMPASS, TILE_H, TILE_W, compassOffset, fitCamera, groundEllipse, northBearing, project, rotatePoint,
     rotateRect, rotateVector, toScreen,
-} from '../js/iso.js';
+} from '../js/core/iso.js';
 
 test('the compass points where the turned map says, and turns smoothly in between', () => {
     const near = (a, b) => assert.ok(Math.abs(a.x - b.x) < 1e-9 && Math.abs(a.y - b.y) < 1e-9, `${JSON.stringify(a)} ≠ ${JSON.stringify(b)}`);

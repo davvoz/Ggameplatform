@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     buildingLines, canFuse, fusionBlocker, fusionCandidates, groupCandidates, heroLines, partName, togglePick,
-} from '../js/fusionPanel.js';
+} from '../js/ui/panels/fusionPanel.js';
 
 const FUSION = { base_types: ['rune_tower', 'frost_tower', 'mana_well', 'wall'], donor_types: ['rune_tower', 'frost_tower', 'mana_well', 'wall', 'rune_trap'] };
 

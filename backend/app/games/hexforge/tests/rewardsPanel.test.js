@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatLong, headline, usableBonuses } from '../js/rewardsPanel.js';
+import { formatLong, headline, usableBonuses } from '../js/ui/panels/rewardsPanel.js';
 
 test('only owned bonuses that work on the target are offered, best fit first', () => {
     const owned = { hourglass: 2, salve: 1, flask: 0 };

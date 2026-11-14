@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { edgePoint, gangSchedule, gremlinSpeed, gremlinStars } from '../js/gremlins.js';
+import { edgePoint, gangSchedule, gremlinSpeed, gremlinStars } from '../js/minigames/gremlins.js';
 
 test('the gang sets off one after another, faster and faster', () => {
     let s = 7;

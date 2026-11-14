@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { carryOver, clampCamera, panBy, zoomAt } from '../js/camera.js';
-import { fitRegion, project, regionAround, toScreen, toWorld } from '../js/iso.js';
-import { leagueProgress } from '../js/leagues.js';
+import { carryOver, clampCamera, panBy, zoomAt } from '../js/core/camera.js';
+import { fitRegion, project, regionAround, toScreen, toWorld } from '../js/core/iso.js';
+import { leagueProgress } from '../js/core/leagues.js';
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
 

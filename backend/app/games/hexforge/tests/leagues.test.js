@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { progressText, rankText, signed, stakesText } from '../js/leagues.js';
+import { progressText, rankText, signed, stakesText } from '../js/core/leagues.js';
 
 test('trophy changes read with their sign', () => {
     assert.equal(signed(30), '+30');

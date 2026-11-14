@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { raidOutcome, timeAgo, unseenText } from '../js/raidLog.js';
+import { raidOutcome, timeAgo, unseenText } from '../js/ui/raidLog.js';
 
 test('raid times read like a feed', () => {
     assert.equal(timeAgo(20), 'just now');

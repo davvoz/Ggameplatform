@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { EFFECT_TICKS, createReplay, poseOfBlow, separate } from '../js/replay.js';
+import { EFFECT_TICKS, createReplay, poseOfBlow, separate } from '../js/core/replay.js';
 
 // A real battle produced by the server simulation (south, production, spread).
 // Regenerate it after changing the simulation:

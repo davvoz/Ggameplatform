@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildingChanges, formatBuildingStat, statsAt, upgradeBlocker, upgradeBonuses } from '../js/upgradePanel.js';
+import { buildingChanges, formatBuildingStat, statsAt, upgradeBlocker, upgradeBonuses } from '../js/ui/panels/upgradePanel.js';
 
 const table = { stats: { 1: { hp: 950, damage: 70 }, 3: { sniper: { hp: 1140, damage: 94 }, gatling: { hp: 1140, damage: 84 } } } };
 

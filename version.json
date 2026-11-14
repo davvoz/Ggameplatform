@@ -1,8 +1,18 @@
 {
-  "version": "5.22.4",
-  "timestamp": "2026-11-14T13:03:57.685Z",
-  "buildNumber": 624,
+  "version": "5.22.5",
+  "timestamp": "2026-11-14T13:45:52.604Z",
+  "buildNumber": 625,
   "changelog": [
+    {
+      "version": "5.22.5",
+      "date": "2026-11-14",
+      "type": "patch",
+      "changes": [
+        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
+        "fix:[H]Refactor heroTile rendering and related functions for improved readability and maintainability",
+        "🔖 Bump version to 5.22.4 [skip-version]"
+      ]
+    },
     {
       "version": "5.22.4",
       "date": "2026-11-14",
@@ -88,15 +98,6 @@
         "feat: Hexforge building upgrades, hero dismissal, tower reach",
         "feat: Hexforge phase 5 steps 4-5, hero items and the Explorer",
         "feat: Hexforge phase 5 step 3, hero evolution"
-      ]
-    },
-    {
-      "version": "5.18.4",
-      "date": "2026-11-09",
-      "type": "patch",
-      "changes": [
-        "fix: clear the three SonarCloud CSS blockers",
-        "🔖 Bump version to 5.18.3 [skip-version]"
       ]
     }
   ]

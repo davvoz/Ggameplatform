@@ -26,6 +26,7 @@ The game is not registered on the platform yet and gives no XP.
 | `js/modes/city/` | My city, split by concern: `CityMode.js` runs the mode (state, server calls, input, frame), `selection.js` the selected building and placing, `hud.js` level, XP, materials and the big cards, `sheets/` one class per sheet (forge, hero, fusion, upgrade, rewards, defense). Each part gets the `CityMode` as `city` and reaches the others through it | anything |
 | `js/modes/battle/` | The attack, split the same way: `BattleMode.js` runs the mode, `plan.js` the target and the plan, `squadPicker.js` the squad and the bonuses, `replayView.js` the replay and the result. Parts reach the mode as `mode` | anything |
 | `js/main.js` | Entry point: the shell, input on the map, the frame loop | anything |
+| `css/` | One stylesheet per area (base, map, controls, city, sheets, attack, battle, animations, wide screens, rewards, heroes, minigames, merchant, fusion, forge slot). `index.html` links them in this order and the order matters: later files override earlier ones | – |
 
 Logic never imports graphics: `core/`, `data/` and `net/` must stay free of
 DOM and canvas, so they can be tested in Node.

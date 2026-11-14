@@ -1,0 +1,1318 @@
+/* ── the anvil ───────────────────────────────────────────────────────── */
+.anvil-game {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(8, 4, 2, 0.82);
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.anvil-card {
+    position: relative;
+    width: min(420px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 18px 22px;
+    border-radius: 22px;
+    border: 2px solid var(--brass);
+    background: radial-gradient(circle at 50% 30%, #3a2416, #120a06 75%);
+    box-shadow: 0 0 40px rgba(255, 122, 26, 0.25);
+}
+
+.anvil-card h2 {
+    margin: 0;
+    font-family: 'Grenze Gotisch', serif;
+    font-size: 30px;
+    color: var(--gold-hi);
+}
+
+.anvil-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.anvil-job {
+    margin: -6px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.anvil-art {
+    position: relative;
+    width: 180px;
+    height: 110px;
+    margin-top: 14px;
+}
+
+.anvil-art svg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 180px;
+    height: 105px;
+}
+
+.anvil-hammer {
+    position: absolute;
+    left: 74px;
+    top: -6px;
+    width: 46px;
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(#8a8f96, #4a4f56);
+    transform-origin: 90% 50%;
+    transform: rotate(-35deg);
+}
+
+.anvil-hammer::after {
+    content: '';
+    position: absolute;
+    left: 38px;
+    top: 4px;
+    width: 46px;
+    height: 7px;
+    border-radius: 3px;
+    background: #6b4a2b;
+}
+
+.anvil-art.hit .anvil-hammer {
+    animation: anvil-swing 260ms ease-out;
+}
+
+@keyframes anvil-swing {
+    0% { transform: rotate(-35deg); }
+    40% { transform: rotate(8deg); }
+    100% { transform: rotate(-35deg); }
+}
+
+.anvil-sparks {
+    position: absolute;
+    left: 70px;
+    top: 26px;
+    width: 40px;
+    height: 20px;
+    opacity: 0;
+    background: radial-gradient(circle, #fff3c0 0 2px, transparent 3px) 0 0 / 10px 10px;
+    filter: drop-shadow(0 0 6px #ffb347);
+}
+
+.anvil-art.hit .anvil-sparks {
+    animation: anvil-sparks 420ms ease-out;
+}
+
+.anvil-art.perfect .anvil-sparks {
+    animation-duration: 650ms;
+    transform: scale(1.8);
+}
+
+@keyframes anvil-sparks {
+    0% { opacity: 1; transform: translateY(0) scale(0.6); }
+    100% { opacity: 0; transform: translateY(-26px) scale(1.6); }
+}
+
+.anvil-bar {
+    position: relative;
+    width: 100%;
+    height: 26px;
+    border-radius: 13px;
+    border: 2px solid #5a3d22;
+    background: #1c120b;
+    overflow: hidden;
+}
+
+.anvil-good,
+.anvil-perfect {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.anvil-good {
+    background: rgba(255, 179, 71, 0.28);
+}
+
+.anvil-perfect {
+    background: linear-gradient(90deg, #ffb347, #fff1b0, #ffb347);
+    box-shadow: 0 0 12px #ffb347;
+}
+
+.anvil-marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 6px;
+    margin-left: -3px;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow: 0 0 10px #fff, 0 0 18px #ff7a1a;
+}
+
+.anvil-word {
+    margin: 0;
+    min-height: 26px;
+    font-weight: 900;
+    font-size: 15px;
+    color: var(--text);
+    text-align: center;
+}
+
+.anvil-word.perfect {
+    font-size: 22px;
+    color: #fff1b0;
+    text-shadow: 0 0 12px #ffb347;
+}
+
+.anvil-word.good {
+    font-size: 19px;
+    color: var(--gold-hi);
+}
+
+.anvil-word.miss {
+    font-size: 17px;
+    color: #ff8a7a;
+}
+
+.anvil-word.anvil-done {
+    font-size: 19px;
+    color: #9ff0b8;
+}
+
+.anvil-pips {
+    display: flex;
+    gap: 8px;
+}
+
+.anvil-pips .pip {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #5a3d22;
+    background: #1c120b;
+}
+
+.anvil-pips .pip.perfect {
+    background: #ffd36b;
+    border-color: #fff1b0;
+    box-shadow: 0 0 8px #ffb347;
+}
+
+.anvil-pips .pip.good {
+    background: #b07a35;
+}
+
+.anvil-pips .pip.miss {
+    background: #5a1c14;
+}
+
+.anvil-strike {
+    width: 100%;
+    padding: 16px;
+    border-radius: 18px;
+    background: var(--molten);
+    color: #2a0d00;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255, 122, 26, 0.45);
+}
+
+.slot-hammer {
+    color: #ffd36b;
+}
+
+/* ── the training dummy ─────────────────────────────────────────────── */
+.training-game {
+    animation: tr-fade-in 200ms ease-out;
+}
+
+.training-game.leaving {
+    animation: tr-fade-out 200ms ease-in forwards;
+}
+
+.training-card {
+    animation: tr-card-in 320ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes tr-fade-in {
+    from { opacity: 0; }
+}
+
+@keyframes tr-fade-out {
+    to { opacity: 0; }
+}
+
+@keyframes tr-card-in {
+    from { transform: translateY(30px) scale(0.92); opacity: 0; }
+}
+
+.tr-stage {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.tr-stage > * {
+    animation: tr-rise 280ms ease-out;
+}
+
+@keyframes tr-rise {
+    from { transform: translateY(12px); opacity: 0; }
+}
+
+/* intro */
+.tr-intro {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.tr-intro-hero img {
+    width: 96px;
+    height: 96px;
+    filter: drop-shadow(0 0 12px rgba(255, 179, 71, 0.45));
+    animation: tr-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes tr-bob {
+    50% { transform: translateY(-5px); }
+}
+
+.tr-rules {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tr-rule-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: left;
+}
+
+.tr-demo {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+}
+
+.tr-demo.green {
+    background: radial-gradient(circle, #d6ffe4 0 18%, #4dd98a 20% 60%, #1f8a50 62%);
+    box-shadow: 0 0 14px #4dd98a;
+    animation: tr-pulse 1s ease-in-out infinite;
+}
+
+.tr-demo.red {
+    background: radial-gradient(circle, #ffd6d0 0 16%, #ff5a4a 18% 60%, #8a1c14 62%);
+    box-shadow: 0 0 14px #ff5a4a;
+    animation: tr-pulse 1s ease-in-out 0.5s infinite;
+}
+
+.tr-demo.red::after {
+    content: '\2716';
+    color: #fff;
+    font-size: 15px;
+}
+
+.tr-demo.clock {
+    border-color: var(--gold-hi);
+    color: var(--gold-hi);
+    font-size: 13px;
+}
+
+@keyframes tr-pulse {
+    50% { transform: scale(1.15); }
+}
+
+.tr-start {
+    width: 100%;
+    padding: 16px;
+    border-radius: 18px;
+    border: 2px solid var(--gold-hi);
+    background: var(--molten);
+    color: #2a0d00;
+    font-family: var(--display);
+    font-size: 30px;
+    letter-spacing: 0.08em;
+    box-shadow: 0 6px 22px rgba(255, 122, 26, 0.5);
+    animation: tr-glow 1.4s ease-in-out infinite;
+}
+
+.tr-start.small {
+    padding: 12px;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+}
+
+.tr-start:active {
+    transform: scale(0.97);
+}
+
+@keyframes tr-glow {
+    50% { box-shadow: 0 6px 30px rgba(255, 179, 71, 0.85); }
+}
+
+/* play */
+.tr-hud {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tr-clock {
+    min-width: 30px;
+    font-family: var(--display);
+    font-size: 26px;
+    color: var(--gold-hi);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.tr-time {
+    flex: 1;
+    height: 12px;
+    border-radius: 6px;
+    background: #1c120b;
+    border: 1px solid #5a3d22;
+    overflow: hidden;
+}
+
+.tr-time > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff7a1a, #ffd36b);
+}
+
+.tr-tally {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.tr-tally b {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 26px;
+    color: #9ff0b8;
+    min-width: 26px;
+    text-align: right;
+}
+
+.bump {
+    animation: tr-bump 220ms ease-out;
+}
+
+@keyframes tr-bump {
+    40% { transform: scale(1.35); }
+}
+
+.training-card.hurry .tr-clock {
+    color: #ff7a6a;
+    animation: tr-pulse 0.5s ease-in-out infinite;
+}
+
+.training-card.hurry .tr-time > span {
+    background: linear-gradient(90deg, #b8380c, #ff5a4a);
+}
+
+.training-card.hurry {
+    border-color: #ff7a6a;
+}
+
+.tr-board {
+    position: relative;
+    width: 100%;
+    height: 270px;
+    border-radius: 16px;
+    background: radial-gradient(circle at 55% 45%, rgba(255, 179, 71, 0.14), transparent 70%);
+    touch-action: manipulation;
+    overflow: hidden;
+}
+
+.tr-dummy {
+    position: absolute;
+    left: 55%;
+    top: 3%;
+    width: 196px;
+    height: 255px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.tr-dummy svg {
+    width: 100%;
+    height: 100%;
+}
+
+.tr-hero {
+    position: absolute;
+    left: 0;
+    bottom: 4px;
+    pointer-events: none;
+}
+
+.tr-hero img {
+    width: 96px;
+    height: 96px;
+    filter: drop-shadow(0 0 8px rgba(255, 179, 71, 0.35));
+}
+
+.tr-combo {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 211, 107, 0.18);
+    border: 1px solid var(--gold-hi);
+    color: var(--gold-hi);
+    font-weight: 900;
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.tr-banner {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, -50%) scale(0);
+    font-family: var(--display);
+    font-size: 72px;
+    color: var(--gold-hi);
+    text-shadow: 0 0 22px #ff7a1a, 0 3px 0 #000;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 3;
+}
+
+.tr-banner.show {
+    animation: tr-banner 800ms ease-out forwards;
+}
+
+.tr-banner.go {
+    color: #9ff0b8;
+    text-shadow: 0 0 22px #4dd98a, 0 3px 0 #000;
+}
+
+.tr-banner.time {
+    font-size: 64px;
+    color: #fff1b0;
+    animation: tr-banner-stay 1000ms ease-out forwards;
+}
+
+@keyframes tr-banner {
+    0% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+    25% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    75% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+}
+
+@keyframes tr-banner-stay {
+    0% { transform: translate(-50%, -50%) scale(2.4) rotate(-6deg); opacity: 0; }
+    30% { transform: translate(-50%, -50%) scale(1) rotate(-6deg); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.05) rotate(-6deg); opacity: 1; }
+}
+
+.tr-xpline {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 22px;
+    color: #9ff0b8;
+    font-variant-numeric: tabular-nums;
+}
+
+.tr-target {
+    position: absolute;
+    width: 52px;
+    height: 52px;
+    margin: -26px 0 0 -26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    animation: tr-life var(--life) linear forwards;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* a ring that shrinks round the target shows how long it stays */
+.tr-target::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    border: 3px solid currentColor;
+    animation: tr-clock var(--life) linear forwards;
+}
+
+.tr-target.green {
+    color: #8ff0b0;
+    background: radial-gradient(circle, #d6ffe4 0 18%, #4dd98a 20% 60%, #1f8a50 62%);
+    box-shadow: 0 0 16px #4dd98a;
+}
+
+.tr-target.red {
+    color: #ff8a7a;
+    background: radial-gradient(circle, #ffd6d0 0 16%, #ff5a4a 18% 60%, #8a1c14 62%);
+    box-shadow: 0 0 16px #ff5a4a;
+}
+
+.tr-target.red::before {
+    content: '\2716';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.tr-target.fade {
+    animation: tr-gone 200ms ease-in forwards;
+    pointer-events: none;
+}
+
+@keyframes tr-life {
+    0% { transform: scale(0.3); }
+    12% { transform: scale(1.12); }
+    20%, 100% { transform: scale(1); }
+}
+
+@keyframes tr-gone {
+    to { transform: scale(0.3); opacity: 0; }
+}
+
+@keyframes tr-clock {
+    from { transform: scale(1); opacity: 0.9; }
+    to { transform: scale(0.62); opacity: 0.3; }
+}
+
+.tr-pop {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-weight: 900;
+    font-size: 22px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 3;
+    animation: tr-pop 700ms ease-out forwards;
+}
+
+.tr-pop.good {
+    color: #9ff0b8;
+    text-shadow: 0 0 10px #4dd98a, 0 2px 0 #000;
+}
+
+.tr-pop.bad {
+    color: #ff9a8a;
+    text-shadow: 0 0 10px #ff5a4a, 0 2px 0 #000;
+}
+
+@keyframes tr-pop {
+    0% { opacity: 0; margin-top: 0; transform: translate(-50%, -50%) scale(0.6); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; margin-top: -46px; transform: translate(-50%, -50%) scale(1); }
+}
+
+.tr-spark {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: tr-spark 520ms ease-out forwards;
+}
+
+@keyframes tr-spark {
+    to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+.tr-slash {
+    position: absolute;
+    width: 90px;
+    height: 6px;
+    margin: -3px 0 0 -45px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, transparent, #fff, transparent);
+    box-shadow: 0 0 12px #fff1b0;
+    transform: rotate(var(--tilt)) scaleX(0);
+    pointer-events: none;
+    animation: tr-slash 300ms ease-out forwards;
+}
+
+@keyframes tr-slash {
+    40% { transform: rotate(var(--tilt)) scaleX(1); opacity: 1; }
+    100% { transform: rotate(var(--tilt)) scaleX(1.1); opacity: 0; }
+}
+
+.tr-board.struck .tr-dummy {
+    animation: tr-shake 300ms ease-out;
+}
+
+.tr-board.struck .tr-hero {
+    animation: tr-lunge 260ms ease-out;
+}
+
+.tr-board.hurt {
+    animation: tr-red 380ms ease-out;
+}
+
+.tr-board.hurt .tr-hero {
+    animation: tr-hurt 380ms ease-out;
+}
+
+@keyframes tr-shake {
+    20% { transform: translateX(calc(-50% + 7px)) rotate(5deg); }
+    50% { transform: translateX(calc(-50% - 6px)) rotate(-4deg); }
+    80% { transform: translateX(calc(-50% + 3px)); }
+}
+
+@keyframes tr-lunge {
+    40% { transform: translateX(28px) rotate(6deg); }
+}
+
+@keyframes tr-hurt {
+    20% { transform: translateX(-10px); filter: drop-shadow(0 0 12px #ff5a4a) saturate(2); }
+    60% { transform: translateX(4px); }
+}
+
+@keyframes tr-red {
+    20% { box-shadow: inset 0 0 40px rgba(255, 60, 40, 0.6); }
+}
+
+/* result */
+.tr-result {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.tr-stars {
+    display: flex;
+    gap: 10px;
+}
+
+.tr-star {
+    font-size: 48px;
+    line-height: 1;
+    color: #3a2a1e;
+    text-shadow: 0 2px 0 #000;
+}
+
+.tr-star.on {
+    color: #ffd36b;
+    text-shadow: 0 0 18px #ffb347, 0 2px 0 #000;
+    animation: tr-star 420ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes tr-star {
+    from { transform: scale(2.4) rotate(-30deg); opacity: 0; }
+}
+
+.tr-bighits b {
+    font-family: var(--display);
+    font-size: 56px;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.tr-bighits span {
+    font-size: 18px;
+    color: var(--muted);
+}
+
+.tr-sub {
+    margin: -6px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.tr-xpbox {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(77, 217, 138, 0.08);
+    border: 1px solid rgba(77, 217, 138, 0.35);
+}
+
+.tr-xplabel {
+    font-size: 15px;
+    font-weight: 800;
+    color: #9ff0b8;
+}
+
+.tr-xplabel.bad {
+    color: #ff9a8a;
+}
+
+.tr-meter {
+    position: relative;
+    height: 14px;
+    border-radius: 7px;
+    background: #1c120b;
+    border: 1px solid #5a3d22;
+    overflow: hidden;
+}
+
+.tr-meter-now,
+.tr-meter-gain {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.tr-meter-now {
+    left: 0;
+    background: linear-gradient(90deg, #b07a35, #ffd36b);
+}
+
+.tr-meter-gain {
+    width: 0;
+    background: linear-gradient(90deg, #4dd98a, #b6ffcf);
+    box-shadow: 0 0 10px #4dd98a;
+    transition: width 900ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.tr-ready {
+    margin: 2px 0 0;
+    font-family: var(--display);
+    font-size: 24px;
+    color: #ffd36b;
+    text-align: center;
+    text-shadow: 0 0 14px #ffb347;
+    animation: tr-star 500ms cubic-bezier(0.2, 1.6, 0.4, 1), tr-pulse 1.2s ease-in-out 0.5s infinite;
+}
+
+.tr-actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .training-game,
+    .training-game * {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* the training box on a hero's card */
+.train-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(77, 217, 138, 0.45);
+    background: linear-gradient(90deg, rgba(77, 217, 138, 0.12), transparent);
+}
+
+.train-box > .icon {
+    width: 26px;
+    height: 26px;
+    color: #8ff0b0;
+    flex: none;
+}
+
+.train-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.train-text small {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* ── the anvil, three screens (shares the training's intro and result styles) ── */
+.av-intro-art {
+    display: flex;
+    justify-content: center;
+}
+
+.av-job-pic {
+    width: 96px;
+    height: 96px;
+    filter: drop-shadow(0 0 12px rgba(255, 179, 71, 0.5));
+    animation: tr-bob 1.6s ease-in-out infinite;
+}
+
+.av-job-pic.small {
+    width: 40px;
+    height: 40px;
+    animation: none;
+}
+
+/* a tiny live bar on the intro: the marker swings across the gold */
+.av-demo {
+    position: relative;
+    flex: none;
+    width: 54px;
+    height: 16px;
+    border-radius: 8px;
+    border: 2px solid #5a3d22;
+    background: #1c120b;
+    overflow: hidden;
+}
+
+.av-demo-gold {
+    position: absolute;
+    left: 38%;
+    width: 24%;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #ffb347, #fff1b0, #ffb347);
+}
+
+.av-demo-marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 4px;
+    border-radius: 2px;
+    background: #fff;
+    box-shadow: 0 0 6px #fff;
+    animation: av-swing 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes av-swing {
+    from { left: 2px; }
+    to { left: calc(100% - 6px); }
+}
+
+.av-hud {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 30px;
+}
+
+.av-count {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.av-count b {
+    font-family: var(--display);
+    font-size: 24px;
+    color: var(--gold-hi);
+}
+
+.av-streak {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(255, 211, 107, 0.18);
+    border: 1px solid var(--gold-hi);
+    color: var(--gold-hi);
+    font-weight: 900;
+    font-size: 14px;
+}
+
+.av-play {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    touch-action: manipulation;
+    user-select: none;
+}
+
+.anvil-art.av-art {
+    width: 240px;
+    height: 150px;
+    margin-top: 6px;
+}
+
+.av-art svg {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    height: 135px;
+}
+
+/* the hot metal on the anvil: brighter with every good blow */
+.av-metal {
+    --heat: 0;
+    position: absolute;
+    left: 66px;
+    top: 34px;
+    width: 92px;
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #ff5a1a, #ffd36b calc(30% + var(--heat) * 40%), #ff5a1a);
+    box-shadow: 0 0 calc(8px + var(--heat) * 22px) #ff7a1a;
+    filter: brightness(calc(0.8 + var(--heat) * 0.7));
+    transition: box-shadow 200ms, filter 200ms;
+}
+
+.av-art .anvil-hammer {
+    left: 104px;
+    top: -14px;
+    width: 58px;
+    height: 20px;
+}
+
+.av-art .anvil-hammer::after {
+    left: 48px;
+    top: 6px;
+    width: 58px;
+    height: 8px;
+}
+
+.av-art.hit.perfect {
+    animation: av-shake 260ms ease-out;
+}
+
+.av-art.hit.perfect .av-metal {
+    animation: av-flash 300ms ease-out;
+}
+
+.av-art.hit.miss .anvil-hammer {
+    animation: av-miss 300ms ease-out;
+}
+
+@keyframes av-shake {
+    25% { transform: translate(3px, 2px); }
+    50% { transform: translate(-3px, -1px); }
+    75% { transform: translate(2px, 1px); }
+}
+
+@keyframes av-flash {
+    30% { filter: brightness(2.4); }
+}
+
+@keyframes av-miss {
+    40% { transform: rotate(-12deg); }
+    100% { transform: rotate(-35deg); }
+}
+
+.av-art .tr-banner {
+    font-size: 56px;
+    top: 40%;
+}
+
+.anvil-word.bump {
+    animation: tr-bump 240ms ease-out;
+}
+
+.anvil-strike:disabled {
+    opacity: 0.5;
+    box-shadow: none;
+}
+
+.av-cut b {
+    color: #9ff0b8;
+}
+
+.av-jobhead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.av-meter-rest,
+.av-meter-cut {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.av-meter-rest {
+    left: 0;
+    background: linear-gradient(90deg, #b8380c, #ffb347);
+    transition: width 900ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.av-meter-cut {
+    width: 0;
+    background: #9ff0b8;
+    box-shadow: 0 0 10px #4dd98a;
+    transition: opacity 900ms ease-out;
+}
+
+.av-meter-cut.gone {
+    opacity: 0;
+}
+
+/* ── the gremlins (intro and result share the training's styles) ───── */
+.training-game.gr-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.gr-intro-art svg {
+    width: 96px;
+    height: 104px;
+    filter: drop-shadow(0 0 12px rgba(111, 154, 79, 0.6));
+    animation: tr-bob 0.9s ease-in-out infinite;
+}
+
+.gr-mini {
+    flex: none;
+    width: 34px;
+    height: 37px;
+}
+
+.gr-mini svg {
+    width: 100%;
+    height: 100%;
+}
+
+/* the play happens on the map: a clear layer that catches every tap */
+.gr-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 61;
+    touch-action: none;
+    user-select: none;
+    overflow: hidden;
+}
+
+.gr-layer.hurt {
+    animation: gr-hurt 400ms ease-out;
+}
+
+@keyframes gr-hurt {
+    25% { box-shadow: inset 0 0 70px rgba(255, 60, 40, 0.55); }
+}
+
+.gr-hud {
+    position: absolute;
+    left: 50%;
+    top: calc(14px + var(--safe-top, 0px));
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--brass);
+    background: rgba(18, 10, 6, 0.88);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.gr-hud b {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 22px;
+    color: var(--gold-hi);
+}
+
+.gr-hud .gr-caught {
+    color: #9ff0b8;
+}
+
+.gr-pips {
+    display: flex;
+    gap: 3px;
+}
+
+.gr-pips .pip {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1.5px solid #5a3d22;
+    background: #1c120b;
+}
+
+.gr-pips .pip.perfect {
+    background: #4dd98a;
+    border-color: #9ff0b8;
+}
+
+.gr-pips .pip.miss {
+    background: #8a1c14;
+}
+
+.gr-layer .tr-banner {
+    top: 40%;
+}
+
+.gr-gremlin {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 52px;
+    height: 56px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(255, 221, 85, 0.35));
+    will-change: transform;
+}
+
+.gr-gremlin svg {
+    width: 100%;
+    height: 100%;
+    animation: gr-in 260ms cubic-bezier(0.2, 1.5, 0.4, 1), gr-bounce 0.28s ease-in-out infinite alternate;
+}
+
+.gr-gremlin.left svg {
+    transform: scaleX(-1);
+}
+
+.gr-leg {
+    fill: #3a3f45;
+    stroke: #1c2a14;
+    stroke-width: 1.5;
+    transform-box: fill-box;
+    transform-origin: 50% 0;
+    animation: gr-step 0.28s ease-in-out infinite alternate;
+}
+
+.gr-leg.b {
+    animation-direction: alternate-reverse;
+}
+
+@keyframes gr-step {
+    from { transform: rotate(-28deg); }
+    to { transform: rotate(28deg); }
+}
+
+@keyframes gr-bounce {
+    to { translate: 0 -3px; }
+}
+
+@keyframes gr-in {
+    from { scale: 0.2; opacity: 0; }
+}
+
+.gr-gremlin.caught {
+    pointer-events: none;
+}
+
+.gr-gremlin.caught svg {
+    animation: gr-caught 450ms ease-in forwards;
+}
+
+@keyframes gr-caught {
+    30% { scale: 1.3; rotate: 20deg; }
+    100% { scale: 0.2; rotate: 360deg; opacity: 0; translate: 0 -30px; }
+}
+
+.gr-gremlin.escaped {
+    pointer-events: none;
+}
+
+.gr-gremlin.escaped svg {
+    animation: gr-escaped 400ms ease-in forwards;
+}
+
+@keyframes gr-escaped {
+    to { scale: 0.1; opacity: 0; translate: 0 10px; }
+}
+
+.gr-layer .tr-pop,
+.gr-layer .tr-spark {
+    position: absolute;
+}
+
+.gr-loot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+}
+
+.gr-loot-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.gr-loot-row b {
+    font-family: var(--display);
+    font-size: 24px;
+}
+
+.gr-next {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+}
+
+/* collect from every building at once: it floats above the Attack button */
+.corner.left .collect-all {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 12px);
+    translate: -50% 0;
+}
+
+/* the call on the city screen when a gang is ready: it floats above the
+   bottom-right buttons, so the row never grows into the Attack button */
+.corner.right .gremlin-call {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 12px);
+}
+
+.gremlin-call .round {
+    border-color: #9ff0b8;
+    box-shadow: 0 0 16px #4dd98a;
+    animation: tr-pulse 1s ease-in-out infinite;
+}
+
+.gremlin-call .action-label {
+    color: #9ff0b8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gr-gremlin svg,
+    .gr-leg,
+    .gremlin-call .round {
+        animation: none !important;
+    }
+}

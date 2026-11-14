@@ -1,0 +1,62 @@
+/* ── the merchant ────────────────────────────────────────────────────── */
+.offers {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.offer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 179, 71, 0.35);
+    background: #1a100a;
+}
+
+.offer.sold {
+    opacity: 0.5;
+}
+
+.offer > img,
+.offer-icon {
+    width: 44px;
+    height: 44px;
+    flex: none;
+}
+
+.offer-icon {
+    --accent: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, #2c1d13), #120a06);
+    color: var(--accent);
+}
+
+.offer-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.offer-text b {
+    font-size: 14px;
+}
+
+.offer-text small {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.offer-side {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}

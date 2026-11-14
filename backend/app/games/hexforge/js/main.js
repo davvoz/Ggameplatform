@@ -2,6 +2,7 @@ import { isMuted, play, setMode as setMusic, setMuted, unlock } from './audio.js
 import { BattleMode } from './battle.js';
 import { CityMode } from './city.js';
 import { icon } from './icons.js';
+import { FrameWatch, detectPerf, perf } from './perf.js';
 import { connectPlatform, toggleFullscreen } from './platform.js';
 import { RankingPanel } from './ranking.js';
 import { Renderer } from './render.js';
@@ -15,6 +16,11 @@ import { closeSheet, isSheetOpen, sheetJustSounded, wireSheets } from './sheets.
 
 const $ = (id) => document.getElementById(id);
 const TAP_SLOP = 9;          // CSS px a finger may wander and still count as a tap
+const IDLE_FRAME_MS = 1000 / 30 - 4;   // performance mode: a still city is drawn at about 30 fps
+const AWAKE_MS = 500;        // ...and at full rate this long after the last touch on the map
+
+perf.on = detectPerf();
+document.documentElement.classList.toggle('perf', perf.on);
 
 const renderer = new Renderer($('view'));
 const modes = { city: new CityMode(renderer), battle: new BattleMode(renderer) };
@@ -37,6 +43,12 @@ let active = null;
 let activeName = null;
 let time = 0;
 let last = performance.now();
+let since = 0;               // seconds since the last drawn frame
+let drawnAt = -Infinity;     // when the last frame was drawn
+let watching = false;        // the gap after this callback's drawn frame is worth measuring
+let lastInput = -Infinity;   // last touch, drag or wheel on the map
+const pointers = new Map();  // fingers or buttons down on the map
+const watch = new FrameWatch();
 
 async function switchTo(name) {
     if (name === activeName) return;
@@ -57,22 +69,43 @@ async function switchTo(name) {
 }
 
 function frame(now) {
+    if (watching && watch.sample(now - last, now) && perf.lower()) {
+        console.info(`[Hexforge] performance mode: quality ${perf.level} (canvas ×${perf.dpr})`);
+        renderer.resize();
+    }
+    watching = false;
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
     time += dt;
-    active?.frame(time, dt);
+    since += dt;
+    if (active && (!perf.on || !restful(now) || now - drawnAt >= IDLE_FRAME_MS)) {
+        active.frame(time, Math.min(since, 0.1));
+        since = 0;
+        drawnAt = now;
+        watching = perf.on;
+    }
     requestAnimationFrame(frame);
+}
+
+/** Performance mode: nothing on the city needs full frame rate (nobody touching, nothing flying). */
+function restful(now) {
+    if (activeName !== 'city' || pointers.size > 0 || now - lastInput < AWAKE_MS) return false;
+    const city = modes.city;
+    return city.mode === 'idle' && !city.gremlinsOn && city.floaters.length === 0;
 }
 
 /** Tap, drag and pinch on the map. A gesture that moved is never a tap. */
 function wireMap() {
     const canvas = $('view');
-    const pointers = new Map();
     let moved = false;
     const local = (e) => {
         const rect = canvas.getBoundingClientRect();
         return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
+    const touched = () => { lastInput = performance.now(); };
+    for (const type of ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'wheel']) {
+        canvas.addEventListener(type, touched, { passive: true });
+    }
     canvas.addEventListener('pointerdown', (e) => {
         canvas.setPointerCapture(e.pointerId);
         const p = local(e);

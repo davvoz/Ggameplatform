@@ -1,5 +1,6 @@
 import { halo, onWall, path, prism, wallRect, withAlpha } from './forgeArt.js';
 import { toScreen } from './iso.js';
+import { softGlow } from './perf.js';
 import { BUILDING_INFO, PATH_INFO } from './labels.js';
 
 /**
@@ -28,8 +29,7 @@ export function drawUpgradeUnder(ctx, cam, b, time) {
         const c = toScreen(cam, x + n + pad, y + n + pad, 2.5);
         const d = toScreen(cam, x + n + pad, y - pad, 2.5);
         ctx.save();
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 8 * cam.scale;
+        softGlow(ctx, color, 8 * cam.scale);
         ctx.strokeStyle = withAlpha(color, 0.6 + 0.25 * Math.sin(time * 2 + b.id));
         ctx.lineWidth = 1.6 * cam.scale;
         ctx.beginPath();

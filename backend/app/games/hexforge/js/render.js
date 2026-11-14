@@ -1,11 +1,12 @@
 import { carryOver, clampCamera, panBy, zoomAt } from './camera.js';
 import {
-    depthOf, fitRegion, groundEllipse, rotatePoint, rotateRect, rotateVector, toScreen, toWorld,
+    TILE_H, TILE_W, depthOf, fitRegion, groundEllipse, rotatePoint, rotateRect, rotateVector, toScreen, toWorld,
 } from './iso.js';
 import { BUILDING_INFO, HERO_INFO, MATERIAL_INFO } from './labels.js';
 import {
     MAGE_ORB, drawBuilding, drawHero, drawRubble, drawTrapMark, flame, halo, hash, path, withAlpha,
 } from './forgeArt.js';
+import { perf } from './perf.js';
 
 /**
  * Canvas renderer for the isometric battlefield, "Forgia Infernale" style:
@@ -23,6 +24,7 @@ const FONT = '"Chakra Petch", "Segoe UI", system-ui, sans-serif';
 const SELECT = '#ffb347';
 const FITS = '#7dff9a';
 const BLOCKED = '#ff5040';
+const ZOOM_SETTLE_MS = 150;  // performance mode: the ground is redrawn sharp once a pinch has rested this long
 
 export class Renderer {
     constructor(canvas) {
@@ -37,6 +39,11 @@ export class Renderer {
         this.insets = {};             // CSS pixels kept free for the interface
         this.ground = null;
         this.groundDirty = true;
+        // performance mode: the tiles are cached around the field and slid or stretched under the
+        // camera, so a drag never repaints them; sky and vignette are gradients made once per size
+        this.tiles = null;
+        this.sky = null;
+        this.zoomedAt = 0;
         this.facings = new Map();     // which way each hero last looked, so standing heroes do not flip
         this.rot = 0;                 // quarter turns of the view
         this.dpr = 1;
@@ -64,6 +71,7 @@ export class Renderer {
         this.base = this.#fit();
         this.camera = this.base;
         this.groundDirty = true;
+        this.tiles = null;
     }
 
     /** Turn the view to `rot` quarter turns (0..3) and fit it again. */
@@ -98,6 +106,7 @@ export class Renderer {
     /** Pinch or wheel: zoom by `factor` around a point in CSS pixels. */
     zoomAt(factor, cssX, cssY) {
         if (!this.camera) return;
+        this.zoomedAt = performance.now();
         this.#setCamera(zoomAt(this.camera, factor, cssX * this.dpr, cssY * this.dpr, this.limits));
     }
 
@@ -131,12 +140,14 @@ export class Renderer {
     }
 
     #measure() {
-        this.dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+        this.dpr = Math.min(globalThis.devicePixelRatio || 1, perf.on ? perf.dpr : 2);
         const rect = this.canvas.getBoundingClientRect();
         this.w = Math.max(1, Math.round(rect.width * this.dpr));
         this.h = Math.max(1, Math.round(rect.height * this.dpr));
         this.canvas.width = this.w;
         this.canvas.height = this.h;
+        this.tiles = null;
+        this.sky = null;
     }
 
     /** Where a world point (cells, height z) is on the page, in CSS pixels. */
@@ -239,15 +250,11 @@ export class Renderer {
     draw(state, options = {}) {
         const { ctx } = this;
         if (!this.camera) return;
-        if (this.groundDirty) {
-            this.ground = this.#paintGround();
-            this.groundDirty = false;
-        }
         const { side = null, time = 0, selectedId = null, preview = null } = options;
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.globalCompositeOperation = 'source-over';
         ctx.globalAlpha = 1;
-        ctx.drawImage(this.ground, 0, 0);
+        this.#drawGround();
 
         if (side) this.#entryEdge(side, time);
         if (options.ranges !== undefined && options.ranges !== null) this.#ranges(options.ranges, state, time);
@@ -308,18 +315,48 @@ export class Renderer {
     }
 
     // ── ground ─────────────────────────────────────────────────────────
+    #drawGround() {
+        if (perf.on) {
+            this.#fastGround();
+            return;
+        }
+        if (this.groundDirty) {
+            this.ground = this.#paintGround();
+            this.groundDirty = false;
+        }
+        this.ctx.drawImage(this.ground, 0, 0);
+    }
+
     #paintGround() {
         const canvas = this.ground ?? document.createElement('canvas');
         if (canvas.width !== this.w) canvas.width = this.w;
         if (canvas.height !== this.h) canvas.height = this.h;
         const ctx = canvas.getContext('2d');
+        ctx.fillStyle = this.#skyGradient(ctx);
+        ctx.fillRect(0, 0, this.w, this.h);
+        this.#paintTiles(ctx);
+        ctx.fillStyle = this.#vignetteGradient(ctx);
+        ctx.fillRect(0, 0, this.w, this.h);
+        return canvas;
+    }
+
+    #skyGradient(ctx) {
         const bg = ctx.createLinearGradient(0, 0, 0, this.h);
         bg.addColorStop(0, '#0b0605');
         bg.addColorStop(0.65, '#170c07');
         bg.addColorStop(1, '#261006');
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, this.w, this.h);
+        return bg;
+    }
 
+    #vignetteGradient(ctx) {
+        const vignette = ctx.createRadialGradient(this.w / 2, this.h * 0.55, this.h * 0.25, this.w / 2, this.h * 0.55, this.h * 0.9);
+        vignette.addColorStop(0, 'rgba(0,0,0,0)');
+        vignette.addColorStop(1, 'rgba(8,2,0,0.65)');
+        return vignette;
+    }
+
+    /** The basalt tiles and the iron rim, through the current camera. */
+    #paintTiles(ctx) {
         const { grid } = this.city;
         for (let x = 0; x < grid; x++) {
             for (let y = 0; y < grid; y++) {
@@ -335,13 +372,76 @@ export class Renderer {
         ctx.lineWidth = 1 * this.camera.scale;
         ctx.strokeStyle = 'rgba(255, 140, 60, 0.35)';
         this.#outline(ctx, 1, 1, grid - 2);
+    }
 
-        const vignette = ctx.createRadialGradient(this.w / 2, this.h * 0.55, this.h * 0.25, this.w / 2, this.h * 0.55, this.h * 0.9);
-        vignette.addColorStop(0, 'rgba(0,0,0,0)');
-        vignette.addColorStop(1, 'rgba(8,2,0,0.65)');
-        ctx.fillStyle = vignette;
+    // ── ground, performance mode ───────────────────────────────────────
+    /**
+     * Same picture as #paintGround, but the tiles live in a cache that only
+     * covers the field (plus a margin around the screen when zoomed in): a
+     * drag slides it, a pinch stretches it, and it is repainted sharp only
+     * when the pinch rests or the view runs past what the cache holds.
+     */
+    #fastGround() {
+        const { ctx, camera } = this;
+        this.sky ??= { sky: this.#skyGradient(ctx), vignette: this.#vignetteGradient(ctx) };
+        ctx.fillStyle = this.sky.sky;
         ctx.fillRect(0, 0, this.w, this.h);
-        return canvas;
+        let t = this.tiles;
+        const settled = performance.now() - this.zoomedAt > ZOOM_SETTLE_MS;
+        const k = t ? camera.scale / t.cam.scale : 1;
+        if (!t || t.rot !== this.rot || t.grid !== this.city.grid || (k !== 1 && (settled || k < 0.6 || k > 1.7))
+            || !this.#tilesCover(t, camera)) {
+            t = this.#cacheTiles(t);
+        }
+        if (t.w > 0 && t.h > 0) {
+            const s = camera.scale / t.cam.scale;
+            ctx.drawImage(t.canvas, 0, 0, t.w, t.h,
+                camera.ox + s * (t.x0 - t.cam.ox), camera.oy + s * (t.y0 - t.cam.oy), t.w * s, t.h * s);
+        }
+        ctx.fillStyle = this.sky.vignette;
+        ctx.fillRect(0, 0, this.w, this.h);
+    }
+
+    /** Screen box of the whole field (with room for the rim) through `camera`; turning does not change it. */
+    #fieldBox(camera) {
+        const g = this.city.grid;
+        const m = 3 * camera.scale + 2;
+        const half = (g * TILE_W / 2) * camera.scale;
+        return {
+            x0: camera.ox - half - m, x1: camera.ox + half + m,
+            y0: camera.oy - m, y1: camera.oy + g * TILE_H * camera.scale + m,
+        };
+    }
+
+    #cacheTiles(previous) {
+        const cam = { ...this.camera };
+        const pad = Math.round(0.25 * Math.max(this.w, this.h));
+        const box = this.#fieldBox(cam);
+        const x0 = Math.floor(Math.max(box.x0, -pad));
+        const y0 = Math.floor(Math.max(box.y0, -pad));
+        const w = Math.max(0, Math.ceil(Math.min(box.x1, this.w + pad)) - x0);
+        const h = Math.max(0, Math.ceil(Math.min(box.y1, this.h + pad)) - y0);
+        const canvas = previous?.canvas ?? document.createElement('canvas');
+        canvas.width = Math.max(1, w);       // resizing also clears it
+        canvas.height = Math.max(1, h);
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(1, 0, 0, 1, -x0, -y0);
+        this.#paintTiles(ctx);
+        this.tiles = { canvas, cam, rot: this.rot, grid: this.city.grid, x0, y0, w, h };
+        return this.tiles;
+    }
+
+    /** Does the cache hold every part of the field that `camera` shows? */
+    #tilesCover(t, camera) {
+        const k = camera.scale / t.cam.scale;
+        const back = (sx, o, o0) => o0 + (sx - o) / k;        // screen now → screen when cached
+        const box = this.#fieldBox(t.cam);
+        const x0 = Math.max(back(0, camera.ox, t.cam.ox), box.x0);
+        const x1 = Math.min(back(this.w, camera.ox, t.cam.ox), box.x1);
+        const y0 = Math.max(back(0, camera.oy, t.cam.oy), box.y0);
+        const y1 = Math.min(back(this.h, camera.oy, t.cam.oy), box.y1);
+        if (x0 >= x1 || y0 >= y1) return true;                // the field is off screen: nothing to show
+        return x0 >= t.x0 - 1 && y0 >= t.y0 - 1 && x1 <= t.x0 + t.w + 1 && y1 <= t.y0 + t.h + 1;
     }
 
     #tile(ctx, x, y, fill, stroke) {
@@ -876,7 +976,8 @@ export class Renderer {
         const s = this.camera.scale;
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        for (let i = 0; i < EMBERS; i++) {
+        const count = perf.on ? perf.embers : EMBERS;
+        for (let i = 0; i < count; i++) {
             const life = (time * (0.05 + hash(i) * 0.08) + hash(i + 5)) % 1;
             const x = hash(i + 11) * this.w + Math.sin(time * 1.1 + i) * 16 * s * life;
             const y = this.h * (1.02 - life * 1.05);

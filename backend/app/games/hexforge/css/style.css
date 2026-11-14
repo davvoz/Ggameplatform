@@ -907,6 +907,29 @@ button.round:disabled {
     }
 }
 
+/* performance mode (phones): the breathing glow lives on its own layer and only fades,
+   instead of the browser repainting a 40px blurred shadow on every frame */
+html.perf .attack-button {
+    position: relative;
+    animation: none;
+}
+
+html.perf .attack-button::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(255, 140, 40, 1);
+    opacity: 0;
+    pointer-events: none;
+    will-change: opacity;
+    animation: glow-fade 2.4s ease-in-out infinite;
+}
+
+@keyframes glow-fade {
+    50% { opacity: 1; }
+}
+
 .bottom-ui {
     position: absolute;
     left: 0;

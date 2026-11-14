@@ -1,4 +1,5 @@
 import { TILE_W, toScreen } from './iso.js';
+import { perf, softGlow } from './perf.js';
 import { FORM_INFO, HERO_INFO } from './labels.js';
 import { drawUpgradeOver, drawUpgradeUnder } from './upgradeArt.js';
 import { drawFusionOver, drawFusionUnder, drawHeroFusionOver, drawHeroFusionUnder } from './fusionArt.js';
@@ -100,6 +101,10 @@ export function path(ctx, pts) {
 
 export function halo(ctx, x, y, radius, color, strength = 1) {
     if (radius <= 0 || strength <= 0) return;
+    if (perf.on) {
+        haloSprite(ctx, x, y, radius, color, strength);
+        return;
+    }
     const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
     g.addColorStop(0, withAlpha(color, 0.55 * Math.min(1, strength)));
     g.addColorStop(1, withAlpha(color, 0));
@@ -112,14 +117,42 @@ export function halo(ctx, x, y, radius, color, strength = 1) {
     ctx.globalCompositeOperation = before;
 }
 
+// Performance mode: each halo colour is painted once into a small canvas and
+// then only stretched into place, instead of building a new gradient per halo.
+const HALO_SIZE = 128;
+const haloCache = new Map();
+
+function haloSprite(ctx, x, y, radius, color, strength) {
+    let sprite = haloCache.get(color);
+    if (!sprite) {
+        sprite = document.createElement('canvas');
+        sprite.width = HALO_SIZE;
+        sprite.height = HALO_SIZE;
+        const c = sprite.getContext('2d');
+        const r = HALO_SIZE / 2;
+        const g = c.createRadialGradient(r, r, 0, r, r, r);
+        g.addColorStop(0, withAlpha(color, 0.55));
+        g.addColorStop(1, withAlpha(color, 0));
+        c.fillStyle = g;
+        c.fillRect(0, 0, HALO_SIZE, HALO_SIZE);
+        haloCache.set(color, sprite);
+    }
+    const before = ctx.globalCompositeOperation;
+    const alpha = ctx.globalAlpha;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = alpha * Math.min(1, strength);
+    ctx.drawImage(sprite, x - radius, y - radius, radius * 2, radius * 2);
+    ctx.globalAlpha = alpha;
+    ctx.globalCompositeOperation = before;
+}
+
 /** A glowing seam across the two front faces of a box at height z. */
 export function seam(ctx, cam, x, y, w, d, z, color, width = 1.6) {
     const a = toScreen(cam, x, y + d, z);
     const b = toScreen(cam, x + w, y + d, z);
     const c = toScreen(cam, x + w, y, z);
     ctx.save();
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 8 * cam.scale;
+    softGlow(ctx, color, 8 * cam.scale);
     ctx.strokeStyle = color;
     ctx.lineWidth = width * cam.scale;
     ctx.beginPath();
@@ -251,8 +284,7 @@ const PAINTERS = {
         });
         // crackling arc between the horns
         if (firing > 0 || Math.sin(time * 13 + b.id) > 0.2) {
-            ctx.shadowColor = '#6fd3ff';
-            ctx.shadowBlur = 12 * s;
+            softGlow(ctx, '#6fd3ff', 12 * s);
             ctx.strokeStyle = firing > 0 ? '#ffffff' : '#9fe8ff';
             ctx.lineWidth = (1.5 + 1.5 * firing) * s;
             ctx.beginPath();
@@ -319,8 +351,7 @@ const PAINTERS = {
         const m = mouth(0, 6);
         const flick = 0.75 + 0.25 * Math.sin(time * 11 + b.id);
         ctx.save();
-        ctx.shadowColor = '#ff7a3d';
-        ctx.shadowBlur = 14 * s;
+        softGlow(ctx, '#ff7a3d', 14 * s);
         ctx.fillStyle = `rgba(255, ${140 + Math.round(60 * flick)}, 50, 1)`;
         wallArch(ctx, mouth, 9, 2, 14, 24);
         ctx.fill();
@@ -400,8 +431,7 @@ const PAINTERS = {
         ctx.save();
         ctx.strokeStyle = '#ffd75e';
         ctx.lineWidth = 2 * s;
-        ctx.shadowColor = '#ffd75e';
-        ctx.shadowBlur = 8 * s;
+        softGlow(ctx, '#ffd75e', 8 * s);
         wallRing(ctx, door, 9, 10, 14);
         ctx.stroke();
         // the wheel's spokes: one along the wall, one upright
@@ -424,8 +454,7 @@ function towerBody(ctx, cam, b, shaftMat, rune, { time, firing }) {
     seam(ctx, cam, x + 0.5, y + 0.5, 1.0, 1.0, 34, withAlpha(rune, 0.6 + 0.4 * Math.max(firing, 0.5 + 0.5 * Math.sin(time * 2 + b.id))));
     // arrow-slit window on the front face
     ctx.save();
-    ctx.shadowColor = rune;
-    ctx.shadowBlur = 8 * s;
+    softGlow(ctx, rune, 8 * s);
     ctx.fillStyle = withAlpha(rune, 0.9);
     wallArch(ctx, onWall(cam, 'left', x + 1.0, y + 1.5), 2.5, 18, 27, 31);
     ctx.fill();

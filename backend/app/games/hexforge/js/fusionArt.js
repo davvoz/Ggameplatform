@@ -1,5 +1,6 @@
 import { IRON, BASALT, flame, gem, halo, onWall, prism, seam, smoke, wallRect, withAlpha } from './forgeArt.js';
 import { toScreen } from './iso.js';
+import { softGlow } from './perf.js';
 import { BUILDING_INFO, HERO_INFO } from './labels.js';
 
 /**
@@ -113,8 +114,7 @@ const MARKS = {
         ctx.quadraticCurveTo(a.x + dir * 10 * s, a.y - 10 * s, tip.x, tip.y);
         ctx.stroke();
         if (Math.sin(time * 11 + seed) > -0.2) {
-            ctx.shadowColor = '#6fd3ff';
-            ctx.shadowBlur = 10 * s;
+            softGlow(ctx, '#6fd3ff', 10 * s);
             ctx.strokeStyle = '#bff0ff';
             ctx.lineWidth = 1.3 * s;
             ctx.beginPath();
@@ -182,8 +182,7 @@ const MARKS = {
         const glow = 0.6 + 0.4 * Math.sin(time * 3);
         ctx.save();
         ctx.strokeStyle = withAlpha('#ff9a5a', glow);
-        ctx.shadowColor = '#ff7a3d';
-        ctx.shadowBlur = 10 * s;
+        softGlow(ctx, '#ff7a3d', 10 * s);
         ctx.lineWidth = 2 * s;
         ctx.beginPath();
         for (let i = 0; i <= 24; i++) {
@@ -253,8 +252,7 @@ function runeRing(ctx, c, rx, ry, colors, turn, s) {
     for (let i = 0; i < n; i++) {
         const from = turn + (i / n) * Math.PI * 2;
         ctx.strokeStyle = colors[i];
-        ctx.shadowColor = colors[i];
-        ctx.shadowBlur = 8 * s;
+        softGlow(ctx, colors[i], 8 * s);
         ctx.beginPath();
         ctx.ellipse(c.x, c.y, rx, ry, 0, from + 0.12, from + (Math.PI * 2) / n - 0.12);
         ctx.stroke();

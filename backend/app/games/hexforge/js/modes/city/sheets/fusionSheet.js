@@ -1,5 +1,6 @@
 import { Refused, fuse, fusePreview } from '../../../net/api.js';
-import { fusionCandidates, renderFusionCard, togglePick } from '../../../ui/panels/fusionPanel.js';
+import { renderFusionCard } from '../../../ui/panels/fusionPanel.js';
+import { fusionCandidates, togglePick } from '../../../core/fusion.js';
 import { play } from '../../../fx/audio.js';
 import { heroNames } from '../../../ui/heroTiles.js';
 import { closeSheet, isSheetOpen, openSheet, toast } from '../../../ui/sheets.js';

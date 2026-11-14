@@ -1,6 +1,7 @@
 import { icon } from './icons.js';
 import { FORM_INFO, HERO_INFO } from '../data/labels.js';
 import { heroPortrait, thumbImg } from '../render/thumbs.js';
+import { tripProgress } from '../core/heroes.js';
 
 /**
  * One tile per hero you own: its portrait, its own name ("Blade 2"), its
@@ -10,8 +11,6 @@ import { heroPortrait, thumbImg } from '../render/thumbs.js';
  * Used by the attack plan and the forge.
  */
 
-export const INJURY_SECONDS = 900;   // as on the server: a fallen hero heals in 15 minutes
-
 /** "Blade 1", "Blade 2"… numbered per class in the order they were forged. */
 export function heroNames(heroes) {
     const seen = {};
@@ -19,13 +18,6 @@ export function heroNames(heroes) {
         seen[h.cls] = (seen[h.cls] ?? 0) + 1;
         return [h.id, `${HERO_INFO[h.cls].tag} ${seen[h.cls]}`];
     }));
-}
-
-/** True when the hero has the XP for its next tier and is not at the forge already. */
-export function evolveReady(hero, tierXp) {
-    if (hero.cls === 'explorer') return false;
-    const next = (hero.tier ?? 1) + 1;
-    return next <= 3 && !hero.evolving && (hero.xp ?? 0) >= (tierXp?.[next] ?? Infinity);
 }
 
 /** The stars of a tier: ★ recruit, ★★ evolved, ★★★ ascended. */
@@ -44,25 +36,6 @@ export function nextStars(have, next) {
         row.append(star);
     }
     return row;
-}
-
-/** 'forge' while evolving, 'hurt' while healing, else 'picked' or 'ready'; plus the seconds left to heal. */
-export function heroStatus(hero, picked, serverNow) {
-    if (hero.cls === 'explorer') {
-        if (!hero.mission) return { state: 'home', left: 0, healed: 1 };
-        const left = hero.mission.ready_at - serverNow;
-        return left > 0 ? { state: 'away', left, healed: 1 } : { state: 'back', left: 0, healed: 1 };
-    }
-    if (hero.evolving) return { state: 'forge', left: 0, healed: 1 };
-    const left = hero.injured_until ? hero.injured_until - serverNow : 0;
-    if (left > 0) return { state: 'hurt', left, healed: Math.max(0, Math.min(1, 1 - left / INJURY_SECONDS)) };
-    return { state: picked ? 'picked' : 'ready', left: 0, healed: 1 };
-}
-
-/** How far through its trip an Explorer is, 0..1. */
-export function tripProgress(trip, now) {
-    const span = trip.ready_at - trip.started_at;
-    return span > 0 ? Math.max(0, Math.min(1, (now - trip.started_at) / span)) : 1;
 }
 
 /** A bar filling up while the Explorer is away; `updateTrips` keeps it moving. */

@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { itemEffect } from '../js/ui/panels/forgePanel.js';
-import { fittingItems, shownStats } from '../js/ui/panels/heroPanel.js';
+import { shownStats } from '../js/ui/panels/heroPanel.js';
+import { fittingItems } from '../js/core/heroes.js';
 import { effectText } from '../js/data/labels.js';
 import { createReplay } from '../js/core/replay.js';
 
@@ -63,7 +64,7 @@ test('a ward soaks hits in the replay, a mending hero heals from the frames', ()
 });
 
 test('evolution previews keep what the gear adds', async () => {
-    const { withGear } = await import('../js/ui/panels/heroPanel.js');
+    const { withGear } = await import('../js/core/heroes.js');
     const base = { hp: 2000, damage: 45, range: 0.9 };
     const shown = { hp: 2000, damage: 50, range: 1.2 };
     const next = withGear({ hp: 2750, damage: 50, range: 0.9 }, base, shown);

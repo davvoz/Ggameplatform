@@ -1,7 +1,9 @@
 import { icon, withIcon } from '../icons.js';
 import { BUILDING_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MATERIAL_INFO, effectText } from '../../data/labels.js';
-import { evolveReady, heroNames, heroStatus, heroTile } from '../heroTiles.js';
+import { heroNames, heroTile } from '../heroTiles.js';
+import { evolveReady, heroStatus } from '../../core/heroes.js';
 import { buildingThumb, heroThumb, itemPicture, thumbImg } from '../../render/thumbs.js';
+import { forgeBlocker } from '../../core/forge.js';
 
 /** DOM builders for the forge sheet and the "ready to place" tray. */
 
@@ -22,14 +24,6 @@ export function formatCountdown(seconds) {
     const m = Math.floor((s % 3600) / 60);
     const sec = String(s % 60).padStart(2, '0');
     return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
-}
-
-/** Why this recipe cannot be forged right now, or null. */
-export function forgeBlocker(recipe, materials, freeSlots) {
-    if (freeSlots <= 0) return 'All forge slots are busy';
-    if (recipe.owned + recipe.yields > recipe.limit) return 'Limit reached';
-    const short = Object.entries(recipe.cost).some(([m, amount]) => (materials[m] ?? 0) < amount);
-    return short ? 'Not enough materials' : null;
 }
 
 /** The limits that several kinds share, named the way the player says them. */

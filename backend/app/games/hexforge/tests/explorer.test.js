@@ -1,11 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { giftText, tripSeconds } from '../js/ui/panels/heroPanel.js';
+import { giftText } from '../js/ui/panels/heroPanel.js';
+import { heroStatus, tripProgress, tripSeconds } from '../js/core/heroes.js';
 
 test('what a dismissed hero leaves, in words', () => {
     assert.equal(giftText({ golden_hourglass: 2, flask: 1 }), 'Golden hourglass ×2 · Energy flask');
 });
-import { formatAway, heroStatus, tripProgress } from '../js/ui/heroTiles.js';
+import { formatAway } from '../js/ui/heroTiles.js';
 
 test('a trip bar fills from start to return', () => {
     const trip = { started_at: 1000, ready_at: 2000 };

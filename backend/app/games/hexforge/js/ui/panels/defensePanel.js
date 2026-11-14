@@ -1,4 +1,5 @@
 import { HERO_INFO, PRIORITY_INFO, SIDE_INFO, TACTIC_INFO } from '../../data/labels.js';
+import { percentHeld, weakestSide } from '../../core/defense.js';
 
 /** The defence test report in the My city panel. Pure helpers first, then the DOM. */
 
@@ -10,22 +11,10 @@ const RATINGS = [
     [0, 'Wide open'],
 ];
 
-export function percentHeld(report) {
-    return report.total ? Math.round((100 * report.held) / report.total) : 0;
-}
-
 /** A one-word verdict for the share of raids held. */
 export function ratingOf(report) {
     const percent = report.held > 0 ? Math.max(percentHeld(report), 1) : 0;
     return RATINGS.find(([from]) => percent >= from)[1];
-}
-
-/** The side that holds the fewest raids, or null when every side holds as many. */
-export function weakestSide(sides) {
-    const entries = Object.entries(sides);
-    const counts = entries.map(([, s]) => s.held);
-    if (counts.every((n) => n === counts[0])) return null;
-    return entries.reduce((low, entry) => (entry[1].held < low[1].held ? entry : low), entries[0])[0];
 }
 
 export function describeWorst(worst) {

@@ -4,6 +4,9 @@ import { partName } from './fusionPanel.js';
 import { icon, withIcon } from '../icons.js';
 import { BONUS_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, MISSION_INFO, TIER_NAMES, times } from '../../data/labels.js';
 import { heroPortrait, heroThumb, itemPicture, thumbImg } from '../../render/thumbs.js';
+import {
+    evolveBlocker, fittingItems, masteryOf, statsOf, trainBlocker, tripSeconds, withGear,
+} from '../../core/heroes.js';
 
 /**
  * The hero card (a sheet): portrait, form and stars, XP towards the next
@@ -19,12 +22,6 @@ const STAT_LABELS = {
 };
 
 // ── pure helpers (tested) ──────────────────────────────────────────────
-/** The stats of a hero as it is (or as `form` at `tier`), from the server's table. */
-export function statsOf(table, cls, form = null, tier = 1) {
-    if (!form || tier <= 1) return table.stats[cls].base;
-    return table.stats[cls][form][String(tier)];
-}
-
 export function formatStat(key, value) {
     if (key === 'cooldown') return `${value} s`;
     if (key === 'tower_bonus') return `×${value}`;
@@ -54,32 +51,6 @@ export function statChanges(from, to) {
 }
 
 /**
- * The stats of a new form or tier, carrying the same gear: each stat keeps
- * the share the items add now (`base` = without items, `shown` = with them).
- */
-export function withGear(target, base, shown) {
-    const out = { ...target };
-    for (const key of Object.keys(target)) {
-        if (!(key in shown) || !(key in base) || typeof target[key] !== 'number') continue;
-        if (key === 'barrier' || key === 'regen') continue;
-        const ratio = base[key] ? shown[key] / base[key] : 1;
-        const value = base[key] ? target[key] * ratio : target[key] + (shown[key] - base[key]);
-        out[key] = Number.isInteger(target[key]) ? Math.round(value) : Math.round(value * 100) / 100;
-    }
-    return out;
-}
-
-/** The items that fit `slot` of a hero of `cls`: weapons of its class, or any spell. */
-export function fittingItems(items, table, cls, slot) {
-    return items.filter((i) => {
-        const row = table.items[i.type];
-        if (row.slot !== slot) return false;
-        if (cls === 'explorer') return row.cls === 'explorer';      // the Explorer carries only its own gear
-        return row.cls === null || row.cls === cls;
-    });
-}
-
-/**
  * What the item picker shows for a hero's slot: the items that fit, free ones
  * first; one another hero carries is greyed (it stays with that hero).
  * `names` maps hero ids to names. Returns { title, line, options, empty }.
@@ -105,20 +76,6 @@ export function gearChoices({ items, table, names, hero, name, slot, current }) 
         options,
         empty: `No other ${what} yet: forge one in the forge's Items tab.`,
     };
-}
-
-/** Why the hero cannot go to the forge now, or null. */
-export function evolveBlocker({ hero, table, materials, freeSlots, serverNow }) {
-    const next = (hero.tier ?? 1) + 1;
-    if (next > 3) return 'Fully ascended';
-    if (hero.evolving) return 'Already at the forge';
-    const need = table.tier_xp[String(next)];
-    if ((hero.xp ?? 0) < need) return `${need - (hero.xp ?? 0)} more XP from fighting`;
-    if (hero.injured_until && hero.injured_until > serverNow) return 'Hurt: wait until healed';
-    if (freeSlots <= 0) return 'All forge slots are busy';
-    const { cost } = table.costs[hero.cls][String(next)];
-    if (Object.entries(cost).some(([m, n]) => (materials[m] ?? 0) < n)) return 'Not enough materials';
-    return null;
 }
 
 // ── DOM ────────────────────────────────────────────────────────────────
@@ -276,13 +233,6 @@ function forgeTip(hero, job, serverNow) {
     return tip;
 }
 
-/** A top-tier hero's mastery: its level, what it adds, and the bar inside the level. */
-export function masteryOf(points, { perLevel, levels, bonus }) {
-    const level = Math.min(levels, Math.floor(points / perLevel));
-    const maxed = level >= levels;
-    return { level, maxed, into: maxed ? perLevel : points - level * perLevel, pct: Math.round(bonus * 100 * level) };
-}
-
 function masteryLine(hero, training) {
     const m = masteryOf(hero.mastery ?? 0, training);
     const text = masteryText(m, training.perLevel);
@@ -291,14 +241,6 @@ function masteryLine(hero, training) {
     fill.style.width = `${Math.round((100 * m.into) / training.perLevel)}%`;
     meter.append(fill);
     return [el('small', '', text), meter];
-}
-
-/** Why this hero cannot train right now, or null. */
-export function trainBlocker(hero, training, serverNow) {
-    if (hero.evolving) return 'At the forge';
-    if (hero.injured_until && hero.injured_until > serverNow) return 'Hurt: heal first';
-    if (training.left <= 0) return 'Rested for today: back tomorrow';
-    return null;
 }
 
 function trainPrize(training) {
@@ -318,13 +260,6 @@ function trainBox(hero, training, serverNow, onTrain) {
     button.addEventListener('click', onTrain);
     box.append(icon('dagger'), text, button);
     return box;
-}
-
-/** How long a mission takes for this Explorer: the Trail Boots shorten it. */
-export function tripSeconds(seconds, gear, itemTable) {
-    const boots = gear?.spell?.type === 'trail_boots' ? gear.spell : null;
-    const cut = boots ? itemTable.items.trail_boots.levels[boots.level - 1] : 0;
-    return Math.round(seconds * (1 - cut / 100));
 }
 
 /** The Explorer's trips: three to pick from, the one under way, or the loot waiting. */
@@ -449,7 +384,6 @@ function evolveBox({ hero, table, materials, freeSlots, serverNow, picked, stats
     if (note) section.append(el('small', 'evolve-note', note));
     return section;
 }
-
 
 /** The mastery line: the level, its bonus and the way to the next one. */
 function masteryText(m, perLevel) {

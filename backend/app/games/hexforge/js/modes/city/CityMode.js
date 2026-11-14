@@ -9,7 +9,7 @@ import { icon } from '../../ui/icons.js';
 import { Compass } from '../../ui/compass.js';
 import { regionAround } from '../../core/iso.js';
 import { MATERIAL_INFO } from '../../data/labels.js';
-import { usableBonuses } from '../../ui/panels/rewardsPanel.js';
+import { usableBonuses } from '../../core/forge.js';
 import { closeSheet, isSheetOpen, toast } from '../../ui/sheets.js';
 import { $, bump } from './shared.js';
 import { MESSAGES } from '../../data/messages.js';

@@ -40,3 +40,11 @@ export function leagueProgress(trophies, league, next) {
     const floor = LEAGUE_FLOORS[league] ?? 0;
     return Math.max(0, Math.min(1, (trophies - floor) / Math.max(1, next.at - floor)));
 }
+
+/** What blocks an attack on this rival, or null; also used for the Fight hint. */
+export function rivalBlocker(pvp, rival) {
+    if (!pvp.arena) return 'Clear Scrap Hollow to enter the arena';
+    if (!rival) return 'Find a rival first';
+    if (!rival.available) return 'This rival is shielded now. Find another';
+    return null;
+}

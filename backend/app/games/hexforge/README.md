@@ -14,14 +14,14 @@ The game is not registered on the platform yet and gives no XP.
 
 | Folder | What lives there | May import |
 | --- | --- | --- |
-| `js/core/` | Game logic: camera, iso maths, placement rules, replay, squad, leagues. Pure, no DOM, no canvas, unit tested | `core/`, `data/` |
+| `js/core/` | Game logic: camera, iso maths, placement rules, replay, squad, leagues, heroes, forge, upgrades, fusion, defense tests, and the minigames' rules (`core/minigames/`). Pure, no DOM, no canvas, unit tested | `core/`, `data/` |
 | `js/data/` | Names, colours, descriptions (`labels.js`) | nothing |
 | `js/net/` | Server API and the platform bridge | `core/`, `data/` |
 | `js/render/` | Canvas drawing: the renderer, the art, thumbnails, the share card, performance mode | `core/`, `data/`, `render/` |
 | `js/fx/` | DOM animations and synthesised sound | anything but `modes/` |
 | `js/ui/` | Shared widgets: icons, sheets, hero tiles, pickers, ranking, raid log, compass, full screen | anything but `modes/` |
-| `js/ui/panels/` | The sheets' content: forge, heroes, fusion, upgrades, defense, rewards, merchant, rivals | anything but `modes/` |
-| `js/minigames/` | Anvil, training, gremlins | anything but `modes/` |
+| `js/ui/panels/` | The sheets' content (forge, heroes, fusion, upgrades, defense, rewards, merchant, rivals): layout and words; the rules they show come from `core/` | anything but `modes/` |
+| `js/minigames/` | Anvil, training, gremlins: screens and animation; their scoring lives in `core/minigames/` | anything but `modes/` |
 | `js/modes/` | The two screens, my city and the attack: they wire everything together | anything |
 | `js/modes/city/` | My city, split by concern: `CityMode.js` runs the mode (state, server calls, input, frame), `selection.js` the selected building and placing, `hud.js` level, XP, materials and the big cards, `sheets/` one class per sheet (forge, hero, fusion, upgrade, rewards, defense). Each part gets the `CityMode` as `city` and reaches the others through it | anything |
 | `js/modes/battle/` | The attack, split the same way: `BattleMode.js` runs the mode, `plan.js` the target and the plan, `squadPicker.js` the squad and the bonuses, `replayView.js` the replay and the result. Parts reach the mode as `mode` | anything |

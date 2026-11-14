@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { adviceFor, describeWorst, percentHeld, ratingOf, stageNote, stageTitle, weakestSide } from '../js/ui/panels/defensePanel.js';
+import { adviceFor, describeWorst, ratingOf, stageNote, stageTitle } from '../js/ui/panels/defensePanel.js';
+import { percentHeld, weakestSide } from '../js/core/defense.js';
 
 const sides = (n, e, s, w) => ({
     north: { held: n, total: 36 }, east: { held: e, total: 36 },

@@ -3,14 +3,6 @@ import { MATERIAL_INFO } from '../../data/labels.js';
 
 /** Helpers for raiding players: what blocks the raid, and loot amounts with their icons. */
 
-/** What blocks an attack on this rival, or null; also used for the Fight hint. */
-export function rivalBlocker(pvp, rival) {
-    if (!pvp.arena) return 'Clear Scrap Hollow to enter the arena';
-    if (!rival) return 'Find a rival first';
-    if (!rival.available) return 'This rival is shielded now. Find another';
-    return null;
-}
-
 export function materialChips(amounts) {
     const wrap = document.createElement('span');
     wrap.className = 'costs';

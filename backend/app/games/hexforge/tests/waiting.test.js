@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { anvilStars, markerAt, rateStrike, zones } from '../js/minigames/anvil.js';
+import { anvilStars, markerAt, rateStrike, zones } from '../js/core/minigames/anvil.js';
 
 test('a strike in the middle is perfect, near it good, far off a miss', () => {
     assert.equal(rateStrike(0.5, 0), 'perfect');

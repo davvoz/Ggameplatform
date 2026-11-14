@@ -5,8 +5,9 @@ import { rewardPop } from '../../../fx/fx.js';
 import { offerGives, renderMerchant } from '../../../ui/panels/merchantPanel.js';
 import { BONUS_INFO } from '../../../data/labels.js';
 import {
-    formatLong, medal, renderBonuses, renderCalendar, renderChest, renderTasks, rewardChips, usableBonuses,
+    formatLong, medal, renderBonuses, renderCalendar, renderChest, renderTasks, rewardChips,
 } from '../../../ui/panels/rewardsPanel.js';
+import { usableBonuses } from '../../../core/forge.js';
 import { isSheetOpen, openSheet, toast } from '../../../ui/sheets.js';
 import { $ } from '../shared.js';
 

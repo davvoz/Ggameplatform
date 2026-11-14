@@ -1,7 +1,7 @@
 import {
     trainHero, evolveHero, equipItem, unequipItem, sendExplorer, explorerReturn, dismissHero, upgradeItem,
 } from '../../../net/api.js';
-import { canFuse } from '../../../ui/panels/fusionPanel.js';
+import { canFuse } from '../../../core/fusion.js';
 import { openItemPicker } from '../../../ui/bonusPicker.js';
 import { play } from '../../../fx/audio.js';
 import { rewardPop } from '../../../fx/fx.js';

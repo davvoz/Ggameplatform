@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { evolveBlocker, formatStat, shownStats, statChanges, statsOf } from '../js/ui/panels/heroPanel.js';
-import { evolveReady, heroStatus, stars } from '../js/ui/heroTiles.js';
+import { formatStat, shownStats, statChanges } from '../js/ui/panels/heroPanel.js';
+import { evolveBlocker, evolveReady, heroStatus, statsOf } from '../js/core/heroes.js';
+import { stars } from '../js/ui/heroTiles.js';
 import { isAvailable } from '../js/core/squad.js';
 
 const base = { hp: 2000, damage: 45, speed: 1.2, range: 0.9, cooldown: 1, nova_damage: 0, nova_radius: 0, taunt_radius: 4, splash_radius: 0, tower_bonus: 1 };

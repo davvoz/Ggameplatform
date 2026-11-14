@@ -1,6 +1,6 @@
 import { formatCountdown } from './forgePanel.js';
 import { icon } from '../icons.js';
-import { BONUS_INFO, BONUS_TARGETS, MATERIAL_INFO, TASK_INFO } from '../../data/labels.js';
+import { BONUS_INFO, MATERIAL_INFO, TASK_INFO } from '../../data/labels.js';
 
 /**
  * DOM builders for the Rewards sheet: the 7-day calendar, today's tasks,
@@ -9,11 +9,6 @@ import { BONUS_INFO, BONUS_TARGETS, MATERIAL_INFO, TASK_INFO } from '../../data/
  */
 
 // ── pure helpers (tested) ──────────────────────────────────────────────
-/** The bonuses the player owns that work on `target` ('job' | 'hero' | 'energy'), best fit first. */
-export function usableBonuses(target, owned) {
-    return BONUS_TARGETS[target].filter((b) => (owned?.[b] ?? 0) > 0);
-}
-
 /** The most telling part of a reward, for a small calendar tile: { icon, color, text }. */
 export function headline(reward) {
     const bonuses = Object.entries(reward.bonuses ?? {});

@@ -1,5 +1,6 @@
 import { play } from '../fx/audio.js';
 import { heroPortrait } from '../render/thumbs.js';
+import { GOAL, SECONDS, hitsToScore, sessionXp, spawnGap, starsFor, targetLife } from '../core/minigames/training.js';
 
 /**
  * The training dummy, in three screens:
@@ -16,39 +17,9 @@ import { heroPortrait } from '../render/thumbs.js';
  * GOAL hits make the full ten, so two hits are a perfect beat and one a good one.
  */
 
-export const SECONDS = 15;
-export const GOAL = 20;            // hits for the full XP
-const STAR_HITS = [6, 12, 18];
 const COUNTDOWN = 3;
 const RED_SHARE = 0.2;
 const HURRY = 3;                   // the last seconds pulse
-
-/** Hits as the server's score: two hits a perfect beat, an odd one a good beat, ten beats at most. */
-export function hitsToScore(hits) {
-    const h = Math.max(0, Math.min(GOAL, hits));
-    return { perfect: Math.floor(h / 2), good: h % 2 };
-}
-
-/** The XP a number of hits is worth, as the server counts it. */
-export function sessionXp(maxXp, hits) {
-    const { perfect, good } = hitsToScore(hits);
-    return Math.round((maxXp * (perfect + 0.5 * good)) / 10);
-}
-
-/** 0 to 3 stars for a session. */
-export function starsFor(hits) {
-    return STAR_HITS.filter((n) => hits >= n).length;
-}
-
-/** Seconds a target stays lit, `t` seconds into the session, for a hero of `tier`. */
-export function targetLife(t, tier = 1) {
-    return Math.max(0.65, 1.35 - 0.025 * t - 0.12 * (tier - 1));
-}
-
-/** Seconds until the next target, `t` seconds into the session. */
-export function spawnGap(t) {
-    return Math.max(0.38, 0.62 - 0.016 * t);
-}
 
 const DUMMY = `
 <svg viewBox="0 0 100 130" aria-hidden="true">

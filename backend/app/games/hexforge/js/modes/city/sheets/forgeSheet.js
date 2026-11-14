@@ -6,7 +6,8 @@ import {
     formatCountdown, itemName, itemThumb, jobName, jobThumb, renderArmoury, renderRecipes, renderRoster,
 } from '../../../ui/panels/forgePanel.js';
 import { openAnvil } from '../../../minigames/anvil.js';
-import { evolveReady, heroNames } from '../../../ui/heroTiles.js';
+import { heroNames } from '../../../ui/heroTiles.js';
+import { evolveReady } from '../../../core/heroes.js';
 import { BUILDING_INFO, FORM_INFO, HERO_INFO, ITEM_INFO, PATH_INFO, times } from '../../../data/labels.js';
 import { closeSheet, openSheet, toast } from '../../../ui/sheets.js';
 import { buildingThumb, heroPortrait, heroThumb, itemPicture } from '../../../render/thumbs.js';

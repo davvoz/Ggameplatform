@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GOAL, hitsToScore, sessionXp, spawnGap, starsFor, targetLife } from '../js/minigames/training.js';
-import { masteryOf, trainBlocker } from '../js/ui/panels/heroPanel.js';
+import { GOAL, hitsToScore, sessionXp, spawnGap, starsFor, targetLife } from '../js/core/minigames/training.js';
+import { masteryOf, trainBlocker } from '../js/core/heroes.js';
 
 test('hits turn into the server score: two hits a perfect beat, one a good beat', () => {
     assert.deepEqual(hitsToScore(0), { perfect: 0, good: 0 });

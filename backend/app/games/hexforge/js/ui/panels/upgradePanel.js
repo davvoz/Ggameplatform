@@ -2,6 +2,7 @@ import { costChips, formatDuration } from './forgePanel.js';
 import { icon, withIcon } from '../icons.js';
 import { BUILDING_INFO, PATH_INFO } from '../../data/labels.js';
 import { buildingThumb, thumbImg } from '../../render/thumbs.js';
+import { statsAt, upgradeBlocker } from '../../core/upgrades.js';
 
 /**
  * The upgrade card (a sheet) for a building type: its level and path, what
@@ -22,12 +23,6 @@ export function formatBuildingStat(key, value) {
     if (key === 'slow') return `${value}%`;
     if (key === 'chain') return `${value} heroes`;
     return String(value);
-}
-
-/** The stats of a type at a level (and path, from level 3). */
-export function statsAt(table, level, path) {
-    const row = table.stats[String(level)];
-    return path && row[path] ? row[path] : row;
 }
 
 /** What moves from `from` to `to`: [{ key, label, from, to }]. */
@@ -72,16 +67,6 @@ export function upgradeBonuses(table, level, path) {
         out.push(`shoots ${Math.round((100 * (base.cooldown - now.cooldown)) / base.cooldown)}% faster`);
     }
     return out;
-}
-
-/** Why the type cannot be upgraded now, or null. */
-export function upgradeBlocker({ type, level, coreLevel, maxLevel, cost, materials, freeSlots, busy }) {
-    if (busy) return 'Already at the forge.';
-    if (level >= maxLevel) return null;
-    if (type !== 'core' && level + 1 > coreLevel) return `Upgrade the Core to level ${level + 1} first.`;
-    if (freeSlots <= 0) return 'The forge is full: wait for a free slot.';
-    if (Object.entries(cost).some(([m, n]) => (materials[m] ?? 0) < n)) return 'Not enough materials.';
-    return null;
 }
 
 // ── DOM ────────────────────────────────────────────────────────────────

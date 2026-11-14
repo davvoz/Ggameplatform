@@ -1,5 +1,6 @@
 import { dismantleBuilding, moveBuilding, placeBuilding, setAim } from '../../net/api.js';
-import { canFuse, partName } from '../../ui/panels/fusionPanel.js';
+import { partName } from '../../ui/panels/fusionPanel.js';
+import { canFuse } from '../../core/fusion.js';
 import { anchorFor, placementError } from '../../core/cityRules.js';
 import { play } from '../../fx/audio.js';
 import { itemName, renderStorage } from '../../ui/panels/forgePanel.js';

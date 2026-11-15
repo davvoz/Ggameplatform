@@ -1,6 +1,6 @@
 /**
- * The powers offered after every wave: three at random (the week's seed),
- * one is taken and kept for the night. `max` is how many times one can be
+ * The powers offered after every `BOON_EVERY` waves (after each boss): three
+ * at random (the week's seed), one is taken and kept for the night. `max` is how many times one can be
  * taken; the other numbers are what one level gives.
  */
 export const BOONS = Object.freeze({
@@ -20,6 +20,9 @@ export const BOONS = Object.freeze({
 
 /** Cards shown after a wave. */
 export const BOON_CHOICES = 3;
+
+/** The powers are offered after one wave in this many: the waves that end with a boss. */
+export const BOON_EVERY = 2;
 
 /**
  * The cards' screen comes in and goes out slowly, and takes no taps while it

@@ -2,6 +2,14 @@ import { Rng } from '../core/Rng.js';
 
 const DANGER = 300;
 const SWING_SOON = 0.3;
+/** A charging boss this near is shielded. */
+const CHARGE_NEAR = 200;
+
+/** A swing about to land, or a charge about to arrive. */
+function landingSoon(enemy, mage, seen) {
+    if (enemy.state === 'charge') return Math.abs(enemy.x - mage.x) < CHARGE_NEAR;
+    return enemy.state === 'windup' && seen(enemy) && enemy.stateTime > enemy.timing.windup - SWING_SOON;
+}
 /** A monster this near the mage is shot even when saving energy. */
 const CLOSE = 220;
 /** The pilot calls the storm once this many monsters are in sight. */
@@ -66,7 +74,7 @@ export class Pilot {
         if (pickup) return { x: pickup.x, y: pickup.y - 22 };
         const alert = this.#rng.chance(this.#focus);
         const seen = (e) => e.stateTime >= this.#reaction;
-        const swinging = alert && sim.enemies.find((e) => e.state === 'windup' && seen(e) && e.stateTime > e.timing.windup - SWING_SOON);
+        const swinging = alert && sim.enemies.find((e) => landingSoon(e, mage, seen));
         if ((swinging || shot) && mage.shieldReady) return { x: mage.x, y: mage.feetY - 60 };
         if (!armed) return null;
         const winding = alert && sim.enemies.find((e) => e.telegraphing && seen(e) && e.x > 0 && e.x < 960);

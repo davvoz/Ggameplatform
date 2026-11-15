@@ -5,6 +5,7 @@
  * - `reach`: how close a melee monster gets before it swings.
  * - `windup` / `recover`: the swing is telegraphed, then it rests.
  * - `range`: archers keep between `range[0]` and `range[1]` from the mage.
+ * - `grit`: the share of the waves' toughness it takes (1 when missing): bats, the swarm, take half.
  * - `muzzle`: where shots leave, ahead of and above the feet: the bow string and
  *   the hands in the sprite's release frame (archer SPELL 6, Ken SPELL 8).
  */
@@ -13,6 +14,7 @@ export const ENEMIES = Object.freeze({
         hp: 1, speed: 125, score: 100, damage: 1,
         flying: true, body: { halfWidth: 34, height: 52 },
         bob: { amplitude: 34, period: 1.3 },
+        grit: 0.5,
         firstWave: 1,
     },
     warrior: {
@@ -48,5 +50,5 @@ export const WAVE_MIX = Object.freeze([
     { from: 1, weights: { bat: 5, warrior: 3 } },
     { from: 2, weights: { bat: 4, warrior: 3, archer: 2 } },
     { from: 4, weights: { bat: 4, warrior: 3, archer: 3, brawler: 1 } }, // brawlers come in a few at a time
-    { from: 8, weights: { bat: 4, warrior: 3, archer: 3, brawler: 2 } },
+    { from: 6, weights: { bat: 4, warrior: 3, archer: 3, brawler: 2 } },
 ]);

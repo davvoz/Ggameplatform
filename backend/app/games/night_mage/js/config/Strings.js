@@ -62,6 +62,9 @@ export const STRINGS = Object.freeze({
     level: 'LV',
     invaderTag: "'S",
     invaderComing: 'INVADER!',
+    fury: 'ENRAGED!',
+    bossDown: 'K.O.!',
+    summon: 'TO ME!',
     /** The boss the forest sends when no other player has sent one. */
     forestBoss: 'THE FOREST',
     /** Under a boss back from an earlier lap of the roster. */

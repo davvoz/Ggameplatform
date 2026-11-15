@@ -43,6 +43,30 @@ const SOUNDS = {
         ...[110, 98, 82].map((f, i) => ({ t: 'sawtooth', from: f, to: f * 0.97, d: 0.42, v: 0.16, at: i * 0.4 })),
         { n: 0.5, f: 220, v: 0.2, at: 0.8 },
     ],
+    /** A boss grows furious: a roar that rises. */
+    fury: [{ t: 'sawtooth', from: 70, to: 150, d: 0.55, v: 0.3 }, { n: 0.5, f: 350, v: 0.3 }],
+    /** A boss calls its bats: three shrieks. */
+    summon: [1400, 1750, 1250].map((f, i) => ({ t: 'square', from: f, to: f * 1.4, d: 0.07, v: 0.07, at: i * 0.08 })),
+    /** A boss falls: a crunch, a yelp sliding down, a whoosh up into the sky, "ding" (timed on its fall). */
+    bossDown: [
+        { n: 0.2, f: 900, v: 0.35 },
+        { t: 'square', from: 880, to: 200, d: 0.45, v: 0.1 },
+        { t: 'triangle', from: 180, to: 1100, d: 0.85, v: 0.12, at: 0.45 },
+        { t: 'sine', from: 1760, to: 1760, d: 0.6, v: 0.16, at: 1.3 },
+        { t: 'sine', from: 2637, to: 2637, d: 0.45, v: 0.08, at: 1.3 },
+    ],
+    /** The curtain closes and the mage dances: a little victory fanfare. */
+    sceneLeaving: [
+        ...[523, 659, 784, 1047].map((f, i) => ({ t: 'square', from: f, to: f, d: 0.1, v: 0.09, at: i * 0.1 })),
+        { t: 'square', from: 784, to: 784, d: 0.12, v: 0.09, at: 0.5 },
+        { t: 'square', from: 1047, to: 1047, d: 0.6, v: 0.1, at: 0.65 },
+        { t: 'triangle', from: 523, to: 523, d: 0.6, v: 0.08, at: 0.65 },
+    ],
+    /** It opens on the new one: a sweep up and two bells. */
+    scene: [
+        { t: 'triangle', from: 200, to: 880, d: 0.7, v: 0.12 },
+        ...[784, 1175].map((f, i) => ({ t: 'sine', from: f, to: f, d: 0.35, v: 0.09, at: 0.45 + i * 0.12 })),
+    ],
     countdown: [{ t: 'square', from: 660, to: 660, d: 0.1, v: 0.12 }],
     go: [{ t: 'square', from: 1320, to: 1320, d: 0.25, v: 0.14 }],
 };
@@ -88,13 +112,14 @@ export class GameAudio {
         action.catch(() => {});
     }
 
-    /** Plays the sounds of a tick's events (at most one of each kind). */
+    /** Plays the sounds of a tick's events (at most one of each kind; a boss's kill has its own). */
     playEvents(events) {
         const seen = new Set();
-        for (const { type } of events) {
-            if (seen.has(type)) continue;
-            seen.add(type);
-            this.play(type);
+        for (const event of events) {
+            const name = event.type === 'kill' && event.invader ? 'bossDown' : event.type;
+            if (seen.has(name)) continue;
+            seen.add(name);
+            this.play(name);
         }
     }
 

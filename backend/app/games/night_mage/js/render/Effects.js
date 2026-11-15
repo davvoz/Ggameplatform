@@ -1,3 +1,4 @@
+import { BossFall } from './BossFallArt.js';
 import { jitter } from './jitter.js';
 import { poseFrame } from './poses.js';
 import { pixelRing, stepped } from './pixels.js';
@@ -227,6 +228,11 @@ export class Effects {
 
     corpse(event) {
         this.#items.push(new Corpse(this.#bank, event));
+    }
+
+    /** A boss's fall: its own little cartoon instead of a corpse. */
+    bossFall(event) {
+        this.#items.push(new BossFall(this.#bank, event));
     }
 
     portal(x, y, flying, color) {

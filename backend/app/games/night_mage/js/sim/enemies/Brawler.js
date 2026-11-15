@@ -1,11 +1,13 @@
 import { WORLD } from '../../config/Tuning.js';
 import { Enemy } from './Enemy.js';
 import { swingTick, trySwing } from './melee.js';
+import { loose, volleyTick } from './volley.js';
 
-/** Throws fireballs from afar, then closes in for a punch. */
+/** Throws fireballs from afar (as a boss, in volleys), then closes in for a punch. */
 export class Brawler extends Enemy {
     think(world, dt) {
         if (this.#throwing(world)) return;
+        if (volleyTick(this, world)) return;
         if (swingTick(this, world)) return;
         if (trySwing(this, world.mage)) return;
         if (this.#wantsToThrow(world.mage)) {
@@ -25,11 +27,7 @@ export class Brawler extends Enemy {
 
     #throwing(world) {
         if (this.state !== 'throw') return false;
-        if (this.stateTime * world.slow >= this.timing.throwWindup) {
-            world.fire(this, this.stats.shot);
-            this.reload = this.stats.reload;
-            this.setState('recover');
-        }
+        if (this.stateTime * world.slow >= this.timing.throwWindup) loose(this, world);
         return true;
     }
 }

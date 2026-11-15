@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOONS, BOON_CHOICES } from '../js/config/Boons.js';
+import { BOONS, BOON_CHOICES, BOON_EVERY } from '../js/config/Boons.js';
 import { STRINGS } from '../js/config/Strings.js';
-import { CRITICAL, ENERGY, MAGE, STORM } from '../js/config/Tuning.js';
+import { CRITICAL, ENERGY, MAGE, STORM, WAVES } from '../js/config/Tuning.js';
 import { Rng } from '../js/core/Rng.js';
 import { ART } from '../js/render/BoonArt.js';
 import { Boons, applyBoon } from '../js/sim/Boons.js';
@@ -62,15 +62,20 @@ test('every power has its words and its picture', () => {
     }
 });
 
-test('after a wave the night stands still until a power is chosen', () => {
+test('after one wave in two (the boss waves) the night stands still until a power is chosen', () => {
     const sim = new Simulation({ seed: 7, maps: [flatMap()] });
     let offered = null;
-    for (let t = 0; t < 60 * 120 && !offered; t++) {
+    const clearedBefore = [];
+    for (let t = 0; t < 60 * 240 && !offered; t++) {
         sim.step();
         for (const e of sim.enemies) e.hp = 0;
-        offered = sim.drainEvents().find((e) => e.type === 'offer');
+        const events = sim.drainEvents();
+        clearedBefore.push(...events.filter((e) => e.type === 'waveClear').map((e) => e.wave));
+        offered = events.find((e) => e.type === 'offer');
     }
-    assert.ok(offered, 'offered after the first wave');
+    assert.ok(offered, 'offered');
+    assert.deepEqual(clearedBefore, [1, BOON_EVERY], 'not after the first wave, after the second');
+    assert.equal(sim.wave, WAVES.invaderEvery, 'the wave of the first boss');
     const ticks = sim.ticks;
     sim.tap(100, 100);
     run(sim, 30);

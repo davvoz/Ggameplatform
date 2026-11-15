@@ -1,4 +1,5 @@
 import { WORLD } from '../config/Tuning.js';
+import { drawCurtain } from './CurtainArt.js';
 import { jitter } from './jitter.js';
 import { Viewport } from './Viewport.js';
 
@@ -12,6 +13,8 @@ export class Renderer {
     #canvas;
     #ctx;
     #parts;
+    /** Seconds since start, for what blinks on its own (the curtain's stars). */
+    #time = 0;
     viewport = new Viewport();
 
     /**
@@ -50,6 +53,7 @@ export class Renderer {
 
     update(dt, sim) {
         const { world, effects, weather, hud, screens } = this.#parts;
+        this.#time += dt;
         world.update(dt);
         effects.update(dt);
         weather.update(dt);
@@ -96,17 +100,33 @@ export class Renderer {
      *          herald?: {invader: object, age: number}, result?: object}} overlay
      */
     drawPlay(sim, mapSpec, overlay = {}) {
-        const { world, effects, weather } = this.#parts;
+        const { world, effects } = this.#parts;
         return this.#framed((ctx) => {
             const area = this.viewport.visible;
             world.draw(ctx, sim, mapSpec);
-            effects.draw(ctx);
-            weather.draw(ctx);
+            this.#layers(ctx, sim);
             if (effects.hurtFlash > 0) this.#hurtFlash(ctx, effects.hurtFlash);
             return overlay.result
                 ? this.#parts.screens.drawResult(ctx, { ...overlay.result, area })
                 : this.#fightScreens(ctx, sim, overlay, area);
         });
+    }
+
+    /**
+     * The effects and the weather over the world; between two scenes the
+     * curtain goes over the weather and the effects over the curtain, so the
+     * wave's last words and sparks show whole on the dark.
+     */
+    #layers(ctx, sim) {
+        const { effects, weather } = this.#parts;
+        if (!sim.journey) {
+            effects.draw(ctx);
+            weather.draw(ctx);
+            return;
+        }
+        weather.draw(ctx);
+        drawCurtain(ctx, sim.journey, sim.mage.chest, this.#time);
+        effects.draw(ctx);
     }
 
     /** Runs a frame's drawing; the canvas state comes back even if the drawing breaks halfway. */

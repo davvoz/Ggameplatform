@@ -24,7 +24,7 @@ export function swingTick(enemy, world) {
         return true;
     }
     if (enemy.state === 'recover') {
-        if (enemy.stateTime * world.slow >= stats.recover) enemy.setState('walk');
+        if (enemy.stateTime * world.slow >= enemy.timing.recover) enemy.setState('walk');
         return true;
     }
     return false;

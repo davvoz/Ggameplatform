@@ -1,10 +1,15 @@
-import { INVADER, WORLD } from '../../config/Tuning.js';
+import { BOSS, INVADER, WORLD } from '../../config/Tuning.js';
+import { BossKit } from './BossKit.js';
 
 const SPAWN_TIME = 0.45;
 /** How much of the step's speed-up the wind-ups take. */
 const WINDUP_SPEEDUP = 0.5;
 const SAME_LEVEL = 30;
 const LEDGE_STEP = 14;
+/** The states where a monster telegraphs (the red "!"): a bolt then is critical. */
+const TELEGRAPHS = new Set(['windup', 'throw', 'rally']);
+/** The timings a boss's fury shortens. */
+const FURY_TIMED = Object.freeze(['windup', 'throwWindup', 'recover', 'reload', 'rally', 'volleyGap']);
 
 function scaleBody({ halfWidth, height }, scale) {
     return { halfWidth: halfWidth * scale, height: height * scale };
@@ -17,6 +22,8 @@ function scaleBody({ halfWidth, height }, scale) {
  * @property {number} slow speed factor (frost)
  * @property {(enemy: Enemy, kind: string) => void} fire throws a shot at the mage
  * @property {(enemy: Enemy, damage: number) => void} strike a melee blow on the mage
+ * @property {(enemy: Enemy, count: number) => void} summon a boss calls bats to its side
+ * @property {(enemy: Enemy) => void} roar a boss grows furious
  */
 
 /**
@@ -43,6 +50,9 @@ export class Enemy {
         const tempo = 1 + ((power.speed ?? 1) - 1) * WINDUP_SPEEDUP;
         this.timing = { ...stats, windup: stats.windup / tempo, throwWindup: stats.throwWindup / tempo };
         this.invader = invader;
+        /** What only bosses do (fury, bats, volleys, the charge, the swoop); null for the others. */
+        this.bossKit = invader ? new BossKit(invader.level) : null;
+        if (invader) Object.assign(this.timing, { rally: BOSS.charge.rally, volleyGap: BOSS.volleyGap });
         /** Its body box: invaders are drawn bigger, and hit and tapped as big as they look. */
         this.body = invader ? scaleBody(stats.body, INVADER.lookScale) : stats.body;
         /** Invaders stand their ground: a critical hit pushes them back less. */
@@ -89,15 +99,16 @@ export class Enemy {
         return Math.abs(x - this.x) <= halfWidth + pad && y >= top - pad && y <= bottom + pad;
     }
 
-    /** Is it winding up a blow or a throw (the red "!")? A bolt now is critical. */
+    /** Is it winding up a blow, a throw or a charge (the red "!")? A bolt now is critical. */
     get telegraphing() {
-        return this.state === 'windup' || this.state === 'throw';
+        return TELEGRAPHS.has(this.state);
     }
 
     /**
      * A bolt lands. A swing already wound up still lands, unless the bolt
      * `interrupts` it (a critical hit). Invaders shrug off plain bolts: only
-     * a critical hit staggers them.
+     * a critical hit staggers them, and none once they are furious (only the
+     * shield's shove still does).
      * @returns {boolean} true when it kills
      */
     hurt(damage, fromX, interrupts = false) {
@@ -105,6 +116,7 @@ export class Enemy {
         this.hp = Math.max(0, this.hp - damage);
         this.flash = 0.12;
         if (this.hp === 0) return true;
+        this.bossKit?.wounded(this.hp / this.maxHp);
         if (this.#staggeredBy(interrupts)) {
             this.x += (this.x < fromX ? -1 : 1) * this.knockback;
             this.setState('stagger');
@@ -114,8 +126,8 @@ export class Enemy {
 
     #staggeredBy(interrupts) {
         if (!this.stats.stagger) return false;
-        if (interrupts) return true;
-        return !this.invader && this.state !== 'windup';
+        if (this.bossKit) return interrupts && !this.bossKit.furious;
+        return interrupts || this.state !== 'windup';
     }
 
     /** Pushed back by the shield: a step away and a stagger, whatever it was doing. */
@@ -135,6 +147,7 @@ export class Enemy {
         this.stateTime += dt;
         this.flash = Math.max(0, this.flash - dt);
         this.reload = Math.max(0, this.reload - dt * world.slow);
+        if (this.bossKit) this.#bossTurn(world);
         if (this.state === 'spawn') {
             if (this.stateTime >= SPAWN_TIME) this.setState(this.flying ? 'fly' : 'walk');
             return;
@@ -143,6 +156,24 @@ export class Enemy {
         // every subclass writes `think`: the behaviour of one tick
         if (this.state !== 'stagger' && this.state !== 'fall') this.think(world, dt);
         if (!this.flying) this.fall(world, dt);
+    }
+
+    /** A boss acts on what the last hits earned: its fury, its bats. */
+    #bossTurn(world) {
+        const { roar, bats } = this.bossKit.take();
+        if (roar) {
+            this.#enrage();
+            world.roar(this);
+        }
+        if (bats > 0) world.summon(this, bats);
+    }
+
+    /** Furious: a quicker step, shorter wind-ups, rests and reloads. */
+    #enrage() {
+        this.speed *= BOSS.furySpeed;
+        const timing = { ...this.timing };
+        for (const key of FURY_TIMED) if (timing[key] !== undefined) timing[key] /= BOSS.furyTempo;
+        this.timing = timing;
     }
 
     // ── helpers for walkers ────────────────────────────────────────────
@@ -156,9 +187,9 @@ export class Enemy {
         if (mage.x !== this.x) this.facing = mage.x < this.x ? -1 : 1;
     }
 
-    /** Walk towards `targetX`, at most one step. @returns {boolean} arrived */
-    walkTo(targetX, world, dt) {
-        const step = this.speed * world.slow * dt;
+    /** Walk towards `targetX`, at most one step (`pace` times its own). @returns {boolean} arrived */
+    walkTo(targetX, world, dt, pace = 1) {
+        const step = this.speed * pace * world.slow * dt;
         const gap = targetX - this.x;
         if (Math.abs(gap) <= step) {
             this.x = targetX;

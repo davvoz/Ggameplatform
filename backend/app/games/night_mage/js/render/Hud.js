@@ -161,7 +161,8 @@ export class Hud {
         ctx.fillStyle = 'rgba(10,5,20,0.8)';
         ctx.fillRect(left - 3, y - 3, width + 6, height + 6);
         const filled = Math.ceil((width / cell) * (boss.hp / boss.maxHp)) * cell;
-        ctx.fillStyle = boss.flash > 0 ? '#ffffff' : '#ff4fd0';
+        const fill = boss.bossKit?.furious ? '#ff3b2f' : '#ff4fd0';
+        ctx.fillStyle = boss.flash > 0 ? '#ffffff' : fill;
         ctx.fillRect(left, y, filled, height);
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
         ctx.fillRect(left, y, filled, cell / 2);

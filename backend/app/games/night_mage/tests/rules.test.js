@@ -7,7 +7,8 @@ import { ACTORS, FRAMES } from '../js/config/Sprites.js';
 import { ENEMIES } from '../js/config/Enemies.js';
 import { INVADER, WAVES } from '../js/config/Tuning.js';
 import { poseFrame } from '../js/render/poses.js';
-import { waveShape } from '../js/sim/Director.js';
+import { bossFor, powerFor, waveShape } from '../js/sim/Director.js';
+import { createEnemy } from '../js/sim/enemies/registry.js';
 
 test('the invader level matches the server rules (night_mage_be/service.py)', () => {
     const server = readFileSync(fileURLToPath(new URL('../../night_mage_be/service.py', import.meta.url)), 'utf8');
@@ -46,6 +47,18 @@ test('timed poses spread their frames over the swing and stay inside the strip',
         assert.ok(frame >= 0 && frame < FRAMES);
     }
     assert.equal(poseFrame('mage', 'cast', 99).frame, FRAMES - 1, 'one-shot poses hold their last frame');
+});
+
+test('from wave 6 the monsters need two bolts (the bats from wave 10), and a boss is never weaker than its wave', () => {
+    const hp = (kind, wave) => createEnemy(kind, { id: 1, x: 0, y: 0, power: powerFor(kind, waveShape(wave).power) }).maxHp;
+    assert.deepEqual([1, 5, 6, 10].map((wave) => hp('warrior', wave)), [1, 1, 2, 2]);
+    assert.deepEqual([5, 6].map((wave) => hp('archer', wave)), [1, 2]);
+    assert.deepEqual([6, 9, 10].map((wave) => hp('bat', wave)), [1, 1, 2]);
+    assert.ok(hp('brawler', 6) > hp('brawler', 5));
+    const weak = [{ id: 'a', kind: 'warrior', level: 1, name: 'A' }];
+    assert.deepEqual([4, 6, 10, 14, 18, 30].map((wave) => bossFor(0, weak, { seed: 1, wave }).invader.level), [1, 2, 3, 4, 5, 5]);
+    assert.equal(bossFor(0, [{ ...weak[0], level: 5 }], { seed: 1, wave: 2 }).invader.level, 5, 'a strong one stays strong');
+    assert.equal(weak[0].level, 1, 'the roster itself is not changed');
 });
 
 test('waves grow and level off', () => {

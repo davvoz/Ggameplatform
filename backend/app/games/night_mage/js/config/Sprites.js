@@ -34,6 +34,9 @@ export const ACTORS = Object.freeze({
             windup: { anim: 'ATTACK', timed: 'windup', from: 0, to: 6 },
             recover: { anim: 'ATTACK', timed: 'recover', from: 7, to: 10 },
             stagger: { anim: 'TAKE_DAMAGE', ms: 30 },
+            // the boss's charge: the axe raised, then a run
+            rally: { anim: 'ATTACK', timed: 'rally', from: 0, to: 3 },
+            charge: { anim: 'WALK', ms: 40, loop: true },
         },
     },
     archer: {
@@ -47,6 +50,8 @@ export const ACTORS = Object.freeze({
             windup: { anim: 'SPELL', timed: 'windup', from: 0, to: 6 },
             recover: { anim: 'SPELL', timed: 'recover', from: 7, to: 10 },
             stagger: { anim: 'TAKE_DAMAGE', ms: 30 },
+            // the boss's volley: the release, over and over
+            volley: { anim: 'SPELL', timed: 'volleyGap', from: 4, to: 6 },
         },
     },
     brawler: {
@@ -59,6 +64,7 @@ export const ACTORS = Object.freeze({
             fall: { anim: 'TAKE_DAMAGE', ms: 60 },
             windup: { anim: 'ATTACK', timed: 'windup', from: 0, to: 5 },
             throw: { anim: 'SPELL', timed: 'throwWindup', from: 0, to: 8 },
+            volley: { anim: 'SPELL', timed: 'volleyGap', from: 6, to: 8 },
             recover: { anim: 'ATTACK', timed: 'recover', from: 6, to: 10 },
             stagger: { anim: 'TAKE_DAMAGE', ms: 30 },
         },

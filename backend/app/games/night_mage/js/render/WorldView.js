@@ -1,3 +1,4 @@
+import { CELEBRATION } from '../config/Sprites.js';
 import { bossName } from '../config/Strings.js';
 import { INVADER, MAGE, WORLD } from '../config/Tuning.js';
 import { drawName } from './Font.js';
@@ -18,6 +19,14 @@ const BUBBLE_ENDING = 0.3;
 const READY_FLASH = 0.35;
 /** Space between the shield bar and the energy crystals under it. */
 const SHIELD_BAR_GAP = 4;
+/** The victory dance: its frames, and its height so the mage stays his size (the sheet's cells are twice his). */
+const DANCE_FRAMES = CELEBRATION.columns * CELEBRATION.rows;
+const DANCE_SIZE = 170;
+
+/** Seconds into the mage's dance between two scenes (it starts with the curtain), or null when he is not dancing. */
+export function danceTime(journey) {
+    return journey && journey.phase !== 'open' ? journey.elapsed : null;
+}
 
 /**
  * Draws the arena: the painted scene, the gifts, the monsters (walkers by
@@ -52,7 +61,7 @@ export class WorldView {
         if (sim.mage.hasBuff('frost')) this.#frostWash(ctx);
         if (sim.storm.active) this.#stormSky(ctx);
         for (const pickup of sim.pickups) this.#pickup(ctx, pickup);
-        this.#mage(ctx, sim.mage);
+        this.#mage(ctx, sim.mage, danceTime(sim.journey));
         const walkers = sim.enemies.filter((e) => !e.flying).sort((a, b) => a.y - b.y);
         for (const enemy of walkers) this.#enemy(ctx, enemy);
         for (const enemy of sim.enemies) if (enemy.flying) this.#enemy(ctx, enemy);
@@ -78,8 +87,16 @@ export class WorldView {
         ctx.fillRect(0, 0, WORLD.width, WORLD.height);
     }
 
-    /** The mage, and over his head his shield bar and his energy. */
-    #mage(ctx, mage) {
+    /**
+     * The mage, and over his head his shield bar and his energy; between two
+     * scenes, his victory dance (`dance` seconds in) instead.
+     */
+    #mage(ctx, mage, dance = null) {
+        if (dance !== null) {
+            const frame = Math.min(DANCE_FRAMES - 1, Math.floor((dance * 1000) / CELEBRATION.ms));
+            this.#bank.drawCelebration(ctx, frame, mage.x, mage.feetY, DANCE_SIZE);
+            return;
+        }
         const { anim, frame } = poseFrame('mage', mage.pose, mage.poseTime);
         const blink = mage.grace > 0 && mage.alive && Math.floor(mage.grace * 16) % 2 === 0;
         ctx.globalAlpha = blink ? 0.45 : 1;
@@ -112,7 +129,7 @@ export class WorldView {
         const { anim, frame } = poseFrame(enemy.kind, enemy.state, enemy.stateTime, enemy.timing);
         const appearing = enemy.state === 'spawn' ? Math.min(1, enemy.stateTime / 0.45) : 1;
         if (enemy.invader) this.#invaderAura(ctx, enemy);
-        if (enemy.state === 'windup' || enemy.state === 'throw') this.#warning(ctx, enemy);
+        if (enemy.telegraphing) this.#warning(ctx, enemy);
         ctx.globalAlpha = appearing;
         const scale = enemy.invader ? INVADER.lookScale : 1;
         this.#bank.draw(ctx, { actor: enemy.kind, anim, frame, facing: enemy.facing, x: enemy.x, y: enemy.y, flash: enemy.flash > 0, scale });
@@ -132,12 +149,15 @@ export class WorldView {
 
     #invaderAura(ctx, enemy) {
         const { x, y } = enemy.center;
-        const pulse = 0.6 + 0.4 * Math.sin(this.#time * 5);
+        // a furious boss burns red and throbs faster
+        const furious = enemy.bossKit?.furious;
+        const pulse = 0.6 + 0.4 * Math.sin(this.#time * (furious ? 12 : 5));
+        const rgb = furious ? '255,50,40' : '255,80,200';
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
         const gradient = ctx.createRadialGradient(x, y, 10, x, y, AURA);
-        gradient.addColorStop(0, `rgba(255,80,200,${0.35 * pulse})`);
-        gradient.addColorStop(1, 'rgba(255,80,200,0)');
+        gradient.addColorStop(0, `rgba(${rgb},${(furious ? 0.5 : 0.35) * pulse})`);
+        gradient.addColorStop(1, `rgba(${rgb},0)`);
         ctx.fillStyle = gradient;
         ctx.fillRect(x - AURA, y - AURA, AURA * 2, AURA * 2);
         ctx.restore();

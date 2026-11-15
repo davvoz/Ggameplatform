@@ -1,9 +1,10 @@
 import { WORLD } from '../../config/Tuning.js';
 import { Enemy } from './Enemy.js';
+import { loose, volleyTick } from './volley.js';
 
 const SCREEN_MARGIN = 48;
 
-/** Keeps her distance on her ledge and shoots arrows (which can be tapped down). */
+/** Keeps her distance on her ledge and shoots arrows (which can be tapped down); as a boss, in volleys. */
 export class Archer extends Enemy {
     think(world, dt) {
         const { mage } = world;
@@ -20,17 +21,13 @@ export class Archer extends Enemy {
     }
 
     #shooting(world) {
-        const { stats } = this;
         if (this.state === 'windup') {
-            if (this.stateTime * world.slow >= this.timing.windup) {
-                world.fire(this, stats.shot);
-                this.reload = stats.reload;
-                this.setState('recover');
-            }
+            if (this.stateTime * world.slow >= this.timing.windup) loose(this, world);
             return true;
         }
+        if (volleyTick(this, world)) return true;
         if (this.state === 'recover') {
-            if (this.stateTime * world.slow >= stats.recover) this.setState('idle');
+            if (this.stateTime * world.slow >= this.timing.recover) this.setState('idle');
             return true;
         }
         return false;

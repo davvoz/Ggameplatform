@@ -22,9 +22,28 @@ the wave, drawn by the seed, never reported to the server). The boss comes
 last, once the wave's monsters are down. A band with INVADER!, the owner's
 name, the monster and its level warns for 1.8 s, then it steps in alone,
 bigger, with a boss bar under the score. Plain bolts do not stagger it; only
-critical hits (during its wind-up) stop it and push it back a little.
+critical hits (during its wind-up) stop it and push it back a little, until
+it grows furious.
 From the warning until the boss falls the music turns to the boss's own piece
 (Dm - Eb - Dm - A, `boss` in `audio/Score.js`), started from its top.
+When it falls it plays a little cartoon (`render/BossFallArt.js`): K.O.!, it
+shudders with pops, is flung into the sky spinning with dizzy stars and
+vanishes with a "ding" and a rain of confetti; the wave waits for it
+(`INVADER.farewell`, 1.9 s) before it ends.
+
+Bosses have powers of their own (`BOSS` in `Tuning.js`, `sim/enemies/BossKit.js`),
+and their level shows in them, not only in their health. A boss is never below
+the wave's own level, one more at each step of toughness (2 from wave 6, 3 from
+10, 4 from 14, 5 from 18): a level-1 invader met late in the night comes in at
+the night's level. The forest's own bosses have just that level.
+
+| Power | Who | What it does | Level |
+|---|---|---|---|
+| Call (TO ME!) | every boss | at 75% and 35% of its health, bats come to its side | 1 + level/2 bats (2 to 4) |
+| Fury (ENRAGED!) | every boss | under half health: 30% quicker step, wind-ups, rests and reloads 1.35x shorter, and critical hits no longer stop it (they still deal double): only the shield does; red aura and bar | |
+| Charge | warrior | from 200 px or more on its level: a 0.7 s rally (the red "!", a critical stops it), a run at 4x its step, 2 hearts; then 4.5 s before the next | |
+| Volley | archer, brawler | its shots come in a row, 0.22 s apart, each burnable and shieldable | 2 + level/2 shots (2 to 4) |
+| Swoop | bat | it does not burst on its bite: it flies up and away, hangs 0.7 s, dives again | |
 
 Built on the art of the user's earlier prototype (`C:\progetti\fantasygame`):
 sprites, painted scenes and their surfaces are reused; the code is new.
@@ -66,7 +85,8 @@ at the mage's feet.
 
 ## Powers between the waves
 
-After every wave the night stands still and three powers are offered
+After every second wave (`BOON_EVERY`: the waves that end with a boss) the
+night stands still and three powers are offered
 (`config/Boons.js`, drawn by the week's seed so everybody gets the same
 cards for the same choices); one is taken, by a tap or by 1 2 3, and kept
 for the night. Some can be taken more than once (the squares on the card):
@@ -80,8 +100,9 @@ bottom left corner.
 
 So that long nights stay tense, every 10 waves the monsters' blows take one
 heart more (said on screen at waves 11, 21...), and their wind-ups get
-quicker as their step does. With powers the pilots reach waves ~11 / 12 / 14 / 17
-(`npm run measure`; the pilots now have a reaction time too).
+quicker as their step does. With bosses, their powers and the powers every second
+wave, the pilots reach waves ~14 / 14 / 14 / 18 (sleepy / casual / good / expert,
+medians of `npm run measure`; the pilots have a reaction time too).
 
 ## Score
 
@@ -91,7 +112,10 @@ All of it lives in `js/sim/ScoreKeeper.js` and `js/config/Tuning.js`.
 - **Combo**: every hit (bolt, burnt shot, reflected shot) keeps it alive; every 4 hits raise the
   multiplier, up to **x6**. A missed tap, a wound or 2.6 s without hits break it.
 - Burnt shots pay 25. Cleared waves pay 250 x wave, flawless waves 400 x wave more.
-- **Bosses** have (5 + 0.6 x level) times the health of their wave's monsters of the same kind,
+- **Toughness** (`WAVES.toughness`): monster health is x1 up to wave 5, x1.5 from wave 6 (the
+  one-bolt warriors and archers need two), x2 from wave 10, +0.5 every 4 waves; bats, the swarm,
+  take half of it (one bolt until wave 9). Brawlers come twice as often from wave 6.
+- **Bosses** have (9 + 1.2 x level) times the health of their wave's monsters of the same kind,
   x1.25 more for each lap of the roster already run, up to x2 (`INVADER` in `Tuning.js`), and pay
   5 times their points. INVADERS SLAIN counts only other players' invaders.
 - **Storm** (`sim/Storm.js`, `STORM` in `Tuning.js`): 40 hits fill it; called, it burns the shots in
@@ -125,6 +149,13 @@ A **scene** is a painted background plus its walkable surfaces; a **map** is a
 way to play a scene: as painted or mirrored, with a colour grade and a weather.
 Four scenes give the twelve maps in `js/config/Scenes.js`; the night moves to
 the next map every four waves, in an order the week's seed decides.
+The move is a curtain of big square pixels (`render/CurtainArt.js`,
+`SCENE_CHANGE` in `Tuning.js`): it closes from the edges in to a ring of light
+round the mage (0.75 s), where he dances his victory (the `CELEBRATE` sheet,
+to a little fanfare) until the ring shuts (1.65 s); the map changes behind it
+(the simulation's own `journey`, the night holding still), then it opens from
+the mage out (0.75 s) and the powers are offered. The wave's last texts and
+sparks are drawn over the curtain.
 
 New scene:
 

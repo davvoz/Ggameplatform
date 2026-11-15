@@ -86,8 +86,12 @@ export const WAVES = Object.freeze({
     gap: { start: 1.1, perWave: 0.037, min: 0.55 }, // 0.55 from wave 15 on
     /** Monsters on the field at once: base + wave, at most max. */
     alive: { base: 4, max: 12 },
-    /** Monster health grows by `step` every `every` waves (x1 on wave 1). */
-    toughness: { every: 4, step: 0.35 },
+    /**
+     * Monster health is x1 until wave `from`, then grows by `step` every
+     * `every` waves (x1.5 from wave 6, x2 from 10...): the one-bolt monsters
+     * need two from wave 6. Bats take only part of it (`grit` in `Enemies.js`).
+     */
+    toughness: { from: 6, every: 4, step: 0.5 },
     breakTime: 2.4,
     /** The scene changes after this many waves. */
     wavesPerMap: 4,
@@ -95,6 +99,15 @@ export const WAVES = Object.freeze({
     /** Waves where an invader from another player closes the fight, as its boss. */
     invaderEvery: 2,
 });
+
+/**
+ * The trip to the next scene, after the wave that ends one, in three parts:
+ * a curtain of pixels closes in to a ring of light round the mage (`close`),
+ * he dances his victory in it until the ring shuts (`cheer`; the dance starts
+ * with the curtain), the scene changes behind it and it opens again (`open`).
+ * The night holds still meanwhile.
+ */
+export const SCENE_CHANGE = Object.freeze({ close: 0.75, cheer: 1.65, open: 0.75 });
 
 export const PICKUPS = Object.freeze({
     dropChance: 0.13,
@@ -116,8 +129,8 @@ export const PICKUPS = Object.freeze({
  */
 export const INVADER = Object.freeze({
     /** Health is multiplied by (base + perLevel * level), and by the wave's own toughness. */
-    hpBase: 5,
-    hpPerLevel: 0.6,
+    hpBase: 9,
+    hpPerLevel: 1.2,
     /** Each time the roster starts over, its bosses get this much more health (x1.25, x1.5...)... */
     hpPerLap: 0.25,
     /** ...for this many laps at most (then x2 stays). */
@@ -128,10 +141,40 @@ export const INVADER = Object.freeze({
     knockback: 0.4,
     /** Seconds of warning, with the field clear, before the invader steps in. */
     heraldTime: 1.8,
+    /** Seconds the wave still lasts after its boss falls, while its fall plays (`render/BossFallArt.js`). */
+    farewell: 1.9,
     maxLevel: 5,
     /** The lowest wave a run must reach to send an invader. */
     minWaveToSend: 3,
     wavesPerLevel: 4,
+});
+
+/**
+ * What only bosses do, and where their level shows beyond their health
+ * (`sim/enemies/BossKit.js`): bigger volleys and more bats called.
+ */
+export const BOSS = Object.freeze({
+    /**
+     * Below this share of its health a boss is furious: quicker steps, blows
+     * and shots, and critical hits no longer stop it (the shield still does).
+     */
+    furyAt: 0.5,
+    furySpeed: 1.3,
+    /** Wind-ups, rests and reloads are this many times shorter once furious. */
+    furyTempo: 1.35,
+    /** At these shares of its health a boss calls bats to its side (1 + level / 2 of them). */
+    callsAt: [0.75, 0.35],
+    /** Archers and brawlers loose 2 + level / 2 shots in one go, this far apart. */
+    volleyBase: 2,
+    volleyGap: 0.22,
+    /**
+     * The warrior's charge: from at least `from` away on its level, a long
+     * rally (the red "!"), then a run at `pace` times its step that hits for
+     * `damage` hearts; then it waits `cooldown` seconds to charge again.
+     */
+    charge: { from: 200, rally: 0.7, pace: 4, damage: 2, cooldown: 4.5 },
+    /** A bat boss does not burst on its bite: it flies up and away, hangs there, dives again. */
+    swoop: { height: 160, away: 260, pace: 1.6, rest: 0.7 },
 });
 
 /** The storm: the mage's ultimate, filled by hits, called with its own button (or E). */

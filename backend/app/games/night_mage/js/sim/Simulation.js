@@ -1,8 +1,8 @@
-import { CRITICAL, DT, INVADER, MAGE, PICKUPS, SCORE, STORM, WORLD } from '../config/Tuning.js';
-import { BOONS } from '../config/Boons.js';
+import { CRITICAL, DT, INVADER, MAGE, PICKUPS, SCENE_CHANGE, SCORE, STORM, WORLD } from '../config/Tuning.js';
+import { BOON_EVERY, BOONS } from '../config/Boons.js';
 import { Rng } from '../core/Rng.js';
 import { Boons, applyBoon } from './Boons.js';
-import { Director } from './Director.js';
+import { Director, powerFor } from './Director.js';
 import { createEnemy } from './enemies/registry.js';
 import { Mage } from './Mage.js';
 import { Pickup, pickupWeights } from './Pickups.js';
@@ -14,6 +14,10 @@ import { resolveTap } from './TapResolver.js';
 import { Terrain } from './Terrain.js';
 
 const SHIELD_SHOVE = 44;
+/** The parts of a trip to the next scene, in order (`SCENE_CHANGE`): it changes as `open` begins. */
+const TRIP = Object.freeze(['close', 'cheer', 'open']);
+/** What a boss calls to its side. */
+const BROOD = 'bat';
 const PICKUP_INSET = 30;
 
 /**
@@ -65,6 +69,8 @@ export class Simulation {
     #events = [];
     #nextId = 1;
     #outcomes = new Map();
+    /** The trip to the next scene, `{phase, age, elapsed}` (seconds in the part, since the start), or null. */
+    #trip = null;
 
     /**
      * @param {{seed: number, maps: {id: string, terrain: object}[], invaders?: object[]}} setup
@@ -98,6 +104,18 @@ export class Simulation {
 
     get wave() {
         return this.director.wave;
+    }
+
+    /**
+     * The trip to the next scene while it lasts: `progress` from 0 to 1 of
+     * its `phase` (closing on the old scene, the mage's dance, opening on the
+     * new one), `elapsed` seconds since it began.
+     * @returns {{phase: 'close'|'cheer'|'open', progress: number, elapsed: number}|null}
+     */
+    get journey() {
+        if (!this.#trip) return null;
+        const { phase, age, elapsed } = this.#trip;
+        return { phase, progress: Math.min(1, age / SCENE_CHANGE[phase]), elapsed };
     }
 
     /** The scene after this one, so it can be prepared ahead. */
@@ -142,6 +160,10 @@ export class Simulation {
         if (this.over) return;
         if (this.offer) {
             this.#waitForChoice();
+            return;
+        }
+        if (this.#trip) {
+            this.#travel();
             return;
         }
         this.ticks += 1;
@@ -205,16 +227,42 @@ export class Simulation {
         const { wave, flawless } = this.director;
         const bonus = this.score.bonus(SCORE.waveClear * wave + (flawless ? SCORE.flawlessWave * wave : 0));
         this.#emit('waveClear', { wave, bonus, flawless });
-        if (this.director.sceneChangeDue) {
-            this.#enterScene(this.#mapIndex + 1);
-            this.#emit('scene', { mapId: this.map.id });
+        if (!this.director.sceneChangeDue) {
+            this.#offerBoons();
+            return;
         }
-        this.#offerBoons();
+        this.#trip = { phase: TRIP[0], age: 0, elapsed: 0 };
+        this.#emit('sceneLeaving', { mapId: this.nextMap.id });
+    }
+
+    /**
+     * One tick of the trip: the night holds still (taps are dropped), the
+     * scene changes once the curtain is closed, the powers come once it is open.
+     */
+    #travel() {
+        this.#inputs.length = 0;
+        this.mage.update(DT);
+        const trip = this.#trip;
+        trip.age += DT;
+        trip.elapsed += DT;
+        if (trip.age < SCENE_CHANGE[trip.phase]) return;
+        const next = TRIP[TRIP.indexOf(trip.phase) + 1];
+        if (!next) {
+            this.#trip = null;
+            this.#offerBoons();
+            return;
+        }
+        this.#trip = { phase: next, age: 0, elapsed: trip.elapsed };
+        if (next !== 'open') return;
+        this.#enterScene(this.#mapIndex + 1);
+        this.#emit('scene', { mapId: this.map.id });
     }
 
     // ── powers between the waves ───────────────────────────────────────
 
+    /** The powers, after one wave in `BOON_EVERY` (after each boss). */
     #offerBoons() {
+        if (this.director.wave % BOON_EVERY !== 0) return;
         const choices = this.boons.offer(this.#rngBoons);
         if (choices.length === 0) return;
         this.offer = choices;
@@ -236,8 +284,8 @@ export class Simulation {
     }
 
     #spawn({ kind, invader }) {
-        const shape = this.director.shape;
-        const power = invader ? invaderPower(invader.level, shape.power, invader.lap) : shape.power;
+        const base = powerFor(kind, this.director.shape.power);
+        const power = invader ? invaderPower(invader.level, base, invader.lap) : base;
         const spot = placeMonster(kind, kind === 'bat', { terrain: this.terrain, mage: this.mage, rng: this.#rngSpawn });
         const enemy = createEnemy(kind, { id: this.#nextId++, ...spot, power, invader: invader ?? null });
         this.enemies.push(enemy);
@@ -408,6 +456,7 @@ export class Simulation {
         const base = enemy.stats.score * (enemy.invader ? SCORE.invaderMultiplier : 1);
         const points = this.score.award(base);
         this.score.kills += 1;
+        if (enemy.invader) this.director.bossFallen();
         const outcome = enemy.invader ? this.#outcomes.get(enemy.invader.id) : null;
         if (outcome) {
             this.score.invadersSlain += 1;
@@ -531,7 +580,16 @@ export class Simulation {
             slow: this.mage.hasBuff('frost') ? PICKUPS.frostSlow : 1,
             fire: (enemy, kind) => this.#fire(enemy, kind),
             strike: (enemy, damage) => this.#hitMage(enemy, damage),
+            summon: (enemy, count) => this.#summon(enemy, count),
+            roar: (enemy) => this.#emit('fury', { id: enemy.id, ...enemy.center }),
         };
+    }
+
+    /** A boss calls bats to its side: they come in like the wave's own. */
+    #summon(enemy, count) {
+        const { x, y } = enemy.center;
+        this.#emit('summon', { id: enemy.id, x, y, count });
+        for (let i = 0; i < count; i++) this.#spawn({ kind: BROOD });
     }
 
     #fire(enemy, kind) {

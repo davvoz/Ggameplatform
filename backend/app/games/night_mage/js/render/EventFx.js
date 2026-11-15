@@ -4,7 +4,20 @@ import { STORM_VIOLET as STORM_COLOR } from './StormArt.js';
 
 const GOLD = '#ffd27a';
 const INVADER_GLOW = 'rgba(255,90,200,0.9)';
+/** Texts over a boss stay this far inside the screen, whole, even when it stands at an edge. */
+const TEXT_MARGIN = 130;
+const inside = (x) => Math.min(960 - TEXT_MARGIN, Math.max(TEXT_MARGIN, x));
 const PICKUP_COLORS = Object.freeze({ heart: '#ff6b81', chain: '#6fc3ff', frost: '#bdf2ff', power: '#ff5a3c', nova: '#ffe66b' });
+
+/** A boss falls: K.O.!, then its fall into the sky. */
+function bossDown(fx, e) {
+    fx.bossFall(e);
+    fx.burst(e.x, e.y, { count: 26, palette: ['#ffffff', '#ff4fd0', GOLD, '#3a1a4a'], power: 1.5, duration: 0.6 });
+    fx.ring(e.x, e.y, { color: '#ff4fd0', radius: 170, duration: 0.5, width: 12 });
+    fx.text(STRINGS.bossDown, inside(e.x), e.y - 140, { color: '#ff4fd0', size: 46, rise: 30, duration: 1.4 });
+    fx.text(`+${e.points}`, inside(e.x), e.y - 80, { color: '#ff9ad5', size: 26 });
+    fx.kick(14);
+}
 
 /** One function per simulation event: what the player sees when it happens. */
 const HANDLERS = {
@@ -16,10 +29,14 @@ const HANDLERS = {
         if (!e.killed) fx.kick(2);
     },
     kill(fx, e) {
+        if (e.invader) {
+            bossDown(fx, e);
+            return;
+        }
         fx.corpse(e);
         fx.burst(e.x, e.y, { count: 18, palette: ['#ffffff', MONSTER_COLORS[e.kind], '#3a1a4a'], power: 1.2 });
-        fx.text(`+${e.points}`, e.x, e.y - 50, { color: e.invader ? '#ff9ad5' : GOLD, size: e.invader ? 26 : 18 });
-        fx.kick(e.invader ? 10 : 4);
+        fx.text(`+${e.points}`, e.x, e.y - 50, { color: GOLD, size: 18 });
+        fx.kick(4);
     },
     burst(fx, e) {
         fx.burst(e.x, e.y, { count: 12, palette: ['#ffffff', MONSTER_COLORS[e.kind], '#3a1a4a'] });
@@ -62,6 +79,16 @@ const HANDLERS = {
     },
     invaderComing(fx) {
         fx.kick(8);
+    },
+    fury(fx, e) {
+        fx.ring(e.x, e.y, { color: '#ff3b2f', radius: 220, duration: 0.6, width: 14 });
+        fx.text(STRINGS.fury, inside(e.x), e.y - 150, { color: '#ff5a3c', size: 30, duration: 1.2 });
+        fx.kick(12);
+    },
+    summon(fx, e) {
+        fx.ring(e.x, e.y, { color: '#b06bff', radius: 150, duration: 0.5, width: 10 });
+        fx.text(STRINGS.summon, inside(e.x), e.y - 95, { color: '#c9a6ff', size: 22, duration: 0.9 });
+        fx.kick(6);
     },
     drop(fx, e) {
         fx.burst(e.x, e.y, { count: 8, power: 0.5, palette: ['#ffffff', '#fff3a0'] });

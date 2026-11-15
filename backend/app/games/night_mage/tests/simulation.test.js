@@ -1,41 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ENEMIES } from '../js/config/Enemies.js';
-import { COMBO, DT, INVADER, MAGE, SCORE, WAVES } from '../js/config/Tuning.js';
+import { COMBO, DT, INVADER, MAGE, SCENE_CHANGE, SCORE, WAVES } from '../js/config/Tuning.js';
 import { bossFor } from '../js/sim/Director.js';
 import { createEnemy } from '../js/sim/enemies/registry.js';
 import { Shot } from '../js/sim/Projectiles.js';
 import { Simulation, invaderPower } from '../js/sim/Simulation.js';
 import { flatMap } from './support/maps.js';
-
-const FLOOR = 440;
-
-function night(options = {}) {
-    return new Simulation({ seed: 7, maps: [flatMap()], ...options });
-}
-
-function run(sim, ticks) {
-    const events = [];
-    for (let i = 0; i < ticks && !sim.over; i++) {
-        sim.step();
-        events.push(...sim.drainEvents());
-    }
-    return events;
-}
-
-/** Puts a monster on the field, ready to act. */
-function place(sim, kind, x, y = FLOOR, extra = {}) {
-    const enemy = createEnemy(kind, { id: 900 + sim.enemies.length, x, y, layer: 0, ...extra });
-    enemy.setState(enemy.flying ? 'fly' : 'walk');
-    sim.enemies.push(enemy);
-    return enemy;
-}
-
-/** Keeps the director from sending its own monsters. */
-function holdWaves(sim) {
-    sim.director.phase = 'break';
-    sim.director.timer = 1e9;
-}
+import { FLOOR, holdWaves, night, place, run } from './support/night.js';
 
 test('a tap on a monster sends a bolt that kills it and scores', () => {
     const sim = night();
@@ -169,12 +141,29 @@ test('waves clear, pay a bonus and the scene changes every few waves', () => {
     const firstMap = sim.map.id;
     const events = clearWaves(sim, WAVES.wavesPerMap);
     const cleared = events.filter((e) => e.type === 'waveClear');
-    const scenes = events.filter((e) => e.type === 'scene');
     assert.equal(cleared.length, WAVES.wavesPerMap);
     assert.ok(cleared.every((c) => c.flawless));
     assert.equal(cleared[0].bonus, SCORE.waveClear + SCORE.flawlessWave);
-    assert.equal(scenes.length, 1);
+    // the curtain closes on the old scene, the night holding still...
+    assert.ok(events.some((e) => e.type === 'sceneLeaving'));
+    assert.equal(sim.map.id, firstMap);
+    assert.equal(sim.journey.phase, 'close');
+    const ticks = sim.ticks;
+    sim.tap(480, 300);
+    const closing = run(sim, Math.round(SCENE_CHANGE.close * 60) + 2);
+    assert.equal(sim.ticks, ticks, 'time stands still');
+    assert.ok(!closing.some((e) => e.type === 'cast'), 'taps on the curtain do nothing');
+    // ...the mage dances in the ring of light...
+    assert.equal(sim.journey.phase, 'cheer');
+    run(sim, Math.round(SCENE_CHANGE.cheer * 60) - 4);
+    assert.equal(sim.map.id, firstMap);
+    assert.ok(Math.abs(sim.journey.elapsed - (SCENE_CHANGE.close + SCENE_CHANGE.cheer)) < 0.1);
+    // ...the scene changes behind it, then it opens and the powers come
+    const rest = run(sim, Math.round(SCENE_CHANGE.open * 60) + 10);
+    assert.equal(rest.filter((e) => e.type === 'scene').length, 1);
     assert.notEqual(sim.map.id, firstMap);
+    assert.equal(sim.journey, null);
+    assert.ok(sim.offer, 'the powers come once the curtain is open');
 });
 
 test('an invader closes an even wave as its boss, tougher, and its fate is reported', () => {

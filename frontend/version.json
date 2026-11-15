@@ -1,8 +1,17 @@
 {
-  "version": "5.23.2",
-  "timestamp": "2026-11-15T01:36:10.975Z",
-  "buildNumber": 629,
+  "version": "5.23.3",
+  "timestamp": "2026-11-15T13:47:02.182Z",
+  "buildNumber": 630,
   "changelog": [
+    {
+      "version": "5.23.3",
+      "date": "2026-11-15",
+      "type": "patch",
+      "changes": [
+        "fix: [NM] add invader mechanics as wave bosses with herald and health adjustments",
+        "🔖 Bump version to 5.23.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.23.2",
       "date": "2026-11-15",
@@ -88,15 +97,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[H]minigiochi",
         "🔖 Bump version to 5.22.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.22.0",
-      "date": "2026-11-11",
-      "type": "minor",
-      "changes": [
-        "feat: Hexforge gains a forge slot every 5 player levels, with an unlock animation",
-        "🔖 Bump version to 5.21.0 [skip-version]"
       ]
     }
   ]

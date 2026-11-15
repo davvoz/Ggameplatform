@@ -1,8 +1,17 @@
 {
-  "version": "5.23.0",
-  "timestamp": "2026-11-14T21:23:36.004Z",
-  "buildNumber": 627,
+  "version": "5.23.1",
+  "timestamp": "2026-11-15T00:33:42.628Z",
+  "buildNumber": 628,
   "changelog": [
+    {
+      "version": "5.23.1",
+      "date": "2026-11-15",
+      "type": "patch",
+      "changes": [
+        "fix:[NM] improvment",
+        "🔖 Bump version to 5.23.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.23.0",
       "date": "2026-11-14",
@@ -88,16 +97,6 @@
       "changes": [
         "feat: Hexforge pings show the battle report; walled-in targets get breached",
         "🔖 Bump version to 5.20.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.20.1",
-      "date": "2026-11-11",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix: add fullscreen button and functionality in Hexforge",
-        "🔖 Bump version to 5.20.0 [skip-version]"
       ]
     }
   ]

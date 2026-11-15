@@ -8,6 +8,8 @@ import { drawShot } from './ShotArt.js';
 
 const TAU = Math.PI * 2;
 const TAG_MARGIN = 70;
+/** Radius of the glow around an invader. */
+const AURA = 120;
 /** The bubble pops up in this long, and blinks for this long before it goes. */
 const BUBBLE_IN = 0.2;
 const BUBBLE_ENDING = 0.3;
@@ -114,7 +116,8 @@ export class WorldView {
         const scale = enemy.invader ? INVADER.lookScale : 1;
         this.#bank.draw(ctx, { actor: enemy.kind, anim, frame, facing: enemy.facing, x: enemy.x, y: enemy.y, flash: enemy.flash > 0, scale });
         ctx.globalAlpha = 1;
-        if (enemy.maxHp > 1 && enemy.hp < enemy.maxHp) this.#healthBar(ctx, enemy);
+        // an invader's health is the boss bar at the top of the screen
+        if (!enemy.invader && enemy.maxHp > 1 && enemy.hp < enemy.maxHp) this.#healthBar(ctx, enemy);
     }
 
     /** A red "!" over a monster about to strike. */
@@ -131,11 +134,11 @@ export class WorldView {
         const pulse = 0.6 + 0.4 * Math.sin(this.#time * 5);
         ctx.save();
         ctx.globalCompositeOperation = 'lighter';
-        const gradient = ctx.createRadialGradient(x, y, 10, x, y, 90);
+        const gradient = ctx.createRadialGradient(x, y, 10, x, y, AURA);
         gradient.addColorStop(0, `rgba(255,80,200,${0.35 * pulse})`);
         gradient.addColorStop(1, 'rgba(255,80,200,0)');
         ctx.fillStyle = gradient;
-        ctx.fillRect(x - 90, y - 90, 180, 180);
+        ctx.fillRect(x - AURA, y - AURA, AURA * 2, AURA * 2);
         ctx.restore();
     }
 
@@ -151,7 +154,7 @@ export class WorldView {
         const top = enemy.flying ? enemy.y - 46 : enemy.y - enemy.body.height - 14;
         ctx.fillStyle = 'rgba(10,5,20,0.75)';
         ctx.fillRect(enemy.x - width / 2 - 2, top - 2, width + 4, 8);
-        ctx.fillStyle = enemy.invader ? '#ff6ad5' : '#ff5a3c';
+        ctx.fillStyle = '#ff5a3c';
         ctx.fillRect(enemy.x - width / 2, top, (width * enemy.hp) / enemy.maxHp, 4);
     }
 

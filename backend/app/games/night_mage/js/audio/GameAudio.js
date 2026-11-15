@@ -38,6 +38,11 @@ const SOUNDS = {
     wave: [{ t: 'triangle', from: 392, to: 392, d: 0.12, v: 0.18 }, { t: 'triangle', from: 523, to: 523, d: 0.2, v: 0.18, at: 0.12 }],
     waveClear: [523, 659, 784, 1047].map((f, i) => ({ t: 'square', from: f, to: f, d: 0.12, v: 0.1, at: i * 0.1 })),
     spawn: [{ t: 'sine', from: 90, to: 260, d: 0.25, v: 0.07 }],
+    /** A boss is coming: three low horns falling, then a rumble. */
+    invaderComing: [
+        ...[110, 98, 82].map((f, i) => ({ t: 'sawtooth', from: f, to: f * 0.97, d: 0.42, v: 0.16, at: i * 0.4 })),
+        { n: 0.5, f: 220, v: 0.2, at: 0.8 },
+    ],
     countdown: [{ t: 'square', from: 660, to: 660, d: 0.1, v: 0.12 }],
     go: [{ t: 'square', from: 1320, to: 1320, d: 0.25, v: 0.14 }],
 };

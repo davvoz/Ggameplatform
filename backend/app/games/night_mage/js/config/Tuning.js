@@ -92,7 +92,7 @@ export const WAVES = Object.freeze({
     /** The scene changes after this many waves. */
     wavesPerMap: 4,
     firstSpawnDelay: 0.9,
-    /** Waves where an invader from another player joins the fight. */
+    /** Waves where an invader from another player closes the fight, as its boss. */
     invaderEvery: 2,
 });
 
@@ -107,13 +107,20 @@ export const PICKUPS = Object.freeze({
     fallSpeed: 260,
 });
 
+/**
+ * An invader is the boss of its wave: it comes last, once the field is clear,
+ * after a warning with its owner's name.
+ */
 export const INVADER = Object.freeze({
-    /** Health is multiplied by base + perLevel * level. */
-    hpBase: 2,
+    /** Health is multiplied by (base + perLevel * level), and by the wave's own toughness. */
+    hpBase: 4,
     hpPerLevel: 0.6,
-    speedBoost: 1.12,
-    /** Invaders are drawn this much bigger (their shots leave from higher up too). */
-    lookScale: 1.12,
+    /** Invaders are drawn this much bigger, and their body (for taps and hits) grows with them. */
+    lookScale: 1.3,
+    /** The share of the usual knockback a critical hit gives them (plain bolts do not stagger them). */
+    knockback: 0.4,
+    /** Seconds of warning, with the field clear, before the invader steps in. */
+    heraldTime: 1.8,
     maxLevel: 5,
     /** The lowest wave a run must reach to send an invader. */
     minWaveToSend: 3,

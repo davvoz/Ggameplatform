@@ -44,6 +44,8 @@ export class Game {
     #titleTime = 0;
     #lastBeep = 0;
     #banner = null;
+    /** The warning of a wave's boss: `{invader, age}`. */
+    #herald = null;
     #result = null;
     /** The powers' screen while it is up: its age, and the power picked (sent to the night after the outro). */
     #offerShow = null;
@@ -263,6 +265,7 @@ export class Game {
         this.#parts.scenes.prepare(this.#spec(this.#sim.nextMap.id));
         this.#result = null;
         this.#banner = null;
+        this.#herald = null;
         this.#clock = COUNTDOWN;
         this.#lastBeep = Math.ceil(COUNTDOWN / 0.6);
         platform.startRun();
@@ -285,6 +288,7 @@ export class Game {
 
     #onEvent(event) {
         if (event.type === 'wave') this.#banner = { wave: event.wave, age: 0, scene: this.#banner?.pendingScene };
+        if (event.type === 'invaderComing') this.#herald = { invader: event.invader, age: 0 };
         if (event.type === 'scene') {
             const spec = this.#spec(event.mapId);
             this.#parts.renderer.weather.set(spec.weather);
@@ -309,6 +313,7 @@ export class Game {
 
     #advanceClocks(dt) {
         if (this.#banner) this.#banner.age += dt;
+        if (this.#herald) this.#herald.age += dt;
         if (this.#mode === 'play') this.#runOffer(dt);
         if (this.#mode === 'title') this.#animateTitle(dt);
         else if (this.#mode === 'countdown') this.#countdown(dt);
@@ -352,6 +357,7 @@ export class Game {
             countdown: this.#mode === 'countdown' ? this.#clock : null,
             paused: this.#mode === 'paused',
             banner: this.#banner?.age < 99 ? this.#banner : null,
+            herald: this.#herald,
             result: this.#result,
             offer: this.#offerShow,
         };

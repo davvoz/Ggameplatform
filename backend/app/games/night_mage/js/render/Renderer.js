@@ -92,7 +92,8 @@ export class Renderer {
      * The fight, with an optional screen on top.
      * @param {import('../sim/Simulation.js').Simulation} sim
      * @param {object} mapSpec
-     * @param {{countdown?: number, paused?: boolean, banner?: {wave: number, age: number, scene?: string}, result?: object}} overlay
+     * @param {{countdown?: number, paused?: boolean, banner?: {wave: number, age: number, scene?: string},
+     *          herald?: {invader: object, age: number}, result?: object}} overlay
      */
     drawPlay(sim, mapSpec, overlay = {}) {
         const { world, effects, weather } = this.#parts;
@@ -127,6 +128,7 @@ export class Renderer {
             screens.drawWaveBanner(ctx, overlay.banner.wave, overlay.banner.age, area);
             if (overlay.banner.scene) screens.drawSceneName(ctx, overlay.banner.scene, overlay.banner.age, area);
         }
+        if (overlay.herald) screens.drawInvaderBanner(ctx, overlay.herald, area);
         if (typeof overlay.countdown === 'number') screens.drawCountdown(ctx, overlay.countdown, area);
         if (sim.offer && overlay.offer) buttons = screens.drawOffer(ctx, { choices: sim.offer, boons: sim.boons, show: overlay.offer }, area);
         if (overlay.paused) buttons = screens.drawPause(ctx, area);

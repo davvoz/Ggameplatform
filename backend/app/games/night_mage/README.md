@@ -13,6 +13,12 @@ with their name over its head that turns up in other players' nights for two
 days. What it does out there (hearts taken, mages defeated, times slain) is
 shown to its owner on the title screen.
 
+An invader is the **boss of its wave** (every second wave, one per wave): it
+comes last, once the wave's monsters are down. A band with INVADER!, the
+owner's name, the monster and its level warns for 1.8 s, then it steps in
+alone, bigger, with a boss bar under the score. Plain bolts do not stagger
+it; only critical hits (during its wind-up) stop it and push it back a little.
+
 Built on the art of the user's earlier prototype (`C:\progetti\fantasygame`):
 sprites, painted scenes and their surfaces are reused; the code is new.
 
@@ -78,7 +84,8 @@ All of it lives in `js/sim/ScoreKeeper.js` and `js/config/Tuning.js`.
 - **Combo**: every hit (bolt, burnt shot, reflected shot) keeps it alive; every 4 hits raise the
   multiplier, up to **x6**. A missed tap, a wound or 2.6 s without hits break it.
 - Burnt shots pay 25. Cleared waves pay 250 x wave, flawless waves 400 x wave more.
-- **Invaders** have more health (2 + 0.6 x level times) and pay 5 times their points.
+- **Invaders** have (4 + 0.6 x level) times the health of their wave's monsters of the same kind
+  (`INVADER` in `Tuning.js`) and pay 5 times their points.
 - **Storm** (`sim/Storm.js`, `STORM` in `Tuning.js`): 40 hits fill it; called, it burns the shots in
   flight and drops a lightning (3 damage) on each monster on screen, nearest first. Lightnings keep the
   combo going but do not fill the next storm. Tuned with `npm run measure`: about one wave more for
@@ -135,7 +142,7 @@ step off the nearer end and drop down, archers keep their ledge.
 
 Same seed and same taps at the same ticks give the same night. The simulation
 runs in fixed 60 Hz ticks and takes every random choice from `core/Rng.js`,
-forked per purpose and per wave, so invaders joining a wave do not change the
+forked per purpose and per wave, so invaders closing a wave do not change the
 monsters of the others. The weekly seed comes from the ISO week
 (`platform/PlatformGateway.js`). Looks (sparks, weather, shake) use their own
 seeded stream in `render/jitter.js`.

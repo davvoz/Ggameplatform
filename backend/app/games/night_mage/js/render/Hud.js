@@ -1,5 +1,6 @@
 import { COMBO, PICKUPS } from '../config/Tuning.js';
 import { STRINGS } from '../config/Strings.js';
+import { drawName } from './Font.js';
 import { STORM_VIOLET, drawStormButton, paintCloud } from './StormArt.js';
 import { ringCells } from './pixels.js';
 
@@ -14,6 +15,8 @@ const STORM_BUTTON = Object.freeze({ x: 900, dy: 172 });
  * a ring swells around it (`flash` seconds).
  */
 const FEED = Object.freeze({ travel: 0.6, flash: 0.4, sparks: 5, trail: 0.07, lift: 140, cell: 6, ring: 46, grow: 14 });
+/** The invader's health, under the score: a wave's boss gets a boss bar. */
+const BOSS_BAR = Object.freeze({ width: 300, height: 12, dy: 92, cell: 6 });
 const HEART = ['01100110', '11111111', '11111111', '11111111', '01111110', '00111100', '00011000'];
 
 function heart(ctx, x, y, size, full) {
@@ -85,6 +88,8 @@ export class Hud {
         this.#multiplier(ctx, sim.score, top + 38);
         this.#font.draw(ctx, `${STRINGS.wave} ${Math.max(1, sim.wave)}`, 944, top + 2, { size: 20, align: 'right' });
         this.#buffs(ctx, mage, top + 40);
+        const boss = sim.enemies.find((e) => e.invader && e.alive);
+        if (boss) this.#bossBar(ctx, boss, top + BOSS_BAR.dy);
         if (this.#keyboard) this.#font.draw(ctx, STRINGS.shieldKey, 16, area.bottom - 26, { size: 14, color: '#9be7ff', alpha: 0.8 });
         this.#boonRow(ctx, sim.boons, area.bottom - (this.#keyboard ? 62 : 36));
         return [this.#stormButton(ctx, sim.storm, area.top + STORM_BUTTON.dy)];
@@ -146,6 +151,20 @@ export class Hud {
         ctx.fillStyle = f < 0.4 ? '#ffffff' : STORM_VIOLET;
         for (const cell of ringCells(bx, by, radius, radius, FEED.cell)) ctx.fillRect(cell.x, cell.y, FEED.cell, FEED.cell);
         ctx.restore();
+    }
+
+    /** The owner's name and the invader's health, in chunky cells that blink while it is hurt. */
+    #bossBar(ctx, boss, y) {
+        const { width, height, cell } = BOSS_BAR;
+        const left = 480 - width / 2;
+        drawName(ctx, boss.invader.name, 480, y - 22, { size: 15, color: '#ffb3e6' });
+        ctx.fillStyle = 'rgba(10,5,20,0.8)';
+        ctx.fillRect(left - 3, y - 3, width + 6, height + 6);
+        const filled = Math.ceil((width / cell) * (boss.hp / boss.maxHp)) * cell;
+        ctx.fillStyle = boss.flash > 0 ? '#ffffff' : '#ff4fd0';
+        ctx.fillRect(left, y, filled, height);
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillRect(left, y, filled, cell / 2);
     }
 
     #multiplier(ctx, score, y) {

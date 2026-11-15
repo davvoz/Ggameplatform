@@ -61,6 +61,7 @@ export const STRINGS = Object.freeze({
     sendFailed: 'COULD NOT SEND IT. TRY LATER',
     level: 'LV',
     invaderTag: "'S",
+    invaderComing: 'INVADER!',
     yourInvaders: 'YOUR INVADERS',
     inboxHits: 'MAGES HIT',
     inboxKills: 'MAGES DEFEATED',

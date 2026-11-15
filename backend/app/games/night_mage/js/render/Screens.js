@@ -1,10 +1,15 @@
 import { BOON_SCREEN, BOONS } from '../config/Boons.js';
 import { STRINGS } from '../config/Strings.js';
+import { INVADER } from '../config/Tuning.js';
 import { drawName } from './Font.js';
 import { poseFrame } from './poses.js';
 
 const INK = 'rgba(12,6,24,0.82)';
 const GOLD = '#ffd27a';
+const INVADER_PINK = '#ff4fd0';
+/** The invader's band opens in this long, and stays this long after it steps in. */
+const HERALD_OPEN = 0.15;
+const HERALD_LINGER = 0.5;
 const SEND_KINDS = ['bat', 'warrior', 'archer', 'brawler'];
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
 const easeOut = (t) => 1 - (1 - t) ** 3;
@@ -231,6 +236,35 @@ export class Screens {
         if (age > 1.4) return;
         const alpha = age < 1 ? 1 : (1.4 - age) / 0.4;
         this.#font.draw(ctx, `${STRINGS.wave} ${wave}`, 480, area.top + area.height * 0.32, { size: 46, align: 'center', alpha });
+    }
+
+    /**
+     * The warning before a wave's boss: a dark band across the arena, a
+     * blinking INVADER!, its owner's name and what it is.
+     * @param {{invader: {name: string, kind: string, level: number}, age: number}} herald
+     */
+    drawInvaderBanner(ctx, { invader, age }, area) {
+        const total = INVADER.heraldTime + HERALD_LINGER;
+        if (age > total) return;
+        const open = Math.min(1, age / HERALD_OPEN);
+        const alpha = age < INVADER.heraldTime ? 1 : (total - age) / HERALD_LINGER;
+        const mid = area.top + area.height * 0.36;
+        const half = 62 * open;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = 'rgba(30,0,24,0.72)';
+        ctx.fillRect(0, mid - half, 960, half * 2);
+        ctx.fillStyle = INVADER_PINK;
+        ctx.fillRect(0, mid - half, 960, 4);
+        ctx.fillRect(0, mid + half - 4, 960, 4);
+        ctx.restore();
+        if (open < 1) return;
+        const blink = Math.floor(age * 6) % 2 === 0;
+        this.#font.draw(ctx, STRINGS.invaderComing, 480, mid - 50, { size: 40, align: 'center', color: blink ? INVADER_PINK : '#ffffff', alpha });
+        if (alpha < 1) return;
+        drawName(ctx, invader.name, 480, mid + 2, { size: 24, color: '#ffb3e6' });
+        const what = `${STRINGS.monsters[invader.kind] ?? ''}  ${STRINGS.level} ${invader.level}`;
+        this.#font.draw(ctx, what, 480, mid + 34, { size: 15, align: 'center', color: '#c9b8ff' });
     }
 
     drawSceneName(ctx, name, age, area) {

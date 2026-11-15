@@ -3,6 +3,7 @@ import { MONSTER_COLORS } from './Effects.js';
 import { STORM_VIOLET as STORM_COLOR } from './StormArt.js';
 
 const GOLD = '#ffd27a';
+const INVADER_GLOW = 'rgba(255,90,200,0.9)';
 const PICKUP_COLORS = Object.freeze({ heart: '#ff6b81', chain: '#6fc3ff', frost: '#bdf2ff', power: '#ff5a3c', nova: '#ffe66b' });
 
 /** One function per simulation event: what the player sees when it happens. */
@@ -54,7 +55,13 @@ const HANDLERS = {
         fx.kick(18);
     },
     spawn(fx, e) {
-        fx.portal(e.x, e.y, e.flying, e.invader ? 'rgba(255,90,200,0.9)' : MONSTER_COLORS[e.kind]);
+        fx.portal(e.x, e.y, e.flying, e.invader ? INVADER_GLOW : MONSTER_COLORS[e.kind]);
+        if (!e.invader) return;
+        fx.ring(e.x, e.flying ? e.y : e.y - 70, { color: '#ff4fd0', radius: 190, duration: 0.6, width: 12 });
+        fx.kick(14);
+    },
+    invaderComing(fx) {
+        fx.kick(8);
     },
     drop(fx, e) {
         fx.burst(e.x, e.y, { count: 8, power: 0.5, palette: ['#ffffff', '#fff3a0'] });

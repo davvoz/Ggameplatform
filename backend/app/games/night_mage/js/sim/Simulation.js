@@ -30,10 +30,13 @@ export function sceneOrder(maps, seed) {
     return order;
 }
 
-/** An invader's health and speed, from the level its owner earned. */
-export function invaderPower(level) {
+/**
+ * An invader's health and speed: the wave's own `power`, with the health
+ * multiplied by the level its owner earned (it is the wave's boss).
+ */
+export function invaderPower(level, power = { hp: 1, speed: 1 }) {
     const clamped = Math.max(1, Math.min(INVADER.maxLevel, level));
-    return { hp: INVADER.hpBase + INVADER.hpPerLevel * clamped, speed: INVADER.speedBoost };
+    return { hp: power.hp * (INVADER.hpBase + INVADER.hpPerLevel * clamped), speed: power.speed };
 }
 
 /**
@@ -185,9 +188,10 @@ export class Simulation {
     }
 
     #runDirector() {
-        const { spawns, started, cleared } = this.director.update(DT, this.enemies.length);
+        const { spawns, started, cleared, herald } = this.director.update(DT, this.enemies.length);
         if (started) this.#waveStarts();
         if (cleared) this.#clearWave();
+        if (herald) this.#emit('invaderComing', { invader: herald });
         for (const order of spawns) this.#spawn(order);
     }
 
@@ -231,7 +235,7 @@ export class Simulation {
 
     #spawn({ kind, invader }) {
         const shape = this.director.shape;
-        const power = invader ? invaderPower(invader.level) : shape.power;
+        const power = invader ? invaderPower(invader.level, shape.power) : shape.power;
         const spot = placeMonster(kind, kind === 'bat', { terrain: this.terrain, mage: this.mage, rng: this.#rngSpawn });
         const enemy = createEnemy(kind, { id: this.#nextId++, ...spot, power, invader: invader ?? null });
         this.enemies.push(enemy);

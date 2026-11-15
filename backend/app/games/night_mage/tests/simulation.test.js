@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ENEMIES } from '../js/config/Enemies.js';
-import { COMBO, MAGE, SCORE, WAVES } from '../js/config/Tuning.js';
+import { COMBO, DT, INVADER, MAGE, SCORE, WAVES } from '../js/config/Tuning.js';
 import { createEnemy } from '../js/sim/enemies/registry.js';
 import { Shot } from '../js/sim/Projectiles.js';
 import { Simulation, invaderPower } from '../js/sim/Simulation.js';
@@ -176,21 +176,33 @@ test('waves clear, pay a bonus and the scene changes every few waves', () => {
     assert.notEqual(sim.map.id, firstMap);
 });
 
-test('an invader joins an even wave, tougher, and its fate is reported', () => {
+test('an invader closes an even wave as its boss, tougher, and its fate is reported', () => {
     const invader = { id: 'inv-1', kind: 'warrior', level: 3, name: 'Luca' };
     const sim = night({ invaders: [invader] });
+    const seen = [];
     let spawned = null;
+    let aliveAtSpawn = -1;
     for (let t = 0; t < 60 * 120 && !spawned; t++) {
         if (sim.offer) sim.choose(sim.offer[0]);
         sim.step();
-        // clear the first wave quickly so the second one comes
+        // clear the waves quickly so the invader's comes
         for (const e of sim.enemies) if (!e.invader) e.hp = 0;
-        spawned = sim.drainEvents().find((e) => e.type === 'spawn' && e.invader);
+        const events = sim.drainEvents();
+        seen.push(...events.map((e) => ({ ...e, tick: sim.ticks })));
+        spawned = events.find((e) => e.type === 'spawn' && e.invader);
+        if (spawned) aliveAtSpawn = sim.enemies.filter((e) => !e.invader).length;
     }
     assert.ok(spawned, 'the invader arrives');
     assert.equal(sim.director.wave % WAVES.invaderEvery, 0);
+    assert.equal(sim.director.remaining, 0, 'it comes last');
+    assert.equal(aliveAtSpawn, 0, 'it steps in alone');
+    const herald = seen.find((e) => e.type === 'invaderComing');
+    assert.equal(herald?.invader, invader, 'it is announced first');
+    const spawnTick = seen.find((e) => e.type === 'spawn' && e.invader).tick;
+    assert.ok(Math.abs((spawnTick - herald.tick) * DT - INVADER.heraldTime) < 2 * DT, 'after the warning');
     const enemy = sim.enemies.find((e) => e.invader);
-    assert.equal(enemy.maxHp, Math.round(ENEMIES.warrior.hp * invaderPower(3).hp));
+    assert.equal(enemy.maxHp, Math.round(ENEMIES.warrior.hp * invaderPower(3, sim.director.shape.power).hp));
+    assert.ok(enemy.maxHp >= 6, 'a boss takes several bolts');
     enemy.hp = 1;
     sim.tap(enemy.center.x, enemy.center.y);
     const events = run(sim, 30);
@@ -198,6 +210,22 @@ test('an invader joins an even wave, tougher, and its fate is reported', () => {
     assert.ok(kill);
     assert.equal(kill.points, 300 * SCORE.invaderMultiplier * sim.score.multiplier);
     assert.deepEqual(sim.report().invaders, [{ id: 'inv-1', damage: 0, slain: true, killedMage: false }]);
+});
+
+test('an invader grows with the wave it closes and stands its ground', () => {
+    assert.ok(invaderPower(1).hp > 1);
+    assert.equal(invaderPower(2, { hp: 2, speed: 1.3 }).hp, 2 * invaderPower(2).hp);
+    assert.equal(invaderPower(2, { hp: 2, speed: 1.3 }).speed, 1.3);
+    const plain = createEnemy('warrior', { id: 1, x: 300, y: FLOOR, layer: 0 });
+    const boss = createEnemy('warrior', { id: 2, x: 300, y: FLOOR, layer: 0, power: invaderPower(1), invader: { id: 'b', level: 1 } });
+    assert.ok(boss.body.height > plain.body.height, 'hit as big as it looks');
+    assert.ok(boss.knockback < plain.knockback);
+    boss.setState('walk');
+    boss.hurt(1, 600);
+    assert.equal(boss.state, 'walk', 'a plain bolt does not stop it');
+    boss.hurt(1, 600, true);
+    assert.equal(boss.state, 'stagger', 'a critical hit does');
+    assert.equal(boss.x, 300 - boss.knockback);
 });
 
 test('a pickup is taken with a tap', () => {

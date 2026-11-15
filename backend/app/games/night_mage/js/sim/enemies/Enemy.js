@@ -6,6 +6,10 @@ const WINDUP_SPEEDUP = 0.5;
 const SAME_LEVEL = 30;
 const LEDGE_STEP = 14;
 
+function scaleBody({ halfWidth, height }, scale) {
+    return { halfWidth: halfWidth * scale, height: height * scale };
+}
+
 /**
  * @typedef {Object} EnemyWorld What a monster may see and do on its turn.
  * @property {import('../Mage.js').Mage} mage
@@ -39,6 +43,10 @@ export class Enemy {
         const tempo = 1 + ((power.speed ?? 1) - 1) * WINDUP_SPEEDUP;
         this.timing = { ...stats, windup: stats.windup / tempo, throwWindup: stats.throwWindup / tempo };
         this.invader = invader;
+        /** Its body box: invaders are drawn bigger, and hit and tapped as big as they look. */
+        this.body = invader ? scaleBody(stats.body, INVADER.lookScale) : stats.body;
+        /** Invaders stand their ground: a critical hit pushes them back less. */
+        this.knockback = (stats.knockback ?? 0) * (invader ? INVADER.knockback : 1);
         this.facing = x < WORLD.width / 2 ? 1 : -1;
         this.state = 'spawn';
         this.stateTime = 0;
@@ -54,10 +62,6 @@ export class Enemy {
 
     get flying() {
         return Boolean(this.stats.flying);
-    }
-
-    get body() {
-        return this.stats.body;
     }
 
     /** Middle of the body: bolts aim here. */
@@ -92,7 +96,8 @@ export class Enemy {
 
     /**
      * A bolt lands. A swing already wound up still lands, unless the bolt
-     * `interrupts` it (a critical hit).
+     * `interrupts` it (a critical hit). Invaders shrug off plain bolts: only
+     * a critical hit staggers them.
      * @returns {boolean} true when it kills
      */
     hurt(damage, fromX, interrupts = false) {
@@ -100,11 +105,17 @@ export class Enemy {
         this.hp = Math.max(0, this.hp - damage);
         this.flash = 0.12;
         if (this.hp === 0) return true;
-        if (this.stats.stagger && (interrupts || this.state !== 'windup')) {
-            this.x += (this.x < fromX ? -1 : 1) * (this.stats.knockback ?? 0);
+        if (this.#staggeredBy(interrupts)) {
+            this.x += (this.x < fromX ? -1 : 1) * this.knockback;
             this.setState('stagger');
         }
         return false;
+    }
+
+    #staggeredBy(interrupts) {
+        if (!this.stats.stagger) return false;
+        if (interrupts) return true;
+        return !this.invader && this.state !== 'windup';
     }
 
     /** Pushed back by the shield: a step away and a stagger, whatever it was doing. */

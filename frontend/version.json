@@ -1,8 +1,17 @@
 {
-  "version": "5.23.3",
-  "timestamp": "2026-11-15T13:47:02.182Z",
-  "buildNumber": 630,
+  "version": "5.23.4",
+  "timestamp": "2026-11-15T16:11:22.686Z",
+  "buildNumber": 631,
   "changelog": [
+    {
+      "version": "5.23.4",
+      "date": "2026-11-15",
+      "type": "patch",
+      "changes": [
+        "fix:[NM] enhance boss mechanics with invader roster and health scaling",
+        "🔖 Bump version to 5.23.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.23.3",
       "date": "2026-11-15",
@@ -87,16 +96,6 @@
         "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
         "fix:[H]enhance item handling with visual indicators for busy items and error handling for equipped items",
         "🔖 Bump version to 5.22.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.22.1",
-      "date": "2026-11-12",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'master' of https://github.com/davvoz/Ggameplatform",
-        "fix:[H]minigiochi",
-        "🔖 Bump version to 5.22.0 [skip-version]"
       ]
     }
   ]

@@ -1,4 +1,4 @@
-import { CRITICAL, DT, INVADER, MAGE, PICKUPS, SCORE, STORM, WAVES, WORLD } from '../config/Tuning.js';
+import { CRITICAL, DT, INVADER, MAGE, PICKUPS, SCORE, STORM, WORLD } from '../config/Tuning.js';
 import { BOONS } from '../config/Boons.js';
 import { Rng } from '../core/Rng.js';
 import { Boons, applyBoon } from './Boons.js';
@@ -191,12 +191,8 @@ export class Simulation {
         for (const order of spawns) this.#spawn(order);
     }
 
-    /** A new wave; every few, the monsters start hitting harder, and it is said. */
     #waveStarts() {
-        const { wave } = this.director;
-        this.#emit('wave', { wave });
-        const { damage } = this.director.shape.power;
-        if (damage > 1 && (wave - 1) % WAVES.fury.every === 0) this.#emit('fury', { hearts: damage });
+        this.#emit('wave', { wave: this.director.wave });
     }
 
     #clearWave() {
@@ -235,7 +231,7 @@ export class Simulation {
 
     #spawn({ kind, invader }) {
         const shape = this.director.shape;
-        const power = invader ? { ...invaderPower(invader.level), damage: shape.power.damage } : shape.power;
+        const power = invader ? invaderPower(invader.level) : shape.power;
         const spot = placeMonster(kind, kind === 'bat', { terrain: this.terrain, mage: this.mage, rng: this.#rngSpawn });
         const enemy = createEnemy(kind, { id: this.#nextId++, ...spot, power, invader: invader ?? null });
         this.enemies.push(enemy);
@@ -532,7 +528,6 @@ export class Simulation {
     #fire(enemy, kind) {
         const from = enemy.muzzle;
         const shot = new Shot({ id: this.#nextId++, kind, ...from, target: this.mage.chest, ownerId: enemy.id });
-        shot.damage *= enemy.might;
         this.shots.push(shot);
         this.#emit('fire', { kind, ...from });
     }

@@ -79,11 +79,6 @@ const HANDLERS = {
     thorns(fx, e) {
         fx.burst(e.x, e.y, { count: 12, power: 0.8, palette: ['#e8ffd0', '#5fae3a', '#2f6a20'] });
     },
-    fury(fx, e) {
-        fx.text(STRINGS.fury, 480, 330, { color: '#ff6b6b', size: 30, rise: 10, duration: 2.4 });
-        fx.text(`${STRINGS.furyHearts} ${e.hearts} ${STRINGS.hearts}`, 480, 372, { color: '#ffb3b3', size: 18, rise: 10, duration: 2.4 });
-        fx.kick(6);
-    },
     critical(fx, e) {
         fx.burst(e.x, e.y, { count: 16, power: 1.1, duration: 0.45, palette: ['#ffffff', '#ffe066', '#ff8a3c'] });
         fx.text(STRINGS.critical, e.x, e.y - 60, { color: '#ffe066', size: 24, duration: 0.8 });

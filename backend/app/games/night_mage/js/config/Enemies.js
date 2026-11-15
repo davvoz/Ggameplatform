@@ -48,5 +48,5 @@ export const WAVE_MIX = Object.freeze([
     { from: 1, weights: { bat: 5, warrior: 3 } },
     { from: 2, weights: { bat: 4, warrior: 3, archer: 2 } },
     { from: 4, weights: { bat: 4, warrior: 3, archer: 3, brawler: 1 } }, // brawlers come in a few at a time
-    { from: 8, weights: { bat: 4, warrior: 3, archer: 3, brawler: 3 } },
+    { from: 8, weights: { bat: 4, warrior: 3, archer: 3, brawler: 2 } },
 ]);

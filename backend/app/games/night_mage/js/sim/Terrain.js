@@ -124,6 +124,14 @@ export class Terrain {
         return best?.layer ?? 0;
     }
 
+    /**
+     * Can a walker drop off this end of the ledge? Not off an end that runs
+     * off the screen: out there the ledge goes on, with nothing to drop from.
+     */
+    dropsOff(ledge, left) {
+        return left ? ledge.minX >= EDGE_REACH : ledge.maxX <= this.#width - 1 - EDGE_REACH;
+    }
+
     /** The ledge of a layer around x (a pixel past its ends still counts). */
     ledgeOf(layerIndex, x) {
         return this.#ledges.find((l) => l.layer === layerIndex && x >= l.minX - 2 && x <= l.maxX + 2) ?? null;

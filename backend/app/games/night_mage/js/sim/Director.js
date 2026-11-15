@@ -4,14 +4,13 @@ import { Rng } from '../core/Rng.js';
 
 /** How a wave grows with its number: more monsters, sooner, tougher. */
 export function waveShape(wave) {
-    const { count, gap, alive, toughness, fury } = WAVES;
+    const { count, gap, alive, toughness } = WAVES;
     return {
         count: Math.round(count.base + wave * count.perWave),
         gap: Math.max(gap.min, gap.start - wave * gap.perWave),
         maxAlive: Math.min(alive.base + wave, alive.max),
         power: {
             hp: 1 + Math.floor((wave - 1) / toughness.every) * toughness.step,
-            damage: 1 + Math.floor((wave - 1) / fury.every),
             speed: 1 + Math.min(0.8, (wave - 1) * 0.04),
         },
     };

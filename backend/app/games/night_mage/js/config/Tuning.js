@@ -83,13 +83,11 @@ export const WAVES = Object.freeze({
     /** Monsters in a wave: base + perWave x wave. */
     count: { base: 6, perWave: 2 },
     /** Seconds between two arrivals: start - perWave x wave, never under min. */
-    gap: { start: 1.1, perWave: 0.06, min: 0.25 },
+    gap: { start: 1.1, perWave: 0.037, min: 0.55 }, // 0.55 from wave 15 on
     /** Monsters on the field at once: base + wave, at most max. */
-    alive: { base: 4, max: 16 },
+    alive: { base: 4, max: 12 },
     /** Monster health grows by `step` every `every` waves (x1 on wave 1). */
-    toughness: { every: 3, step: 0.35 },
-    /** Every this many waves the monsters' blows and shots take one heart more (2 from wave 11...). */
-    fury: { every: 10 },
+    toughness: { every: 4, step: 0.35 },
     breakTime: 2.4,
     /** The scene changes after this many waves. */
     wavesPerMap: 4,

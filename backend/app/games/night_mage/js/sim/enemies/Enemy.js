@@ -32,8 +32,6 @@ export class Enemy {
         this.maxHp = Math.max(1, Math.round(stats.hp * (power.hp ?? 1)));
         this.hp = this.maxHp;
         this.speed = stats.speed * (power.speed ?? 1);
-        /** Hearts its blows and shots take, per point of damage in its stats. */
-        this.might = power.damage ?? 1;
         /**
          * Its stats with the swing and the throw sped up by half as much as its
          * step (late waves strike sooner): the behaviour and the drawing time them on it.
@@ -69,7 +67,7 @@ export class Enemy {
 
     /** Hearts a blow of it takes. */
     get damage() {
-        return this.stats.damage * this.might;
+        return this.stats.damage;
     }
 
     /** Where its shots leave: its `muzzle`, turned the way it faces (invaders are drawn bigger). */
@@ -162,17 +160,30 @@ export class Enemy {
 
     /**
      * Where a walker heads to reach the mage: straight to it on the same
-     * level, or off the nearer end of its ledge when it stands above.
+     * level, or off its ledge when it stands above.
      */
     approachX(world, stopAt) {
         const { mage, terrain } = world;
         const ledge = this.y < mage.feetY - SAME_LEVEL ? terrain.ledgeOf(this.layer, this.x) : null;
-        if (ledge) {
-            // the end nearer to the mage: it does not depend on where the walker is, so it never dithers
-            const leftIsNearer = Math.abs(mage.x - ledge.minX) < Math.abs(ledge.maxX - mage.x);
-            return leftIsNearer ? ledge.minX - LEDGE_STEP : ledge.maxX + LEDGE_STEP;
-        }
+        if (ledge) return this.#ledgeExit(ledge, terrain, mage);
         return mage.x + (this.x < mage.x ? -stopAt : stopAt);
+    }
+
+    /**
+     * Off the end of the ledge nearer to the mage (it does not depend on where
+     * the walker is, so it never dithers), among the ends it can drop from.
+     * With none (the ledge runs off the screen on that side), it stops over
+     * the mage, on screen: it shoots from there and the player can reach it.
+     */
+    #ledgeExit(ledge, terrain, mage) {
+        const left = terrain.dropsOff(ledge, true) ? ledge.minX - LEDGE_STEP : null;
+        const right = terrain.dropsOff(ledge, false) ? ledge.maxX + LEDGE_STEP : null;
+        if (left !== null && right !== null) {
+            return Math.abs(mage.x - ledge.minX) < Math.abs(ledge.maxX - mage.x) ? left : right;
+        }
+        if (left !== null || right !== null) return left ?? right;
+        const margin = this.body.halfWidth;
+        return Math.min(Math.max(mage.x, ledge.minX, margin), ledge.maxX, terrain.width - margin);
     }
 
     /** Gravity for walkers: off a ledge they drop to the next surface. */

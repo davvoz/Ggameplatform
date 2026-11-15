@@ -31,7 +31,6 @@ const SOUNDS = {
     offer: [{ t: 'sine', from: 330, to: 660, d: 0.3, v: 0.12 }],
     vampire: [{ t: 'sine', from: 400, to: 800, d: 0.2, v: 0.15 }],
     thorns: [{ n: 0.1, f: 1500, v: 0.2 }],
-    fury: [{ t: 'sawtooth', from: 110, to: 70, d: 0.6, v: 0.2 }, { t: 'sawtooth', from: 165, to: 100, d: 0.6, v: 0.12 }],
     noEnergy: [{ t: 'square', from: 110, to: 90, d: 0.07, v: 0.07 }],
     stormReady: [784, 988, 1175].map((f, i) => ({ t: 'triangle', from: f, to: f, d: 0.1, v: 0.12, at: i * 0.07 })),
     storm: [{ n: 0.6, f: 300, v: 0.35 }, { t: 'sawtooth', from: 90, to: 40, d: 0.6, v: 0.2 }],

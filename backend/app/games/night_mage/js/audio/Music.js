@@ -1,4 +1,4 @@
-import { STEP_TIME, frequency, notesAt } from './Score.js';
+import { STEP_TIME, frequency, notesAt, pieceOf } from './Score.js';
 
 /** How far ahead notes are booked, and how often the booking runs (seconds). */
 const LOOKAHEAD = 0.15;
@@ -11,6 +11,7 @@ const VOICES = Object.freeze({
     arp: { wave: 'square', volume: 0.05, hold: 0.7, filter: 2200 },
     lead: { wave: 'square', volume: 0.07, hold: 0.85, filter: 3200, vibrato: true },
     softLead: { wave: 'triangle', volume: 0.12, hold: 0.9, filter: 2400, vibrato: true },
+    bossLead: { wave: 'sawtooth', volume: 0.06, hold: 0.85, filter: 2600, vibrato: true },
 });
 
 /**
@@ -36,16 +37,22 @@ export class Music {
         this.#bus.connect(destination);
     }
 
-    /** @param {'calm'|'fight'|null} mood */
+    /**
+     * Moods of the same piece swap on the next step; another piece (the boss's)
+     * starts from its top.
+     * @param {'calm'|'fight'|'boss'|null} mood
+     */
     setMood(mood) {
         if (mood === this.#mood) return;
         const starting = this.#mood === null;
+        const newPiece = !starting && mood !== null && pieceOf(mood) !== pieceOf(this.#mood);
         this.#mood = mood;
         if (mood === null) {
             clearInterval(this.#timer);
             this.#timer = null;
             return;
         }
+        if (newPiece) this.#step = 0;
         if (starting) {
             this.#step = 0;
             this.#nextTime = this.#ctx.currentTime + 0.05;

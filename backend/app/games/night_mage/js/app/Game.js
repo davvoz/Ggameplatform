@@ -8,9 +8,10 @@ import { Pilot } from './Pilot.js';
 
 const COUNTDOWN = 1.8;
 const DEATH_PAUSE = 1.3;
-const INVADERS_PER_RUN = 6;
+/** The bosses' roster: as many invaders as the server hands out (`MAX_HANDED_OUT`). */
+const INVADERS_PER_RUN = 8;
 const SPECS = new Map(MAPS.map((spec) => [spec.id, spec]));
-/** The music of each mode: calm around the fight, the fight's own while it lasts, none in the pause. */
+/** The music of each mode: calm around the fight, the fight's own while it lasts (the boss's while a boss is out), none in the pause. */
 const MOODS = Object.freeze({ title: 'calm', countdown: 'fight', play: 'fight', dying: 'fight', paused: null, results: 'calm' });
 /** The mouse's sight for what a tap would hit: locked on a target, the shield on the mage. */
 const AIMS = Object.freeze({ enemy: 'lock', shot: 'lock', pickup: 'lock', shield: 'shield' });
@@ -46,6 +47,8 @@ export class Game {
     #banner = null;
     /** The warning of a wave's boss: `{invader, age}`. */
     #herald = null;
+    /** A boss is announced or on the field: its music plays. */
+    #bossOut = false;
     #result = null;
     /** The powers' screen while it is up: its age, and the power picked (sent to the night after the outro). */
     #offerShow = null;
@@ -225,9 +228,19 @@ export class Game {
 
     // ── flow ───────────────────────────────────────────────────────────
 
+    #setBossOut(out) {
+        this.#bossOut = out;
+        this.#parts.audio.setMusic(this.#moodFor(this.#mode));
+    }
+
+    #moodFor(mode) {
+        const mood = MOODS[mode];
+        return mood === 'fight' && this.#bossOut ? 'boss' : mood;
+    }
+
     #setMode(mode) {
         this.#mode = mode;
-        this.#parts.audio.setMusic(MOODS[mode]);
+        this.#parts.audio.setMusic(this.#moodFor(mode));
         const shown = { countdown: 'play', dying: 'play' }[mode] ?? mode;
         this.#parts.chrome.setMode(shown);
     }
@@ -266,6 +279,7 @@ export class Game {
         this.#result = null;
         this.#banner = null;
         this.#herald = null;
+        this.#bossOut = false;
         this.#clock = COUNTDOWN;
         this.#lastBeep = Math.ceil(COUNTDOWN / 0.6);
         platform.startRun();
@@ -288,7 +302,12 @@ export class Game {
 
     #onEvent(event) {
         if (event.type === 'wave') this.#banner = { wave: event.wave, age: 0, scene: this.#banner?.pendingScene };
-        if (event.type === 'invaderComing') this.#herald = { invader: event.invader, age: 0 };
+        if (event.type === 'invaderComing') {
+            this.#herald = { invader: event.invader, age: 0 };
+            this.#setBossOut(true);
+        }
+        // the boss is gone: slain, or a bat boss that spent itself on the mage
+        if ((event.type === 'kill' || event.type === 'burst') && event.invader) this.#setBossOut(false);
         if (event.type === 'scene') {
             const spec = this.#spec(event.mapId);
             this.#parts.renderer.weather.set(spec.weather);

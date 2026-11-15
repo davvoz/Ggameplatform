@@ -1,5 +1,5 @@
 import { BOON_SCREEN, BOONS } from '../config/Boons.js';
-import { STRINGS } from '../config/Strings.js';
+import { STRINGS, bossName } from '../config/Strings.js';
 import { INVADER } from '../config/Tuning.js';
 import { drawName } from './Font.js';
 import { poseFrame } from './poses.js';
@@ -240,8 +240,9 @@ export class Screens {
 
     /**
      * The warning before a wave's boss: a dark band across the arena, a
-     * blinking INVADER!, its owner's name and what it is.
-     * @param {{invader: {name: string, kind: string, level: number}, age: number}} herald
+     * blinking INVADER!, its owner's name, what it is and, when it is back
+     * from an earlier lap of the roster, that it is stronger.
+     * @param {{invader: {name: string|null, kind: string, level: number, lap: number}, age: number}} herald
      */
     drawInvaderBanner(ctx, { invader, age }, area) {
         const total = INVADER.heraldTime + HERALD_LINGER;
@@ -249,7 +250,7 @@ export class Screens {
         const open = Math.min(1, age / HERALD_OPEN);
         const alpha = age < INVADER.heraldTime ? 1 : (total - age) / HERALD_LINGER;
         const mid = area.top + area.height * 0.36;
-        const half = 62 * open;
+        const half = 70 * open;
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = 'rgba(30,0,24,0.72)';
@@ -260,11 +261,12 @@ export class Screens {
         ctx.restore();
         if (open < 1) return;
         const blink = Math.floor(age * 6) % 2 === 0;
-        this.#font.draw(ctx, STRINGS.invaderComing, 480, mid - 50, { size: 40, align: 'center', color: blink ? INVADER_PINK : '#ffffff', alpha });
+        this.#font.draw(ctx, STRINGS.invaderComing, 480, mid - 58, { size: 40, align: 'center', color: blink ? INVADER_PINK : '#ffffff', alpha });
         if (alpha < 1) return;
-        drawName(ctx, invader.name, 480, mid + 2, { size: 24, color: '#ffb3e6' });
+        drawName(ctx, bossName(invader), 480, mid - 6, { size: 24, color: '#ffb3e6' });
         const what = `${STRINGS.monsters[invader.kind] ?? ''}  ${STRINGS.level} ${invader.level}`;
-        this.#font.draw(ctx, what, 480, mid + 34, { size: 15, align: 'center', color: '#c9b8ff' });
+        this.#font.draw(ctx, what, 480, mid + 24, { size: 15, align: 'center', color: '#c9b8ff' });
+        if (invader.lap > 0) this.#font.draw(ctx, STRINGS.stronger, 480, mid + 46, { size: 13, align: 'center', color: '#ff9a3c' });
     }
 
     drawSceneName(ctx, name, age, area) {

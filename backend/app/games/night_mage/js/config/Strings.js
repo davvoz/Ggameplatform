@@ -62,6 +62,10 @@ export const STRINGS = Object.freeze({
     level: 'LV',
     invaderTag: "'S",
     invaderComing: 'INVADER!',
+    /** The boss the forest sends when no other player has sent one. */
+    forestBoss: 'THE FOREST',
+    /** Under a boss back from an earlier lap of the roster. */
+    stronger: 'BACK AND STRONGER',
     yourInvaders: 'YOUR INVADERS',
     inboxHits: 'MAGES HIT',
     inboxKills: 'MAGES DEFEATED',
@@ -69,3 +73,8 @@ export const STRINGS = Object.freeze({
     pickups: { heart: 'HEAL!', chain: 'CHAIN!', frost: 'FROST!', power: 'POWER!', nova: 'NOVA!' },
     monsters: { bat: 'BAT', warrior: 'WARRIOR', archer: 'ARCHER', brawler: 'BRAWLER' },
 });
+
+/** The name over a boss: its owner's, or the forest's own. */
+export function bossName(invader) {
+    return invader.name ?? STRINGS.forestBoss;
+}

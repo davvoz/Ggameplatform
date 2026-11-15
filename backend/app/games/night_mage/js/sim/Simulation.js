@@ -31,12 +31,14 @@ export function sceneOrder(maps, seed) {
 }
 
 /**
- * An invader's health and speed: the wave's own `power`, with the health
- * multiplied by the level its owner earned (it is the wave's boss).
+ * A boss's health and speed: the wave's own `power`, with the health
+ * multiplied by the level its owner earned and by the laps of the roster
+ * it has already run (it comes back stronger).
  */
-export function invaderPower(level, power = { hp: 1, speed: 1 }) {
+export function invaderPower(level, power = { hp: 1, speed: 1 }, lap = 0) {
     const clamped = Math.max(1, Math.min(INVADER.maxLevel, level));
-    return { hp: power.hp * (INVADER.hpBase + INVADER.hpPerLevel * clamped), speed: power.speed };
+    const comeback = 1 + INVADER.hpPerLap * Math.min(INVADER.maxLaps, Math.max(0, lap));
+    return { hp: power.hp * (INVADER.hpBase + INVADER.hpPerLevel * clamped) * comeback, speed: power.speed };
 }
 
 /**
@@ -235,11 +237,14 @@ export class Simulation {
 
     #spawn({ kind, invader }) {
         const shape = this.director.shape;
-        const power = invader ? invaderPower(invader.level, shape.power) : shape.power;
+        const power = invader ? invaderPower(invader.level, shape.power, invader.lap) : shape.power;
         const spot = placeMonster(kind, kind === 'bat', { terrain: this.terrain, mage: this.mage, rng: this.#rngSpawn });
         const enemy = createEnemy(kind, { id: this.#nextId++, ...spot, power, invader: invader ?? null });
         this.enemies.push(enemy);
-        if (invader) this.#outcomes.set(invader.id, { id: invader.id, damage: 0, slain: false, killedMage: false });
+        // an invader that comes back adds to what it did on its earlier laps; the forest's own bosses are not reported
+        if (invader?.id && !this.#outcomes.has(invader.id)) {
+            this.#outcomes.set(invader.id, { id: invader.id, damage: 0, slain: false, killedMage: false });
+        }
         this.#emit('spawn', { id: enemy.id, kind, x: enemy.x, y: enemy.y, flying: enemy.flying, invader: invader ?? null });
     }
 
@@ -403,10 +408,10 @@ export class Simulation {
         const base = enemy.stats.score * (enemy.invader ? SCORE.invaderMultiplier : 1);
         const points = this.score.award(base);
         this.score.kills += 1;
-        if (enemy.invader) {
+        const outcome = enemy.invader ? this.#outcomes.get(enemy.invader.id) : null;
+        if (outcome) {
             this.score.invadersSlain += 1;
-            const outcome = this.#outcomes.get(enemy.invader.id);
-            if (outcome) outcome.slain = true;
+            outcome.slain = true;
         }
         const { x, y } = enemy.center;
         this.#emit('kill', { id: enemy.id, kind: enemy.kind, x, y, feetY: enemy.y, facing: enemy.facing, points, invader: enemy.invader });
@@ -538,7 +543,7 @@ export class Simulation {
 
     #sweep() {
         for (const enemy of this.enemies) {
-            if (enemy.expended) this.#emit('burst', { id: enemy.id, kind: enemy.kind, x: enemy.x, y: enemy.y });
+            if (enemy.expended) this.#emit('burst', { id: enemy.id, kind: enemy.kind, x: enemy.x, y: enemy.y, invader: enemy.invader });
         }
         this.enemies = this.enemies.filter((e) => e.alive);
         this.bolts = this.bolts.filter((b) => b.alive);

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ENEMIES } from '../js/config/Enemies.js';
 import { COMBO, DT, INVADER, MAGE, SCORE, WAVES } from '../js/config/Tuning.js';
+import { bossFor } from '../js/sim/Director.js';
 import { createEnemy } from '../js/sim/enemies/registry.js';
 import { Shot } from '../js/sim/Projectiles.js';
 import { Simulation, invaderPower } from '../js/sim/Simulation.js';
@@ -197,7 +198,7 @@ test('an invader closes an even wave as its boss, tougher, and its fate is repor
     assert.equal(sim.director.remaining, 0, 'it comes last');
     assert.equal(aliveAtSpawn, 0, 'it steps in alone');
     const herald = seen.find((e) => e.type === 'invaderComing');
-    assert.equal(herald?.invader, invader, 'it is announced first');
+    assert.deepEqual(herald?.invader, { ...invader, lap: 0 }, 'it is announced first');
     const spawnTick = seen.find((e) => e.type === 'spawn' && e.invader).tick;
     assert.ok(Math.abs((spawnTick - herald.tick) * DT - INVADER.heraldTime) < 2 * DT, 'after the warning');
     const enemy = sim.enemies.find((e) => e.invader);
@@ -210,6 +211,55 @@ test('an invader closes an even wave as its boss, tougher, and its fate is repor
     assert.ok(kill);
     assert.equal(kill.points, 300 * SCORE.invaderMultiplier * sim.score.multiplier);
     assert.deepEqual(sim.report().invaders, [{ id: 'inv-1', damage: 0, slain: true, killedMage: false }]);
+});
+
+/** One tick where every monster on the field drops at once (the bosses only once counted). @returns the bosses that stepped in */
+function sweepingTick(sim) {
+    if (sim.offer) sim.choose(sim.offer[0]);
+    sim.step();
+    const arrived = sim.drainEvents()
+        .filter((e) => e.type === 'spawn' && e.invader)
+        .map((e) => ({ wave: sim.wave, enemy: sim.enemies.find((m) => m.id === e.id) }));
+    for (const e of sim.enemies) e.hp = 0;
+    return arrived;
+}
+
+/** Plays a night, clearing the field every tick, until `count` bosses have stepped in. */
+function untilBosses(sim, count) {
+    const bosses = [];
+    for (let t = 0; t < 60 * 600 && bosses.length < count; t++) bosses.push(...sweepingTick(sim));
+    return bosses;
+}
+
+test('the invaders take turns as bosses and start again, stronger, when the roster runs out', () => {
+    const roster = [{ id: 'a', kind: 'warrior', level: 1, name: 'A' }, { id: 'b', kind: 'archer', level: 2, name: 'B' }];
+    const picks = [0, 1, 2, 3, 4].map((i) => bossFor(i, roster, { seed: 1, wave: 2 * (i + 1) }));
+    assert.deepEqual(picks.map((p) => p.invader.id), ['a', 'b', 'a', 'b', 'a']);
+    assert.deepEqual(picks.map((p) => p.invader.lap), [0, 0, 1, 1, 2]);
+    assert.equal(roster[0].lap, undefined, 'the roster itself is not changed');
+    assert.ok(invaderPower(1, undefined, 1).hp > invaderPower(1).hp);
+    assert.equal(invaderPower(1, undefined, 99).hp, invaderPower(1, undefined, INVADER.maxLaps).hp, 'the comeback stops growing');
+});
+
+test('every second wave has a boss, the same invader comes back stronger and is reported once', () => {
+    const invader = { id: 'solo', kind: 'warrior', level: 1, name: 'Solo' };
+    const sim = night({ invaders: [invader] });
+    const [first, second] = untilBosses(sim, 2);
+    assert.deepEqual([first.wave, second.wave], [WAVES.invaderEvery, 2 * WAVES.invaderEvery]);
+    assert.equal(second.enemy.invader.lap, 1);
+    assert.ok(second.enemy.maxHp > first.enemy.maxHp);
+    assert.deepEqual(sim.report().invaders.map((o) => o.id), ['solo'], 'one report for all its laps');
+});
+
+test('with no invaders the forest sends its own bosses, never reported', () => {
+    const sim = night();
+    const bosses = untilBosses(sim, 2);
+    assert.equal(bosses.length, 2);
+    assert.ok(bosses.every((b) => b.enemy.invader.id === null && b.enemy.invader.name === null));
+    assert.deepEqual(sim.report().invaders, []);
+    assert.equal(sim.score.invadersSlain, 0);
+    const again = bossFor(0, [], { seed: 7, wave: 2 });
+    assert.deepEqual(again, bossFor(0, [], { seed: 7, wave: 2 }), 'the same night sends the same boss');
 });
 
 test('an invader grows with the wave it closes and stands its ground', () => {

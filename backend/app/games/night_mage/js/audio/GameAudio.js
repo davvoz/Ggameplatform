@@ -71,7 +71,7 @@ export class GameAudio {
         this.#music.setMood(this.#mood);
     }
 
-    /** @param {'calm'|'fight'|null} mood the music to play, `null` for none */
+    /** @param {'calm'|'fight'|'boss'|null} mood the music to play, `null` for none */
     setMusic(mood) {
         this.#mood = mood;
         this.#music?.setMood(mood);

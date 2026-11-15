@@ -23,17 +23,34 @@ export function mixFor(wave) {
 }
 
 /**
+ * The boss of the `index`-th boss wave (0 for the first). The invaders take
+ * turns and start again from the first when the roster runs out, one lap
+ * stronger each time; with none, the forest sends its own (no id, no name),
+ * drawn from the wave's monsters and as strong as the wave.
+ * @returns {{kind: string, invader: {id: string|null, kind: string, level: number, name: string|null, lap: number}}}
+ */
+export function bossFor(index, roster, { seed, wave }) {
+    if (roster.length > 0) {
+        const entry = roster[index % roster.length];
+        return { kind: entry.kind, invader: { ...entry, lap: Math.floor(index / roster.length) } };
+    }
+    const kind = Rng.fork(seed, `boss:${wave}`).weighted(mixFor(wave));
+    const level = Math.min(INVADER.maxLevel, 1 + Math.floor(wave / INVADER.wavesPerLevel));
+    return { kind, invader: { id: null, kind, level, name: null, lap: 0 } };
+}
+
+/**
  * The waves of the night. Each wave draws its monsters from its own random
  * stream, so the night is the same for everybody with the same seed, with or
- * without invaders. Every few waves an invader sent by another player closes
- * the wave as its boss: once the field is clear, a warning ('herald'), then it
- * steps in alone.
+ * without invaders. Every few waves a boss closes the wave (`bossFor`): once
+ * the field is clear, a warning ('herald'), then it steps in alone.
  */
 export class Director {
     #seed;
-    #invaders;
+    #roster;
+    #bossesSent = 0;
     #queue = [];
-    /** The invader waiting for the end of this wave, if any. */
+    /** The boss waiting for the end of this wave, if any: `{kind, invader}`. */
     #boss = null;
     #spawnTimer = 0;
     #shape = null;
@@ -44,10 +61,10 @@ export class Director {
     timer = WAVES.firstSpawnDelay;
     flawless = true;
 
-    /** @param {number} seed @param {object[]} invaders other players' monsters, in order */
+    /** @param {number} seed @param {object[]} invaders other players' monsters, the bosses' roster in order */
     constructor(seed, invaders = []) {
         this.#seed = seed;
-        this.#invaders = [...invaders];
+        this.#roster = [...invaders];
     }
 
     get remaining() {
@@ -72,9 +89,14 @@ export class Director {
         const mix = mixFor(this.wave);
         this.#queue = Array.from({ length: this.#shape.count }, () => ({ kind: rng.weighted(mix) }));
         this.#queue[0] = { kind: 'bat' };
-        const bossWave = this.wave % WAVES.invaderEvery === 0;
-        this.#boss = bossWave ? (this.#invaders.shift() ?? null) : null;
+        this.#boss = this.wave % WAVES.invaderEvery === 0 ? this.#nextBoss() : null;
         this.#spawnTimer = 0;
+    }
+
+    #nextBoss() {
+        const boss = bossFor(this.#bossesSent, this.#roster, { seed: this.#seed, wave: this.wave });
+        this.#bossesSent += 1;
+        return boss;
     }
 
     /**
@@ -99,21 +121,21 @@ export class Director {
         return { spawns, started: false, cleared: fieldClear, herald: null };
     }
 
-    /** The wave's monsters are down: the invader is announced. */
+    /** The wave's monsters are down: the boss is announced. */
     #herald() {
         this.phase = 'herald';
         this.timer = INVADER.heraldTime;
-        return { spawns: [], started: false, cleared: false, herald: this.#boss };
+        return { spawns: [], started: false, cleared: false, herald: this.#boss.invader };
     }
 
-    /** The warning runs out and the invader steps in. */
+    /** The warning runs out and the boss steps in. */
     #announce(dt) {
         this.timer -= dt;
         if (this.timer > 0) return { spawns: [], started: false, cleared: false, herald: null };
-        const invader = this.#boss;
+        const boss = this.#boss;
         this.#boss = null;
         this.phase = 'fight';
-        return { spawns: [{ kind: invader.kind, invader }], started: false, cleared: false, herald: null };
+        return { spawns: [boss], started: false, cleared: false, herald: null };
     }
 
     #rest(dt) {

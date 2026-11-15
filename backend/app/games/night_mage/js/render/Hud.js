@@ -1,5 +1,5 @@
 import { COMBO, PICKUPS } from '../config/Tuning.js';
-import { STRINGS } from '../config/Strings.js';
+import { STRINGS, bossName } from '../config/Strings.js';
 import { drawName } from './Font.js';
 import { STORM_VIOLET, drawStormButton, paintCloud } from './StormArt.js';
 import { ringCells } from './pixels.js';
@@ -157,7 +157,7 @@ export class Hud {
     #bossBar(ctx, boss, y) {
         const { width, height, cell } = BOSS_BAR;
         const left = 480 - width / 2;
-        drawName(ctx, boss.invader.name, 480, y - 22, { size: 15, color: '#ffb3e6' });
+        drawName(ctx, bossName(boss.invader), 480, y - 22, { size: 15, color: '#ffb3e6' });
         ctx.fillStyle = 'rgba(10,5,20,0.8)';
         ctx.fillRect(left - 3, y - 3, width + 6, height + 6);
         const filled = Math.ceil((width / cell) * (boss.hp / boss.maxHp)) * cell;

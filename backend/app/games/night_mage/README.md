@@ -13,11 +13,18 @@ with their name over its head that turns up in other players' nights for two
 days. What it does out there (hearts taken, mages defeated, times slain) is
 shown to its owner on the title screen.
 
-An invader is the **boss of its wave** (every second wave, one per wave): it
-comes last, once the wave's monsters are down. A band with INVADER!, the
-owner's name, the monster and its level warns for 1.8 s, then it steps in
-alone, bigger, with a boss bar under the score. Plain bolts do not stagger
-it; only critical hits (during its wind-up) stop it and push it back a little.
+**Every second wave ends with a boss.** The night loads up to 8 invaders
+from other players (the server's `MAX_HANDED_OUT`) as the bosses' roster:
+they take turns, and when the roster runs out it starts again from the
+first, each one stronger every time it comes back (BACK AND STRONGER). With
+no invaders at all, the forest sends its own boss (THE FOREST: a monster of
+the wave, drawn by the seed, never reported to the server). The boss comes
+last, once the wave's monsters are down. A band with INVADER!, the owner's
+name, the monster and its level warns for 1.8 s, then it steps in alone,
+bigger, with a boss bar under the score. Plain bolts do not stagger it; only
+critical hits (during its wind-up) stop it and push it back a little.
+From the warning until the boss falls the music turns to the boss's own piece
+(Dm - Eb - Dm - A, `boss` in `audio/Score.js`), started from its top.
 
 Built on the art of the user's earlier prototype (`C:\progetti\fantasygame`):
 sprites, painted scenes and their surfaces are reused; the code is new.
@@ -84,8 +91,9 @@ All of it lives in `js/sim/ScoreKeeper.js` and `js/config/Tuning.js`.
 - **Combo**: every hit (bolt, burnt shot, reflected shot) keeps it alive; every 4 hits raise the
   multiplier, up to **x6**. A missed tap, a wound or 2.6 s without hits break it.
 - Burnt shots pay 25. Cleared waves pay 250 x wave, flawless waves 400 x wave more.
-- **Invaders** have (4 + 0.6 x level) times the health of their wave's monsters of the same kind
-  (`INVADER` in `Tuning.js`) and pay 5 times their points.
+- **Bosses** have (5 + 0.6 x level) times the health of their wave's monsters of the same kind,
+  x1.25 more for each lap of the roster already run, up to x2 (`INVADER` in `Tuning.js`), and pay
+  5 times their points. INVADERS SLAIN counts only other players' invaders.
 - **Storm** (`sim/Storm.js`, `STORM` in `Tuning.js`): 40 hits fill it; called, it burns the shots in
   flight and drops a lightning (3 damage) on each monster on screen, nearest first. Lightnings keep the
   combo going but do not fill the next storm. Tuned with `npm run measure`: about one wave more for
@@ -102,7 +110,7 @@ simulation knows nothing about the rest.
 | `js/sim/enemies/` | One class per monster, behaviour only (`think`) | Stats in `config/Enemies.js`, class in `registry.js` |
 | `js/core/` | Seeded RNG, fixed timestep loop | No game knowledge |
 | `js/render/` | Renderer, viewport, world view, effects, HUD, screens, title demo | Reads the simulation, never changes it |
-| `js/audio/` | Synthesised sound effects and music (`Score.js`: the loop as data, `Music.js`: its player) | Reacts to simulation events; calm music around the fight, its own in it |
+| `js/audio/` | Synthesised sound effects and music (`Score.js`: the loop as data, `Music.js`: its player) | Reacts to simulation events; calm music around the fight, its own in it, and the boss's own piece from its warning until it falls |
 | `js/input/` | Pointer and keyboard | One tap = one world point |
 | `js/platform/` | SDK, leaderboard, invasion API | Behind the `PlatformGateway` contract |
 | `js/app/` | The flow (title, countdown, fight, results), the autopilot | Receives its parts from `main.js` |
@@ -153,7 +161,7 @@ seeded stream in `render/jitter.js`.
 
 | Route | What |
 |---|---|
-| `GET /invaders?count=6` | other players' active invaders for one night (never your own, one per owner, least seen first) |
+| `GET /invaders?count=8` | other players' active invaders for one night (never your own, one per owner, least seen first) |
 | `POST /invaders` `{kind, wave}` | send one (session needed); level from the wave; at most 3 active, the oldest retires |
 | `POST /invaders/report` `{outcomes}` | what each invader did in a night (damage clamped to 5) |
 | `GET /me/invaders` | totals of the last 7 days, shown on the title (session needed) |

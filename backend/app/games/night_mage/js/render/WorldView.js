@@ -1,3 +1,4 @@
+import { bossName } from '../config/Strings.js';
 import { INVADER, MAGE, WORLD } from '../config/Tuning.js';
 import { drawName } from './Font.js';
 import { poseFrame } from './poses.js';
@@ -146,7 +147,7 @@ export class WorldView {
     #invaderTag(ctx, enemy) {
         const top = enemy.flying ? enemy.y - 64 : enemy.y - enemy.body.height - 58;
         const x = Math.min(WORLD.width - TAG_MARGIN, Math.max(TAG_MARGIN, enemy.x));
-        drawName(ctx, enemy.invader.name, x, top, { size: 15, color: '#ffb3e6' });
+        drawName(ctx, bossName(enemy.invader), x, top, { size: 15, color: '#ffb3e6' });
     }
 
     #healthBar(ctx, enemy) {

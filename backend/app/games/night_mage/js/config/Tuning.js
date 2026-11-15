@@ -108,13 +108,20 @@ export const PICKUPS = Object.freeze({
 });
 
 /**
- * An invader is the boss of its wave: it comes last, once the field is clear,
- * after a warning with its owner's name.
+ * Every few waves (`WAVES.invaderEvery`) a boss closes the wave: it comes last,
+ * once the field is clear, after a warning with its owner's name. The bosses
+ * are the invaders other players sent, taking turns; when the roster runs out
+ * it starts again from the first, each one stronger every time it comes back.
+ * With no invaders at all, the forest sends its own.
  */
 export const INVADER = Object.freeze({
     /** Health is multiplied by (base + perLevel * level), and by the wave's own toughness. */
-    hpBase: 4,
+    hpBase: 5,
     hpPerLevel: 0.6,
+    /** Each time the roster starts over, its bosses get this much more health (x1.25, x1.5...)... */
+    hpPerLap: 0.25,
+    /** ...for this many laps at most (then x2 stays). */
+    maxLaps: 4,
     /** Invaders are drawn this much bigger, and their body (for taps and hits) grows with them. */
     lookScale: 1.3,
     /** The share of the usual knockback a critical hit gives them (plain bolts do not stagger them). */

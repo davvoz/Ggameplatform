@@ -13,6 +13,7 @@ import { paintPickups } from './render/PickupArt.js';
 import { paintShots } from './render/ShotArt.js';
 import { Renderer } from './render/Renderer.js';
 import { SceneArt } from './render/SceneArt.js';
+import { SightArt } from './render/SightArt.js';
 import { Screens } from './render/Screens.js';
 import { SpriteBank } from './render/SpriteBank.js';
 import { TitleDemo } from './render/TitleDemo.js';
@@ -20,6 +21,7 @@ import { Weather } from './render/Weather.js';
 import { WorldView } from './render/WorldView.js';
 import { buildMaps } from './sim/Maps.js';
 import { Chrome } from './ui/Chrome.js';
+import { Sight } from './ui/Sight.js';
 
 /** Composition root: the only place that knows the concrete classes. */
 
@@ -35,10 +37,10 @@ async function loadSurfaces() {
     return Object.fromEntries(entries);
 }
 
-async function boot() {
+/** @param {Chrome} chrome the page around the canvas (made first, so a failed start can be shown) */
+async function boot(chrome) {
     const canvas = document.getElementById('game-canvas');
     const stage = document.getElementById('stage');
-    const chrome = new Chrome(document);
     const platform = new Cur8Platform();
     const connecting = platform.connect();
 
@@ -65,6 +67,7 @@ async function boot() {
         hud: new Hud(font, icons, keyboard, paintBoons(icons)),
         screens: new Screens(font, bank, keyboard, paintBoons(icons)),
         demo: new TitleDemo({ bank, font, shots: shotArt, keyboard }),
+        sight: new SightArt(),
     });
     const audio = new GameAudio();
     const game = new Game({ renderer, audio, platform, chrome, scenes, maps });
@@ -83,13 +86,20 @@ async function boot() {
     };
     pointer.onKey((action, index) => keys[action](index));
 
-    const loop = new GameLoop(TICK_RATE, () => game.tick(), (dt) => game.frame(dt));
+    const sight = new Sight(canvas);
+    const frame = (dt) => {
+        game.setMouse(sight.point);
+        game.frame(dt);
+        sight.show(game.aim);
+    };
+    const loop = new GameLoop(TICK_RATE, () => game.tick(), frame, (error) => chrome.showFrameError(error));
     let hidden = document.hidden;
     let platformPaused = false;
     let upright = chrome.isUpright;
     const applyPause = () => {
         const stop = hidden || platformPaused || upright;
         if (stop) game.pause();
+        if (stop) sight.show('system'); // no frames, no drawn sight: the system's cursor comes back
         loop.setPaused(stop);
         audio.setSuspended(hidden || platformPaused);
     };
@@ -133,4 +143,8 @@ async function boot() {
     globalThis.__nightMage = { game, renderer };
 }
 
-boot().catch((error) => console.error('[Night Mage] boot failed', error));
+const chrome = new Chrome(document);
+boot(chrome).catch((error) => {
+    console.error('[Night Mage] boot failed', error);
+    chrome.showLoadFailed(() => location.reload());
+});

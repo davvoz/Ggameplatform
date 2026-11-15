@@ -21,11 +21,16 @@ function setFace(ctx, size) {
 export class Font {
     #scratch = null;
 
+    /** Loads the face; if it cannot, the game still starts, in the system face. */
     async load() {
         if (!globalThis.FontFace || !document.fonts) return;
         await Promise.all(FACES.map(async ({ file, range }) => {
-            const face = new FontFace(FAMILY, `url(${file})`, { weight: '600', unicodeRange: range });
-            document.fonts.add(await face.load());
+            try {
+                const face = new FontFace(FAMILY, `url(${file})`, { weight: '600', unicodeRange: range });
+                document.fonts.add(await face.load());
+            } catch (error) {
+                console.warn('[Night Mage] font not loaded, using the system one', error);
+            }
         }));
     }
 

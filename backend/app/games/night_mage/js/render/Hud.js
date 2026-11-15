@@ -1,12 +1,19 @@
 import { COMBO, PICKUPS } from '../config/Tuning.js';
 import { STRINGS } from '../config/Strings.js';
-import { drawStormButton, paintCloud } from './StormArt.js';
+import { STORM_VIOLET, drawStormButton, paintCloud } from './StormArt.js';
+import { ringCells } from './pixels.js';
 
 /** Clear of the platform's back button, which sits over the top left corner. */
 const LEFT = 118;
 const BUFF_COLORS = Object.freeze({ chain: '#44aaff', frost: '#9be7ff', power: '#ff4444' });
 /** The storm button: on the right, under the platform's round buttons. */
 const STORM_BUTTON = Object.freeze({ x: 900, dy: 172 });
+/**
+ * A lost heart feeding the storm: sparks fly in an arc from the mage to the
+ * button (`travel` seconds), the dial lights its new cells when they land and
+ * a ring swells around it (`flash` seconds).
+ */
+const FEED = Object.freeze({ travel: 0.6, flash: 0.4, sparks: 5, trail: 0.07, lift: 140, cell: 6, ring: 46, grow: 14 });
 const HEART = ['01100110', '11111111', '11111111', '11111111', '01111110', '00111100', '00011000'];
 
 function heart(ctx, x, y, size, full) {
@@ -35,6 +42,8 @@ export class Hud {
     #cloud;
     #time = 0;
     #shownScore = 0;
+    /** Lost hearts on their way to the storm: `{x, y, fill, age}`. */
+    #feeds = [];
 
     /**
      * @param {boolean} keyboard name the keys (E on the storm button, Space for the shield)
@@ -50,10 +59,18 @@ export class Hud {
 
     reset() {
         this.#shownScore = 0;
+        this.#feeds = [];
+    }
+
+    /** The events of a tick the HUD shows itself: a lost heart feeding the storm. */
+    playEvents(events) {
+        for (const e of events) if (e.type === 'stormFed') this.#feeds.push({ x: e.x, y: e.y, fill: e.fill, age: 0 });
     }
 
     update(dt, sim) {
         this.#time += dt;
+        for (const feed of this.#feeds) feed.age += dt;
+        this.#feeds = this.#feeds.filter((feed) => feed.age < FEED.travel + FEED.flash);
         const target = sim.score.score;
         this.#shownScore += Math.ceil((target - this.#shownScore) * Math.min(1, dt * 12));
         if (this.#shownScore > target) this.#shownScore = target;
@@ -89,8 +106,46 @@ export class Hud {
         let label = null;
         if (this.#keyboard) label = STRINGS.stormKey;
         else if (ready) label = STRINGS.stormTap;
-        const look = { cloud: this.#cloud, font: this.#font, fill: storm.fill, ready, time: this.#time, label };
-        return { id: 'storm', ...drawStormButton(ctx, STORM_BUTTON.x, y, look) };
+        // the charge of the sparks still flying shows only when they land
+        const flying = this.#feeds.filter((feed) => feed.age < FEED.travel).reduce((sum, feed) => sum + feed.fill, 0);
+        const fill = Math.max(0, storm.fill - flying);
+        const look = { cloud: this.#cloud, font: this.#font, fill, ready: ready && flying === 0, time: this.#time, label };
+        const area = drawStormButton(ctx, STORM_BUTTON.x, y, look);
+        for (const feed of this.#feeds) this.#drawFeed(ctx, feed, STORM_BUTTON.x, y);
+        return { id: 'storm', ...area };
+    }
+
+    /** One lost heart: its sparks on the way to the button at (bx, by), then the ring as they land. */
+    #drawFeed(ctx, feed, bx, by) {
+        if (feed.age >= FEED.travel) {
+            this.#landing(ctx, (feed.age - FEED.travel) / FEED.flash, bx, by);
+            return;
+        }
+        const cx = (feed.x + bx) / 2;
+        const cy = Math.min(feed.y, by) - FEED.lift;
+        for (let k = 0; k < FEED.sparks; k++) {
+            const t = Math.max(0, Math.min(1, feed.age / FEED.travel - k * FEED.trail));
+            const u = 1 - t;
+            const x = u * u * feed.x + 2 * u * t * cx + t * t * bx;
+            const y = u * u * feed.y + 2 * u * t * cy + t * t * by;
+            const size = k === 0 ? FEED.cell * 1.5 : FEED.cell;
+            const left = Math.round((x - size / 2) / 3) * 3;
+            const top = Math.round((y - size / 2) / 3) * 3;
+            ctx.fillStyle = STORM_VIOLET;
+            ctx.fillRect(left, top, size, size);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(left + size / 3, top + size / 3, size / 3, size / 3);
+        }
+    }
+
+    /** A ring of cells swelling out of the dial and fading, white then violet. */
+    #landing(ctx, f, bx, by) {
+        const radius = FEED.ring + f * FEED.grow;
+        ctx.save();
+        ctx.globalAlpha = 1 - f;
+        ctx.fillStyle = f < 0.4 ? '#ffffff' : STORM_VIOLET;
+        for (const cell of ringCells(bx, by, radius, radius, FEED.cell)) ctx.fillRect(cell.x, cell.y, FEED.cell, FEED.cell);
+        ctx.restore();
     }
 
     #multiplier(ctx, score, y) {

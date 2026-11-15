@@ -1,7 +1,7 @@
 import { STORM, WORLD } from '../config/Tuning.js';
 
 /**
- * The mage's ultimate. Every hit fills it; once full it can be called: a
+ * The mage's ultimate. Every hit fills it, and a lost heart a little more; once full it can be called: a
  * lightning falls on every monster in sight, nearest to the mage first.
  * Pure state, driven by the simulation.
  */
@@ -32,6 +32,14 @@ export class Storm {
         if (this.ready || this.active) return false;
         this.charge += 1;
         return this.ready;
+    }
+
+    /** Pain feeds it too (a lost heart). @returns {number} the charge it actually took */
+    feed(amount) {
+        if (this.ready || this.active) return 0;
+        const gained = Math.min(amount, this.needed - this.charge);
+        this.charge += gained;
+        return gained;
     }
 
     /**

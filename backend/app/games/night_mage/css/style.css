@@ -34,6 +34,17 @@ html, body {
     cursor: crosshair;
 }
 
+/* with a mouse the game draws its own sight in its pixels (js/render/SightArt.js):
+   the system cursor hides over the arena, is a hand on the canvas buttons, and
+   comes back while the game is stopped (js/ui/Sight.js sets data-aim) */
+@media (pointer: fine) {
+    #game-canvas[data-aim="free"],
+    #game-canvas[data-aim="lock"],
+    #game-canvas[data-aim="shield"] { cursor: none; }
+
+    #game-canvas[data-aim="button"] { cursor: pointer; }
+}
+
 /* ---- round buttons, top right, out of the HUD's way */
 .chrome {
     position: absolute;
@@ -138,6 +149,9 @@ body[data-mode="loading"] .chrome { display: none; }
 }
 
 .loading[hidden] { display: none; }
+.loading.is-failed { cursor: pointer; }
+.loading.is-failed .orb,
+.loading.is-failed .loading-track { display: none; }
 
 .orb {
     width: 34px;
@@ -197,4 +211,17 @@ body[data-mode="loading"] .chrome { display: none; }
 
 @keyframes turn {
     40%, 100% { transform: rotate(-90deg); }
+}
+
+/* ---- a frame that failed: its message, for the bug report */
+.frame-error {
+    position: fixed;
+    left: 8px;
+    bottom: 6px;
+    z-index: 12;
+    margin: 0;
+    max-width: 70vw;
+    font: 11px/1.3 monospace;
+    color: #ff9a9a;
+    pointer-events: none;
 }

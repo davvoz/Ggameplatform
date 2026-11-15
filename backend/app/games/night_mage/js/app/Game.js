@@ -1,4 +1,5 @@
 import { INVADER } from '../config/Tuning.js';
+import { BOON_SCREEN } from '../config/Boons.js';
 import { MAPS } from '../config/Scenes.js';
 import { playEvents } from '../render/EventFx.js';
 import { titleCue } from '../render/TitleDemo.js';
@@ -11,6 +12,8 @@ const INVADERS_PER_RUN = 6;
 const SPECS = new Map(MAPS.map((spec) => [spec.id, spec]));
 /** The music of each mode: calm around the fight, the fight's own while it lasts, none in the pause. */
 const MOODS = Object.freeze({ title: 'calm', countdown: 'fight', play: 'fight', dying: 'fight', paused: null, results: 'calm' });
+/** The mouse's sight for what a tap would hit: locked on a target, the shield on the mage. */
+const AIMS = Object.freeze({ enemy: 'lock', shot: 'lock', pickup: 'lock', shield: 'shield' });
 
 /** The level of the invader a run lets the player send, or 0 when it is too short. */
 export function sendLevel(wave) {
@@ -42,6 +45,11 @@ export class Game {
     #lastBeep = 0;
     #banner = null;
     #result = null;
+    /** The powers' screen while it is up: its age, and the power picked (sent to the night after the outro). */
+    #offerShow = null;
+    #mouse = null;
+    #aim = null;
+    #sightTime = 0;
 
     /**
      * @param {{renderer: object, audio: object, platform: object, chrome: object, scenes: object, maps: object[]}} parts
@@ -94,6 +102,37 @@ export class Game {
         if (button) this.#press(button.id);
     }
 
+    /** The mouse on the canvas, in CSS pixels, or null when it is away (touch has none). */
+    setMouse(point) {
+        this.#mouse = point;
+    }
+
+    /** What is under the mouse: 'button', 'lock', 'shield', 'free', or null without a mouse. */
+    get aim() {
+        return this.#aim;
+    }
+
+    /**
+     * What a click at a world point would do, for the mouse's sight: 'button'
+     * on a button, 'lock' on something to hit or take, 'shield' on the mage,
+     * 'free' elsewhere.
+     */
+    #aimAt(point) {
+        if (this.#buttons.some((b) => inside(b, point))) return 'button';
+        if (this.#mode !== 'play' || this.#sim.offer) return 'free';
+        return AIMS[this.#sim.aimAt(point.x, point.y)] ?? 'free';
+    }
+
+    /** The sight drawn over the frame; the hand of the system on buttons instead. */
+    #drawSight() {
+        const { renderer } = this.#parts;
+        const point = this.#mouse && renderer.toWorld(this.#mouse.x, this.#mouse.y);
+        this.#aim = point ? this.#aimAt(point) : null;
+        if (!point || this.#aim === 'button') return;
+        const dim = this.#aim === 'shield' && !this.#sim.mage.shieldReady;
+        renderer.drawSight({ x: point.x, y: point.y, look: this.#aim, time: this.#sightTime, dim });
+    }
+
     /**
      * In the fight the storm button takes its taps; while the powers are
      * offered only their cards do; every other tap goes to the night.
@@ -101,7 +140,7 @@ export class Game {
     #playTap(point) {
         const button = this.#buttons.find((b) => inside(b, point));
         if (this.#sim.offer) {
-            if (button?.id.startsWith('boon:')) this.#sim.choose(button.id.slice(5));
+            if (button?.id.startsWith('boon:')) this.#pickBoon(button.id.slice(5));
         } else if (button?.id === 'storm') {
             this.#sim.callStorm();
         } else {
@@ -112,7 +151,31 @@ export class Game {
     /** 1, 2, 3: one of the powers offered. */
     chooseBoon(index) {
         const choice = this.#mode === 'play' ? this.#sim.offer?.[index] : null;
-        if (choice) this.#sim.choose(choice);
+        if (choice) this.#pickBoon(choice);
+    }
+
+    /** A card is taken only once the screen is fully in, and only one. */
+    #pickBoon(id) {
+        const show = this.#offerShow;
+        if (!show || show.picked || show.age < BOON_SCREEN.intro) return;
+        show.picked = id;
+        show.pickedAt = show.age;
+        this.#parts.audio.play('boon');
+    }
+
+    /** Runs the powers' screen clock; once the outro is over, the choice goes to the night. */
+    #runOffer(dt) {
+        if (!this.#sim?.offer) {
+            this.#offerShow = null;
+            return;
+        }
+        this.#offerShow ??= { age: 0, picked: null, pickedAt: 0, sent: false };
+        const show = this.#offerShow;
+        show.age += dt;
+        if (show.picked && !show.sent && show.age - show.pickedAt >= BOON_SCREEN.outro) {
+            show.sent = true;
+            this.#sim.choose(show.picked);
+        }
     }
 
     /** Space / Enter: the main button of the screen; in the fight, the shield. */
@@ -215,6 +278,7 @@ export class Game {
         sim.step();
         const events = sim.drainEvents();
         playEvents(this.#parts.renderer.effects, events, sim);
+        this.#parts.renderer.hud.playEvents(events);
         this.#parts.audio.playEvents(events);
         for (const event of events) this.#onEvent(event);
     }
@@ -239,10 +303,13 @@ export class Game {
         renderer.update(dt, this.#sim);
         this.#advanceClocks(dt);
         this.#buttons = this.#draw();
+        this.#sightTime += dt;
+        this.#drawSight();
     }
 
     #advanceClocks(dt) {
         if (this.#banner) this.#banner.age += dt;
+        if (this.#mode === 'play') this.#runOffer(dt);
         if (this.#mode === 'title') this.#animateTitle(dt);
         else if (this.#mode === 'countdown') this.#countdown(dt);
         else if (this.#mode === 'dying') {
@@ -286,6 +353,7 @@ export class Game {
             paused: this.#mode === 'paused',
             banner: this.#banner?.age < 99 ? this.#banner : null,
             result: this.#result,
+            offer: this.#offerShow,
         };
         return renderer.drawPlay(this.#sim, this.#spec(this.#sim.map.id), overlay);
     }

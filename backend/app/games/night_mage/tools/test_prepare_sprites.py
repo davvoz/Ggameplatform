@@ -42,6 +42,41 @@ class PocketTest(unittest.TestCase):
         self.assertEqual(image.getpixel((8, 8)), WHITE)
 
 
+LEFTOVER = (205, 205, 212, 230)
+SKIN = (230, 170, 130, 255)
+
+
+def arm_with_leftovers() -> Image.Image:
+    """An outlined arm with whitish leftovers on its outline, beside a block of white cloth."""
+    image = Image.new("RGBA", (30, 20), CLEAR)
+    for x in range(4, 12):
+        for y in range(4, 12):
+            image.putpixel((x, y), OUTLINE if x in (4, 11) or y in (4, 11) else SKIN)
+    image.putpixel((7, 3), LEFTOVER)
+    image.putpixel((7, 2), LEFTOVER)  # two pixels thick
+    image.putpixel((12, 8), LEFTOVER)
+    for x in range(18, 26):
+        for y in range(4, 12):
+            image.putpixel((x, y), CLOTH)
+    return image
+
+
+class FringeTest(unittest.TestCase):
+    def test_clears_the_whitish_leftovers_on_the_outline(self):
+        image = arm_with_leftovers()
+        ps.remove_white_fringe(image)
+        for spot in ((7, 3), (7, 2), (12, 8)):
+            self.assertEqual(image.getpixel(spot), CLEAR, spot)
+
+    def test_keeps_the_edge_of_white_clothes_and_the_figure(self):
+        image = arm_with_leftovers()
+        ps.remove_white_fringe(image)
+        for spot in ((18, 4), (25, 11), (21, 4), (18, 8)):
+            self.assertEqual(image.getpixel(spot), CLOTH, spot)
+        self.assertEqual(image.getpixel((4, 8)), OUTLINE)
+        self.assertEqual(image.getpixel((7, 7)), SKIN)
+
+
 class MirrorTest(unittest.TestCase):
     def test_turns_each_frame_in_its_own_cell_keeping_the_order(self):
         width = ps.FRAMES * 7 + 3  # cells that do not divide the sheet evenly, like the real ones

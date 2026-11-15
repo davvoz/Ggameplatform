@@ -3,7 +3,7 @@ import { drawName } from './Font.js';
 import { poseFrame } from './poses.js';
 import { pixelRing } from './pixels.js';
 import { drawEnergy } from './EnergyArt.js';
-import { drawBubble, drawShieldRing, paintBubble } from './ShieldArt.js';
+import { drawBubble, drawShieldBar, paintBubble } from './ShieldArt.js';
 import { drawShot } from './ShotArt.js';
 
 const TAU = Math.PI * 2;
@@ -11,6 +11,10 @@ const TAG_MARGIN = 70;
 /** The bubble pops up in this long, and blinks for this long before it goes. */
 const BUBBLE_IN = 0.2;
 const BUBBLE_ENDING = 0.3;
+/** The shield bar flashes for this long when the shield comes back. */
+const READY_FLASH = 0.35;
+/** Space between the shield bar and the energy crystals under it. */
+const SHIELD_BAR_GAP = 4;
 
 /**
  * Draws the arena: the painted scene, the gifts, the monsters (walkers by
@@ -24,6 +28,8 @@ export class WorldView {
     #shots;
     #bubbleArt;
     #time = 0;
+    #readiness = 1;
+    #readyAt = -Infinity;
 
     constructor({ bank, scenes, icons, shots }) {
         this.#bank = bank;
@@ -69,11 +75,10 @@ export class WorldView {
         ctx.fillRect(0, 0, WORLD.width, WORLD.height);
     }
 
-    /** The mage, the shield ring at his feet and his energy over his head. */
+    /** The mage, and over his head his shield bar and his energy. */
     #mage(ctx, mage) {
         const { anim, frame } = poseFrame('mage', mage.pose, mage.poseTime);
         const blink = mage.grace > 0 && mage.alive && Math.floor(mage.grace * 16) % 2 === 0;
-        if (mage.alive && !mage.shielded) drawShieldRing(ctx, mage.x, mage.feetY - 2, shieldReadiness(mage), this.#time);
         ctx.globalAlpha = blink ? 0.45 : 1;
         this.#bank.draw(ctx, { actor: 'mage', anim, frame, facing: mage.facing, x: mage.x, y: mage.feetY });
         ctx.globalAlpha = 1;
@@ -81,7 +86,17 @@ export class WorldView {
         if (mage.alive) {
             const top = mage.feetY - MAGE.tapHeight - 6;
             drawEnergy(ctx, mage.x, top, { energy: mage.energy, max: mage.energyMax, denied: mage.denied > 0 && Math.floor(mage.denied * 20) % 2 === 0 });
+            this.#shieldBar(ctx, mage, top - SHIELD_BAR_GAP);
         }
+    }
+
+    /** The shield's recharge bar, with a flash the moment the shield is back. */
+    #shieldBar(ctx, mage, bottom) {
+        const done = shieldReadiness(mage);
+        if (done >= 1 && this.#readiness < 1) this.#readyAt = this.#time;
+        this.#readiness = done;
+        const flash = Math.max(0, 1 - (this.#time - this.#readyAt) / READY_FLASH);
+        drawShieldBar(ctx, mage.x, bottom, { done, time: this.#time, flash });
     }
 
     #bubble(ctx, mage) {

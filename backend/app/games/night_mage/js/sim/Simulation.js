@@ -104,6 +104,14 @@ export class Simulation {
         this.#inputs.push({ x, y });
     }
 
+    /**
+     * What a tap at (x, y) would hit right now, without tapping (the mouse's sight).
+     * @returns {'pickup'|'shot'|'enemy'|'shield'|'miss'}
+     */
+    aimAt(x, y) {
+        return resolveTap(x, y, this).type;
+    }
+
     /** The shield without a tap (the keyboard). */
     shield() {
         this.#inputs.push({ command: 'shield' });
@@ -494,6 +502,16 @@ export class Simulation {
         }
         this.#emit('hurt', { x, y, hp: this.mage.hp, by: enemy?.kind ?? null, invader: enemy?.invader ?? null });
         if (fatal) this.#endNight(enemy);
+        else this.#feedStorm(damage);
+    }
+
+    /** A lost heart fills the storm a little; `fill` is the part of the dial it adds. */
+    #feedStorm(hearts) {
+        const gained = this.storm.feed(STORM.hurtCharge * hearts);
+        if (gained <= 0) return;
+        const { x, y } = this.mage.chest;
+        this.#emit('stormFed', { x, y, fill: gained / this.storm.needed });
+        if (this.storm.ready) this.#emit('stormReady');
     }
 
     #endNight(enemy) {

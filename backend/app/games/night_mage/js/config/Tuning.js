@@ -81,11 +81,11 @@ export const SCORE = Object.freeze({
 
 export const WAVES = Object.freeze({
     /** Monsters in a wave: base + perWave x wave. */
-    count: { base: 7, perWave: 2.5 },
+    count: { base: 6, perWave: 2 },
     /** Seconds between two arrivals: start - perWave x wave, never under min. */
-    gap: { start: 1.1, perWave: 0.08, min: 0.25 },
+    gap: { start: 1.1, perWave: 0.06, min: 0.25 },
     /** Monsters on the field at once: base + wave, at most max. */
-    alive: { base: 6, max: 18 },
+    alive: { base: 4, max: 16 },
     /** Monster health grows by `step` every `every` waves (x1 on wave 1). */
     toughness: { every: 3, step: 0.35 },
     /** Every this many waves the monsters' blows and shots take one heart more (2 from wave 11...). */
@@ -126,6 +126,8 @@ export const INVADER = Object.freeze({
 export const STORM = Object.freeze({
     /** Hits (bolts, burnt and reflected shots) that fill it. */
     charge: 70,
+    /** Charge a lost heart adds (not the last one). */
+    hurtCharge: 10,
     /** Damage of each lightning: kills the small fry of the first waves, hurts the rest. */
     damage: 3,
     /** The first lightning falls this long after the call, the others one after the other. */

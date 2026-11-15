@@ -1,4 +1,4 @@
-import { ringCells, stepped } from './pixels.js';
+import { stepped } from './pixels.js';
 
 const TAU = Math.PI * 2;
 const RADIUS = 92;
@@ -8,8 +8,16 @@ const BAND = '#5cc4ff';
 const FILL = 'rgba(120,210,255,0.1)';
 const GLINT = 'rgba(200,240,255,0.45)';
 const SHINE = 'rgba(255,255,255,0.75)';
-/** Cells of the ring at the feet, lit one by one as the shield recharges. */
-const RING_CELLS = 28;
+/** The recharge bar over the mage's head, a small shield in front of it. */
+const BAR = { width: 56, height: 6, border: 2, gap: 4, step: 2 };
+const BAR_FRAME = '#0e1424';
+const BAR_EMPTY = '#1f2b40';
+const BAR_CHARGING = '#3b9be0';
+const BAR_READY = '#a6ecff';
+const BAR_FLASH = '#ffffff';
+const ICON_PX = 2;
+const ICON = ['11111', '12221', '12221', '01210', '00100'];
+const ICON_SIZE = ICON.length * ICON_PX;
 
 /** The colour of one cell of the bubble, or null (pure, for the tests too). */
 export function bubbleCell(dx, dy, i, j) {
@@ -65,20 +73,42 @@ export function drawBubble(ctx, bubble, x, y, { fade = 1, time = 0, ending = fal
     ctx.restore();
 }
 
+/** The colour of the bar's fill: white in the flash, bright when ready, blue while it charges. */
+function fillColor(ready, flash) {
+    if (flash > 0) return BAR_FLASH;
+    return ready ? BAR_READY : BAR_CHARGING;
+}
+
+function drawIcon(ctx, x, y, color) {
+    ICON.forEach((row, r) => [...row].forEach((cell, c) => {
+        if (cell === '0') return;
+        ctx.fillStyle = cell === '1' ? BAR_FRAME : color;
+        ctx.fillRect(x + c * ICON_PX, y + r * ICON_PX, ICON_PX, ICON_PX);
+    }));
+}
+
 /**
- * The ring of cells at the mage's feet: it lights up cell by cell while the
- * shield recharges (`done` from 0 to 1) and pulses once it is ready.
+ * The shield's recharge bar, centred on `cx` with its bottom at `bottom`.
+ * It fills left to right while the shield recharges (`done` from 0 to 1),
+ * is bright and pulses once ready, and `flash` (1 down to 0, just after the
+ * shield came back) turns it white for a moment.
  */
-export function drawShieldRing(ctx, x, y, done, time) {
-    const cells = ringCells(x, y, 44, 10, 4, RING_CELLS);
+export function drawShieldBar(ctx, cx, bottom, { done, time, flash = 0 }) {
     const ready = done >= 1;
-    const lit = Math.floor(done * cells.length);
+    const color = fillColor(ready, flash);
+    const outer = BAR.height + BAR.border * 2;
+    const left = Math.round(cx - (ICON_SIZE + BAR.gap + BAR.width + BAR.border * 2) / 2);
+    const top = Math.round(bottom - outer);
+    const barLeft = left + ICON_SIZE + BAR.gap;
+    const filled = ready ? BAR.width : Math.floor((done * BAR.width) / BAR.step) * BAR.step;
     ctx.save();
-    cells.forEach((cell, i) => {
-        if (ready) ctx.globalAlpha = Math.floor(time * 4) % 2 === 0 ? 0.85 : 0.45;
-        else ctx.globalAlpha = i < lit ? 0.8 : 0.5;
-        ctx.fillStyle = ready || i < lit ? '#7ad7ff' : '#26324a';
-        ctx.fillRect(cell.x, cell.y, 4, 4);
-    });
+    drawIcon(ctx, left, Math.round(top + (outer - ICON_SIZE) / 2), ready ? color : BAR_EMPTY);
+    ctx.fillStyle = BAR_FRAME;
+    ctx.fillRect(barLeft, top, BAR.width + BAR.border * 2, outer);
+    ctx.fillStyle = BAR_EMPTY;
+    ctx.fillRect(barLeft + BAR.border, top + BAR.border, BAR.width, BAR.height);
+    if (ready && flash <= 0) ctx.globalAlpha = Math.floor(time * 3) % 2 === 0 ? 1 : 0.7;
+    ctx.fillStyle = color;
+    ctx.fillRect(barLeft + BAR.border, top + BAR.border, filled, BAR.height);
     ctx.restore();
 }

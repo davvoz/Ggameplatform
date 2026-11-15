@@ -21,7 +21,7 @@ function fakeParts(sent) {
             drawTitle: () => BUTTONS,
             drawPlay: () => BUTTONS,
             effects: new Proxy({}, { get: () => quiet }), // takes every effect and draws none
-            hud: { reset: quiet },
+            hud: { reset: quiet, playEvents: quiet },
             weather: { set: quiet },
         },
         audio: { unlock: quiet, play: quiet, playEvents: quiet, setMusic: quiet },
@@ -147,8 +147,13 @@ test('keys 1 2 3 choose among the powers offered', () => {
     const game = new Game(fakeParts([]));
     toFight(game);
     game.sim.offer = ['twin', 'lucky', 'vampire'];
+    game.frame(0.1);
+    game.chooseBoon(0); // too soon: the cards are still coming in
+    game.frame(1);
     game.chooseBoon(1);
+    game.frame(1); // the picked card flashes, the others go
     game.tick();
+    assert.equal(game.sim.boons.level('twin'), 0);
     assert.equal(game.sim.boons.level('lucky'), 1);
     assert.equal(game.sim.offer, null);
 });

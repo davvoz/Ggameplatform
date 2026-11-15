@@ -24,7 +24,7 @@ export const STRINGS = Object.freeze({
         crystal: { name: 'BIG CRYSTAL', lines: ['ONE MORE', 'CRYSTAL'] },
         quickCrystals: { name: 'QUICK CRYSTALS', lines: ['YOUR CRYSTALS', 'COME BACK FASTER'] },
         thorns: { name: 'THORN SHIELD', lines: ['A BLOCKED BLOW', 'HURTS THE ATTACKER'] },
-        vampire: { name: 'VAMPIRE', lines: ['EVERY 40 KILLS', 'HEAL A HEART'] },
+        vampire: { name: 'VAMPIRE', lines: ['EVERY 10 KILLS', 'HEAL A HEART'] },
         lucky: { name: 'LUCKY', lines: ['GIFTS DROP', 'TWICE AS OFTEN'] },
         sharpEye: { name: 'SHARP EYE', lines: ['CRITICALS: TRIPLE', 'DAMAGE, +1 CRYSTAL'] },
     },

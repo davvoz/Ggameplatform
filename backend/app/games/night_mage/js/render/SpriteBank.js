@@ -1,13 +1,6 @@
 import { ACTORS, CELEBRATION, FRAMES } from '../config/Sprites.js';
+import { loadImage } from './loadImage.js';
 
-function loadImage(src) {
-    return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error(`Cannot load ${src}`));
-        image.src = src;
-    });
-}
 
 /** A copy of a sheet painted flat in one colour (hit flashes, silhouettes). */
 function tinted(image, color) {

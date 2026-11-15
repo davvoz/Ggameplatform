@@ -1,4 +1,4 @@
-import { BOONS } from '../config/Boons.js';
+import { BOON_SCREEN, BOONS } from '../config/Boons.js';
 import { STRINGS } from '../config/Strings.js';
 import { drawName } from './Font.js';
 import { poseFrame } from './poses.js';
@@ -6,10 +6,43 @@ import { poseFrame } from './poses.js';
 const INK = 'rgba(12,6,24,0.82)';
 const GOLD = '#ffd27a';
 const SEND_KINDS = ['bat', 'warrior', 'archer', 'brawler'];
+const clamp01 = (t) => Math.max(0, Math.min(1, t));
+const easeOut = (t) => 1 - (1 - t) ** 3;
 
+/**
+ * How one power card looks at a moment of its screen: rising in one after
+ * the other, then (once one is picked) the picked one swelling and flashing
+ * while the others sink and fade. Pure.
+ * @param {{age: number, picked: string|null, pickedAt: number}} show
+ * @returns {{alpha: number, dy: number, scale: number, glow: boolean}}
+ */
+export function cardLook(show, id, index) {
+    const { intro, stagger, outro } = BOON_SCREEN;
+    if (!show.picked) {
+        const rise = easeOut(clamp01((show.age - index * stagger) / (intro - 2 * stagger)));
+        return { alpha: rise, dy: (1 - rise) * 160, scale: 0.9 + 0.1 * rise, glow: false };
+    }
+    const leaving = clamp01((show.age - show.pickedAt) / outro);
+    if (show.picked === id) {
+        return { alpha: 1 - clamp01((leaving - 0.6) / 0.4), dy: 0, scale: 1 + 0.12 * Math.sin(leaving * Math.PI), glow: true };
+    }
+    return { alpha: 1 - leaving, dy: leaving * 80, scale: 1 - 0.1 * leaving, glow: false };
+}
+
+/** A rounded rectangle path; drawn by hand where the browser lacks `roundRect` (older Safari). */
 function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.roundRect(x, y, w, h, r);
+    if (ctx.roundRect) {
+        ctx.roundRect(x, y, w, h, r);
+        return;
+    }
+    const k = Math.min(r, w / 2, h / 2);
+    ctx.moveTo(x + k, y);
+    ctx.arcTo(x + w, y, x + w, y + h, k);
+    ctx.arcTo(x + w, y + h, x, y + h, k);
+    ctx.arcTo(x, y + h, x, y, k);
+    ctx.arcTo(x, y, x + w, y, k);
+    ctx.closePath();
 }
 
 /**
@@ -113,43 +146,63 @@ export class Screens {
     }
 
     /**
-     * The powers offered after a wave: one card each (tap it, or press its number).
-     * @param {string[]} offer @param {import('../sim/Boons.js').Boons} boons what is taken already
+     * The powers offered after a wave: the screen darkens, the cards rise one
+     * by one and only then take taps (or 1 2 3); a picked card flashes while
+     * the others go, then the screen clears.
+     * @param {{choices: string[], boons: import('../sim/Boons.js').Boons, show: {age: number, picked: string|null, pickedAt: number}}} offer
      */
-    drawOffer(ctx, offer, boons, area) {
-        this.#shade(ctx, area, 0.62);
+    drawOffer(ctx, { choices, boons, show }, area) {
+        const coming = easeOut(clamp01(show.age / BOON_SCREEN.intro));
+        const leaving = show.picked ? clamp01((show.age - show.pickedAt) / BOON_SCREEN.outro) : 0;
+        const fade = coming * (1 - leaving);
+        this.#shade(ctx, area, 0.62 * fade);
         const mid = area.top + area.height / 2;
-        this.#font.draw(ctx, STRINGS.offerTitle, 480, mid - 178, { size: 34, align: 'center', color: GOLD });
-        this.#font.draw(ctx, STRINGS.offerHint, 480, mid - 138, { size: 15, align: 'center', color: '#c9b8ff' });
-        return offer.map((id, i) => {
-            const cx = 480 + (i - (offer.length - 1) / 2) * 280;
-            return this.#boonCard(ctx, id, i, { cx, cy: mid + 12 }, boons.level(id));
+        const drop = (1 - coming) * -30;
+        this.#font.draw(ctx, STRINGS.offerTitle, 480, mid - 178 + drop, { size: 34, align: 'center', color: GOLD, alpha: fade });
+        this.#font.draw(ctx, STRINGS.offerHint, 480, mid - 138 + drop, { size: 15, align: 'center', color: '#c9b8ff', alpha: fade });
+        const armed = show.age >= BOON_SCREEN.intro && !show.picked;
+        const buttons = [];
+        choices.forEach((id, i) => {
+            const cx = 480 + (i - (choices.length - 1) / 2) * 280;
+            const cy = mid + 12;
+            const look = cardLook(show, id, i);
+            if (look.alpha <= 0) return;
+            ctx.save();
+            ctx.globalAlpha = look.alpha;
+            ctx.translate(cx, cy + look.dy);
+            ctx.scale(look.scale, look.scale);
+            const card = this.#boonCard(ctx, id, i, boons.level(id), look.glow);
+            ctx.restore();
+            if (armed) buttons.push({ id: `boon:${id}`, x: cx + card.x, y: cy + card.y, w: card.w, h: card.h });
         });
+        return buttons;
     }
 
-    #boonCard(ctx, id, index, { cx, cy }, level) {
+    /** A power's card, centred on the origin. @returns {{x: number, y: number, w: number, h: number}} its area */
+    #boonCard(ctx, id, index, level, glow) {
         const w = 250;
         const h = 226;
-        const x = cx - w / 2;
-        const y = cy - h / 2;
+        const x = -w / 2;
+        const y = -h / 2;
         ctx.fillStyle = '#1a0a2e';
         roundRect(ctx, x - 4, y + 4, w + 8, h + 8, 16);
         ctx.fill();
         ctx.fillStyle = 'rgba(40,22,70,0.96)';
         roundRect(ctx, x, y, w, h, 14);
         ctx.fill();
-        ctx.strokeStyle = GOLD;
-        ctx.lineWidth = 3;
+        const flash = glow && Math.floor(this.#time * 14) % 2 === 0;
+        ctx.strokeStyle = flash ? '#ffffff' : GOLD;
+        ctx.lineWidth = glow ? 6 : 3;
         ctx.stroke();
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(this.#boonIcons[id], cx - 36, y + 16, 72, 72);
+        ctx.drawImage(this.#boonIcons[id], -36, y + 16, 72, 72);
         const { name, lines: first, next } = STRINGS.boons[id];
         const lines = next?.[level] ?? first;
-        this.#font.draw(ctx, name, cx, y + 98, { size: 20, align: 'center', color: GOLD });
-        lines.forEach((line, i) => this.#font.draw(ctx, line, cx, y + 132 + i * 22, { size: 13, align: 'center', color: '#ffffff' }));
-        this.#levelPips(ctx, cx, y + h - 24, level, BOONS[id].max);
+        this.#font.draw(ctx, name, 0, y + 98, { size: 20, align: 'center', color: GOLD });
+        lines.forEach((line, i) => this.#font.draw(ctx, line, 0, y + 132 + i * 22, { size: 13, align: 'center', color: '#ffffff' }));
+        this.#levelPips(ctx, 0, y + h - 24, level, BOONS[id].max);
         if (this.#keyboard) this.#keyBadge(ctx, x + 22, y + 22, String(index + 1));
-        return { id: `boon:${id}`, x, y, w, h };
+        return { x, y, w, h };
     }
 
     /** One square per level: taken (gold), the one this card gives (pink), still to come (dark). */

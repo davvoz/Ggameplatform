@@ -1,3 +1,4 @@
+
 /**
  * The few HTML elements around the canvas: pause, sound and full screen
  * buttons, the XP and level up stickers from the platform, the loading
@@ -7,6 +8,8 @@ const TOUCH_DEVICE = '(pointer: coarse)';
 const XP_STICKER_MS = 3500;
 const LEVEL_STICKER_MS = 6000;
 const PEEL_MS = 300;
+/** Shown when the game cannot start; a tap reloads it. */
+const LOAD_FAILED = 'THE FOREST DID NOT WAKE UP. TAP TO TRY AGAIN';
 
 export class Chrome {
     #doc;
@@ -81,6 +84,27 @@ export class Chrome {
 
     hideLoading() {
         this.#doc.getElementById('loading').hidden = true;
+    }
+
+    /** A frame failed: its message, small at the bottom, so a player can tell what broke. */
+    showFrameError(error) {
+        let line = this.#doc.getElementById('frame-error');
+        if (!line) {
+            line = this.#doc.createElement('p');
+            line.id = 'frame-error';
+            line.className = 'frame-error';
+            this.#doc.body.append(line);
+        }
+        line.textContent = String(error?.message ?? error).slice(0, 160);
+    }
+
+    /** The start failed (a file did not load): say so, and try again on a tap. */
+    showLoadFailed(retry) {
+        const loading = this.#doc.getElementById('loading');
+        loading.hidden = false;
+        loading.querySelector('p').textContent = LOAD_FAILED;
+        loading.classList.add('is-failed');
+        loading.addEventListener('pointerdown', retry, { once: true });
     }
 
     /** Phones held upright get a message: the game is made for a wide screen. */

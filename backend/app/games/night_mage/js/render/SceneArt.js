@@ -1,16 +1,9 @@
 import { GRADES } from '../config/Grades.js';
 import { SCENES } from '../config/Scenes.js';
+import { loadImage } from './loadImage.js';
 
 const KEEP = 3;
 
-function loadImage(src) {
-    return new Promise((resolve, reject) => {
-        const image = new Image();
-        image.onload = () => resolve(image);
-        image.onerror = () => reject(new Error(`Cannot load ${src}`));
-        image.src = src;
-    });
-}
 
 const clamp = (v) => (v < 0 ? 0 : Math.min(255, v));
 

@@ -17,7 +17,8 @@ export class Renderer {
     /**
      * @param {HTMLCanvasElement} canvas
      * @param {{world: import('./WorldView.js').WorldView, effects: import('./Effects.js').Effects, weather: import('./Weather.js').Weather,
-     *          hud: import('./Hud.js').Hud, screens: import('./Screens.js').Screens, demo: import('./TitleDemo.js').TitleDemo}} parts
+     *          hud: import('./Hud.js').Hud, screens: import('./Screens.js').Screens, demo: import('./TitleDemo.js').TitleDemo,
+     *          sight: import('./SightArt.js').SightArt}} parts
      */
     constructor(canvas, parts) {
         this.#canvas = canvas;
@@ -77,14 +78,14 @@ export class Renderer {
     /** The title: the scene, the idle mage, the rules played by example. */
     drawTitle(mapSpec, mage, model) {
         const { world, weather, screens, demo } = this.#parts;
-        const ctx = this.#begin();
-        world.drawStill(ctx, mapSpec, mage);
-        weather.draw(ctx);
-        const area = this.viewport.visible;
-        const buttons = screens.drawTitle(ctx, { ...model, area });
-        demo.draw(ctx, { mage, ground: model.ground }, area.top + 148, model.time);
-        this.#end(ctx);
-        return buttons;
+        return this.#framed((ctx) => {
+            world.drawStill(ctx, mapSpec, mage);
+            weather.draw(ctx);
+            const area = this.viewport.visible;
+            const buttons = screens.drawTitle(ctx, { ...model, area });
+            demo.draw(ctx, { mage, ground: model.ground }, area.top + 148, model.time);
+            return buttons;
+        });
     }
 
     /**
@@ -95,17 +96,26 @@ export class Renderer {
      */
     drawPlay(sim, mapSpec, overlay = {}) {
         const { world, effects, weather } = this.#parts;
+        return this.#framed((ctx) => {
+            const area = this.viewport.visible;
+            world.draw(ctx, sim, mapSpec);
+            effects.draw(ctx);
+            weather.draw(ctx);
+            if (effects.hurtFlash > 0) this.#hurtFlash(ctx, effects.hurtFlash);
+            return overlay.result
+                ? this.#parts.screens.drawResult(ctx, { ...overlay.result, area })
+                : this.#fightScreens(ctx, sim, overlay, area);
+        });
+    }
+
+    /** Runs a frame's drawing; the canvas state comes back even if the drawing breaks halfway. */
+    #framed(draw) {
         const ctx = this.#begin();
-        const area = this.viewport.visible;
-        world.draw(ctx, sim, mapSpec);
-        effects.draw(ctx);
-        weather.draw(ctx);
-        if (effects.hurtFlash > 0) this.#hurtFlash(ctx, effects.hurtFlash);
-        const buttons = overlay.result
-            ? this.#parts.screens.drawResult(ctx, { ...overlay.result, area })
-            : this.#fightScreens(ctx, sim, overlay, area);
-        this.#end(ctx);
-        return buttons;
+        try {
+            return draw(ctx);
+        } finally {
+            this.#end(ctx);
+        }
     }
 
     /** What lies over the fight: HUD, banners, countdown, the powers' cards, the pause. @returns the buttons */
@@ -118,9 +128,16 @@ export class Renderer {
             if (overlay.banner.scene) screens.drawSceneName(ctx, overlay.banner.scene, overlay.banner.age, area);
         }
         if (typeof overlay.countdown === 'number') screens.drawCountdown(ctx, overlay.countdown, area);
-        if (sim.offer) buttons = screens.drawOffer(ctx, sim.offer, sim.boons, area);
+        if (sim.offer && overlay.offer) buttons = screens.drawOffer(ctx, { choices: sim.offer, boons: sim.boons, show: overlay.offer }, area);
         if (overlay.paused) buttons = screens.drawPause(ctx, area);
         return buttons;
+    }
+
+    /** The mouse's sight over the frame just drawn (no shake: it follows the hand, not the arena). */
+    drawSight(sight) {
+        const ctx = this.#ctx;
+        this.viewport.apply(ctx);
+        this.#parts.sight.draw(ctx, sight);
     }
 
     #hurtFlash(ctx, amount) {

@@ -8,14 +8,19 @@ Turns the prototype's sprite sheets (PNG) into the game's WebP sheets.
 - Sheets of the actors in CLEAN lose the white background left around the
   figure: starting from the transparent pixels, near-white pixels touching
   them are made transparent. Dark outlines stop the fill, so white clothes
-  inside the figure stay.
+  inside the figure stay. Then the whitish pixels left on the outline: too
+  grey or too opaque for the fill, but with few whitish pixels around them,
+  so they are leftovers and not the edge of white clothes.
 - Sheets in POCKETS also lose the white trapped between the legs, which a
   grey ground line cuts off from the transparent area: patches of pure white
   of at least POCKET pixels and the near-white around them; then the thin
   grey ground lines left floating under the feet.
-- Sheets in MIRRORED are not read for their LEFT side: it is the cleaned
-  RIGHT sheet mirrored frame by frame (frames in the same order), for the
-  prototype sheets whose two sides were drawn differently.
+- Sheets corrected by hand live in tools/sprite_sources/<actor>/ and are
+  used instead of the prototype's (Ken's IDLE_RIGHT was redrawn, his
+  WALK_LEFT cleaned of the white between the ponytail and the neck).
+- Animations in MIRRORED are read only on the side they name: the other side
+  is that cleaned sheet mirrored frame by frame (frames in the same order),
+  for the prototype sheets whose two sides were drawn differently.
 
 Keep ACTORS in step with `js/config/Sprites.js` (folders and animations).
 """
@@ -27,6 +32,7 @@ from pathlib import Path
 from PIL import Image
 
 OUT = Path(__file__).resolve().parent.parent / "assets" / "sprites"
+CORRECTED = Path(__file__).resolve().parent / "sprite_sources"
 SIDES = ("LEFT", "RIGHT")
 ACTORS = {
     "mage": ("IDLE", "SPELL", "TAKE_DAMAGE", "BLOCK"),
@@ -37,7 +43,7 @@ ACTORS = {
 }
 CLEAN = {"ken"}
 POCKETS = {("ken", "WALK")}
-MIRRORED = {("ken", "WALK")}
+MIRRORED = {("ken", "WALK"): "LEFT", ("ken", "IDLE"): "RIGHT"}  # the side drawn; the other is mirrored
 FRAMES = 11  # frames per sheet, as FRAMES in js/config/Sprites.js
 
 TRANSPARENT = 32      # alpha at or below: empty
@@ -50,7 +56,12 @@ PURE_SPREAD = 16
 POCKET = 24           # smaller pure-white patches are highlights on the clothes
 GROUND_LIGHT = 150    # a ground line: grey at least this light...
 GROUND_REACH = 3      # ...with empty space this close above and below
+EDGE_LIGHT = 140      # an outline pixel this light...
+EDGE_SPREAD = 40      # ...and this grey is whitish
+EDGE_COMPANY = 3      # with fewer whitish pixels around it, it is a leftover
+EDGE_PASSES = 2       # leftovers can be two pixels thick
 NEIGHBOURS = ((1, 0), (-1, 0), (0, 1), (0, -1))
+AROUND = NEIGHBOURS + ((1, 1), (1, -1), (-1, 1), (-1, -1))
 
 
 def _is_background(pixel) -> bool:
@@ -80,6 +91,43 @@ def remove_white_halo(image: Image.Image) -> int:
                 pixels[nx, ny] = (0, 0, 0, 0)
                 cleared += 1
                 queue.append((nx, ny))
+    return cleared
+
+
+def _is_whitish(pixel) -> bool:
+    r, g, b, a = pixel
+    low, high = min(r, g, b), max(r, g, b)
+    return a > TRANSPARENT and low >= EDGE_LIGHT and high - low <= EDGE_SPREAD
+
+
+def _around(size, x, y, steps):
+    """The spots at `steps` from (x, y), None for those off the sheet."""
+    width, height = size
+    for dx, dy in steps:
+        nx, ny = x + dx, y + dy
+        yield (nx, ny) if 0 <= nx < width and 0 <= ny < height else None
+
+
+def _is_leftover(pixels, size, x, y) -> bool:
+    """A whitish pixel on the outline with few whitish pixels around it."""
+    if not _is_whitish(pixels[x, y]):
+        return False
+    if not any(spot is None or pixels[spot][3] <= TRANSPARENT for spot in _around(size, x, y, NEIGHBOURS)):
+        return False
+    company = sum(1 for spot in _around(size, x, y, AROUND) if spot is not None and _is_whitish(pixels[spot]))
+    return company < EDGE_COMPANY
+
+
+def remove_white_fringe(image: Image.Image) -> int:
+    """Clears the whitish leftovers on the outline, in EDGE_PASSES passes. @returns how many."""
+    pixels = image.load()
+    size = image.size
+    cleared = 0
+    for _ in range(EDGE_PASSES):
+        found = [(x, y) for y in range(size[1]) for x in range(size[0]) if _is_leftover(pixels, size, x, y)]
+        for spot in found:
+            pixels[spot] = (0, 0, 0, 0)
+        cleared += len(found)
     return cleared
 
 
@@ -167,17 +215,21 @@ def mirror_frames(image: Image.Image) -> Image.Image:
 
 
 def _cleaned(source: Path, actor: str, anim: str, side: str) -> tuple:
-    image = Image.open(source / actor / f"{anim}_{side}.png").convert("RGBA")
+    corrected = CORRECTED / actor / f"{anim}_{side}.png"
+    path = corrected if corrected.exists() else source / actor / f"{anim}_{side}.png"
+    image = Image.open(path).convert("RGBA")
     cleared = remove_white_halo(image) if actor in CLEAN else 0
     if (actor, anim) in POCKETS:
         cleared += remove_white_pockets(image)
+    if actor in CLEAN:
+        cleared += remove_white_fringe(image)  # last: the pockets open new outlines
     return image, cleared
 
 
 def prepare(source: Path, actor: str, anim: str, side: str) -> str:
-    mirror = (actor, anim) in MIRRORED and side == "LEFT"
-    image, cleared = _cleaned(source, actor, anim, "RIGHT" if mirror else side)
-    if mirror:
+    drawn = MIRRORED.get((actor, anim), side)
+    image, cleared = _cleaned(source, actor, anim, drawn)
+    if drawn != side:
         image = mirror_frames(image)
     size = image.size
     target = OUT / actor / f"{anim}_{side}.webp"
@@ -186,7 +238,7 @@ def prepare(source: Path, actor: str, anim: str, side: str) -> str:
     saved = Image.open(target).size
     if saved != size:
         raise RuntimeError(f"{target.name}: saved {saved}, expected {size}")
-    note = (f", {cleared} white pixels cleared" if cleared else "") + (", mirrored from RIGHT" if mirror else "")
+    note = (f", {cleared} white pixels cleared" if cleared else "") + (f", mirrored from {drawn}" if drawn != side else "")
     return f"{actor}/{target.name} {size[0]}x{size[1]}{note}"
 
 

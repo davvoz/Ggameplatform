@@ -93,6 +93,10 @@ const HANDLERS = {
         const { x, y } = sim.mage.chest;
         fx.text(STRINGS.stormReady, x, y - 150, { color: STORM_COLOR, size: 24, duration: 1.2 });
     },
+    /** The puff the sparks leave from; the HUD flies them to the storm button. */
+    stormFed(fx, e) {
+        fx.burst(e.x, e.y, { count: 10, power: 0.6, duration: 0.35, palette: ['#ffffff', '#c9a6ff', STORM_COLOR] });
+    },
     storm(fx, e) {
         fx.ring(e.x, e.y, { color: STORM_COLOR, radius: 140, duration: 0.45, width: 10 });
         fx.text(STRINGS.storm, 480, 170, { color: STORM_COLOR, size: 44, rise: 16, duration: 1.1 });

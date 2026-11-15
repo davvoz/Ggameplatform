@@ -47,7 +47,8 @@ const REFLECT_SPEED = 1.8;
  * which rule is shown (0 monster, 1 arrow, 2 shield) and how far into it.
  */
 export function titleBeat(time) {
-    return { scene: Math.floor(time / LOOP) % SCENES.length, t: time % LOOP };
+    const at = Math.max(0, time);
+    return { scene: Math.floor(at / LOOP) % SCENES.length, t: at % LOOP };
 }
 
 /**

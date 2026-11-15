@@ -1,8 +1,17 @@
 {
-  "version": "5.23.1",
-  "timestamp": "2026-11-15T00:33:42.628Z",
-  "buildNumber": 628,
+  "version": "5.23.2",
+  "timestamp": "2026-11-15T01:36:10.975Z",
+  "buildNumber": 629,
   "changelog": [
+    {
+      "version": "5.23.2",
+      "date": "2026-11-15",
+      "type": "patch",
+      "changes": [
+        "fix: [NM]remove unused fury mechanics and adjust enemy attributes",
+        "🔖 Bump version to 5.23.1 [skip-version]"
+      ]
+    },
     {
       "version": "5.23.1",
       "date": "2026-11-15",
@@ -88,15 +97,6 @@
       "changes": [
         "feat: Hexforge gains a forge slot every 5 player levels, with an unlock animation",
         "🔖 Bump version to 5.21.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.21.0",
-      "date": "2026-11-11",
-      "type": "minor",
-      "changes": [
-        "feat: Hexforge pings show the battle report; walled-in targets get breached",
-        "🔖 Bump version to 5.20.1 [skip-version]"
       ]
     }
   ]

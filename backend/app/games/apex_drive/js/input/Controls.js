@@ -152,6 +152,9 @@ export class Controls {
     #press(event) {
         if (event.button !== undefined && event.button > 0) return;
         event.preventDefault();
+        // the default action, focusing the page, is cancelled with the rest: in the
+        // platform's frame the keys would keep going to the platform's page
+        this.#element.focus?.({ preventScroll: true });
         const role = this.#onPress(event.clientX, event.clientY);
         if (!role) return;
         if (role === 'brake') this.#brakes.add(event.pointerId);

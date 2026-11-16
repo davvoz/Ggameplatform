@@ -83,6 +83,17 @@ test('a press steers only where the screen says so', () => {
     assert.equal(controls.read().throttle, false);
 });
 
+test('every press takes the keyboard focus back (in the platform frame, the keys follow it)', () => {
+    const canvas = fakeCanvas();
+    let focused = 0;
+    canvas.focus = () => { focused += 1; };
+    const controls = new Controls(canvas, new EventTarget(), { onPress: () => false, onKey: () => {} });
+    send(canvas, 'pointerdown', { pointerId: 1, clientX: 20, button: 0 });
+    send(canvas, 'pointerdown', { pointerId: 2, clientX: 20, button: 2 });
+    assert.equal(focused, 1, 'a left press focuses; the right button does nothing');
+    assert.equal(controls.read().steer, 0, 'a tap on a button does not steer');
+});
+
 /** Controls in touch mode on a clock the test moves; presses left of x 150 steer, the rest is the brake. */
 function touchControls() {
     const canvas = fakeCanvas();

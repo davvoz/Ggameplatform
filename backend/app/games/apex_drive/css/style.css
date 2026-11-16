@@ -39,6 +39,11 @@ html, body {
     image-rendering: crisp-edges;
 }
 
+/* focused on every press (input/Controls.js), so the keys reach the game in the platform's frame */
+#game-canvas:focus {
+    outline: none;
+}
+
 /* ---- the full screen button, drawn like the game: sized in game pixels (--px, set by main.js),
    in the top right corner the screens keep free (CORNER in render/ui/widgets.js) */
 .pix-btn {

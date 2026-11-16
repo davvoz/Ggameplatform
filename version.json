@@ -1,8 +1,17 @@
 {
-  "version": "5.24.2",
-  "timestamp": "2026-11-16T20:43:59.537Z",
-  "buildNumber": 635,
+  "version": "5.24.3",
+  "timestamp": "2026-11-16T21:29:33.691Z",
+  "buildNumber": 636,
   "changelog": [
+    {
+      "version": "5.24.3",
+      "date": "2026-11-16",
+      "type": "patch",
+      "changes": [
+        "fix:[AD] enhance race functionality and player profile integration",
+        "🔖 Bump version to 5.24.2 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.2",
       "date": "2026-11-16",
@@ -82,18 +91,6 @@
       "changes": [
         "feat:[NM]add NM",
         "🔖 Bump version to 5.22.6 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.22.6",
-      "date": "2026-11-14",
-      "type": "patch",
-      "changes": [
-        "Merge branch 'refactor/hexforge-layout': Hexforge split into role folders, smaller modules, rules in core, CSS by area",
-        "refactor:[H] split the Hexforge stylesheet by area",
-        "refactor:[H] drop the unused fused-hero styles",
-        "refactor:[H] tidy Hexforge: league wording to data, tests by module, drop the gallery",
-        "refactor:[H] move Hexforge game rules out of the panels into core"
       ]
     }
   ]

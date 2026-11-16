@@ -32,6 +32,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.games.apex_drive_be import ping as apex_drive_ping
 from app.models import CoinTransaction, Game, GameSession, User
 from app.routers.steem_posts import (
     STEEM_NODES,
@@ -262,8 +263,13 @@ def _hexforge_result(session: GameSession) -> Dict[str, str]:
     return {"headline": headline, "label": "DESTRUCTION", "value": f"{destroyed}%"}
 
 
-# Games whose result is not a score of points: how their ping says it
-_GAME_RESULTS = {"hexforge": _hexforge_result}
+def _apex_drive_result(session: GameSession) -> Optional[Dict[str, str]]:
+    """A career race pays credits, not points: the place on the track, a challenge run's time."""
+    return apex_drive_ping.ping_result(_session_data(session), session.score or 0)
+
+
+# Games whose result is not a score of points: how their ping says it (None: points after all)
+_GAME_RESULTS = {"hexforge": _hexforge_result, "apex_drive": _apex_drive_result}
 
 
 def _result_of(game: Game, session: GameSession) -> Optional[Dict[str, str]]:
@@ -279,13 +285,16 @@ def _result_words(game: Game, session: GameSession) -> str:
     return f"{session.score or 0:,} points"
 
 
+def _points_headline(game: Game, score: int) -> str:
+    """The headline of a game whose result is a score of points."""
+    unit = "point" if score == 1 else "points"
+    return f"I scored {score:,} {unit} in {game.title} on Cur8 Games! 🎮"
+
+
 def build_ping_text(game: Game, session: GameSession) -> str:
     """Who scored what in which game, how it went, where to play, the hashtags; within 280 characters."""
-    score = session.score or 0
     result = _result_of(game, session)
-    headline = result["headline"] if result else (
-        f"I scored {score:,} {'point' if score == 1 else 'points'} in {game.title} on Cur8 Games! 🎮"
-    )
+    headline = result["headline"] if result else _points_headline(game, session.score or 0)
     details = [f"⭐ +{_format_xp(session.xp_earned)} XP"]
     if session.duration_seconds:
         details.append(f"⏱️ {_format_duration(session.duration_seconds)}")
@@ -304,7 +313,9 @@ def _ping_tags(text: str) -> List[str]:
     return tags[:10]
 
 
-def _build_comment(user: User, game: Game, session: GameSession, wall: Dict[str, str], image_url: Optional[str]) -> Dict[str, Any]:
+def _build_comment(
+    user: User, game: Game, session: GameSession, wall: Dict[str, str], image_url: Optional[str]
+) -> Dict[str, Any]:
     text = build_ping_text(game, session)
     metadata: Dict[str, Any] = {"app": APP, "format": "markdown", "type": "ping", "tags": _ping_tags(text)}
     if image_url:
@@ -427,7 +438,9 @@ async def confirm_ping(request: ConfirmRequest, db: DbSession, coin_service: Coi
 
 
 @router.post("/publish-with-key")
-async def publish_ping_with_key(request: PublishWithKeyRequest, db: DbSession, coin_service: CoinServiceDep, current_user_id: CurrentUserId):
+async def publish_ping_with_key(
+    request: PublishWithKeyRequest, db: DbSession, coin_service: CoinServiceDep, current_user_id: CurrentUserId
+):
     """Publishes the ping with the player's posting key (never stored), then spends the coins."""
     user, session, game = _shareable_session(db, current_user_id, request.session_id)
     _check_can_ping(db, coin_service, current_user_id, request.session_id)

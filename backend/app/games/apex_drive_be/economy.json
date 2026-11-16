@@ -443,46 +443,55 @@
   ],
   "tracks": {
     "duskValley": {
+      "name": "DUSK VALLEY",
       "laps": 3,
       "lapLength": 547800,
       "cashPerLap": 960
     },
     "pierCircuit": {
+      "name": "PIER CIRCUIT",
       "laps": 6,
       "lapLength": 245000,
       "cashPerLap": 300
     },
     "cliffRoad": {
+      "name": "CLIFF ROAD",
       "laps": 3,
       "lapLength": 584200,
       "cashPerLap": 1080
     },
     "neonAvenue": {
+      "name": "NEON AVENUE",
       "laps": 3,
       "lapLength": 523800,
       "cashPerLap": 780
     },
     "underpass": {
+      "name": "UNDERPASS",
       "laps": 4,
       "lapLength": 307600,
       "cashPerLap": 540
     },
     "stormBypass": {
+      "name": "STORM BYPASS",
       "laps": 3,
       "lapLength": 469200,
       "cashPerLap": 360
     },
     "iceFields": {
+      "name": "ICE FIELDS",
       "laps": 3,
       "lapLength": 530800,
       "cashPerLap": 1080
     },
     "glacierPass": {
+      "name": "GLACIER PASS",
       "laps": 3,
       "lapLength": 488600,
       "cashPerLap": 1140
     },
     "whiteout": {
+      "name": "WHITEOUT",
       "laps": 7,
       "lapLength": 240800,
       "cashPerLap": 540

@@ -237,6 +237,13 @@ with the same rules, then takes the server's career when it answers; a
 refusal brings the server's career back). Its rules are the game's own,
 exported to `apex_drive_be/economy.json` by `tools/export-economy.js`.
 
+A race's session (`platform/PlatformSessions.js`) says how it went: mode,
+track, place, best lap, time, or a DNF when the race is left. The platform's
+ping (`app/routers/pings.py`) reads it through `apex_drive_be/ping.py`: "I won
+on NEON AVENUE", PLACE / 1ST on the card, a challenge run's time, never "0
+points". Only what is checked gets in: a track of the game (named from
+economy.json), a place a race can have, times within reason.
+
 A race is started and finished on the server, which checks the result
 against the car it started with: no lap faster than the car could do on
 nitro all the way, no more cash than the road holds, no race over before it

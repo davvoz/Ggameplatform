@@ -174,13 +174,24 @@ export class RaceScreen extends Screen {
 
     /** A new race on the same track; a challenge run is a new run. */
     #again() {
+        this.#retire();
         if (this.params.challenge) this.app.show('challenge', { go: true });
         else this.app.show('race', this.params);
     }
 
     #quit() {
+        this.#retire();
         if (this.params.challenge) this.app.show('challenge');
         else this.app.show('tracks', this.params);
+    }
+
+    /** The race left before the flag: its session ends as a retirement (its ping says DNF, not 0 points). */
+    #retire() {
+        if (this.#done) return;
+        this.#done = true;
+        const { trackId, challenge } = this.params;
+        if (challenge) this.app.sessions.finishUnscoredRun({ trackId, weekId: challenge.weekId });
+        else this.app.sessions.retireCareerRace({ trackId });
     }
 
     #drawPause(ctx, size) {
@@ -213,7 +224,7 @@ export class RaceScreen extends Screen {
         }
         const creditsBefore = this.app.career.credits;
         const payout = this.app.sync.finishRace(this.#entry, trackId, result, worldOf(trackId).prizeScale);
-        this.app.sessions.finishCareerRace({ trackId, position: result.position });
+        this.app.sessions.finishCareerRace({ trackId, position: result.position, bestLap: result.bestLap, time: result.time });
         this.app.show('results', { ...this.params, result, payout, creditsBefore });
     }
 }

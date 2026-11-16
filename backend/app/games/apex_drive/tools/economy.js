@@ -37,7 +37,7 @@ export function economyData() {
         worlds: WORLDS.map(({ id, prizeScale, tracks }) => ({ id, prizeScale, tracks })),
         tracks: Object.fromEntries(trackIds.map((id) => {
             const track = trackOf(id);
-            return [id, { laps: track.laps, lapLength: Math.round(track.length), cashPerLap: cashPerLap(track) }];
+            return [id, { name: track.name, laps: track.laps, lapLength: Math.round(track.length), cashPerLap: cashPerLap(track) }];
         })),
     };
 }

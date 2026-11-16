@@ -21,6 +21,7 @@ import { RaceView } from './render/RaceView.js';
 import { RoadPalette } from './render/road/RoadPalette.js';
 import { focalLength } from './render/screen.js';
 import { Logo } from './render/ui/Logo.js';
+import { levelUpBanner, RewardBanners, xpBanner } from './render/ui/RewardBanners.js';
 import { GarageScreen } from './screens/GarageScreen.js';
 import { RaceScreen } from './screens/RaceScreen.js';
 import { ResultsScreen } from './screens/ResultsScreen.js';
@@ -141,8 +142,24 @@ async function boot() {
     new ResizeObserver(fit).observe(stage);
     fit();
 
+    // the XP and the level ups the platform hands over, drawn over every screen
+    const rewards = new RewardBanners();
+    sessions.onRewards({
+        onXp: (xp) => {
+            if (xp <= 0) return;
+            rewards.add(xpBanner(xp));
+            audio.play('buy');
+        },
+        onLevelUp: (levelUp) => {
+            rewards.add(levelUpBanner(levelUp));
+            audio.play('perfectStart');
+        },
+    });
+
     const loop = new GameLoop(TICK_RATE, () => game.tick(1 / TICK_RATE), (dt) => {
         game.frame(dt);
+        rewards.update(dt);
+        rewards.draw(frame.ctx, frame.size, icons);
         audio.update();
     }, (error) => chrome.showFrameError(error));
     let hidden = document.hidden;
@@ -184,7 +201,7 @@ async function boot() {
     game.start(query.get('screen') ?? 'title', { trackId: query.get('track') ?? undefined, worldIndex: 0 });
     applyPause();
     loop.start();
-    globalThis.__apexDrive = { game, app };
+    globalThis.__apexDrive = { game, app, rewards };
 }
 
 try {

@@ -1,8 +1,17 @@
 {
-  "version": "5.24.6",
-  "timestamp": "2026-11-16T23:29:58.843Z",
-  "buildNumber": 639,
+  "version": "5.24.7",
+  "timestamp": "2026-11-16T23:53:15.105Z",
+  "buildNumber": 640,
   "changelog": [
+    {
+      "version": "5.24.7",
+      "date": "2026-11-16",
+      "type": "patch",
+      "changes": [
+        "dix:[AD]add reward banners for XP and level ups with associated functionality",
+        "🔖 Bump version to 5.24.6 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.6",
       "date": "2026-11-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[NM] enhance boss mechanics with invader roster and health scaling",
         "🔖 Bump version to 5.23.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.23.3",
-      "date": "2026-11-15",
-      "type": "patch",
-      "changes": [
-        "fix: [NM] add invader mechanics as wave bosses with herald and health adjustments",
-        "🔖 Bump version to 5.23.2 [skip-version]"
       ]
     }
   ]

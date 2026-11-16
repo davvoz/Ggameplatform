@@ -4,12 +4,14 @@ it and asks for every change.
 
   GET  /api/apex_drive/health
   GET  /api/apex_drive/me                              the career
+  GET  /api/apex_drive/me/profile                      my name, Steem name, whether I am ranked
   POST /api/apex_drive/me/parts/{category}             buy the next tier        -> {answer, career}
   POST /api/apex_drive/me/mods/{mod_id}                buy a mod                -> {answer, career}
   PUT  /api/apex_drive/me/fitted   {mods}              fit exactly these mods   -> {answer, career}
   POST /api/apex_drive/me/races    {trackId}           start a career race      -> {raceId, seed}
   POST /api/apex_drive/me/races/{id}/finish  {position, bestLap, cash}          -> {payout, career}
   GET  /api/apex_drive/challenge                       this week's track and my best
+  GET  /api/apex_drive/challenge/leaderboard           this week's standings and my place
   POST /api/apex_drive/challenge/races                 start a run              -> {raceId, seed, trackId, weekId, laps}
   POST /api/apex_drive/challenge/races/{id}/finish  {time, bestLap}             -> {score, time, best}
 
@@ -30,7 +32,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.user_auth import CurrentUserId
 
-from . import service
+from . import service, standings
 from .career import CareerError
 
 router = APIRouter(prefix="/api/apex_drive", tags=["Apex Drive"])
@@ -127,9 +129,20 @@ def finish_race(request: Request, race_id: str, body: FinishRequest, user_id: Cu
     return {"payout": payout, "career": career.to_dict()}
 
 
+@router.get("/me/profile")
+def my_profile(user_id: CurrentUserId, db: Db):
+    return standings.profile(db, user_id)
+
+
 @router.get("/challenge")
 def challenge(user_id: CurrentUserId, db: Db, now: Now):
     return service.challenge_info(db, user_id, now)
+
+
+@router.get("/challenge/leaderboard")
+@limiter.limit("60/minute")
+def challenge_leaderboard(request: Request, user_id: CurrentUserId, db: Db, now: Now):
+    return standings.leaderboard(db, user_id, now)
 
 
 @router.post("/challenge/races")

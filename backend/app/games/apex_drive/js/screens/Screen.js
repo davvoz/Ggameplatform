@@ -19,6 +19,8 @@ import { Menu } from './Menu.js';
  * @property {import('../audio/GameAudio.js').GameAudio} audio
  * @property {() => void} toggleSound mute or unmute, remembered
  * @property {(kind: 'effects'|'music', step: number) => void} setVolume a volume, remembered
+ * @property {{name: string, steem: string|null, ranked: boolean}} player who is playing (ranked: on the leaderboard)
+ * @property {import('../render/ui/Avatars.js').Avatars} avatars Steem avatars as pixel portraits
  */
 export class Screen {
     /** Seconds since shown. */

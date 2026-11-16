@@ -1,3 +1,4 @@
+import { BODY } from '../../config/Tuning.js';
 import { drive, racingLine } from './driving.js';
 
 /**
@@ -11,16 +12,52 @@ import { drive, racingLine } from './driving.js';
  * in BEHAVIOURS.
  */
 
-/** Player within this far behind (world units) is worth blocking. */
-const BLOCK_RANGE = 2600;
-/** Player within this far either way, side by side, is worth ramming. */
-const RAM_RANGE = 1300;
+/**
+ * Blocking: the player within `range` behind (world units) is worth it; the
+ * blocker goes where it saw the player `reaction` seconds ago (a feint beats
+ * it), for `hold` seconds at most, then keeps its own line for `rest`.
+ */
+const BLOCK = { range: 2600, reaction: 0.6, hold: 2.5, rest: 3 };
+/** Ramming: only with the player alongside, noses within this far (world units): never a shove from behind. */
+const RAM_RANGE = BODY.length * 0.6;
 /** Player this close ahead: a reason to burn nitro and fight back. */
 const CHASE_RANGE = 2200;
 
 /** How far ahead on the road the player is (a lap down or up counts as beside). */
 function gapToPlayer(self, race) {
     return race.track.gap(self.car.z, race.player.car.z);
+}
+
+/** Whether the player is a rival for its place: on the same lap, not a lap (or more) away either way. */
+function racingFor(self, race) {
+    return Math.abs(self.car.z - race.player.car.z) < race.track.length / 2;
+}
+
+/** Where the player was `delay` seconds ago, as a driver sees it in the mirror: (race) => x. */
+function mirror(delay) {
+    const seen = [];
+    return (race) => {
+        seen.push({ t: race.time, x: race.player.car.x });
+        while (seen.length > 1 && seen[1].t <= race.time - delay) seen.shift();
+        return seen[0].x;
+    };
+}
+
+/** A move kept up for `hold` seconds at most, then dropped for `rest`: (wanted, now) => whether it is on. */
+function stamina(hold, rest) {
+    let since = null;
+    let restUntil = -Infinity;
+    return (wanted, now) => {
+        if (!wanted || now < restUntil) {
+            since = null;
+            return false;
+        }
+        since ??= now;
+        if (now - since <= hold) return true;
+        restUntil = now + rest;
+        since = null;
+        return false;
+    };
 }
 
 /** Takes the racing line, on the limit, nitro on the straights. */
@@ -38,13 +75,19 @@ function cruiser(rng) {
     };
 }
 
-/** Moves across into the player's way when the player is close behind. */
+/**
+ * Moves across into the line of the player close behind, while they race
+ * for the same place: late (it reacts to the mirror) and not for long.
+ */
 function blocker() {
+    const watch = mirror(BLOCK.reaction);
+    const blocking = stamina(BLOCK.hold, BLOCK.rest);
     return {
         aim(self, race) {
             const gap = gapToPlayer(self, race);
-            const behind = gap < 0 && gap > -BLOCK_RANGE;
-            const x = behind ? race.player.car.x : racingLine(race.track, self.car.z);
+            const seen = watch(race);
+            const behind = gap < 0 && gap > -BLOCK.range && racingFor(self, race);
+            const x = blocking(behind, race.time) ? seen : racingLine(race.track, self.car.z);
             return { x, pace: 0.98, nitro: gap > 0 && gap < CHASE_RANGE };
         },
     };
@@ -55,7 +98,7 @@ function rammer() {
     return {
         aim(self, race) {
             const gap = gapToPlayer(self, race);
-            const near = Math.abs(gap) < RAM_RANGE;
+            const near = Math.abs(gap) < RAM_RANGE && racingFor(self, race);
             const into = race.player.car.x + Math.sign(race.player.car.x - self.car.x) * 0.3;
             const x = near ? into : racingLine(race.track, self.car.z);
             return { x, pace: 0.97, nitro: gap > 0 && gap < CHASE_RANGE };

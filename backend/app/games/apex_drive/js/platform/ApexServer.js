@@ -61,8 +61,18 @@ export class ApexServer {
         return this.#call(`/me/races/${encodeURIComponent(raceId)}/finish`, 'POST', result);
     }
 
+    /** The signed-in player: {name, steem, ranked}. */
+    profile() {
+        return this.#call('/me/profile');
+    }
+
     challenge() {
         return this.#call('/challenge');
+    }
+
+    /** This week's standings: {weekId, trackId, players, entries: [{rank, name, steem, score, time, me}], me}. */
+    leaderboard() {
+        return this.#call('/challenge/leaderboard');
     }
 
     startRun() {

@@ -103,11 +103,23 @@ export class CareerSync {
         return payout;
     }
 
+    /** @returns {Promise<{name: string, steem: string|null, ranked: boolean}|null>} who is playing, null offline */
+    async profile() {
+        const answer = await this.#server.profile();
+        return answer.ok ? answer.data : null;
+    }
+
     // ---- the weekly challenge (only with a server)
 
     /** @returns {Promise<object|null>} this week's track and the player's best */
     async challenge() {
         const answer = await this.#server.challenge();
+        return answer.ok ? answer.data : null;
+    }
+
+    /** @returns {Promise<object|null>} this week's standings with the player's place, null offline */
+    async leaderboard() {
+        const answer = await this.#server.leaderboard();
         return answer.ok ? answer.data : null;
     }
 

@@ -79,7 +79,9 @@ Esc goes back; everything is also a tap.
 Five drivers (`config/Drivers.js`), each with colours, a tuned car and a
 behaviour (`sim/ai/behaviours.js`): VEX the **racer** (racing line, nitro on
 straights), BRICK the **rammer** (steers into you side by side, heavy),
-NYX the **blocker** (moves into your line when you are close behind),
+NYX the **blocker** (moves into your line when you are close behind: late,
+as seen in its mirror, for a few seconds, then it rests; both only while
+you race for a place, never a lap apart),
 ZIP the **weaver** (swerves lane to lane), OTTO the **cruiser** (keeps a lane).
 They all share `sim/ai/driving.js`: slow before a bend to what their grip
 holds, go round a slower car, lift rather than ram it. A small rubber band
@@ -93,6 +95,11 @@ of each in turn (`buys` in `config/Drivers.js`: BRICK armour first, VEX
 tyres first...). Stock on the first track, they grow with the economy; the
 world's `difficulty` only fine-tunes on top. The track screen shows them
 (RIVALS: a pip per tier bought).
+
+Two cars touching are settled along the way they overlap least: more in
+line, the car behind runs into the one in front (speed shared out, set
+apart along the road); more side by side, they rub (set apart across the
+road, the one coming through keeps its speed and its place).
 
 Cars a lap down are on the road like any other: they block, bump and give
 a slipstream (`Track.gap` measures the road distance the short way round;
@@ -259,6 +266,18 @@ the faster, the more points. The game reports those points at the end of the
 session with the run's id, and `app/game_score_validators.py` lets through
 only a run the server checked, once, of that player and that week. Career
 races report 0: they pay credits.
+
+The game says it is the ranked mode: "WEEKLY LEADERBOARD" over the
+CHALLENGE button, and a ribbon on the challenge screen ("COUNTS ON THE CUR8
+WEEKLY LEADERBOARD", or, to a guest, that only Steem players are ranked).
+The screen shows the week's standings (`GET /challenge/leaderboard`,
+`apex_drive_be/standings.py`): every ranked player's best run, guests and
+banned players left out as on the platform, each with their Steem name and
+avatar (`render/ui/Avatars.js`: the platform's image service, shrunk to a
+pixel portrait; a coloured tile with the initial while it loads or when
+there is none), the player's row lit and kept at the bottom when beyond
+the first places. Who is playing comes from `GET /me/profile` at boot
+(`app.player`): their Steem name is their name in the races too.
 
 Registration on the platform: `backend/scripts/register_apex_drive.py`.
 Backend tests: `cd backend && python -m unittest discover -s app/games/apex_drive_be/tests -t .`

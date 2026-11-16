@@ -10,7 +10,8 @@ import { MenuScreen } from './Screen.js';
 /**
  * The world select: one postcard per world, left and right to browse
  * (they slide), its tracks won so far, a lock on the ones still closed.
- * The weekly challenge opens from here too.
+ * The weekly challenge opens from here too: the ranked mode, as the line
+ * over its button says.
  */
 const CARD = { maxWidth: 190, height: 108, top: 26, art: 66 };
 const SLIDE = 0.3;
@@ -58,6 +59,8 @@ export class WorldScreen extends MenuScreen {
         const rise = (1 - ease.outBack(progress(this.time, 0.05, 0.35))) * 30;
         this.#drawCard(ctx, WORLDS[this.#index], this.#index, { ...card, x: card.x + shift, y: card.y + rise });
         this.#dots(ctx, size);
+        // the challenge is the ranked mode: said over its button
+        textCentered(ctx, 'WEEKLY LEADERBOARD', size.width / 2, size.height - 32, { color: UI.gold, outline: UI.ink });
     }
 
     #drawCard(ctx, world, index, box) {

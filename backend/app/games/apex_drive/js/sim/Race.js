@@ -370,18 +370,20 @@ export class Race {
         }
     }
 
-    /** The car behind runs into the one in front: speeds and places are shared out, both are shoved apart. */
+    /**
+     * Two cars touching, settled along the way they overlap least. More in
+     * line than side by side: the car behind runs into the one in front,
+     * speeds are shared out and the cars are set apart along the road. More
+     * side by side: they rub, are set apart across it, and the one coming
+     * through keeps its speed and its place (an overtake is never undone by
+     * a touch). Either way both are shoved apart.
+     */
     #bump(rear, front, gap) {
         const [a, b] = [rear.car, front.car];
-        if (a.speed > b.speed) {
-            const difference = a.speed - b.speed;
-            a.speed = b.speed + difference * CONTACT.rearKeep;
-            b.speed += difference * (1 - CONTACT.rearKeep) * 0.5;
-        }
-        const overlap = BODY.length - gap;
-        a.z -= overlap / 2;
-        b.z += overlap / 2;
-        // a hit from straight behind trades speed; side by side, the cars push apart
+        const along = (BODY.length - gap) / BODY.length;
+        const across = 1 - Math.abs(b.x - a.x) / BODY.width;
+        if (across >= along) this.#rearEnd(a, b, gap);
+        else this.#rub(a, b);
         const side = (b.x - a.x) / BODY.width;
         a.shove -= side * CONTACT.shove * b.stats.ram * a.stats.bumpTaken;
         b.shove += side * CONTACT.shove * a.stats.ram * b.stats.bumpTaken;
@@ -395,6 +397,26 @@ export class Race {
             const other = rear.isPlayer ? front : rear;
             this.#emit('bump', { with: other.name, hurt: hurt > 0 && !this.player.car.shielded });
         }
+    }
+
+    /** From behind: the car behind gives the one in front most of the speed it had more; they part along the road. */
+    #rearEnd(a, b, gap) {
+        if (a.speed > b.speed) {
+            const difference = a.speed - b.speed;
+            a.speed = b.speed + difference * CONTACT.rearKeep;
+            b.speed += difference * (1 - CONTACT.rearKeep) * 0.5;
+        }
+        const overlap = BODY.length - gap;
+        a.z -= overlap / 2;
+        b.z += overlap / 2;
+    }
+
+    /** Side by side: they part across the road, each on its own side. */
+    #rub(a, b) {
+        const side = Math.sign(b.x - a.x) || 1;
+        const overlap = BODY.width - Math.abs(b.x - a.x);
+        a.x -= (side * overlap) / 2;
+        b.x += (side * overlap) / 2;
     }
 
     #watchPosition() {

@@ -138,7 +138,7 @@ export const BODY = {
 export const CONTACT = {
     /** A bump shoves both cars sideways at this speed (half widths per second), times the other's ram. */
     shove: 1.1,
-    /** The car behind keeps this much of the speed difference. */
+    /** Running into a car from behind, the car behind keeps this much of the speed difference (side by side: all of it). */
     rearKeep: 0.35,
     damage: 5,
     /** Seconds before the same two cars can hurt each other again. */

@@ -27,6 +27,7 @@ import { TitleScreen } from './screens/TitleScreen.js';
 import { TrackScreen } from './screens/TrackScreen.js';
 import { WorldScreen } from './screens/WorldScreen.js';
 import { propKindsOf } from './sim/setup.js';
+import { Avatars } from './render/ui/Avatars.js';
 import { Chrome } from './ui/Chrome.js';
 
 /** Composition root: the only place that knows the concrete classes. */
@@ -93,6 +94,9 @@ async function boot() {
             settingsStore.save(settings);
         },
         icons,
+        /** Who is playing (their Steem name and avatar); offline, a nameless "YOU". */
+        player: { name: 'YOU', steem: null, ranked: false },
+        avatars: new Avatars(),
         // a mouse (and so, most likely, a keyboard): the screens name the keys
         keyboard: globalThis.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false,
         autopilot: query.has('autoplay'),
@@ -168,7 +172,8 @@ async function boot() {
             applyPause();
         },
     }).catch((error) => console.error('[Apex Drive] platform', error));
-    await sync.load();
+    const [, player] = await Promise.all([sync.load(), sync.profile()]);
+    if (player) app.player = player;
 
     // automated checks: ?screen=garage&track=duskValley opens a screen straight away
     game.start(query.get('screen') ?? 'title', { trackId: query.get('track') ?? undefined, worldIndex: 0 });

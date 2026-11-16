@@ -166,3 +166,19 @@ test('a good driver in the stock car makes the podium of the first race most tim
     assert.ok(podiums >= 3, `podiums ${podiums}/5: ${races.map((r) => r.position)}`);
     assert.ok(races.every((r) => r.offRoad < 0.05), `off the road: ${races.map((r) => r.offRoad.toFixed(3))}`);
 });
+
+test('rubbing side by side never sends the car coming through back behind, nor takes its speed', () => {
+    const race = racingRace();
+    const [other] = race.racers.filter((r) => !r.isPlayer);
+    const car = race.player.car;
+    for (const rest of race.racers.filter((r) => !r.isPlayer && r !== other)) rest.car.z = -50000;
+    Object.assign(other.car, { z: 10000, x: 0, speed: 6000 });
+    // nearly alongside, the sides just overlapping
+    Object.assign(car, { z: 10000 - BODY.length / 3, x: -BODY.width * 0.8, speed: 9000 });
+    const before = car.z;
+    const events = run(race, DT, () => GAS);
+    assert.ok(events.some((e) => e.type === 'bump'), 'they touched');
+    assert.ok(car.z > before, 'not set back');
+    assert.ok(car.speed > 8500, `speed ${car.speed}`);
+    assert.ok(Math.abs(car.x - other.car.x) >= BODY.width - 1e-9, 'set apart across the road');
+});

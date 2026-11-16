@@ -51,6 +51,15 @@ test('ratings stay within their bars, for the stock car and the best one', () =>
 });
 
 test('no build carries more than the nitro limit', () => {
-    const loaded = computeStats({ parts: { nitro: 3 }, mods: ['extraTank'] }, CATALOG);
+    const tank = { effect: { add: { nitroCharges: 2 } } };
+    const loaded = computeStats({ parts: { nitro: 3 }, mods: ['tank'] }, { ...CATALOG, mods: { ...CATALOG.mods, tank } });
     assert.equal(loaded.nitroCharges, PHYSICS.maxNitro);
+});
+
+test('POWER NITRO makes the nitro stronger and keeps every charge', () => {
+    const plain = computeStats({ parts: { nitro: 3 }, mods: [] }, CATALOG);
+    const power = computeStats({ parts: { nitro: 3 }, mods: ['extraTank'] }, CATALOG);
+    assert.equal(CATALOG.mods.extraTank.name, 'POWER NITRO');
+    assert.ok(Math.abs(power.nitroPower - plain.nitroPower * 1.2) < 1e-9);
+    assert.equal(power.nitroCharges, plain.nitroCharges);
 });

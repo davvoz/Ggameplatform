@@ -324,13 +324,11 @@
       }
     },
     "extraTank": {
-      "price": 900,
-      "energy": 1,
+      "price": 1800,
+      "energy": 2,
       "effect": {
-        "add": {
-          "nitroCharges": 1
-        },
         "mul": {
+          "nitroPower": 1.2,
           "mass": 1.04
         }
       }

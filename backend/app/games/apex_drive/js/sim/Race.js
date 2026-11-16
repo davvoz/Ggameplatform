@@ -444,14 +444,33 @@ export class Race {
         }
     }
 
-    /** The race as the results screen tells it. */
+    /**
+     * The race as the results screen tells it. The race ends a moment after
+     * the player's flag: a rival still out gets the time it is heading for
+     * (the distance left at its average speed so far), never better than the
+     * driver ranked before it, so every rival's row has a time.
+     */
     result() {
+        let last = 0;
+        const standings = this.standings.map((racer) => {
+            // a player without the flag (everyone else home first) has no time
+            if (racer.isPlayer && !racer.finished) return { name: racer.name, isPlayer: true, time: null };
+            last = Math.max(last, racer.finishTime ?? this.#expectedFinish(racer));
+            return { name: racer.name, isPlayer: racer.isPlayer, time: last };
+        });
         return {
             position: this.position,
             bestLap: this.bestLap,
             time: this.player.finishTime,
             cash: this.cash,
-            standings: this.standings.map((racer) => ({ name: racer.name, isPlayer: racer.isPlayer, time: racer.finishTime })),
+            standings,
         };
+    }
+
+    /** When a racer still out would take the flag, at the average speed it has kept since GO. */
+    #expectedFinish(racer) {
+        const left = this.track.laps * this.track.length - racer.car.z;
+        const average = racer.car.z / Math.max(this.time, 1e-6);
+        return this.time + left / Math.max(average, 1);
     }
 }

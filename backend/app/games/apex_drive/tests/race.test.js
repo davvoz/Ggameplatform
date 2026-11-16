@@ -182,3 +182,21 @@ test('rubbing side by side never sends the car coming through back behind, nor t
     assert.ok(car.speed > 8500, `speed ${car.speed}`);
     assert.ok(Math.abs(car.x - other.car.x) >= BODY.width - 1e-9, 'set apart across the road');
 });
+
+test("rivals still out at the player's flag get the time they are heading for, in the order they run", () => {
+    const race = racingRace();
+    const { length, laps } = race.track;
+    race.player.car.z = length * laps - 10;
+    race.player.car.speed = 6000;
+    race.racers.filter((r) => !r.isPlayer).forEach((rival, i) => {
+        rival.car.z = length * laps - 3000 - i * 1500;
+        rival.car.speed = 5000;
+    });
+    run(race, 0.2, () => GAS);
+    assert.equal(race.phase, 'finished');
+    const { standings } = race.result();
+    assert.equal(standings[0].isPlayer, true);
+    assert.equal(standings[0].time, race.player.finishTime);
+    assert.ok(standings.every((row) => row.time !== null), 'every row has a time');
+    standings.slice(1).forEach((row, i) => assert.ok(row.time >= standings[i].time, `${row.name} after ${standings[i].name}`));
+});

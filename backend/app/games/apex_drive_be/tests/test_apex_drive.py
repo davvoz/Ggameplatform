@@ -57,8 +57,18 @@ class EconomyTest(unittest.TestCase):
         self.assertEqual(eco.stats_of({"chassis": 3}, [])["slots"], base["slots"] + 3)
 
     def test_nitro_charges_are_whole_and_capped(self):
-        stats = eco.stats_of({"nitro": 3}, ["extraTank"])
-        self.assertEqual(stats["nitroCharges"], eco.economy()["physics"]["maxNitro"])
+        data = eco.economy()
+        tank = {"effect": {"add": {"nitroCharges": 2.4}}}
+        with mock.patch.object(eco, "economy", return_value={**data, "mods": {**data["mods"], "tank": tank}}):
+            stats = eco.stats_of({"nitro": 3}, ["tank"])
+        self.assertEqual(stats["nitroCharges"], data["physics"]["maxNitro"])
+
+    def test_power_nitro_raises_the_speed_bound(self):
+        plain = eco.stats_of({"nitro": 3}, [])
+        power = eco.stats_of({"nitro": 3}, ["extraTank"])
+        self.assertAlmostEqual(power["nitroPower"], plain["nitroPower"] * 1.2)
+        self.assertEqual(power["nitroCharges"], plain["nitroCharges"])
+        self.assertGreater(eco.speed_bound(power), eco.speed_bound(plain))
 
     def test_a_better_car_has_a_higher_speed_bound(self):
         self.assertGreater(eco.speed_bound(eco.stats_of(TOP_PARTS, [])), eco.speed_bound(eco.stats_of({}, [])))

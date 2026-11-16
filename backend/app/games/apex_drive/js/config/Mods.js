@@ -29,12 +29,14 @@ export const MODS = {
         lines: ['NITRO +30% POWER', 'ONE CHARGE LESS'],
         effect: { mul: { nitroPower: 1.3 }, add: { nitroCharges: -1 } },
     },
+    // once EXTRA TANK (one more charge: useless with the best nitro, already at the limit);
+    // the id stays, as the careers that bought it saved it
     extraTank: {
-        name: 'EXTRA TANK',
-        energy: 1,
-        price: 900,
-        lines: ['ONE MORE NITRO (MAX 5)', '+4% WEIGHT'],
-        effect: { add: { nitroCharges: 1 }, mul: { mass: 1.04 } },
+        name: 'POWER NITRO',
+        energy: 2,
+        price: 1800,
+        lines: ['NITRO +20% POWER', '+4% WEIGHT'],
+        effect: { mul: { nitroPower: 1.2, mass: 1.04 } },
     },
     magnet: {
         name: 'PICKUP MAGNET',

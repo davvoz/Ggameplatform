@@ -1,8 +1,17 @@
 {
-  "version": "5.24.3",
-  "timestamp": "2026-11-16T21:29:33.691Z",
-  "buildNumber": 636,
+  "version": "5.24.4",
+  "timestamp": "2026-11-16T21:50:31.314Z",
+  "buildNumber": 637,
   "changelog": [
+    {
+      "version": "5.24.4",
+      "date": "2026-11-16",
+      "type": "patch",
+      "changes": [
+        "fix: [AD] enhance keyboard focus handling for game canvas and add related tests",
+        "🔖 Bump version to 5.24.3 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.3",
       "date": "2026-11-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[NM] improvment",
         "🔖 Bump version to 5.23.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.23.0",
-      "date": "2026-11-14",
-      "type": "minor",
-      "changes": [
-        "feat:[NM]add NM",
-        "🔖 Bump version to 5.22.6 [skip-version]"
       ]
     }
   ]

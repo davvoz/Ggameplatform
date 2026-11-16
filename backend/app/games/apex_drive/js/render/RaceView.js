@@ -105,7 +105,7 @@ export class RaceView {
             return place ? [{ depth: place.depth, draw: () => sprite.draw(ctx, place) }] : [];
         });
         sprites.push({ depth: CAMERA.behind, draw: () => this.#drawPlayer(ctx, size, horizon, clock) });
-        sprites.sort((a, b) => b.depth - a.depth).forEach((sprite) => sprite.draw());
+        for (const sprite of sprites.toSorted((a, b) => b.depth - a.depth)) sprite.draw();
         this.#weather(ctx, size, horizon, clock);
     }
 

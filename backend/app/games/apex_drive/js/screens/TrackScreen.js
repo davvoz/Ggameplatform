@@ -1,3 +1,4 @@
+import { DRIVERS } from '../config/Drivers.js';
 import { WEATHER } from '../config/Weather.js';
 import { WORLDS } from '../config/Worlds.js';
 import { formatTime, ordinal } from '../render/hud/RaceHud.js';
@@ -5,22 +6,27 @@ import { MiniMap } from '../render/hud/MiniMap.js';
 import { drawText } from '../render/PixelFont.js';
 import { ease, progress } from '../render/ui/ease.js';
 import { arrow, panel, textCentered, UI } from '../render/ui/widgets.js';
-import { trackOf } from '../sim/setup.js';
+import { rivalBuilds, trackOf } from '../sim/setup.js';
 import { header, HEADER_HEIGHT, menuBackground } from './backdrop.js';
 import { MenuScreen } from './Screen.js';
 
 /**
  * The tracks of a world: a list on the left (locked ones show a lock, raced
- * ones their best place), the chosen track's map and facts on the right,
- * and the way on: to the garage, or straight to the race.
+ * ones their best place), under it the rivals' cars as they come to the
+ * chosen track (a pip per part tier they have bought), its map and facts on
+ * the right, and the way on: to the garage, or straight to the race.
  */
 const ROW = { height: 17, gap: 3 };
+/** The rivals' panel: a line per rival, a pip per tier bought. */
+const RIVALS = { line: 9, title: 11, pip: 4, least: 40 };
 
 export class TrackScreen extends MenuScreen {
     #world;
     #worldIndex;
     #selected;
     #maps = new Map();
+    /** Tiers each rival has bought, by track. */
+    #tiers = new Map();
 
     enter() {
         this.#worldIndex = this.params.worldIndex ?? 0;
@@ -69,7 +75,9 @@ export class TrackScreen extends MenuScreen {
     scene(ctx, size) {
         menuBackground(ctx, size, this.time);
         header(ctx, size, this.#world.name, this.app.career.credits, this.app.icons);
-        this.menu.buttons.filter((b) => b.custom).forEach((row, i) => this.#row(ctx, row, i));
+        const rows = this.menu.buttons.filter((b) => b.custom);
+        rows.forEach((row, i) => this.#row(ctx, row, i));
+        this.#rivals(ctx, size, rows.at(-1));
         this.#details(ctx, size);
     }
 
@@ -89,6 +97,39 @@ export class TrackScreen extends MenuScreen {
         if (!open) ctx.drawImage(this.app.icons.lock[1], x + row.w - 13, row.y + 4);
         else if (best) drawText(ctx, ordinal(best), x + row.w - 24, row.y + 5, { color: best <= 3 ? UI.gold : UI.cream });
         if (focused && Math.floor(this.time * 3) % 2 === 0) arrow(ctx, x - 6, row.y + 6, UI.cream);
+    }
+
+    /** Part tiers each rival has bought by the time it races a track: [driver, tiers]. */
+    #tiersOf(trackId) {
+        if (!this.#tiers.has(trackId)) {
+            const builds = rivalBuilds(trackId);
+            const count = (parts) => Object.values(parts).reduce((sum, tier) => sum + tier, 0);
+            this.#tiers.set(trackId, DRIVERS.map((driver) => [driver, count(builds.get(driver.id))]));
+        }
+        return this.#tiers.get(trackId);
+    }
+
+    /** The rivals' cars on the chosen track, under the list (when there is room). */
+    #rivals(ctx, { width, height }, lastRow) {
+        const x = 8;
+        const y = lastRow.y + lastRow.h + 6;
+        const w = this.#listWidth(width);
+        const h = height - 28 - y;
+        if (h < RIVALS.least) return;
+        const appear = ease.outCubic(progress(this.time, 0.2, 0.3));
+        const left = x - (1 - appear) * w;
+        panel(ctx, left, y, w, h);
+        drawText(ctx, 'RIVALS', left + 5, y + 4, { color: UI.gold });
+        this.#tiersOf(this.#trackId).forEach(([driver, tiers], i) => {
+            const line = y + RIVALS.title + 3 + i * RIVALS.line;
+            if (line + RIVALS.line > y + h) return;
+            ctx.fillStyle = driver.colors.r;
+            ctx.fillRect(left + 5, line, 5, 5);
+            drawText(ctx, driver.name, left + 13, line - 1, { color: UI.cream });
+            ctx.fillStyle = UI.gold;
+            for (let p = 0; p < tiers; p++) ctx.fillRect(left + 50 + p * (RIVALS.pip + 1), line, RIVALS.pip, 5);
+            if (tiers === 0) drawText(ctx, 'STOCK', left + 50, line - 1, { color: UI.dim });
+        });
     }
 
     /** The chosen track: its map, laps, weather, best place and lap record. */

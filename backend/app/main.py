@@ -160,7 +160,7 @@ allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
 if allow_all_origins:
     # More permissive CORS for LAN access
     cors_kwargs = {
-        "allow_origin_regex": r"http://.*",  # Allow any HTTP origin on LAN
+        "allow_origin_regex": r"https?://.*",  # Allow any origin on LAN (http or https)
         "allow_credentials": True,
         "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Cache-Control", "Pragma"],

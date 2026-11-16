@@ -58,7 +58,7 @@ export class Rng {
 export function hashSeed(seed, salt) {
     let hash = 0x811c9dc5 ^ (seed >>> 0);
     const text = String(salt);
-    for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 0x01000193);
+    for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.codePointAt(i), 0x01000193);
     hash = Math.imul(hash ^ (hash >>> 16), 0x85ebca6b);
     return ((hash ^ (hash >>> 13)) >>> 0) || 1;
 }

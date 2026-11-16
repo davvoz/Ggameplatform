@@ -85,6 +85,15 @@ They all share `sim/ai/driving.js`: slow before a bend to what their grip
 holds, go round a slower car, lift rather than ram it. A small rubber band
 keeps the pack together. The player starts last on the grid.
 
+The rivals **upgrade their cars** along the career, as the player does
+(`sim/rivals.js`): before a track each has spent a share of the prizes a
+driver finishing 2nd won on every track before it (`RIVAL_UPGRADES` in
+`config/Tuning.js`), at the garage's prices, on the parts it likes, one tier
+of each in turn (`buys` in `config/Drivers.js`: BRICK armour first, VEX
+tyres first...). Stock on the first track, they grow with the economy; the
+world's `difficulty` only fine-tunes on top. The track screen shows them
+(RIVALS: a pip per tier bought).
+
 Cars a lap down are on the road like any other: they block, bump and give
 a slipstream (`Track.gap` measures the road distance the short way round;
 cars count their distance since the start). Going by a rival, the player

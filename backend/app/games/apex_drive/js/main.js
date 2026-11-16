@@ -177,4 +177,8 @@ async function boot() {
     globalThis.__apexDrive = { game, app };
 }
 
-boot().catch((error) => console.error('[Apex Drive] boot failed', error));
+try {
+    await boot();
+} catch (error) {
+    console.error('[Apex Drive] boot failed', error);
+}

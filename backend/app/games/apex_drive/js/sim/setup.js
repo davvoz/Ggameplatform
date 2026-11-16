@@ -3,7 +3,8 @@ import { POTHOLES } from '../config/Hazards.js';
 import { PICKUP_LAYOUT, PICKUPS } from '../config/Pickups.js';
 import { PROPS, SCENERY } from '../config/Props.js';
 import { TRACKS } from '../config/Tracks.js';
-import { BODY, RACE, ROAD, TRACK_BUILD } from '../config/Tuning.js';
+import { PARTS } from '../config/Parts.js';
+import { BODY, PRIZES, RACE, RIVAL_UPGRADES, ROAD, TRACK_BUILD } from '../config/Tuning.js';
 import { WEATHER } from '../config/Weather.js';
 import { WORLDS } from '../config/Worlds.js';
 import { hashSeed, Rng } from '../core/Rng.js';
@@ -14,12 +15,14 @@ import { Car } from './Car.js';
 import { layPickups, PickupField } from './Pickups.js';
 import { layPotholes, PotholeField } from './Potholes.js';
 import { Race, Racer } from './Race.js';
+import { rivalBudget, rivalParts } from './rivals.js';
 import { bySegment, layScenery } from './Scenery.js';
 import { Track } from './Track.js';
 
 /**
  * Builds a race from the game's data: the track of a world, its weather,
- * props, pickups and potholes, the rivals on the grid and the player at the back.
+ * props, pickups and potholes, the rivals on the grid (in the cars they have
+ * upgraded by then) and the player at the back.
  */
 
 const tracks = new Map();
@@ -57,8 +60,14 @@ export function worldOf(trackId) {
     return world;
 }
 
-function rivalStats(driver, world) {
-    const stats = applyEffect(computeStats({ parts: {}, mods: [] }, CATALOG), driver.effect);
+/** The parts each rival has bought by the time it races a track. */
+export function rivalBuilds(trackId) {
+    const budget = rivalBudget(trackId, WORLDS, PRIZES, RIVAL_UPGRADES);
+    return new Map(DRIVERS.map((driver) => [driver.id, rivalParts(driver.buys, budget, PARTS)]));
+}
+
+function rivalStats(driver, world, parts) {
+    const stats = applyEffect(computeStats({ parts, mods: [] }, CATALOG), driver.effect);
     stats.power *= world.difficulty * driver.skill;
     return stats;
 }
@@ -78,11 +87,12 @@ export function createRace({ trackId, playerStats, playerName = 'YOU', seed = 1 
     const world = worldOf(trackId);
     const rng = new Rng(hashSeed(track.seed, seed));
     const lapLength = track.length;
+    const builds = rivalBuilds(trackId);
 
     const rivals = DRIVERS.map((driver) => new Racer({
         id: driver.id,
         name: driver.name,
-        car: new Car(rivalStats(driver, world)),
+        car: new Car(rivalStats(driver, world, builds.get(driver.id))),
         brain: createBrain(driver.behaviour, rng),
         colors: driver.colors,
         lapLength,

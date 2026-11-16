@@ -186,3 +186,9 @@ export const PRIZES = [1500, 1000, 700, 450, 250, 120];
 
 /** A place this good or better unlocks the next track. */
 export const PODIUM = 3;
+
+/**
+ * The rivals' upgrades (sim/rivals.js): before a track each has spent this
+ * share of the prizes a driver finishing in `place` won on every track before it.
+ */
+export const RIVAL_UPGRADES = { place: 2, share: 0.6 };

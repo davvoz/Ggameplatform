@@ -31,20 +31,28 @@ export class Screen {
     }
 
     /** Called once, when the screen becomes the current one. */
-    enter() {}
+    enter() {
+        // nothing by default: a screen does what it needs
+    }
 
     /** Called once, when another screen takes its place. */
-    leave() {}
+    leave() {
+        // nothing by default: a screen does what it needs
+    }
 
     /** Called at the simulation's rate with the fixed step (seconds). */
-    tick() {}
+    tick() {
+        // nothing by default: a screen does what it needs
+    }
 
     update(dt) {
         this.time += dt;
     }
 
     /** Draws the screen: (ctx, size) with size the frame's {width, height}. */
-    draw() {}
+    draw() {
+        // nothing by default: a screen does what it needs
+    }
 
     /**
      * A press at (x, y), frame pixels.
@@ -55,10 +63,14 @@ export class Screen {
     }
 
     /** A key action: up, down, left, right, confirm, back, pause. */
-    key() {}
+    key() {
+        // nothing by default: a screen does what it needs
+    }
 
     /** The page was hidden or the platform paused the game. */
-    suspend() {}
+    suspend() {
+        // nothing by default: a screen does what it needs
+    }
 
     /** The song to play while shown (config/Music.js), null for none. */
     get music() {
@@ -84,15 +96,23 @@ export class MenuScreen extends Screen {
     }
 
     /** What is behind the buttons: (ctx, size). */
-    scene() {}
+    scene() {
+        // nothing by default: a screen does what it needs
+    }
 
     /** What is over the buttons: (ctx, size). */
-    overlay() {}
+    overlay() {
+        // nothing by default: a screen does what it needs
+    }
 
     /** A button was pressed: (id). */
-    action() {}
+    action() {
+        // nothing by default: a screen does what it needs
+    }
 
-    back() {}
+    back() {
+        // nothing by default: a screen does what it needs
+    }
 
     draw(ctx, size) {
         this.menu.set(this.layout(size));

@@ -267,8 +267,10 @@ session with the run's id, and `app/game_score_validators.py` lets through
 only a run the server checked, once, of that player and that week. Career
 races report 0: they pay credits.
 
-The game says it is the ranked mode: "WEEKLY LEADERBOARD" over the
-CHALLENGE button, and a ribbon on the challenge screen ("COUNTS ON THE CUR8
+The game says it is the ranked mode: on the world select the challenge is a
+card as big as the career's, half the screen each ("WEEKLY LEADERBOARD"
+over a podium, "TOP 10 WIN", the time left in the week, or, to a guest,
+"SIGN IN TO RANK"), and a ribbon on the challenge screen ("COUNTS ON THE CUR8
 WEEKLY LEADERBOARD", or, to a guest, that only Steem players are ranked).
 The screen shows the week's standings (`GET /challenge/leaderboard`,
 `apex_drive_be/standings.py`): every ranked player's best run, guests and
@@ -278,6 +280,19 @@ pixel portrait; a coloured tile with the initial while it loads or when
 there is none), the player's row lit and kept at the bottom when beyond
 the first places. Who is playing comes from `GET /me/profile` at boot
 (`app.player`): their Steem name is their name in the races too.
+
+A challenge run has the sponsor's boards, in every world (config
+`CHALLENGE_ADS`, `sim/Scenery.js` `layAds`, art in `render/art/AdArt.js`):
+a banner over the road just after the line, CUR8 WEEKLY CHALLENGE with the
+cur8 logo (cars drive under it: it is `overhead`, nobody hits it); boards
+along the lap on alternate sides (NO BRAKES!, the cur8 logo alone, HODL
+STEEM, luciojolly's Steem avatar alone, TOP 10 WIN); and on the
+last stretch VOTE, CUR8, FOR, WITNESS, one word a board, then a giant board
+with the logo. An avatar board's picture is loaded from Steem like the
+standings' avatars (`app.avatars`) and drawn into the board's frame by
+`RaceView` during the race: an image from Steem cannot be read back, and
+the boards are shrunk by reading their pixels. The boards off the road are
+props like the others (a car off the road hits them); career races have none.
 
 Registration on the platform: `backend/scripts/register_apex_drive.py`.
 Backend tests: `cd backend && python -m unittest discover -s app/games/apex_drive_be/tests -t .`

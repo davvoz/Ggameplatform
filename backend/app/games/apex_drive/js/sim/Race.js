@@ -317,7 +317,7 @@ export class Race {
         const count = this.track.segments.length;
         for (const offset of [-1, 0, 1]) {
             const props = this.#propsAt.get((segment + offset + count) % count) ?? [];
-            const hit = props.find((prop) => Math.abs(prop.x - car.x) < (prop.width + BODY.width) / 2);
+            const hit = props.find((prop) => !prop.overhead && Math.abs(prop.x - car.x) < (prop.width + BODY.width) / 2);
             if (hit) {
                 this.#crash(racer, hit);
                 return;

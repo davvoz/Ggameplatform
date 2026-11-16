@@ -1,5 +1,6 @@
 import { CARS, PLAYER_CAR } from './config/Cars.js';
 import { DRIVERS } from './config/Drivers.js';
+import { CHALLENGE_ADS } from './config/Props.js';
 import { THEMES } from './config/Themes.js';
 import { ROAD, SCREEN, TICK_RATE } from './config/Tuning.js';
 import { CareerSync } from './app/CareerSync.js';
@@ -10,6 +11,7 @@ import { Controls } from './input/Controls.js';
 import { ApexServer } from './platform/ApexServer.js';
 import { LocalSave } from './platform/LocalSave.js';
 import { PlatformSessions } from './platform/PlatformSessions.js';
+import { paintAds } from './render/art/AdArt.js';
 import { paintIcons } from './render/art/Icons.js';
 import { paintProps } from './render/art/PropArt.js';
 import { Backdrop } from './render/Backdrop.js';
@@ -47,13 +49,15 @@ function raceArt() {
     const backdrops = new Map();
     const props = new Map();
     const rivals = new Map(DRIVERS.map((driver) => [driver.id, new CarArt(CARS[PLAYER_CAR], driver.colors)]));
+    const ads = paintAds(CHALLENGE_ADS);
     const once = (cache, key, make) => {
         if (!cache.has(key)) cache.set(key, make());
         return cache.get(key);
     };
     return {
         backdrop: (theme) => once(backdrops, theme, () => new Backdrop(THEMES[theme], focalLength(SCREEN))),
-        props: (world) => once(props, world.id, () => paintProps(THEMES[world.theme].props, propKindsOf(world))),
+        // the challenge's boards can stand in any world: every world has them
+        props: (world) => once(props, world.id, () => ({ ...paintProps(THEMES[world.theme].props, propKindsOf(world)), ...ads })),
         rivals,
     };
 }
@@ -110,6 +114,7 @@ async function boot() {
             player: playerCar,
             rivals: shared.rivals,
             weather: race.weather,
+            avatars: app.avatars,
         }),
     };
     const factories = Object.fromEntries(Object.entries(SCREENS).map(([name, Kind]) => [name, (a, params) => new Kind(a, params)]));

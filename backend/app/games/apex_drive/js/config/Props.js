@@ -25,6 +25,43 @@ export const PROPS = {
     snowman: { width: 0.3 },
     /** Broken road ahead: put up by sim/Scenery.js before every broken stretch, never by chance. */
     rough: { width: 0.3 },
+    /** The weekly challenge's boards (CHALLENGE_ADS): wide ones with words, square ones, the giant logo. */
+    ad: { width: 1.8 },
+    adSquare: { width: 1.7 },
+    adAvatar: { width: 2.3 },
+    adLogo: { width: 2.6 },
+    /** Across the road on two posts, high up: the cars drive under it, it stops nobody. */
+    adBanner: { width: 0, overhead: true },
+};
+
+/**
+ * The weekly challenge's boards, in every world (sim/Scenery.js layAds, art
+ * in render/art/AdArt.js). Each board has a `kind` (its size, above) and a
+ * `look`: its art, or `text` for a wide board with that text on it, or
+ * `steem` for an avatar board (kind adAvatar) with that Steem user's avatar (loaded from Steem
+ * during the race, as the standings' avatars).
+ * - banner: over the road, `segment` segments after the line (the start);
+ * - along: spread over the lap from `from` to `to` (shares), on alternate
+ *   sides `at` half widths from the middle, the right first;
+ * - finish: the last stretch, on the right: one word a board, `every`
+ *   segments apart, then the giant logo `before` segments from the line.
+ */
+export const CHALLENGE_ADS = {
+    banner: { segment: 4 },
+    along: {
+        from: 0.1,
+        to: 0.75,
+        at: 2.6,
+        boards: [
+            { kind: 'ad', text: 'NO BRAKES!' },
+            // the tall square boards on the left, clear of the minimap
+            { kind: 'adSquare', look: 'adCur8' },
+            { kind: 'ad', text: 'HODL STEEM' },
+            { kind: 'adAvatar', steem: 'luciojolly' },
+            { kind: 'ad', text: 'TOP 10 WIN' },
+        ],
+    },
+    finish: { words: ['VOTE', 'CUR8', 'FOR', 'WITNESS'], every: 50, before: 50, at: 2.7, logoAt: 3.6 },
 };
 
 export const SCENERY = {

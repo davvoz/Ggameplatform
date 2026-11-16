@@ -1,7 +1,7 @@
 import { DRIVERS } from '../config/Drivers.js';
 import { POTHOLES } from '../config/Hazards.js';
 import { PICKUP_LAYOUT, PICKUPS } from '../config/Pickups.js';
-import { PROPS, SCENERY } from '../config/Props.js';
+import { CHALLENGE_ADS, PROPS, SCENERY } from '../config/Props.js';
 import { TRACKS } from '../config/Tracks.js';
 import { PARTS } from '../config/Parts.js';
 import { BODY, PRIZES, RACE, RIVAL_UPGRADES, ROAD, TRACK_BUILD } from '../config/Tuning.js';
@@ -16,7 +16,7 @@ import { layPickups, PickupField } from './Pickups.js';
 import { layPotholes, PotholeField } from './Potholes.js';
 import { Race, Racer } from './Race.js';
 import { rivalBudget, rivalParts } from './rivals.js';
-import { bySegment, layScenery } from './Scenery.js';
+import { bySegment, layAds, layScenery } from './Scenery.js';
 import { Track } from './Track.js';
 
 /**
@@ -79,10 +79,11 @@ function gridSpot(index) {
 }
 
 /**
- * @param {{trackId: string, playerStats: import('./Build.js').Stats, playerName?: string, seed?: number}} options
- *   seed: varies the rivals' choices from race to race (the track itself never changes)
+ * @param {{trackId: string, playerStats: import('./Build.js').Stats, playerName?: string, seed?: number, challenge?: boolean}} options
+ *   seed: varies the rivals' choices from race to race (the track itself never changes);
+ *   challenge: a weekly challenge run, with the sponsor's boards before the line
  */
-export function createRace({ trackId, playerStats, playerName = 'YOU', seed = 1 }) {
+export function createRace({ trackId, playerStats, playerName = 'YOU', seed = 1, challenge = false }) {
     const track = trackOf(trackId);
     const world = worldOf(trackId);
     const rng = new Rng(hashSeed(track.seed, seed));
@@ -108,7 +109,9 @@ export function createRace({ trackId, playerStats, playerName = 'YOU', seed = 1 
     const racers = [...rivals, player];
     racers.forEach((racer, i) => Object.assign(racer.car, gridSpot(i)));
 
-    const props = layScenery(track, { ...world, ...TRACKS[trackId].scenery }, PROPS, SCENERY);
+    const ads = challenge ? layAds(track, CHALLENGE_ADS, PROPS) : [];
+    const taken = new Set(ads.map((ad) => ad.segment));
+    const props = [...layScenery(track, { ...world, ...TRACKS[trackId].scenery }, PROPS, SCENERY, taken), ...ads].sort((a, b) => a.z - b.z);
     return new Race({
         track,
         world,

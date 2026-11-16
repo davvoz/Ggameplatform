@@ -41,7 +41,7 @@ export class RaceScreen extends Screen {
         const run = this.params.challenge;
         this.#entry = run ? null : this.app.sync.startRace(this.params.trackId);
         const seed = run ? run.seed : this.#entry.seed;
-        this.#race = createRace({ trackId: this.params.trackId, playerStats: this.app.career.stats(), seed, playerName: this.app.player.name });
+        this.#race = createRace({ trackId: this.params.trackId, playerStats: this.app.career.stats(), seed, playerName: this.app.player.name, challenge: Boolean(run) });
         this.#view = this.app.makeRaceView(this.#race);
         this.#hud = new RaceHud(this.#race, this.app.icons, { keyboard: this.app.keyboard, brake: this.app.controls.touch });
         this.#taunts = new Taunts(seed);

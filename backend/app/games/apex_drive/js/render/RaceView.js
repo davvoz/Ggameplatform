@@ -1,5 +1,6 @@
 import { POTHOLES } from '../config/Hazards.js';
 import { CAMERA, LEAN, ROAD, SCREEN } from '../config/Tuning.js';
+import { AVATAR } from './art/AdArt.js';
 import { Lean } from './art/lean.js';
 import { bySegment } from '../sim/Scenery.js';
 import { makeCanvas } from './canvas.js';
@@ -10,6 +11,9 @@ import { paintRoad } from './road/raster.js';
 import { paintTunnels } from './road/tunnel.js';
 import { projectRoad } from './road/project.js';
 import { focalLength } from './screen.js';
+
+/** The avatars on the challenge's boards are loaded this big, then blown up with square pixels. */
+const AVATAR_PIXELS = 40;
 
 /**
  * Draws a race seen from behind the player's car: the backdrop (veiled by
@@ -62,13 +66,16 @@ export class RaceView {
      * @param {{backdrop: import('./Backdrop.js').Backdrop, palette: import('./road/RoadPalette.js').RoadPalette,
      *   props: Record<string, HTMLCanvasElement>, icons: Record<string, Record<number, HTMLCanvasElement>>,
      *   player: import('./CarArt.js').CarArt, rivals: Map<string, import('./CarArt.js').CarArt>,
-     *   weather: {tint: string|null, veil?: string, particles: object|null}}} parts
+     *   weather: {tint: string|null, veil?: string, particles: object|null},
+     *   avatars?: import('./ui/Avatars.js').Avatars}} parts avatars: Steem avatars, for the challenge's avatar boards
      */
     constructor(race, parts) {
         this.#race = race;
         this.#parts = parts;
         this.#reference = (this.#focal * ROAD.halfWidth) / CAMERA.behind;
         this.#propsAt = bySegment(race.props);
+        // the boards' avatars start loading now, so they are there when the boards come
+        for (const prop of race.props) if (prop.steem) parts.avatars?.portrait(prop.steem, AVATAR_PIXELS);
         this.#falling = precipitationOf(parts.weather.particles);
     }
 
@@ -159,9 +166,36 @@ export class RaceView {
     #props(strips) {
         const art = this.#parts.props;
         return strips.flatMap((strip) => (this.#propsAt.get(strip.index) ?? []).map((prop) => {
-            const kind = prop.kind === 'chevron' && prop.x > 0 ? 'chevronLeft' : prop.kind;
-            return { where: this.#where(prop.segment, 0.5, prop.x), draw: (ctx, place) => drawStanding(ctx, art[kind], place) };
+            const look = prop.kind === 'chevron' && prop.x > 0 ? 'chevronLeft' : prop.look ?? prop.kind;
+            const draw = (ctx, place) => {
+                drawStanding(ctx, art[look], place);
+                if (prop.steem) this.#avatarOn(ctx, art[look], place, prop.steem);
+            };
+            return { where: this.#where(prop.segment, 0.5, prop.x), draw };
         }));
+    }
+
+    /**
+     * A Steem user's avatar in their board's frame (AdArt AVATAR), as the board
+     * stands at `place`; nothing until it has loaded. It is drawn here, not
+     * painted into the board: an image from Steem cannot be read back, and the
+     * boards are shrunk by reading their pixels.
+     */
+    #avatarOn(ctx, board, place, steem) {
+        const portrait = this.#parts.avatars?.portrait(steem, AVATAR_PIXELS);
+        if (!portrait) return;
+        const width = widthAt(board, place);
+        const scale = width / board.width;
+        const height = Math.round(board.height * scale);
+        const top = Math.round(place.y - height);
+        const size = Math.round(AVATAR.size * scale);
+        if (size < 1) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, ctx.canvas.width, Math.round(place.clip));
+        ctx.clip();
+        ctx.drawImage(portrait, Math.round(place.x - width / 2 + AVATAR.x * scale), Math.round(top + AVATAR.y * scale), size, size);
+        ctx.restore();
     }
 
     #pickups(cameraZ, clock) {

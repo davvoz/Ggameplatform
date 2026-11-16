@@ -1,0 +1,115 @@
+/* Apex Drive: the page is a stage for one low resolution canvas, scaled up with square pixels. */
+:root {
+    --night: #1b1440;
+    --ink: #140c1c;
+    --cream: #f2eef6;
+    --px: 3px; /* one game pixel, set by main.js */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--night);
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+#stage {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+}
+
+#frame {
+    position: relative;
+    line-height: 0;
+}
+
+/* the size is set by js/render/Frame.js, keeping the frame's shape */
+#game-canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* ---- the full screen button, drawn like the game: sized in game pixels (--px, set by main.js),
+   in the top right corner the screens keep free (CORNER in render/ui/widgets.js) */
+.pix-btn {
+    position: absolute;
+    top: calc(var(--px) * 3);
+    right: calc(var(--px) * 3);
+    width: calc(var(--px) * 13);
+    height: calc(var(--px) * 13);
+    padding: calc(var(--px) * 2.5);
+    border: var(--px) solid var(--ink);
+    background: var(--cream);
+    box-shadow: inset calc(var(--px) * -1) calc(var(--px) * -1) 0 #b9aed0;
+    cursor: pointer;
+    opacity: 0.85;
+}
+
+.pix-btn:hover { opacity: 1; }
+.pix-btn:active { transform: translateY(var(--px)); box-shadow: none; }
+
+.pix-btn svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: var(--ink);
+    shape-rendering: crispEdges;
+}
+
+/* the browser's full screen fights the platform's rotation on phones */
+@media (pointer: coarse) {
+    #btn-fullscreen { display: none; }
+}
+
+.frame-error {
+    position: fixed;
+    left: 8px;
+    bottom: 4px;
+    margin: 0;
+    color: #ff8a8a;
+    font-size: 11px;
+}
+
+/* ---- phones held upright */
+.rotate-guard {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: none;
+    place-content: center;
+    justify-items: center;
+    gap: 12px;
+    background: var(--night);
+    color: var(--cream);
+    text-align: center;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.is-upright .rotate-guard { display: grid; }
+
+.rotate-guard svg {
+    width: 120px;
+    height: 120px;
+    fill: none;
+    stroke: var(--cream);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.rotate-guard .turn { animation: wobble 1.4s ease-in-out infinite; transform-origin: 60px 60px; }
+
+@keyframes wobble {
+    50% { transform: rotate(-18deg); }
+}

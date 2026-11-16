@@ -727,7 +727,8 @@ def end_game_session(session_id: str, score: int, duration_seconds: int, extra_d
 
         # ── anti-cheat: void implausible scores BEFORE they touch the leaderboard,
         #    high score, XP or quests. Games without a validator pass through.
-        score, reject_reason = validate_game_score(game_id, score, duration_seconds, extra_data)
+        score, reject_reason = validate_game_score(game_id, score, duration_seconds, extra_data,
+                                                   user_id=game_session.user_id)
         if reject_reason is not None:
             print(f"[DB] ⚠️ Score rejected for {game_id} ({reject_reason}): {score} → 0")
             score = 0

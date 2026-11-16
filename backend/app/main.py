@@ -39,6 +39,7 @@ from app.games.stunt_hill_be.router import router as stunt_hill_router
 from app.games.stormrun_be.router import router as stormrun_router
 from app.games.hexforge_be.router import router as hexforge_router
 from app.games.night_mage_be.router import router as night_mage_router
+from app.games.apex_drive_be.router import router as apex_drive_router
 from app.database import init_db
 from app.leaderboard_triggers import setup_leaderboard_triggers
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -213,6 +214,7 @@ app.include_router(stunt_hill_router, tags=["Stunt Hill Ranked"])
 app.include_router(stormrun_router, tags=["Stormrun"])
 app.include_router(hexforge_router, tags=["Hexforge"])
 app.include_router(night_mage_router, tags=["Night Mage"])
+app.include_router(apex_drive_router, tags=["Apex Drive"])
 #app.include_router(city_world_router, tags=["City World"])
 app.include_router(push_notifications.router, tags=["push-notifications"])
 app.include_router(campaigns.router, prefix="/campaigns", tags=["campaigns"])

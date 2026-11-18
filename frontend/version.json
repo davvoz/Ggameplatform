@@ -1,8 +1,17 @@
 {
-  "version": "5.24.7",
-  "timestamp": "2026-11-16T23:53:15.105Z",
-  "buildNumber": 640,
+  "version": "5.24.8",
+  "timestamp": "2026-11-18T17:19:53.004Z",
+  "buildNumber": 641,
   "changelog": [
+    {
+      "version": "5.24.8",
+      "date": "2026-11-18",
+      "type": "patch",
+      "changes": [
+        "fix: enhance Steem API handling with multiple nodes and improved error management",
+        "🔖 Bump version to 5.24.7 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.7",
       "date": "2026-11-16",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[NM]balance and animations",
         "🔖 Bump version to 5.23.4 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.23.4",
-      "date": "2026-11-15",
-      "type": "patch",
-      "changes": [
-        "fix:[NM] enhance boss mechanics with invader roster and health scaling",
-        "🔖 Bump version to 5.23.3 [skip-version]"
       ]
     }
   ]

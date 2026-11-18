@@ -19,6 +19,7 @@ from app.steem_checker import (
     resolve_witness_vote_from_memo,
     persist_multiplier_result,
     get_delegation_amount,
+    SteemUnavailable,
 )
 from app.telegram_notifier import send_telegram_error
 
@@ -62,7 +63,13 @@ class MultiplierScheduler:
                     memo.update(fetched)
                     pending = {a.get("proxy") for a in fetched.values() if a.get("proxy")} - set(memo)
 
+                skipped = 0
                 for u in users:
+                    if u.steem_username not in memo:
+                        # Account data not fetched (Steem node down): keep the
+                        # stored multiplier instead of resetting it to base.
+                        skipped += 1
+                        continue
                     try:
                         # The sweep bypasses the per-user cooldown BY DESIGN: it is
                         # the safety net for drift and must not depend on per-user
@@ -70,6 +77,8 @@ class MultiplierScheduler:
                         votes = resolve_witness_vote_from_memo(u.steem_username, memo)
                         delegation = get_delegation_amount(u.steem_username)  # per-user RPC, unavoidable
                         persist_multiplier_result(u, votes, delegation, session)
+                    except SteemUnavailable:
+                        skipped += 1
                     except Exception as e:
                         errors_count += 1
                         logger.exception("Error checking multiplier for user %s", u.user_id)
@@ -85,6 +94,8 @@ class MultiplierScheduler:
                                     'current_user': u.user_id
                                 }
                             )
+                if skipped:
+                    logger.warning("Skipped %d/%d users: Steem data unavailable, multipliers left unchanged", skipped, users_checked)
 
         except Exception as e:
             logger.exception("Critical error during scheduled multiplier check")

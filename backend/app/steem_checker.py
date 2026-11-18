@@ -10,7 +10,14 @@ import requests
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional
 
-STEEM_API_URL = "https://api.steemit.com"
+# Nodes tried in order; the first one that answers wins. api.steemit.com alone
+# is a single point of failure (if it rejects the server IP, login breaks).
+STEEM_API_NODES = [
+    node.strip() for node in os.getenv(
+        "STEEM_API_NODES",
+        "https://api.steemit.com,https://api.moecki.online,https://api.justyy.com",
+    ).split(",") if node.strip()
+]
 CUR8_WITNESS = "cur8.witness"
 CUR8_ACCOUNT = "cur8"
 
@@ -22,30 +29,47 @@ MAX_PROXY_DEPTH = 4  # Steem allows proxy chains up to depth 4
 # Shared HTTP session for connection reuse (thread-safe for this usage)
 _http = requests.Session()
 
+_RPC_UNAVAILABLE = object()  # sentinel: no node answered
+
+
+class SteemUnavailable(Exception):
+    """No Steem node answered: callers must NOT persist a 'no vote / no delegation' result."""
+
+
+def _rpc(method: str, params: list):
+    """
+    Call a condenser_api method, failing over across STEEM_API_NODES.
+    Returns the JSON-RPC `result`, or _RPC_UNAVAILABLE if every node failed.
+    """
+    payload = {"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
+    for node in STEEM_API_NODES:
+        try:
+            response = _http.post(node, json=payload, timeout=10)
+            if response.status_code != 200:
+                print(f"⚠️ Steem node {node} returned HTTP {response.status_code} for {method}")
+                continue
+            body = response.json()
+            if "result" not in body:
+                print(f"⚠️ Steem node {node} returned no result for {method}: {body.get('error')}")
+                continue
+            return body["result"]
+        except Exception as e:
+            print(f"⚠️ Steem node {node} failed for {method}: {e}")
+    print(f"❌ All Steem nodes failed for {method}")
+    return _RPC_UNAVAILABLE
+
 def _fetch_vests_to_sp_ratio() -> Optional[float]:
     """Fetch the VESTS/SP ratio from the blockchain. None on failure."""
     try:
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "condenser_api.get_dynamic_global_properties",
-            "params": [],
-            "id": 1
-        }
+        props = _rpc("condenser_api.get_dynamic_global_properties", [])
+        if props is _RPC_UNAVAILABLE or not props:
+            return None
+        total_vesting_fund_steem = float(props.get("total_vesting_fund_steem", "0").split()[0])
+        total_vesting_shares = float(props.get("total_vesting_shares", "0").split()[0])
 
-        response = _http.post(STEEM_API_URL, json=payload, timeout=10)
-
-        if response.status_code == 200:
-            result = response.json()
-            if "result" in result:
-                props = result["result"]
-                total_vesting_fund_steem = float(props.get("total_vesting_fund_steem", "0").split()[0])
-                total_vesting_shares = float(props.get("total_vesting_shares", "0").split()[0])
-
-                if total_vesting_shares > 0:
-                    # VESTS to SP ratio
-                    ratio = total_vesting_shares / total_vesting_fund_steem
-                    return ratio
-
+        if total_vesting_shares > 0:
+            # VESTS to SP ratio
+            return total_vesting_shares / total_vesting_fund_steem
         return None
 
     except Exception as e:
@@ -132,23 +156,12 @@ def get_accounts_data(usernames: list) -> Dict[str, Dict]:
     results: Dict[str, Dict] = {}
     for i in range(0, len(usernames), 100):
         chunk = usernames[i:i + 100]
-        try:
-            payload = {
-                "jsonrpc": "2.0",
-                "method": "condenser_api.get_accounts",
-                "params": [chunk],
-                "id": 1
-            }
-
-            response = _http.post(STEEM_API_URL, json=payload, timeout=10)
-
-            if response.status_code == 200:
-                result = response.json()
-                for account in result.get("result", []) or []:
-                    results[account["name"]] = account
-
-        except Exception as e:
-            print(f"⚠️ Error batch-fetching accounts (chunk starting {chunk[0]}): {e}")
+        accounts = _rpc("condenser_api.get_accounts", [chunk])
+        if accounts is _RPC_UNAVAILABLE:
+            print(f"⚠️ Error batch-fetching accounts (chunk starting {chunk[0]})")
+            continue
+        for account in accounts or []:
+            results[account["name"]] = account
     return results
 
 
@@ -211,8 +224,16 @@ def verify_posting_key(username: str, posting_key: str) -> Dict:
     """
     try:
         # Get account data first
-        account = get_account_data(username)
         print(f"🔍 Verifying posting key for {username}...")
+        accounts = _rpc("condenser_api.get_accounts", [[username]])
+        if accounts is _RPC_UNAVAILABLE:
+            return {
+                "success": False,
+                "unavailable": True,
+                "message": "Steem blockchain is temporarily unreachable. Please try again in a few minutes.",
+                "account": None
+            }
+        account = next((a for a in accounts or [] if a.get("name") == username), None)
         if not account:
             return {
                 "success": False,
@@ -292,31 +313,23 @@ def get_delegation_amount(username: str) -> float:
         # Get current VESTS to SP conversion ratio
         vests_per_steem = get_vests_to_sp_ratio()
         
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "condenser_api.get_vesting_delegations",
-            "params": [username, CUR8_ACCOUNT, 100],
-            "id": 1
-        }
+        delegations = _rpc("condenser_api.get_vesting_delegations", [username, CUR8_ACCOUNT, 100])
+        if delegations is _RPC_UNAVAILABLE:
+            raise SteemUnavailable(f"could not fetch delegations for {username}")
 
-        response = _http.post(STEEM_API_URL, json=payload, timeout=10)
-        
-        if response.status_code == 200:
-            result = response.json()
-            if "result" in result:
-                delegations = result["result"]
-                
-                # Find delegation specifically to @cur8
-                for delegation in delegations:
-                    if delegation.get("delegatee") == CUR8_ACCOUNT:
-                        vests_str = delegation.get("vesting_shares", "0 VESTS")
-                        vests = float(vests_str.split()[0])
-                        # Convert VESTS to STEEM Power using dynamic ratio
-                        steem_amount = vests / vests_per_steem
-                        return round(steem_amount, 3)
-        
+        # Find delegation specifically to @cur8
+        for delegation in delegations or []:
+            if delegation.get("delegatee") == CUR8_ACCOUNT:
+                vests_str = delegation.get("vesting_shares", "0 VESTS")
+                vests = float(vests_str.split()[0])
+                # Convert VESTS to STEEM Power using dynamic ratio
+                steem_amount = vests / vests_per_steem
+                return round(steem_amount, 3)
+
         return 0.0
-        
+
+    except SteemUnavailable:
+        raise
     except Exception as e:
         print(f"⚠️ Error checking delegation for {username}: {e}")
         return 0.0
@@ -422,10 +435,20 @@ def update_user_multiplier(user_id: str, steem_username: str, db_session, force:
 
         # Check current Steem status
         print(f"🔍 Checking Steem multiplier for {steem_username}...")
+        # If the chain is unreachable, keep the stored multiplier: a failed lookup
+        # would otherwise read as "no witness vote, no delegation" and reset it.
+        if _rpc("condenser_api.get_accounts", [[steem_username]]) is _RPC_UNAVAILABLE:
+            print(f"⏭️ Steem unreachable, keeping current multiplier for {steem_username}")
+            return False
         votes_witness = check_witness_vote(steem_username)
         delegation_amount = get_delegation_amount(steem_username)
 
         return persist_multiplier_result(user, votes_witness, delegation_amount, db_session)
+
+    except SteemUnavailable as e:
+        print(f"⏭️ Steem unreachable, keeping current multiplier for {steem_username}: {e}")
+        db_session.rollback()
+        return False
 
     except Exception as e:
         print(f"❌ Error updating multiplier for {user_id}: {e}")

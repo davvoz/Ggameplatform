@@ -196,7 +196,7 @@ async def authenticate_with_steem(auth_data: SteemKeychainAuth, response: Respon
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Steem authentication failed: {str(e)}")
 
-@router.post("/steem-posting-key-auth", responses=_RESP_400_401)
+@router.post("/steem-posting-key-auth", responses={400: {"description": _DESC_400}, 401: {"description": _DESC_401}, 503: {"description": "Steem blockchain unreachable"}})
 async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth, response: Response, request: Request):
     """Authenticate user with Steem posting key.
     
@@ -211,7 +211,7 @@ async def authenticate_with_posting_key(auth_data: SteemPostingKeyAuth, response
         
         if not verification["success"]:
             raise HTTPException(
-                status_code=401, 
+                status_code=503 if verification.get("unavailable") else 401,
                 detail=verification["message"]
             )
         

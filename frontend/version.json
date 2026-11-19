@@ -1,8 +1,17 @@
 {
-  "version": "5.24.8",
-  "timestamp": "2026-11-18T17:19:53.004Z",
-  "buildNumber": 641,
+  "version": "5.24.9",
+  "timestamp": "2026-11-19T08:39:19.706Z",
+  "buildNumber": 642,
   "changelog": [
+    {
+      "version": "5.24.9",
+      "date": "2026-11-19",
+      "type": "patch",
+      "changes": [
+        "fix:[AD]add worlds",
+        "🔖 Bump version to 5.24.8 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.8",
       "date": "2026-11-18",
@@ -82,15 +91,6 @@
       "changes": [
         "feat: [AD]add Apex Drive game API, service, rules, and tests",
         "🔖 Bump version to 5.23.5 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.23.5",
-      "date": "2026-11-15",
-      "type": "patch",
-      "changes": [
-        "fix:[NM]balance and animations",
-        "🔖 Bump version to 5.23.4 [skip-version]"
       ]
     }
   ]

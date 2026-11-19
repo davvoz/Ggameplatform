@@ -1,6 +1,9 @@
-import { POTHOLES } from '../config/Hazards.js';
+import { ABYSS, POTHOLES, VORTEX } from '../config/Hazards.js';
 import { BODY, CONTACT, DRAFT, RACE } from '../config/Tuning.js';
+import { flowOf } from './Currents.js';
+import { comeBack, fallen, fly, onRampNow } from './Flight.js';
 import { PotholeField } from './Potholes.js';
+import { drop, onTurbo } from './Vortex.js';
 
 /**
  * One race: the player and the rivals on a track, from the grid to the flag.
@@ -16,7 +19,7 @@ import { PotholeField } from './Potholes.js';
  *
  * @typedef {object} RaceEvent
  * @property {string} type count, go, perfectStart, wheelspin, lap, finalLap, finish, pickup,
- *   nitro, bump, crash, pothole, position, overtake
+ *   nitro, bump, crash, pothole, position, overtake, launch, land, hardLanding, fall, respawn, current, drop, turbo
  * @property {number} [n] count: the number shown
  * @property {number} [lap] lap, finalLap
  * @property {number} [position] finish
@@ -27,6 +30,7 @@ import { PotholeField } from './Potholes.js';
  * @property {number} [to] position: the place now
  * @property {string} [name] overtake: the rival passed on the road
  * @property {boolean} [lapped] overtake: it is a lap (or more) down
+ * @property {string} [flow] current: the way it flows (sim/Currents.js flowOf)
  */
 
 export class Racer {
@@ -44,6 +48,8 @@ export class Racer {
     finishTime = null;
     crashCooldown = 0;
     holeCooldown = 0;
+    /** Seconds still passing through the other cars, just back from a fall. */
+    ghost = 0;
     #lapLength;
 
     constructor({ id, name, car, brain, isPlayer = false, colors = null, lapLength }) {
@@ -93,6 +99,10 @@ export class Race {
     #touched = new Map();
     /** Rival id -> whether it was ahead of the player on the road, while near. */
     #ahead = new Map();
+    /** The way the current under the player flows, null out of one. */
+    #flow = null;
+    /** Whether the player's car is on a turbo strip. */
+    #turbo = false;
 
     /**
      * @param {{track: import('./Track.js').Track, world: object, weather: object, racers: Racer[],
@@ -233,14 +243,53 @@ export class Race {
         const lap = racer.lap;
         const charges = car.nitro;
         const grip = 1 - (1 - this.grip) * (1 - car.stats.weatherGrip);
-        car.step(input, { curve: this.track.segmentAt(car.z).curve, grip }, dt, this.#band(racer));
+        const segment = this.track.segmentAt(car.z);
+        const fromRamp = onRampNow(car, this.track);
+        car.step(input, { curve: segment.curve, grip, ribbons: segment.ribbons, current: segment.current, roll: segment.roll }, dt, this.#band(racer));
         racer.crashCooldown = Math.max(0, racer.crashCooldown - dt);
         racer.holeCooldown = Math.max(0, racer.holeCooldown - dt);
+        racer.ghost = Math.max(0, racer.ghost - dt);
         if (racer.isPlayer && car.nitro < charges) this.#emit('nitro');
-        if (car.offRoad || this.track.segmentAt(car.z).closed) this.#crashes(racer);
-        this.#potholes(racer, fromZ);
-        if (racer.isPlayer) this.#collect(fromZ, car);
+        if (racer.isPlayer) this.#current(segment.current);
+        this.#air(racer, fromRamp, dt);
+        if (this.track.hasVortex) this.#vortex(racer, dt);
+        if (!car.loose) {
+            if (car.offRoad || this.track.segmentAt(car.z).closed) this.#crashes(racer);
+            this.#potholes(racer, fromZ);
+        }
+        if (racer.isPlayer && car.falling === 0) this.#collect(fromZ, car);
         if (racer.lap > lap) this.#newLap(racer);
+    }
+
+    /** The player's car into a current, or into another way of one: it is said. */
+    #current(current) {
+        const flow = flowOf(current);
+        if (flow && flow !== this.#flow) this.#emit('current', { flow });
+        this.#flow = flow;
+    }
+
+    /** In the vortex: too slow on the wall, dropping across the tube; on a turbo strip, free nitro. */
+    #vortex(racer, dt) {
+        const car = racer.car;
+        const segment = this.track.segmentAt(car.z);
+        const happened = drop(car, segment.roll ?? 0, dt);
+        if (happened && racer.isPlayer) this.#emit(happened);
+        const turbo = !car.loose && onTurbo(segment, car.x);
+        if (turbo) car.boost(VORTEX.turboTime);
+        if (racer.isPlayer && turbo && !this.#turbo) this.#emit('turbo');
+        if (racer.isPlayer) this.#turbo = turbo;
+    }
+
+    /** Off a ramp, over the void: flying, landing, falling, and back on the road after a fall. */
+    #air(racer, fromRamp, dt) {
+        const car = racer.car;
+        const happened = fly(car, this.track, fromRamp, dt);
+        if (happened && racer.isPlayer) this.#emit(happened);
+        if (!fallen(car)) return;
+        comeBack(car, this.track);
+        racer.ghost = ABYSS.respawnGrace;
+        racer.crashCooldown = ABYSS.respawnGrace;
+        if (racer.isPlayer) this.#emit('respawn');
     }
 
     #drafts() {
@@ -248,8 +297,8 @@ export class Race {
             let draft = 0;
             for (const other of this.racers) {
                 const gap = this.track.gap(racer.car.z, other.car.z);
-                const behind = other !== racer && gap > 0 && gap < DRAFT.range;
-                if (behind && Math.abs(other.car.x - racer.car.x) < DRAFT.width) draft = Math.max(draft, 1 - gap / DRAFT.range);
+                const behind = other !== racer && !other.car.loose && gap > 0 && gap < DRAFT.range;
+                if (behind && Math.abs(this.track.across(racer.car.z, racer.car.x, other.car.x)) < DRAFT.width) draft = Math.max(draft, 1 - gap / DRAFT.range);
             }
             racer.car.draft = draft;
         }
@@ -278,7 +327,7 @@ export class Race {
     }
 
     #collect(fromZ, car) {
-        const found = this.pickups.collect(fromZ, car.z, car.x, this.#reach + car.stats.magnet);
+        const found = this.pickups.collect(fromZ, car.z, car.x, this.#reach + car.stats.magnet, (z, from, to) => this.track.across(z, from, to));
         for (const item of found) {
             const spec = this.#pickupKinds[item.kind];
             const value = this.#apply(item.kind, spec, car);
@@ -361,13 +410,19 @@ export class Race {
         const racers = this.racers;
         for (let i = 0; i < racers.length; i++) {
             for (let j = i + 1; j < racers.length; j++) {
+                if (!this.#solid(racers[i]) || !this.#solid(racers[j])) continue;
                 const gap = this.track.gap(racers[i].car.z, racers[j].car.z);
                 const [rear, front] = gap >= 0 ? [racers[i], racers[j]] : [racers[j], racers[i]];
-                if (Math.abs(gap) < BODY.length && Math.abs(front.car.x - rear.car.x) < BODY.width) {
+                if (Math.abs(gap) < BODY.length && Math.abs(this.track.across(rear.car.z, rear.car.x, front.car.x)) < BODY.width) {
                     this.#bump(rear, front, Math.abs(gap));
                 }
             }
         }
+    }
+
+    /** A car others can touch: on the road, not just back from a fall (in the air they pass over or under). */
+    #solid(racer) {
+        return racer.ghost === 0 && !racer.car.loose;
     }
 
     /**
@@ -380,11 +435,13 @@ export class Race {
      */
     #bump(rear, front, gap) {
         const [a, b] = [rear.car, front.car];
+        const apart = this.track.across(a.z, a.x, b.x);
         const along = (BODY.length - gap) / BODY.length;
-        const across = 1 - Math.abs(b.x - a.x) / BODY.width;
+        const across = 1 - Math.abs(apart) / BODY.width;
         if (across >= along) this.#rearEnd(a, b, gap);
-        else this.#rub(a, b);
-        const side = (b.x - a.x) / BODY.width;
+        else this.#rub(a, b, apart);
+        // shoved apart from where they were set
+        const side = this.track.across(a.z, a.x, b.x) / BODY.width;
         a.shove -= side * CONTACT.shove * b.stats.ram * a.stats.bumpTaken;
         b.shove += side * CONTACT.shove * a.stats.ram * b.stats.bumpTaken;
 
@@ -411,10 +468,10 @@ export class Race {
         b.z += overlap / 2;
     }
 
-    /** Side by side: they part across the road, each on its own side. */
-    #rub(a, b) {
-        const side = Math.sign(b.x - a.x) || 1;
-        const overlap = BODY.width - Math.abs(b.x - a.x);
+    /** Side by side (`apart` across): they part across the road, each on its own side. */
+    #rub(a, b, apart) {
+        const side = Math.sign(apart) || 1;
+        const overlap = BODY.width - Math.abs(apart);
         a.x -= (side * overlap) / 2;
         b.x += (side * overlap) / 2;
     }

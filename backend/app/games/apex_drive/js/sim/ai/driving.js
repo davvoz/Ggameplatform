@@ -1,11 +1,21 @@
 import { BODY, PHYSICS } from '../../config/Tuning.js';
+import { pushOf } from '../Currents.js';
+import { jumpAhead } from '../Flight.js';
+import { nearestRibbon } from '../Ground.js';
+import { letsGo, slideOf } from '../Vortex.js';
 
 /**
  * The driving every computer car shares: it reads the road ahead, slows
  * before a bend to the speed its own grip can hold, steers towards the
  * place its behaviour asks for (making up for the bend's push), goes round a
  * slower car or a pothole in its way, keeps out of a lane closed for works,
- * and lights the nitro on a straight when asked.
+ * and lights the nitro on a straight when asked. Over the abyss it keeps to
+ * the asphalt: where the road narrows, on the branch of a fork it is
+ * heading for (the nearest), and flat out in the middle of a ramp, with
+ * nitro if it needs it to clear the gap. In a current across the road it
+ * steers against the drift. In the vortex it keeps to the bottom of the
+ * tube against the walls' pull, and rides a turbo strip when it is fast
+ * enough to hold on up there.
  *
  * A behaviour only says where to be and how hard to push: an Aim.
  *
@@ -13,8 +23,10 @@ import { BODY, PHYSICS } from '../../config/Tuning.js';
  *   x: place across the road; pace: share of the safe speed (1 = on the limit)
  */
 
-/** World units looked ahead for bends: near (steering) and far (braking). */
-const LOOK = { steer: 1400, from: 600, to: 4600, step: 400, straight: 9000 };
+/** World units looked ahead for bends: near (steering) and far (braking); where a branch is heading (lead). */
+const LOOK = { steer: 1400, from: 600, to: 4600, step: 400, straight: 9000, lead: 3600 };
+/** On narrow asphalt the car keeps this much more of the lost width away from the edges. */
+const NARROW_KEEP = 1.4;
 /** Past roadworks the car keeps this far into the open lane (half widths from the middle). */
 const WORKS_KEEP = 0.55;
 /**
@@ -27,6 +39,10 @@ const STEER_GAIN = 2.2;
 /** Cars this close ahead (world units) and this close sideways are in the way. */
 const BLOCKED = { range: 1800, width: BODY.width * 1.25, pass: 0.62, lift: 900 };
 const ROAD_EDGE = 0.78;
+/** A jump within this far ahead (world units) is driven for: flat out, aimed at the ramp's middle... */
+const JUMP = { reach: 7000, margin: 1.12 };
+/** A turbo strip is ridden by a car this much faster than the speed that holds it on there. */
+const TURBO_MARGIN = 1.25;
 /** A bend gentler than this does not spoil a straight (for the nitro). */
 const STRAIGHT_CURVE = 1.6;
 
@@ -52,7 +68,9 @@ function carInWay(self, race, aimX) {
     for (const other of race.racers) {
         const gap = race.track.gap(self.car.z, other.car.z);
         if (other === self || gap <= 0 || gap >= BLOCKED.range || other.car.speed > self.car.speed + 400) continue;
-        const inWay = Math.abs(other.car.x - self.car.x) < BLOCKED.width || Math.abs(other.car.x - aimX) < BLOCKED.width;
+        const z = self.car.z;
+        const inWay = Math.abs(race.track.across(z, self.car.x, other.car.x)) < BLOCKED.width
+            || Math.abs(race.track.across(z, aimX, other.car.x)) < BLOCKED.width;
         if (inWay && gap < nearestGap) [nearest, nearestGap] = [other, gap];
     }
     return nearest && { racer: nearest, gap: nearestGap };
@@ -84,12 +102,51 @@ function besideHoles(race, car, x) {
     return free.reduce((best, place) => (Math.abs(place - car.x) < Math.abs(best - car.x) ? place : best), free[0] ?? x);
 }
 
+/**
+ * The asphalt the car is heading for, as the span its middle keeps within:
+ * the ribbon nearest it a little ahead (or here, over a gap ahead), its
+ * middle taken further on (`LOOK.lead`) so the car moves with a branch that
+ * bends away or comes back. On the usual road that is the whole width,
+ * ROAD_EDGE from the middle; on narrow asphalt the car keeps further in.
+ * @returns {{c: number, w: number, edge: number}}
+ */
+function laneSpan(track, car) {
+    const vortex = vortexSpan(track, car);
+    if (vortex) return vortex;
+    for (const ahead of [LOOK.steer, 0, LOOK.steer * 2]) {
+        const ribbon = nearestRibbon(track.ribbonsAt(car.z + ahead), car.x);
+        if (!ribbon) continue;
+        const later = nearestRibbon(track.ribbonsAt(car.z + LOOK.lead), ribbon.c);
+        const c = later && Math.abs(later.c - ribbon.c) < ribbon.w ? later.c : ribbon.c;
+        return { c, w: ribbon.w, edge: Math.max(0, ROAD_EDGE - (1 - ribbon.w) * NARROW_KEEP) };
+    }
+    return { c: 0, w: 1, edge: ROAD_EDGE };
+}
+
+/**
+ * In the vortex (rolled here or a little ahead): a turbo strip coming, when
+ * the car is fast enough to hold on there, else the bottom of the tube as wide as the usual road; null out of it.
+ */
+function vortexSpan(track, car) {
+    const here = track.segmentAt(car.z);
+    const ahead = track.segmentAt(car.z + LOOK.steer);
+    if (!here.roll && !ahead.roll) return null;
+    const turbo = [ahead, track.segmentAt(car.z + LOOK.lead)].find((segment) => segment.turbo !== undefined && segment.roll);
+    if (turbo && !letsGo(turbo.roll, turbo.turbo, car.speedRatio / TURBO_MARGIN)) return { c: turbo.turbo, w: 1, edge: 0 };
+    return { c: 0, w: 1, edge: ROAD_EDGE };
+}
+
+/** An aim across the usual road (-1..1) brought onto the span: scaled to it, kept within its edges. */
+function onSpan(span, x) {
+    return span.c + clamp(x * span.w, -span.edge, span.edge);
+}
+
 /** Where to go round a car: on the side the car already leans to, else where the road is wider. */
-function passingPlace(self, other) {
-    const apart = self.car.x - other.car.x;
-    let side = other.car.x >= 0 ? -1 : 1;
+function passingPlace(self, other, span, track) {
+    const apart = track.across(self.car.z, other.car.x, self.car.x);
+    let side = other.car.x >= span.c ? -1 : 1;
     if (Math.abs(apart) > 0.15) side = Math.sign(apart);
-    return clamp(other.car.x + side * BLOCKED.pass, -ROAD_EDGE, ROAD_EDGE);
+    return clamp(other.car.x + side * BLOCKED.pass, span.c - span.edge, span.c + span.edge);
 }
 
 /**
@@ -106,18 +163,24 @@ export function drive(self, race, aim) {
     const limit = safeRatio(sharpestAhead(track, car.z, LOOK.from, LOOK.to), grip) * aim.pace;
     const ratio = car.speedRatio;
 
-    const blocked = carInWay(self, race, aim.x);
-    const wanted = blocked ? passingPlace(self, blocked.racer) : clamp(aim.x, -ROAD_EDGE, ROAD_EDGE);
+    const span = laneSpan(track, car);
+    const jump = jumpAhead(track, car.z, car.x, JUMP.reach);
+    const blocked = carInWay(self, race, span.c + aim.x * span.w);
+    let wanted = blocked ? passingPlace(self, blocked.racer, span, track) : onSpan(span, aim.x);
+    if (jump) wanted = jump.lip.x;
     const dodge = besideHoles(race, car, wanted);
     const target = openLane(track, car.z, dodge);
     const gain = dodge === wanted ? STEER_GAIN : STEER_GAIN * HOLES.gain;
     const curve = track.segmentAt(car.z + LOOK.steer).curve;
     const outward = (curve * ratio * ratio * PHYSICS.centrifugal) / grip;
-    const pull = (target - car.x) * gain + outward;
+    const under = track.segmentAt(car.z);
+    const drift = pushOf(under.current).across + slideOf(under.roll ?? 0, car.x);
+    const pull = track.across(car.z, car.x, target) * gain + outward - drift;
     const steer = ratio > 0.05 ? clamp(pull / (PHYSICS.steer * Math.min(1, ratio)), -1, 1) : 0;
     // closing fast on a car still in the way: lift rather than ram it
-    const tooClose = blocked && blocked.gap < BLOCKED.lift && Math.abs(blocked.racer.car.x - car.x) < BLOCKED.width;
+    const tooClose = blocked && blocked.gap < BLOCKED.lift && Math.abs(track.across(car.z, car.x, blocked.racer.car.x)) < BLOCKED.width;
 
+    if (jump) return flatOut(car, steer, jump.lip.speed * JUMP.margin);
     const straight = sharpestAhead(track, car.z, LOOK.from, LOOK.straight, LOOK.step * 2) < STRAIGHT_CURVE;
     return {
         steer,
@@ -125,6 +188,11 @@ export function drive(self, race, aim) {
         brake: ratio > limit * 1.08,
         nitro: aim.nitro && straight && car.nitro > 0 && !car.boosting,
     };
+}
+
+/** A ramp coming: throttle down, no brakes, nitro if the car is short of the speed that clears the gap. */
+function flatOut(car, steer, needed) {
+    return { steer, throttle: true, brake: false, nitro: car.speed < needed && car.nitro > 0 && !car.boosting };
 }
 
 /** The racing line: towards the inside of the bend coming. */

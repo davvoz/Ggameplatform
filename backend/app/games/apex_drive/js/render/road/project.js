@@ -7,11 +7,17 @@
  *
  * Pure function: numbers in, numbers out, no canvas.
  *
- * @typedef {{x: number, y: number, w: number}} Edge screen x of the road's middle,
- *   screen y, half width of the road in pixels
- * @typedef {{index: number, n: number, near: Edge, far: Edge, tunnel: boolean, broken: boolean}} Strip
+ * @typedef {{x: number, y: number, w: number, z: number}} Edge screen x of the road's middle,
+ *   screen y, half width of the road in pixels, distance from the camera (world units)
+ * @typedef {{index: number, n: number, near: Edge, far: Edge, tunnel: boolean, broken: boolean,
+ *   ribbons: import('../../sim/Ground.js').Ribbon[], farRibbons: import('../../sim/Ground.js').Ribbon[], abyss: boolean,
+ *   tube: boolean, current: import('../../sim/Currents.js').Current|null, roll: number, farRoll: number, turbo?: number}} Strip
  *   n: how many segments ahead of the camera (0 = the one it is on); tunnel: under a roof;
- *   broken: broken road (patched asphalt, no lane marks)
+ *   broken: broken road (patched asphalt, no lane marks); ribbons: the asphalt at its near
+ *   edge, farRibbons at its far one (the next segment's); abyss: void beside the asphalt;
+ *   tube: inside a glass tube under the sea; current: the water's ({along, across}) or null;
+ *   roll: how far the road rolls up into the vortex's tube at the near edge, farRoll at the far one;
+ *   turbo: where across a turbo strip runs (sim/Vortex.js)
  * @typedef {{width: number, height: number, horizon: number, focal: number}} View
  *   focal: pixels per world unit at distance 1
  * @typedef {{x: number, y: number, z: number}} Camera world position (z wraps)
@@ -36,7 +42,7 @@ export function projectRoad(track, camera, view, road) {
     const base = segments[baseIndex];
     const edge = (x, y, z) => {
         const scale = view.focal / z;
-        return { x: view.width / 2 + (x - camera.x) * scale, y: view.horizon - (y - camera.y) * scale, w: road.halfWidth * scale };
+        return { x: view.width / 2 + (x - camera.x) * scale, y: view.horizon - (y - camera.y) * scale, w: road.halfWidth * scale, z };
     };
 
     const strips = [];
@@ -55,6 +61,14 @@ export function projectRoad(track, camera, view, road) {
                 far: edge(x + dx, segment.y2, z2),
                 tunnel: segment.tunnel === true,
                 broken: segment.broken === true,
+                ribbons: segment.ribbons,
+                farRibbons: segments[(index + 1) % segments.length].ribbons,
+                abyss: segment.abyss === true,
+                tube: segment.tube === true,
+                current: segment.current ?? null,
+                roll: segment.roll ?? 0,
+                farRoll: segments[(index + 1) % segments.length].roll ?? 0,
+                turbo: segment.turbo,
             });
         }
         x += dx;

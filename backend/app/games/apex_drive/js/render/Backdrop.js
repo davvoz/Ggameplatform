@@ -1,4 +1,7 @@
 import { Rng } from '../core/Rng.js';
+import { paintPlanet, paintSpires } from './AlienSky.js';
+import { paintGridPeaks, paintNeonSun } from './NeonScenery.js';
+import { paintFish, paintReef, paintRays, paintRuins } from './OceanScenery.js';
 import { drawWrapped, makeCanvas } from './canvas.js';
 
 /**
@@ -261,6 +264,14 @@ const PAINTERS = {
     hills: paintHills,
     stars: paintStars,
     skyline: paintSkyline,
+    planet: paintPlanet,
+    spires: paintSpires,
+    rays: paintRays,
+    fish: paintFish,
+    ruins: paintRuins,
+    reef: paintReef,
+    neonSun: paintNeonSun,
+    gridPeaks: paintGridPeaks,
 };
 
 /** The layer kinds the backdrop knows (for the tests). */

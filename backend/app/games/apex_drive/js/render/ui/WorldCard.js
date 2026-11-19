@@ -1,6 +1,8 @@
 import { Rng } from '../../core/Rng.js';
+import { paintPlanetOn } from '../AlienSky.js';
 import { paintAuroraOn, paintBody } from '../Backdrop.js';
 import { makeCanvas } from '../canvas.js';
+import { neonSunOn } from '../NeonScenery.js';
 
 /**
  * A world's postcard for the world select: its sky, its scenery (from the
@@ -25,6 +27,14 @@ export function paintWorldCard(theme, width, height) {
 }
 
 const CARD_PAINTERS = {
+    neonSun({ ctx, width, height, horizon }, theme) {
+        neonSunOn(ctx, Math.round(width * 0.5), horizon - 1, { ...theme.neonSun, radius: Math.max(8, Math.round(height * 0.3)) });
+    },
+    gridPeaks(card, theme, layer) {
+        const look = theme.peaks[layer.look];
+        const near = layer.look === 'near';
+        ridge(card, { base: card.height * (near ? 0.06 : 0.12), waves: near ? [[4, 3], [9, 2]] : [[3, 6], [7, 3]], color: look.body, lit: look.crest });
+    },
     mountains(card, theme) {
         if (theme.sun.shape === 'moon') moonHigh(card, theme.sun);
         else sunset(card, theme.sun);
@@ -40,6 +50,62 @@ const CARD_PAINTERS = {
         for (let i = 0; i < width / 6; i++) {
             ctx.fillStyle = rng.pick(theme.stars.colors);
             ctx.fillRect(rng.int(0, width - 1), Math.floor(horizon * 0.8 * rng.next() * rng.next()), 1, 1);
+        }
+    },
+    planet({ ctx, width, height, horizon }, theme) {
+        paintPlanetOn(ctx, Math.round(width * 0.3), Math.round(horizon * 0.42), theme.planet, Math.max(6, Math.round(height * 0.14)));
+    },
+    rays({ ctx, width, horizon, rng }, theme) {
+        const { colors, slant } = theme.rays;
+        for (let i = 0; i < width / 12; i++) {
+            const x = rng.int(0, width - 1);
+            for (let y = 0; y < horizon; y++) {
+                ctx.fillStyle = colors[Math.min(colors.length - 1, Math.floor((y / horizon) * colors.length))];
+                ctx.fillRect(Math.round(x + y * slant), y, 3, 1);
+            }
+        }
+    },
+    ruins({ ctx, width, height, horizon, rng }, theme, layer) {
+        const look = theme.ruins;
+        const scale = height / 140;
+        for (let x = 0; x < width;) {
+            const w = Math.max(3, Math.round(rng.int(layer.wide[0], layer.wide[1]) * scale));
+            const h = Math.max(2, Math.round(rng.int(layer.tall[0], layer.tall[1]) * scale));
+            ctx.fillStyle = look.body;
+            ctx.fillRect(x, horizon - h, w, h);
+            ctx.fillStyle = look.edge;
+            ctx.fillRect(x + w - 1, horizon - h, 1, h);
+            ctx.fillStyle = rng.pick(look.windows);
+            if (h > 6) ctx.fillRect(x + 1, horizon - h + 3, 1, 1);
+            x += w + rng.int(1, 4);
+        }
+    },
+    reef({ ctx, width, horizon, rng }, theme) {
+        const look = theme.reef;
+        for (let x = 0; x < width; x++) {
+            const h = 2 + Math.round(1.5 * Math.sin(x * 0.3) + rng.next());
+            ctx.fillStyle = look.body;
+            ctx.fillRect(x, horizon - h, 1, h);
+            if (rng.chance(0.08)) {
+                ctx.fillStyle = rng.pick(look.coral);
+                ctx.fillRect(x, horizon - h - 1, 1, 1);
+            }
+        }
+    },
+    spires({ ctx, width, height, horizon, rng }, theme, layer) {
+        const look = theme.spires[layer.look];
+        const scale = height / 160;
+        for (let i = 0; i < width * layer.perPixel * 2; i++) {
+            const x = rng.int(0, width - 1);
+            const tall = Math.round(rng.int(layer.tall[0], layer.tall[1]) * scale);
+            const half = Math.max(1, Math.round(rng.int(layer.wide[0], layer.wide[1]) * scale * 0.5));
+            for (let row = 0; row < tall; row++) {
+                const w = Math.max(1, Math.round((half * (row + 1)) / tall));
+                ctx.fillStyle = look.body;
+                ctx.fillRect(x - w, horizon - tall + row, w * 2, 1);
+                ctx.fillStyle = look.lit;
+                ctx.fillRect(x - w, horizon - tall + row, 1, 1);
+            }
         }
     },
     skyline({ ctx, width, height, horizon, rng }, theme, layer) {

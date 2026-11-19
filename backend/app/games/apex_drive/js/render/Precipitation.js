@@ -49,7 +49,7 @@ class Falling {
             const [vx, vy] = this.#velocity(drop, from, height, speed, clock);
             drop.x += vx * dt;
             drop.y += vy * dt;
-            if (drop.x < -8 || drop.x > width + 8 || drop.y > height + 8) this.#respawn(drop, size, from, speed);
+            if (drop.x < -8 || drop.x > width + 8 || drop.y > height + 8 || (this.config.fall < 0 && drop.y < -12)) this.#respawn(drop, size, from, speed);
             else each(drop, vx, vy);
         }
     }
@@ -73,7 +73,10 @@ class Falling {
         }));
     }
 
-    /** A new drop: from the top standing still, more and more from round the road's far end at speed. */
+    /**
+     * A new drop: from the top standing still (from the bottom if it rises),
+     * more and more from round the road's far end at speed.
+     */
     #respawn(drop, { width, height }, from, speed) {
         const rng = this.#rng;
         if (rng.chance(speed * 0.8)) {
@@ -81,7 +84,7 @@ class Falling {
             drop.y = from.y + rng.range(-0.6, 0.4) * height * 0.5;
         } else {
             drop.x = rng.next() * width;
-            drop.y = -rng.range(0, 10);
+            drop.y = this.config.fall < 0 ? height + rng.range(0, 10) : -rng.range(0, 10);
         }
         drop.near = rng.range(0.55, 1);
     }
@@ -148,12 +151,13 @@ function gust(ctx, { width, height }, clock, { every, length, alpha, color }) {
     ctx.fillRect(0, 0, width, height);
 }
 
-/** A double white flash at the start of every `every` seconds (a stopped clock holds it). */
-function lightning(ctx, { width, height }, clock, { every, alpha }) {
+/** A double flash (white, or `color`) at the start of every `every` seconds (a stopped clock holds it). */
+function lightning(ctx, { width, height }, clock, { every, alpha, color = [235, 240, 255] }) {
     const t = clock % every;
     const lit = t < 0.07 || (t > 0.14 && t < 0.22);
     if (!lit) return;
-    ctx.fillStyle = `rgba(235, 240, 255, ${alpha})`;
+    const [r, g, b] = color;
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
     ctx.fillRect(0, 0, width, height);
 }
 
@@ -164,7 +168,39 @@ function streak(ctx, drop, vx, vy, length) {
     for (let i = 0; i < length; i++) ctx.fillRect(Math.round(drop.x - dx * i), Math.round(drop.y - dy * i), 1, 1);
 }
 
-const KINDS = { rain: Rain, snow: Snow };
+/**
+ * Bubbles rising (a negative `fall`), wobbling as they go: the nearest ones
+ * rings of light, the far ones single dots; at speed they stream past.
+ */
+class Bubbles extends Falling {
+    /** @param {CanvasRenderingContext2D} ctx @param {{width: number, height: number}} size @param {number} clock @param {Motion} motion */
+    draw(ctx, size, clock, motion) {
+        const { color, far, streak: longest } = this.config;
+        this.move(size, clock, motion, (drop, vx, vy) => {
+            const length = Math.round(motion.speed * longest * drop.near);
+            if (length >= 2) {
+                ctx.fillStyle = far;
+                streak(ctx, drop, vx, vy, length);
+                return;
+            }
+            const x = Math.round(drop.x);
+            const y = Math.round(drop.y);
+            if (drop.near < 0.8) {
+                ctx.fillStyle = far;
+                ctx.fillRect(x, y, 1, 1);
+                return;
+            }
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y - 1, 2, 1);
+            ctx.fillRect(x - 1, y, 1, 2);
+            ctx.fillRect(x + 2, y, 1, 2);
+            ctx.fillRect(x, y + 2, 2, 1);
+        });
+        if (this.config.lightning) lightning(ctx, size, clock, this.config.lightning);
+    }
+}
+
+const KINDS = { rain: Rain, snow: Snow, bubbles: Bubbles };
 
 /** @param {object|null} particles a weather's `particles` @returns {{draw: Function}|null} */
 export function precipitationOf(particles) {

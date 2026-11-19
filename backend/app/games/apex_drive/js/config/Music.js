@@ -330,11 +330,217 @@ const polarLights = {
     },
 };
 
+// ---- VOID RUN: the hostile planet, E phrygian, fast and heavy
+
+const VOID = {
+    Em: { arp: ['E4', 'G4', 'B4'], root: 'E2' },
+    F: { arp: ['F4', 'A4', 'C5'], root: 'F2' },
+    G: { arp: ['G4', 'B4', 'D5'], root: 'G2' },
+    D: { arp: ['D4', 'F#4', 'A4'], root: 'D3' },
+    C: { arp: ['C4', 'E4', 'G4'], root: 'C3' },
+    B: { arp: ['B3', 'D#4', 'F#4'], root: 'B2' },
+    Bb: { arp: ['Bb3', 'D4', 'F4'], root: 'Bb2' },
+};
+const VOID_VERSE = ['Em', 'F', 'Em', 'F', 'Em', 'F', 'G', 'F'].map((name) => VOID[name]);
+const VOID_CHORUS = ['C', 'D', 'Em', 'Em', 'C', 'D', 'B', 'B'].map((name) => VOID[name]);
+const VOID_BRIDGE = ['Bb', 'C', 'D', 'B'].map((name) => VOID[name]);
+const STOMP = {
+    beat: 'k . h k s . h . k k h . s . h k',
+    drive: 'k . k . s . h k k . k . s . o .',
+    fill: 'k . s . k s s . s s s s s s s s',
+    sparse: 'k . . . s . . . k . . . s . h h',
+};
+
+const voidRun = {
+    bpm: 164,
+    echo: { steps: 3, feedback: 0.3, wet: 0.24, tone: 2000 },
+    order: ['intro', 'verse', 'chorus', 'verse', 'chorus', 'bridge'],
+    loopFrom: 1,
+    sections: {
+        intro: {
+            arp: bars(arp(VOID.Em.arp, 2), arp(VOID.F.arp, 2), arp(VOID.Em.arp, 2), arp(VOID.F.arp, 2)),
+            bass: bars(pumpBass('E2'), pumpBass('F2'), pumpBass('E2'), pumpBass('F2')),
+            drums: bars(STOMP.sparse, STOMP.sparse, STOMP.beat, STOMP.fill),
+        },
+        verse: {
+            lead: bars(
+                'E5 - - - F5 - E5 - B4 - - - E5 - G5 -',
+                'F5 - - - - - E5 - C5 - - - A4 - . .',
+                'E5 - - - F5 - E5 - B4 - - - G5 - B5 -',
+                'A5 - - - G5 - F5 - - - E5 - C5 - . .',
+                'E5 - E5 - F5 - G5 - - - B5 - A5 - G5 -',
+                'F5 - - - E5 - - - C5 - D5 - E5 - . .',
+                'G5 - - - F#5 - - - D5 - E5 - F#5 - A5 -',
+                'F5 - - - - - - - E5 - - - . . . .',
+            ),
+            arp: perChord(VOID_VERSE, (chord) => arp(chord.arp)),
+            bass: perChord(VOID_VERSE, (chord) => octaveBass(chord.root)),
+            drums: bars(STOMP.beat, STOMP.beat, STOMP.beat, STOMP.drive, STOMP.beat, STOMP.beat, STOMP.beat, STOMP.fill),
+        },
+        chorus: {
+            lead: bars(
+                'E6 - - - D6 - C6 - - - G5 - C6 - E6 -',
+                'F#6 - - - - - E6 - D6 - - - A5 - . .',
+                'G6 - - - F#6 - E6 - - - B5 - E6 - G6 -',
+                'E6 - - - - - - - - - - - . . . .',
+                'E6 - - - D6 - C6 - - - G5 - C6 - E6 -',
+                'F#6 - - - - - E6 - D6 - - - A5 - D6 -',
+                'D#6 - - - - - F#6 - - - B5 - D#6 - F#6 -',
+                'B5 - - - - - - - - - - - . . . .',
+            ),
+            arp: perChord(VOID_CHORUS, (chord) => arp(chord.arp.map(up))),
+            bass: perChord(VOID_CHORUS, (chord) => pumpBass(chord.root)),
+            drums: bars(STOMP.drive, STOMP.drive, STOMP.drive, STOMP.fill, STOMP.drive, STOMP.drive, STOMP.drive, STOMP.fill),
+        },
+        bridge: {
+            arp: perChord(VOID_BRIDGE, (chord) => arp(chord.arp, 2)),
+            bass: perChord(VOID_BRIDGE, (chord) => octaveBass(chord.root)),
+            drums: bars(STOMP.sparse, STOMP.sparse, STOMP.beat, STOMP.fill),
+        },
+    },
+};
+
+// ---- DEEP CURRENT: the drowned city, D dorian, slow and wide, a bell over rolling arpeggios
+
+const DEEP = {
+    Dm: { arp: ['D4', 'F4', 'A4'], root: 'D2' },
+    Am: { arp: ['C4', 'E4', 'A4'], root: 'A1' },
+    C: { arp: ['C4', 'E4', 'G4'], root: 'C2' },
+    G: { arp: ['B3', 'D4', 'G4'], root: 'G1' },
+    Bb: { arp: ['Bb3', 'D4', 'F4'], root: 'Bb1' },
+    F: { arp: ['C4', 'F4', 'A4'], root: 'F1' },
+    A: { arp: ['C#4', 'E4', 'A4'], root: 'A1' },
+};
+const DEEP_VERSE = ['Dm', 'Am', 'C', 'G', 'Dm', 'Am', 'Bb', 'C'].map((name) => DEEP[name]);
+const DEEP_CHORUS = ['F', 'C', 'Dm', 'Am', 'F', 'C', 'G', 'A'].map((name) => DEEP[name]);
+const TIDE = {
+    roll: 'k . . h . . s . k . h . s . h .',
+    swell: 'k . h . s . h k . . h . s . h h',
+    fill: 'k . s . s . s s s s s s s s s s',
+    sparse: 'k . . . . . h . k . . . s . . .',
+};
+
+const deepCurrent = {
+    bpm: 126,
+    echo: { steps: 4, feedback: 0.45, wet: 0.36, tone: 1800 },
+    order: ['intro', 'verse', 'chorus', 'verse', 'chorus'],
+    loopFrom: 1,
+    sections: {
+        intro: {
+            arp: bars(arp(DEEP.Dm.arp, 2), arp(DEEP.Am.arp, 2), arp(DEEP.C.arp, 2), arp(DEEP.G.arp, 2)),
+            bass: bars(octaveBass('D2'), octaveBass('A1'), octaveBass('C2'), octaveBass('G1')),
+            drums: bars(TIDE.sparse, TIDE.sparse, TIDE.roll, TIDE.fill),
+        },
+        verse: {
+            bell: bars(
+                'D5 - - - - - F5 - A5 - - - G5 - F5 -',
+                'E5 - - - - - - - C5 - D5 - E5 - . .',
+                'G5 - - - - - E5 - C5 - - - D5 - E5 -',
+                'D5 - - - - - - - B4 - - - . . . .',
+                'D5 - - - - - F5 - A5 - - - C6 - A5 -',
+                'G5 - - - - - E5 - C5 - - - A4 - . .',
+                'Bb4 - - - D5 - F5 - Bb5 - - - A5 - G5 -',
+                'E5 - - - - - - - - - - - . . . .',
+            ),
+            arp: perChord(DEEP_VERSE, (chord) => arp(chord.arp)),
+            bass: perChord(DEEP_VERSE, (chord) => octaveBass(chord.root)),
+            drums: bars(TIDE.roll, TIDE.roll, TIDE.roll, TIDE.swell, TIDE.roll, TIDE.roll, TIDE.roll, TIDE.fill),
+        },
+        chorus: {
+            bell: bars(
+                'A5 - - - - - G5 - F5 - - - C6 - - -',
+                'G5 - - - - - E5 - C5 - - - G5 - . .',
+                'F5 - - - - - E5 - D5 - - - A5 - - -',
+                'E5 - - - - - - - C5 - - - . . . .',
+                'A5 - - - - - G5 - F5 - - - C6 - D6 -',
+                'E6 - - - - - D6 - C6 - - - G5 - . .',
+                'D6 - - - C6 - - - B5 - - - G5 - - -',
+                'C#6 - - - - - - - - - - - . . . .',
+            ),
+            arp: perChord(DEEP_CHORUS, (chord) => arp(chord.arp.map(up))),
+            bass: perChord(DEEP_CHORUS, (chord) => octaveBass(chord.root)),
+            drums: bars(TIDE.swell, TIDE.swell, TIDE.swell, TIDE.fill, TIDE.swell, TIDE.swell, TIDE.swell, TIDE.fill),
+        },
+    },
+};
+
+// ---- GRID RUNNER: the grid vortex, F# minor, synthwave: a bass pulsing on sixteenths, wide arpeggios, a soaring lead
+
+const GRID = {
+    'F#m': { arp: ['F#4', 'A4', 'C#5'], root: 'F#1' },
+    D: { arp: ['D4', 'F#4', 'A4'], root: 'D2' },
+    A: { arp: ['E4', 'A4', 'C#5'], root: 'A1' },
+    E: { arp: ['E4', 'G#4', 'B4'], root: 'E2' },
+    Bm: { arp: ['D4', 'F#4', 'B4'], root: 'B1' },
+    'C#': { arp: ['E#4', 'G#4', 'C#5'], root: 'C#2' },
+};
+const GRID_VERSE = ['F#m', 'D', 'A', 'E', 'F#m', 'D', 'A', 'C#'].map((name) => GRID[name]);
+const GRID_CHORUS = ['D', 'E', 'F#m', 'F#m', 'D', 'E', 'Bm', 'C#'].map((name) => GRID[name]);
+const NEON_BEAT = {
+    beat: 'k . h . s . h . k . h . s . h h',
+    gated: 'k . h k s . h . k . h k s . o .',
+    fill: 'k . h . s . s . s s . s s s s s',
+    sparse: 'k . . . . . h . k . . . . . h .',
+};
+
+/** Bass on every sixteenth, the root and its octave: the engine of synthwave. */
+function pulseBass(root) {
+    const high = up(root);
+    return `${root} ${root} ${high} ${root} `.repeat(4).trim();
+}
+
+const gridRunner = {
+    bpm: 116,
+    echo: { steps: 3, feedback: 0.4, wet: 0.3, tone: 2200 },
+    order: ['intro', 'verse', 'chorus', 'verse', 'chorus'],
+    loopFrom: 1,
+    sections: {
+        intro: {
+            arp: bars(arp(GRID['F#m'].arp, 2), arp(GRID.D.arp, 2), arp(GRID.A.arp, 2), arp(GRID.E.arp, 2)),
+            bass: bars(pulseBass('F#1'), pulseBass('D2'), pulseBass('A1'), pulseBass('E2')),
+            drums: bars(NEON_BEAT.sparse, NEON_BEAT.sparse, NEON_BEAT.beat, NEON_BEAT.fill),
+        },
+        verse: {
+            lead: bars(
+                'C#5 - - - - - A4 - F#4 - - - A4 - C#5 -',
+                'D5 - - - - - - - A4 - - - F#4 - . .',
+                'E5 - - - - - C#5 - A4 - - - C#5 - E5 -',
+                'B4 - - - - - - - G#4 - - - . . . .',
+                'C#5 - - - - - A4 - F#4 - - - A4 - F#5 -',
+                'F#5 - - - E5 - D5 - - - A4 - D5 - . .',
+                'E5 - - - - - C#5 - A4 - B4 - C#5 - E5 -',
+                'E#5 - - - - - - - - - - - . . . .',
+            ),
+            arp: perChord(GRID_VERSE, (chord) => arp(chord.arp)),
+            bass: perChord(GRID_VERSE, (chord) => pulseBass(chord.root)),
+            drums: bars(NEON_BEAT.beat, NEON_BEAT.beat, NEON_BEAT.beat, NEON_BEAT.gated, NEON_BEAT.beat, NEON_BEAT.beat, NEON_BEAT.beat, NEON_BEAT.fill),
+        },
+        chorus: {
+            lead: bars(
+                'F#5 - - - A5 - - - D6 - - - C#6 - A5 -',
+                'B5 - - - - - G#5 - E5 - - - G#5 - B5 -',
+                'C#6 - - - - - A5 - F#5 - - - A5 - C#6 -',
+                'F#6 - - - - - - - - - - - . . . .',
+                'F#5 - - - A5 - - - D6 - - - C#6 - A5 -',
+                'B5 - - - - - G#5 - E5 - - - B5 - E6 -',
+                'D6 - - - - - C#6 - B5 - - - F#5 - B5 -',
+                'C#6 - - - - - - - E#5 - - - G#5 - . .',
+            ),
+            arp: perChord(GRID_CHORUS, (chord) => arp(chord.arp.map(up))),
+            bass: perChord(GRID_CHORUS, (chord) => pulseBass(chord.root)),
+            drums: bars(NEON_BEAT.gated, NEON_BEAT.gated, NEON_BEAT.gated, NEON_BEAT.fill, NEON_BEAT.gated, NEON_BEAT.gated, NEON_BEAT.gated, NEON_BEAT.fill),
+        },
+    },
+};
+
 export const SONGS = {
     pitLane,
     sunsetRun,
     nightDrive,
     polarLights,
+    voidRun,
+    deepCurrent,
+    gridRunner,
 };
 
 /** The song of the menus (title, worlds, tracks, garage, results). */

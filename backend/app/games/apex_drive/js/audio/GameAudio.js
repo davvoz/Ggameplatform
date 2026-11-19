@@ -104,6 +104,8 @@ export function soundOf(event) {
             return event.hurt ? 'bumpHurt' : 'bump';
         case 'position':
             return event.to < event.from ? 'positionUp' : 'positionDown';
+        case 'current':
+            return event.flow === 'against' ? 'undertow' : 'current';
         default:
             return event.type in SOUNDS ? event.type : null;
     }

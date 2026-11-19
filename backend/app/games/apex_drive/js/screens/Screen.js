@@ -64,6 +64,16 @@ export class Screen {
         return false;
     }
 
+    /** A press that did not steer moved to (x, y), frame pixels, still held. */
+    drag() {
+        // nothing by default: a screen with something to drag says so
+    }
+
+    /** The mouse wheel turned over (x, y), frame pixels: `deltaY` down positive. */
+    wheel() {
+        // nothing by default: a screen with something to scroll says so
+    }
+
     /** A key action: up, down, left, right, confirm, back, pause. */
     key() {
         // nothing by default: a screen does what it needs

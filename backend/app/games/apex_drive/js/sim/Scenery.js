@@ -3,8 +3,9 @@ import { Rng } from '../core/Rng.js';
 /**
  * Props by the road, laid from the track's seed: the world's own kinds
  * scattered on both sides, chevron signs on the outside of every sharp
- * bend, warning signs on both sides before broken road, and barriers across
- * the lane closed for roadworks. They are solid: the race checks a car
+ * bend, warning signs on both sides before broken road and before every
+ * jump's ramp, and barriers across the lane closed for roadworks. Nothing
+ * stands over the abyss, nor where the road rolls up into the vortex's tube. They are solid: the race checks a car
  * leaving the road (or in roadworks) against them.
  *
  * @typedef {{segment: number, z: number, x: number, kind: string, width: number, look?: string, steem?: string, overhead?: boolean}} Prop
@@ -32,13 +33,15 @@ export function layScenery(track, world, kinds, layout, taken = new Set()) {
     });
 
     const warnings = roughWarnings(track, layout.roughAt);
+    const jumps = jumpWarnings(track, layout.jumpAt);
     track.segments.forEach((segment, i) => {
         if (segment.closed && i % layout.barrierEvery === 0) {
             props.push({ segment: i, z: (i + 0.5) * track.segmentLength, x: segment.closed * layout.barrierAt, kind: 'barrier', ...kinds.barrier });
         }
-        if (segment.tunnel || taken.has(i)) return;
-        if (warnings.has(i)) {
-            for (const side of [-1, 1]) add(i, side * layout.chevronAt, 'rough');
+        if (!roomFor(segment) || taken.has(i)) return;
+        const warning = (warnings.has(i) && 'rough') || (jumps.has(i) && 'gapSign');
+        if (warning) {
+            for (const side of [-1, 1]) add(i, side * layout.chevronAt, warning);
             return;
         }
         const chevron = Math.abs(segment.curve) > layout.chevronCurve && i % layout.chevronEvery === 0;
@@ -88,13 +91,18 @@ function lookOf(board) {
     return board.kind;
 }
 
-/** [board, segment]: evenly from `from` to `to` of the lap, sides alternating, out of tunnels. */
+/** Whether something can stand by this segment: not in a tunnel, not over the abyss, not where the road rolls up into the vortex. */
+function roomFor(segment) {
+    return !segment.tunnel && !segment.abyss && !segment.roll;
+}
+
+/** [board, segment]: evenly from `from` to `to` of the lap, sides alternating, out of tunnels and the abyss. */
 function alongTheLap({ segments }, { from, to, at, boards }) {
     const count = segments.length;
     return boards.map((board, i) => {
         const share = from + ((to - from) * i) / Math.max(1, boards.length - 1);
         let segment = Math.floor(share * count);
-        for (let n = 0; n < count && segments[segment].tunnel; n++) segment = (segment + 1) % count;
+        for (let n = 0; n < count && !roomFor(segments[segment]); n++) segment = (segment + 1) % count;
         return [{ ...board, x: (i % 2 === 0 ? 1 : -1) * at }, segment];
     });
 }
@@ -105,7 +113,7 @@ function beforeTheLine({ segments }, { words, every, before, at, logoAt }) {
     const boards = [...words.map((text) => ({ kind: 'ad', text, x: at })), { kind: 'adLogo', x: logoAt }];
     return boards.flatMap((board, i) => {
         const segment = count - before - (boards.length - 1 - i) * every;
-        return segment < 0 || segments[segment].tunnel ? [] : [[board, segment]];
+        return segment < 0 || !roomFor(segments[segment]) ? [] : [[board, segment]];
     });
 }
 
@@ -116,6 +124,23 @@ function roughWarnings({ segments }, before) {
     segments.forEach((segment, i) => {
         const starts = segment.broken && !segments[(i - 1 + count) % count].broken;
         if (starts) for (const distance of before) at.add((i - distance + count) % count);
+    });
+    return at;
+}
+
+/**
+ * The segments the jump warnings stand on: so many segments before each
+ * ramp, or before the edge of the void the ramp lies over (signs need ground).
+ */
+function jumpWarnings({ segments }, before) {
+    const count = segments.length;
+    const at = new Set();
+    segments.forEach((segment, i) => {
+        const ramp = segment.ribbons.some((r) => r.ramp);
+        if (!ramp || segments[(i - 1 + count) % count].ribbons.some((r) => r.ramp)) return;
+        let edge = i;
+        for (let n = 0; n < count && segments[edge].abyss; n++) edge = (edge - 1 + count) % count;
+        for (const distance of before) at.add((edge - distance + count) % count);
     });
     return at;
 }

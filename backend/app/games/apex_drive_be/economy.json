@@ -437,6 +437,33 @@
         "glacierPass",
         "whiteout"
       ]
+    },
+    {
+      "id": "xenoWastes",
+      "prizeScale": 2.5,
+      "tracks": [
+        "magmaRift",
+        "sporeCanyon",
+        "theMaw"
+      ]
+    },
+    {
+      "id": "sunkenCity",
+      "prizeScale": 3.2,
+      "tracks": [
+        "coralAvenue",
+        "theTrench",
+        "atlantisRing"
+      ]
+    },
+    {
+      "id": "gridVortex",
+      "prizeScale": 4,
+      "tracks": [
+        "hyperloop",
+        "theSpiral",
+        "eventHorizon"
+      ]
     }
   ],
   "tracks": {
@@ -493,6 +520,60 @@
       "laps": 7,
       "lapLength": 240800,
       "cashPerLap": 540
+    },
+    "magmaRift": {
+      "name": "MAGMA RIFT",
+      "laps": 3,
+      "lapLength": 509000,
+      "cashPerLap": 960
+    },
+    "sporeCanyon": {
+      "name": "SPORE CANYON",
+      "laps": 4,
+      "lapLength": 357800,
+      "cashPerLap": 480
+    },
+    "theMaw": {
+      "name": "THE MAW",
+      "laps": 5,
+      "lapLength": 264600,
+      "cashPerLap": 480
+    },
+    "coralAvenue": {
+      "name": "CORAL AVENUE",
+      "laps": 3,
+      "lapLength": 421600,
+      "cashPerLap": 960
+    },
+    "theTrench": {
+      "name": "THE TRENCH",
+      "laps": 4,
+      "lapLength": 359200,
+      "cashPerLap": 960
+    },
+    "atlantisRing": {
+      "name": "ATLANTIS RING",
+      "laps": 5,
+      "lapLength": 234600,
+      "cashPerLap": 300
+    },
+    "hyperloop": {
+      "name": "HYPERLOOP",
+      "laps": 3,
+      "lapLength": 442800,
+      "cashPerLap": 1080
+    },
+    "theSpiral": {
+      "name": "THE SPIRAL",
+      "laps": 4,
+      "lapLength": 363000,
+      "cashPerLap": 480
+    },
+    "eventHorizon": {
+      "name": "EVENT HORIZON",
+      "laps": 5,
+      "lapLength": 214200,
+      "cashPerLap": 300
     }
   }
 }

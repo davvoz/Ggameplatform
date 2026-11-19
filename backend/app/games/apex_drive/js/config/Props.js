@@ -25,6 +25,26 @@ export const PROPS = {
     snowman: { width: 0.3 },
     /** Broken road ahead: put up by sim/Scenery.js before every broken stretch, never by chance. */
     rough: { width: 0.3 },
+    /** A hostile world's: acid crystals, basalt needles, tentacle stalks, the ribs of a giant beast. */
+    crystal: { width: 0.4 },
+    spire: { width: 0.4 },
+    pod: { width: 0.3 },
+    ribs: { width: 1.4, at: [2.4, 3.2] },
+    /** The drowned city's: coral, kelp, a giant clam, a broken column, a stone giant's head, the old street lamps. */
+    coral: { width: 0.4 },
+    kelp: { width: 0.25 },
+    clam: { width: 0.5 },
+    column: { width: 0.3 },
+    statue: { width: 1.2, at: [2.4, 3.2] },
+    lantern: { width: 0.12 },
+    /** The grid vortex's: light pylons, neon palms, data obelisks, holographic signs, pyramids of light. */
+    pylon: { width: 0.14 },
+    palm: { width: 0.3 },
+    obelisk: { width: 0.35 },
+    holo: { width: 1, at: [2.2, 3] },
+    prism: { width: 1.2, at: [2.6, 3.4] },
+    /** A jump ahead: put up by sim/Scenery.js before every ramp, never by chance. */
+    gapSign: { width: 0.3 },
     /** The weekly challenge's boards (CHALLENGE_ADS): wide ones with words, square ones, the giant logo. */
     ad: { width: 1.8 },
     adSquare: { width: 1.7 },
@@ -80,4 +100,6 @@ export const SCENERY = {
     barrierAt: 0.5,
     /** Broken road: warning signs on both sides, this many segments before each broken stretch. */
     roughAt: [32, 16],
+    /** A jump: warning signs on both sides, this many segments before its ramp, or before the void it lies over. */
+    jumpAt: [30, 12],
 };

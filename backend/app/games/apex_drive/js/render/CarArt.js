@@ -84,12 +84,15 @@ export class CarArt {
      * @param {import('../sim/Car.js').Car} car
      * @param {number} clock seconds, for flickers
      * @param {number} [pose] -steps..steps
+     * @param {number|null} [ground] the row its shadow lies on (under a car in the air), null for none
      */
-    draw(ctx, cx, bottom, car, clock, pose = 0) {
+    draw(ctx, cx, bottom, car, clock, pose = 0, ground = bottom) {
         const left = Math.round(cx - this.width / 2);
         const top = Math.round(bottom - this.height);
-        ctx.fillStyle = SHADOW;
-        ctx.fillRect(left + 2, top + this.height - 2, this.width - 4, 3);
+        if (ground !== null) {
+            ctx.fillStyle = SHADOW;
+            ctx.fillRect(left + 2, Math.round(ground) - 2, this.width - 4, 3);
+        }
         ctx.drawImage(this.spriteFor(car, { pose }), left, top);
         this.#flame(ctx, left, top, car, clock, this.#poses[pose].exhaust);
         if (car.shielded) this.#shield(ctx, left, top, car, clock);

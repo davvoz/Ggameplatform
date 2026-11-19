@@ -11,13 +11,15 @@ from sqlalchemy.orm import Session
 
 from app.models import User
 
-from . import challenge as weekly
 from .models import ApexDriveRace
+from .service import this_week
 
 CHALLENGE = "challenge"
 # Names longer than this are cut (Steem names are at most 16).
 NAME_LENGTH = 16
 GUEST = "GUEST"
+# Places sent to the game, which scrolls through them (the first ten are paid on the platform).
+SHOWN = 50
 
 
 def _profile(user: User | None) -> dict:
@@ -51,12 +53,12 @@ def _best_runs(db: Session, week_id: str) -> list:
     return [(user_id, score, time) for user_id, (score, time, _) in ordered]
 
 
-def leaderboard(db: Session, user_id: str, now: float, limit: int = 10) -> dict:
+def leaderboard(db: Session, user_id: str, now: float, limit: int = SHOWN) -> dict:
     """
     This week's standings: the first `limit` players, and the asking player's
     own place (`me`, also when it is beyond them; None before their first run).
     """
-    info = weekly.challenge_of(now)
+    info = this_week(db, now)
     runs = _best_runs(db, info["weekId"])
     shown = runs[:limit]
     ids = [uid for uid, _, _ in shown] + [user_id]

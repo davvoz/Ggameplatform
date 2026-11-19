@@ -8,6 +8,8 @@ import { mixPixel, toPixel, rgbOf } from '../color.js';
  * Broken road has the theme's patched asphalt and no lane marks; a theme
  * with potholes names their colours (`road.hole`), faded the same way. The
  * weather may fade the road into a colour of its own (`haze`: a blizzard's white).
+ * A theme with a vortex (`vortex`) adds its walls' colours: the panels in
+ * bands, a ring of light, the seams, a turbo strip's two flashes.
  */
 export class RoadPalette {
     #cache = new Map();
@@ -62,8 +64,12 @@ export class RoadPalette {
             asphalt: tone(broken ? road.patch ?? road.asphalt : road.asphalt),
             // the marks are worn away where the road is broken
             lane: band === 0 && !broken ? fade(road.lane) : null,
+            // a ramp before a gap: warning stripes across it, a segment each
+            ramp: (road.ramp ?? road.asphalt).map(fade),
         };
         if (road.hole) colors.hole = Object.fromEntries(Object.entries(road.hole).map(([part, color]) => [part, fade(color)]));
+        const { vortex } = this.#theme;
+        if (vortex) Object.assign(colors, { wall: tone(vortex.wall), ring: fade(vortex.ring), seam: fade(vortex.seam), turbo: vortex.turbo.map(fade), grid: fade(vortex.grid) });
         return colors;
     }
 }

@@ -40,6 +40,53 @@ export const SOUNDS = {
         { t: 'sawtooth', from: 110, to: 35, d: 0.5, v: 0.3 },
         { n: 0.2, f: 3500, q: 2, v: 0.2, at: 0.05 },
     ],
+    /** Off a ramp: the wind rising, the engine's note leaping as the wheels spin free. */
+    launch: [
+        { n: 0.5, f: 600, to: 2400, q: 0.8, v: 0.22 },
+        { t: 'square', from: 220, to: 420, d: 0.25, v: 0.07 },
+    ],
+    /** Wheels back on the asphalt. */
+    land: [
+        { t: 'triangle', from: 130, to: 50, d: 0.14, v: 0.4 },
+        { n: 0.08, f: 900, v: 0.2 },
+    ],
+    /** Landing too hard: the thud, the springs bottoming out, the body crunching. */
+    hardLanding: [
+        { t: 'triangle', from: 120, to: 36, d: 0.22, v: 0.5 },
+        { n: 0.18, f: 1400, to: 300, q: 1.5, v: 0.35 },
+        { t: 'square', from: 1800, to: 1300, d: 0.05, v: 0.05, at: 0.04 },
+    ],
+    /** Over the edge: a long falling whine into the wind of the void. */
+    fall: [
+        { t: 'sawtooth', from: 880, to: 70, d: 1.3, v: 0.14 },
+        { n: 1.3, f: 1200, to: 300, q: 0.6, v: 0.2 },
+    ],
+    /** Too slow up the vortex's wall: the tyres let go, the car whistles down across the tube. */
+    drop: [
+        { t: 'square', from: 900, to: 160, d: 0.6, v: 0.08 },
+        { n: 0.6, f: 2400, to: 500, q: 0.8, v: 0.18 },
+    ],
+    /** On a turbo strip: a rising electric zap. */
+    turbo: [
+        { t: 'sawtooth', from: 300, to: 1400, d: 0.25, v: 0.07 },
+        { n: 0.3, f: 1200, to: 5000, q: 1.2, v: 0.2 },
+    ],
+    /** Into a current: the water rushing past, bubbles rising. */
+    current: [
+        { n: 0.9, f: 300, to: 1500, q: 0.7, v: 0.3 },
+        ...notes([520, 700, 610, 880, 760], { step: 0.07, d: 0.05, v: 0.05, t: 'triangle', at: 0.1 }),
+    ],
+    /** Into a current against the car: a deep surge dragging it back. */
+    undertow: [
+        { n: 0.9, f: 1300, to: 200, q: 0.7, v: 0.32 },
+        { t: 'sawtooth', from: 160, to: 70, d: 0.7, v: 0.07 },
+    ],
+    /** Back on the road out of the dark: a quick rising shimmer. */
+    respawn: [
+        { t: 'square', from: 330, to: 330, d: 0.07, v: 0.06 },
+        { t: 'square', from: 494, to: 494, d: 0.07, v: 0.06, at: 0.07 },
+        { t: 'square', from: 660, to: 660, d: 0.12, v: 0.06, at: 0.14 },
+    ],
     /** A wheel in a pothole: a dull thud and the body rattling. */
     pothole: [
         { t: 'triangle', from: 110, to: 38, d: 0.18, v: 0.45 },

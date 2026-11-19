@@ -186,6 +186,25 @@ class ChallengeTest(unittest.TestCase):
         self.assertEqual(sorted(seen), sorted(order))
         self.assertEqual(weekly.challenge_of(monday)["weekId"], "2026-W47")
 
+    def test_each_week_the_track_after_last_weeks_and_new_tracks_join_the_end_of_the_queue(self):
+        order = ["a", "b", "c"]
+        self.assertEqual(weekly.track_of_week(45, order, (45, "b")), "b", "a week raced keeps its track")
+        self.assertEqual(weekly.track_of_week(46, order, (45, "b")), "c")
+        self.assertEqual(weekly.track_of_week(48, order, (45, "b")), "b", "weeks nobody raced still count")
+        self.assertEqual(weekly.track_of_week(46, order + ["new1", "new2"], (45, "c")), "new1", "new tracks after the last")
+        self.assertEqual(weekly.track_of_week(7, order), "b", "nothing raced yet: the weeks since EPOCH")
+        self.assertEqual(weekly.track_of_week(46, order, (45, "gone")), "b", "a track no longer in the game: the same")
+
+    def test_a_week_under_way_keeps_its_track_when_tracks_are_added(self):
+        monday = datetime(2026, 11, 16, tzinfo=timezone.utc).timestamp()
+        with memory_db()() as db:
+            _, info = service.start_challenge(db, "u1", monday + 3600)
+            longer = weekly.track_order() + ["futureTrack"]
+            with mock.patch.object(weekly, "track_order", return_value=longer):
+                self.assertEqual(service.this_week(db, monday + 2 * 86400)["trackId"], info["trackId"])
+                after = longer[(longer.index(info["trackId"]) + 1) % len(longer)]
+                self.assertEqual(service.this_week(db, monday + WEEK)["trackId"], after)
+
     def test_everybody_gets_the_same_seed_in_a_week_and_another_the_next(self):
         self.assertEqual(weekly.challenge_of(T0)["seed"], weekly.challenge_of(T0 + 3600)["seed"])
         self.assertNotEqual(weekly.challenge_of(T0)["seed"], weekly.challenge_of(T0 + WEEK)["seed"])

@@ -90,14 +90,27 @@ def best_run(db: Session, user_id: str, week_id: str) -> ApexDriveRace | None:
             .order_by(ApexDriveRace.score.desc()).first())
 
 
+def last_raced_week(db: Session, week_id: str) -> tuple | None:
+    """The latest week up to `week_id` with a challenge run, and its track (that of its latest run)."""
+    row = (db.query(ApexDriveRace.week_id, ApexDriveRace.track_id)
+           .filter(ApexDriveRace.kind == CHALLENGE, ApexDriveRace.week_id <= week_id)
+           .order_by(ApexDriveRace.week_id.desc(), ApexDriveRace.started_at.desc()).first())
+    return (weekly.week_index(row.week_id), row.track_id) if row else None
+
+
+def this_week(db: Session, now: float) -> dict:
+    """This week's challenge: the track after the last week raced."""
+    return weekly.challenge_of(now, last_raced_week(db, weekly.week_of(now)[0]))
+
+
 def challenge_info(db: Session, user_id: str, now: float) -> dict:
-    info = weekly.challenge_of(now)
+    info = this_week(db, now)
     best = best_run(db, user_id, info["weekId"])
     return {**info, "best": {"time": best.time, "score": best.score} if best else None}
 
 
 def start_challenge(db: Session, user_id: str, now: float) -> tuple:
-    info = weekly.challenge_of(now)
+    info = this_week(db, now)
     stats = load_career(db, user_id).stats()
     race = _start(db, stats, now, user_id=user_id, kind=CHALLENGE, track_id=info["trackId"], seed=info["seed"],
                   week_id=info["weekId"])

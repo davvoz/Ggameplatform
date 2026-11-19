@@ -53,24 +53,30 @@ export class Controls {
     #touches = new Map();
     /** pointers holding the brake button */
     #brakes = new Set();
+    /** pointers pressed on a screen (not steering): their moves are drags */
+    #drags = new Set();
     #nitro = false;
     #element;
     #onPress;
     #onKey;
+    #onDrag;
     #touch;
     #now;
 
     /**
      * @param {HTMLElement} element where touches count
      * @param {EventTarget} target where keys are heard
-     * @param {{onPress: (clientX: number, clientY: number) => boolean|'brake', onKey: (action: string) => void}} handlers
-     *   onPress: true when the press should steer, 'brake' when it holds the brake
+     * @param {{onPress: (clientX: number, clientY: number) => boolean|'brake', onKey: (action: string) => void,
+     *   onDrag?: (clientX: number, clientY: number) => void, onWheel?: (clientX: number, clientY: number, deltaY: number) => void}} handlers
+     *   onPress: true when the press should steer, 'brake' when it holds the brake; onDrag: a press that does
+     *   not steer moved, held down; onWheel: the mouse wheel turned over the element
      * @param {{touch?: boolean, now?: () => number}} [options] touch: a touch screen (see above); now: seconds
      */
-    constructor(element, target, { onPress, onKey }, { touch = false, now = () => globalThis.performance.now() / 1000 } = {}) {
+    constructor(element, target, { onPress, onKey, onDrag, onWheel }, { touch = false, now = () => globalThis.performance.now() / 1000 } = {}) {
         this.#element = element;
         this.#onPress = onPress;
         this.#onKey = onKey;
+        this.#onDrag = onDrag;
         this.#touch = touch;
         this.#now = now;
         element.addEventListener('pointerdown', (event) => this.#press(event));
@@ -79,7 +85,14 @@ export class Controls {
             element.addEventListener(type, (event) => {
                 this.#touches.delete(event.pointerId);
                 this.#brakes.delete(event.pointerId);
+                this.#drags.delete(event.pointerId);
             });
+        }
+        if (onWheel) {
+            element.addEventListener('wheel', (event) => {
+                event.preventDefault();
+                onWheel(event.clientX, event.clientY, event.deltaY);
+            }, { passive: false });
         }
         element.addEventListener('contextmenu', (event) => event.preventDefault());
         target.addEventListener('keydown', (event) => this.#key(event, true));
@@ -92,6 +105,7 @@ export class Controls {
         this.#held.clear();
         this.#touches.clear();
         this.#brakes.clear();
+        this.#drags.clear();
         this.#nitro = false;
     }
 
@@ -156,8 +170,8 @@ export class Controls {
         // platform's frame the keys would keep going to the platform's page
         this.#element.focus?.({ preventScroll: true });
         const role = this.#onPress(event.clientX, event.clientY);
-        if (!role) return;
-        if (role === 'brake') this.#brakes.add(event.pointerId);
+        if (!role) this.#drags.add(event.pointerId);
+        else if (role === 'brake') this.#brakes.add(event.pointerId);
         else this.#touches.set(event.pointerId, { side: this.#side(event), since: this.#now() });
         // keeps the finger's moves and lift even if it slides off the canvas
         try {
@@ -167,8 +181,9 @@ export class Controls {
         }
     }
 
-    /** A finger sliding to the other half steers that way, gently again. */
+    /** A finger sliding to the other half steers that way, gently again; on a screen it drags. */
     #move(event) {
+        if (this.#drags.has(event.pointerId)) this.#onDrag?.(event.clientX, event.clientY);
         const touch = this.#touches.get(event.pointerId);
         const side = touch && this.#side(event);
         if (touch && side !== touch.side) this.#touches.set(event.pointerId, { side, since: this.#now() });

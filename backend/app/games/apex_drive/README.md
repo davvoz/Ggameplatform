@@ -6,7 +6,7 @@ pickups on the road, prize money spent in a garage on parts (tier by tier)
 and on mods (the tactical build: slots, energy, trade-offs).
 Landscape, full screen, drawn at 180 rows with square pixels.
 
-Today the career has three worlds. SUNSET COAST (dusk, mountains) has three
+Today the career has six worlds. SUNSET COAST (dusk, mountains) has three
 tracks: DUSK VALLEY (3 laps), PIER CIRCUIT (short, 6 laps) and CLIFF ROAD
 (hilly, 3 laps, in a light drizzle). NEON CITY (night, skylines, neon) has
 NEON AVENUE, UNDERPASS (4 laps, two tunnels: `tunnels` on the track,
@@ -20,9 +20,35 @@ whiten the screen); all
 three have **broken road**: patched, cracked asphalt with no lane marks,
 warning signs before it, and potholes that slow the car, knock it and jolt
 it aside (`broken` on the track, `config/Hazards.js`, `sim/Potholes.js`,
-`render/road/potholes.js`); the rivals steer round them. Five weathers
-(clear, drizzle, storm, snow, blizzard), a song per world. Every system is
-data driven, so more of each is data, not code (see **Extending**).
+`render/road/potholes.js`); the rivals steer round them. XENO WASTES (a
+hostile planet under a blood-red sky, a ringed gas giant, basalt spires
+veined with magma; acid crystals, tentacle stalks, giant ribs by the road)
+runs over **the abyss**: roads on pillars of rock over a sea of magma far
+below, roads that narrow, fork in two branches with the void between them,
+and stop at striped ramps before gaps only a fast car clears (see **The
+abyss**). MAGMA RIFT (3 laps, ashfall: embers and ash), SPORE CANYON (4
+laps, spores: the air thick and green, a jump on one branch of each fork)
+and THE MAW (5 laps, acid storm: green rain and green lightning, every trap
+in one short lap). SUNKEN CITY (a drowned metropolis on the sea floor:
+light falling in shafts and rippling over the road, towers leaning where
+they sank, the reef, shoals of fish; coral, kelp, giant clams, broken
+columns, a stone giant's head, the old street lamps) has **ocean currents**
+(see **Under the sea**) and roads in **glass tubes**: CORAL AVENUE (3
+laps, clear water: a current to ride, one to fight, one pushing across, a
+long tube), THE TRENCH (4 laps, murky: a narrow bridge over the trench with
+a current pushing towards the edge, a fork over it) and ATLANTIS RING (5
+laps, a storm on the surface: tubes, currents and the trench in one short
+lap). GRID VORTEX (roads of light over a plain ruled in neon, a huge
+setting sun in bands, mountains drawn in light; light pylons, neon palms,
+data obelisks, holographic signs, pyramids of light) has roads that **roll
+up into tubes** driven all the way round (see **The vortex**): HYPERLOOP (3
+laps, a clear night: two long tubes, a turbo strip up a wall in each), THE
+SPIRAL (4 laps, data rain: three tubes bending hard, a turbo strip near the
+ceiling) and EVENT HORIZON (5 laps, a surge: a short lap nearly all in the
+tube). Fourteen weathers (clear, drizzle, storm, snow, blizzard, ashfall,
+spores, acid storm, clear water, murky, surface storm, clear night, data
+rain, surge), a song per world. Every system is data
+driven, so more of each is data, not code (see **Extending**).
 
 Locally the backend serves it at `http://localhost:8000/games/apex_drive/index.html`.
 Every career lives on the server (see **Server**); the browser keeps only
@@ -160,6 +186,90 @@ weather's grip (drizzle 0.75, snow 0.7, blizzard 0.58) takes from all three: ben
 braking, so better tyres soften the rain without cancelling it. Every number
 is in `config/Tuning.js` (`PHYSICS`, `CONTACT`, `DRAFT`, `RACE`).
 
+## The abyss
+
+Where a track runs over the void (`abyss`, `narrows`, `forks`, `jumps` on
+the track, numbers in `ABYSS` of `config/Hazards.js`):
+
+- **Ribbons** (`sim/Ground.js`): every segment's road is a list of ribbons
+  of asphalt (middle and half width, in half widths of the usual road): one
+  full ribbon on most of the road (`FULL`), a narrower one where it narrows,
+  two on a fork, none over a gap. Beside them is ground (off the road, slow
+  but solid) unless the segment is over the abyss: there it is void. A
+  narrowing and a fork ease in and out (`narrowEase`, `forkEase`), slowly
+  enough to steer with them.
+- **Jumps** (`sim/Flight.js`): a ramp is the last `ramp` segments before a
+  gap, striped across. A car that runs out of asphalt leaving it flies: it
+  rises at `kick` of its speed, gravity brings it down; on asphalt it lands
+  (too hard knocks it), over the void it falls. Anywhere else, out of
+  asphalt over the void, it falls at once. In the air the wheels touch
+  nothing (`Car.loose`: no thrust, no brakes, no steering, no contact).
+- **A fall** lasts `fallTime`: the screen darkens, then the car is back on
+  the road ahead (`respawnPlace`: the nearest ribbon, the road whole for
+  `respawnClear` segments, never on a ramp), nearly stopped and damaged,
+  passing through the others for a moment.
+- **The rivals** (`sim/ai/driving.js`) keep to the ribbon they are heading
+  for (its middle taken further on, so they follow a branch that bends away
+  or comes back), further from the edges where the asphalt is narrow, take
+  the branch nearest them, and go flat out at a ramp's middle, with nitro if
+  they are short of the speed that clears it (`lipsOf`, worked out once a
+  track).
+- **The tests** (`tests/abyss.test.js`) check that every jump of the game is
+  cleared at a fair speed on a straight, and that every faster car, up to
+  1.4 x the reference speed, still lands on asphalt (not past a branch's
+  end); that nothing lies or stands over the void; and that the rivals finish
+  the hostile world's races, seldom falling.
+
+## Under the sea
+
+- **Currents** (`currents: [[from, to, along, across]]` on a track,
+  strengths -1..1, `CURRENTS` in `config/Hazards.js`, `sim/Currents.js`): the
+  water along the road pushes the car on or holds it back (an acceleration,
+  `along` behind the car, a stronger `against`: only the push is held by the
+  server's bound), across it drifts the car towards an edge (`across` half
+  widths a second, a good share of the wheel); they ease in and out. The
+  rivals steer against the drift. The road shows them as big arrows of silt
+  pointing the way the water flows; entering one, the player hears it and
+  reads it (CURRENT >>, UNDERTOW!, CROSSCURRENT: the race's `current` event).
+- **Glass tubes** (`tubes: [[from, to]]`, `render/road/tube.js`): drawn
+  over the road like the tunnels, but seen through: highlights along the
+  glass, a metal ring every few segments, a collar at the mouth, a faint tint
+  inside.
+- **The light** (`water` in the theme, `render/road/water.js`): caustics,
+  two tiles of a light net sliding different ways over the road and the sea
+  floor, brightest where their lines cross, fading with the distance.
+- **The trenches** are the abyss of the hostile world with another palette
+  (`abyss` in the theme): a dark floor, vents glowing cyan.
+- **The server's bound**: a forward current makes a car faster than on a
+  flat road; `tests/currents.test.js` checks that even the fastest build, on
+  nitro in the deepest slipstream all the lap with every current behind it,
+  stays slower than the lap the server refuses (`apex_drive_be/rules.py`).
+
+## The vortex
+
+- **Rolling up** (`vortex: [[from, to]]` on a track, `VORTEX` in
+  `config/Hazards.js`, `sim/Vortex.js`): each segment of the stretch has a
+  `roll`, eased from 0 (the flat road) to 1 (a closed tube) and back; in
+  between it is a half pipe. Across, the surface is an arc of a circle of
+  radius `VORTEX.radius / roll` touching the road's line at the bottom; a
+  car's x stays the distance along the surface from the bottom. In a closed
+  tube x goes round (`CIRCLE` a lap): every distance across between cars,
+  pickups and aims is `track.across(z, from, to)`, the shorter way round.
+- **The walls pull you down**: a car on a wall slides towards the bottom;
+  in bends the push outward carries it up the outer wall, like a bobsleigh.
+  On the upper half only speed holds it on: under `VORTEX.stick` of the
+  reference speed (less on the upper walls) it lets go, drops across the
+  tube (`drop`: LOST GRIP!) and lands hard at the bottom, slower.
+- **Turbo strips** (`turbo: [[from, to, x]]`): a strip along the surface
+  at x; on it a car burns free nitro, so the server's bound (nitro all lap)
+  holds. **Pickups**: in a closed tube one lane in three is on the ceiling.
+- **The rivals** keep to the bottom against the walls' pull and ride a turbo
+  strip when they are fast enough to hold on up there.
+- **Drawing it** (`render/road/vortex.js`): on a vortex track the whole
+  road is drawn in pieces, not rows (see step 8 below), and the camera rolls
+  with the car so the surface under it is always down; the backdrop and
+  everything standing on the road turn with it.
+
 ## How the road is drawn
 
 1. **The road is a list of segments straight ahead** (`sim/Track.js`).
@@ -178,6 +288,21 @@ is in `config/Tuning.js` (`PHYSICS`, `CONTACT`, `DRAFT`, `RACE`).
    pose (`render/art/lean.js`, `LEAN` in `config/Tuning.js`).
 5. **Backdrop** (`render/Backdrop.js`): layers one full turn wide that slide
    with the road's heading; on a crest they come down to sit on the road.
+6. **The abyss** (`render/road/abyss.js`): the scanlines leave the void as
+   VOID pixels; under the asphalt after a gap the far wall drops to the
+   floor, every few segments a pillar holds the road up (rock in strata, lit
+   red from below), then the magma floor fills the rest, a plane far below
+   projected row by row like the road, flowing, lost in a red haze.
+7. **Under the sea** (`render/road/water.js`, `render/road/tube.js`): the
+   light net and the currents' arrows painted into the road's pixels before
+   the abyss; the glass tubes drawn over the road like the tunnels.
+8. **The vortex** (`render/road/vortex.js`, only on tracks with one): each
+   strip is cut across into pieces (the ground and its neon grid, rumble
+   strips, asphalt, lane marks, the walls' panels and seams, a turbo strip),
+   each piece a quad from the strip's far cross-section to its near one, cut
+   again round the tube's curve, turned with the camera's roll and filled
+   far to near. Far strips are merged in batches aligned to their segments
+   (no shimmer); pieces overlap by a pixel, so no crack shows between them.
 
 ## Structure
 
@@ -208,9 +333,13 @@ is in `config/Tuning.js` (`PHYSICS`, `CONTACT`, `DRAFT`, `RACE`).
 - **World**: an entry in `config/Worlds.js` (theme, tracks, difficulty, prize
   scale, props, music) and a theme in `config/Themes.js`: sky, fog, the sun
   or the moon, its scenery `layers` (far to near: `clouds`, `stars`,
-  `aurora`, `mountains`, `hills`, `skyline`; any can `drift` and `pulse`; a
-  new kind is a painter in `render/Backdrop.js`), road and prop colours
-  (with `patch` and `hole` if its tracks have broken road). Its card is painted from the
+  `aurora`, `mountains`, `hills`, `skyline`, `planet`, `spires`, `rays`,
+  `fish`, `ruins`, `reef`; any can `drift` and `pulse`; a new kind is a
+  painter in `render/Backdrop.js`, the hostile world's in
+  `render/AlienSky.js`, the sea's in `render/OceanScenery.js`), road and prop
+  colours (with `patch` and `hole` if its tracks have broken road, `ramp`
+  and an `abyss` if they run over the void, `water` and `tube` under the
+  sea). Its card is painted from the
   theme. It unlocks when every track of the world before is on the podium.
 - **Weather**: an entry in `config/Weather.js`: grip, fog (and its colour,
   `haze`), icon, a tint over the whole scene, a `veil` over the sky and the
@@ -219,6 +348,19 @@ is in `config/Tuning.js` (`PHYSICS`, `CONTACT`, `DRAFT`, `RACE`).
   under the engines (`ambience`).
 - **Broken road**: `broken: [[from, to], ...]` (shares of the lap) on a
   track; how many potholes and what they do in `config/Hazards.js`.
+- **The abyss**: on a track, `abyss: [[from, to]]` (void beside the road),
+  `narrows: [[from, to, halfWidth]]`, `forks: [[from, to, apart]]` (the
+  branches' middles `apart` half widths from the road's) and `jumps:
+  [[lip, gap, side?]]` (a ramp ending at `lip`, a gap of `gap` segments,
+  only on the branch on `side` of a fork). `tests/abyss.test.js` tells you
+  if a jump is too hard, in a bend, or lands a fast car in the void.
+- **Under the sea**: `currents: [[from, to, along, across]]` and `tubes:
+  [[from, to]]` on a track; `tests/currents.test.js` tells you if the
+  currents behind a car would let it beat the server's bound.
+- **The vortex**: `vortex: [[from, to]]` and `turbo: [[from, to, x]]` on a
+  track, a `vortex` in its theme (the walls' colours, the ground's grid);
+  `tests/vortex.test.js` tells you if a turbo strip lies outside the tube or
+  over the ceiling's seam.
 - **Part tier or category**: `config/Parts.js` (and an icon named as the
   category in `render/art/Icons.js`). **Mod**: `config/Mods.js`.
 - **Rival**: `config/Drivers.js`; a new behaviour in `sim/ai/behaviours.js`.
@@ -259,7 +401,10 @@ browser, so they cannot prove a result (that would take replaying the
 inputs on the server).
 
 **Weekly challenge**: one track for everybody, the next one in the career's
-order every Monday (UTC, as the platform's weekly leaderboard), raced with
+order every Monday (UTC, as the platform's weekly leaderboard): the track
+after the one of the last week raced (from the runs in the database), so new
+tracks join the end of the queue by themselves and a week under way keeps
+its track when tracks are added; raced with
 one's own car against the same rivals (a seed per week). The server scores a
 run `10000 x par / time` (par: the race at the reference speed all the way):
 the faster, the more points. The game reports those points at the end of the

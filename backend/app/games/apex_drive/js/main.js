@@ -131,6 +131,8 @@ async function boot() {
             audio.unlock();
             game.key(action);
         },
+        onDrag: (x, y) => game.drag(x, y),
+        onWheel: (x, y, deltaY) => game.wheel(x, y, deltaY),
     }, { touch: !app.keyboard });
 
     const chrome = new Chrome(document);

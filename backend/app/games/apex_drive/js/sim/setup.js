@@ -44,6 +44,7 @@ export function propKindsOf(world) {
         for (const kind of Object.keys(TRACKS[id].scenery?.props ?? {})) kinds.add(kind);
         if (TRACKS[id].roadworks) kinds.add('barrier');
         if (TRACKS[id].broken) kinds.add('rough');
+        if (TRACKS[id].jumps) kinds.add('gapSign');
     }
     return [...kinds];
 }

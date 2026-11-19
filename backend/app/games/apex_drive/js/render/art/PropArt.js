@@ -1,4 +1,7 @@
 import { makeCanvas } from '../canvas.js';
+import { ALIEN_PAINTERS } from './AlienProps.js';
+import { NEON_PAINTERS } from './NeonProps.js';
+import { OCEAN_PAINTERS } from './OceanProps.js';
 import { mirror } from './pixels.js';
 
 /**
@@ -284,7 +287,7 @@ function barrier(c) {
     return canvas;
 }
 
-const PAINTERS = { pine, rock, lamp, billboard, chevron, building, cone, barrier, snowPine, snowPole, cabin, snowman, rough };
+const PAINTERS = { pine, rock, lamp, billboard, chevron, building, cone, barrier, snowPine, snowPole, cabin, snowman, rough, ...ALIEN_PAINTERS, ...OCEAN_PAINTERS, ...NEON_PAINTERS };
 
 /** The prop kinds that can be drawn (for the tests). */
 export const PROP_KINDS = Object.keys(PAINTERS);

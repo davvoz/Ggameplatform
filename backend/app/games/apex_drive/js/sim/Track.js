@@ -7,13 +7,24 @@
  * - its height at both ends (`y1`, `y2`),
  * - the road's heading there, unwrapped (for the scrolling backdrop).
  * The walked points are the minimap's plan, so map and road always agree.
+ * Each segment also has its ribbons of asphalt and whether it runs over the
+ * abyss (sim/Ground.js): the road may narrow, fork or stop at a gap; and in
+ * the grid vortex how far it rolls up into a tube (sim/Vortex.js).
  *
  * Distances along the road (`z`) may grow past one lap: every query wraps.
  */
 
+import { ABYSS } from '../config/Hazards.js';
+import { layCurrents } from './Currents.js';
+import { hasGround, layGround } from './Ground.js';
+import { acrossOn, layVortex } from './Vortex.js';
+
 const TAU = Math.PI * 2;
 
-/** @typedef {{index: number, curve: number, turn: number, heading: number, y1: number, y2: number}} Segment */
+/**
+ * @typedef {{index: number, curve: number, turn: number, heading: number, y1: number, y2: number,
+ *   ribbons: import('./Ground.js').Ribbon[], abyss: boolean}} Segment
+ */
 /** @typedef {{x: number, y: number}} PlanPoint a point of the map, in map units */
 
 export function wrap(value, size) {
@@ -136,6 +147,8 @@ export class Track {
             };
             // tunnels: [from, to] shares of the lap
             if (def.tunnels?.some(([from, to]) => i / count >= from && i / count < to)) segment.tunnel = true;
+            // glass tubes under the sea: [from, to] shares of the lap
+            if (def.tubes?.some(([from, to]) => i / count >= from && i / count < to)) segment.tube = true;
             // roadworks: [from, to, side] shares of the lap, the lane closed on `side` (-1 left, 1 right)
             const works = def.roadworks?.find(([from, to]) => i / count >= from && i / count < to);
             if (works) segment.closed = works[2];
@@ -145,7 +158,15 @@ export class Track {
             return segment;
         });
         this.lapTurn = heading - raw[0];
+        layGround(this.segments, def);
+        layCurrents(this.segments, def);
+        layVortex(this.segments, def);
         this.hasTunnels = this.segments.some((segment) => segment.tunnel);
+        this.hasAbyss = this.segments.some((segment) => segment.abyss);
+        this.hasTubes = this.segments.some((segment) => segment.tube);
+        this.hasVortex = this.segments.some((segment) => segment.roll);
+        /** The abyss's floor, world height: far below the lowest road. */
+        this.floor = Math.min(...this.segments.map((segment) => segment.y1)) - ABYSS.depth;
         this.plan = steps.map((p) => ({ x: p.x / def.scale, y: p.y / def.scale }));
         this.segmentLength = segmentLength;
         this.length = count * segmentLength;
@@ -164,6 +185,14 @@ export class Track {
     gap(fromZ, toZ) {
         const ahead = wrap(toZ - fromZ, this.length);
         return ahead > this.length / 2 ? ahead - this.length : ahead;
+    }
+
+    /**
+     * How far `to` is from `from` across the road at z (half widths, to the
+     * right when positive): in the vortex's closed tube the shorter way round.
+     */
+    across(z, from, to) {
+        return acrossOn(this.segmentAt(z), from, to);
     }
 
     /** @returns {Segment} */
@@ -192,6 +221,16 @@ export class Track {
         const segment = this.segmentAt(z);
         const laps = Math.floor(z / this.length);
         return segment.heading + segment.turn * this.progressIn(z) + laps * this.lapTurn;
+    }
+
+    /** The ribbons of asphalt at z. @returns {import('./Ground.js').Ribbon[]} */
+    ribbonsAt(z) {
+        return this.segmentAt(z).ribbons;
+    }
+
+    /** Whether there is something to stand on at (z, x): asphalt, or ground off the road. */
+    groundAt(z, x) {
+        return hasGround(this.segmentAt(z), x);
     }
 
     /** @returns {PlanPoint} where z is on the map */

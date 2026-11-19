@@ -99,7 +99,7 @@ function rammer() {
         aim(self, race) {
             const gap = gapToPlayer(self, race);
             const near = Math.abs(gap) < RAM_RANGE && racingFor(self, race);
-            const into = race.player.car.x + Math.sign(race.player.car.x - self.car.x) * 0.3;
+            const into = race.player.car.x + Math.sign(race.track.across(self.car.z, self.car.x, race.player.car.x)) * 0.3;
             const x = near ? into : racingLine(race.track, self.car.z);
             return { x, pace: 0.97, nitro: gap > 0 && gap < CHASE_RANGE };
         },

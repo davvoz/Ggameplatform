@@ -89,6 +89,20 @@ export class Game {
         return this.#screen.press(x, y);
     }
 
+    /** A press that does not steer, moved while held. */
+    drag(clientX, clientY) {
+        if (this.#wipe.busy) return;
+        const { x, y } = this.#frame.toFrame(clientX, clientY);
+        this.#screen.drag(x, y);
+    }
+
+    /** The mouse wheel: `deltaY` down positive. */
+    wheel(clientX, clientY, deltaY) {
+        if (this.#wipe.busy) return;
+        const { x, y } = this.#frame.toFrame(clientX, clientY);
+        this.#screen.wheel(x, y, deltaY);
+    }
+
     key(action) {
         if (!this.#wipe.busy) this.#screen.key(action);
     }

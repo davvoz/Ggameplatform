@@ -21,6 +21,9 @@ const POP_TEXT = {
 /** The nitro lights with an orange flash over the whole frame, gone in a moment. */
 const NITRO_FLASH = { life: 0.28, color: [255, 150, 60], alpha: 0.4 };
 
+/** A current under the car, said as it enters it. */
+const FLOW_TEXT = { with: 'CURRENT >>', against: 'UNDERTOW!', left: '<< CROSSCURRENT', right: 'CROSSCURRENT >>' };
+
 const POP_COLOR = { cash: UI.gold, nitro: '#ff8a2a', repair: UI.green, shield: UI.cyan, boost: UI.gold };
 const LIGHTS = { size: 12, gap: 4 };
 
@@ -78,6 +81,19 @@ export class Banners {
             case 'crash':
                 this.#shake = 2;
                 return add('note', 1.1, { text: 'CRASH!', color: UI.red });
+            case 'launch': return add('pop', 0.9, { text: 'AIR!', color: UI.gold });
+            case 'hardLanding':
+                this.#shake = 1.6;
+                return add('pop', 0.9, { text: 'HARD LANDING!', color: '#ff8a2a' });
+            case 'fall': return add('note', 1.5, { text: 'INTO THE VOID!', color: UI.red });
+            case 'drop':
+                this.#shake = Math.max(this.#shake, 0.8);
+                return add('note', 1.3, { text: 'LOST GRIP!', color: '#ff8a2a' });
+            case 'turbo': return add('pop', 0.8, { text: 'TURBO!', color: UI.gold });
+            case 'current': return add('note', 1.4, { text: FLOW_TEXT[event.flow], color: event.flow === 'with' ? UI.cyan : '#ff8a2a' });
+            case 'land':
+                this.#shake = Math.max(this.#shake, 0.6);
+                return undefined;
             case 'position': return add('place', 1.3, event);
             default: return undefined;
         }

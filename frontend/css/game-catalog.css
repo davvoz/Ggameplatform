@@ -16,6 +16,10 @@
     margin-right: auto;
     position: relative;
     overflow: hidden;
+    /* Number of tabs and active tab index (set from JS) drive the sliding indicator */
+    --tab-count: 3;
+    --active-index: 0;
+    --tab-indicator-shift: translateX(calc(100% * var(--active-index)));
 }
 
 /* Sliding indicator - base layer (ranked gradient) */
@@ -24,7 +28,8 @@
     position: absolute;
     top: 4px;
     left: 4px;
-    width: calc(50% - 4px);
+    width: calc((100% - 8px) / var(--tab-count));
+    transform: var(--tab-indicator-shift);
     height: calc(100% - 8px);
     border-radius: calc(var(--radius-xl) - 2px);
     background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffcc02 100%);
@@ -44,7 +49,8 @@
     position: absolute;
     top: 4px;
     left: 4px;
-    width: calc(50% - 4px);
+    width: calc((100% - 8px) / var(--tab-count));
+    transform: var(--tab-indicator-shift);
     height: calc(100% - 8px);
     border-radius: calc(var(--radius-xl) - 2px);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
@@ -65,7 +71,8 @@
     position: absolute;
     top: 4px;
     left: 4px;
-    width: calc(50% - 4px);
+    width: calc((100% - 8px) / var(--tab-count));
+    transform: var(--tab-indicator-shift);
     height: calc(100% - 8px);
     border-radius: calc(var(--radius-xl) - 2px);
     background: linear-gradient(105deg,
@@ -81,9 +88,6 @@
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.game-mode-tabs.mode-fun .tab-shine {
-    transform: translateX(100%);
-}
 
 /* Animate shine on transition */
 .game-mode-tabs.transitioning .tab-shine {
@@ -100,20 +104,29 @@
     }
 }
 
-.game-mode-tabs.mode-fun::before {
-    transform: translateX(100%);
+.game-mode-tabs.mode-fun::before,
+.game-mode-tabs.mode-steem::before {
     box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.3),
         0 0 10px rgba(247, 147, 30, 0);
 }
 
 .game-mode-tabs.mode-fun::after {
-    transform: translateX(100%);
     opacity: 1;
     box-shadow:
         0 2px 8px rgba(0, 0, 0, 0.3),
         0 0 35px rgba(118, 75, 162, 0.6),
         0 0 60px rgba(240, 147, 251, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* Steem Games tab: reuse the overlay layer with Steem blue */
+.game-mode-tabs.mode-steem::after {
+    opacity: 1;
+    background: linear-gradient(135deg, #1a5099 0%, #2f7fd6 50%, #4ba2f2 100%);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 0 35px rgba(47, 127, 214, 0.6),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
@@ -262,8 +275,9 @@
     }
 
     .game-mode-tab {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: 0.9rem;
+        padding: var(--spacing-sm) var(--spacing-xs);
+        font-size: 0.85rem;
+        white-space: nowrap;
     }
 }
 
@@ -437,6 +451,34 @@
 
 .steem-rewards-badge {
     background: linear-gradient(180deg, #444ad4 101%, #8c8fe4 38%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Steem Games logos have mixed aspect ratios: show them whole instead of cropping */
+.steem-game-card .game-thumbnail {
+    background: radial-gradient(circle at center, #1d2433 0%, #0d1118 100%);
+}
+
+.steem-game-card .game-thumbnail img {
+    object-fit: contain;
+    padding: var(--spacing-md);
+    box-sizing: border-box;
+}
+
+/* Keep long titles clear of the absolutely positioned "External" badge */
+.steem-game-card .game-title {
+    padding-right: 96px;
+}
+
+/* External site badge for Steem Games cards */
+.external-game-badge {
+    background: linear-gradient(180deg, #2f7fd6 0%, #1a5099 100%);
     color: white;
     padding: 4px 10px;
     border-radius: var(--radius-sm);

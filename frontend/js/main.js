@@ -25,6 +25,8 @@ import WalletRenderer from './WalletRenderer.js';
 import { initVersionWatcher } from './versionWatcher.js';
 import PingsAPI from './PingsAPI.js';
 import PingShareModal from './PingShareModal.js';
+import { getSteemGames } from './steemGames.js';
+import { createSteemGameCard } from './SteemGameCard.js';
 
 // Import nav.js for side effects (registers community notification handlers)
 import './nav.js';
@@ -233,6 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // Current game mode filter state
 let currentGameMode = 'ranked';
 
+// Catalog tabs, in display order. 'steem' lists external games (static showcase).
+const GAME_MODES = ['ranked', 'fun', 'steem'];
+const STEEM_MODE = 'steem';
+const MODE_LABELS = { ranked: 'Ranked', fun: 'Fun', steem: 'Steem' };
+
 // Helper: unified play count accessor (prefer metadata.playCount, then session_count)
 function getPlayCount(game) {
     const metaCount = game?.metadata?.playCount;
@@ -292,15 +299,41 @@ function restoreTabState() {
     const tabsContainer = document.querySelector('.game-mode-tabs');
     const tabs = document.querySelectorAll('.game-mode-tab');
 
-    if (tabsContainer) {
-        // Set the mode-fun class if Fun is selected
-        tabsContainer.classList.toggle('mode-fun', currentGameMode === 'fun');
-    }
+    updateTabsIndicator(tabsContainer, currentGameMode);
 
     // Update active state on tabs
     tabs.forEach(tab => {
         tab.classList.toggle('active', tab.dataset.mode === currentGameMode);
     });
+}
+
+/**
+ * Move the sliding indicator to the given mode and apply its color theme
+ */
+function updateTabsIndicator(tabsContainer, mode) {
+    if (!tabsContainer) return;
+    tabsContainer.style.setProperty('--active-index', String(Math.max(GAME_MODES.indexOf(mode), 0)));
+    tabsContainer.classList.toggle('mode-fun', mode === 'fun');
+    tabsContainer.classList.toggle('mode-steem', mode === STEEM_MODE);
+}
+
+/**
+ * Build the card fragment for the external Steem games tab
+ */
+function buildSteemGamesFragment() {
+    const fragment = document.createDocumentFragment();
+    const steemGames = getSteemGames();
+
+    if (steemGames.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'text-center no-games-message';
+        emptyMsg.textContent = 'No Steem games available yet.';
+        fragment.appendChild(emptyMsg);
+        return fragment;
+    }
+
+    steemGames.forEach(game => fragment.appendChild(createSteemGameCard(game)));
+    return fragment;
 }
 
 /**
@@ -382,8 +415,8 @@ function setupGameModeTabs() {
             // Skip if same mode
             if (newMode === oldMode) return;
 
-            // Determine swipe direction
-            const isSwipingLeft = newMode === 'fun';
+            // Determine swipe direction from tab order
+            const isSwipingLeft = GAME_MODES.indexOf(newMode) > GAME_MODES.indexOf(oldMode);
             const swipeOutClass = isSwipingLeft ? 'swipe-left' : 'swipe-right';
             const swipeInClass = isSwipingLeft ? 'swipe-in-left' : 'swipe-in-right';
 
@@ -394,7 +427,7 @@ function setupGameModeTabs() {
             if (tabsContainer) {
                 // Trigger shine animation
                 tabsContainer.classList.add('transitioning');
-                tabsContainer.classList.toggle('mode-fun', newMode === 'fun');
+                updateTabsIndicator(tabsContainer, newMode);
 
                 // Remove transitioning class after animation
                 setTimeout(() => {
@@ -416,6 +449,8 @@ function setupGameModeTabs() {
  * Pre-fetch and prepare games content without rendering
  */
 async function prepareGamesContent(mode) {
+    if (mode === STEEM_MODE) return buildSteemGamesFragment();
+
     const games = await fetchGames({ mode });
 
     // Filter games by mode
@@ -443,7 +478,7 @@ async function prepareGamesContent(mode) {
     const fragment = document.createDocumentFragment();
 
     if (filteredGames.length === 0) {
-        const modeLabel = mode === 'ranked' ? 'Ranked' : 'Fun';
+        const modeLabel = MODE_LABELS[mode] || mode;
         const noGamesMsg = document.createElement('p');
         noGamesMsg.className = 'text-center no-games-message';
         noGamesMsg.textContent = `No ${modeLabel} games available yet.`;
@@ -473,6 +508,12 @@ async function loadGamesContent(filters = {}) {
 
     if (!gameGrid) return;
 
+    if (filters.mode === STEEM_MODE) {
+        gameGrid.innerHTML = '';
+        gameGrid.appendChild(buildSteemGamesFragment());
+        return;
+    }
+
     gameGrid.innerHTML = '<div class="loading">Loading games...</div>';
 
     try {
@@ -488,7 +529,7 @@ async function loadGamesContent(filters = {}) {
         gameGrid.innerHTML = '';
 
         if (filteredGames.length === 0) {
-            const modeLabel = modeFilter === 'ranked' ? 'Ranked' : 'Fun';
+            const modeLabel = MODE_LABELS[modeFilter] || modeFilter;
             gameGrid.innerHTML = `<p class="text-center no-games-message">No ${modeLabel} games available yet.</p>`;
             return;
         }

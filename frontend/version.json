@@ -1,8 +1,17 @@
 {
-  "version": "5.24.10",
-  "timestamp": "2026-11-23T21:57:31.678Z",
-  "buildNumber": 643,
+  "version": "5.25.0",
+  "timestamp": "2026-11-23T23:02:02.466Z",
+  "buildNumber": 644,
   "changelog": [
+    {
+      "version": "5.25.0",
+      "date": "2026-11-23",
+      "type": "minor",
+      "changes": [
+        "feat: Implement weekly report generation with highlights and publishing functionality",
+        "🔖 Bump version to 5.24.10 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.10",
       "date": "2026-11-23",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [AD]enhance race session tracking, add retirement handling, and improve ping results",
         "🔖 Bump version to 5.24.1 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.24.1",
-      "date": "2026-11-16",
-      "type": "patch",
-      "changes": [
-        "fix: [AD]implement rival upgrades and budget system, enhance rival behavior and add tests",
-        "🔖 Bump version to 5.24.0 [skip-version]"
       ]
     }
   ]

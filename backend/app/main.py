@@ -236,6 +236,10 @@ async def startup_schedulers():
     
     start_daily_quest_scheduler()
     print("✅ Daily quest reset scheduler started")
+
+    from app.weekly_report.job import start_weekly_report_job
+    start_weekly_report_job()
+    print("✅ Weekly post job started")
     
     # Start prediction market WebSocket + first round
     from app.games.prediction_market_be.router import start_new_round as start_prediction_round, start_btc_websocket
@@ -269,6 +273,10 @@ async def shutdown_schedulers():
     
     stop_daily_quest_scheduler()
     print("🛑 Daily quest reset scheduler stopped")
+
+    from app.weekly_report.job import stop_weekly_report_job
+    stop_weekly_report_job()
+    print("🛑 Weekly post job stopped")
     
     # Send shutdown notification
     send_telegram_warning(

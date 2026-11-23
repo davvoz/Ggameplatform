@@ -25,6 +25,7 @@ from app.models.leaderboard import (
     WeeklyLeaderboard,
     LeaderboardReward,
     WeeklyWinner,
+    WeeklyRotation,
 )
 
 from app.models.quest import (
@@ -75,6 +76,7 @@ __all__ = [
     "WeeklyLeaderboard",
     "LeaderboardReward",
     "WeeklyWinner",
+    "WeeklyRotation",
     # Quest
     "Quest",
     "UserQuest",

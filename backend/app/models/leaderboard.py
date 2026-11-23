@@ -173,3 +173,24 @@ class WeeklyWinner(Base):
 
     def __repr__(self) -> str:
         return f"<WeeklyWinner {self.week_start}: {self.user_id} - Rank {self.rank}>"
+
+
+class WeeklyRotation(Base):
+    """
+    The games that pay STEEM in a week, and the @cur8 post that opened the week
+    (last week's results and this week's games). Written by app.weekly_report.
+    """
+    __tablename__ = 'weekly_rotations'
+
+    week_start = Column(String, primary_key=True)
+    game_ids = Column(Text, nullable=True)  # JSON list, set when the STEEM switches are flipped
+    banner_url = Column(String, nullable=True)
+    post_url = Column(String, nullable=True)
+    phrase_ids = Column(Text, nullable=True)  # JSON list: the next posts avoid these phrases
+    attempts = Column(Integer, default=0)
+    last_error = Column(Text, nullable=True)
+    created_at = Column(String, nullable=False)
+    posted_at = Column(String, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"<WeeklyRotation {self.week_start}: {self.game_ids}>"

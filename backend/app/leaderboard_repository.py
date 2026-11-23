@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_
+import json
 import uuid
 
 from app.models import (
@@ -14,6 +15,7 @@ from app.models import (
     Leaderboard,  # All-time leaderboard (existing)
     LeaderboardReward,
     WeeklyWinner,
+    WeeklyRotation,
     User,
     Game,
     GameStatus
@@ -22,7 +24,10 @@ from app.models import (
 
 class LeaderboardRepository:
     """Repository for leaderboard operations."""
-    
+
+    # The top players of each game who are rewarded every week
+    WINNERS_PER_GAME = 10
+
     def __init__(self, session: Session):
         self.session = session
     
@@ -331,7 +336,19 @@ class LeaderboardRepository:
         ).first()
         
         return reward
-    
+
+    def steem_prize_pool(self, game_id: str) -> float:
+        """The STEEM a game pays its weekly winners when its STEEM rewards are on."""
+        rewards = (self.get_rewards_for_rank(game_id, rank) for rank in range(1, self.WINNERS_PER_GAME + 1))
+        return sum(reward.steem_reward for reward in rewards if reward)
+
+    def _steem_rewarded_games(self, week_start: str) -> Optional[set]:
+        """The games the weekly rotation picked for this week, or None for a week it did not pick."""
+        rotation = self.session.get(WeeklyRotation, week_start)
+        if rotation and rotation.game_ids:
+            return set(json.loads(rotation.game_ids))
+        return None
+
     def compute_weekly_winners(self, week_start: str) -> List[Dict[str, Any]]:
         """
         Compute the winners of a week and their rewards, without saving them.
@@ -341,10 +358,13 @@ class LeaderboardRepository:
 
         # Get all games with their steem_rewards_enabled flag
         games = self.session.query(Game.game_id, Game.steem_rewards_enabled).all()
-        
+        # A week the rotation picked pays its own games even when the switches
+        # have moved on (a missed week paid later)
+        rotation_games = self._steem_rewarded_games(week_start)
+
         for game in games:
             game_id = game[0]
-            steem_enabled = bool(game[1])  # Check if Steem rewards are enabled for this game
+            steem_enabled = game_id in rotation_games if rotation_games is not None else bool(game[1])
             
             # Get top players for this game
             top_players = self.session.query(
@@ -358,7 +378,7 @@ class LeaderboardRepository:
             ).order_by(
                 desc(WeeklyLeaderboard.score),
                 WeeklyLeaderboard.created_at.asc()  # Tiebreaker: chi arriva prima vince
-            ).limit(10).all()  # Top 10
+            ).limit(self.WINNERS_PER_GAME).all()
             
             for rank, player in enumerate(top_players, 1):
                 user_id, score = player

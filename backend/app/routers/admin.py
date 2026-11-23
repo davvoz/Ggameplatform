@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Response, Request, Header, Depends, Cookie
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated, Dict, List, Any, Optional
 from pathlib import Path
@@ -766,6 +766,66 @@ def resend_weekly_steem(request: PayWeekRequest, username: CurrentUser, db: DbSe
     results = get_scheduler().resend_week_steem(week_start)
 
     return {"success": results['success'], "results": results}
+
+
+# ============ WEEKLY POST ============
+
+def _weekly_post_week(week_start: Optional[str]):
+    """The Monday the request names, or the current week's."""
+    from datetime import date
+    from app.weekly_report.config import current_week_start
+
+    if not week_start:
+        return current_week_start()
+    try:
+        monday = date.fromisoformat(week_start)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="week_start must be a date, YYYY-MM-DD")
+    if monday.weekday() != 0:
+        raise HTTPException(status_code=400, detail="week_start must be a Monday")
+    return monday
+
+@router.get("/weekly-post/preview", response_class=PlainTextResponse, responses={400: {"description": "Bad week"}})
+def preview_weekly_post(week_start: Optional[str] = None):
+    """The post the weekly job would publish for the week (default: this week). Nothing is saved or published."""
+    from app.weekly_report.job import get_job
+
+    week = _weekly_post_week(week_start)
+    try:
+        preview = get_job().preview(week)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    post = preview.post
+    status = "switched" if preview.games_already_switched else "not switched yet, this is the pick the job would make"
+    return "\n".join([
+        f"PREVIEW of the weekly post for the week of {week} (STEEM games: {status})",
+        f"Banner: /admin/weekly-post/preview/banner.jpg?week_start={week}",
+        f"Permlink: {post.permlink}",
+        f"Tags: {' '.join(post.tags)}",
+        "",
+        f"TITLE: {post.title}",
+        "",
+        post.body,
+    ])
+
+@router.get("/weekly-post/preview/banner.jpg", responses={400: {"description": "Bad week"}})
+def preview_weekly_banner(week_start: Optional[str] = None):
+    """The banner the weekly job would publish for the week (default: this week)."""
+    from app.weekly_report.job import get_job
+
+    try:
+        banner = get_job().preview(_weekly_post_week(week_start)).banner
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return Response(content=banner, media_type="image/jpeg")
+
+@router.post("/weekly-post/run")
+def run_weekly_post(username: CurrentUser):
+    """Run the weekly job now for this week, also after it gave up (sync: uploads and posts)"""
+    from app.weekly_report.job import get_job
+
+    logging.getLogger(__name__).info(f"📰 Admin {username} is running the weekly post job")
+    return get_job().run(ignore_attempts=True)
 
 
 # ========== GAMES CRUD ENDPOINTS ==========

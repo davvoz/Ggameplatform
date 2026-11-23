@@ -1,0 +1,282 @@
+{
+  "_help": "Phrases of the weekly @cur8 post. Each list is a pool: one phrase is picked per post, avoiding the ones used in the last posts, so keep at least 6 per list. Placeholders in braces are filled in by app/weekly_report/writer.py; a pool may only use the placeholders listed for it in _placeholders.",
+  "_placeholders": {
+    "every list": "{week} closed week number, {next_week} new week number, {steem} STEEM paid last week, {prize} STEEM up for grabs this week, {count} / {Count} rewarded games last week as a word, {next_count} rewarded games this week as a word",
+    "winner_clause": "{game} {player} {score}",
+    "recap": "{clauses}",
+    "highlights.game_winner, defending, first_win": "{game} {emoji} {player} {score}",
+    "highlights.record": "{game} {emoji} {player} {score} {old_record}",
+    "highlights.close_finish": "{game} {emoji} {player} {score} {runner_up} {runner_up_score} {gap} {points}",
+    "highlights.dominant": "{game} {emoji} {player} {score} {runner_up} {runner_up_score} {ratio}",
+    "highlights.podium": "{game} {emoji} {player} {score} {second} {third}",
+    "highlights.multi_winner": "{player} {games} {count}",
+    "highlights.everywhere": "{player} {rank} {count}",
+    "new_games_*": "{games} {new_count} {New_count} {noun} / {Noun} (game, games) {them} (it, them)",
+    "call_to_action": "{verbs}"
+  },
+
+  "intro": [
+    "🔥 Week {week} is over! Another week of competition, great scores and {steem} STEEM distributed to our players!",
+    "🏁 That's a wrap on Week {week}! {Count} leaderboards, plenty of battles and {steem} STEEM sent straight to the winners!",
+    "⏱️ Time's up for Week {week}! The scores are locked, the rewards are out and {steem} STEEM went to our top players!",
+    "🎉 Week {week} has come to an end, and what a week it was: {steem} STEEM distributed across {count} leaderboards!",
+    "🔔 The final bell has rung on Week {week}! {steem} STEEM has been shared among the best players of the week!",
+    "💎 Week {week} is in the books! {Count} games, tons of attempts and {steem} STEEM in rewards for our community!",
+    "🚩 Week {week} is officially closed! Another round of fierce competition, with {steem} STEEM handed out to the winners!",
+    "⚡ Week {week} is done and dusted! The leaderboards have spoken and {steem} STEEM is already in the winners' wallets!",
+    "🌟 Another week, another batch of champions! Week {week} is over and {steem} STEEM has been distributed!",
+    "🏆 Week {week} is history! {Count} leaderboards, countless runs and {steem} STEEM paid out to our players!",
+    "🎮 Game over for Week {week}! Thanks to everyone who played: {steem} STEEM has been sent to the top of the rankings!",
+    "📣 Week {week} results are in! Big scores, tight races and {steem} STEEM distributed to the community!"
+  ],
+
+  "story": [
+    "{Count} leaderboards brought plenty of action, with some close battles and impressive performances.",
+    "Every leaderboard had its own story this week, from tight finishes to scores that left everyone behind.",
+    "The competition was fierce from Monday to Sunday, and the final rankings show it.",
+    "Some players pushed their limits all week long, others snuck in with a last-minute run. Here's how it ended.",
+    "It was a week of comebacks, records and nerves of steel across all {count} games.",
+    "The leaderboards kept changing until the very last day, and the final results did not disappoint.",
+    "Our players brought their A-game this week, and every spot in the top 10 had to be earned.",
+    "New faces, returning champions and a few surprises: this week had a bit of everything.",
+    "From the first run on Monday to the last attempt on Sunday night, the action never stopped.",
+    "The top spots changed hands more than once this week, and every point counted in the end.",
+    "Strategy, skill and a lot of retries decided this week's rankings.",
+    "It was another busy week on Cur8 Games, with every leaderboard packed with strong scores."
+  ],
+
+  "recap": [
+    "💥 {clauses}!",
+    "👀 In short: {clauses}.",
+    "⚔️ {clauses}!",
+    "🔥 {clauses}!",
+    "📊 The quick recap: {clauses}.",
+    "🎯 {clauses}.",
+    "🏅 Here's the summary: {clauses}!",
+    "✨ {clauses}!"
+  ],
+
+  "winner_clause": [
+    "{player} takes {game}",
+    "{game} goes to {player}",
+    "{player} rules {game}",
+    "{player} claims the {game} crown",
+    "{game} sees {player} on top",
+    "{player} conquers {game}",
+    "{player} grabs first place in {game}",
+    "{game} belongs to {player}",
+    "{player} finishes first in {game}",
+    "{player} leads {game} with {score} points",
+    "{player} tops {game}",
+    "{game} is won by {player}"
+  ],
+
+  "results_lead": [
+    "Here are the final rankings, scores and rewards for this week.",
+    "Let's take a look at the final rankings and the rewards of Week {week}.",
+    "Here's how the leaderboards ended, with scores and rewards for every winner.",
+    "These are the final standings of Week {week}, with all the rewards.",
+    "Below you'll find the top 10 of every game, with scores and rewards.",
+    "Time to reveal the final rankings! Here are the top players and their rewards.",
+    "Here's who made it to the top, and what they earned.",
+    "The final leaderboards of Week {week}, rewards included:"
+  ],
+
+  "gg_title": [
+    "GG to Everyone 🔥",
+    "Week {week} Highlights ✨",
+    "The Best Moments of the Week 🎬",
+    "What a Week! 🙌",
+    "GG, Players! 🎮",
+    "Highlights of Week {week} 🌟",
+    "Moments to Remember 📸",
+    "The Week in a Nutshell 🥜"
+  ],
+
+  "highlights_lead": [
+    "Week {week} highlights:",
+    "Here's what stood out this week:",
+    "A few moments worth remembering:",
+    "The stories of the week:",
+    "Some numbers and names you should know:",
+    "What we saw on the leaderboards this week:",
+    "This week's top moments:",
+    "The highlights at a glance:"
+  ],
+
+  "gg_close": [
+    "GG to everyone who competed this week!",
+    "Congratulations to all the winners, and thanks to everyone who played!",
+    "Well played, everyone! See you on the leaderboards!",
+    "Thanks to all the players who made this week so exciting!",
+    "Huge respect to every player who gave it a shot this week!",
+    "GG to all of you, winners or not: every run makes the competition better!",
+    "Congrats to the champions, and good luck to everyone next week!",
+    "Thank you all for playing, see you at the top!"
+  ],
+
+  "highlights": {
+    "game_winner": [
+      "{emoji} {player} takes the {game} crown with {score} points!",
+      "{emoji} {player} wins {game} with a score of {score}!",
+      "{emoji} {player} finishes on top of {game} with {score} points.",
+      "{emoji} {score} points are enough for {player} to win {game}!",
+      "{emoji} {player} claims first place in {game} ({score} points).",
+      "{emoji} {game} has a new champion: {player} with {score} points!",
+      "{emoji} Nobody could beat {player} in {game}: {score} points!",
+      "{emoji} {player} leads {game} from the top with {score} points."
+    ],
+    "record": [
+      "{emoji} {player} sets a new {game} record: {score} points, beating the old best of {old_record}!",
+      "{emoji} History in {game}! {player} scores {score}, the best weekly win ever (previous best: {old_record}).",
+      "{emoji} {player} raises the bar in {game} with a record {score} points!",
+      "{emoji} New all-time high in {game}: {player} with {score} points!",
+      "{emoji} {player} breaks the {game} record with {score} points. The old mark was {old_record}!",
+      "{emoji} {score} points in {game}! {player} writes a new record in our weekly history."
+    ],
+    "close_finish": [
+      "{emoji} {player} wins {game} by just {gap} {points} over {runner_up}!",
+      "{emoji} What a finish in {game}! {player} beats {runner_up} by only {gap} {points}!",
+      "{emoji} {gap} {points}! That's all that separated {player} and {runner_up} in {game}.",
+      "{emoji} Photo finish in {game}: {player} ({score}) edges out {runner_up} ({runner_up_score})!",
+      "{emoji} {player} holds off {runner_up} in {game} by a tiny {gap} {points}!",
+      "{emoji} Nail-biter in {game}: {player} takes it with {score}, just {gap} {points} ahead of {runner_up}!",
+      "{emoji} {runner_up} came so close in {game}, but {player} wins by {gap} {points}!"
+    ],
+    "dominant": [
+      "{emoji} {player} dominates {game} with an incredible score of {score} points!",
+      "{emoji} {player} is in a league of their own in {game}: {score} points, {ratio}x the runner-up!",
+      "{emoji} Unstoppable! {player} wins {game} with {score} points.",
+      "{emoji} {player} leaves everyone behind in {game} with {score} points!",
+      "{emoji} {score} points in {game}! {player} wins by a mile.",
+      "{emoji} {player} crushes {game} with {score} points, {ratio} times the score of {runner_up}!"
+    ],
+    "defending": [
+      "{emoji} {player} defends the {game} title, winning again with {score} points!",
+      "{emoji} Still the champion! {player} keeps the {game} crown.",
+      "{emoji} {player} does it again in {game}: back-to-back wins!",
+      "{emoji} Nobody can dethrone {player} in {game}: another win with {score} points!",
+      "{emoji} {player} keeps ruling {game} with {score} points.",
+      "{emoji} Same game, same champion: {player} wins {game} once more!"
+    ],
+    "first_win": [
+      "{emoji} {player} wins a weekly leaderboard for the first time, in {game}!",
+      "{emoji} First weekly victory for {player}, who takes {game} with {score} points!",
+      "{emoji} A new name at the top: {player} wins {game}!",
+      "{emoji} Welcome to the winners' club, {player}! First place in {game} with {score} points.",
+      "{emoji} {player} earns a first-ever weekly win in {game}!",
+      "{emoji} Breakthrough week for {player}: first place in {game}!"
+    ],
+    "podium": [
+      "{emoji} {second} and {third} secure second and third place in {game}.",
+      "{emoji} Behind the winner in {game}, {second} and {third} complete the podium.",
+      "{emoji} {second} takes silver and {third} bronze in {game}.",
+      "{emoji} {game} podium: {second} in second place, {third} in third.",
+      "{emoji} Great runs from {second} and {third}, who join the {game} podium!",
+      "{emoji} {second} and {third} fight their way onto the {game} podium."
+    ],
+    "multi_winner": [
+      "🏆 {player} takes first place in {games}!",
+      "🏆 {player} wins {count} leaderboards this week: {games}!",
+      "👑 What a week for {player}: first place in {games}!",
+      "🏆 {player} is the player of the week, winning {games}!",
+      "👑 {player} collects {count} wins: {games}!",
+      "🏆 {games}: all won by {player}!"
+    ],
+    "everywhere": [
+      "💪 {player} reaches the top {rank} in all {count} games!",
+      "💪 {player} makes the top {rank} in every rewarded game!",
+      "🎯 Consistency award: {player} finishes in the top {rank} of all {count} leaderboards!",
+      "💪 {player} is everywhere: top {rank} in all {count} games!",
+      "🎯 {player} shows great all-round skills, with a top {rank} finish in every game!",
+      "💪 Top {rank} in all {count} leaderboards for {player}!"
+    ]
+  },
+
+  "new_games_title": [
+    "🆕 {New_count} New {Noun} on Cur8!",
+    "🆕 Fresh {Noun} on Cur8!",
+    "🆕 New on Cur8 Games",
+    "🆕 Say Hello to Our New {Noun}!",
+    "🆕 The Lineup Grows!",
+    "🆕 Just Landed on Cur8!"
+  ],
+
+  "new_games_intro": [
+    "We're expanding the Cur8 Games lineup with {new_count} new {noun}:",
+    "The platform keeps growing! Here's what's new:",
+    "We've just added {new_count} new {noun} to Cur8:",
+    "Get ready for some fresh challenges:",
+    "Say hello to the newest {noun} in the ranked lineup:",
+    "There's something new to play on Cur8:"
+  ],
+
+  "new_games_outro": [
+    "Fresh challenges and more ways to compete! Give {them} a try and let us know what you think.",
+    "Try {them} out, explore the new gameplay and tell us what you think in the comments!",
+    "We can't wait to see your first scores on the new leaderboards!",
+    "Jump in, learn the ropes and be the first to set a high score!",
+    "Your feedback helps us improve every game, so let us know what you think!",
+    "We're looking forward to seeing the community take on the new {noun}!"
+  ],
+
+  "live_title": [
+    "🚀 Week {next_week} Is Live!",
+    "🚀 Week {next_week} Starts Now!",
+    "🎮 Week {next_week} Is On!",
+    "🔥 Welcome to Week {next_week}!",
+    "🚀 Week {next_week}: Let the Games Begin!",
+    "⚡ Week {next_week} Has Started!"
+  ],
+
+  "live_intro": [
+    "A new week, new challenges and another {prize} STEEM up for grabs!",
+    "The leaderboards are empty and {prize} STEEM is waiting for the best players!",
+    "Fresh start, fresh rankings and {prize} STEEM in rewards this week!",
+    "Another {prize} STEEM is on the line this week. Who's taking it?",
+    "Everyone starts from zero again, with {prize} STEEM up for grabs!",
+    "New week, new chances: {prize} STEEM will go to this week's top players!",
+    "It's time to climb the rankings again: {prize} STEEM is up for grabs!",
+    "{prize} STEEM, {next_count} games, one week. Ready?"
+  ],
+
+  "rewarded_lead": [
+    "🎯 Rewarded games this week:",
+    "🎯 This week's STEEM games:",
+    "🎯 The {next_count} games paying STEEM this week:",
+    "🎯 Where the STEEM is this week:",
+    "🎯 This week you can earn STEEM in:",
+    "🎯 Games in the spotlight this week:"
+  ],
+
+  "reset_line": [
+    "Leaderboards are reset.",
+    "All leaderboards are back to zero.",
+    "The rankings have been reset: everyone starts fresh.",
+    "Leaderboards are clean and ready for new records.",
+    "Every score starts from zero again.",
+    "The slate is clean: the leaderboards are reset."
+  ],
+
+  "call_to_action": [
+    "Time to {verbs} your way to the top!",
+    "Get ready to {verbs} your way to the top!",
+    "Whatever it takes: {verbs} your way to the top!",
+    "It's time to {verbs} like never before!",
+    "Ready to {verbs} for the top spot?",
+    "Show us what you've got: {verbs} and claim your reward!",
+    "Warm up, then {verbs} your way into the top 10!",
+    "Let's go: {verbs} and make it count!"
+  ],
+
+  "slogan": [
+    "🔥 Play harder. Rank higher. Earn more.",
+    "🎮 Play. Compete. Earn.",
+    "🏆 Every rank counts!",
+    "💎 Your next high score could be worth STEEM.",
+    "⚡ One more run could change everything.",
+    "🔥 See you at the top!",
+    "🎯 Aim high, play hard, earn STEEM.",
+    "🚀 The leaderboard is waiting for you."
+  ]
+}

@@ -1,8 +1,17 @@
 {
-  "version": "5.24.9",
-  "timestamp": "2026-11-19T08:39:19.706Z",
-  "buildNumber": 642,
+  "version": "5.24.10",
+  "timestamp": "2026-11-23T21:57:31.678Z",
+  "buildNumber": 643,
   "changelog": [
+    {
+      "version": "5.24.10",
+      "date": "2026-11-23",
+      "type": "patch",
+      "changes": [
+        "Add Steem Game Card and Game Data",
+        "🔖 Bump version to 5.24.9 [skip-version]"
+      ]
+    },
     {
       "version": "5.24.9",
       "date": "2026-11-19",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [AD]implement rival upgrades and budget system, enhance rival behavior and add tests",
         "🔖 Bump version to 5.24.0 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.24.0",
-      "date": "2026-11-16",
-      "type": "minor",
-      "changes": [
-        "feat: [AD]add Apex Drive game API, service, rules, and tests",
-        "🔖 Bump version to 5.23.5 [skip-version]"
       ]
     }
   ]

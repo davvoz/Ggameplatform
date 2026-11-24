@@ -2,6 +2,7 @@ import CommunityAPI from './CommunityAPI.js';
 import { PrivateMessageAPI } from './PrivateMessageManager.js';
 import AuthManager from './auth.js';
 import { getCommunityWS, setCommunityWS, getCurrentCommunityManager, getPMWS, setPMWS } from './state.js';
+import { runWithNextPageChange } from './pageTransition.js';
 
 /**
  * Check for unclaimed quest rewards and update badge
@@ -194,11 +195,8 @@ function initMobileNav() {
         e.preventDefault();
         e.stopPropagation();
 
-        const isActive = navMenu.classList.contains('active');
-
-        if (isActive) {
-            newNavToggle.classList.remove('active');
-            navMenu.classList.remove('active');
+        if (navMenu.classList.contains('active')) {
+            closeMobileMenu(newNavToggle, navMenu);
         } else {
             newNavToggle.classList.add('active');
             navMenu.classList.add('active');
@@ -206,28 +204,51 @@ function initMobileNav() {
 
     });
 
-    // Close menu when clicking on a link
+    // Tapping a link: the menu stays open (covering the page) until the new page
+    // has arrived, then slides out over it (see runWithNextPageChange)
     const navLinks = navMenu.querySelectorAll('.nav-link');
 
     navLinks.forEach(link => {
         link.addEventListener('click', function () {
+            if (!navMenu.classList.contains('active')) return;
 
-            newNavToggle.classList.remove('active');
-            navMenu.classList.remove('active');
+            const close = () => closeMobileMenu(newNavToggle, navMenu);
+            if (isCurrentRoute(link)) {
+                // Same page: no route change will close it
+                close();
+            } else {
+                runWithNextPageChange(close);
+            }
         });
     });
 
     // Close menu when clicking outside
     document.addEventListener('click', function (e) {
-        if (!newNavToggle.contains(e.target) && !navMenu.contains(e.target)) {
-            if (navMenu.classList.contains('active')) {
-                newNavToggle.classList.remove('active');
-                navMenu.classList.remove('active');
-            }
+        const clickedOutside = !newNavToggle.contains(e.target) && !navMenu.contains(e.target);
+        if (clickedOutside && navMenu.classList.contains('active')) {
+            closeMobileMenu(newNavToggle, navMenu);
         }
     });
 
     return true;
+}
+
+/**
+ * True if the link points to the page already shown
+ * @param {HTMLAnchorElement} link
+ */
+function isCurrentRoute(link) {
+    return link.getAttribute('href') === (globalThis.location.hash || '#/');
+}
+
+/**
+ * Close the mobile menu (slide-out animation defined in navigation.css)
+ * @param {HTMLElement} navToggle - hamburger button
+ * @param {HTMLElement} navMenu - sliding menu panel
+ */
+function closeMobileMenu(navToggle, navMenu) {
+    navToggle.classList.remove('active');
+    navMenu.classList.remove('active');
 }
 
 // ES6 modules are deferred by default - DOM is already ready

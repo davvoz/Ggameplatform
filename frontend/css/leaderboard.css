@@ -622,6 +622,24 @@
         opacity: 0;
         pointer-events: none;
     }
+
+    /* Mouse drag-to-scroll (js/GameCarousel.js): the strip can be grabbed */
+    .game-carousel-track {
+        cursor: grab;
+        user-select: none;
+    }
+
+    /* While dragging: the strip follows the mouse freely (snap would fight it,
+       it applies again on release) and the game under the cursor does not react */
+    .game-carousel.is-dragging .game-carousel-track {
+        scroll-snap-type: none;
+        cursor: grabbing;
+    }
+
+    .game-carousel.is-dragging .game-carousel-item {
+        cursor: grabbing;
+        pointer-events: none;
+    }
 }
 
 @media (max-width: 600px) {

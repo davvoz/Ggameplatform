@@ -32,6 +32,13 @@ let isFirstRoute = true;
  * Initialize the router
  */
 export function initRouter() {
+    // Every page change starts from the top (handleRoute). With the browser's
+    // automatic scroll restoration, Back/Forward first jumped the current page to
+    // the scroll of the previous entry, visible for a moment before the new page
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
     // Listen for hash changes
     globalThis.addEventListener('hashchange', handleRoute);
     
@@ -65,20 +72,23 @@ function handleRoute() {
     runPageTransition(() => {
         // A new page starts from the top
         if (isPageChange) globalThis.scrollTo(0, 0);
-        renderRoute(route, hash);
+        return renderRoute(route, hash);
     }, { animate: isPageChange });
 }
 
 /**
  * Render the matched route (or the 404 page) and update the nav state
+ * @returns {*} the route handler's result (a promise for async pages)
  */
 function renderRoute(route, hash) {
-    if (route) {
-        route.handler(route.params);
-        updateActiveNavLink(hash);
-    } else {
+    if (!route) {
         render404();
+        return undefined;
     }
+
+    const rendering = route.handler(route.params);
+    updateActiveNavLink(hash);
+    return rendering;
 }
 
 /**

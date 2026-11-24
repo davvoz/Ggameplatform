@@ -11,18 +11,59 @@
 // a different view-transition-name than the old one
 const PHASE_ATTRIBUTE = 'data-page-transition';
 
+// Longest wait for the new page before uncovering it anyway (see runWithNextPageChange)
+const MAX_PAGE_WAIT_MS = 1200;
+
+// Work to run once the next page has arrived (see runWithNextPageChange)
+let pendingAfterNextPage = null;
+
 function prefersReducedMotion() {
     return globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 }
 
 /**
+ * The next page change happens under something covering the page (the open
+ * mobile menu): the page is swapped without animation, hidden by the cover, and
+ * `callback` (which removes the cover, with its own animation) runs once the new
+ * page has arrived, or after MAX_PAGE_WAIT_MS at most.
+ * @param {() => void} callback
+ */
+export function runWithNextPageChange(callback) {
+    pendingAfterNextPage = callback;
+}
+
+function takePendingAfterNextPage() {
+    const callback = pendingAfterNextPage;
+    pendingAfterNextPage = null;
+    return callback;
+}
+
+/**
+ * Resolve when `rendering` settles or after `maxMs`, whichever comes first.
+ * A failed render is logged, not rethrown: the cover must still be removed.
+ * @param {*} rendering - value returned by the page update (a promise for async pages)
+ * @param {number} maxMs
+ */
+function settleWithin(rendering, maxMs) {
+    const settled = Promise.resolve(rendering)
+        .catch(error => console.error('Page render failed:', error));
+    const timeout = new Promise(resolve => setTimeout(resolve, maxMs));
+    return Promise.race([settled, timeout]);
+}
+
+/**
  * Run a page update, animated when possible.
- * The update must swap the page synchronously: async renderers are started but
- * not awaited, so the animation never waits for network data.
- * @param {() => void} update - swaps the page content
+ * The animation does not wait for async renderers (network data).
+ * @param {() => (void|Promise<void>)} update - swaps the page content
  * @param {{ animate?: boolean }} [options]
  */
 export function runPageTransition(update, { animate = true } = {}) {
+    const afterPage = takePendingAfterNextPage();
+    if (afterPage) {
+        settleWithin(update(), MAX_PAGE_WAIT_MS).then(afterPage);
+        return;
+    }
+
     const canAnimate = animate
         && typeof document.startViewTransition === 'function'
         && !prefersReducedMotion();

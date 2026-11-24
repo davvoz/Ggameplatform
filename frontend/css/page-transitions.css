@@ -27,9 +27,8 @@ html[data-page-transition="new"] #app {
     animation: none;
 }
 
-/* Navbar stays still and above the animating page content.
-   Only its live (new) image is shown: the old snapshot may still contain the
-   mobile menu open (it closes when a link is tapped), which would appear twice. */
+/* Navbar stays still and above the animating page content: only its live (new)
+   image is shown, no cross-fade of the bar */
 ::view-transition-group(site-navbar) {
     z-index: 2;
     animation: none;

@@ -3,7 +3,8 @@
  * the game of the leaderboard (replaces the big grid of game cards).
  *
  * - Touch / trackpad: native horizontal scroll with scroll-snap.
- * - Mouse: arrow buttons (shown only on devices with hover), hidden at the ends.
+ * - Mouse: drag the strip to scroll it, or use the arrow buttons (shown only on
+ *   devices with hover, hidden at the ends).
  * - The selected game is kept centered in the strip.
  *
  * Selection itself is handled by the page through `data-action="select-game"`
@@ -15,6 +16,10 @@ const ITEM_SELECTOR = '.game-carousel-item';
 const ARROW_SCROLL_RATIO = 0.8;
 // Tolerance (px) when checking if the strip is at one of its ends
 const EDGE_TOLERANCE_PX = 4;
+// Mouse movement (px) after which a press on the strip becomes a drag, not a click
+const DRAG_THRESHOLD_PX = 6;
+// Set on the carousel while the strip is dragged with the mouse (leaderboard.css)
+const DRAGGING_CLASS = 'is-dragging';
 
 function escapeHtml(value) {
     return String(value ?? '')
@@ -80,7 +85,77 @@ export function getCenteredScrollLeft(item, track) {
 }
 
 /**
- * Wire up arrows and centering for a rendered carousel.
+ * Drag-to-scroll with the mouse (touch already scrolls natively).
+ * A press becomes a drag only past DRAG_THRESHOLD_PX, so a plain click still
+ * selects a game; the click that ends a drag is swallowed instead.
+ * @param {HTMLElement} track - scrollable strip
+ * @param {HTMLElement} carousel - carousel root, gets DRAGGING_CLASS while dragging
+ * @returns {() => void} removes the listeners
+ */
+function enableMouseDragScroll(track, carousel) {
+    let drag = null; // { pointerId, startX, startScroll, moved }
+    let swallowNextClick = false;
+
+    const onPointerDown = (event) => {
+        swallowNextClick = false;
+        if (event.pointerType !== 'mouse' || event.button !== 0) return;
+        drag = { pointerId: event.pointerId, startX: event.clientX, startScroll: track.scrollLeft, moved: false };
+    };
+
+    const onPointerMove = (event) => {
+        if (event.pointerId !== drag?.pointerId) return;
+
+        const dx = event.clientX - drag.startX;
+        if (!drag.moved) {
+            if (Math.abs(dx) < DRAG_THRESHOLD_PX) return;
+            // Captured only now: capturing on press would retarget plain clicks
+            drag.moved = true;
+            track.setPointerCapture(event.pointerId);
+            carousel.classList.add(DRAGGING_CLASS);
+        }
+        track.scrollLeft = drag.startScroll - dx;
+    };
+
+    const onPointerEnd = (event) => {
+        if (event.pointerId !== drag?.pointerId) return;
+        if (drag.moved) {
+            swallowNextClick = true;
+            carousel.classList.remove(DRAGGING_CLASS);
+        }
+        drag = null;
+    };
+
+    // Capture phase: stops the click before the page's game selection sees it
+    const onClickCapture = (event) => {
+        if (!swallowNextClick) return;
+        swallowNextClick = false;
+        event.preventDefault();
+        event.stopPropagation();
+    };
+
+    // The browser's own image drag would cancel ours
+    const onDragStart = (event) => event.preventDefault();
+
+    track.addEventListener('pointerdown', onPointerDown);
+    track.addEventListener('pointermove', onPointerMove);
+    track.addEventListener('pointerup', onPointerEnd);
+    track.addEventListener('pointercancel', onPointerEnd);
+    track.addEventListener('click', onClickCapture, true);
+    track.addEventListener('dragstart', onDragStart);
+
+    return () => {
+        track.removeEventListener('pointerdown', onPointerDown);
+        track.removeEventListener('pointermove', onPointerMove);
+        track.removeEventListener('pointerup', onPointerEnd);
+        track.removeEventListener('pointercancel', onPointerEnd);
+        track.removeEventListener('click', onClickCapture, true);
+        track.removeEventListener('dragstart', onDragStart);
+        carousel.classList.remove(DRAGGING_CLASS);
+    };
+}
+
+/**
+ * Wire up arrows, mouse dragging and centering for a rendered carousel.
  * @param {HTMLElement} root - element containing the carousel markup
  * @returns {{ select: (gameId: string) => void, destroy: () => void } | null}
  */
@@ -114,6 +189,7 @@ export function initGameCarousel(root) {
     prevBtn?.addEventListener('click', onArrowClick);
     nextBtn?.addEventListener('click', onArrowClick);
     track.addEventListener('scroll', updateArrows, { passive: true });
+    const disableMouseDragScroll = enableMouseDragScroll(track, carousel);
     const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateArrows);
     resizeObserver?.observe(track);
 
@@ -136,6 +212,7 @@ export function initGameCarousel(root) {
             prevBtn?.removeEventListener('click', onArrowClick);
             nextBtn?.removeEventListener('click', onArrowClick);
             track.removeEventListener('scroll', updateArrows);
+            disableMouseDragScroll();
             resizeObserver?.disconnect();
         }
     };

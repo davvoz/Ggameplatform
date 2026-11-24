@@ -1,8 +1,17 @@
 {
-  "version": "5.26.0",
-  "timestamp": "2026-11-24T01:11:41.949Z",
-  "buildNumber": 645,
+  "version": "5.27.0",
+  "timestamp": "2026-11-24T01:41:19.317Z",
+  "buildNumber": 646,
   "changelog": [
+    {
+      "version": "5.27.0",
+      "date": "2026-11-24",
+      "type": "minor",
+      "changes": [
+        "feat: Implement mouse drag-to-scroll functionality for game carousel and enhance mobile navigation behavior",
+        "🔖 Bump version to 5.26.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.26.0",
       "date": "2026-11-24",
@@ -82,15 +91,6 @@
       "changes": [
         "fix: [AD] enhance keyboard focus handling for game canvas and add related tests",
         "🔖 Bump version to 5.24.3 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.24.3",
-      "date": "2026-11-16",
-      "type": "patch",
-      "changes": [
-        "fix:[AD] enhance race functionality and player profile integration",
-        "🔖 Bump version to 5.24.2 [skip-version]"
       ]
     }
   ]

@@ -27,9 +27,14 @@ import PingsAPI from './PingsAPI.js';
 import PingShareModal from './PingShareModal.js';
 import { getSteemGames } from './steemGames.js';
 import { createSteemGameCard } from './SteemGameCard.js';
+import { initStickyCatalogTabs } from './catalogStickyTabs.js';
+import { initImageFadeIn } from './imageFadeIn.js';
 
 // Import nav.js for side effects (registers community notification handlers)
 import './nav.js';
+
+// Images (thumbnails, avatars, ...) fade in when they finish loading
+initImageFadeIn();
 
 // Initialize daily login banner and store in state
 const dailyLoginBannerInstance = new DailyLoginBanner();
@@ -268,6 +273,9 @@ export async function renderCatalog(filters = {}) {
 
     // Set up game mode tabs
     setupGameModeTabs();
+
+    // Pin the tabs under the navbar while scrolling
+    initStickyCatalogTabs();
 
     // Load and display games with current mode filter
     await loadGames({ ...filters, mode: currentGameMode });

@@ -819,6 +819,19 @@ def preview_weekly_banner(week_start: Optional[str] = None):
         raise HTTPException(status_code=400, detail=str(e))
     return Response(content=banner, media_type="image/jpeg")
 
+@router.get("/weekly-post/preview/signature", responses={400: {"description": "Bad week or missing key"}})
+def test_weekly_post_signature(week_start: Optional[str] = None):
+    """Sign the previewed post as @cur8 without broadcasting it, and have a node check
+    the signature (sync: talks to the Steem nodes). Nothing reaches the chain."""
+    from app.weekly_report.job import get_job
+    from app.weekly_report.publish import test_post_signature
+
+    try:
+        post = get_job().preview(_weekly_post_week(week_start)).post
+        return test_post_signature(post)
+    except (ValueError, RuntimeError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @router.post("/weekly-post/run")
 def run_weekly_post(username: CurrentUser):
     """Run the weekly job now for this week, also after it gave up (sync: uploads and posts)"""

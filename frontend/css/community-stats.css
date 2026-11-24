@@ -1726,3 +1726,11 @@
         padding: 12px 8px;
     }
 }
+
+/* ========== Section switch animation (keyframes in ui-animations.css) ==========
+   Sections are shown with display: none -> visible, which restarts the animation
+   every time a tab is selected. */
+.community-chat-section.active,
+.community-stats-section.active {
+    animation: ui-fade-up var(--ui-enter-duration) var(--ui-ease-out) backwards;
+}

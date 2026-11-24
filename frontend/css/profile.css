@@ -1255,3 +1255,34 @@
         padding: 12px 14px;
     }
 }
+
+/* ========================================
+   Avatar / cover fade-in (js/imageFadeIn.js -> setBackgroundImageWithFade)
+   ======================================== */
+/* Waiting for the Steem photo: same color the cover reveal starts from,
+   instead of the gray placeholder circle */
+.avatar-circle.is-loading {
+    background: var(--background-light);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* The circle color/frame change blends with the photo fade-in */
+.avatar-circle {
+    transition: background-color var(--ui-image-duration) ease, border-color var(--ui-image-duration) ease;
+}
+
+.avatar-icon.bg-fade-in {
+    animation: ui-image-in var(--ui-image-duration) ease-out;
+}
+
+/* Cover: the dark overlay starts as the solid header color and clears to its
+   normal tint, revealing the image (the header content does not fade) */
+.profile-header.bg-fade-in::before {
+    animation: profile-cover-reveal calc(var(--ui-image-duration) * 1.5) ease-out;
+}
+
+@keyframes profile-cover-reveal {
+    from {
+        background-color: var(--background-light);
+    }
+}

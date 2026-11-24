@@ -1,0 +1,78 @@
+/* ========================================
+   Page change animation (View Transitions API, see js/pageTransition.js)
+   Only the page content (#app) animates: the navbar and the page background
+   stay still. The old page fades out first, then the new one fades in sliding
+   up, one after the other so the two pages never overlap.
+
+   Old and new page use two different names (JS sets data-page-transition="new"
+   on <html> while applying the new page): each snapshot keeps its own position,
+   so the jump to the top of the new page is never animated as a scroll.
+   ======================================== */
+
+#app {
+    view-transition-name: page-old;
+}
+
+html[data-page-transition="new"] #app {
+    view-transition-name: page-new;
+}
+
+.navbar {
+    view-transition-name: site-navbar;
+}
+
+/* The rest of the page (background) swaps instantly: no cross-fade */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+}
+
+/* Navbar stays still and above the animating page content.
+   Only its live (new) image is shown: the old snapshot may still contain the
+   mobile menu open (it closes when a link is tapped), which would appear twice. */
+::view-transition-group(site-navbar) {
+    z-index: 2;
+    animation: none;
+}
+
+::view-transition-old(site-navbar) {
+    animation: none;
+    opacity: 0;
+}
+
+::view-transition-new(site-navbar) {
+    animation: none;
+}
+
+:root {
+    --page-out-duration: 160ms;
+    --page-in-duration: 320ms;
+}
+
+::view-transition-group(page-old),
+::view-transition-group(page-new) {
+    z-index: 1;
+    animation: none;
+}
+
+::view-transition-old(page-old) {
+    animation: page-content-out var(--page-out-duration) ease-in both;
+}
+
+/* Starts when the old page has fully faded out (delay = old page duration) */
+::view-transition-new(page-new) {
+    animation: page-content-in var(--page-in-duration) cubic-bezier(0.22, 1, 0.36, 1) var(--page-out-duration) both;
+}
+
+@keyframes page-content-out {
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes page-content-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+}

@@ -709,3 +709,13 @@
 .pm-reply-preview-cancel:hover {
     background: rgba(239, 68, 68, 0.3);
 }
+
+/* ========== Enter animations (keyframes in ui-animations.css) ========== */
+.community-messages-section.active {
+    animation: ui-fade-up var(--ui-enter-duration) var(--ui-ease-out) backwards;
+}
+
+/* Opening a conversation: the chat slides in from the right */
+.pm-chat-area {
+    animation: ui-fade-in-right var(--ui-enter-duration) var(--ui-ease-out) backwards;
+}

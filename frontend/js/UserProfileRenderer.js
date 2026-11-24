@@ -5,6 +5,7 @@ import { config } from './config.js';
 import AuthManager from './auth.js';
 import ConfirmModal from './ConfirmModal.js';
 import { buildLevelCardElement } from './level-widget.js';
+import { setBackgroundImageWithFade } from './imageFadeIn.js';
 
 /**
  * UserProfileRenderer - Renders the public profile page for any user.
@@ -343,7 +344,7 @@ class UserProfileRenderer {
             <div class="profile user-public-profile">
                 <div class="profile-header" id="publicProfileHeader">
                     <div class="profile-avatar">
-                        <div class="avatar-circle">
+                        <div class="avatar-circle ${steemUsername ? 'is-loading' : ''}">
                             <span class="avatar-icon" id="publicAvatarIcon">${avatarHTML}</span>
                         </div>
                     </div>
@@ -567,7 +568,6 @@ class UserProfileRenderer {
             return;
         }
 
-        avatarIcon.style.backgroundImage = `url(${steemProfile.profileImage})`;
         avatarIcon.style.backgroundSize = 'cover';
         avatarIcon.style.backgroundPosition = 'center';
         avatarIcon.style.width = '100%';
@@ -575,17 +575,20 @@ class UserProfileRenderer {
         avatarIcon.textContent = '';
         avatarIcon.innerHTML = '';
 
-        if (avatarCircle) {
+        // Keep the loading look (header color, see profile.css) until the photo is there
+        setBackgroundImageWithFade(avatarIcon, steemProfile.profileImage, () => {
+            if (!avatarCircle) return;
+            avatarCircle.classList.remove('is-loading');
             avatarCircle.style.background = 'transparent';
             avatarCircle.style.border = '4px solid rgba(255, 255, 255, 0.8)';
-        }
+        });
     }
 
     updateCoverWithSteemData(steemProfile) {
         const profileHeader = document.getElementById('publicProfileHeader');
 
         if (profileHeader && steemProfile.coverImage) {
-            profileHeader.style.backgroundImage = `url(${steemProfile.coverImage})`;
+            setBackgroundImageWithFade(profileHeader, steemProfile.coverImage);
             profileHeader.style.backgroundSize = 'cover';
             profileHeader.style.backgroundPosition = 'center';
         }

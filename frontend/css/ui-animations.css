@@ -1,0 +1,74 @@
+/* ========================================
+   Shared UI enter animations
+   Used by in-page components that appear or change (tabs, sections, lists).
+   Only opacity/transform are animated (GPU friendly). Components use
+   `animation-fill-mode: backwards` so that, once finished, the animation does
+   not override their own transforms (e.g. hover lifts).
+   ======================================== */
+
+:root {
+    --ui-enter-duration: 280ms;
+    --ui-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Delay between consecutive items of a list */
+    --ui-stagger: 35ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ui-enter-duration: 0.01ms;
+        --ui-stagger: 0ms;
+    }
+}
+
+/* Fade in while moving up a little */
+@keyframes ui-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+/* Fade in rising from lower (podium-like elements) */
+@keyframes ui-rise {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+}
+
+/* Fade in coming from the right (drill-down views, e.g. opening a chat) */
+@keyframes ui-fade-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+}
+
+/* ========================================
+   Image fade-in (js/imageFadeIn.js)
+   Images not loaded yet are hidden, then fade in when they arrive.
+   Opacity only, so it never conflicts with hover zooms on thumbnails.
+   ======================================== */
+:root {
+    --ui-image-duration: 400ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ui-image-duration: 0.01ms;
+    }
+}
+
+img.img-pending {
+    opacity: 0;
+}
+
+img.img-fade-in {
+    animation: ui-image-in var(--ui-image-duration) ease-out;
+}
+
+@keyframes ui-image-in {
+    from {
+        opacity: 0;
+    }
+}

@@ -437,176 +437,205 @@
     background: rgba(0, 217, 255, 0.1);
 }
 
-/* Game Selector Cards */
+/* Game Selector: slim horizontal carousel (js/GameCarousel.js) */
 .game-selector {
-    margin-bottom: var(--spacing-xl);
-}
-
-.game-selector-label {
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     margin-bottom: var(--spacing-lg);
-    text-align: center;
 }
 
-.game-cards-container {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-lg);
-    max-width: 900px;
-    margin: 0 auto;
-    padding: var(--spacing-sm);
-}
-
-.game-selector-card {
-    background: var(--surface);
-    border-radius: var(--radius-xl);
-    border: 2px solid var(--border);
-    cursor: pointer;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+.game-carousel {
+    --carousel-item-width: 136px;
+    --carousel-fade: 40px;
     position: relative;
+    max-width: 960px;
+    margin: 0 auto;
 }
 
-.game-selector-card::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    background: linear-gradient(135deg, var(--primary-color), var(--accent-purple), var(--primary-color));
-    background-size: 200% 200%;
-    border-radius: var(--radius-xl);
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    z-index: -1;
+.game-carousel-track {
+    position: relative; /* items' offsetLeft is measured from here */
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--carousel-fade);
+    padding: 10px var(--carousel-fade) 6px;
+    scrollbar-width: none;
+    /* Soft fade on the edges that still have games to scroll to */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--carousel-fade), #000 calc(100% - var(--carousel-fade)), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--carousel-fade), #000 calc(100% - var(--carousel-fade)), transparent 100%);
 }
 
-.game-selector-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.6) 100%);
-    z-index: 1;
-    pointer-events: none;
+.game-carousel-track::-webkit-scrollbar {
+    display: none;
 }
 
-.game-selector-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    border-color: rgba(0, 217, 255, 0.3);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4),
-                0 0 24px rgba(0, 217, 255, 0.15);
+.game-carousel.is-at-start .game-carousel-track {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - var(--carousel-fade)), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - var(--carousel-fade)), transparent 100%);
 }
 
-.game-selector-card:hover::before {
-    opacity: 0.6;
-    animation: borderGlow 2s ease infinite;
+.game-carousel.is-at-end .game-carousel-track {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--carousel-fade));
+    mask-image: linear-gradient(90deg, transparent 0, #000 var(--carousel-fade));
 }
 
-@keyframes borderGlow {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+.game-carousel.is-at-start.is-at-end .game-carousel-track {
+    -webkit-mask-image: none;
+    mask-image: none;
 }
 
-.game-selector-card.active {
-    border-color: var(--primary-color);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
-                0 0 40px rgba(0, 217, 255, 0.3);
+/* Item: small thumbnail + name */
+.game-carousel-item {
+    flex: 0 0 var(--carousel-item-width);
+    min-width: 0; /* long names must not widen the item */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    scroll-snap-align: center;
+    opacity: 0.7;
+    transition: opacity 0.25s ease, color 0.25s ease;
 }
 
-.game-selector-card.active::before {
+.game-carousel-item:hover,
+.game-carousel-item:focus-visible,
+.game-carousel-item.active {
     opacity: 1;
-    animation: borderGlow 2s ease infinite;
 }
 
-.game-selector-card.active .game-card-name {
-    color: #fff;
-    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+.game-carousel-item:focus-visible {
+    outline: none;
 }
 
-.game-card-thumbnail {
+.game-carousel-thumb {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg);
     overflow: hidden;
     background: var(--background-light);
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-.game-card-thumbnail img {
+.game-carousel-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
 }
 
-.game-selector-card:hover .game-card-thumbnail img {
-    transform: scale(1.1);
+.game-carousel-item:hover .game-carousel-thumb {
+    transform: translateY(-2px);
+    border-color: rgba(0, 217, 255, 0.35);
 }
 
-.game-card-steem {
+.game-carousel-item:focus-visible .game-carousel-thumb {
+    border-color: var(--primary-color);
+}
+
+.game-carousel-item.active .game-carousel-thumb {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 4px 18px rgba(0, 217, 255, 0.35);
+}
+
+.game-carousel-steem {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
-    background: rgba(0, 0, 0, 0.7);
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    padding: 3px;
     border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 5px;
-    z-index: 2;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.game-card-steem img {
+.game-carousel-steem img {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
 
-.game-card-name {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 2;
-    padding: var(--spacing-md) var(--spacing-sm);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #fff;
+.game-carousel-name {
+    width: 100%;
     text-align: center;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    transition: all 0.3s ease;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* Responsive game cards */
+.game-carousel-item.active .game-carousel-name {
+    color: var(--primary-color);
+}
+
+/* Arrows: only on devices with a mouse; hidden at the ends */
+.game-carousel-arrow {
+    display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .game-carousel-arrow {
+        position: absolute;
+        top: calc(10px + (var(--carousel-item-width) * 10 / 16) / 2);
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0 0 3px;
+        border-radius: 50%;
+        border: 1px solid var(--border-light);
+        background: var(--background-light);
+        color: var(--text-primary);
+        font-size: 1.4rem;
+        line-height: 1;
+        cursor: pointer;
+        transform: translateY(-50%);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        transition: opacity 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .game-carousel-arrow:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+    }
+
+    .game-carousel-arrow--prev {
+        left: 0;
+    }
+
+    .game-carousel-arrow--next {
+        right: 0;
+    }
+
+    .game-carousel-arrow:disabled {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
 @media (max-width: 600px) {
-    .game-cards-container {
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--spacing-sm);
-        max-width: 100%;
+    .game-carousel {
+        --carousel-item-width: 108px;
+        --carousel-fade: 24px;
     }
-    
-    .game-selector-card {
-        border-radius: var(--radius-lg);
+
+    .game-carousel-track {
+        gap: 10px;
     }
-    
-    .game-card-name {
+
+    .game-carousel-name {
         font-size: 0.75rem;
-        padding: var(--spacing-sm) var(--spacing-xs);
-    }
-    
-    .game-card-steem {
-        width: 20px;
-        height: 20px;
-        top: 4px;
-        right: 4px;
-        padding: 3px;
     }
 }
 
@@ -1826,4 +1855,46 @@
         padding-left: var(--spacing-xs) ;
         padding-right: var(--spacing-xs) ;
     }
+}
+/* ========================================
+   Enter animations (keyframes in ui-animations.css)
+   Content of the leaderboard panel animates every time it is re-rendered
+   (tab switch, game switch, data loaded).
+   ======================================== */
+.leaderboard-content > * {
+    animation: ui-fade-up var(--ui-enter-duration) var(--ui-ease-out) backwards;
+}
+
+/* Podium: 1st place first, then 2nd and 3rd */
+.leaderboard-content .gdl-podium-player {
+    animation: ui-rise 420ms var(--ui-ease-out) backwards;
+}
+
+.leaderboard-content .gdl-podium-2 {
+    animation-delay: calc(var(--ui-stagger) * 2);
+}
+
+.leaderboard-content .gdl-podium-3 {
+    animation-delay: calc(var(--ui-stagger) * 4);
+}
+
+/* List rows cascade in (the first 10; the rest come in with the 10th) */
+.leaderboard-content .gdl-list-row {
+    animation: ui-fade-up var(--ui-enter-duration) var(--ui-ease-out) backwards;
+    animation-delay: calc(var(--ui-stagger) * 10);
+}
+
+.leaderboard-content .gdl-list-row:nth-child(1) { animation-delay: calc(var(--ui-stagger) * 1); }
+.leaderboard-content .gdl-list-row:nth-child(2) { animation-delay: calc(var(--ui-stagger) * 2); }
+.leaderboard-content .gdl-list-row:nth-child(3) { animation-delay: calc(var(--ui-stagger) * 3); }
+.leaderboard-content .gdl-list-row:nth-child(4) { animation-delay: calc(var(--ui-stagger) * 4); }
+.leaderboard-content .gdl-list-row:nth-child(5) { animation-delay: calc(var(--ui-stagger) * 5); }
+.leaderboard-content .gdl-list-row:nth-child(6) { animation-delay: calc(var(--ui-stagger) * 6); }
+.leaderboard-content .gdl-list-row:nth-child(7) { animation-delay: calc(var(--ui-stagger) * 7); }
+.leaderboard-content .gdl-list-row:nth-child(8) { animation-delay: calc(var(--ui-stagger) * 8); }
+.leaderboard-content .gdl-list-row:nth-child(9) { animation-delay: calc(var(--ui-stagger) * 9); }
+
+/* Winners history: a week's table appears when its group is opened */
+.leaderboard-content .collapsible-content {
+    animation: ui-fade-up var(--ui-enter-duration) var(--ui-ease-out) backwards;
 }

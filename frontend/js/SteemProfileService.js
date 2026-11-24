@@ -36,23 +36,26 @@ export class SteemProfileService {
     /**
      * Fetch Steem user profile data
      * @param {string} username - Steem username
+     * @param {{ includeCur8Support?: boolean }} [options] - includeCur8Support also
+     *   reads the cur8.witness vote (proxy included) and the delegation to @cur8:
+     *   extra RPC calls, so only callers that need them ask for them
      * @returns {Promise<Object|null>} Profile data or null if not found
      */
-    async fetchProfile(username) {
+    async fetchProfile(username, { includeCur8Support = false } = {}) {
         if (!username) {
-
             return null;
         }
-
-
 
         const accountData = await this._fetchAccountData(username);
         if (!accountData) {
             return null;
         }
 
-        return await this._extractProfileData(accountData);
-
+        const profileData = this._extractProfileData(accountData);
+        if (includeCur8Support) {
+            Object.assign(profileData, await this._fetchCur8Support(accountData));
+        }
+        return profileData;
     }
 
     /**
@@ -85,28 +88,9 @@ export class SteemProfileService {
      * Extract and parse profile data from account
      * @private
      */
-    async _extractProfileData(account) {
-
-
+    _extractProfileData(account) {
         const metadata = this._parseMetadata(account);
         const profile = metadata.profile || {};
-
-        // Extract witness votes
-        const witnessVotes = account.witness_votes || [];
-        let votesCur8Witness = witnessVotes.includes('cur8.witness');
-
-        // Check if user uses a proxy for witness voting
-        const proxy = account.proxy || '';
-        if (proxy && !votesCur8Witness) {
-
-            // If using proxy, check if proxy votes for cur8.witness
-            votesCur8Witness = await this._checkProxyVote(proxy);
-        }
-
-        // Get delegation specifically to @cur8 using get_vesting_delegations
-        const delegationAmount = await this._getDelegationToCur8(account.name);
-
-
 
         return {
             profileImage: profile.profile_image || '',
@@ -114,12 +98,29 @@ export class SteemProfileService {
             about: profile.about || '',
             location: profile.location || '',
             website: profile.website || '',
-            witnessVotes: witnessVotes,
-            votesCur8Witness: votesCur8Witness,
-            proxy: proxy,
-            delegationAmount: delegationAmount,
+            witnessVotes: account.witness_votes || [],
+            proxy: account.proxy || '',
             account: account
         };
+    }
+
+    /**
+     * Read the account's support to CUR8: cur8.witness vote (directly or through
+     * its proxy) and SP delegated to @cur8
+     * @private
+     */
+    async _fetchCur8Support(account) {
+        const witnessVotes = account.witness_votes || [];
+        let votesCur8Witness = witnessVotes.includes('cur8.witness');
+
+        const proxy = account.proxy || '';
+        if (proxy && !votesCur8Witness) {
+            votesCur8Witness = await this._checkProxyVote(proxy);
+        }
+
+        const delegationAmount = await this._getDelegationToCur8(account.name);
+
+        return { votesCur8Witness, delegationAmount };
     }
 
     /**

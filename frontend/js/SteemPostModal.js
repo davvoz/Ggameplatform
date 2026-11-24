@@ -6,6 +6,8 @@ import imageUploadService from './ImageUploadService.js';
  * Modal for creating and publishing Steem posts with user customization
  */
 
+const MAX_IMAGES = 10;
+
 class SteemPostModal {
     constructor(steemPostAPI, coinAPI, authManager) {
         this.steemPostAPI = steemPostAPI;
@@ -13,7 +15,9 @@ class SteemPostModal {
         this.authManager = authManager;
         this.modalElement = null;
         this.previewData = null;
-        this.uploadedImageUrl = null;
+        // Each entry: { id, previewUrl, url: string|null, status: 'uploading'|'done', element }
+        this.images = [];
+        this.nextImageId = 0;
     }
 
     /**
@@ -67,14 +71,15 @@ class SteemPostModal {
                         <div class="post-creator-section">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <h3 style="margin: 0;">✍️ Your Personal Message</h3>
-                                <button id="selectImageBtn" class="btn-select-image-small" title="Add image">
-                                    📷 Add Image
+                                <button id="selectImageBtn" class="btn-select-image-small" title="Add images (max ${MAX_IMAGES})">
+                                    📷 Add Images
                                 </button>
                             </div>
-                            <input 
-                                type="file" 
-                                id="imageUploadInput" 
-                                accept="image/*" 
+                            <input
+                                type="file"
+                                id="imageUploadInput"
+                                accept="image/*"
+                                multiple
                                 style="display: none;"
                             />
                             <p class="section-description">Add a personal touch to your gaming achievement post</p>
@@ -85,10 +90,7 @@ class SteemPostModal {
                                 rows="5"
                             ></textarea>
                             <div id="imagePreviewContainer" class="image-preview-container-compact" style="display: none;">
-                                <div class="image-preview-wrapper-compact">
-                                    <img id="imagePreview" class="image-preview-compact" />
-                                    <button id="removeImageBtn" class="btn-remove-image-compact" title="Remove image">&times;</button>
-                                </div>
+                                <div id="imagePreviewGrid" class="image-preview-grid"></div>
                                 <div class="image-upload-status" id="imageUploadStatus"></div>
                             </div>
                         </div>
@@ -151,14 +153,12 @@ class SteemPostModal {
         const overlay = this.modalElement.querySelector('.steem-post-modal-overlay');
         const selectImageBtn = document.getElementById('selectImageBtn');
         const imageUploadInput = document.getElementById('imageUploadInput');
-        const removeImageBtn = document.getElementById('removeImageBtn');
 
         closeBtn.addEventListener('click', () => this.close());
         overlay.addEventListener('click', () => this.close());
         publishBtn.addEventListener('click', () => this.publishPost());
         selectImageBtn.addEventListener('click', () => imageUploadInput.click());
         imageUploadInput.addEventListener('change', (e) => this.handleImageSelection(e));
-        removeImageBtn.addEventListener('click', () => this.removeImage());
     }
 
     /**
@@ -239,6 +239,11 @@ class SteemPostModal {
             return;
         }
 
+        if (this.hasPendingUploads()) {
+            alert('Please wait until all images have finished uploading.');
+            return;
+        }
+
         try {
             this.setButtonLoading(publishBtn, 'Processing...');
 
@@ -288,9 +293,9 @@ class SteemPostModal {
             throw new Error('Invalid post data received from server. Missing title, body, or tags.');
         }
 
-        // If an image was uploaded, prepend it to the body
-        if (this.uploadedImageUrl) {
-            const imageMarkdown = `![](${this.uploadedImageUrl})\n\n`;
+        // If images were uploaded, prepend them to the body in selection order
+        const imageMarkdown = this.buildImagesMarkdown();
+        if (imageMarkdown) {
             postData.body = imageMarkdown + postData.body;
             
             // Also update operations if using Keychain
@@ -387,73 +392,169 @@ class SteemPostModal {
     }
 
     /**
-     * Handle image selection from input
+     * Handle image selection from input (supports multiple files)
      */
-    async handleImageSelection(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    handleImageSelection(event) {
+        const input = event.target;
+        const files = Array.from(input.files || []);
+        // Reset so selecting the same file again re-triggers "change"
+        input.value = '';
+        if (files.length === 0) return;
 
-        // Validate file
-        if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file');
-            return;
+        const { accepted, rejected } = this.validateSelectedFiles(files);
+        if (rejected.length > 0) {
+            alert(rejected.join('\n'));
         }
 
-        if (!imageUploadService.isFileSizeValid(file)) {
-            alert(`Image is too large. Maximum allowed size is ${imageUploadService.MAX_FILE_SIZE_MB}MB.`);
-            return;
+        accepted.forEach(file => this.addAndUploadImage(file));
+    }
+
+    /**
+     * Split selected files into accepted ones and human-readable rejection reasons
+     */
+    validateSelectedFiles(files) {
+        const accepted = [];
+        const rejected = [];
+        let freeSlots = MAX_IMAGES - this.images.length;
+
+        for (const file of files) {
+            if (!file.type.startsWith('image/')) {
+                rejected.push(`"${file.name}" is not a valid image file.`);
+            } else if (!imageUploadService.isFileSizeValid(file)) {
+                rejected.push(`"${file.name}" is too large (max ${imageUploadService.MAX_FILE_SIZE_MB}MB).`);
+            } else if (freeSlots <= 0) {
+                rejected.push(`"${file.name}" skipped: maximum ${MAX_IMAGES} images per post.`);
+            } else {
+                accepted.push(file);
+                freeSlots--;
+            }
         }
+
+        return { accepted, rejected };
+    }
+
+    /**
+     * Add a preview tile for the file and upload it
+     */
+    async addAndUploadImage(file) {
+        const image = {
+            id: this.nextImageId++,
+            previewUrl: URL.createObjectURL(file),
+            url: null,
+            status: 'uploading',
+            element: null
+        };
+        image.element = this.createImageTile(image);
+        this.images.push(image);
+        document.getElementById('imagePreviewGrid')?.appendChild(image.element);
+        this.refreshImageStatus();
 
         try {
-            // Show preview immediately
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const imagePreview = document.getElementById('imagePreview');
-                const previewContainer = document.getElementById('imagePreviewContainer');
-                imagePreview.src = e.target.result;
-                previewContainer.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-
-            // Update status
-            const statusEl = document.getElementById('imageUploadStatus');
-            statusEl.textContent = 'Uploading...';
-            statusEl.style.color = '#ffd700';
-
-            // Upload image via shared service
             const user = this.authManager.getUser();
-            this.uploadedImageUrl = await imageUploadService.uploadImage(file, user?.steem_username || user?.username);
-
-            // Update status
-            statusEl.textContent = '✓ Image uploaded successfully';
-            statusEl.style.color = '#4CAF50';
-
+            const url = await imageUploadService.uploadImage(file, user?.steem_username || user?.username);
+            // The image may have been removed (or the modal closed) during upload
+            if (!this.images.includes(image)) return;
+            image.url = url;
+            image.status = 'done';
+            image.element.classList.remove('uploading');
         } catch (error) {
-            let errorMessage = error.message;
-            if (errorMessage.includes('timeout')) {
-                errorMessage = 'Upload timeout. Please check your connection and try again.';
-            }
-            alert(`Failed to upload image: ${errorMessage}`);
-            this.removeImage();
+            if (!this.images.includes(image)) return;
+            const errorMessage = error.message.includes('timeout')
+                ? 'Upload timeout. Please check your connection and try again.'
+                : error.message;
+            alert(`Failed to upload "${file.name}": ${errorMessage}`);
+            this.removeImage(image.id);
+            return;
+        }
+
+        this.refreshImageStatus();
+    }
+
+    /**
+     * Build a preview tile (thumbnail + remove button) for an image
+     */
+    createImageTile(image) {
+        const tile = document.createElement('div');
+        tile.className = 'image-preview-tile uploading';
+
+        const img = document.createElement('img');
+        img.className = 'image-preview-thumb';
+        img.src = image.previewUrl;
+        img.alt = '';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn-remove-image-compact';
+        removeBtn.title = 'Remove image';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.addEventListener('click', () => this.removeImage(image.id));
+
+        tile.append(img, removeBtn);
+        return tile;
+    }
+
+    /**
+     * Update the status line and container visibility from current images
+     */
+    refreshImageStatus() {
+        const container = document.getElementById('imagePreviewContainer');
+        const statusEl = document.getElementById('imageUploadStatus');
+        const selectBtn = document.getElementById('selectImageBtn');
+        if (!container || !statusEl) return;
+
+        const total = this.images.length;
+        const pending = this.images.filter(img => img.status === 'uploading').length;
+
+        container.style.display = total > 0 ? 'block' : 'none';
+        if (selectBtn) selectBtn.disabled = total >= MAX_IMAGES;
+
+        if (total === 0) {
+            statusEl.textContent = '';
+        } else if (pending > 0) {
+            statusEl.textContent = `Uploading ${pending} of ${total} image(s)...`;
+            statusEl.style.color = '#ffd700';
+        } else {
+            statusEl.textContent = `✓ ${total} image(s) uploaded (max ${MAX_IMAGES})`;
+            statusEl.style.color = '#4CAF50';
         }
     }
 
+    /**
+     * Remove a single image by id
+     */
+    removeImage(imageId) {
+        const index = this.images.findIndex(img => img.id === imageId);
+        if (index === -1) return;
 
+        const [image] = this.images.splice(index, 1);
+        image.element?.remove();
+        URL.revokeObjectURL(image.previewUrl);
+        this.refreshImageStatus();
+    }
 
     /**
-     * Remove uploaded image
+     * Remove all images and release their preview URLs
      */
-    removeImage() {
-        this.uploadedImageUrl = null;
-        const previewContainer = document.getElementById('imagePreviewContainer');
-        const imagePreview = document.getElementById('imagePreview');
-        const imageUploadInput = document.getElementById('imageUploadInput');
-        const statusEl = document.getElementById('imageUploadStatus');
+    clearImages() {
+        this.images.forEach(img => URL.revokeObjectURL(img.previewUrl));
+        this.images = [];
+    }
 
-        previewContainer.style.display = 'none';
-        imagePreview.src = '';
-        imageUploadInput.value = '';
-        statusEl.textContent = '';
+    /**
+     * Whether any image is still uploading
+     */
+    hasPendingUploads() {
+        return this.images.some(img => img.status === 'uploading');
+    }
+
+    /**
+     * Markdown for all uploaded images, in selection order ('' if none)
+     */
+    buildImagesMarkdown() {
+        return this.images
+            .filter(img => img.url)
+            .map(img => `![](${img.url})\n\n`)
+            .join('');
     }
 
     /**
@@ -465,7 +566,7 @@ class SteemPostModal {
             setTimeout(() => {
                 this.modalElement.remove();
                 this.modalElement = null;
-                this.uploadedImageUrl = null;
+                this.clearImages();
             }, 300);
         }
     }

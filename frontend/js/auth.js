@@ -388,6 +388,22 @@ class AuthManager {
         globalThis.dispatchEvent(new CustomEvent('userLogin', { detail: userData }));
     }
 
+    /**
+     * Merge fresh fields into the logged-in user and persist them, without
+     * redrawing the navbar or dispatching 'userLogin' (not a new login).
+     * Callers notify what changed themselves (e.g. 'multiplierUpdated').
+     * @param {Object} fields - user fields to update
+     * @returns {Object|null} the updated user, or null if nobody is logged in
+     */
+    updateUserFields(fields) {
+        if (!this.currentUser) return null;
+
+        this.currentUser = { ...this.currentUser, ...fields };
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        localStorage.setItem('gameplatform_user', JSON.stringify(this.currentUser));
+        return this.currentUser;
+    }
+
     loadUserFromStorage() {
         // Carica platform epoch salvato
         this.platformEpoch = localStorage.getItem('platformEpoch');

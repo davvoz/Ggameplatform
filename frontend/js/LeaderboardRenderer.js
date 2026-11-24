@@ -1,6 +1,7 @@
 import { fetchGames,  getGamePreviewUrl } from './api.js';
 import { steemAvatarService } from './SteemAvatarService.js';
 import LeaderboardAPI from './LeaderboardAPI.js';
+import { renderGameCarousel, initGameCarousel } from './GameCarousel.js';
 
 // Module-level singleton
 let leaderboardRenderer = null;
@@ -20,6 +21,7 @@ class LeaderboardRenderer {
         this.countdownInterval = null;
         this._delegationAttached = false;
         this._boundClickHandler = null;
+        this.gameCarousel = null;
     }
 
     /**
@@ -125,10 +127,7 @@ class LeaderboardRenderer {
                 </div>
                 <!-- Game Filter -->
                 <div class="game-selector">
-                    
-                    <div class="game-cards-container">
-                        ${games.map((g, idx) => this.renderGameCard(g, idx === 0)).join('')}
-                    </div>
+                    ${renderGameCarousel(games, this.currentGameId, (game) => this.getGameThumbnailUrl(game))}
                 </div>
                 <!-- Tabs: Weekly / All-Time / Winners -->
                 <div class="leaderboard-tabs">
@@ -152,31 +151,19 @@ class LeaderboardRenderer {
         
         // Attach click handlers to game cards
         this.attachGameCardHandlers();
+
+        // Arrows + centering of the game carousel
+        this.gameCarousel?.destroy();
+        this.gameCarousel = initGameCarousel(this.appContainer);
     }
 
     /**
-     * Render a game card for the selector
+     * Thumbnail URL of a game for the selector
      */
-    renderGameCard(game, isSelected = false) {
-        const thumbnailUrl = game.thumbnail
+    getGameThumbnailUrl(game) {
+        return game.thumbnail
             ? getGamePreviewUrl(game.game_id, game.thumbnail)
             : './icons/icon-192x192.png';
-        
-        const steemBadge = game.steem_rewards_enabled 
-            ? '<div class="game-card-steem"><img src="./icons/steem.png" alt="STEEM"></div>' 
-            : '';
-        
-        return `
-            <div class="game-selector-card ${isSelected ? 'active' : ''}" 
-                 data-game-id="${game.game_id}"
-                 data-action="select-game">
-                <div class="game-card-thumbnail">
-                    <img src="${thumbnailUrl}" alt="${game.title}" loading="lazy">
-                    ${steemBadge}
-                </div>
-                <div class="game-card-name">${game.title}</div>
-            </div>
-        `;
     }
 
     /**
@@ -223,10 +210,8 @@ class LeaderboardRenderer {
     async selectGame(gameId) {
         if (this.currentGameId === gameId) return;
         
-        // Update visual state
-        document.querySelectorAll('.game-selector-card').forEach(card => {
-            card.classList.toggle('active', card.dataset.gameId === gameId);
-        });
+        // Update visual state (and keep the selected game centered)
+        this.gameCarousel?.select(gameId);
         
         // Call the existing change handler
         await this.onGameChange(gameId);
@@ -690,6 +675,8 @@ class LeaderboardRenderer {
         if (this.countdownInterval) {
             clearInterval(this.countdownInterval);
         }
+        this.gameCarousel?.destroy();
+        this.gameCarousel = null;
         if (this._boundClickHandler && this.appContainer) {
             this.appContainer.removeEventListener('click', this._boundClickHandler);
             this._boundClickHandler = null;

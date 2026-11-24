@@ -6,6 +6,7 @@ import {
     getCurrentGameRuntime, setCurrentGameRuntime,
     getCurrentCommunityManager, setCurrentCommunityManager
 } from './state.js';
+import { runPageTransition } from './pageTransition.js';
 
 /**
  * Router configuration
@@ -24,6 +25,8 @@ const routes = {
 };
 
 
+// The first render (page load) is not animated
+let isFirstRoute = true;
 
 /**
  * Initialize the router
@@ -56,6 +59,20 @@ function handleRoute() {
         setCurrentCommunityManager(null);
     }
     
+    const isPageChange = !isFirstRoute;
+    isFirstRoute = false;
+
+    runPageTransition(() => {
+        // A new page starts from the top
+        if (isPageChange) globalThis.scrollTo(0, 0);
+        renderRoute(route, hash);
+    }, { animate: isPageChange });
+}
+
+/**
+ * Render the matched route (or the 404 page) and update the nav state
+ */
+function renderRoute(route, hash) {
     if (route) {
         route.handler(route.params);
         updateActiveNavLink(hash);

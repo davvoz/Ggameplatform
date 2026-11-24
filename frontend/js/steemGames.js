@@ -70,6 +70,16 @@ const STEEM_GAMES = [
         thumbnail: "./images/steem-games/steemheights.webp"
     },
     {
+        id: "steemarchers",
+        title: "Steem Archers",
+        description: "Steem Archers is an exciting archery game where players test their aiming skills, precision, and timing.",
+        author: "@steempro",
+        category: "action",
+        tags: ["arcade", "sports"],
+        url: "https://archers.steempro.com/",
+        thumbnail: "./images/steem-games/steemarchers.webp"
+    },
+    {
         id: "steembingo",
         title: "Steem Bingo",
         description: "Steem Bingo on Steem is an online bingo game built around the Steem blockchain.",
@@ -140,14 +150,15 @@ const STEEM_GAMES = [
         thumbnail: "./images/steem-games/steem-maze.webp"
     },
     {
-        id: "steemarchers",
-        title: "Steem Archers",
-        description: "Steem Archers is an exciting archery game where players test their aiming skills, precision, and timing.",
-        author: "@steempro",
-        category: "action",
-        tags: ["arcade", "sports"],
-        url: "https://archers.steempro.com/",
-        thumbnail: "./images/steem-games/steemarchers.webp"
+        id: "steemflags",
+        title: "Steem Flags",
+        description: "Steem Flags is a quiz game where you guess the country from its flag.",
+        author: "@do2earn",
+        category: "quiz",
+        tags: ["educational", "trivia"],
+        // Site root: it redirects to a "temporarily disabled" page while the game is down
+        url: "https://steemflags.do2earn.dev/",
+        thumbnail: "./images/steem-games/steemflags.webp"
     }
 ];
 

@@ -7,6 +7,10 @@ import { buildLevelCardElement } from './level-widget.js';
 import CoinAPI from './coinAPI.js';
 import SteemPostModal from './SteemPostModal.js';
 import InviteFriendModal from './InviteFriendModal.js';
+import { setBackgroundImageWithFade } from './imageFadeIn.js';
+
+// Avatar circle state while the Steem photo is loading (styled in profile.css)
+const AVATAR_LOADING_CLASS = 'is-loading';
 
 // Module-level lazy-initialized instances
 let steemPostAPI = null;
@@ -30,33 +34,10 @@ class ProfileRenderer {
         // Get cached user data for immediate rendering
         const cachedUser = this.authManager.getUser();
 
-        // Render page immediately with cached data and loading placeholders
+        // Render page immediately with cached data and loading placeholders.
+        // The multiplier breakdown is fetched once, by the multiplier badge
+        // (_setupMultiplierBadge), which also syncs it to AuthManager.
         await this.renderProfilePageSkeleton(cachedUser);
-
-        // Load multiplier breakdown in background (non-blocking)
-        const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
-        if (cachedUser?.user_id) {
-            fetch(`${API_URL}/users/multiplier-breakdown/${cachedUser.user_id}`)
-                .then(resp => resp.ok ? resp.json() : null)
-                .then(json => {
-                    if (json?.breakdown?.final_multiplier !== undefined) {
-                        const breakdown = json.breakdown;
-                        const updatedUser = {
-                            ...cachedUser,
-                            cur8_multiplier: Number(breakdown.final_multiplier),
-                            delegation_amount: Number(breakdown.delegation_amount || cachedUser.delegation_amount || 0)
-                        };
-
-                        if (this.authManager.setUser)
-                            this.authManager.setUser(updatedUser);
-
-
-                        globalThis.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
-
-                    }
-                })
-                .catch(e => { });
-        }
 
         // Load all other data in background (non-blocking)
         this.loadProfileDataAsync(cachedUser);
@@ -92,9 +73,11 @@ class ProfileRenderer {
         this.loadSteemProfile(user).then(steemProfile => {
             if (steemProfile) {
                 this.updateProfileWithSteemData(user, steemProfile);
+            } else {
+                this.showAvatarFallback(user);
             }
-        }).catch(error => {
-
+        }).catch(() => {
+            this.showAvatarFallback(user);
         });
     }
 
@@ -195,31 +178,9 @@ class ProfileRenderer {
             return null;
         }
 
-        const steemProfile = await fetchSteemProfile(steemUsername);
-
-        // Update multiplier from Steem data if available
-        if (steemProfile?.votesCur8Witness !== undefined) {
-            try {
-                const API_URL = globalThis.ENV?.API_URL || globalThis.location.origin;
-
-                // Send real Steem data to backend for multiplier update
-                const response = await fetch(`${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${steemProfile.votesCur8Witness}&delegation_amount=${steemProfile.delegationAmount || 0}`, {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    // Update user object with new multiplier
-                    user.cur8_multiplier = result.cur8_multiplier;
-                    user.votes_cur8_witness = result.votes_cur8_witness;
-                    user.delegation_amount = result.delegation_amount;
-                }
-            } catch (error) {
-                console.error('Error updating Steem data:', error);
-            }
-        }
-
-        return steemProfile;
+        // Only avatar/cover: the multiplier (witness vote, delegation) is checked by
+        // the backend on its own schedule, not on every profile visit
+        return fetchSteemProfile(steemUsername);
     }
 
     extractSteemUsername(user) {
@@ -601,20 +562,42 @@ class ProfileRenderer {
     setAvatar(avatarCircle, avatarIcon, user, steemProfile) {
         if (steemProfile?.profileImage) {
             this.setSteemAvatar(avatarCircle, avatarIcon, steemProfile.profileImage);
+        } else if (!steemProfile && this.extractSteemUsername(user)) {
+            // Steem profile still loading: no placeholder emoji, the circle uses the
+            // header color (like the cover) until the photo fades in
+            // (see showAvatarFallback if it never comes)
+            avatarCircle?.classList.add(AVATAR_LOADING_CLASS);
+            avatarIcon.textContent = '';
         } else {
+            avatarCircle?.classList.remove(AVATAR_LOADING_CLASS);
+            this.setEmojiAvatar(avatarIcon, user);
+        }
+    }
+
+    /**
+     * Emoji avatar when the Steem profile could not provide a photo
+     */
+    showAvatarFallback(user) {
+        const avatarIcon = document.querySelector('.avatar-icon');
+        if (avatarIcon && !avatarIcon.style.backgroundImage) {
+            avatarIcon.closest('.avatar-circle')?.classList.remove(AVATAR_LOADING_CLASS);
             this.setEmojiAvatar(avatarIcon, user);
         }
     }
 
     setSteemAvatar(avatarCircle, avatarIcon, profileImage) {
-        avatarIcon.style.backgroundImage = `url(${profileImage})`;
         avatarIcon.style.backgroundSize = 'cover';
         avatarIcon.style.backgroundPosition = 'center';
         avatarIcon.style.width = '100%';
         avatarIcon.style.height = '100%';
         avatarIcon.textContent = '';
-        avatarCircle.style.background = 'transparent';
-        avatarCircle.style.border = '4px solid rgba(255, 255, 255, 0.8)';
+        // Keep the loading look until the photo is there, then switch to the photo frame
+        avatarCircle.classList.add(AVATAR_LOADING_CLASS);
+        setBackgroundImageWithFade(avatarIcon, profileImage, () => {
+            avatarCircle.classList.remove(AVATAR_LOADING_CLASS);
+            avatarCircle.style.background = 'transparent';
+            avatarCircle.style.border = '4px solid rgba(255, 255, 255, 0.8)';
+        });
     }
 
     setEmojiAvatar(avatarIcon, user) {
@@ -632,7 +615,7 @@ class ProfileRenderer {
 
     setHeaderBackground(profileHeader, steemProfile) {
         if (steemProfile?.coverImage) {
-            profileHeader.style.backgroundImage = `url(${steemProfile.coverImage})`;
+            setBackgroundImageWithFade(profileHeader, steemProfile.coverImage);
             profileHeader.style.backgroundSize = 'cover';
             profileHeader.style.backgroundPosition = 'center';
         }
@@ -759,14 +742,13 @@ class ProfileRenderer {
                 return;
             }
 
-            const updatedUser = {
-                ...currentUser,
+            // Silent update: refreshing the multiplier is not a login, so the navbar
+            // is not redrawn ('multiplierUpdated' updates only the multiplier card)
+            const updatedUser = this.authManager.updateUserFields({
                 cur8_multiplier: Number(breakdown.final_multiplier),
                 votes_cur8_witness: (breakdown.witness_bonus && Number(breakdown.witness_bonus) > 0) || currentUser.votes_cur8_witness || false,
                 delegation_amount: Number(breakdown.delegation_amount || currentUser.delegation_amount || 0)
-            };
-
-            this.authManager.setUser?.(updatedUser);
+            });
             globalThis.dispatchEvent(new CustomEvent('multiplierUpdated', { detail: updatedUser }));
         } catch (error) {
             console.error('Error syncing multiplier to auth manager:', error);
@@ -795,30 +777,13 @@ class ProfileRenderer {
         fetch(`${apiUrl}/api/levels/${user.user_id}`)
             .then(response => response.ok ? response.json() : null)
             .then(levelInfo => {
+                // Only the profile card: the navbar level badge is owned by AuthManager.updateUI
+                // (rewriting it here swapped it to a different layout, then back: navbar glitch)
                 if (levelInfo) {
-                    this._updateNavbarLevelBadge(levelInfo, totalXP);
                     this._updateProfileLevelCard(levelInfo, totalXP);
                 }
             })
             .catch(error => { });
-    }
-
-    _updateNavbarLevelBadge(levelInfo, totalXP) {
-        const levelBadgeContainer = document.querySelector('#levelBadgeContainer');
-        if (!levelBadgeContainer) {
-            return;
-        }
-
-        const color = levelInfo.color || '#6366f1';
-        levelBadgeContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: linear-gradient(135deg, ${color}18, transparent); border-radius: 10px; border: 2px solid ${color}55;">
-                <span style="font-size: 28px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">${levelInfo.badge}</span>
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <span style="font-weight: 800; font-size: 16px; color: ${color}; text-shadow: 0 1px 3px rgba(0,0,0,0.3); letter-spacing: 0.5px;">Lv${levelInfo.current_level}</span>
-                    <span style="font-size: 11px; opacity: 0.85; font-weight: 600;">${totalXP.toFixed(0)} XP</span>
-                </div>
-            </div>
-        `;
     }
 
     _updateProfileLevelCard(levelInfo, totalXP) {
@@ -1232,7 +1197,7 @@ class ProfileRenderer {
         const steemUsername = this.extractSteemUsername(user);
         if (!steemUsername) throw new Error('No Steem username available');
 
-        const steemProfile = await steemProfileService.fetchProfile(steemUsername);
+        const steemProfile = await steemProfileService.fetchProfile(steemUsername, { includeCur8Support: true });
         const API_URL = globalThis.ENV?.API_URL || config.API_URL || globalThis.location.origin;
 
         const response = await fetch(`${API_URL}/users/update-steem-data/${user.user_id}?votes_witness=${steemProfile.votesCur8Witness}&delegation_amount=${steemProfile.delegationAmount || 0}`, {

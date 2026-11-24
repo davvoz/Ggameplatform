@@ -1,8 +1,17 @@
 {
-  "version": "5.25.0",
-  "timestamp": "2026-11-23T23:02:02.466Z",
-  "buildNumber": 644,
+  "version": "5.26.0",
+  "timestamp": "2026-11-24T01:11:41.949Z",
+  "buildNumber": 645,
   "changelog": [
+    {
+      "version": "5.26.0",
+      "date": "2026-11-24",
+      "type": "minor",
+      "changes": [
+        "feat: Enhance UI with animations and transitions, added 10 images limit upload in 500 coin post",
+        "🔖 Bump version to 5.25.0 [skip-version]"
+      ]
+    },
     {
       "version": "5.25.0",
       "date": "2026-11-23",
@@ -82,15 +91,6 @@
       "changes": [
         "fix:[AD] enhance race functionality and player profile integration",
         "🔖 Bump version to 5.24.2 [skip-version]"
-      ]
-    },
-    {
-      "version": "5.24.2",
-      "date": "2026-11-16",
-      "type": "patch",
-      "changes": [
-        "fix: [AD]enhance race session tracking, add retirement handling, and improve ping results",
-        "🔖 Bump version to 5.24.1 [skip-version]"
       ]
     }
   ]
